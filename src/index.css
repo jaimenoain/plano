@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Cineforum Design System - Intergenerational High-Contrast Dark Mode */
+
+@layer base {
+  :root {
+    /* Background: Deep Matte Charcoal */
+    --background: 240 6% 6%;           /* Slightly lifted from 4% for better contrast */
+    --foreground: 0 0% 98%;            /* Pure White text */
+
+    /* Cards: Lighter than background to create distinct "surfaces" */
+    --card: 240 4% 10%;                /* Distinctly lighter than bg */
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 240 4% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary: Electric Blue - High Visibility */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Muted */
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 70%;     /* Brightened from 65% for readability */
+    --muted-darker: 240 4% 40%;         
+
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 4% 20%;               /* Increased contrast on borders */
+    --input: 240 4% 20%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;                  /* Increased radius = friendlier, less "sharp" */
+
+    /* Glassmorphism */
+    --glass-bg: 0 0% 0% / 0.7;          /* Darker glass for better text readability */
+    --glass-border: 0 0% 100% / 0.15;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent text resizing on mobile rotation which disorients seniors */
+    -webkit-text-size-adjust: 100%; 
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Base font size 16px is critical for legibility */
+    font-size: 16px; 
+    line-height: 1.5;
+  }
+
+  /* Improve form element usability */
+  input, textarea, select {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS */
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px; /* Slightly wider for easier grabbing with mouse */
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-darker));
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-black/70 backdrop-blur-xl border-b border-white/10;
+  }
+  
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

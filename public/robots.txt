@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cineforum.eu/sitemap.xml

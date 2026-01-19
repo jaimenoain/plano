@@ -1,0 +1,379 @@
+import { Heart, MessageCircle, Star, Clock } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { slugify } from "@/lib/utils";
+
+interface ReviewCardProps {
+  review: {
+    id: string; 
+    content: string | null;
+    rating: number | null;
+    tags?: string[] | null;
+    created_at: string;
+    edited_at?: string | null;
+    status?: string; // Added status
+    user: {
+      username: string | null;
+      avatar_url: string | null;
+    };
+    film: {
+      title: string;
+      original_title?: string | null;
+      poster_path: string | null;
+      tmdb_id?: number;
+      media_type?: string;
+    };
+    likes_count: number;
+    comments_count: number;
+    is_liked: boolean;
+    watch_with_users?: { id: string, avatar_url: string | null, username: string | null }[]; // Added watch_with_users
+  };
+  onLike?: (reviewId: string) => void; 
+  onComment?: (reviewId: string) => void;
+  isDetailView?: boolean;
+  hideUser?: boolean;
+  hideFilmInfo?: boolean; 
+}
+
+export function ReviewCard({ 
+  review, 
+  onLike, 
+  onComment, 
+  isDetailView = false, 
+  hideUser = false,
+  hideFilmInfo = false
+}: ReviewCardProps) {
+  const navigate = useNavigate();
+  
+  // FIXED: Safety Check - Prevent crash if film data is missing
+  if (!review.film) return null;
+
+  const posterPathWidth = isDetailView ? "w154" : "w342";
+  const posterUrl = review.film.poster_path 
+    ? `https://image.tmdb.org/t/p/${posterPathWidth}${review.film.poster_path}`
+    : null;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (isDetailView) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+
+    if (review.film.tmdb_id && review.user.username) {
+        const type = review.film.media_type || 'movie';
+        navigate(`/${type}/${slugify(review.film.title)}/${review.film.tmdb_id}/${review.user.username}`);
+    } else {
+        navigate(`/review/${review.id}`);
+    }
+  };
+
+  const handleCommentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onComment) {
+        onComment(review.id);
+    } else {
+        if (review.film.tmdb_id && review.user.username) {
+            const type = review.film.media_type || 'movie';
+            navigate(`/${type}/${slugify(review.film.title)}/${review.film.tmdb_id}/${review.user.username}`);
+        } else {
+            navigate(`/review/${review.id}`);
+        }
+    }
+  };
+
+  // Safe user access
+  const username = review.user?.username || "Unknown User";
+  const avatarUrl = review.user?.avatar_url || undefined;
+  const userInitial = username.charAt(0).toUpperCase();
+
+  // Title Logic
+  const hasDifferentOriginalTitle = review.film.original_title && 
+    review.film.original_title !== review.film.title;
+  
+  const mainTitle = hasDifferentOriginalTitle ? review.film.original_title : review.film.title;
+  const subTitle = hasDifferentOriginalTitle ? review.film.title : null;
+
+  const isWatchlist = review.status === 'watchlist';
+  const watchWithUsers = review.watch_with_users || [];
+
+  // --- 1. DETAIL VIEW (List View) ---
+  if (isDetailView) {
+    return (
+      <article className="px-4 py-4 hairline">
+        {!hideUser ? (
+          <div className="flex items-center gap-3 mb-3">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={avatarUrl} />
+              <AvatarFallback className="bg-secondary text-foreground text-sm">
+                {userInitial}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {username}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(review.edited_at || review.created_at), { addSuffix: true }).replace("about ", "")}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-3">
+             <p className="text-xs text-muted-foreground">
+               {formatDistanceToNow(new Date(review.edited_at || review.created_at), { addSuffix: true }).replace("about ", "")}
+             </p>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          {!hideFilmInfo && (
+            posterUrl ? (
+              <img
+                src={posterUrl}
+                alt={review.film.title}
+                className="w-24 h-36 object-cover rounded-sm flex-shrink-0"
+              />
+            ) : (
+              <div className="w-24 h-36 bg-secondary rounded-sm flex-shrink-0 flex items-center justify-center">
+                <span className="text-xs text-muted-foreground">No image</span>
+              </div>
+            )
+          )}
+
+          <div className="flex-1 min-w-0">
+            {!hideFilmInfo && (
+              <div className="mb-2">
+                <h3 className="text-base font-semibold text-foreground truncate">
+                  {mainTitle}
+                </h3>
+                {subTitle && (
+                  <p className="text-xs text-muted-foreground truncate">{subTitle}</p>
+                )}
+              </div>
+            )}
+            
+            {review.rating && (
+              <div className="flex items-center gap-1 mb-2">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-3 h-3 ${
+                      i < review.rating!
+                        ? "fill-yellow-500 text-yellow-500"
+                        : "fill-transparent text-muted-foreground/30"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {review.content && (
+              <p className="text-sm text-muted-foreground mb-2">
+                {review.content}
+              </p>
+            )}
+
+            {review.tags && review.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {review.tags.slice(0, 3).map(tag => (
+                  <Badge key={tag} variant="secondary" className="text-xs px-2 h-6 font-normal text-muted-foreground">
+                    {tag}
+                  </Badge>
+                ))}
+                {review.tags.length > 3 && (
+                   <span className="text-xs text-muted-foreground self-center">+{review.tags.length - 3}</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6 mt-3 pt-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLike?.(review.id);
+              // Trigger PWA interaction check on like
+              window.dispatchEvent(new CustomEvent('pwa-interaction'));
+            }}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Heart
+              className={`h-4 w-4 ${
+                review.is_liked ? "fill-primary text-primary" : ""
+              }`}
+            />
+            <span className="text-xs">{review.likes_count}</span>
+          </button>
+          <button
+            onClick={handleCommentClick}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="text-xs">{review.comments_count}</span>
+          </button>
+        </div>
+      </article>
+    );
+  }
+
+  // --- 2. GRID VIEW (Social Layout Final) ---
+  return (
+    <article 
+      onClick={handleCardClick}
+      className="group relative flex flex-col h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
+    >
+      {/* 1. Header: User Info - UX IMPROVED */}
+      {!hideUser && (
+        <div className="p-1.5 md:p-3 flex items-center gap-1.5 md:gap-3 border-b border-border/40 bg-muted/20">
+          <Avatar className="h-10 w-10 md:h-12 md:w-12 border border-border/50 shadow-sm">
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback className="text-base md:text-lg font-bold bg-primary/10 text-primary">
+              {userInitial}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col min-w-0">
+            <span className="text-base md:text-lg font-bold text-foreground leading-tight truncate">
+              {username}
+            </span>
+            <span className="text-[10px] md:text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(review.edited_at || review.created_at)).replace("about ", "")} ago
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Poster Image - Only if NOT hidden */}
+      {!hideFilmInfo && (
+        <div className="aspect-[2/3] relative bg-secondary overflow-hidden">
+          {posterUrl ? (
+            <img
+              src={posterUrl}
+              alt={mainTitle || ""}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              No image
+            </div>
+          )}
+
+          {/* Watch With Facepile Overlay - Only if watchlist and has users */}
+          {isWatchlist && watchWithUsers.length > 0 && (
+             <div className="absolute bottom-2 right-2 flex -space-x-2 z-10">
+                {watchWithUsers.slice(0, 3).map(u => (
+                   <Avatar key={u.id} className="h-6 w-6 ring-2 ring-background border border-white/20">
+                      <AvatarImage src={u.avatar_url || undefined} />
+                      <AvatarFallback className="text-[8px] bg-secondary text-foreground">{u.username?.charAt(0)}</AvatarFallback>
+                   </Avatar>
+                ))}
+                {watchWithUsers.length > 3 && (
+                   <div className="h-6 w-6 rounded-full bg-black/60 ring-2 ring-background border border-white/20 flex items-center justify-center text-[8px] text-white">
+                      +{watchWithUsers.length - 3}
+                   </div>
+                )}
+             </div>
+          )}
+        </div>
+      )}
+
+      {/* 3. Content Body */}
+      <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
+        {/* Film Title (Context) - Only if NOT hidden */}
+        {!hideFilmInfo && (
+          <div className="mb-1">
+            <h3 className="text-base font-bold text-foreground line-clamp-2 leading-tight">
+              {mainTitle}
+            </h3>
+            {subTitle && (
+              <p className="text-xs text-muted-foreground line-clamp-1 truncate">
+                {subTitle}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Rating Section: Big Number + Stars - RESPONSIVE TWEAK */}
+        {review.rating && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+             <span className="text-2xl md:text-3xl font-bold leading-none text-foreground tracking-tighter">
+               {review.rating}
+             </span>
+             <div className="flex items-center gap-0.5">
+              {Array.from({ length: 10 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-3 h-3 md:w-3.5 md:h-3.5 ${
+                      i < review.rating!
+                        ? "fill-yellow-500 text-yellow-500"
+                        : "fill-transparent text-muted-foreground/30"
+                    }`}
+                  />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Watchlist Indicator */}
+        {isWatchlist && (
+          <div className="flex items-center gap-2 mb-1 mt-1">
+             <Clock className="w-4 h-4 text-blue-500 fill-blue-500/20" />
+             <span className="text-sm font-medium text-blue-500">
+               Wants to watch
+             </span>
+          </div>
+        )}
+
+        {/* Review Text: Only show if exists */}
+        {review.content && (
+           <p className="text-sm font-medium text-foreground line-clamp-3 leading-relaxed">
+             "{review.content}"
+           </p>
+        )}
+
+        {/* Tags Section - UPDATED */}
+        {review.tags && review.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {review.tags.slice(0, 3).map(tag => (
+              <Badge key={tag} variant="secondary" className="text-xs px-2 h-6 font-normal text-muted-foreground/80">
+                {tag}
+              </Badge>
+            ))}
+            {review.tags.length > 3 && (
+              <span className="text-xs text-muted-foreground self-center">+{review.tags.length - 3}</span>
+            )}
+          </div>
+        )}
+
+        {/* 4. Action Footer */}
+        <div className="mt-auto pt-3 flex items-center gap-4 border-t border-border/50">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLike?.(review.id);
+              // Trigger PWA interaction check on like
+              window.dispatchEvent(new CustomEvent('pwa-interaction'));
+            }}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors group/like"
+          >
+            <Heart
+              className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${
+                review.is_liked ? "fill-primary text-primary" : ""
+              }`}
+            />
+            <span className="text-xs font-medium">{review.likes_count}</span>
+          </button>
+          
+          <button
+            onClick={handleCommentClick}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group/comment"
+          >
+            <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
+            <span className="text-xs font-medium">{review.comments_count}</span>
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
