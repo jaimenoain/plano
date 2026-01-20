@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Send, Loader2, ArrowLeft, ArrowRight, Trash2, Heart, Star, MessageCircle, Clock, Pencil, Users } from "lucide-react";
+import { Loader2, ArrowLeft, ArrowRight, Trash2, Heart, Star, MessageCircle, Clock, Pencil, MapPin } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,8 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import { cn, slugify } from "@/lib/utils";
-import { RecommendDialog } from "@/components/common/RecommendDialog";
+import { cn } from "@/lib/utils";
 import { MetaHead } from "@/components/common/MetaHead";
 import NotFound from "@/pages/NotFound";
 
@@ -24,20 +23,19 @@ interface FeedReview {
   tags: string[] | null;
   created_at: string;
   user_id: string;
-  film_id: string;
+  building_id: string;
   status: string;
   user: {
     username: string | null;
     avatar_url: string | null;
   };
-  film: {
-    title: string;
-    original_title: string | null;
-    poster_path: string | null;
-    backdrop_path: string | null;
-    release_date: string | null;
-    tmdb_id: number;
-    media_type: string;
+  building: {
+    id: string;
+    name: string;
+    image_url: string | null;
+    year: number | null;
+    architects: string[] | null;
+    address: string | null;
   };
   likes_count: number;
   comments_count: number;
@@ -74,256 +72,199 @@ interface Liker {
   };
 }
 
-interface WatchWithUser {
-  id: string;
-  username: string | null;
-  avatar_url: string | null;
-}
-
-export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?: "movie" | "tv" }) {
-  const { id: paramId, username } = useParams(); // paramId can be review UUID OR TMDB ID (if username is present)
+export default function ReviewDetails() {
+  const { id: paramId } = useParams(); // This is the Log UUID
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [id, setId] = useState<string | null>(username ? null : (paramId || null)); // The actual Review UUID
   const { toast } = useToast();
 
   const [review, setReview] = useState<FeedReview | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [relatedReviews, setRelatedReviews] = useState<RelatedReview[]>([]);
   const [likers, setLikers] = useState<Liker[]>([]);
-  const [watchWithUsers, setWatchWithUsers] = useState<WatchWithUser[]>([]);
-  const [currentUserReview, setCurrentUserReview] = useState<{ id: string; rating: number | null } | null>(null);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showLikesDialog, setShowLikesDialog] = useState(false);
-  const [showRecommendDialog, setShowRecommendDialog] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     async function loadData() {
+        if (!paramId) {
+            setNotFound(true);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         setNotFound(false);
 
-        let reviewId = username ? null : paramId; // Default to paramId if direct mode
-        let reviewData = null;
-
         try {
-            // 1. Resolve Review Data (either by Lookup or ID)
-            if (username && paramId && propMediaType) {
-                // Lookup Mode
-                 const { data, error } = await supabase
-                    .from('log')
-                    .select(`
-                        id, content, rating, tags, created_at, user_id, film_id, status,
-                        user:profiles!inner(username, avatar_url),
-                        film:films!inner(title, original_title, poster_path, backdrop_path, release_date, tmdb_id, media_type)
-                    `)
-                    .eq('user.username', username)
-                    .eq('film.tmdb_id', parseInt(paramId))
-                    .eq('film.media_type', propMediaType)
-                    .maybeSingle();
+            // 1. Fetch Log Data
+            // Note: DB column is 'image_url', even if sometimes referred to as 'main_image_url' in requirements.
+            const { data: reviewData, error } = await supabase
+                .from("log")
+                .select(`
+                    id, content, rating, tags, created_at, user_id, building_id, status,
+                    user:profiles(username, avatar_url),
+                    building:buildings(id, name, image_url, year, architects, address)
+                `)
+                .eq("id", paramId)
+                .single();
 
-                 if (error) throw error;
-                 if (!data) {
-                     setNotFound(true);
-                     setLoading(false);
-                     return;
-                 }
-                 reviewData = data;
-                 reviewId = data.id;
-            } else if (paramId && !username) {
-                // Direct ID Mode
-                reviewId = paramId;
-                const { data, error } = await supabase
-                    .from("log")
-                    .select(`
-                      id, content, rating, tags, created_at, user_id, film_id, status,
-                      user:profiles(username, avatar_url),
-                      film:films(title, original_title, poster_path, backdrop_path, release_date, tmdb_id, media_type)
-                    `)
-                    .eq("id", reviewId)
-                    .single();
-
-                if (error) {
-                    if (error.code === "PGRST116") {
-                         setNotFound(true);
-                         setLoading(false);
-                         return;
-                    }
-                    throw error;
+            if (error) {
+                if (error.code === "PGRST116") {
+                        setNotFound(true);
+                        setLoading(false);
+                        return;
                 }
-                reviewData = data;
-            } else {
-                // Invalid params
+                throw error;
+            }
+
+            if (!reviewData) {
                 setNotFound(true);
                 setLoading(false);
                 return;
             }
 
-            // Set ID state for other potential uses
-            if (reviewId) setId(reviewId);
-
             // 2. Fetch Auxiliary Data in Parallel
-            if (reviewData && reviewId) {
-                const [likesCount, commentsCount, userLike, likersData, userReviewData] = await Promise.all([
-                    supabase.from("likes").select("id", { count: "exact" }).eq("interaction_id", reviewId),
-                    supabase.from("comments").select("id", { count: "exact" }).eq("interaction_id", reviewId),
-                    user ? supabase.from("likes").select("id").eq("interaction_id", reviewId).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
-                    supabase.from("likes").select("user_id, user:profiles(username, avatar_url)").eq("interaction_id", reviewId).order("created_at", { ascending: false }).limit(50),
-                    user ? supabase.from("log").select("id, rating").eq("film_id", reviewData.film_id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null })
-                ]);
+            const [likesCount, commentsCount, userLike, likersData] = await Promise.all([
+                supabase.from("likes").select("id", { count: "exact" }).eq("interaction_id", reviewData.id),
+                supabase.from("comments").select("id", { count: "exact" }).eq("interaction_id", reviewData.id),
+                user ? supabase.from("likes").select("id").eq("interaction_id", reviewData.id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
+                supabase.from("likes").select("user_id, user:profiles(username, avatar_url)").eq("interaction_id", reviewData.id).order("created_at", { ascending: false }).limit(50)
+            ]);
 
-                if (userReviewData && userReviewData.data) {
-                    setCurrentUserReview(userReviewData.data);
-                }
+            setReview({
+                id: reviewData.id,
+                content: reviewData.content,
+                rating: reviewData.rating,
+                tags: reviewData.tags,
+                created_at: reviewData.created_at,
+                user_id: reviewData.user_id,
+                building_id: reviewData.building_id,
+                status: reviewData.status,
+                user: Array.isArray(reviewData.user) ? reviewData.user[0] : reviewData.user,
+                building: Array.isArray(reviewData.building) ? reviewData.building[0] : reviewData.building,
+                likes_count: likesCount.count || 0,
+                comments_count: commentsCount.count || 0,
+                is_liked: !!userLike.data,
+            });
 
-                setReview({
-                    id: reviewData.id,
-                    content: reviewData.content,
-                    rating: reviewData.rating,
-                    tags: reviewData.tags,
-                    created_at: reviewData.created_at,
-                    user_id: reviewData.user_id,
-                    film_id: reviewData.film_id,
-                    status: reviewData.status,
-                    user: Array.isArray(reviewData.user) ? reviewData.user[0] : reviewData.user,
-                    film: Array.isArray(reviewData.film) ? reviewData.film[0] : reviewData.film,
-                    likes_count: likesCount.count || 0,
-                    comments_count: commentsCount.count || 0,
-                    is_liked: !!userLike.data,
-                });
-
-                if (likersData.data) {
-                    // @ts-ignore
-                    setLikers(likersData.data.map(item => ({
-                        user_id: item.user_id,
-                        user: Array.isArray(item.user) ? item.user[0] : item.user
-                    })));
-                }
-
-                 // Fetch Watch With Users if watchlist
-                if (reviewData.status === 'watchlist') {
-                    const { data: watchWithData } = await supabase
-                        .from("recommendations")
-                        .select(`
-                            recipient:profiles!recommendations_recipient_id_fkey(id, username, avatar_url)
-                        `)
-                        .eq("recommender_id", reviewData.user_id)
-                        .eq("film_id", reviewData.film_id)
-                        .eq("status", "watch_with");
-
-                    if (watchWithData) {
-                        // @ts-ignore
-                        setWatchWithUsers(watchWithData.map(item => item.recipient).filter(Boolean));
-                    }
-                }
-
-                // Related Reviews Logic
-                if (reviewData.film_id) {
-                    let followingIds: string[] = [];
-                    if (user) {
-                        const { data: follows } = await supabase
-                            .from("follows")
-                            .select("following_id")
-                            .eq("follower_id", user.id);
-
-                        followingIds = follows?.map(f => f.following_id) || [];
-                    }
-
-                    let relatedData: any[] = [];
-
-                    if (followingIds.length > 0) {
-                        const { data: friendsData } = await supabase
-                            .from("log")
-                            .select(`
-                                id, rating,
-                                user:profiles(username, avatar_url)
-                            `)
-                            .eq("film_id", reviewData.film_id)
-                            .in("user_id", followingIds)
-                            .neq("id", reviewId)
-                            .eq("status", "watched")
-                            .limit(15);
-
-                        if (friendsData && friendsData.length > 0) {
-                            relatedData = friendsData;
-                        }
-                    }
-
-                    if (relatedData.length === 0) {
-                        let query = supabase
-                            .from("log")
-                            .select(`
-                                id, rating,
-                                user:profiles(username, avatar_url)
-                            `)
-                            .eq("film_id", reviewData.film_id)
-                            .neq("id", reviewId)
-                            .eq("status", "watched")
-                            .limit(15);
-
-                        if (user) {
-                            query = query.neq("user_id", user.id);
-                        }
-
-                        const { data: communityData } = await query;
-                        if (communityData) {
-                            relatedData = communityData;
-                        }
-                    }
-
-                    if (relatedData.length > 0) {
-                        const mapped = relatedData.map(r => ({
-                            ...r,
-                            user: Array.isArray(r.user) ? r.user[0] : r.user
-                        }));
-
-                        mapped.sort((a: any, b: any) => {
-                            const aHasAvatar = !!a.user.avatar_url;
-                            const bHasAvatar = !!b.user.avatar_url;
-                            if (aHasAvatar === bHasAvatar) return 0;
-                            return bHasAvatar ? 1 : -1;
-                        });
-
-                        // @ts-ignore
-                        setRelatedReviews(mapped);
-                    }
-                }
-
-                // Comments
-                const { data: commentsData, error: commentsError } = await supabase
-                    .from("comments")
-                    .select(`
-                      id, content, created_at, user_id,
-                      user:profiles(username, avatar_url)
-                    `)
-                    .eq("interaction_id", reviewId)
-                    .order("created_at", { ascending: true });
-
-                if (commentsError) throw commentsError;
-
-                let formattedComments: Comment[] = [];
-                if (commentsData.length > 0) {
-                    const commentIds = commentsData.map(c => c.id);
-                    // @ts-ignore
-                    const { data: likesData } = await supabase
-                        .from("comment_likes")
-                        .select("comment_id, user_id")
-                        .in("comment_id", commentIds);
-
-                    formattedComments = commentsData.map(c => {
-                        const relevantLikes = likesData?.filter((l: any) => l.comment_id === c.id) || [];
-                        return {
-                            ...c,
-                            user: Array.isArray(c.user) ? c.user[0] : c.user,
-                            likes_count: relevantLikes.length,
-                            is_liked: user ? relevantLikes.some((l: any) => l.user_id === user.id) : false
-                        };
-                    });
-                }
-                setComments(formattedComments);
+            if (likersData.data) {
+                // @ts-ignore
+                setLikers(likersData.data.map(item => ({
+                    user_id: item.user_id,
+                    user: Array.isArray(item.user) ? item.user[0] : item.user
+                })));
             }
+
+            // Related Reviews Logic (Same Building)
+            if (reviewData.building_id) {
+                let followingIds: string[] = [];
+                if (user) {
+                    const { data: follows } = await supabase
+                        .from("follows")
+                        .select("following_id")
+                        .eq("follower_id", user.id);
+
+                    followingIds = follows?.map(f => f.following_id) || [];
+                }
+
+                let relatedData: any[] = [];
+
+                // Try to find friends first
+                if (followingIds.length > 0) {
+                    const { data: friendsData } = await supabase
+                        .from("log")
+                        .select(`
+                            id, rating,
+                            user:profiles(username, avatar_url)
+                        `)
+                        .eq("building_id", reviewData.building_id)
+                        .in("user_id", followingIds)
+                        .neq("id", reviewData.id)
+                        .eq("status", "visited") // Only visited logs usually have ratings/value
+                        .limit(15);
+
+                    if (friendsData && friendsData.length > 0) {
+                        relatedData = friendsData;
+                    }
+                }
+
+                // Fallback to community
+                if (relatedData.length === 0) {
+                    let query = supabase
+                        .from("log")
+                        .select(`
+                            id, rating,
+                            user:profiles(username, avatar_url)
+                        `)
+                        .eq("building_id", reviewData.building_id)
+                        .neq("id", reviewData.id)
+                        .eq("status", "visited")
+                        .limit(15);
+
+                    if (user) {
+                        query = query.neq("user_id", user.id);
+                    }
+
+                    const { data: communityData } = await query;
+                    if (communityData) {
+                        relatedData = communityData;
+                    }
+                }
+
+                if (relatedData.length > 0) {
+                    const mapped = relatedData.map(r => ({
+                        ...r,
+                        user: Array.isArray(r.user) ? r.user[0] : r.user
+                    }));
+
+                    mapped.sort((a: any, b: any) => {
+                        const aHasAvatar = !!a.user.avatar_url;
+                        const bHasAvatar = !!b.user.avatar_url;
+                        if (aHasAvatar === bHasAvatar) return 0;
+                        return bHasAvatar ? 1 : -1;
+                    });
+
+                    // @ts-ignore
+                    setRelatedReviews(mapped);
+                }
+            }
+
+            // Comments
+            const { data: commentsData, error: commentsError } = await supabase
+                .from("comments")
+                .select(`
+                    id, content, created_at, user_id,
+                    user:profiles(username, avatar_url)
+                `)
+                .eq("interaction_id", reviewData.id)
+                .order("created_at", { ascending: true });
+
+            if (commentsError) throw commentsError;
+
+            let formattedComments: Comment[] = [];
+            if (commentsData.length > 0) {
+                const commentIds = commentsData.map(c => c.id);
+                // @ts-ignore
+                const { data: likesData } = await supabase
+                    .from("comment_likes")
+                    .select("comment_id, user_id")
+                    .in("comment_id", commentIds);
+
+                formattedComments = commentsData.map(c => {
+                    const relevantLikes = likesData?.filter((l: any) => l.comment_id === c.id) || [];
+                    return {
+                        ...c,
+                        user: Array.isArray(c.user) ? c.user[0] : c.user,
+                        likes_count: relevantLikes.length,
+                        is_liked: user ? relevantLikes.some((l: any) => l.user_id === user.id) : false
+                    };
+                });
+            }
+            setComments(formattedComments);
 
         } catch (e) {
             console.error(e);
@@ -334,7 +275,7 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
     }
 
     loadData();
-  }, [paramId, username, propMediaType, user?.id]);
+  }, [paramId, user?.id]);
 
   const handleLikeReview = async () => {
     if (!user || !review) return;
@@ -471,22 +412,17 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
     }
   };
 
-  const handleEditReview = () => {
-    if (!review) return;
-    navigate(`/post?movieId=${review.film.tmdb_id}&mediaType=${review.film.media_type || 'movie'}&title=${encodeURIComponent(review.film.title)}&poster=${review.film.poster_path}`);
-  };
-
   const handleDeleteReview = async () => {
     if (!review) return;
-    if (!window.confirm("Are you sure you want to delete this review? This action cannot be undone.")) return;
+    if (!window.confirm("Are you sure you want to delete this log? This action cannot be undone.")) return;
     try {
         const { error } = await supabase.from("log").delete().eq("id", review.id);
         if (error) throw error;
-        toast({ title: "Review deleted" });
+        toast({ title: "Log deleted" });
         navigate("/profile"); 
     } catch (error: any) {
         console.error(error);
-        toast({ variant: "destructive", title: "Error", description: error.message || "Could not delete review." });
+        toast({ variant: "destructive", title: "Error", description: error.message || "Could not delete log." });
     }
   };
 
@@ -494,23 +430,23 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
     if (relatedReviews.length === 0) return null;
     const firstUser = relatedReviews[0].user.username;
     if (relatedReviews.length === 1) {
-        return <span>Also rated by <span className="font-semibold">{firstUser}</span></span>;
+        return <span>Also visited by <span className="font-semibold">{firstUser}</span></span>;
     }
     return (
         <span>
-            Also rated by <span className="font-semibold">{firstUser}</span> and <span className="font-semibold">{relatedReviews.length - 1} other{relatedReviews.length > 2 ? 's' : ''}</span>
+            Also visited by <span className="font-semibold">{firstUser}</span> and <span className="font-semibold">{relatedReviews.length - 1} other{relatedReviews.length > 2 ? 's' : ''}</span>
         </span>
     );
   };
 
-  const isWatchlist = review?.status === 'watchlist';
+  const isBucketList = review?.status === 'watchlist' || review?.status === 'pending';
   const isReviewOwner = user?.id === review?.user_id;
 
   const renderSidebarActions = () => (
     <div className="space-y-4 pt-2">
         {relatedReviews.length > 0 && (
             <Link
-                to={`/${review!.film.media_type || 'movie'}/${slugify(review!.film.title) || 'title'}/${review!.film.tmdb_id}`}
+                to={`/building/${review!.building_id}`}
                 className="block w-full group cursor-pointer animate-in fade-in slide-in-from-top-1"
             >
                 <div className="flex flex-wrap items-center gap-2">
@@ -546,32 +482,24 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
     );
   }
 
-  if (notFound || !review || !review.film) return <NotFound />;
+  if (notFound || !review || !review.building) return <NotFound />;
 
-  const posterUrl = review.film.poster_path 
-    ? `https://image.tmdb.org/t/p/w500${review.film.poster_path}`
-    : null;
+  // Building images are typically 4:3
+  const imageUrl = review.building.image_url;
 
-  // Fix: Move these variables up so they are available for pageTitle and pageDescription
-  const mainTitle = review.film.original_title || review.film.title;
-  const releaseYear = review.film.release_date ? new Date(review.film.release_date).getFullYear() : null;
+  const mainTitle = review.building.name;
+  const releaseYear = review.building.year;
 
-  const pageTitle = isWatchlist
-    ? `${review.user.username} wants to watch ${mainTitle}`
-    : `${review.user.username}'s review of ${mainTitle}`;
+  const pageTitle = isBucketList
+    ? `${review.user.username} wants to visit ${mainTitle}`
+    : `${review.user.username}'s visit to ${mainTitle}`;
 
   const pageDescription = review.content
     ? review.content.replace(/[*_~`#]/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\n/g, ' ').slice(0, 160)
-    : isWatchlist
-      ? `${review.user.username} added ${mainTitle} to their watchlist.`
-      : `${review.user.username} rated ${mainTitle} ${review.rating ? `${review.rating}/10` : ''}.`;
+    : isBucketList
+      ? `${review.user.username} added ${mainTitle} to their bucket list.`
+      : `${review.user.username} visited ${mainTitle} ${review.rating ? `and rated it ${review.rating}/5` : ''}.`;
   
-  const backgroundUrl = review.film.backdrop_path
-    ? `https://image.tmdb.org/t/p/w1280${review.film.backdrop_path}`
-    : review.film.poster_path 
-      ? `https://image.tmdb.org/t/p/w1280${review.film.poster_path}`
-      : null;
-
   const formatDate = (date: string) => formatDistanceToNow(new Date(date), { addSuffix: true }).replace(/^about /, "");
 
   return (
@@ -579,13 +507,13 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
         <MetaHead
             title={pageTitle}
             description={pageDescription}
-            image={posterUrl || undefined}
+            image={imageUrl || undefined}
         />
 
-        {backgroundUrl && (
+        {imageUrl && (
             <div className="fixed inset-0 z-0">
                 <img 
-                    src={backgroundUrl} 
+                    src={imageUrl}
                     alt="Background" 
                     className="w-full h-full object-cover blur-[80px] opacity-20 scale-105" 
                 />
@@ -599,7 +527,7 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <span className="font-semibold ml-4 text-sm opacity-70 truncate">
-                    Review
+                    Visit Log
                 </span>
             </div>
         </header>
@@ -607,21 +535,21 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
         <main className="relative z-10 container max-w-4xl mx-auto px-4 pt-8 md:pt-12">
             <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start">
                 
-                {/* Left Column: Poster & Facepile (Related Reviews) */}
-                <div className="hidden md:block w-[160px] md:w-[200px] shrink-0 mx-auto md:mx-0 space-y-4">
+                {/* Left Column: Image & Facepile */}
+                <div className="hidden md:block w-[160px] md:w-[240px] shrink-0 mx-auto md:mx-0 space-y-4">
                     <Link 
-                        to={`/${review.film.media_type || 'movie'}/${slugify(review.film.title) || 'title'}/${review.film.tmdb_id}`}
-                        className="shadow-2xl rounded-lg overflow-hidden ring-1 ring-white/10 bg-secondary/50 block hover:ring-primary/50 hover:scale-[1.02] transition-all"
+                        to={`/building/${review.building_id}`}
+                        className="shadow-2xl rounded-lg overflow-hidden ring-1 ring-white/10 bg-secondary/50 block hover:ring-primary/50 hover:scale-[1.02] transition-all aspect-[4/3]"
                     >
-                        {posterUrl ? (
+                        {imageUrl ? (
                                 <img 
-                                src={posterUrl} 
-                                alt={review.film.title} 
-                                className="w-full h-auto object-cover" 
+                                src={imageUrl}
+                                alt={review.building.name}
+                                className="w-full h-full object-cover"
                             />
                         ) : (
-                            <div className="aspect-[2/3] w-full flex items-center justify-center text-muted-foreground bg-secondary">
-                                No Poster
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary">
+                                No Image
                             </div>
                         )}
                     </Link>
@@ -631,7 +559,7 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
                     </div>
                 </div>
                 
-                {/* Right Column: Review Details (Strictly Left-Aligned Content) */}
+                {/* Right Column: Review Details */}
                 <div className="flex-1 min-w-0 w-full space-y-6 text-left">
                     
                     {/* Header: Title Sentence & Avatar */}
@@ -651,10 +579,10 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
                                    </Link>
                                    {" "}
                                    <span className="text-muted-foreground font-normal text-xl md:text-2xl">
-                                      {isWatchlist ? (isReviewOwner ? "want to watch" : "wants to watch") : "watched"}
+                                      {isBucketList ? (isReviewOwner ? "want to visit" : "wants to visit") : "visited"}
                                    </span>
                                    {" "}
-                                   <Link to={`/${review.film.media_type || 'movie'}/${slugify(review.film.title) || 'title'}/${review.film.tmdb_id}`} className="hover:text-primary transition-colors">{mainTitle}</Link>
+                                   <Link to={`/building/${review.building_id}`} className="hover:text-primary transition-colors">{mainTitle}</Link>
                                 </h1>
 
                                 <div className="text-sm text-muted-foreground mt-1">
@@ -665,20 +593,20 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
 
                         {/* Rating or Watchlist Status */}
                         <div className="pl-16">
-                            {isWatchlist ? (
+                            {isBucketList ? (
                                 <div className="flex items-center gap-2 text-blue-400">
                                     <Clock className="w-5 h-5" />
-                                    <span className="font-medium">Added to the watchlist</span>
+                                    <span className="font-medium">Added to Bucket List</span>
                                 </div>
                             ) : (
                                 review.rating && (
                                     <div className="flex items-center gap-3">
                                         <div className="flex gap-0.5 md:gap-1.5">
-                                            {Array.from({ length: 10 }).map((_, i) => (
+                                            {Array.from({ length: 5 }).map((_, i) => (
                                                 <Star
                                                     key={i}
                                                     className={cn(
-                                                        "h-4 w-4 md:h-5 md:w-5 transition-all",
+                                                        "h-5 w-5 md:h-6 md:w-6 transition-all",
                                                         i < review.rating!
                                                             ? "fill-yellow-500 text-yellow-500"
                                                             : "fill-transparent text-white/20"
@@ -722,55 +650,13 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
                         </div>
                     )}
 
-                    {/* Watch With Users (if watchlist) */}
-                    {isWatchlist && watchWithUsers.length > 0 && (
-                        <div className="pl-16 mt-4">
-                             <div className="bg-secondary/20 rounded-xl p-4 border border-white/5 inline-block">
-                                <p className="text-sm text-muted-foreground mb-3 font-medium uppercase tracking-wider text-[11px]">
-                                    Watching with
-                                </p>
-                                <div className="flex flex-wrap gap-4">
-                                    {watchWithUsers.map(u => (
-                                        <Link key={u.id} to={`/profile/${u.username}`} className="flex items-center gap-3 group">
-                                            <Avatar className="h-8 w-8 ring-1 ring-white/10 group-hover:ring-primary/50 transition-all">
-                                                <AvatarImage src={u.avatar_url || undefined} />
-                                                <AvatarFallback>{u.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium text-sm group-hover:text-primary transition-colors">
-                                                {u.username}
-                                            </span>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Action Buttons (Edit, Recommend, Delete) - Only for Owner */}
+                    {/* Action Buttons (Edit, Delete) - Only for Owner */}
                     {isReviewOwner && (
                         <div className="pl-0 md:pl-16 mt-6 flex flex-wrap gap-3">
                             <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => setShowRecommendDialog(true)}
-                            >
-                                {isWatchlist ? (
-                                    <>
-                                        <Users className="w-4 h-4 mr-2" />
-                                        Watch with...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Send className="w-4 h-4 mr-2" />
-                                        Recommend
-                                    </>
-                                )}
-                            </Button>
-
-                            <Button
-                                size="sm"
                                 variant="secondary"
-                                onClick={() => navigate(`/post?movieId=${review.film.tmdb_id}&mediaType=${review.film.media_type || 'movie'}&title=${encodeURIComponent(review.film.title)}&poster=${review.film.poster_path}${currentUserReview ? `&rating=${currentUserReview.rating}` : ''}`)}
+                                onClick={() => navigate(`/post?id=${review.building_id}&title=${encodeURIComponent(review.building.name)}&image=${encodeURIComponent(review.building.image_url || '')}`)}
                             >
                                 <Pencil className="w-4 h-4 mr-2" />
                                 Edit
@@ -781,29 +667,32 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
                                 variant="ghost"
                                 className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                 onClick={handleDeleteReview}
-                                aria-label="Delete review"
+                                aria-label="Delete log"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </Button>
                         </div>
                     )}
 
-                    {/* NEW: Context Card (Mobile Only) */}
+                    {/* Context Card (Mobile Only) */}
                     <div className="md:hidden mt-2">
                         <Link
-                            to={`/${review.film.media_type || 'movie'}/${slugify(review.film.title) || 'title'}/${review.film.tmdb_id}`}
+                            to={`/building/${review.building_id}`}
                             className="block bg-secondary/30 border border-white/5 rounded-xl overflow-hidden active:scale-[0.98] transition-transform"
                         >
                             <div className="flex gap-4 p-3">
-                                <div className="shrink-0 w-20 aspect-[2/3] bg-secondary rounded-md overflow-hidden relative">
-                                     {posterUrl && <img src={posterUrl} className="w-full h-full object-cover" />}
+                                <div className="shrink-0 w-24 aspect-[4/3] bg-secondary rounded-md overflow-hidden relative">
+                                     {imageUrl && <img src={imageUrl} className="w-full h-full object-cover" />}
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
                                      <div className="flex items-center justify-between gap-2">
                                          <span className="font-semibold text-base text-white truncate">{mainTitle}</span>
                                          <ArrowRight className="w-4 h-4 text-muted-foreground" />
                                      </div>
-                                     <div className="text-sm text-muted-foreground">{releaseYear}</div>
+                                     <div className="text-sm text-muted-foreground flex items-center gap-1">
+                                        {review.building.address && <MapPin className="w-3 h-3" />}
+                                        <span className="truncate">{review.building.address || releaseYear}</span>
+                                     </div>
                                 </div>
                             </div>
                         </Link>
@@ -820,13 +709,13 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
                                     ))}
                                 </div>
                                 <span className="text-sm text-muted-foreground ml-1">
-                                    Also rated by {relatedReviews[0].user.username} {relatedReviews.length > 1 ? `+${relatedReviews.length - 1}` : ''}
+                                    Also visited by {relatedReviews[0].user.username} {relatedReviews.length > 1 ? `+${relatedReviews.length - 1}` : ''}
                                 </span>
                             </div>
                         )}
                     </div>
 
-                    {/* Interaction Bar (Left-aligned) */}
+                    {/* Interaction Bar */}
                     <div className="flex items-center gap-6 pt-2 border-t border-white/5 mt-6">
                         <Button 
                             variant="ghost" 
@@ -977,18 +866,6 @@ export default function ReviewDetails({ mediaType: propMediaType }: { mediaType?
                 </ScrollArea>
             </DialogContent>
         </Dialog>
-
-        {review && (
-            <RecommendDialog
-                open={showRecommendDialog}
-                onOpenChange={setShowRecommendDialog}
-                film={{
-                    id: review.film_id, // This is the UUID
-                    title: review.film.title
-                }}
-                mode={isWatchlist ? "watch_with" : "recommend"}
-            />
-        )}
     </div>
   );
 }
