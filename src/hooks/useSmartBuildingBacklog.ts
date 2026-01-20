@@ -1,0 +1,100 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { SmartBuilding } from "@/components/groups/watchlist/SmartBuildingCard";
+import { FilterState } from "@/components/groups/watchlist/SmartBacklogFilters";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useSmartBacklog(group: any, selectedMemberIds: string[], filters: FilterState) {
+  return useQuery({
+    queryKey: ["group-smart-backlog", group?.id, selectedMemberIds, filters],
+    queryFn: async () => {
+      if (selectedMemberIds.length === 0) return [];
+
+      // 1. Fetch relevant logs (pending and visited/logged) for selected members
+      const { data: logs, error: logsError } = await supabase
+        .from("log")
+        .select(`
+          building_id,
+          user_id,
+          status,
+          rating,
+          watched_at
+        `)
+        .in("user_id", selectedMemberIds)
+        .in("status", ["pending", "watched"]);
+
+      if (logsError) throw logsError;
+
+      // 2. Process logs
+      const watchlistMap = new Map<string, Set<string>>(); // building_id -> Set<user_id>
+      const seenSet = new Set<string>(); // building_id (if seen/visited by ANY selected member)
+
+      logs.forEach((log) => {
+        const isSeen = log.status === "watched" || log.rating !== null || log.watched_at !== null;
+
+        if (isSeen) {
+           seenSet.add(log.building_id);
+        } else if (log.status === "pending") {
+           if (!watchlistMap.has(log.building_id)) {
+             watchlistMap.set(log.building_id, new Set());
+           }
+           watchlistMap.get(log.building_id)?.add(log.user_id);
+        }
+      });
+
+      // 3. Filter IDs
+      let candidateBuildingIds = Array.from(watchlistMap.keys());
+
+      // Filter: Exclude Seen (Visited)
+      if (filters.excludeSeen) {
+        candidateBuildingIds = candidateBuildingIds.filter((id) => !seenSet.has(id));
+      }
+
+      if (candidateBuildingIds.length === 0) return [];
+
+      // 4. Fetch Building Details for candidates
+      const { data: buildingDetails, error: buildingsError } = await supabase
+        .from("buildings")
+        .select("*")
+        .in("id", candidateBuildingIds);
+
+      if (buildingsError) throw buildingsError;
+
+      // 5. Final Aggregation
+      const results: SmartBuilding[] = buildingDetails
+        .map((building) => {
+          const interestedUserIds = Array.from(watchlistMap.get(building.id) || []);
+
+          const interestedUsers = group.members
+            .filter((m: any) => interestedUserIds.includes(m.user.id))
+            .map((m: any) => ({
+              id: m.user.id,
+              username: m.user.username,
+              avatar_url: m.user.avatar_url
+            }));
+
+          return {
+            id: building.id,
+            name: building.name,
+            image_url: building.image_url,
+            year: building.year,
+            architects: building.architects,
+            overlap_count: interestedUserIds.length,
+            interested_users: interestedUsers,
+            total_selected_members: selectedMemberIds.length,
+          };
+        });
+
+      // 6. Sort
+      // Primary: Overlap Count (Desc)
+      // Secondary: Year (Desc)
+      return results.sort((a, b) => {
+        if (b.overlap_count !== a.overlap_count) {
+          return b.overlap_count - a.overlap_count;
+        }
+        return (b.year || 0) - (a.year || 0);
+      });
+    },
+    enabled: !!group?.id,
+  });
+}
