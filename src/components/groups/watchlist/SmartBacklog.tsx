@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MemberSelector } from "./MemberSelector";
 import { SmartBacklogFilters, FilterState } from "./SmartBacklogFilters";
-import { SmartFilmGrid } from "./SmartFilmGrid";
-import { useSmartBacklog } from "@/hooks/useSmartBacklog";
+import { SmartBuildingGrid } from "./SmartBuildingGrid";
+import { useSmartBacklog } from "@/hooks/useSmartBuildingBacklog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Play, Info } from "lucide-react";
@@ -34,13 +34,11 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(initialMemberIds);
   const [filters, setFilters] = useState<FilterState>({
     excludeSeen: true,
-    maxRuntime: null,
-    providers: [],
   });
   const [isStartingSession, setIsStartingSession] = useState(false);
 
   // Use the custom hook
-  const { data: films, isLoading } = useSmartBacklog(group, selectedMemberIds, filters);
+  const { data: buildings, isLoading } = useSmartBacklog(group, selectedMemberIds, filters);
 
   const { data: userWatchlistCount = 0 } = useQuery({
     queryKey: ["user-watchlist-count", user?.id],
@@ -50,7 +48,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
         .from("log")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id)
-        .eq("status", "watchlist");
+        .eq("status", "pending");
       if (error) throw error;
       return count || 0;
     },
@@ -58,8 +56,8 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
   });
 
   const handleStartSession = async () => {
-    if (!films || films.length === 0) {
-      toast.error("No films available to vote on");
+    if (!buildings || buildings.length === 0) {
+      toast.error("No buildings available to vote on");
       return;
     }
     if (!user) {
@@ -69,7 +67,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
 
     setIsStartingSession(true);
     try {
-      const topFilms = films.slice(0, 15); // Top 15 films
+      const topBuildings = buildings.slice(0, 15); // Top 15 buildings
       const title = `Voting Session - ${new Date().toISOString().split('T')[0]}`;
 
       // Generate unique slug
@@ -91,7 +89,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
         .insert({
           group_id: group.id,
           title: title,
-          type: "film_selection",
+          type: "film_selection", // Leaving this as is for now as backend might enforce it, but ideally "building_selection"
           status: "open",
           created_by: user.id,
           slug: finalSlug
@@ -101,41 +99,14 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
 
       if (pollError) throw pollError;
 
-      // 2. Prepare Questions with Trailer Fetching (Parallel)
-      const questionPromises = topFilms.map(async (film, index) => {
-          let mediaUrl = film.poster_path ? `https://image.tmdb.org/t/p/w500${film.poster_path}` : null;
-          let mediaType = "image";
-
-          // 1. Try to use cached trailer
-          if (film.trailer) {
-              mediaUrl = film.trailer;
-              mediaType = "video";
-          }
-          // 2. Fallback: Try to fetch trailer if TMDB ID exists
-          else if (film.tmdb_id) {
-             try {
-                 const { data: tmdbData } = await supabase.functions.invoke("tmdb-movie", {
-                    body: { movieId: film.tmdb_id, type: "movie" }
-                 });
-
-                 // Look for trailer in results
-                 // Assuming tmdb-movie returns standard TMDB details which includes videos
-                 if (tmdbData?.videos?.results) {
-                     const trailer = tmdbData.videos.results.find((v: any) => v.type === "Trailer" && v.site === "YouTube");
-                     if (trailer) {
-                         mediaUrl = `https://www.youtube.com/watch?v=${trailer.key}`;
-                         mediaType = "video";
-                     }
-                 }
-             } catch (err) {
-                 console.warn(`Failed to fetch trailer for ${film.title}`, err);
-                 // Fallback to poster is already set
-             }
-          }
+      // 2. Prepare Questions
+      const questionPromises = topBuildings.map(async (building, index) => {
+          const mediaUrl = building.image_url; // Use internal image url
+          const mediaType = "image";
 
           return {
             poll_id: poll.id,
-            question_text: film.title,
+            question_text: building.name,
             order_index: index,
             response_type: "boolean", // Yes/No
             is_live_active: index === 0, // First one active
@@ -143,11 +114,12 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
             media_type: mediaType,
             media_url: mediaUrl,
             media_data: {
-              tmdb_id: film.tmdb_id,
-              overview: film.overview,
-              release_date: film.release_date,
-              runtime: film.runtime,
-              poster_path: film.poster_path
+              building_id: building.id,
+              // tmdb_id removed
+              // overview removed (not in SmartBuilding)
+              year: building.year,
+              architects: building.architects,
+              image_url: building.image_url
             }
           };
       });
@@ -231,17 +203,17 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
         <Alert className="mb-4 bg-muted/50 border-primary/20">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Add films you want to watch into your watchlist to keep track of them and to contribute to the group watchlist.
+            Add buildings you want to visit into your bucket list to keep track of them and to contribute to the group backlog.
           </AlertDescription>
         </Alert>
       )}
-      <SmartFilmGrid films={films || []} isLoading={isLoading} />
+      <SmartBuildingGrid buildings={buildings || []} isLoading={isLoading} />
 
       {/* Floating Action Button */}
       <div className="fixed bottom-24 right-4 md:right-8 z-[60]">
         <Button
           onClick={handleStartSession}
-          disabled={isStartingSession || !films || films.length === 0}
+          disabled={isStartingSession || !buildings || buildings.length === 0}
           size="lg"
           className="rounded-full shadow-xl bg-indigo-600 hover:bg-indigo-700 text-white gap-2 px-6 h-14 transition-all hover:scale-105 hover:shadow-2xl border-2 border-indigo-400/20"
         >

@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { slugify } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,41 +14,32 @@ interface InterestedUser {
   avatar_url: string | null;
 }
 
-export interface SmartFilm {
+export interface SmartBuilding {
   id: string;
-  tmdb_id: number | null;
-  title: string;
-  poster_path: string | null;
-  release_date: string | null;
-  runtime: number | null;
-  overview: string | null;
-  vote_average: number | null;
-  trailer: string | null;
+  name: string;
+  image_url: string | null;
+  year: number | null;
+  architects: string[] | null;
   overlap_count: number;
   interested_users: InterestedUser[];
   total_selected_members: number;
 }
 
-interface SmartFilmCardProps {
-  film: SmartFilm;
+interface SmartBuildingCardProps {
+  building: SmartBuilding;
 }
 
-export function SmartFilmCard({ film }: SmartFilmCardProps) {
+export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
 
-  const isInWatchlist = user && film.interested_users.some(u => u.id === user.id);
+  const isInWatchlist = user && building.interested_users.some(u => u.id === user.id);
 
-  const posterUrl = film.poster_path
-    ? `https://image.tmdb.org/t/p/w500${film.poster_path}`
-    : "/placeholder.svg";
+  const imageUrl = building.image_url || "/placeholder.svg";
 
   // Construct Link URL
-  const mediaType = "movie"; // Default fallback
-  const linkUrl = film.tmdb_id
-     ? `/${mediaType}/${slugify(film.title)}/${film.tmdb_id}`
-     : `/media/${mediaType}/${film.id}`;
+  const linkUrl = `/building/${building.id}`;
 
   const handleToggleWatchlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,22 +59,22 @@ export function SmartFilmCard({ film }: SmartFilmCardProps) {
           .from("log")
           .delete()
           .eq("user_id", user.id)
-          .eq("film_id", film.id)
-          .eq("status", "watchlist");
+          .eq("building_id", building.id)
+          .eq("status", "pending");
 
         if (error) throw error;
-        toast.success("Removed from watchlist");
+        toast.success("Removed from bucket list");
       } else {
         const { error } = await supabase
           .from("log")
           .insert({
             user_id: user.id,
-            film_id: film.id,
-            status: "watchlist"
+            building_id: building.id,
+            status: "pending"
           });
 
         if (error) throw error;
-        toast.success("Added to watchlist");
+        toast.success("Added to bucket list");
       }
 
       // Invalidate queries to refresh UI
@@ -93,7 +83,7 @@ export function SmartFilmCard({ film }: SmartFilmCardProps) {
 
     } catch (error) {
       console.error("Watchlist toggle error:", error);
-      toast.error("Failed to update watchlist");
+      toast.error("Failed to update bucket list");
     } finally {
       setIsLoading(false);
     }
@@ -101,10 +91,10 @@ export function SmartFilmCard({ film }: SmartFilmCardProps) {
 
   return (
     <div className="group relative flex flex-col space-y-2">
-      <Link to={linkUrl} className="relative aspect-[2/3] overflow-hidden rounded-xl bg-muted transition-all hover:scale-[1.02] hover:ring-2 hover:ring-primary/50 hover:shadow-lg">
+      <Link to={linkUrl} className="relative aspect-[4/3] overflow-hidden rounded-xl bg-muted transition-all hover:scale-[1.02] hover:ring-2 hover:ring-primary/50 hover:shadow-lg">
         <img
-          src={posterUrl}
-          alt={film.title}
+          src={imageUrl}
+          alt={building.name}
           className="h-full w-full object-cover transition-all"
           loading="lazy"
         />
@@ -133,7 +123,7 @@ export function SmartFilmCard({ film }: SmartFilmCardProps) {
               <Plus className="h-4 w-4" />
             )}
             <span className="sr-only">
-              {isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+              {isInWatchlist ? "Remove from bucket list" : "Add to bucket list"}
             </span>
           </Button>
         </div>
@@ -141,19 +131,22 @@ export function SmartFilmCard({ film }: SmartFilmCardProps) {
         {/* Quick info on bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
           <h3 className="font-semibold leading-tight line-clamp-2 text-sm md:text-base drop-shadow-md">
-            {film.title}
+            {building.name}
           </h3>
           <div className="flex items-center gap-2 text-xs text-white/80 mt-1">
-             {film.release_date && <span>{new Date(film.release_date).getFullYear()}</span>}
-             {film.runtime && <span>• {Math.floor(film.runtime / 60)}h {film.runtime % 60}m</span>}
+             {building.architects && building.architects.length > 0 && (
+                <span>{building.architects[0]}</span>
+             )}
+             {building.architects && building.architects.length > 0 && building.year && <span>•</span>}
+             {building.year && <span>{building.year}</span>}
           </div>
         </div>
       </Link>
 
       {/* Interested Users Avatars */}
-      {film.interested_users.length > 0 && (
+      {building.interested_users.length > 0 && (
         <div className="flex items-center -space-x-2 px-1">
-          {film.interested_users.slice(0, 5).map((u) => (
+          {building.interested_users.slice(0, 5).map((u) => (
              <Avatar key={u.id} className="h-6 w-6 border-2 border-background ring-1 ring-border">
                 <AvatarImage src={u.avatar_url || undefined} />
                 <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
@@ -161,9 +154,9 @@ export function SmartFilmCard({ film }: SmartFilmCardProps) {
                 </AvatarFallback>
              </Avatar>
           ))}
-          {film.interested_users.length > 5 && (
+          {building.interested_users.length > 5 && (
              <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-[9px] font-medium text-muted-foreground ring-1 ring-border">
-                +{film.interested_users.length - 5}
+                +{building.interested_users.length - 5}
              </div>
           )}
         </div>
