@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
+import { BuildingMap } from "@/components/common/BuildingMap";
 
 // --- Types ---
 interface BuildingDetails {
@@ -55,6 +56,32 @@ export default function BuildingDetails() {
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
   const [reviews, setReviews] = useState<FeedReview[]>([]);
+
+  // Parse location
+  const coordinates = useMemo(() => {
+    if (!building?.location) return null;
+
+    // Case 1: GeoJSON Object
+    if (typeof building.location === 'object' && building.location.coordinates) {
+      return {
+        lng: building.location.coordinates[0],
+        lat: building.location.coordinates[1]
+      };
+    }
+
+    // Case 2: WKT String "POINT(lng lat)"
+    if (typeof building.location === 'string') {
+      const match = building.location.match(/POINT\s*\((-?\d+\.?\d*)\s+(-?\d+\.?\d*)\)/i);
+      if (match) {
+        return {
+          lng: parseFloat(match[1]),
+          lat: parseFloat(match[2])
+        };
+      }
+    }
+
+    return null;
+  }, [building]);
 
   useEffect(() => {
     if (id) fetchBuildingData();
@@ -167,11 +194,19 @@ export default function BuildingDetails() {
                 </div>
             </div>
 
-            {/* Placeholder for OpenFreeMap Integration [cite: 7] */}
-            <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">
+            {/* Map Integration */}
+            {coordinates ? (
+              <BuildingMap
+                lat={coordinates.lat}
+                lng={coordinates.lng}
+                className="h-48 w-full"
+              />
+            ) : (
+              <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">
                 <MapPin className="w-6 h-6 opacity-50" />
-                <span className="text-xs uppercase tracking-widest">Map View Unavailable</span>
-            </div>
+                <span className="text-xs uppercase tracking-widest">Location Unavailable</span>
+              </div>
+            )}
         </div>
 
         {/* RIGHT: Data & Actions */}
