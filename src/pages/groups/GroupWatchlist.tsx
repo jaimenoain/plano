@@ -8,9 +8,9 @@ export default function GroupWatchlist() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 mb-2">
-        <h2 className="text-2xl font-bold tracking-tight">Group Watchlist</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Group Bucket List</h2>
         <p className="text-muted-foreground">
-          Find the perfect movie by seeing what everyone wants to watch.
+          Find the perfect building by seeing what everyone wants to visit.
         </p>
       </div>
       <SmartBacklog group={group} />

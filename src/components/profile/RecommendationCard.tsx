@@ -23,19 +23,17 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export interface RecommendationInteraction {
-  status: 'watched' | 'watchlist' | null;
+  status: 'visited' | 'pending' | null;
   rating: number | null;
 }
 
 interface Recommendation {
   id: string;
-  film: {
+  building: {
     id: string;
-    title: string;
-    tmdb_id: number;
-    poster_path: string | null;
-    media_type: string;
-    release_date: string | null;
+    name: string;
+    image_url: string | null;
+    year: number | null;
   };
   recommender: {
     username: string | null;
@@ -53,22 +51,22 @@ interface RecommendationCardProps {
 }
 
 export function RecommendationCard({ recommendation, interaction, onDismiss, onRate, onWatchlist }: RecommendationCardProps) {
-  const { film, recommender } = recommendation;
-  const year = film.release_date ? new Date(film.release_date).getFullYear() : null;
+  const { building, recommender } = recommendation;
+  const year = building.year;
 
   return (
     <div className="bg-card border border-border/50 rounded-lg overflow-hidden flex flex-col h-full animate-in fade-in zoom-in-95 duration-300">
       <div className="relative aspect-[2/3] group cursor-pointer overflow-hidden">
-        <Link to={`/${film.media_type || 'movie'}/${slugify(film.title)}/${film.tmdb_id}`}>
-            {film.poster_path ? (
+        <Link to={`/building/${building.id}`}>
+            {building.image_url ? (
             <img
-                src={`https://image.tmdb.org/t/p/w500${film.poster_path}`}
-                alt={film.title}
+                src={building.image_url}
+                alt={building.name}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
             ) : (
             <div className="w-full h-full bg-secondary flex items-center justify-center text-muted-foreground p-4 text-center">
-                {film.title}
+                {building.name}
             </div>
             )}
         </Link>
@@ -76,8 +74,8 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
 
       <div className="p-3 flex flex-col flex-1 gap-2">
         <div>
-            <Link to={`/${film.media_type || 'movie'}/${slugify(film.title)}/${film.tmdb_id}`} className="hover:underline">
-                 <h3 className="font-semibold leading-tight line-clamp-1" title={film.title}>{film.title}</h3>
+            <Link to={`/building/${building.id}`} className="hover:underline">
+                 <h3 className="font-semibold leading-tight line-clamp-1" title={building.name}>{building.name}</h3>
             </Link>
             <p className="text-xs text-muted-foreground mt-0.5">{year} • {formatDistanceToNow(new Date(recommendation.created_at))} ago</p>
         </div>
@@ -103,7 +101,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
                   variant={interaction.rating ? "default" : "secondary"}
                   size={interaction.rating ? "default" : "icon"}
                   className={cn("h-8 w-full rounded-md transition-colors", !interaction.rating && "hover:bg-primary hover:text-primary-foreground")}
-                  onClick={() => onRate(film)}
+                  onClick={() => onRate(building)}
                 >
                   {interaction.rating ? (
                     <span className="flex items-center gap-1 font-bold"><Star className="h-3 w-3 fill-current" /> {interaction.rating}</span>
@@ -120,18 +118,18 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={interaction.status === 'watchlist' ? "default" : "secondary"}
+                  variant={interaction.status === 'pending' ? "default" : "secondary"}
                   size="icon"
                   className={cn("h-8 w-full rounded-md transition-colors",
-                    interaction.status === 'watchlist' ? "bg-blue-600 hover:bg-blue-700 text-white" : "hover:bg-primary hover:text-primary-foreground"
+                    interaction.status === 'pending' ? "bg-blue-600 hover:bg-blue-700 text-white" : "hover:bg-primary hover:text-primary-foreground"
                   )}
-                  onClick={() => onWatchlist(film)}
+                  onClick={() => onWatchlist(building)}
                 >
-                    <Bookmark className={cn("h-4 w-4", interaction.status === 'watchlist' && "fill-current")} />
+                    <Bookmark className={cn("h-4 w-4", interaction.status === 'pending' && "fill-current")} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Add to Watchlist</p>
+                <p>Add to Bucket List</p>
               </TooltipContent>
             </Tooltip>
 

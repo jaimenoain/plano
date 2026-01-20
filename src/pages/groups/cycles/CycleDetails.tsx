@@ -14,12 +14,11 @@ import { slugify } from "@/lib/utils";
 
 // Reusing types from other files implicitly for now, keeping it simple
 interface CycleLeaderboardItem {
-  film: {
-    id: number; // TMDB ID (or DB ID depending on query) but here we likely mean DB ID or joined object
-    tmdb_id: number;
-    title: string;
-    poster_path: string | null;
-    release_date: string | null;
+  building: {
+    id: string;
+    name: string;
+    image_url: string | null;
+    year: number | null;
   };
   avg_rating: number;
   count: number;
@@ -75,9 +74,9 @@ export default function CycleDetails() {
         .from("group_sessions")
         .select(`
           *,
-          films:session_films(
+          buildings:session_buildings(
             is_main,
-            film:films(*)
+            building:buildings(*)
           )
         `)
         .eq("cycle_id", cycleId)
@@ -90,17 +89,17 @@ export default function CycleDetails() {
   });
 
   // 3. Calculate Leaderboard (Client-side)
-  // We need logs for the films in these sessions from group members
-  const sessionFilmIds = useMemo(() => {
+  // We need logs for the buildings in these sessions from group members
+  const sessionBuildingIds = useMemo(() => {
     if (!sessions) return [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return sessions.flatMap((s: any) => s.films?.map((f: any) => f.film?.id)).filter(Boolean);
+    return sessions.flatMap((s: any) => s.buildings?.map((f: any) => f.building?.id)).filter(Boolean);
   }, [sessions]);
 
   const { data: leaderboard, isLoading: leaderboardLoading } = useQuery({
-    queryKey: ["cycle-leaderboard", cycleId, sessionFilmIds],
+    queryKey: ["cycle-leaderboard", cycleId, sessionBuildingIds],
     queryFn: async () => {
-      if (sessionFilmIds.length === 0) return [];
+      if (sessionBuildingIds.length === 0) return [];
 
       // Get member IDs
       const { data: members } = await supabase.from("group_members").select("user_id").eq("group_id", group.id);
@@ -110,8 +109,8 @@ export default function CycleDetails() {
       // Fetch logs
       const { data: logs, error } = await supabase
         .from("log")
-        .select("rating, film_id")
-        .in("film_id", sessionFilmIds)
+        .select("rating, building_id")
+        .in("building_id", sessionBuildingIds)
         .in("user_id", memberIds)
         .not("rating", "is", null);
 
@@ -121,31 +120,30 @@ export default function CycleDetails() {
       const statsMap = new Map<string, { sum: number; count: number }>();
 
       logs.forEach(log => {
-          const fid = String(log.film_id);
-          const current = statsMap.get(fid) || { sum: 0, count: 0 };
-          statsMap.set(fid, { sum: current.sum + log.rating, count: current.count + 1 });
+          const bid = String(log.building_id);
+          const current = statsMap.get(bid) || { sum: 0, count: 0 };
+          statsMap.set(bid, { sum: current.sum + log.rating, count: current.count + 1 });
       });
 
-      // Map back to film details
+      // Map back to building details
       const results: CycleLeaderboardItem[] = [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const allFilms = sessions?.flatMap((s: any) => s.films?.map((f: any) => f.film)).filter(Boolean) || [];
+      const allBuildings = sessions?.flatMap((s: any) => s.buildings?.map((f: any) => f.building)).filter(Boolean) || [];
 
-      // Deduplicate films map
+      // Deduplicate buildings map
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const filmMap = new Map<string, any>();
-      allFilms.forEach((f: any) => filmMap.set(String(f.id), f));
+      const buildingMap = new Map<string, any>();
+      allBuildings.forEach((b: any) => buildingMap.set(String(b.id), b));
 
       statsMap.forEach((val, key) => {
-          const film = filmMap.get(key);
-          if (film) {
+          const building = buildingMap.get(key);
+          if (building) {
               results.push({
-                  film: {
-                      id: film.tmdb_id, // Use TMDB ID for display/linking
-                      tmdb_id: film.tmdb_id,
-                      title: film.title,
-                      poster_path: film.poster_path,
-                      release_date: film.release_date
+                  building: {
+                      id: building.id,
+                      name: building.name,
+                      image_url: building.image_url,
+                      year: building.year
                   },
                   avg_rating: val.sum / val.count,
                   count: val.count
@@ -155,7 +153,7 @@ export default function CycleDetails() {
 
       return results.sort((a, b) => b.avg_rating - a.avg_rating);
     },
-    enabled: !!sessions && sessionFilmIds.length > 0 && !!group?.id
+    enabled: !!sessions && sessionBuildingIds.length > 0 && !!group?.id
   });
 
   const updateStatus = useMutation({
@@ -294,9 +292,9 @@ export default function CycleDetails() {
                       const isFuture = sessionDay >= today;
                       const isPast = sessionDay < today;
 
-                      // Sort films: Main first
+                      // Sort buildings: Main first
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const sortedFilms = session.films?.slice().sort((a: any, b: any) => {
+                      const sortedBuildings = session.buildings?.slice().sort((a: any, b: any) => {
                           if (a.is_main && !b.is_main) return -1;
                           if (!a.is_main && b.is_main) return 1;
                           return 0;
@@ -320,19 +318,19 @@ export default function CycleDetails() {
 
                                <div className="grid gap-2">
                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                   {sortedFilms?.map(({ film, is_main }: any) => (
+                                   {sortedBuildings?.map(({ building, is_main }: any) => (
                                        <div
-                                         key={film.id}
+                                         key={building.id}
                                          className="flex gap-3 items-center group p-1 rounded transition-colors"
                                        >
-                                           <img src={`https://image.tmdb.org/t/p/w92${film.poster_path}`} className="w-10 h-14 object-cover rounded shadow-sm" alt="" />
+                                           <img src={building.image_url} className="w-10 h-14 object-cover rounded shadow-sm" alt="" />
                                            <div>
                                                <div className="flex items-center gap-2">
-                                                   <span className="font-semibold text-sm">{film.title}</span>
+                                                   <span className="font-semibold text-sm">{building.name}</span>
                                                    {is_main && <Badge className="text-[10px] h-4 px-1">Main</Badge>}
                                                </div>
                                                <div className="text-xs text-muted-foreground">
-                                                   {film.release_date?.split('-')[0]}
+                                                   {building.year}
                                                </div>
                                            </div>
                                        </div>
@@ -362,16 +360,16 @@ export default function CycleDetails() {
                   <div className="bg-card border rounded-xl overflow-hidden divide-y">
                       {leaderboard.map((item, idx) => (
                           <div
-                            key={item.film.tmdb_id}
+                            key={item.building.id}
                             className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                            onClick={() => navigate(`/movie/${slugify(item.film.title)}/${item.film.tmdb_id}`)} // Assuming movie for now, leaderboard usually movies
+                            onClick={() => navigate(`/building/${item.building.id}`)}
                           >
                               <div className="font-mono text-muted-foreground font-bold w-6 text-center shrink-0">
                                   #{idx + 1}
                               </div>
-                              <img src={`https://image.tmdb.org/t/p/w92${item.film.poster_path}`} className="w-10 h-14 object-cover rounded shrink-0" alt="" />
+                              <img src={item.building.image_url || '/placeholder.png'} className="w-10 h-14 object-cover rounded shrink-0" alt="" />
                               <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-semibold truncate">{item.film.title}</div>
+                                  <div className="text-sm font-semibold truncate">{item.building.name}</div>
                                   <div className="text-xs text-muted-foreground flex items-center gap-2">
                                       <span className="flex items-center text-yellow-500 font-bold">
                                           <Star className="w-3 h-3 mr-0.5 fill-current" />

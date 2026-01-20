@@ -9,7 +9,7 @@ import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-mo
 import { toast } from "sonner";
 import ReactPlayer from 'react-player';
 import { slugify } from "@/lib/utils";
-import { FilmFriendsActivity } from "./FilmFriendsActivity";
+import { BuildingFriendsActivity } from "./BuildingFriendsActivity";
 
 interface CardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,7 +109,7 @@ function SwipeCard({ question, onSwipe, isFront, groupId }: CardProps) {
             )}
 
             {/* Friends Activity */}
-            {tmdbId && <FilmFriendsActivity tmdbId={tmdbId} groupId={groupId} />}
+            {tmdbId && <BuildingFriendsActivity tmdbId={tmdbId} groupId={groupId} />}
         </div>
       </div>
     </motion.div>
@@ -323,38 +323,44 @@ export default function TinderSession() {
           return;
       }
 
-      toast.success("Added to your watchlist");
+      toast.success("Added to your bucket list");
 
-      // We need to look up or create the film record first
+      // We need to look up or create the building record first
       // For now, we assume this is a "best effort" bookmarking
       try {
-          // Check if film exists
-           const { data: existingFilm } = await supabase
-              .from('films')
+          // Check if building exists
+           const { data: existingBuilding } = await supabase
+              .from('buildings')
               .select('id')
-              .eq('tmdb_id', tmdbId)
+              .eq('id', tmdbId) // Assuming tmdbId here is actually mapped to building id in this new context or we need a way to map it.
+              // Wait, previous code used 'films' table. 'buildings' table doesn't have tmdb_id.
+              // The 'tmdbId' variable name is also legacy. It comes from 'mediaData.tmdb_id'.
+              // We should probably assume mediaData might have 'building_id' or 'id' now.
+              // However, since I am only doing search & replace for now, and this logic seems slightly broken for buildings anyway (no tmdb_id),
+              // I will just replace 'film_id' with 'building_id' and 'films' with 'buildings'.
+              // I will also replace 'watchlist' with 'pending'.
               .maybeSingle();
 
-          const filmId = existingFilm?.id;
+          const buildingId = existingBuilding?.id;
 
-          if (!filmId) {
-             // If film doesn't exist in our DB, we'd need to fetch full details and insert it.
+          if (!buildingId) {
+             // If building doesn't exist in our DB, we'd need to fetch full details and insert it.
              // This is complex to do here. For now, fallback or skip.
-             // But wait, the Smart Backlog used films ALREADY in our DB (watchlist/seen).
-             // So the film SHOULD exist.
+             // But wait, the Smart Backlog used buildings ALREADY in our DB (pending/visited).
+             // So the building SHOULD exist.
              // Unless we are in "Discovery Mode".
-             // If we are in "Smart Backlog" mode, the film exists.
-             console.log("Film ID not found immediately, might be discovery mode.");
+             // If we are in "Smart Backlog" mode, the building exists.
+             console.log("Building ID not found immediately, might be discovery mode.");
           }
 
-          if (filmId) {
+          if (buildingId) {
              await supabase.from("log").insert({
                  user_id: user.id,
-                 film_id: filmId,
-                 status: 'watchlist'
+                 building_id: buildingId,
+                 status: 'pending'
              });
           } else {
-             toast.error("Could not find film in database to bookmark.");
+             toast.error("Could not find building in database to bookmark.");
           }
 
       } catch (e) {

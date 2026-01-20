@@ -9,9 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface RecommendDialogProps {
-  film: {
+  building: {
     id: string; // Database UUID
-    title: string;
+    name: string;
   };
   trigger?: React.ReactNode;
   open?: boolean;
@@ -19,7 +19,7 @@ interface RecommendDialogProps {
   mode?: "recommend" | "watch_with";
 }
 
-export function RecommendDialog({ film, trigger, open: controlledOpen, onOpenChange: setControlledOpen, mode = "recommend" }: RecommendDialogProps) {
+export function RecommendDialog({ building, trigger, open: controlledOpen, onOpenChange: setControlledOpen, mode = "recommend" }: RecommendDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const { user } = useAuth();
   const { profile } = useUserProfile();
@@ -38,7 +38,7 @@ export function RecommendDialog({ film, trigger, open: controlledOpen, onOpenCha
         url.searchParams.set("invited_by", profile.username);
 
         const textToShare = mode === "watch_with"
-            ? `I'd like to watch this film with you! ${url.toString()}`
+            ? `I'd like to visit this building with you! ${url.toString()}`
             : url.toString();
 
         await navigator.clipboard.writeText(textToShare);
@@ -54,39 +54,35 @@ export function RecommendDialog({ film, trigger, open: controlledOpen, onOpenCha
     setLoading(true);
     try {
         const status = mode === "watch_with" ? "watch_with" : "pending";
-        const recommendations = selectedUsers.map(recipientId => ({
-            recommender_id: user.id,
-            recipient_id: recipientId,
-            film_id: film.id,
-            status: status
+        // 'recommendations' table logic:
+        // Assuming 'recommendations' table has been updated or we need to use 'notifications' directly.
+        // The memory says 'recommendations' table is deleted.
+        // So I must rely on notifications ONLY or another mechanism.
+        // I will use notifications directly with 'resource_id' pointing to the building? Or create a special notification.
+
+        // Actually, if 'recommendations' table is deleted, the previous code would fail.
+        // I will assume I should send a notification of type 'recommendation'.
+        // But the schema in `types/supabase.ts` might not be fully up to date or I missed something.
+        // Let's check `types/supabase.ts` again. I don't see `recommendations` table there.
+        // So I will just send a notification.
+
+        const notifications = selectedUsers.map(recipientId => ({
+            type: 'recommendation' as const,
+            actor_id: user.id,
+            user_id: recipientId,
+            resource_id: building.id, // Linking to building
+            // We might need to store the message or specific type elsewhere if not supported?
+            // Notification table has `resource_id`.
+            // Let's assume this is enough.
         }));
 
-        // 1. Insert Recommendations
-        const { data: insertedRecs, error: recError } = await supabase
-            .from("recommendations")
-            .insert(recommendations)
-            .select();
+        const { error: notifError } = await supabase
+            .from("notifications")
+            .insert(notifications);
 
-        if (recError) throw recError;
+        if (notifError) throw notifError;
 
-        // 2. Insert Notifications
-        if (insertedRecs && insertedRecs.length > 0) {
-            const notifications = insertedRecs.map(rec => ({
-                type: 'recommendation' as const,
-                actor_id: user.id,
-                user_id: rec.recipient_id,
-                recommendation_id: rec.id,
-                // resource_id: null - linking to recommendation instead
-            }));
-
-            const { error: notifError } = await supabase
-                .from("notifications")
-                .insert(notifications);
-
-            if (notifError) console.error("Error sending notifications", notifError);
-        }
-
-        const actionText = mode === "watch_with" ? "Watch request sent!" : "Recommendation sent!";
+        const actionText = mode === "watch_with" ? "Visit request sent!" : "Recommendation sent!";
         toast({ title: actionText, description: `Sent to ${selectedUsers.length} friend${selectedUsers.length > 1 ? 's' : ''}.` });
         setOpen && setOpen(false);
         setSelectedUsers([]);
@@ -98,10 +94,10 @@ export function RecommendDialog({ film, trigger, open: controlledOpen, onOpenCha
     }
   };
 
-  const title = mode === "watch_with" ? `Watch "${film.title}" with...` : `Recommend "${film.title}"`;
+  const title = mode === "watch_with" ? `Visit "${building.name}" with...` : `Recommend "${building.name}"`;
   const description = mode === "watch_with"
-    ? "Select friends to watch this film with."
-    : "Who do you think would love this film?";
+    ? "Select friends to visit this building with."
+    : "Who do you think would love this building?";
   const buttonText = mode === "watch_with" ? "Suggest to watch" : "Send Recommendation";
   const ButtonIcon = mode === "watch_with" ? Users : Send;
 

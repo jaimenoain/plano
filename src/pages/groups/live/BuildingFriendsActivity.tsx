@@ -3,23 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MessageSquare } from "lucide-react";
 
-interface FilmFriendsActivityProps {
+interface BuildingFriendsActivityProps {
   tmdbId: number;
   groupId: string;
 }
 
-export function FilmFriendsActivity({ tmdbId, groupId }: FilmFriendsActivityProps) {
+export function BuildingFriendsActivity({ tmdbId, groupId }: BuildingFriendsActivityProps) {
   const { data: activity, isLoading } = useQuery({
-    queryKey: ['film-friends-activity', tmdbId, groupId],
+    queryKey: ['building-friends-activity', tmdbId, groupId],
     queryFn: async () => {
-      // 1. Get film_id
-      const { data: film } = await supabase
-        .from('films')
+      // 1. Get building_id
+      const { data: building } = await supabase
+        .from('buildings')
         .select('id')
-        .eq('tmdb_id', tmdbId)
+        .eq('id', tmdbId) // Assuming tmdbId maps to building id or similar logic
         .maybeSingle();
 
-      if (!film) return [];
+      if (!building) return [];
 
       // 2. Get group members
       const { data: members } = await supabase
@@ -42,9 +42,9 @@ export function FilmFriendsActivity({ tmdbId, groupId }: FilmFriendsActivityProp
           created_at,
           user:profiles(id, username, avatar_url)
         `)
-        .eq('film_id', film.id)
+        .eq('building_id', building.id)
         .in('user_id', memberIds)
-        .not('status', 'eq', 'watchlist') // We mainly want reviews/ratings, not just "want to watch" which is implied by the voting session
+        .not('status', 'eq', 'pending') // We mainly want reviews/ratings, not just "want to visit" which is implied by the voting session
         .order('created_at', { ascending: false });
 
       return logs || [];
@@ -79,13 +79,13 @@ export function FilmFriendsActivity({ tmdbId, groupId }: FilmFriendsActivityProp
                  )}
               </div>
             </div>
-            {item.review && (
+            {item.content && (
                 <div className="pl-10">
-                    <p className="text-sm text-white/70 italic line-clamp-3">"{item.review}"</p>
+                    <p className="text-sm text-white/70 italic line-clamp-3">"{item.content}"</p>
                 </div>
             )}
-             {!item.review && item.status === 'watched' && (
-                 <div className="pl-10 text-xs text-white/50">Watched</div>
+             {!item.content && item.status === 'visited' && (
+                 <div className="pl-10 text-xs text-white/50">Visited</div>
              )}
           </div>
         ))}

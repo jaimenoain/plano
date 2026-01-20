@@ -21,29 +21,29 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
           watched_at
         `)
         .in("user_id", selectedMemberIds)
-        .in("status", ["pending", "watched"]);
+        .in("status", ["pending", "visited"]);
 
       if (logsError) throw logsError;
 
       // 2. Process logs
-      const watchlistMap = new Map<string, Set<string>>(); // building_id -> Set<user_id>
+      const bucketListMap = new Map<string, Set<string>>(); // building_id -> Set<user_id>
       const seenSet = new Set<string>(); // building_id (if seen/visited by ANY selected member)
 
       logs.forEach((log) => {
-        const isSeen = log.status === "watched" || log.rating !== null || log.watched_at !== null;
+        const isSeen = log.status === "visited" || log.rating !== null || log.watched_at !== null;
 
         if (isSeen) {
            seenSet.add(log.building_id);
         } else if (log.status === "pending") {
-           if (!watchlistMap.has(log.building_id)) {
-             watchlistMap.set(log.building_id, new Set());
+           if (!bucketListMap.has(log.building_id)) {
+             bucketListMap.set(log.building_id, new Set());
            }
-           watchlistMap.get(log.building_id)?.add(log.user_id);
+           bucketListMap.get(log.building_id)?.add(log.user_id);
         }
       });
 
       // 3. Filter IDs
-      let candidateBuildingIds = Array.from(watchlistMap.keys());
+      let candidateBuildingIds = Array.from(bucketListMap.keys());
 
       // Filter: Exclude Seen (Visited)
       if (filters.excludeSeen) {
@@ -63,7 +63,7 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
       // 5. Final Aggregation
       const results: SmartBuilding[] = buildingDetails
         .map((building) => {
-          const interestedUserIds = Array.from(watchlistMap.get(building.id) || []);
+          const interestedUserIds = Array.from(bucketListMap.get(building.id) || []);
 
           const interestedUsers = group.members
             .filter((m: any) => interestedUserIds.includes(m.user.id))

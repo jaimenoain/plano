@@ -64,64 +64,24 @@ export function ScheduleDialog({ item, groupId, open, onOpenChange }: ScheduleDi
       // Add to existing session
       setIsSubmitting(true);
       try {
-        // 0. Ensure film exists in DB (it might be enriched from TMDB in the UI but not fully in DB if created via other means, though backlog items usually have TMDB ID)
-        // Actually, item.film comes from `tmdb-movie` edge function which returns TMDB data.
-        // We need to make sure the film is in our `films` table before linking it.
-        // The `tmdb-movie` return likely matches the `films` schema or is close.
-        // If `item.film.id` is a UUID, it's local. If it's a number, it's TMDB ID and we might need to upsert.
-        // However, `item` has `tmdb_id`. The `tmdb-movie` function likely returns the enriched object.
-        // Let's assume we need to upsert the film first to be safe, similar to how CreateSession does it.
+        // 0. Ensure building exists in DB.
+        // item.building should already be a valid object with an ID if it came from the backlog which references buildings table.
+        // The backlog item in `group_backlog_items` has `building_id`.
+        // So we can assume `item.building.id` is a UUID from our `buildings` table.
 
-        const filmData = {
-           tmdb_id: item.film.id, // TMDB ID from the enriched object
-           title: item.film.title,
-           original_title: item.film.original_title,
-           poster_path: item.film.poster_path,
-           overview: item.film.overview,
-           release_date: item.film.release_date || item.film.first_air_date,
-           media_type: item.film.media_type || 'movie',
-           vote_average: item.film.vote_average,
-           // other fields as needed
-        };
+        const buildingId = item.building?.id || item.building_id;
 
-        // We can't easily upsert without a dedicated function if we don't have the UUID.
-        // But `session_films` requires a UUID `film_id`.
-        // If `item.film` has a UUID `id`, use it.
-        // If not, we need to find or create the film.
+        if (!buildingId) {
+             throw new Error("Missing building ID");
+        }
 
-        // Let's use the edge function or direct upsert if possible.
-        // But `item.film` from `tmdb-movie` function *usually* returns the TMDB structure, where `id` is the TMDB ID (int).
-        // Check `PipelineTab.tsx`: `const { data: filmData } = await supabase.functions.invoke("tmdb-movie", ...)`
-
-        // So `item.film.id` is likely an Integer. `session_films.film_id` expects a UUID.
-        // We MUST upsert the film into the `films` table to get a UUID.
-
-        // Upsert film based on TMDB ID
-        const { data: upsertedFilm, error: upsertError } = await supabase
-            .from("films")
-            .upsert({
-                tmdb_id: filmData.tmdb_id,
-                title: filmData.title,
-                original_title: filmData.original_title,
-                poster_path: filmData.poster_path,
-                overview: filmData.overview,
-                release_date: filmData.release_date,
-                media_type: filmData.media_type,
-                vote_average: filmData.vote_average
-            }, { onConflict: 'tmdb_id' })
-            .select()
-            .single();
-
-        if (upsertError) throw upsertError;
-        if (!upsertedFilm) throw new Error("Failed to upsert film");
-
-        // 1. Add film to session
+        // 1. Add building to session
         const { error: sessionError } = await supabase
-          .from("session_films")
+          .from("session_buildings")
           .insert({
             session_id: selectedSessionId,
-            film_id: upsertedFilm.id,
-            is_main: false, // Default to secondary film
+            building_id: buildingId,
+            is_main: false, // Default to secondary
           });
 
         if (sessionError) throw sessionError;
@@ -136,7 +96,7 @@ export function ScheduleDialog({ item, groupId, open, onOpenChange }: ScheduleDi
 
         toast({
           title: "Added to session",
-          description: `"${item.film.title}" has been added to the session.`,
+          description: `"${item.building?.name || "Item"}" has been added to the session.`,
         });
 
         queryClient.invalidateQueries({ queryKey: ["group-backlog", groupId] });
@@ -158,9 +118,9 @@ export function ScheduleDialog({ item, groupId, open, onOpenChange }: ScheduleDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Schedule "{item.film?.title || "Film"}"</DialogTitle>
+          <DialogTitle>Schedule "{item.building?.name || "Building"}"</DialogTitle>
           <DialogDescription>
-            Choose to create a new session or add this film to an existing upcoming session.
+            Choose to create a new session or add this building to an existing upcoming session.
           </DialogDescription>
         </DialogHeader>
 

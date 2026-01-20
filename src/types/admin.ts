@@ -44,10 +44,10 @@ export type DashboardStats = {
     };
   };
   content_intelligence: {
-    trending_films: {
-      film_id: string;
-      title: string;
-      poster_path: string | null;
+    trending_buildings: {
+      building_id: string;
+      name: string;
+      image_url: string | null;
       log_count: number;
     }[];
   };
@@ -142,12 +142,12 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
     },
   },
   content_intelligence: {
-    trending_films: [
-      { film_id: '1', title: 'Dune: Part Two', poster_path: '/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg', log_count: 45 },
-      { film_id: '2', title: 'Poor Things', poster_path: '/kCGlIMHnOm8JPXq3rXM6c5wMxc8.jpg', log_count: 32 },
-      { film_id: '3', title: 'Oppenheimer', poster_path: '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', log_count: 28 },
-      { film_id: '4', title: 'The Zone of Interest', poster_path: '/hUu9zyZmDD8vzZR52777YqE0cI3.jpg', log_count: 15 },
-      { film_id: '5', title: 'Anatomy of a Fall', poster_path: '/kGs5espgiqkX2xM2vx5k76t9o9k.jpg', log_count: 12 },
+    trending_buildings: [
+      { building_id: '1', name: 'Empire State Building', image_url: '/empire.jpg', log_count: 45 },
+      { building_id: '2', name: 'Fallingwater', image_url: '/fallingwater.jpg', log_count: 32 },
+      { building_id: '3', name: 'Guggenheim Museum', image_url: '/guggenheim.jpg', log_count: 28 },
+      { building_id: '4', name: 'Sydney Opera House', image_url: '/sydney.jpg', log_count: 15 },
+      { building_id: '5', name: 'Burj Khalifa', image_url: '/burj.jpg', log_count: 12 },
     ],
   },
   user_leaderboard: {
