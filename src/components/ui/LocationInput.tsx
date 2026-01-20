@@ -67,6 +67,7 @@ export function LocationInput({
 
         // Explicitly load the places library
         await importLibrary("places");
+        await importLibrary("geocoding");
         
         setScriptLoaded(true);
       } catch (error) {
