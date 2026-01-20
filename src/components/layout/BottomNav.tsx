@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 // Reduced to the 3 core navigation items
 const navItems = [
   { icon: Home, label: "Feed", path: "/" },
-  { icon: Search, label: "Find", path: "/search" },
+  { icon: Search, label: "Buildings", path: "/search" },
   { icon: Users, label: "Groups", path: "/groups" },
 ];
 

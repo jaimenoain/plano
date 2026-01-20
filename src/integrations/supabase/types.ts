@@ -9,6 +9,42 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      buildings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          location: unknown | null
+          name: string
+          address: string | null
+          architect: string | null
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location?: unknown | null
+          name: string
+          address?: string | null
+          architect?: string | null
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location?: unknown | null
+          name?: string
+          address?: string | null
+          architect?: string | null
+          year?: number | null
+        }
+        Relationships: []
+      }
       comment_likes: {
         Row: {
           comment_id: string
@@ -84,66 +120,6 @@ export interface Database {
           }
         ]
       }
-      films: {
-        Row: {
-          backdrop_path: string | null
-          countries: Json | null
-          credits: Json | null
-          genre_ids: number[] | null
-          id: string
-          imdb_id: string | null
-          media_type: string
-          original_language: string | null
-          original_title: string | null
-          overview: string | null
-          poster_path: string | null
-          release_date: string | null
-          runtime: number | null
-          title: string
-          tmdb_id: number | null
-          vote_average: number | null
-          watch_providers: Json | null
-        }
-        Insert: {
-          backdrop_path?: string | null
-          countries?: Json | null
-          credits?: Json | null
-          genre_ids?: number[] | null
-          id?: string
-          imdb_id?: string | null
-          media_type?: string
-          original_language?: string | null
-          original_title?: string | null
-          overview?: string | null
-          poster_path?: string | null
-          release_date?: string | null
-          runtime?: number | null
-          title: string
-          tmdb_id?: number | null
-          vote_average?: number | null
-          watch_providers?: Json | null
-        }
-        Update: {
-          backdrop_path?: string | null
-          countries?: Json | null
-          credits?: Json | null
-          genre_ids?: number[] | null
-          id?: string
-          imdb_id?: string | null
-          media_type?: string
-          original_language?: string | null
-          original_title?: string | null
-          overview?: string | null
-          poster_path?: string | null
-          release_date?: string | null
-          runtime?: number | null
-          title?: string
-          tmdb_id?: number | null
-          vote_average?: number | null
-          watch_providers?: Json | null
-        }
-        Relationships: []
-      }
       follows: {
         Row: {
           created_at: string
@@ -186,7 +162,7 @@ export interface Database {
           id: string
           priority: "Low" | "Medium" | "High"
           status: "Pending" | "Scheduled" | "Archived"
-          tmdb_id: number
+          building_id: string
           user_id: string
         }
         Insert: {
@@ -197,7 +173,7 @@ export interface Database {
           id?: string
           priority?: "Low" | "Medium" | "High"
           status?: "Pending" | "Scheduled" | "Archived"
-          tmdb_id: number
+          building_id: string
           user_id: string
         }
         Update: {
@@ -208,7 +184,7 @@ export interface Database {
           id?: string
           priority?: "Low" | "Medium" | "High"
           status?: "Pending" | "Scheduled" | "Archived"
-          tmdb_id?: number
+          building_id?: string
           user_id?: string
         }
         Relationships: [
@@ -224,6 +200,13 @@ export interface Database {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_backlog_items_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
             referencedColumns: ["id"]
           },
           {
@@ -479,7 +462,7 @@ export interface Database {
           content: string | null
           created_at: string
           edited_at: string | null
-          film_id: string
+          building_id: string
           group_id: string | null
           id: string
           rating: number | null
@@ -493,7 +476,7 @@ export interface Database {
           content?: string | null
           created_at?: string
           edited_at?: string | null
-          film_id: string
+          building_id: string
           group_id?: string | null
           id?: string
           rating?: number | null
@@ -507,7 +490,7 @@ export interface Database {
           content?: string | null
           created_at?: string
           edited_at?: string | null
-          film_id?: string
+          building_id?: string
           group_id?: string | null
           id?: string
           rating?: number | null
@@ -519,10 +502,10 @@ export interface Database {
         }
         Relationships: [
           {
-            foreignKeyName: "log_film_id_fkey"
-            columns: ["film_id"]
+            foreignKeyName: "log_building_id_fkey"
+            columns: ["building_id"]
             isOneToOne: false
-            referencedRelation: "films"
+            referencedRelation: "buildings"
             referencedColumns: ["id"]
           },
           {
@@ -548,7 +531,6 @@ export interface Database {
           group_id: string | null
           id: string
           is_read: boolean
-          recommendation_id: string | null
           resource_id: string | null
           session_id: string | null
           type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request"
@@ -560,7 +542,6 @@ export interface Database {
           group_id?: string | null
           id?: string
           is_read?: boolean
-          recommendation_id?: string | null
           resource_id?: string | null
           session_id?: string | null
           type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request"
@@ -572,7 +553,6 @@ export interface Database {
           group_id?: string | null
           id?: string
           is_read?: boolean
-          recommendation_id?: string | null
           resource_id?: string | null
           session_id?: string | null
           type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request"
@@ -591,13 +571,6 @@ export interface Database {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_recommendation_id_fkey"
-            columns: ["recommendation_id"]
-            isOneToOne: false
-            referencedRelation: "recommendations"
             referencedColumns: ["id"]
           },
           {
@@ -633,7 +606,7 @@ export interface Database {
           order_index: number
           content_type: string
           media_url: string | null
-          tmdb_id: number | null
+          building_id: string | null
         }
         Insert: {
           created_at?: string
@@ -644,7 +617,7 @@ export interface Database {
           order_index?: number
           content_type?: string
           media_url?: string | null
-          tmdb_id?: number | null
+          building_id?: string | null
         }
         Update: {
           created_at?: string
@@ -655,7 +628,7 @@ export interface Database {
           order_index?: number
           content_type?: string
           media_url?: string | null
-          tmdb_id?: number | null
+          building_id?: string | null
         }
         Relationships: [
           {
@@ -663,6 +636,13 @@ export interface Database {
             columns: ["question_id"]
             isOneToOne: false
             referencedRelation: "poll_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_options_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
             referencedColumns: ["id"]
           }
         ]
@@ -796,7 +776,7 @@ export interface Database {
           show_results_before_close: boolean | null
           status: string
           title: string
-          type: "general" | "film_selection" | "quiz"
+          type: "general" | "building_selection" | "quiz"
           allow_multiple_votes: boolean | null
         }
         Insert: {
@@ -809,7 +789,7 @@ export interface Database {
           show_results_before_close?: boolean | null
           status?: string
           title: string
-          type?: "general" | "film_selection" | "quiz"
+          type?: "general" | "building_selection" | "quiz"
           allow_multiple_votes?: boolean | null
         }
         Update: {
@@ -822,7 +802,7 @@ export interface Database {
           show_results_before_close?: boolean | null
           status?: string
           title?: string
-          type?: "general" | "film_selection" | "quiz"
+          type?: "general" | "building_selection" | "quiz"
           allow_multiple_votes?: boolean | null
         }
         Relationships: [
@@ -845,55 +825,6 @@ export interface Database {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      recommendations: {
-        Row: {
-          created_at: string
-          film_id: string
-          id: string
-          recipient_id: string
-          recommender_id: string
-          status: string
-        }
-        Insert: {
-          created_at?: string
-          film_id: string
-          id?: string
-          recipient_id: string
-          recommender_id: string
-          status?: string
-        }
-        Update: {
-          created_at?: string
-          film_id?: string
-          id?: string
-          recipient_id?: string
-          recommender_id?: string
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recommendations_film_id_fkey"
-            columns: ["film_id"]
-            isOneToOne: false
-            referencedRelation: "films"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recommendations_recipient_id_fkey"
-            columns: ["recipient_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recommendations_recommender_id_fkey"
-            columns: ["recommender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           }
         ]
@@ -1016,35 +947,35 @@ export interface Database {
           }
         ]
       }
-      session_films: {
+      session_buildings: {
         Row: {
-          film_id: string
+          building_id: string
           id: string
           is_main: boolean | null
           session_id: string
         }
         Insert: {
-          film_id: string
+          building_id: string
           id?: string
           is_main?: boolean | null
           session_id: string
         }
         Update: {
-          film_id?: string
+          building_id?: string
           id?: string
           is_main?: boolean | null
           session_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "session_films_film_id_fkey"
-            columns: ["film_id"]
+            foreignKeyName: "session_buildings_building_id_fkey"
+            columns: ["building_id"]
             isOneToOne: false
-            referencedRelation: "films"
+            referencedRelation: "buildings"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_films_session_id_fkey"
+            foreignKeyName: "session_buildings_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "group_sessions"
@@ -1093,13 +1024,13 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      get_group_film_stats: {
+      get_group_building_stats: {
         Args: {
           p_group_id: string
-          p_film_ids: string[]
+          p_building_ids: string[]
         }
         Returns: {
-          film_id: string
+          building_id: string
           avg_rating: number
           log_count: number
         }[]

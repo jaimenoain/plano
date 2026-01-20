@@ -18,12 +18,11 @@ interface ReviewCardProps {
       username: string | null;
       avatar_url: string | null;
     };
-    film: {
-      title: string;
-      original_title?: string | null;
-      poster_path: string | null;
-      tmdb_id?: number;
-      media_type?: string;
+    building: {
+      id: string;
+      name: string;
+      image_url: string | null;
+      address?: string | null;
     };
     likes_count: number;
     comments_count: number;
@@ -34,7 +33,7 @@ interface ReviewCardProps {
   onComment?: (reviewId: string) => void;
   isDetailView?: boolean;
   hideUser?: boolean;
-  hideFilmInfo?: boolean; 
+  hideBuildingInfo?: boolean;
 }
 
 export function ReviewCard({ 
@@ -43,26 +42,24 @@ export function ReviewCard({
   onComment, 
   isDetailView = false, 
   hideUser = false,
-  hideFilmInfo = false
+  hideBuildingInfo = false
 }: ReviewCardProps) {
   const navigate = useNavigate();
   
-  // FIXED: Safety Check - Prevent crash if film data is missing
-  if (!review.film) return null;
+  // FIXED: Safety Check - Prevent crash if building data is missing
+  if (!review.building) return null;
 
-  const posterPathWidth = isDetailView ? "w154" : "w342";
-  const posterUrl = review.film.poster_path 
-    ? `https://image.tmdb.org/t/p/${posterPathWidth}${review.film.poster_path}`
-    : null;
+  const posterUrl = review.building.image_url || null;
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isDetailView) return;
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
 
-    if (review.film.tmdb_id && review.user.username) {
-        const type = review.film.media_type || 'movie';
-        navigate(`/${type}/${slugify(review.film.title)}/${review.film.tmdb_id}/${review.user.username}`);
+    if (review.building.id && review.user.username) {
+        // Navigate to building specific review or just building details?
+        // Using existing pattern:
+        navigate(`/building/${slugify(review.building.name)}/${review.building.id}/${review.user.username}`);
     } else {
         navigate(`/review/${review.id}`);
     }
@@ -73,9 +70,8 @@ export function ReviewCard({
     if (onComment) {
         onComment(review.id);
     } else {
-        if (review.film.tmdb_id && review.user.username) {
-            const type = review.film.media_type || 'movie';
-            navigate(`/${type}/${slugify(review.film.title)}/${review.film.tmdb_id}/${review.user.username}`);
+        if (review.building.id && review.user.username) {
+            navigate(`/building/${slugify(review.building.name)}/${review.building.id}/${review.user.username}`);
         } else {
             navigate(`/review/${review.id}`);
         }
@@ -88,11 +84,8 @@ export function ReviewCard({
   const userInitial = username.charAt(0).toUpperCase();
 
   // Title Logic
-  const hasDifferentOriginalTitle = review.film.original_title && 
-    review.film.original_title !== review.film.title;
-  
-  const mainTitle = hasDifferentOriginalTitle ? review.film.original_title : review.film.title;
-  const subTitle = hasDifferentOriginalTitle ? review.film.title : null;
+  const mainTitle = review.building.name;
+  const subTitle = review.building.address;
 
   const isWatchlist = review.status === 'watchlist';
   const watchWithUsers = review.watch_with_users || [];
@@ -127,11 +120,11 @@ export function ReviewCard({
         )}
 
         <div className="flex gap-3">
-          {!hideFilmInfo && (
+          {!hideBuildingInfo && (
             posterUrl ? (
               <img
                 src={posterUrl}
-                alt={review.film.title}
+                alt={review.building.name}
                 className="w-24 h-36 object-cover rounded-sm flex-shrink-0"
               />
             ) : (
@@ -142,7 +135,7 @@ export function ReviewCard({
           )}
 
           <div className="flex-1 min-w-0">
-            {!hideFilmInfo && (
+            {!hideBuildingInfo && (
               <div className="mb-2">
                 <h3 className="text-base font-semibold text-foreground truncate">
                   {mainTitle}
@@ -155,7 +148,7 @@ export function ReviewCard({
             
             {review.rating && (
               <div className="flex items-center gap-1 mb-2">
-                {Array.from({ length: 10 }).map((_, i) => (
+                {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
                     className={`w-3 h-3 ${
@@ -245,7 +238,7 @@ export function ReviewCard({
       )}
 
       {/* 2. Poster Image - Only if NOT hidden */}
-      {!hideFilmInfo && (
+      {!hideBuildingInfo && (
         <div className="aspect-[2/3] relative bg-secondary overflow-hidden">
           {posterUrl ? (
             <img
@@ -280,8 +273,8 @@ export function ReviewCard({
 
       {/* 3. Content Body */}
       <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
-        {/* Film Title (Context) - Only if NOT hidden */}
-        {!hideFilmInfo && (
+        {/* Building Name (Context) - Only if NOT hidden */}
+        {!hideBuildingInfo && (
           <div className="mb-1">
             <h3 className="text-base font-bold text-foreground line-clamp-2 leading-tight">
               {mainTitle}
@@ -301,7 +294,7 @@ export function ReviewCard({
                {review.rating}
              </span>
              <div className="flex items-center gap-0.5">
-              {Array.from({ length: 10 }).map((_, i) => (
+              {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
                     className={`w-3 h-3 md:w-3.5 md:h-3.5 ${
@@ -320,7 +313,7 @@ export function ReviewCard({
           <div className="flex items-center gap-2 mb-1 mt-1">
              <Clock className="w-4 h-4 text-blue-500 fill-blue-500/20" />
              <span className="text-sm font-medium text-blue-500">
-               Wants to watch
+               Wants to visit
              </span>
           </div>
         )}

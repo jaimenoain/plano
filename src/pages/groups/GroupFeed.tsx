@@ -27,16 +27,16 @@ export default function GroupFeed() {
     return <JoinGroupPrompt group={group} />;
   }
 
-  // Fetch Film IDs
-  const { data: allGroupFilmIds = [] } = useQuery({
-    queryKey: ["group-all-film-ids", id],
+  // Fetch Building IDs
+  const { data: allGroupBuildingIds = [] } = useQuery({
+    queryKey: ["group-all-building-ids", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("session_films")
-        .select(`film_id, group_sessions!inner(group_id)`)
+        .from("session_buildings")
+        .select(`building_id, group_sessions!inner(group_id)`)
         .eq("group_sessions.group_id", id);
       if (error) throw error;
-      const ids = data.map(d => d.film_id);
+      const ids = data.map(d => d.building_id);
       return Array.from(new Set(ids));
     },
     enabled: !!id,
@@ -49,11 +49,11 @@ export default function GroupFeed() {
     isFetchingNextPage,
     isLoading: logsLoading
   } = useInfiniteQuery({
-    queryKey: ["group-logs", id, showOffSession, allGroupFilmIds],
+    queryKey: ["group-logs", id, showOffSession, allGroupBuildingIds],
     queryFn: async ({ pageParam = 0 }) => {
       if (!group?.members) return [];
-      // If we only show session films and there are none, return empty immediately
-      if (!showOffSession && allGroupFilmIds.length === 0) return [];
+      // If we only show session buildings and there are none, return empty immediately
+      if (!showOffSession && allGroupBuildingIds.length === 0) return [];
 
       const memberIds = group.members.map((m: any) => m.user.id);
       
@@ -62,21 +62,21 @@ export default function GroupFeed() {
         .select(`
           id, content, rating, created_at, edited_at, watched_at, tags, status,
           user:profiles(id, username, avatar_url),
-          film:films(id, title, original_title, poster_path, tmdb_id, media_type),
+          building:buildings(id, name, image_url, address),
           likes:likes(id),
           comments:comments(count),
           user_likes:likes(id)
         `)
         .in("user_id", memberIds)
-        .in("status", ["watched", "watchlist", "review"])
+        .in("status", ["visited", "watchlist", "review"])
         .eq("user_likes.user_id", user?.id || '')
         .order("edited_at", { ascending: false })
         .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
       if (!showOffSession) {
-        query = query.in("film_id", allGroupFilmIds);
-      } else if (allGroupFilmIds.length > 0) {
-        query = query.not("film_id", "in", `(${allGroupFilmIds.join(',')})`);
+        query = query.in("building_id", allGroupBuildingIds);
+      } else if (allGroupBuildingIds.length > 0) {
+        query = query.not("building_id", "in", `(${allGroupBuildingIds.join(',')})`);
       }
 
       const { data, error } = await query;
@@ -93,7 +93,7 @@ export default function GroupFeed() {
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === PAGE_SIZE ? allPages.length : undefined;
     },
-    enabled: !!id && !!group?.members && (showOffSession || allGroupFilmIds.length > 0),
+    enabled: !!id && !!group?.members && (showOffSession || allGroupBuildingIds.length > 0),
     initialPageParam: 0,
   });
 
@@ -102,7 +102,7 @@ export default function GroupFeed() {
 
     // Optimistic update
     queryClient.setQueryData(
-      ["group-logs", id, showOffSession, allGroupFilmIds],
+      ["group-logs", id, showOffSession, allGroupBuildingIds],
       (oldData: any) => {
         if (!oldData) return oldData;
         return {
@@ -129,7 +129,7 @@ export default function GroupFeed() {
     // We can assume if we just toggled it, the server state was the opposite.
 
     // Let's find the item in the cache we just updated
-    const cache = queryClient.getQueryData(["group-logs", id, showOffSession, allGroupFilmIds]) as any;
+    const cache = queryClient.getQueryData(["group-logs", id, showOffSession, allGroupBuildingIds]) as any;
     let isLikedNow = false;
 
     // Find the review in the updated cache
@@ -153,7 +153,7 @@ export default function GroupFeed() {
       }
     } catch (error) {
       // Revert if error
-      queryClient.invalidateQueries({ queryKey: ["group-logs", id, showOffSession, allGroupFilmIds] });
+      queryClient.invalidateQueries({ queryKey: ["group-logs", id, showOffSession, allGroupBuildingIds] });
     }
   };
 
@@ -203,7 +203,7 @@ export default function GroupFeed() {
         </>
       ) : (
         <div className="text-center py-20 text-muted-foreground text-sm">
-          {showOffSession ? "No activity found." : "No activity for group films yet."}
+          {showOffSession ? "No activity found." : "No activity for group buildings yet."}
         </div>
       )}
     </div>

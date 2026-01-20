@@ -27,10 +27,8 @@ export function BacklogItemCard({ item, cycles, onUpdate }: BacklogItemCardProps
   const [priority, setPriority] = useState(item.priority);
   const [cycleId, setCycleId] = useState(item.cycle_id || "none");
 
-  const film = item.film;
-  const posterUrl = film?.poster_path
-    ? `https://image.tmdb.org/t/p/w200${film.poster_path}`
-    : null;
+  const building = item.building;
+  const imageUrl = building?.image_url || null;
 
   const handleSave = async () => {
     try {
@@ -76,16 +74,16 @@ export function BacklogItemCard({ item, cycles, onUpdate }: BacklogItemCardProps
     High: { border: "border-l-rose-500", text: "text-rose-600", label: "High Priority" }
   }[priority as "Low" | "Medium" | "High"] || { border: "border-l-slate-400", text: "text-slate-500", label: "Priority" };
 
-  const mainTitle = film?.original_title || film?.title || film?.name || "Unknown Title";
-  const subTitle = (film?.title && film?.title !== mainTitle) ? film.title : null;
+  const mainTitle = building?.name || "Unknown Building";
+  const subTitle = building?.address || null;
 
   return (
     <Card className={`overflow-hidden transition-all border-l-4 ${priorityConfig.border}`}>
       <CardContent className="p-0 flex flex-col sm:flex-row gap-4">
-        {/* Poster */}
+        {/* Image */}
         <div className="shrink-0 w-full sm:w-24 h-36 bg-muted relative">
-            {posterUrl ? (
-                 <img src={posterUrl} className="w-full h-full object-cover" alt="Poster" />
+            {imageUrl ? (
+                 <img src={imageUrl} className="w-full h-full object-cover" alt="Building" />
             ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                     <span className="text-xs">No Image</span>
