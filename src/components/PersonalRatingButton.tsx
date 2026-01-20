@@ -35,7 +35,7 @@ export function PersonalRatingButton({ filmId, initialRating, onRate, isPending 
           {hasRated ? (
             <span className="flex items-center gap-1 font-bold">
               <Star className="w-3.5 h-3.5 fill-current" />
-              {initialRating}/10
+              {initialRating}/5
             </span>
           ) : (
             <span className="text-xs">Rate</span>
@@ -47,7 +47,7 @@ export function PersonalRatingButton({ filmId, initialRating, onRate, isPending 
           className="flex items-center gap-0.5"
           onMouseLeave={() => setHoverRating(null)}
         >
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((star) => {
+          {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
             const isFilled = (hoverRating !== null ? star <= hoverRating : (initialRating || 0) >= star);
 
             return (
@@ -76,7 +76,7 @@ export function PersonalRatingButton({ filmId, initialRating, onRate, isPending 
           })}
         </div>
         <div className="text-center mt-2 text-xs font-medium text-muted-foreground h-4">
-          {hoverRating ? `${hoverRating} / 10` : (initialRating ? `${initialRating} / 10` : "Rate this film")}
+          {hoverRating ? `${hoverRating} / 5` : (initialRating ? `${initialRating} / 5` : "Rate this film")}
         </div>
       </PopoverContent>
     </Popover>
