@@ -19,6 +19,8 @@ export interface Database {
           name: string
           address: string | null
           architect: string | null
+          architects: string[] | null
+          styles: string[] | null
           year: number | null
         }
         Insert: {
@@ -30,6 +32,8 @@ export interface Database {
           name: string
           address?: string | null
           architect?: string | null
+          architects?: string[] | null
+          styles?: string[] | null
           year?: number | null
         }
         Update: {
@@ -41,6 +45,8 @@ export interface Database {
           name?: string
           address?: string | null
           architect?: string | null
+          architects?: string[] | null
+          styles?: string[] | null
           year?: number | null
         }
         Relationships: []

@@ -11,6 +11,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AddBuildingDetails } from "@/components/AddBuildingDetails";
 
 interface NearbyBuilding {
   id: string;
@@ -22,11 +23,13 @@ interface NearbyBuilding {
 }
 
 export default function AddBuilding() {
+  const [step, setStep] = useState<1 | 2>(1);
   const [selectedAddress, setSelectedAddress] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showDuplicates, setShowDuplicates] = useState(false);
+  const [finalLocationData, setFinalLocationData] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
   const navigate = useNavigate();
 
@@ -90,12 +93,13 @@ export default function AddBuilding() {
   };
 
   const proceedToStep2 = (lat: number, lng: number, address: string) => {
-    console.log("Proceeding to step 2 with:", { lat, lng, address });
-    // In a real app, we would navigate to the next step, passing state.
-    // For this task, we log it or show a success message.
-    toast.success("Location verified! Proceeding to next step...");
-    // navigate("/add-building/details", { state: { lat, lng, address } });
+    setFinalLocationData({ lat, lng, address });
+    setStep(2);
   };
+
+  if (step === 2 && finalLocationData) {
+    return <div className="container max-w-2xl py-8"><AddBuildingDetails locationData={finalLocationData} onBack={() => setStep(1)} /></div>;
+  }
 
   return (
     <div className="container max-w-2xl py-8 space-y-8">
