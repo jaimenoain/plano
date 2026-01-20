@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Search, X, Loader2, Crown, Trash2, Plus, Tv, Clapperboard, Clock, User, Repeat, MapPin, FileText, Link as LinkIcon, BarChart2, Pencil, Sparkles } from "lucide-react";
+import { Calendar as CalendarIcon, Search, X, Loader2, Crown, Trash2, Plus, Tv, MapPin, FileText, Link as LinkIcon, BarChart2, Pencil, Sparkles, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn, parseHomeBase } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,10 +42,9 @@ interface Resource {
 
 export default function CreateSession() {
   const { slug, sessionId } = useParams();
-  // Get query params
   const searchParams = new URLSearchParams(window.location.search);
   const backlogIdParam = searchParams.get("backlogId");
-  const tmdbIdParam = searchParams.get("tmdbId");
+  const buildingIdParam = searchParams.get("buildingId");
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -63,12 +62,9 @@ export default function CreateSession() {
   const [isEditingLogistics, setIsEditingLogistics] = useState(false);
   
   const [query, setQuery] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [results, setResults] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedFilms, setSelectedFilms] = useState<any[]>([]);
-  const [mainFilmId, setMainFilmId] = useState<number | null>(null); 
-  const [searching, setSearching] = useState(false);
+  const [selectedBuildings, setSelectedBuildings] = useState<any[]>([]);
+  const [mainBuildingId, setMainBuildingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [resolvedGroupId, setResolvedGroupId] = useState<string | null>(null);
   const [groupSlug, setGroupSlug] = useState<string | null>(null);
@@ -147,8 +143,8 @@ export default function CreateSession() {
         fetchActiveCycles();
         fetchAvailablePolls();
         // If we have backlog params, load that item
-        if (backlogIdParam && tmdbIdParam && !selectedFilms.length) {
-            handleSelectBacklogItem(backlogIdParam, parseInt(tmdbIdParam));
+        if (backlogIdParam && buildingIdParam && !selectedBuildings.length) {
+            handleSelectBacklogItem(backlogIdParam, buildingIdParam);
         }
     }
   }, [resolvedGroupId]);
@@ -159,8 +155,7 @@ export default function CreateSession() {
     }
   }, [sessionId, resolvedGroupId]);
 
-  // Handle pre-selection from backlog
-  const handleSelectBacklogItem = async (bId: string, tId: number) => {
+  const handleSelectBacklogItem = async (bId: string, buildId: string) => {
       // Fetch backlog item details to get the note
       const { data: backlogItem } = await supabase
         .from("group_backlog_items")
@@ -179,20 +174,20 @@ export default function CreateSession() {
           setBacklogId(bId);
       }
 
-      // Add the film
-      // Use existing addFilm logic but we need to fetch basic info first if not provided
-      // For now, let's fetch basic info from TMDB
-      // try {
-      //     const { data: filmData } = await supabase.functions.invoke("tmdb-movie", {
-      //         body: { movieId: tId, type: "movie" } // Assuming movie
-      //     });
-      //     if (filmData) {
-      //         addFilm(filmData);
-      //         setMainFilmId(tId);
-      //     }
-      // } catch (e) {
-      //     console.error("Error fetching backlog film", e);
-      // }
+      // Add the building
+      try {
+          const { data: buildingData } = await supabase
+              .from("buildings")
+              .select("*")
+              .eq("id", buildId)
+              .single();
+          if (buildingData) {
+              addBuilding(buildingData);
+              setMainBuildingId(buildId);
+          }
+      } catch (e) {
+          console.error("Error fetching backlog building", e);
+      }
   };
 
   const fetchActiveCycles = async () => {
@@ -253,9 +248,9 @@ export default function CreateSession() {
         .from('group_sessions')
         .select(`
           *,
-          films:session_films(
+          buildings:session_buildings(
             is_main,
-            film:films(*)
+            building:buildings(*)
           )
         `)
         .eq('id', sessionId)
@@ -278,26 +273,23 @@ export default function CreateSession() {
         if (data.cycle_id) setShowCycle(true);
         if (data.resources && (data.resources as any).length > 0) setShowResources(true);
 
-        // Note: poll visibility is handled in fetchAvailablePolls which runs in parallel
-        // but depends on sessionId being available.
-
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const sessionData = data as any;
         if (sessionData.session_type) setSessionType(sessionData.session_type);
         if (sessionData.location) setLocation(sessionData.location);
         if (sessionData.meeting_link) setMeetingLink(sessionData.meeting_link);
 
-        const films = data.films
+        const buildings = data.buildings
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((f: any) => f.film)
+          .map((f: any) => f.building)
           .filter(Boolean);
           
-        setSelectedFilms(films);
+        setSelectedBuildings(buildings);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mainEntry = data.films.find((f: any) => f.is_main);
-        if (mainEntry && mainEntry.film) {
-            setMainFilmId(mainEntry.film.tmdb_id);
+        const mainEntry = data.buildings.find((f: any) => f.is_main);
+        if (mainEntry && mainEntry.building) {
+            setMainBuildingId(mainEntry.building.id);
         }
       }
     } catch (error) {
@@ -309,36 +301,38 @@ export default function CreateSession() {
     }
   };
 
-  const searchFilms = async (q: string) => {
+  const searchBuildings = async (q: string) => {
     setQuery(q);
-    if (q.length < 3) {
+    if (q.length < 2) {
       setResults([]);
       return;
     }
     
-    // Legacy search removed
-    setResults([]);
+    const { data } = await supabase
+        .from("buildings")
+        .select("*")
+        .ilike("name", `%${q}%`)
+        .limit(10);
+
+    setResults(data || []);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const addFilm = async (film: any) => {
-      // Legacy add film logic removed
+  const addBuilding = async (building: any) => {
+      if (selectedBuildings.find(b => b.id === building.id)) return;
+      setSelectedBuildings([...selectedBuildings, building]);
+      if (!mainBuildingId) setMainBuildingId(building.id);
+      setQuery("");
+      setResults([]);
   };
 
-  const removeFilm = (idToRemove: number) => {
-    const updated = selectedFilms.filter(item => (item.tmdb_id || item.id) !== idToRemove);
-    setSelectedFilms(updated);
+  const removeBuilding = (idToRemove: string) => {
+    const updated = selectedBuildings.filter(item => item.id !== idToRemove);
+    setSelectedBuildings(updated);
     
-    if (mainFilmId === idToRemove) {
-        setMainFilmId(null);
+    if (mainBuildingId === idToRemove) {
+        setMainBuildingId(null);
     }
-  };
-
-  const formatRuntime = (minutes: number) => {
-    if (!minutes) return "";
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
   };
 
   const getDomain = (url: string) => {
@@ -368,10 +362,10 @@ export default function CreateSession() {
   };
 
   const generateDescription = async () => {
-      if (selectedFilms.length === 0) {
+      if (selectedBuildings.length === 0) {
           toast({
-              title: "No films selected",
-              description: "Please select films first to generate a description.",
+              title: "No buildings selected",
+              description: "Please select buildings first to generate a description.",
               variant: "destructive",
           });
           return;
@@ -379,15 +373,14 @@ export default function CreateSession() {
 
       setIsGenerating(true);
       try {
-          // Local generation logic (replacing missing edge function)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const titles = selectedFilms.map((f: any) => f.title || f.name).join(" and ");
+          const titles = selectedBuildings.map((f: any) => f.name).join(" and ");
           let generatedDescription = "";
 
-          if (selectedFilms.length === 1) {
-             generatedDescription = `Join us for a special screening of ${titles}. This film is a masterpiece of its genre, offering a unique perspective that is sure to spark conversation. Don't miss this opportunity to experience it on the big screen with fellow cinema lovers!`;
+          if (selectedBuildings.length === 1) {
+             generatedDescription = `Join us for a special discussion of ${titles}. This building is a masterpiece, offering a unique perspective that is sure to spark conversation. Don't miss this opportunity to discuss it with fellow architecture lovers!`;
           } else {
-             generatedDescription = `Get ready for an incredible double feature! We're showing ${titles}. These films share a thematic connection that explores deep narratives and stunning visuals. It's going to be a night of cinematic magic you won't want to miss.`;
+             generatedDescription = `Get ready for an incredible session! We're discussing ${titles}. These works share a thematic connection that explores deep narratives and stunning visuals.`;
           }
 
           // Simulate a small delay for better UX (so it feels like "thinking")
@@ -396,7 +389,7 @@ export default function CreateSession() {
           setDescription(generatedDescription);
           toast({
               title: "Description generated!",
-              description: "The description has been magically updated.",
+              description: "The description has been updated.",
           });
       } catch (error) {
           console.error("Error generating description:", error);
@@ -451,14 +444,14 @@ export default function CreateSession() {
         const updateData: SessionUpdate = sessionData;
         const { error } = await supabase
           .from('group_sessions')
-          .update(updateData as any) // Still need generic cast because library types are strict
+          .update(updateData as any)
           .eq('id', sessionId);
         
         if (error) throw error;
       } else {
         const { data: session, error } = await supabase
           .from('group_sessions')
-          .insert(sessionData as any) // Still need generic cast because library types are strict
+          .insert(sessionData as any)
           .select()
           .single();
           
@@ -512,45 +505,21 @@ export default function CreateSession() {
           if (pollError) throw pollError;
       }
 
-      // 2. Link Films
+      // 2. Link Buildings
       if (isEditing) {
-        await supabase.from('session_films').delete().eq('session_id', currentSessionId);
+        await supabase.from('session_buildings').delete().eq('session_id', currentSessionId);
       }
 
-      for (const tmdbFilm of selectedFilms) {
-        // Handle ID: If from Search it's .id, if from DB it's .tmdb_id
-        const tmdbId = tmdbFilm.tmdb_id || tmdbFilm.id;
-        
-        // Determine media type (default to movie if not present, e.g. old data)
-        const mediaType = tmdbFilm.media_type || 'movie';
-
-        // Check if we have the FULL data in our DB (credits, runtime)
-        const { data: existingFilm } = await supabase
-          .from('films')
-          .select('id, credits, runtime')
-          .eq('tmdb_id', tmdbId)
-          .eq('media_type', mediaType) // Important: Same ID could exist for movie/tv
-          .maybeSingle();
-
-        let filmUuid = existingFilm?.id;
-        
-        // If film doesn't exist OR is missing key metadata, fetch full details
-        const needsDetails = !existingFilm || !existingFilm.credits || !existingFilm.runtime;
-
-        // Legacy TMDB fetch logic removed
-
-        // Link to session
-        if (filmUuid) {
+      for (const building of selectedBuildings) {
             const { error: linkError } = await supabase
-            .from('session_films')
+            .from('session_buildings')
             .insert({
                 session_id: currentSessionId,
-                film_id: filmUuid,
-                is_main: mainFilmId === tmdbId
+                building_id: building.id,
+                is_main: mainBuildingId === building.id
             });
             
             if (linkError) throw linkError;
-        }
       }
 
       toast({ title: isEditing ? "Session updated!" : "Session created!" });
@@ -674,13 +643,13 @@ export default function CreateSession() {
             )}
         </div>
 
-        {/* SECTION 2: Films (Hero) */}
+        {/* SECTION 2: Buildings (Hero) */}
         <div className="space-y-4">
-          <label className="text-sm font-medium">Films & TV Shows</label>
+          <label className="text-sm font-medium">Buildings / Sites</label>
 
           <Tabs defaultValue="search" className="w-full">
             <TabsList className="w-full grid grid-cols-2">
-                <TabsTrigger value="search">Search TMDB</TabsTrigger>
+                <TabsTrigger value="search">Search</TabsTrigger>
                 <TabsTrigger value="backlog">From Pipeline</TabsTrigger>
             </TabsList>
 
@@ -690,42 +659,35 @@ export default function CreateSession() {
                     <Input
                     placeholder="Search to add..."
                     value={query}
-                    onChange={e => searchFilms(e.target.value)}
+                    onChange={e => searchBuildings(e.target.value)}
                     className="pl-10"
                     />
                     {results.length > 0 && (
                     <div className="absolute z-[60] w-full mt-1 bg-popover border border-border rounded-md shadow-md max-h-60 overflow-y-auto">
                         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                        {results.map((film: any) => {
-                        const originalTitle = film.original_title || film.original_name;
-                        const displayTitle = film.title || film.name;
-                        const year = (film.release_date || film.first_air_date)?.split('-')[0] || "";
-                        const mainTitle = originalTitle || displayTitle;
-                        const subTitle = (originalTitle && originalTitle !== displayTitle) ? displayTitle : null;
-
+                        {results.map((building: any) => {
                         return (
                         <div
-                            key={film.id}
+                            key={building.id}
                             className="flex gap-3 p-3 hover:bg-secondary cursor-pointer items-center border-b last:border-0"
-                            onClick={() => addFilm(film)}
+                            onClick={() => addBuilding(building)}
                         >
                             <div className="shrink-0 w-10 h-14 bg-muted rounded overflow-hidden shadow-sm">
-                            {film.poster_path ? (
-                                <img src={`https://image.tmdb.org/t/p/w92${film.poster_path}`} className="w-full h-full object-cover" />
+                            {building.image_url ? (
+                                <img src={building.image_url} className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                    {film.media_type === 'tv' ? <Tv className="w-4 h-4"/> : <Clapperboard className="w-4 h-4"/>}
+                                    <Building2 className="w-4 h-4"/>
                                 </div>
                             )}
                             </div>
                             <div className="text-sm flex-1 min-w-0">
                             <p className="font-medium truncate">
-                                {mainTitle} {year && <span className="text-muted-foreground font-normal">({year})</span>}
+                                {building.name}
                             </p>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <span className="capitalize">{film.media_type === 'tv' ? 'TV Series' : 'Movie'}</span>
-                                    {subTitle && (
-                                        <span className="truncate">• {subTitle}</span>
+                                    {building.address && (
+                                        <span className="truncate">{building.address}</span>
                                     )}
                             </div>
                             </div>
@@ -742,10 +704,9 @@ export default function CreateSession() {
                     <BacklogSelectionTab
                         groupId={resolvedGroupId}
                         onSelect={(item) => {
-                             if (item.film) {
-                                 // Add film
-                                 addFilm(item.film);
-                                 setMainFilmId(item.tmdb_id);
+                             if (item.building) {
+                                 addBuilding(item.building);
+                                 setMainBuildingId(item.building.id);
                                  // Pre-fill note if present
                                  if (item.admin_note) {
                                      setDescription(prev => prev ? prev + "\n\n" + item.admin_note : item.admin_note);
@@ -756,7 +717,7 @@ export default function CreateSession() {
                                  }
                                  // Set backlog ID to update status later
                                  setBacklogId(item.id);
-                                 toast({ title: "Film selected from pipeline" });
+                                 toast({ title: "Building selected from pipeline" });
                              }
                         }}
                     />
@@ -765,50 +726,31 @@ export default function CreateSession() {
           </Tabs>
 
           <div className="flex flex-col gap-3 mt-4">
-            {selectedFilms.length > 0 && (
+            {selectedBuildings.length > 0 && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Crown className="w-3 h-3" /> Select the main feature
                 </p>
             )}
 
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {selectedFilms.map((f: any) => {
-                const tmdbId = f.tmdb_id || f.id;
-                const isMain = mainFilmId === tmdbId;
-                const name = f.title || f.name;
-                const originalName = f.original_title || f.original_name;
-                const year = (f.release_date || f.first_air_date)?.split('-')[0];
-                const mainTitle = originalName || name;
-                const subTitle = (originalName && originalName !== name) ? name : null;
-
-                let director = f.director_name;
-                if (!director && f.credits) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    director = f.credits.crew?.find((p: any) => p.job === 'Director')?.name;
-                }
-
-                const runtime = f.runtime;
+            {selectedBuildings.map((b: any) => {
+                const isMain = mainBuildingId === b.id;
 
                 return (
                 <div
-                    key={tmdbId}
+                    key={b.id}
                     className={cn(
                         "relative flex gap-4 p-4 rounded-lg border bg-card transition-all",
                         isMain ? "ring-2 ring-yellow-500/50 border-yellow-500/50 bg-yellow-500/5" : "hover:border-primary/50"
                     )}
                 >
                     <div className="shrink-0 w-20 aspect-[2/3] bg-muted rounded-md overflow-hidden shadow-sm relative">
-                        {f.poster_path ? (
-                            <img src={`https://image.tmdb.org/t/p/w154${f.poster_path}`} className="w-full h-full object-cover" />
+                        {b.image_url ? (
+                            <img src={b.image_url} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                <Clapperboard className="w-8 h-8 opacity-20"/>
+                                <Building2 className="w-8 h-8 opacity-20"/>
                             </div>
-                        )}
-                        {f.loadingDetails && (
-                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                 <Loader2 className="w-6 h-6 animate-spin text-white" />
-                             </div>
                         )}
                     </div>
 
@@ -816,27 +758,12 @@ export default function CreateSession() {
                         <div className="flex items-start justify-between gap-4">
                             <div>
                                 <h3 className="font-bold text-lg leading-tight">
-                                    {mainTitle} <span className="font-normal text-muted-foreground text-base">({year})</span>
+                                    {b.name}
                                 </h3>
-                                {subTitle && (
-                                    <p className="text-sm text-muted-foreground italic">{subTitle}</p>
+                                {b.address && (
+                                    <p className="text-sm text-muted-foreground italic">{b.address}</p>
                                 )}
                             </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                             {director && (
-                                 <div className="flex items-center gap-1.5">
-                                     <User className="w-3.5 h-3.5" />
-                                     <span>{director}</span>
-                                 </div>
-                             )}
-                             {runtime > 0 && (
-                                 <div className="flex items-center gap-1.5">
-                                     <Clock className="w-3.5 h-3.5" />
-                                     <span>{formatRuntime(runtime)}</span>
-                                 </div>
-                             )}
                         </div>
                     </div>
 
@@ -848,7 +775,7 @@ export default function CreateSession() {
                                 "h-8 w-8 transition-colors",
                                 isMain ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-900/20" : "text-muted-foreground hover:text-yellow-500"
                             )}
-                            onClick={() => setMainFilmId(isMain ? null : tmdbId)}
+                            onClick={() => setMainBuildingId(isMain ? null : b.id)}
                             title="Set as Main Feature"
                          >
                              <Crown className={cn("h-5 w-5", isMain && "fill-current")} />
@@ -857,8 +784,8 @@ export default function CreateSession() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => removeFilm(tmdbId)}
-                            title="Remove film"
+                            onClick={() => removeBuilding(b.id)}
+                            title="Remove building"
                          >
                              <X className="h-5 w-5" />
                          </Button>
@@ -873,7 +800,7 @@ export default function CreateSession() {
         <div className="space-y-4">
             <div className="space-y-2">
             <label className="text-sm font-medium">Title (Optional)</label>
-            <Input placeholder="e.g. Horror Night" value={title} onChange={e => setTitle(e.target.value)} />
+            <Input placeholder="e.g. Modernism Discussion" value={title} onChange={e => setTitle(e.target.value)} />
             </div>
 
             <div className="space-y-2">

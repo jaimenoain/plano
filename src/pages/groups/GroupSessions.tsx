@@ -112,7 +112,7 @@ export default function GroupSessions() {
         .from("group_sessions")
         .select(`
           *, 
-          films:session_films(film_id, is_main, film:films(*)),
+          buildings:session_buildings(building_id, is_main, building:buildings(*)),
           likes:session_likes(user_id, user:profiles(id, username, avatar_url)),
           comments_list:session_comments(id, content, created_at, user:profiles(id, username, avatar_url)),
           comments:session_comments(count),
@@ -159,18 +159,18 @@ export default function GroupSessions() {
 
   const sessions = useMemo(() => sessionPages?.pages.flat() || [], [sessionPages]);
   
-  // 2. Identify Visible Films
-  const visibleFilmIds = useMemo(() => {
+  // 2. Identify Visible Buildings
+  const visibleBuildingIds = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ids = sessions.flatMap((s: any) => s.films?.map((f: any) => f.film_id) || []);
+    const ids = sessions.flatMap((s: any) => s.buildings?.map((f: any) => f.building_id) || []);
     return Array.from(new Set(ids));
   }, [sessions]);
 
   // 3. Fetch ONLY the logs needed for the currently visible cards
   const { data: visibleLogs } = useQuery({
-    queryKey: ["group-logs-visible", group?.id, user?.id, visibleFilmIds],
+    queryKey: ["group-logs-visible", group?.id, user?.id, visibleBuildingIds],
     queryFn: async () => {
-      if (visibleFilmIds.length === 0) return [];
+      if (visibleBuildingIds.length === 0) return [];
 
       const { data: members } = await supabase.from("group_members").select("user_id").eq("group_id", group.id);
       const memberIds = members?.map(m => m.user_id) || [];
@@ -179,15 +179,15 @@ export default function GroupSessions() {
 
       const { data, error } = await supabase
         .from("log")
-        .select("film_id, rating, content, tags, user:profiles(id, username, avatar_url)")
+        .select("building_id, rating, content, tags, user:profiles(id, username, avatar_url)")
         .in("user_id", memberIds)
-        .in("film_id", visibleFilmIds)
+        .in("building_id", visibleBuildingIds)
         .not("rating", "is", null);
 
       if (error) throw error;
       return data;
     },
-    enabled: !!group?.id && visibleFilmIds.length > 0,
+    enabled: !!group?.id && visibleBuildingIds.length > 0,
     placeholderData: (prev) => prev
   });
 

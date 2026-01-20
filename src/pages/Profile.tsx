@@ -15,25 +15,14 @@ import { cn } from "@/lib/utils";
 import { ReviewCard } from "@/components/feed/ReviewCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FollowButton } from "@/components/FollowButton";
 import { useToast } from "@/hooks/use-toast";
 import { FavoritesSection } from "@/components/profile/FavoritesSection";
 import { ManageFavoritesDialog } from "@/components/profile/ManageFavoritesDialog";
 import { ManageTagsDialog } from "@/components/profile/ManageTagsDialog";
 import { FavoriteItem } from "@/components/profile/types";
-import { RecommendationCard, RecommendationInteraction } from "@/components/profile/RecommendationCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { formatDistanceToNow } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
 
 // New Components
@@ -69,15 +58,11 @@ interface FeedReview {
     username: string | null;
     avatar_url: string | null;
   };
-  film: {
-    id: string | number;
-    title: string;
-    original_title?: string | null;
-    poster_path: string | null;
-    genres?: number[];
-    genre_ids?: number[];
-    tmdb_id?: number;
-    media_type?: string;
+  building: {
+    id: string;
+    name: string;
+    image_url: string | null;
+    address?: string | null;
   };
   likes_count: number;
   comments_count: number;
@@ -94,24 +79,6 @@ interface UserListItem {
   is_follower: boolean;
 }
 
-interface EnrichedRecommendation {
-    id: string;
-    film: {
-        id: string;
-        title: string;
-        tmdb_id: number;
-        poster_path: string | null;
-        media_type: string;
-        release_date: string | null;
-    };
-    recommender: {
-        username: string | null;
-        avatar_url: string | null;
-    };
-    created_at: string;
-    interaction: RecommendationInteraction;
-}
-
 export default function Profile() {
   const { user: currentUser, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -125,20 +92,14 @@ export default function Profile() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   // URL-derived state
-  const activeTab = (searchParams.get("tab") as "reviews" | "watchlist" | "foryou") || "reviews";
+  const activeTab = (searchParams.get("tab") as "reviews" | "watchlist") || "reviews";
   const searchQuery = searchParams.get("search") || "";
   const selectedTag = searchParams.get("tag");
 
   const [loading, setLoading] = useState(true);
   
   const [content, setContent] = useState<FeedReview[]>([]);
-  const [recommendations, setRecommendations] = useState<EnrichedRecommendation[]>([]);
-  const [pendingRecsCount, setPendingRecsCount] = useState(0);
   const [contentLoading, setContentLoading] = useState(false);
-
-  // Recommendation Filters
-  const [showWatched, setShowWatched] = useState(true);
-  const [showWatchlisted, setShowWatchlisted] = useState(true);
 
   // Favorites
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
@@ -272,45 +233,6 @@ export default function Profile() {
           setProfile(data);
           uid = data.id;
           let favs = (data as any).favorites || [];
-
-          // Hydrate logic: fetch ratings only for FILMS
-          const filmFavs = favs.filter((f: any) => !f.type || f.type === 'film');
-          const missingDataIds = filmFavs.map((f: any) => f.id);
-
-          if (missingDataIds.length > 0) {
-            const { data: userRatings } = await supabase
-              .from("log")
-              .select("id, rating, film:films!inner(tmdb_id, media_type, backdrop_path)")
-              .eq("user_id", data.id)
-              .in("film.tmdb_id", missingDataIds)
-              .not("rating", "is", null);
-
-            if (userRatings) {
-              const infoMap = new Map();
-              userRatings.forEach((log: any) => {
-                const film = Array.isArray(log.film) ? log.film[0] : log.film;
-                if (film && film.tmdb_id) {
-                  infoMap.set(`${film.media_type}-${film.tmdb_id}`, {
-                    id: log.id,
-                    rating: log.rating,
-                    backdrop_path: film.backdrop_path
-                  });
-                }
-              });
-
-              favs = favs.map((f: any) => {
-                  if (f.type && f.type !== 'film') return f; // Skip non-films
-                  const info = infoMap.get(`${f.media_type}-${f.id}`) || infoMap.get(`movie-${f.id}`) || infoMap.get(`tv-${f.id}`);
-                  return {
-                    ...f,
-                    rating: f.rating ?? info?.rating,
-                    backdrop_path: f.backdrop_path ?? info?.backdrop_path,
-                    reviewId: info?.id,
-                    username: data.username
-                  };
-              });
-            }
-          }
           setFavorites(favs);
       }
 
@@ -352,8 +274,7 @@ export default function Profile() {
   const filteredContent = useMemo(() => {
     return content.filter(item => {
       const matchesSearch = searchQuery === "" ||
-        item.film.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.film.original_title && item.film.original_title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        item.building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.content && item.content.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesTag = selectedTag === null || item.tags?.includes(selectedTag);
@@ -361,15 +282,6 @@ export default function Profile() {
       return matchesSearch && matchesTag;
     });
   }, [content, searchQuery, selectedTag]);
-
-  // Computed: Filtered Recommendations
-  const filteredRecommendations = useMemo(() => {
-    return recommendations.filter(rec => {
-        if (!showWatched && rec.interaction.status === 'watched') return false;
-        if (!showWatchlisted && rec.interaction.status === 'watchlist') return false;
-        return true;
-    });
-  }, [recommendations, showWatched, showWatchlisted]);
 
   const checkIfFollowing = async () => {
     if (!currentUser || !targetUserId || currentUser.id === targetUserId) return;
@@ -380,7 +292,7 @@ export default function Profile() {
   const fetchStats = async () => {
     if (!targetUserId) return;
     const [reviewsResult, watchlistResult, followersResult, followingResult] = await Promise.all([
-      supabase.from("log").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "watched"),
+      supabase.from("log").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "visited"),
       supabase.from("log").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "watchlist"),
       supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", targetUserId),
       supabase.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", targetUserId),
@@ -392,14 +304,6 @@ export default function Profile() {
       followers: followersResult.count || 0,
       following: followingResult.count || 0,
     });
-
-    if (isOwnProfile) {
-        const { count } = await supabase.from("recommendations")
-            .select("id", { count: "exact", head: true })
-            .eq("recipient_id", targetUserId)
-            .eq("status", "pending");
-        setPendingRecsCount(count || 0);
-    }
   };
 
   const fetchSquad = async () => {
@@ -421,49 +325,12 @@ export default function Profile() {
     setContentLoading(true);
 
     try {
-      if (activeTab === "foryou") {
-        if (!isOwnProfile) {
-            setContentLoading(false);
-            return;
-        }
-        const { data, error } = await supabase
-            .from("recommendations")
-            .select(`
-                id, created_at, status,
-                film:films ( id, title, tmdb_id, poster_path, media_type, release_date ),
-                recommender:profiles!recommendations_recommender_id_fkey ( username, avatar_url )
-            `)
-            .eq("recipient_id", targetUserId)
-            .eq("status", "pending")
-            .order("created_at", { ascending: false });
-
-        if (error) throw error;
-
-        const filmIds = data?.map(d => d.film.id) || [];
-        const { data: logs } = await supabase
-            .from("log")
-            .select("film_id, status, rating")
-            .eq("user_id", targetUserId)
-            .in("film_id", filmIds);
-
-        const logMap = new Map();
-        logs?.forEach(log => {
-            logMap.set(log.film_id, { status: log.status, rating: log.rating });
-        });
-
-        const enrichedRecs = (data || []).map(rec => ({
-            ...rec,
-            interaction: logMap.get(rec.film.id) || { status: null, rating: null }
-        }));
-
-        setRecommendations(enrichedRecs);
-      } else {
-        const status = activeTab === "reviews" ? "watched" : "watchlist";
+        const status = activeTab === "reviews" ? "visited" : "watchlist";
         const { data: logsData, error: logsError } = await supabase
             .from("log")
             .select(`
-            id, content, rating, created_at, edited_at, user_id, film_id, tags, status,
-            film:films ( id, title, original_title, poster_path, genre_ids, tmdb_id, media_type )
+            id, content, rating, created_at, edited_at, user_id, building_id, tags, status,
+            building:buildings ( id, name, image_url, address )
             `)
             .eq("user_id", targetUserId)
             .eq("status", status)
@@ -491,30 +358,7 @@ export default function Profile() {
 
         const userLikes = new Set(userLikesResult.data?.map(l => l.interaction_id));
 
-        const watchWithMap = new Map();
-        if (activeTab === "watchlist") {
-             const { data: recData } = await supabase
-                .from("recommendations")
-                .select(`
-                    film_id,
-                    recipient:profiles!recommendations_recipient_id_fkey(id, username, avatar_url)
-                `)
-                .eq("recommender_id", targetUserId)
-                .eq("status", "watch_with");
-
-             if (recData) {
-                 recData.forEach((rec: any) => {
-                     const existing = watchWithMap.get(rec.film_id) || [];
-                     if (rec.recipient) existing.push(rec.recipient);
-                     watchWithMap.set(rec.film_id, existing);
-                 });
-             }
-        }
-
         const formattedContent: FeedReview[] = logsData.map((item: any) => {
-            const filmData = Array.isArray(item.film) ? item.film[0] : item.film;
-            const watchWith = watchWithMap.get(item.film_id);
-
             return {
             id: item.id,
             content: item.content,
@@ -523,60 +367,26 @@ export default function Profile() {
             edited_at: item.edited_at,
             status: item.status,
             user: { username: profile?.username || "Unknown", avatar_url: profile?.avatar_url || null },
-            film: {
-                id: filmData?.id || item.film_id,
-                title: filmData?.title || "Unknown Film",
-                original_title: filmData?.original_title || null,
-                poster_path: filmData?.poster_path || null,
-                genre_ids: filmData?.genre_ids || [],
-                tmdb_id: filmData?.tmdb_id,
-                media_type: filmData?.media_type,
+            building: {
+                id: item.building?.id || item.building_id,
+                name: item.building?.name || "Unknown Building",
+                image_url: item.building?.image_url || null,
+                address: item.building?.address || null,
             },
             tags: item.tags || [],
             likes_count: likesCount.get(item.id) || 0,
             comments_count: commentsCount.get(item.id) || 0,
             is_liked: userLikes.has(item.id),
-            watch_with_users: watchWith,
+            watch_with_users: [], // Removed watch_with for now
             };
         });
 
         setContent(formattedContent);
-      }
-
     } catch (error) {
       console.error("Error fetching content:", error);
     } finally {
       setContentLoading(false);
     }
-  };
-
-  const handleRecommendationAction = async (id: string, action: 'dismiss') => {
-      if (action === 'dismiss') {
-          setRecommendations(prev => prev.filter(r => r.id !== id));
-          await supabase.from("recommendations").update({ status: 'ignored' }).eq("id", id);
-          toast({ description: "Recommendation dismissed." });
-          setPendingRecsCount(prev => Math.max(0, prev - 1));
-      }
-  };
-
-  const handleRateFilm = (film: any) => {
-      navigate(`/post?movieId=${film.tmdb_id}&mediaType=${film.media_type || 'movie'}&title=${encodeURIComponent(film.title)}&poster=${film.poster_path}`);
-  };
-
-  const handleWatchlistFilm = async (film: any) => {
-      if (!currentUser) return;
-      try {
-          const { error } = await supabase.from("log").upsert({
-              user_id: currentUser.id,
-              film_id: film.id,
-              status: "watchlist"
-          }, { onConflict: "user_id, film_id" });
-          if (error) throw error;
-          navigate(`/post?type=watchlist&movieId=${film.tmdb_id}&mediaType=${film.media_type || 'movie'}&title=${encodeURIComponent(film.title)}&poster=${film.poster_path}`);
-      } catch (error) {
-          console.error("Error adding to watchlist:", error);
-          toast({ variant: "destructive", description: "Failed to add to watchlist." });
-      }
   };
 
   const handleLike = async (reviewId: string) => {
@@ -618,7 +428,7 @@ export default function Profile() {
   const handleSaveFavorites = async (newFilmFavorites: FavoriteItem[]) => {
       if (!currentUser) return;
       // Merge with non-film favorites
-      const nonFilmFavorites = favorites.filter(f => f.type && f.type !== 'film');
+      const nonFilmFavorites = favorites.filter(f => f.type && f.type !== 'building');
       const combined = [...newFilmFavorites, ...nonFilmFavorites];
       setFavorites(combined);
 
@@ -638,7 +448,7 @@ export default function Profile() {
   const handleSaveHighlights = async (newHighlights: FavoriteItem[]) => {
       if (!currentUser) return;
       // Merge with film favorites
-      const filmFavorites = favorites.filter(f => !f.type || f.type === 'film');
+      const filmFavorites = favorites.filter(f => !f.type || f.type === 'building');
       const combined = [...filmFavorites, ...newHighlights];
       setFavorites(combined);
 
@@ -734,7 +544,7 @@ export default function Profile() {
   }
 
   // Filter only film favorites for the FavoritesSection
-  const filmFavorites = favorites.filter(f => !f.type || f.type === 'film');
+  const buildingFavorites = favorites.filter(f => !f.type || f.type === 'building');
 
   const avatarUrl = profile?.avatar_url
     ? (profile.avatar_url.startsWith("http")
@@ -746,7 +556,7 @@ export default function Profile() {
     <AppLayout title={profile?.username || "Profile"} showLogo={false} showBack={!isOwnProfile}>
       <MetaHead
         title={`${profile?.username} (@${profile?.username})`}
-        description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Cineforum.`}
+        description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Archiforum.`}
         image={avatarUrl}
       />
       
@@ -765,9 +575,9 @@ export default function Profile() {
 
       {/* 2. Favorite Films (Moved to body as requested implicitly by "Add a section") */}
       {/* Only show if not empty or if own profile (to empty state manageable) */}
-      {(filmFavorites.length > 0 || isOwnProfile) && (
+      {(buildingFavorites.length > 0 || isOwnProfile) && (
          <FavoritesSection
-            favorites={filmFavorites}
+            favorites={buildingFavorites}
             isOwnProfile={isOwnProfile}
             onManage={() => setShowManageFavorites(true)}
          />
@@ -799,55 +609,38 @@ export default function Profile() {
         <Tabs value={activeTab} onValueChange={(v: string) => handleTabChange(v)} className="w-full">
           <div className="sticky top-14 bg-background z-10 pt-2 pb-4 space-y-3 shadow-sm border-b border-border/40 -mx-4 px-4 mb-4">
             <div className="flex items-center justify-between">
-              <TabsList className={cn("grid w-full max-w-[200px]", isOwnProfile && pendingRecsCount > 0 ? "grid-cols-3 max-w-[300px]" : "grid-cols-2")}>
+              <TabsList className="grid w-full max-w-[200px] grid-cols-2">
                 <TabsTrigger value="reviews">Reviews</TabsTrigger>
                 <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
-                {isOwnProfile && pendingRecsCount > 0 && <TabsTrigger value="foryou">For You</TabsTrigger>}
               </TabsList>
             </div>
 
             {/* Search Input */}
-            {activeTab !== "foryou" && (
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search reviews..."
-                        value={searchQuery}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="pl-9 bg-secondary/50 border-transparent focus:bg-background transition-colors"
-                    />
-                    {searchQuery && (
-                        <button onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                        </button>
-                    )}
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="shrink-0"
-                    onClick={() => navigate(`/search?rated_by=${profile?.username || ""}`)}
-                    title="Filter by rated films"
-                  >
-                    <Filter className="h-4 w-4" />
-                  </Button>
+            <div className="flex gap-2">
+                <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search reviews..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="pl-9 bg-secondary/50 border-transparent focus:bg-background transition-colors"
+                />
+                {searchQuery && (
+                    <button onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                    </button>
+                )}
                 </div>
-            )}
-
-             {/* For You Filters */}
-             {activeTab === "foryou" && (
-                <div className="flex items-center gap-4 py-1">
-                    <div className="flex items-center space-x-2">
-                        <Checkbox id="show-watched" checked={showWatched} onCheckedChange={(c) => setShowWatched(!!c)} />
-                        <Label htmlFor="show-watched" className="text-sm font-normal text-muted-foreground">Show watched</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Checkbox id="show-watchlisted" checked={showWatchlisted} onCheckedChange={(c) => setShowWatchlisted(!!c)} />
-                        <Label htmlFor="show-watchlisted" className="text-sm font-normal text-muted-foreground">Show watchlisted</Label>
-                    </div>
-                </div>
-            )}
+                <Button
+                variant="secondary"
+                size="icon"
+                className="shrink-0"
+                onClick={() => navigate(`/search?rated_by=${profile?.username || ""}`)}
+                title="Filter by rated buildings"
+                >
+                <Filter className="h-4 w-4" />
+                </Button>
+            </div>
           </div>
 
           <TabsContent value="reviews" className="mt-0">
@@ -884,31 +677,10 @@ export default function Profile() {
                   <EmptyState
                     icon={Bookmark}
                     label="Watchlist is empty"
-                    description={isOwnProfile ? "Never forget a recommendation again. Add movies here to build your personal queue." : undefined}
-                    action={isOwnProfile ? <Button onClick={() => navigate("/search")}>Search Films</Button> : undefined}
+                    description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
+                    action={isOwnProfile ? <Button onClick={() => navigate("/search")}>Search Buildings</Button> : undefined}
                   />
                 )
-             )}
-          </TabsContent>
-
-          <TabsContent value="foryou" className="mt-0">
-             {contentLoading ? (
-               <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-             ) : filteredRecommendations.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
-                  {filteredRecommendations.map((rec) => (
-                    <RecommendationCard
-                        key={rec.id}
-                        recommendation={rec}
-                        interaction={rec.interaction}
-                        onDismiss={(id) => handleRecommendationAction(id, 'dismiss')}
-                        onRate={handleRateFilm}
-                        onWatchlist={handleWatchlistFilm}
-                    />
-                  ))}
-                </div>
-             ) : (
-                <EmptyState icon={Star} label="No recommendations to display" description="Adjust filters or check back later." />
              )}
           </TabsContent>
         </Tabs>
@@ -962,7 +734,7 @@ export default function Profile() {
       <ManageFavoritesDialog
         open={showManageFavorites}
         onOpenChange={setShowManageFavorites}
-        favorites={filmFavorites}
+        favorites={buildingFavorites}
         onSave={handleSaveFavorites}
       />
 

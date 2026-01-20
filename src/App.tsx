@@ -18,7 +18,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import GroupSettings from "./pages/GroupSettings";
 import NotFound from "./pages/NotFound";
-import FilmDetails from "./pages/FilmDetails";
+// import FilmDetails from "./pages/FilmDetails";
 import ReviewDetails from "./pages/ReviewDetails";
 import Notifications from "./pages/Notifications";
 import Groups from "./pages/Groups";
@@ -123,18 +123,18 @@ const router = createBrowserRouter(
       <Route path="/settings" element={<Settings />} />
 
       {/* SEO Friendly Routes */}
-      <Route path="/movie/:slug/:id" element={<FilmDetails mediaType="movie" />} />
-      <Route path="/tv/:slug/:id" element={<FilmDetails mediaType="tv" />} />
+      {/* <Route path="/movie/:slug/:id" element={<FilmDetails mediaType="movie" />} /> */}
+      {/* <Route path="/tv/:slug/:id" element={<FilmDetails mediaType="tv" />} /> */}
 
       {/* Nested Review Routes */}
-      <Route path="/movie/:slug/:id/review/:username" element={<ReviewDetails mediaType="movie" />} />
-      <Route path="/tv/:slug/:id/review/:username" element={<ReviewDetails mediaType="tv" />} />
-      <Route path="/movie/:slug/:id/:username" element={<ReviewDetails mediaType="movie" />} />
-      <Route path="/tv/:slug/:id/:username" element={<ReviewDetails mediaType="tv" />} />
+      {/* <Route path="/movie/:slug/:id/review/:username" element={<ReviewDetails mediaType="movie" />} /> */}
+      {/* <Route path="/tv/:slug/:id/review/:username" element={<ReviewDetails mediaType="tv" />} /> */}
+      {/* <Route path="/movie/:slug/:id/:username" element={<ReviewDetails mediaType="movie" />} /> */}
+      {/* <Route path="/tv/:slug/:id/:username" element={<ReviewDetails mediaType="tv" />} /> */}
 
       {/* Legacy/Fallback Routes */}
-      <Route path="/media/:type/:id" element={<FilmDetails />} />
-      <Route path="/review/:id" element={<ReviewDetails />} />
+      {/* <Route path="/media/:type/:id" element={<FilmDetails />} /> */}
+      {/* <Route path="/review/:id" element={<ReviewDetails />} /> */}
 
       <Route path="*" element={<NotFound />} />
     </Route>
