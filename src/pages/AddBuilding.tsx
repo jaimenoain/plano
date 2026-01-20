@@ -66,7 +66,7 @@ export default function AddBuilding() {
       const { data, error } = await supabase.rpc('find_nearby_buildings', {
         lat,
         long: lng,
-        radius_meters: 100 // 100m radius
+        radius_meters: 50 // 50m radius (updated per spec)
       });
 
       if (error) {
