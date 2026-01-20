@@ -9,7 +9,7 @@ import { useState } from "react";
 import { Star, Edit, Trash2, Heart, MessageSquare, Send, Pencil, CalendarPlus, Notebook, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RatingSpectrum } from "@/components/RatingSpectrum";
+// import { RatingSpectrum } from "@/components/RatingSpectrum";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { SessionRatingChart } from "@/components/groups/SessionRatingChart";
 import { slugify, createGoogleCalendarUrl } from "@/lib/utils";
@@ -460,7 +460,7 @@ export function SessionCard({
                               </div>
                             )}
                           </div>
-                          <RatingSpectrum logs={localStats.logs} />
+                          {/* <RatingSpectrum logs={localStats.logs} /> */}
 
                           {/* Members' Reviews */}
                           <div className="mt-6 space-y-4">

@@ -15,7 +15,7 @@ import { Plus, Trash2, Check, Image as ImageIcon, Film, X, Edit2, ArrowUp, Arrow
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { TmdbSearchInput } from "./TmdbSearchInput";
+// import { TmdbSearchInput } from "./TmdbSearchInput";
 
 const pollSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -806,30 +806,8 @@ function QuestionAttachment({ nestIndex }: { nestIndex: number }) {
 
                     {mediaType === 'film' && (
                         <div className="space-y-2">
-                            {mediaData ? (
-                                <div className="flex gap-3 items-center">
-                                    {mediaData.poster_path && (
-                                        <img src={`https://image.tmdb.org/t/p/w92${mediaData.poster_path}`} className="h-16 w-12 object-cover rounded" />
-                                    )}
-                                    <div>
-                                        <div className="font-medium">{mediaData.original_title || mediaData.original_name || mediaData.title || mediaData.name}</div>
-                                        {((mediaData.title || mediaData.name) && (mediaData.title || mediaData.name) !== (mediaData.original_title || mediaData.original_name)) && (
-                                            <div className="text-xs text-muted-foreground opacity-80">{mediaData.title || mediaData.name}</div>
-                                        )}
-                                        <div className="text-xs text-muted-foreground">{(mediaData.release_date || "").split('-')[0]}</div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <TmdbSearchInput
-                                    onChange={(film) => {
-                                        setValue(`questions.${nestIndex}.media_data`, film);
-                                        // Also set media_url as poster for simple fallback? Or rely on data.
-                                        if (film.poster_path) {
-                                           setValue(`questions.${nestIndex}.media_url`, `https://image.tmdb.org/t/p/w500${film.poster_path}`);
-                                        }
-                                    }}
-                                />
-                            )}
+                            {/* Film Selection logic removed */}
+                            <p className="text-sm text-muted-foreground">Film selection temporarily unavailable.</p>
                         </div>
                     )}
                 </div>
@@ -1002,73 +980,13 @@ function QuestionOptionItem({
 
                 {responseType === 'film' && (
                     <div>
-                        {optionTmdbId ? (
-                                <div className="flex gap-2 items-center p-2 border rounded bg-muted/50 relative">
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm truncate">{optionValue}</div>
-                                </div>
-                                <Button
-                                    type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0"
-                                    onClick={() => {
-                                        setValue(`questions.${nestIndex}.options.${index}.tmdb_id`, null);
-                                        setValue(`questions.${nestIndex}.options.${index}.value`, "");
-                                        setValue(`questions.${nestIndex}.options.${index}.media_url`, null);
-                                    }}
-                                >
-                                    <X className="w-3 h-3" />
-                                </Button>
-                                </div>
-                        ) : (
-                            <TmdbSearchInput
-                                onChange={(film) => {
-                                    setValue(`questions.${nestIndex}.options.${index}.tmdb_id`, film.id);
-                                    // Store "Title (Year)" as value to ensure year is visible
-                                    const year = (film.release_date || film.first_air_date || "").split("-")[0];
-                                    const title = film.original_title || film.original_name || film.title || film.name;
-                                    const displayValue = year ? `${title} (${year})` : title;
-
-                                    setValue(`questions.${nestIndex}.options.${index}.value`, displayValue);
-                                    if (film.poster_path) {
-                                        setValue(`questions.${nestIndex}.options.${index}.media_url`, `https://image.tmdb.org/t/p/w500${film.poster_path}`);
-                                    }
-                                }}
-                                placeholder={`Search film for Option ${index+1}`}
-                            />
-                        )}
+                        <p className="text-sm text-muted-foreground">Film selection temporarily unavailable.</p>
                     </div>
                 )}
 
                 {responseType === 'person' && (
                     <div>
-                        {optionTmdbId ? (
-                                <div className="flex gap-2 items-center p-2 border rounded bg-muted/50 relative">
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm truncate">{optionValue}</div>
-                                </div>
-                                <Button
-                                    type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0"
-                                    onClick={() => {
-                                        setValue(`questions.${nestIndex}.options.${index}.tmdb_id`, null);
-                                        setValue(`questions.${nestIndex}.options.${index}.value`, "");
-                                        setValue(`questions.${nestIndex}.options.${index}.media_url`, null);
-                                    }}
-                                >
-                                    <X className="w-3 h-3" />
-                                </Button>
-                                </div>
-                        ) : (
-                            <TmdbSearchInput
-                                type="person"
-                                onChange={(person) => {
-                                    setValue(`questions.${nestIndex}.options.${index}.tmdb_id`, person.id);
-                                    setValue(`questions.${nestIndex}.options.${index}.value`, person.name);
-                                    if (person.profile_path) {
-                                        setValue(`questions.${nestIndex}.options.${index}.media_url`, `https://image.tmdb.org/t/p/w500${person.profile_path}`);
-                                    }
-                                }}
-                                placeholder={`Search person for Option ${index+1}`}
-                            />
-                        )}
+                        <p className="text-sm text-muted-foreground">Person selection temporarily unavailable.</p>
                     </div>
                 )}
             </div>

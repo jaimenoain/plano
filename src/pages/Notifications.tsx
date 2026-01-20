@@ -194,20 +194,21 @@ export default function Notifications() {
     } else if (notification.type === 'join_request') {
        if (notification.group_id) navigate(`/groups/${notification.group_id}/members`);
     } else if (notification.type === 'recommendation') {
-      const rec = (notification as any).recommendation;
-      if (rec?.status === 'watch_with' && rec.film?.tmdb_id && notification.actor?.username) {
-        const film = rec.film;
-        navigate(`/${film.media_type || 'movie'}/${slugify(film.title)}/${film.tmdb_id}/${notification.actor.username}`);
-      } else {
-        navigate(`/profile?tab=foryou`);
-      }
+      // const rec = (notification as any).recommendation;
+      // if (rec?.status === 'watch_with' && rec.film?.tmdb_id && notification.actor?.username) {
+      //   const film = rec.film;
+      //   navigate(`/${film.media_type || 'movie'}/${slugify(film.title)}/${film.tmdb_id}/${notification.actor.username}`);
+      // } else {
+      //   navigate(`/profile?tab=foryou`);
+      // }
+      navigate(`/profile?tab=foryou`);
     } else if (notification.resource?.id) {
-        if (notification.resource.film?.tmdb_id && notification.resource.user?.username) {
-            const film = notification.resource.film;
-            navigate(`/${film.media_type || 'movie'}/${slugify(film.title)}/${film.tmdb_id}/${notification.resource.user.username}`);
-        } else {
+        // if (notification.resource.film?.tmdb_id && notification.resource.user?.username) {
+        //     const film = notification.resource.film;
+        //     navigate(`/${film.media_type || 'movie'}/${slugify(film.title)}/${film.tmdb_id}/${notification.resource.user.username}`);
+        // } else {
             navigate(`/review/${notification.resource.id}`);
-        }
+        // }
     }
   };
 
@@ -305,13 +306,14 @@ export default function Notifications() {
             <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
           )}
 
-          {(n.resource?.film?.poster_path || (n as any).recommendation?.film?.poster_path) && (
+          {/* TMDB Image Logic Removed */}
+          {/* {(n.resource?.film?.poster_path || (n as any).recommendation?.film?.poster_path) && (
             <img 
               src={`https://image.tmdb.org/t/p/w92${n.resource?.film?.poster_path || (n as any).recommendation?.film?.poster_path}`}
               alt="Poster" 
               className="h-12 w-8 object-cover rounded bg-secondary ml-2"
             />
-          )}
+          )} */}
         </div>
       ))}
     </>
