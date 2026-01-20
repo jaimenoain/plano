@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TagInput } from "@/components/ui/tag-input";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { BuildingForm, BuildingFormData } from "./BuildingForm";
 
 interface AddBuildingDetailsProps {
   locationData: {
@@ -19,69 +17,24 @@ interface AddBuildingDetailsProps {
 }
 
 export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsProps) {
-  const [name, setName] = useState("");
-  const [year_completed, setYear] = useState<string>("");
-  const [architects, setArchitects] = useState<string[]>([]);
-  const [styles, setStyles] = useState<string[]>([]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name) {
-      toast.error("Building name is required");
-      return;
-    }
-
+  const handleFormSubmit = async (data: BuildingFormData) => {
     setIsSubmitting(true);
 
     try {
-      let imageUrl = null;
-
-      if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        // Attempt to upload
-        const { error: uploadError } = await supabase.storage
-          .from('building_images')
-          .upload(filePath, imageFile);
-
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
-          // If error is bucket not found, we can try to create it, but usually we can't from client.
-          // We will just report error.
-          toast.error("Failed to upload image. Please try again.");
-          setIsSubmitting(false);
-          return;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('building_images')
-          .getPublicUrl(filePath);
-
-        imageUrl = publicUrl;
-      }
-
-      const { data, error } = await supabase
+      const { data: insertedData, error } = await supabase
         .from('buildings')
         .insert({
-          name,
-          year_completed: year_completed ? parseInt(year_completed) : null,
-          architects,
-          styles,
+          name: data.name,
+          year_completed: data.year_completed,
+          architects: data.architects,
+          styles: data.styles,
+          description: data.description,
           address: locationData.address,
-          main_image_url: imageUrl,
+          main_image_url: data.main_image_url,
           // location is a geography(POINT) column. We need to pass a string "POINT(lng lat)"
-          // Cast to unknown to bypass strict type check if needed, but Supabase client handles strings for geography often.
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown
         })
         .select()
@@ -92,7 +45,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         toast.error("Failed to save building.");
       } else {
         toast.success("Building added successfully!");
-        navigate(`/building/${data.id}`);
+        navigate(`/building/${insertedData.id}`);
       }
 
     } catch (error) {
@@ -101,6 +54,15 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const initialValues: BuildingFormData = {
+    name: "",
+    year_completed: null,
+    architects: [],
+    styles: [],
+    description: "",
+    main_image_url: null,
   };
 
   return (
@@ -120,82 +82,12 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Sydney Opera House"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="year_completed">Year Built</Label>
-              <Input
-                id="year_completed"
-                type="number"
-                value={year_completed}
-                onChange={(e) => setYear(e.target.value)}
-                placeholder="e.g. 1973"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Architects</Label>
-              <TagInput
-                tags={architects}
-                setTags={setArchitects}
-                placeholder="Type and press Enter to add architect..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Add multiple architects if applicable.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Architectural Styles</Label>
-              <TagInput
-                tags={styles}
-                setTags={setStyles}
-                placeholder="Type and press Enter to add style..."
-              />
-              <p className="text-xs text-muted-foreground">
-                e.g. Modernist, Expressionist, Brutalist
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="image">Image</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="cursor-pointer"
-                />
-              </div>
-              {imageFile && (
-                <p className="text-sm text-muted-foreground">
-                  Selected: {imageFile.name}
-                </p>
-              )}
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Building"
-              )}
-            </Button>
-          </form>
+          <BuildingForm
+            initialValues={initialValues}
+            onSubmit={handleFormSubmit}
+            isSubmitting={isSubmitting}
+            submitLabel="Save Building"
+          />
         </CardContent>
       </Card>
     </div>

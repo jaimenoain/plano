@@ -4,6 +4,7 @@ import {
   Loader2, MapPin, Calendar, Star, Send, 
   Trash2, Edit2, Check, Bookmark, Navigation
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +52,7 @@ export default function BuildingDetails() {
   
   const [building, setBuilding] = useState<BuildingDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCreator, setIsCreator] = useState(false);
   
   // User Interaction State
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
@@ -99,6 +101,9 @@ export default function BuildingDetails() {
 
       if (error) throw error;
       setBuilding(data);
+      if (user && data.created_by === user.id) {
+          setIsCreator(true);
+      }
 
       if (user) {
         // 2. Fetch User Log (using building_id) 
@@ -214,7 +219,16 @@ export default function BuildingDetails() {
             
             {/* Header Info */}
             <div>
-                <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
+                <div className="flex justify-between items-start">
+                    <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
+                    {isCreator && (
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/building/${id}/edit`}>
+                                <Edit2 className="w-5 h-5" />
+                            </Link>
+                        </Button>
+                    )}
+                </div>
                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     {building.year_completed && (
                         <div className="flex items-center gap-1.5">
@@ -224,7 +238,6 @@ export default function BuildingDetails() {
                     )}
                     {building.architects && (
                         <div className="flex items-center gap-1.5">
-                            <Edit2 className="w-4 h-4" />
                             <span>{building.architects.join(", ")}</span>
                         </div>
                     )}
@@ -237,6 +250,9 @@ export default function BuildingDetails() {
                             <Badge key={style} variant="outline" className="border-white/20">{style}</Badge>
                         ))}
                     </div>
+                )}
+                {building.description && (
+                  <p className="mt-4 text-muted-foreground">{building.description}</p>
                 )}
             </div>
 
