@@ -182,17 +182,17 @@ export default function CreateSession() {
       // Add the film
       // Use existing addFilm logic but we need to fetch basic info first if not provided
       // For now, let's fetch basic info from TMDB
-      try {
-          const { data: filmData } = await supabase.functions.invoke("tmdb-movie", {
-              body: { movieId: tId, type: "movie" } // Assuming movie
-          });
-          if (filmData) {
-              addFilm(filmData);
-              setMainFilmId(tId);
-          }
-      } catch (e) {
-          console.error("Error fetching backlog film", e);
-      }
+      // try {
+      //     const { data: filmData } = await supabase.functions.invoke("tmdb-movie", {
+      //         body: { movieId: tId, type: "movie" } // Assuming movie
+      //     });
+      //     if (filmData) {
+      //         addFilm(filmData);
+      //         setMainFilmId(tId);
+      //     }
+      // } catch (e) {
+      //     console.error("Error fetching backlog film", e);
+      // }
   };
 
   const fetchActiveCycles = async () => {
@@ -316,77 +316,13 @@ export default function CreateSession() {
       return;
     }
     
-    setSearching(true);
-    try {
-      // Use "multi" to search for movies AND tv shows
-      const { data } = await supabase.functions.invoke("tmdb-search", {
-        body: { query: q, type: "multi" },
-      });
-      
-      // Filter out people or other media types if needed, keep movies and tv
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const filtered = (data.results || []).filter((item: any) => 
-        item.media_type === "movie" || item.media_type === "tv"
-      );
-      
-      setResults(filtered.slice(0, 20) || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSearching(false);
-    }
+    // Legacy search removed
+    setResults([]);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const addFilm = async (film: any) => {
-    const filmId = film.id; 
-    const exists = selectedFilms.some(f => (f.tmdb_id || f.id) === filmId);
-
-    if (!exists) {
-      // Optimistic add with loading state
-      const tempFilm = { ...film, loadingDetails: true };
-      setSelectedFilms(prev => [...prev, tempFilm]);
-      setQuery("");
-      setResults([]);
-
-      try {
-        const mediaType = film.media_type || 'movie';
-        // Fetch full details (credits, runtime, etc.)
-        const { data: tmdbData } = await supabase.functions.invoke("tmdb-movie", {
-             body: { movieId: filmId, type: mediaType },
-        });
-
-        if (tmdbData) {
-            setSelectedFilms(prev => prev.map(f => {
-                if ((f.tmdb_id || f.id) === filmId) {
-                     // Extract Director (for movies) or Creator (for TV)
-                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                     const director = tmdbData.credits?.crew?.find((p: any) => p.job === 'Director')?.name
-                                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                      || tmdbData.created_by?.map((c:any) => c.name).join(', ');
-
-                     // Extract Runtime
-                     const runtime = tmdbData.runtime || (tmdbData.episode_run_time?.length ? tmdbData.episode_run_time[0] : 0);
-
-                     return {
-                         ...f,
-                         ...tmdbData, // Merge full details
-                         director_name: director,
-                         runtime: runtime,
-                         loadingDetails: false
-                     };
-                }
-                return f;
-            }));
-        } else {
-             // Fallback: remove loading flag
-             setSelectedFilms(prev => prev.map(f => (f.tmdb_id || f.id) === filmId ? { ...f, loadingDetails: false } : f));
-        }
-      } catch (e) {
-        console.error("Error fetching details", e);
-        setSelectedFilms(prev => prev.map(f => (f.tmdb_id || f.id) === filmId ? { ...f, loadingDetails: false } : f));
-      }
-    }
+      // Legacy add film logic removed
   };
 
   const removeFilm = (idToRemove: number) => {
@@ -601,76 +537,7 @@ export default function CreateSession() {
         // If film doesn't exist OR is missing key metadata, fetch full details
         const needsDetails = !existingFilm || !existingFilm.credits || !existingFilm.runtime;
 
-        if (needsDetails) {
-           const { data: tmdbData, error: tmdbError } = await supabase.functions.invoke("tmdb-movie", {
-             body: { movieId: tmdbId, type: mediaType },
-           });
-
-           if (!tmdbError && tmdbData) {
-               // Handle property differences between Movie and TV
-               const title = tmdbData.title || tmdbData.name; // TV uses name
-               const releaseDate = tmdbData.release_date || tmdbData.first_air_date; // TV uses first_air_date
-               // Runtime for TV is often in episode_run_time array
-               const runtime = tmdbData.runtime || (tmdbData.episode_run_time?.length ? tmdbData.episode_run_time[0] : 0);
-
-               // Extract trailer
-               const trailer = tmdbData.videos?.results?.find(
-                 (v: any) => v.site === "YouTube" && v.type === "Trailer"
-               );
-               const trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
-
-               // Upsert with full details
-               const filmToUpsert = {
-                  tmdb_id: tmdbId,
-                  media_type: mediaType,
-                  title: title || tmdbFilm.title || tmdbFilm.name,
-                  original_title: tmdbData.original_title || tmdbData.original_name || tmdbFilm.original_title || tmdbFilm.original_name,
-                  overview: tmdbData.overview || tmdbFilm.overview,
-                  poster_path: tmdbData.poster_path || tmdbFilm.poster_path,
-                  backdrop_path: tmdbData.backdrop_path, 
-                  release_date: releaseDate || tmdbFilm.release_date || tmdbFilm.first_air_date,
-                  credits: tmdbData.credits,
-                  runtime: runtime,
-                  original_language: tmdbData.original_language,
-                  countries: tmdbData.production_countries,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  genre_ids: tmdbData.genres?.map((g: any) => g.id) || [],
-                  trailer: trailerUrl
-               };
-
-               const { data: upsertedFilm, error: upsertError } = await supabase
-                .from('films')
-                .upsert(
-                    filmUuid ? { ...filmToUpsert, id: filmUuid } : filmToUpsert
-                )
-                .select()
-                .single();
-
-               if (upsertError) throw upsertError;
-               filmUuid = upsertedFilm.id;
-           } else {
-               // Fallback: Just insert what we have if fetch fails and it's a new film
-               console.error("Could not fetch details from TMDB", tmdbError);
-               if (!filmUuid) {
-                   const { data: newFilm, error: filmError } = await supabase
-                    .from('films')
-                    .insert({
-                      tmdb_id: tmdbId,
-                      title: tmdbFilm.title || tmdbFilm.name,
-                      poster_path: tmdbFilm.poster_path || null,
-                      overview: tmdbFilm.overview || null,
-                      release_date: tmdbFilm.release_date || tmdbFilm.first_air_date || null,
-                      media_type: mediaType,
-                      original_language: tmdbFilm.original_language || null
-                    })
-                    .select()
-                    .single();
-                   
-                   if (filmError) throw filmError;
-                   filmUuid = newFilm.id;
-               }
-           }
-        }
+        // Legacy TMDB fetch logic removed
 
         // Link to session
         if (filmUuid) {

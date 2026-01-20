@@ -16,9 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { useFilmAvailability } from "@/hooks/useFilmAvailability";
-import { FilmAvailability } from "@/components/film/FilmAvailability";
-import { RatingSpectrum } from "@/components/RatingSpectrum";
+// import { useFilmAvailability } from "@/hooks/useFilmAvailability";
+// import { FilmAvailability } from "@/components/film/FilmAvailability";
+// import { RatingSpectrum } from "@/components/RatingSpectrum";
 import { MetaHead } from "@/components/common/MetaHead";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { COUNTRIES, normalizeCountries } from "@/lib/countries";
@@ -399,13 +399,12 @@ export default function FilmDetails({ mediaType: propMediaType }: { mediaType?: 
 
   // --- Derived Data for Render ---
   const availabilityFromMovie = useMemo(() => {
-      if (!movie || !movie["watch/providers"]?.results || !userCountry) return undefined;
-      const results = movie["watch/providers"].results[userCountry];
-      if (!results) return undefined;
-      return { stream: results.flatrate || [], rent: results.rent || [], buy: results.buy || [] };
+      // Legacy provider logic removed
+      return undefined;
   }, [movie, userCountry]);
 
-  const { availability, loading: availabilityLoading } = useFilmAvailability(dbFilmId, id ? parseInt(id) : null, (propMediaType || type), userCountry, availabilityFromMovie);
+  const availability = undefined;
+  const availabilityLoading = false;
 
   // Sorting Logic for Social Section
   const { friendsText, friendsStars, communityText, communityStars, friendsWantToWatch } = useMemo(() => {
@@ -573,14 +572,14 @@ export default function FilmDetails({ mediaType: propMediaType }: { mediaType?: 
                              )}
                          </div>
                          <div>
-                             <FilmAvailability
+                             {/* <FilmAvailability
                                 availability={availability}
                                 loading={availabilityLoading}
                                 countryCode={userCountry}
                                 subscribedPlatforms={fullUserProfile?.subscribed_platforms}
                                 mode="summary"
                                 onExpand={() => setShowAvailabilityDialog(true)}
-                             />
+                             /> */}
                          </div>
                      </div>
                 </div>
@@ -621,7 +620,7 @@ export default function FilmDetails({ mediaType: propMediaType }: { mediaType?: 
                                 </div>
                             </div>
                             <div className="p-5 bg-card/80 shadow-sm transition-colors">
-                                <RatingSpectrum logs={spectrumLogs} />
+                                {/* <RatingSpectrum logs={spectrumLogs} /> */}
                             </div>
                         </div>
                     )}
@@ -715,7 +714,7 @@ export default function FilmDetails({ mediaType: propMediaType }: { mediaType?: 
         />
       )}
 
-      <Dialog open={showAvailabilityDialog} onOpenChange={setShowAvailabilityDialog}>
+      {/* <Dialog open={showAvailabilityDialog} onOpenChange={setShowAvailabilityDialog}>
           <DialogContent>
               <DialogHeader>
                   <DialogTitle tabIndex={0} className="focus:outline-none">Where to Watch</DialogTitle>
@@ -728,7 +727,7 @@ export default function FilmDetails({ mediaType: propMediaType }: { mediaType?: 
                  mode="full"
               />
           </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
     </AppLayout>
   );
@@ -796,7 +795,7 @@ function HeroSection({ movie, availability, availabilityLoading, onOpenAvailabil
                   </div>
 
                   {/* Availability Utility Line */}
-                  <div className="w-full max-w-sm lg:max-w-none flex justify-center lg:justify-start mb-4 lg:mb-0">
+                  {/* <div className="w-full max-w-sm lg:max-w-none flex justify-center lg:justify-start mb-4 lg:mb-0">
                      <FilmAvailability
                         availability={availability}
                         loading={availabilityLoading}
@@ -805,7 +804,7 @@ function HeroSection({ movie, availability, availabilityLoading, onOpenAvailabil
                         mode="hero"
                         onExpand={onOpenAvailability}
                      />
-                  </div>
+                  </div> */}
              </div>
         </div>
     );
