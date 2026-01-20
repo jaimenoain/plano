@@ -18,7 +18,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import GroupSettings from "./pages/GroupSettings";
 import NotFound from "./pages/NotFound";
-// import FilmDetails from "./pages/FilmDetails";
+import BuildingDetails from "./pages/BuildingDetails";
 import ReviewDetails from "./pages/ReviewDetails";
 import Notifications from "./pages/Notifications";
 import Groups from "./pages/Groups";
@@ -126,8 +126,7 @@ const router = createBrowserRouter(
       <Route path="/settings" element={<Settings />} />
 
       {/* SEO Friendly Routes */}
-      {/* <Route path="/movie/:slug/:id" element={<FilmDetails mediaType="movie" />} /> */}
-      {/* <Route path="/tv/:slug/:id" element={<FilmDetails mediaType="tv" />} /> */}
+      {/* <Route path="/building/:slug/:id" element={<BuildingDetails />} /> */}
 
       {/* Nested Review Routes */}
       {/* <Route path="/movie/:slug/:id/review/:username" element={<ReviewDetails mediaType="movie" />} /> */}
@@ -136,7 +135,7 @@ const router = createBrowserRouter(
       {/* <Route path="/tv/:slug/:id/:username" element={<ReviewDetails mediaType="tv" />} /> */}
 
       {/* Legacy/Fallback Routes */}
-      {/* <Route path="/media/:type/:id" element={<FilmDetails />} /> */}
+      {/* <Route path="/building/:type/:id" element={<BuildingDetails />} /> */}
       {/* <Route path="/review/:id" element={<ReviewDetails />} /> */}
 
       <Route path="*" element={<NotFound />} />
