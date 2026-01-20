@@ -18,8 +18,10 @@ END $$;
 ALTER TABLE user_buildings DROP CONSTRAINT IF EXISTS user_buildings_status_check;
 
 -- Alter the status column to use the enum
--- We cast existing values to the new type.
--- Note: 'pending' and 'visited' exist. 'did_not_finish' is new.
+-- We must drop the default first to avoid "default for column cannot be cast automatically" error
+-- Then we alter the type with a cast
+-- Finally we restore the default with the correct enum type
 ALTER TABLE user_buildings
-  ALTER COLUMN status TYPE user_building_status
-  USING status::user_building_status;
+  ALTER COLUMN status DROP DEFAULT,
+  ALTER COLUMN status TYPE user_building_status USING status::user_building_status,
+  ALTER COLUMN status SET DEFAULT 'pending'::user_building_status;
