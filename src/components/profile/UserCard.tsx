@@ -24,7 +24,7 @@ interface Profile {
 
 interface Stats {
     reviews: number;
-    watchlist: number;
+    pending: number;
     followers: number;
     following: number;
 }
@@ -37,7 +37,7 @@ interface UserCardProps {
     onFollowToggle: () => void;
     onSignOut: () => void;
     onOpenUserList: (type: "followers" | "following") => void;
-    onTabChange: (tab: "reviews" | "watchlist") => void;
+    onTabChange: (tab: "reviews" | "bucket_list") => void;
     squad?: Profile[];
 }
 
@@ -134,7 +134,7 @@ export function UserCard({
                     {/* Stats Row */}
                     <div className="flex items-center justify-between md:justify-start md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border/40">
                         <StatItem label="reviews" value={stats.reviews} onClick={() => onTabChange("reviews")} />
-                        <StatItem label="watchlist" value={stats.watchlist} onClick={() => onTabChange("watchlist")} />
+                        <StatItem label="bucket list" value={stats.pending} onClick={() => onTabChange("bucket_list")} />
                         <StatItem label="followers" value={stats.followers} onClick={() => onOpenUserList("followers")} />
                         <StatItem label="following" value={stats.following} onClick={() => onOpenUserList("following")} />
                     </div>

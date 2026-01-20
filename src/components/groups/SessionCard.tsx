@@ -105,19 +105,19 @@ export function SessionCard({
 
   const hasHistory = globalRankingData?.length > 0;
 
-  const getVisibleFilmStats = (filmId: string) => {
+  const getVisibleBuildingStats = (buildingId: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const logs = visibleLogs?.filter((l: any) => String(l.film_id) === String(filmId)) || [];
+    const logs = visibleLogs?.filter((l: any) => String(l.building_id) === String(buildingId)) || [];
     if (!logs.length) return null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const avg = logs.reduce((acc: number, val: any) => acc + val.rating, 0) / logs.length;
     return { avg, count: logs.length, logs };
   };
 
-  // Check if any film in the session has more than 1 rating from the group
+  // Check if any building in the session has more than 1 rating from the group
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const hasEnoughRatings = session.films?.some((f: any) => {
-    const stats = getVisibleFilmStats(f.film.id);
+  const hasEnoughRatings = session.buildings?.some((f: any) => {
+    const stats = getVisibleBuildingStats(f.building.id);
     return stats && stats.count > 1;
   });
 
@@ -188,15 +188,15 @@ export function SessionCard({
     }
   });
 
-  const rateFilm = useMutation({
-    mutationFn: async ({ filmId, rating }: { filmId: string, rating: number }) => {
+  const rateBuilding = useMutation({
+    mutationFn: async ({ buildingId, rating }: { buildingId: string, rating: number }) => {
       if (!user) throw new Error("Must be logged in");
-      const { data: existingLogs } = await supabase.from("log").select("id").eq("user_id", user.id).eq("film_id", filmId);
+      const { data: existingLogs } = await supabase.from("log").select("id").eq("user_id", user.id).eq("building_id", buildingId);
       if (existingLogs?.[0]) {
          const { error } = await supabase.from("log").update({ rating }).eq("id", existingLogs[0].id);
          if (error) throw error;
       } else {
-         const { error } = await supabase.from("log").insert({ user_id: user.id, film_id: filmId, rating, watched_at: new Date().toISOString() });
+         const { error } = await supabase.from("log").insert({ user_id: user.id, building_id: buildingId, rating, watched_at: new Date().toISOString() });
          if (error) throw error;
       }
     },
@@ -213,8 +213,8 @@ export function SessionCard({
 
   const handleAddToCalendar = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filmsList = (session.films || []).map((f: any) =>
-      `${f.is_main ? '[Main] ' : ''}${f.film.title}`
+    const buildingList = (session.buildings || []).map((f: any) =>
+      `${f.is_main ? '[Main] ' : ''}${f.building.name}`
     ).join('\n');
 
     const sessionUrl = `${window.location.origin}/groups/${slug}/sessions/${slugify(session.title || "session")}/${session.id}`;
@@ -222,14 +222,14 @@ export function SessionCard({
     const description = [
       session.description,
       '',
-      'Films:',
-      filmsList,
+      'Buildings:',
+      buildingList,
       '',
       `Link: ${sessionUrl}`
     ].filter(Boolean).join('\n');
 
     const url = createGoogleCalendarUrl({
-      title: session.title || "Movie Night",
+      title: session.title || "Architecture Session",
       description,
       startTime: sDate,
     });
@@ -387,46 +387,38 @@ export function SessionCard({
         )}
 
         <div className="divide-y divide-border/40 flex-1">
-          {[...(session.films || [])]
+          {[...(session.buildings || [])]
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .sort((a: any, b: any) => (a.is_main === b.is_main ? 0 : a.is_main ? -1 : 1))
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .map(({ film, is_main }: any) => {
-              const localStats = getVisibleFilmStats(film.id);
+            .map(({ building, is_main }: any) => {
+              const localStats = getVisibleBuildingStats(building.id);
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const myLog = localStats?.logs.find((l: any) => l.user.id === user?.id);
 
-              const releaseYear = film.release_date ? new Date(film.release_date).getFullYear() : null;
-              const runtime = film.runtime ? `${film.runtime}m` : null;
-              const genres = film.genre_ids?.slice(0, 2).map((gid: number) => GENRE_MAP[gid]).filter(Boolean);
-              const showOriginalTitle = film.original_title && film.original_title !== film.title;
-              const mainTitle = showOriginalTitle ? film.original_title : film.title;
-              const subTitle = showOriginalTitle ? film.title : null;
-
               return (
                 <div
-                  key={film.id}
+                  key={building.id}
                   className="group/item hover:bg-muted/20 cursor-pointer transition-colors relative"
-                  onClick={() => navigate(`/${film.media_type || 'movie'}/${slugify(film.title || "")}/${film.tmdb_id}`)}
+                  onClick={() => navigate(`/building/${building.id}`)}
                 >
                   <div className={`flex gap-5 p-5 ${showGroupStats ? "pb-2" : ""}`}>
                     <div className="relative shrink-0 w-20 h-28 rounded-md overflow-hidden border bg-muted shadow-sm">
-                      <img src={`https://image.tmdb.org/t/p/w200${film.poster_path}`} className="w-full h-full object-cover" alt={film.title} />
+                      <img src={building.image_url || '/placeholder.png'} className="w-full h-full object-cover" alt={building.name} />
                     </div>
                     <div className="flex-1 flex flex-col justify-center min-w-0 py-1">
                       <div className="mb-2 flex justify-between items-start">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-lg leading-tight">{mainTitle}</h4>
+                            <h4 className="font-bold text-lg leading-tight">{building.name}</h4>
                             {is_main && (
                               <Badge className="h-5 px-1.5 text-[10px] bg-blue-600 text-white rounded">Main</Badge>
                             )}
                           </div>
-                          {subTitle && <p className="text-xs text-muted-foreground truncate">{subTitle}</p>}
                         </div>
                         <div onClick={(e) => e.stopPropagation()}>
                           {myLog?.rating ? (
-                            <Button variant="default" size="sm" className="h-9 px-3 bg-primary/10 border-primary/20 border" onClick={() => navigate(`/post?movieId=${film.tmdb_id}&mediaType=${film.media_type || 'movie'}&title=${encodeURIComponent(film.title || "")}&poster=${film.poster_path || ""}`)}>
+                            <Button variant="default" size="sm" className="h-9 px-3 bg-primary/10 border-primary/20 border" onClick={() => navigate(`/post?buildingId=${building.id}&title=${encodeURIComponent(building.name || "")}`)}>
                               <div className="flex items-center gap-1.5">
                                 <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                                 <span className="text-white font-bold text-base">{myLog.rating}</span>
@@ -434,15 +426,14 @@ export function SessionCard({
                               </div>
                             </Button>
                           ) : (
-                            <PersonalRatingButton filmId={film.id} initialRating={null} onRate={(fid, rating) => rateFilm.mutate({ filmId: fid, rating })} isPending={rateFilm.isPending} />
+                            <PersonalRatingButton filmId={building.id} initialRating={null} onRate={(bid, rating) => rateBuilding.mutate({ buildingId: bid, rating })} isPending={rateBuilding.isPending} />
                           )}
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                        {releaseYear && <span>{releaseYear}</span>}
-                        {runtime && <span>{runtime}</span>}
+                        {building.year && <span>{building.year}</span>}
                         <div className="basis-full h-0 sm:hidden"></div>
-                        {genres?.map((g: string) => <Badge key={g} variant="outline" className="text-xs h-5 px-1.5 font-normal">{g}</Badge>)}
+                        {building.architects && building.architects.map((a: string) => <Badge key={a} variant="outline" className="text-xs h-5 px-1.5 font-normal">{a}</Badge>)}
                       </div>
                     </div>
                   </div>
@@ -510,7 +501,7 @@ export function SessionCard({
         {/* Chart Section */}
         {hasHistory && showGroupStats && !isAfterToday && hasEnoughRatings && (
            <SessionRatingChart
-             sessionFilms={session.films}
+             sessionBuildings={session.buildings}
              globalRankingData={globalRankingData}
            />
         )}

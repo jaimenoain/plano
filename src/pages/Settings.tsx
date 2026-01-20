@@ -367,7 +367,7 @@ export default function Settings() {
           escapeCsvCell(item.rating),
           escapeCsvCell(item.content),
           escapeCsvCell(item.tags ? item.tags.join("|") : ""),
-          escapeCsvCell(item.status === "watchlist" ? "Watchlist" : "Watched"),
+          escapeCsvCell(item.status === "pending" ? "Bucket List" : "Visited"),
           escapeCsvCell(formatDate(item.watched_at || item.created_at))
         ].join(",");
       });
@@ -688,7 +688,7 @@ export default function Settings() {
                 <div>
                   <h3 className="font-medium">Download My Data</h3>
                   <p className="text-sm text-muted-foreground">
-                    Export your ratings, reviews, and watchlist to a CSV file.
+                    Export your ratings, reviews, and bucket list to a CSV file.
                   </p>
                 </div>
                 <Button

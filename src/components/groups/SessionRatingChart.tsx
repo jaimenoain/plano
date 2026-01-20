@@ -3,7 +3,7 @@ import { LineChart, Line, ResponsiveContainer, Tooltip, TooltipProps, YAxis } fr
 
 interface SessionRatingChartProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sessionFilms: any[];
+  sessionBuildings: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   globalRankingData: any[];
 }
@@ -163,7 +163,7 @@ const FilmTooltip = ({ data }: { data: any }) => {
       );
 };
 
-export function SessionRatingChart({ sessionFilms, globalRankingData }: SessionRatingChartProps) {
+export function SessionRatingChart({ sessionBuildings, globalRankingData }: SessionRatingChartProps) {
   const [hoveredFilm, setHoveredFilm] = useState<any>(null);
 
   const chartData = useMemo(() => {
@@ -174,7 +174,7 @@ export function SessionRatingChart({ sessionFilms, globalRankingData }: SessionR
     const sortedData = [...globalRankingData].sort((a: any, b: any) => b.avg_rating - a.avg_rating);
     const totalCount = sortedData.length;
 
-    const sessionFilmIds = new Set(sessionFilms?.map(sf => String(sf.film.id)));
+    const sessionBuildingIds = new Set(sessionBuildings?.map(sf => String(sf.building.id)));
 
     // Counter to maintain alternating label logic just for session films
     let sessionOrderCounter = 0;
@@ -182,16 +182,14 @@ export function SessionRatingChart({ sessionFilms, globalRankingData }: SessionR
     // Map data to calculate GLOBAL ranking/percentile
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mappedData = sortedData.map((stat: any, index: number) => {
-      const filmIdStr = String(stat.film_id);
-      const isSessionFilm = sessionFilmIds.has(filmIdStr);
+      const buildingIdStr = String(stat.building_id);
+      const isSessionFilm = sessionBuildingIds.has(buildingIdStr);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sessionFilm = isSessionFilm ? sessionFilms.find((sf: any) => String(sf.film.id) === filmIdStr) : null;
+      const sessionBuilding = isSessionFilm ? sessionBuildings.find((sf: any) => String(sf.building.id) === buildingIdStr) : null;
 
       // Titles logic
-      const originalTitle = sessionFilm?.film?.original_title;
-      const localTitle = sessionFilm?.film?.title;
       // Prefer original title, fallback to local, then stat title
-      const displayTitle = originalTitle || localTitle || stat.title || "Unknown";
+      const displayTitle = sessionBuilding?.building?.name || stat.name || "Unknown";
 
       // Calculate Percentile (Top X%) - relative to TOTAL rated films
       const percentile = Math.ceil(((index + 1) / totalCount) * 100);
@@ -199,7 +197,7 @@ export function SessionRatingChart({ sessionFilms, globalRankingData }: SessionR
       return {
         rating: stat.avg_rating,
         displayTitle,
-        localTitle, // Store for subtitle in tooltip
+        localTitle: null, // Removed concept of local vs original title for buildings for now
         isSessionFilm,
         percentile,
         rank: index + 1,
@@ -211,7 +209,7 @@ export function SessionRatingChart({ sessionFilms, globalRankingData }: SessionR
     // Return the FULL dataset (do not filter) so the sparkline shows the entire group history
     return mappedData;
 
-  }, [sessionFilms, globalRankingData]);
+  }, [sessionBuildings, globalRankingData]);
 
   if (chartData.length === 0) return null;
 

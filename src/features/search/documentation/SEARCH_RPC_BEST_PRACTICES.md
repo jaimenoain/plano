@@ -44,11 +44,11 @@ This document synthesizes technical learnings, regression fixes, and strict impl
 ### Join Accuracy (Internal vs. External IDs)
 
 * **The Incident:** A query failed with `column fa.tmdb_id does not exist` (Code: 42703) when attempting to join `film_availability` (alias `fa`) using `tmdb_id`.
-* **The Logic:** `film_availability` links to `films` via an internal UUID (`film_id`), not the external `tmdb_id`.
+* **The Logic:** `film_availability` links to `films` via an internal UUID (`building_id`), not the external `tmdb_id`.
 * **The Fix:** Always verify relationships to determine if they use internal UUIDs or external IDs.
 ```sql
 -- CORRECT
-WHERE fa.film_id = f.id
+WHERE fa.building_id = f.id
 
 ```
 

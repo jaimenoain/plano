@@ -68,7 +68,7 @@ export default function GroupFeed() {
           user_likes:likes(id)
         `)
         .in("user_id", memberIds)
-        .in("status", ["visited", "watchlist", "review"])
+        .in("status", ["visited", "pending", "review"])
         .eq("user_likes.user_id", user?.id || '')
         .order("edited_at", { ascending: false })
         .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);

@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { UserPicker } from "@/components/common/UserPicker";
 
 type Visibility = "public" | "contacts" | "private";
-type PostType = "review" | "watchlist";
+type PostType = "review" | "bucket_list";
 
 export default function Post() {
   const [searchParams] = useSearchParams();
@@ -36,7 +36,7 @@ export default function Post() {
   const paramImage = searchParams.get("image") || "";
   const typeParam = searchParams.get("type");
 
-  const [postType, setPostType] = useState<PostType>((typeParam === "watchlist" || typeParam === "review") ? typeParam : "review");
+  const [postType, setPostType] = useState<PostType>((typeParam === "bucket_list" || typeParam === "review") ? typeParam as PostType : "review");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0); // Added for hover effect
   const [content, setContent] = useState("");
@@ -99,7 +99,7 @@ export default function Post() {
 
       if (log) {
         setExistingLogId(log.id);
-        setPostType(log.status === "watchlist" ? "watchlist" : "review");
+        setPostType(log.status === "pending" ? "bucket_list" : "review");
         if (log.rating) setRating(log.rating);
         if (log.content) setContent(log.content);
         if (log.tags) setSelectedTags(log.tags);
@@ -165,7 +165,7 @@ export default function Post() {
 
       const { data: logData, error } = await supabase.from("log").upsert({
         ...baseData,
-        status: isReview ? "visited" : "watchlist",
+        status: isReview ? "visited" : "pending",
         rating: isReview ? rating : null,
         content: content.trim() || null,
         tags: selectedTags.length > 0 ? selectedTags : null,
@@ -186,7 +186,7 @@ export default function Post() {
       }
       */
 
-      toast({ title: isReview ? "Review posted!" : "Added to watchlist!" });
+      toast({ title: isReview ? "Review posted!" : "Added to bucket list!" });
       navigate("/", { state: isReview ? { reviewPosted: true } : undefined });
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message });
@@ -228,7 +228,7 @@ export default function Post() {
       <header className="fixed top-0 left-0 right-0 z-50 glass safe-area-pt">
         <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
           <button onClick={() => navigate(-1)} className="p-2 -ml-2"><X className="h-5 w-5" /></button>
-          <span className="text-sm font-medium">{postType === "review" ? "Rate & Review" : "Add to Watchlist"}</span>
+          <span className="text-sm font-medium">{postType === "review" ? "Rate & Review" : "Add to Bucket List"}</span>
           {/* Save button moved to bottom */}
           <div className="w-5" /> 
         </div>
@@ -255,9 +255,9 @@ export default function Post() {
             </div>
 
             <div className="flex gap-2 py-4">
-              {(["review", "watchlist"] as PostType[]).map((type) => (
+              {(["review", "bucket_list"] as PostType[]).map((type) => (
                 <button key={type} onClick={() => setPostType(type)} className={cn("flex-1 py-2 rounded-md text-sm font-medium capitalize", postType === type ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground")}>
-                  {type}
+                  {type === "bucket_list" ? "Bucket List" : "Review"}
                 </button>
               ))}
             </div>

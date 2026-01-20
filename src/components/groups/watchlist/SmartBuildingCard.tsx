@@ -79,7 +79,7 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
 
       // Invalidate queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["group-smart-backlog"] });
-      queryClient.invalidateQueries({ queryKey: ["user-watchlist-count"] });
+      queryClient.invalidateQueries({ queryKey: ["user-bucket-list-count"] });
 
     } catch (error) {
       console.error("Watchlist toggle error:", error);

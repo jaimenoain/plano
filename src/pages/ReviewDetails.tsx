@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Loader2, ArrowLeft, ArrowRight, Trash2, Heart, Star, MessageCircle, Clock, Pencil, MapPin } from "lucide-react";
+import { Loader2, ArrowLeft, ArrowRight, Trash2, Heart, Star, MessageCircle, Clock, Pencil, MapPin, Send } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -439,7 +439,7 @@ export default function ReviewDetails() {
     );
   };
 
-  const isBucketList = review?.status === 'watchlist' || review?.status === 'pending';
+  const isBucketList = review?.status === 'pending';
   const isReviewOwner = user?.id === review?.user_id;
 
   const renderSidebarActions = () => (

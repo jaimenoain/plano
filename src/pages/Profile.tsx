@@ -42,7 +42,7 @@ interface Profile {
 
 interface Stats {
   reviews: number;
-  watchlist: number;
+  pending: number;
   followers: number;
   following: number;
 }
@@ -88,11 +88,11 @@ export default function Profile() {
   
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [stats, setStats] = useState<Stats>({ reviews: 0, watchlist: 0, followers: 0, following: 0 });
+  const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
 
   // URL-derived state
-  const activeTab = (searchParams.get("tab") as "reviews" | "watchlist") || "reviews";
+  const activeTab = (searchParams.get("tab") as "reviews" | "bucket_list") || "reviews";
   const searchQuery = searchParams.get("search") || "";
   const selectedTag = searchParams.get("tag");
 
@@ -291,16 +291,16 @@ export default function Profile() {
 
   const fetchStats = async () => {
     if (!targetUserId) return;
-    const [reviewsResult, watchlistResult, followersResult, followingResult] = await Promise.all([
+    const [reviewsResult, pendingResult, followersResult, followingResult] = await Promise.all([
       supabase.from("log").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "visited"),
-      supabase.from("log").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "watchlist"),
+      supabase.from("log").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "pending"),
       supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", targetUserId),
       supabase.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", targetUserId),
     ]);
 
     setStats({
       reviews: reviewsResult.count || 0,
-      watchlist: watchlistResult.count || 0,
+      pending: pendingResult.count || 0,
       followers: followersResult.count || 0,
       following: followingResult.count || 0,
     });
@@ -325,7 +325,7 @@ export default function Profile() {
     setContentLoading(true);
 
     try {
-        const status = activeTab === "reviews" ? "visited" : "watchlist";
+        const status = activeTab === "reviews" ? "visited" : "pending";
         const { data: logsData, error: logsError } = await supabase
             .from("log")
             .select(`
@@ -611,7 +611,7 @@ export default function Profile() {
             <div className="flex items-center justify-between">
               <TabsList className="grid w-full max-w-[200px] grid-cols-2">
                 <TabsTrigger value="reviews">Reviews</TabsTrigger>
-                <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
+                <TabsTrigger value="bucket_list">Bucket List</TabsTrigger>
               </TabsList>
             </div>
 
@@ -661,7 +661,7 @@ export default function Profile() {
              )}
           </TabsContent>
 
-          <TabsContent value="watchlist" className="mt-0">
+          <TabsContent value="bucket_list" className="mt-0">
              {contentLoading ? (
                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
              ) : filteredContent.length > 0 ? (
@@ -676,7 +676,7 @@ export default function Profile() {
                 ) : (
                   <EmptyState
                     icon={Bookmark}
-                    label="Watchlist is empty"
+                    label="Bucket List is empty"
                     description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
                     action={isOwnProfile ? <Button onClick={() => navigate("/search")}>Search Buildings</Button> : undefined}
                   />
