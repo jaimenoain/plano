@@ -28,7 +28,7 @@ export function BacklogItemCard({ item, cycles, onUpdate }: BacklogItemCardProps
   const [cycleId, setCycleId] = useState(item.cycle_id || "none");
 
   const building = item.building;
-  const imageUrl = building?.image_url || null;
+  const imageUrl = building?.main_image_url || null;
 
   const handleSave = async () => {
     try {

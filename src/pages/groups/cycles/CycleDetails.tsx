@@ -17,8 +17,8 @@ interface CycleLeaderboardItem {
   building: {
     id: string;
     name: string;
-    image_url: string | null;
-    year: number | null;
+    main_image_url: string | null;
+    year_completed: number | null;
   };
   avg_rating: number;
   count: number;
@@ -108,7 +108,7 @@ export default function CycleDetails() {
 
       // Fetch logs
       const { data: logs, error } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select("rating, building_id")
         .in("building_id", sessionBuildingIds)
         .in("user_id", memberIds)
@@ -142,8 +142,8 @@ export default function CycleDetails() {
                   building: {
                       id: building.id,
                       name: building.name,
-                      image_url: building.image_url,
-                      year: building.year
+                      main_image_url: building.main_image_url,
+                      year_completed: building.year_completed
                   },
                   avg_rating: val.sum / val.count,
                   count: val.count
@@ -323,14 +323,14 @@ export default function CycleDetails() {
                                          key={building.id}
                                          className="flex gap-3 items-center group p-1 rounded transition-colors"
                                        >
-                                           <img src={building.image_url} className="w-10 h-14 object-cover rounded shadow-sm" alt="" />
+                                           <img src={building.main_image_url} className="w-10 h-14 object-cover rounded shadow-sm" alt="" />
                                            <div>
                                                <div className="flex items-center gap-2">
                                                    <span className="font-semibold text-sm">{building.name}</span>
                                                    {is_main && <Badge className="text-[10px] h-4 px-1">Main</Badge>}
                                                </div>
                                                <div className="text-xs text-muted-foreground">
-                                                   {building.year}
+                                                   {building.year_completed}
                                                </div>
                                            </div>
                                        </div>
@@ -367,7 +367,7 @@ export default function CycleDetails() {
                               <div className="font-mono text-muted-foreground font-bold w-6 text-center shrink-0">
                                   #{idx + 1}
                               </div>
-                              <img src={item.building.image_url || '/placeholder.png'} className="w-10 h-14 object-cover rounded shrink-0" alt="" />
+                              <img src={item.building.main_image_url || '/placeholder.png'} className="w-10 h-14 object-cover rounded shrink-0" alt="" />
                               <div className="flex-1 min-w-0">
                                   <div className="text-sm font-semibold truncate">{item.building.name}</div>
                                   <div className="text-xs text-muted-foreground flex items-center gap-2">

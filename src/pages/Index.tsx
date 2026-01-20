@@ -129,10 +129,10 @@ interface FeedReview {
   building: {
     id: string;
     name: string;
-    image_url: string | null;
+    main_image_url: string | null;
     address?: string | null;
     architects?: string[] | null;
-    year?: number | null;
+    year_completed?: number | null;
   };
   likes_count: number;
   comments_count: number;
@@ -181,9 +181,9 @@ export default function Index() {
       const to = from + PAGE_SIZE - 1;
 
       // Use standard query instead of RPC to avoid dependency on removed function
-      // Fetched fields updated to include architects and year for the new card design.
+      // Fetched fields updated to include architects and year_completed for the new card design.
       const { data: simpleReviews, error } = await supabase
-          .from("log")
+          .from("user_buildings")
           .select(`
             id,
             content,
@@ -196,7 +196,7 @@ export default function Index() {
             group_id,
             building_id,
             user:profiles(id, username, avatar_url),
-            building:buildings(id, name, image_url, address, architects, year),
+            building:buildings(id, name, main_image_url, address, architects, year_completed),
             likes:likes(count),
             comments:comments(count)
           `)
@@ -232,10 +232,10 @@ export default function Index() {
         building: {
           id: review.building?.id,
           name: review.building?.name || "Unknown Building",
-          image_url: review.building?.image_url || null,
+          main_image_url: review.building?.main_image_url || null,
           address: review.building?.address || null,
           architects: review.building?.architects || null,
-          year: review.building?.year || null,
+          year_completed: review.building?.year_completed || null,
         },
         likes_count: review.likes?.[0]?.count || 0,
         comments_count: review.comments?.[0]?.count || 0,

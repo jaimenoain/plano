@@ -20,7 +20,7 @@ interface AddBuildingDetailsProps {
 
 export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsProps) {
   const [name, setName] = useState("");
-  const [year, setYear] = useState<string>("");
+  const [year_completed, setYear] = useState<string>("");
   const [architects, setArchitects] = useState<string[]>([]);
   const [styles, setStyles] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -75,11 +75,11 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         .from('buildings')
         .insert({
           name,
-          year: year ? parseInt(year) : null,
+          year_completed: year_completed ? parseInt(year_completed) : null,
           architects,
           styles,
           address: locationData.address,
-          image_url: imageUrl,
+          main_image_url: imageUrl,
           // location is a geography(POINT) column. We need to pass a string "POINT(lng lat)"
           // Cast to unknown to bypass strict type check if needed, but Supabase client handles strings for geography often.
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown
@@ -133,11 +133,11 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="year">Year Built</Label>
+              <Label htmlFor="year_completed">Year Built</Label>
               <Input
-                id="year"
+                id="year_completed"
                 type="number"
-                value={year}
+                value={year_completed}
                 onChange={(e) => setYear(e.target.value)}
                 placeholder="e.g. 1973"
               />

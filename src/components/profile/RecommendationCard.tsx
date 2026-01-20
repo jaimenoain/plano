@@ -32,8 +32,8 @@ interface Recommendation {
   building: {
     id: string;
     name: string;
-    image_url: string | null;
-    year: number | null;
+    main_image_url: string | null;
+    year_completed: number | null;
   };
   recommender: {
     username: string | null;
@@ -52,15 +52,15 @@ interface RecommendationCardProps {
 
 export function RecommendationCard({ recommendation, interaction, onDismiss, onRate, onWatchlist }: RecommendationCardProps) {
   const { building, recommender } = recommendation;
-  const year = building.year;
+  const year_completed = building.year_completed;
 
   return (
     <div className="bg-card border border-border/50 rounded-lg overflow-hidden flex flex-col h-full animate-in fade-in zoom-in-95 duration-300">
       <div className="relative aspect-[2/3] group cursor-pointer overflow-hidden">
         <Link to={`/building/${building.id}`}>
-            {building.image_url ? (
+            {building.main_image_url ? (
             <img
-                src={building.image_url}
+                src={building.main_image_url}
                 alt={building.name}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
@@ -77,7 +77,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
             <Link to={`/building/${building.id}`} className="hover:underline">
                  <h3 className="font-semibold leading-tight line-clamp-1" title={building.name}>{building.name}</h3>
             </Link>
-            <p className="text-xs text-muted-foreground mt-0.5">{year} • {formatDistanceToNow(new Date(recommendation.created_at))} ago</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{year_completed} • {formatDistanceToNow(new Date(recommendation.created_at))} ago</p>
         </div>
 
         {/* Recommender Info - More prominent in body */}

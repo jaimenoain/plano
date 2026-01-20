@@ -47,7 +47,7 @@ export type DashboardStats = {
     trending_buildings: {
       building_id: string;
       name: string;
-      image_url: string | null;
+      main_image_url: string | null;
       log_count: number;
     }[];
   };
@@ -143,11 +143,11 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
   },
   content_intelligence: {
     trending_buildings: [
-      { building_id: '1', name: 'Empire State Building', image_url: '/empire.jpg', log_count: 45 },
-      { building_id: '2', name: 'Fallingwater', image_url: '/fallingwater.jpg', log_count: 32 },
-      { building_id: '3', name: 'Guggenheim Museum', image_url: '/guggenheim.jpg', log_count: 28 },
-      { building_id: '4', name: 'Sydney Opera House', image_url: '/sydney.jpg', log_count: 15 },
-      { building_id: '5', name: 'Burj Khalifa', image_url: '/burj.jpg', log_count: 12 },
+      { building_id: '1', name: 'Empire State Building', main_image_url: '/empire.jpg', log_count: 45 },
+      { building_id: '2', name: 'Fallingwater', main_image_url: '/fallingwater.jpg', log_count: 32 },
+      { building_id: '3', name: 'Guggenheim Museum', main_image_url: '/guggenheim.jpg', log_count: 28 },
+      { building_id: '4', name: 'Sydney Opera House', main_image_url: '/sydney.jpg', log_count: 15 },
+      { building_id: '5', name: 'Burj Khalifa', main_image_url: '/burj.jpg', log_count: 12 },
     ],
   },
   user_leaderboard: {

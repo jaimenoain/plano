@@ -21,10 +21,10 @@ interface ReviewCardProps {
     building: {
       id: string;
       name: string;
-      image_url: string | null;
+      main_image_url: string | null;
       address?: string | null;
       architects?: string[] | null;
-      year?: number | null;
+      year_completed?: number | null;
     };
     likes_count: number;
     comments_count: number;
@@ -51,7 +51,7 @@ export function ReviewCard({
   // FIXED: Safety Check - Prevent crash if building data is missing
   if (!review.building) return null;
 
-  const posterUrl = review.building.image_url || null;
+  const posterUrl = review.building.main_image_url || null;
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isDetailView) return;
@@ -88,20 +88,20 @@ export function ReviewCard({
 
   // Metadata Logic: Architect • Year, fallback to Address
   const architects = review.building.architects;
-  const year = review.building.year;
+  const year_completed = review.building.year_completed;
 
   let subTitle = review.building.address;
 
   if (architects && architects.length > 0) {
       subTitle = architects[0];
-      if (year) {
-          subTitle += ` • ${year}`;
+      if (year_completed) {
+          subTitle += ` • ${year_completed}`;
       }
-  } else if (year) {
-      subTitle = `${year}`;
+  } else if (year_completed) {
+      subTitle = `${year_completed}`;
       if (review.building.address) {
-          // If only year is available, maybe show address too contextually,
-          // or just year. Let's show Year • Address for context.
+          // If only year_completed is available, maybe show address too contextually,
+          // or just year_completed. Let's show Year • Address for context.
            subTitle += ` • ${review.building.address}`;
       }
   }

@@ -354,7 +354,7 @@ export default function TinderSession() {
           }
 
           if (buildingId) {
-             await supabase.from("log").insert({
+             await supabase.from("user_buildings").insert({
                  user_id: user.id,
                  building_id: buildingId,
                  status: 'pending'

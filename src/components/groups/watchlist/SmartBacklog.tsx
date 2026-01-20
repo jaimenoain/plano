@@ -45,7 +45,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
     queryFn: async () => {
       if (!user) return 0;
       const { count, error } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("status", "pending");
@@ -101,7 +101,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
 
       // 2. Prepare Questions
       const questionPromises = topBuildings.map(async (building, index) => {
-          const mediaUrl = building.image_url; // Use internal image url
+          const mediaUrl = building.main_image_url; // Use internal image url
           const mediaType = "image";
 
           return {
@@ -117,9 +117,9 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
               building_id: building.id,
               // tmdb_id removed
               // overview removed (not in SmartBuilding)
-              year: building.year,
+              year_completed: building.year_completed,
               architects: building.architects,
-              image_url: building.image_url
+              main_image_url: building.main_image_url
             }
           };
       });

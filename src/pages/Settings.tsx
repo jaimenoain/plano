@@ -323,7 +323,7 @@ export default function Settings() {
           content,
           tags,
           status,
-          watched_at,
+          visited_at,
           created_at,
           films (
             title,
@@ -368,7 +368,7 @@ export default function Settings() {
           escapeCsvCell(item.content),
           escapeCsvCell(item.tags ? item.tags.join("|") : ""),
           escapeCsvCell(item.status === "pending" ? "Bucket List" : "Visited"),
-          escapeCsvCell(formatDate(item.watched_at || item.created_at))
+          escapeCsvCell(formatDate(item.visited_at || item.created_at))
         ].join(",");
       });
 

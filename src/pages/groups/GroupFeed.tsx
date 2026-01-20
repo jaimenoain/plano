@@ -58,11 +58,11 @@ export default function GroupFeed() {
       const memberIds = group.members.map((m: any) => m.user.id);
       
       let query = supabase
-        .from("log")
+        .from("user_buildings")
         .select(`
-          id, content, rating, created_at, edited_at, watched_at, tags, status,
+          id, content, rating, created_at, edited_at, visited_at, tags, status,
           user:profiles(id, username, avatar_url),
-          building:buildings(id, name, image_url, address),
+          building:buildings(id, name, main_image_url, address),
           likes:likes(id),
           comments:comments(count),
           user_likes:likes(id)

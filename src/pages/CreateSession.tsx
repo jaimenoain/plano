@@ -673,8 +673,8 @@ export default function CreateSession() {
                             onClick={() => addBuilding(building)}
                         >
                             <div className="shrink-0 w-10 h-14 bg-muted rounded overflow-hidden shadow-sm">
-                            {building.image_url ? (
-                                <img src={building.image_url} className="w-full h-full object-cover" />
+                            {building.main_image_url ? (
+                                <img src={building.main_image_url} className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                                     <Building2 className="w-4 h-4"/>
@@ -745,8 +745,8 @@ export default function CreateSession() {
                     )}
                 >
                     <div className="shrink-0 w-20 aspect-[2/3] bg-muted rounded-md overflow-hidden shadow-sm relative">
-                        {b.image_url ? (
-                            <img src={b.image_url} className="w-full h-full object-cover" />
+                        {b.main_image_url ? (
+                            <img src={b.main_image_url} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                                 <Building2 className="w-8 h-8 opacity-20"/>

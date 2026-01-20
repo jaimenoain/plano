@@ -16,9 +16,9 @@ export function ContentIntelligenceZone({ trendingBuildings }: ContentIntelligen
           {trendingBuildings.map((building) => (
             <div key={building.building_id} className="flex flex-col items-center text-center space-y-2">
               <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-muted">
-                {building.image_url ? (
+                {building.main_image_url ? (
                   <img
-                    src={building.image_url}
+                    src={building.main_image_url}
                     alt={building.name}
                     className="h-full w-full object-cover"
                   />

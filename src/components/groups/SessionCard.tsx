@@ -191,12 +191,12 @@ export function SessionCard({
   const rateBuilding = useMutation({
     mutationFn: async ({ buildingId, rating }: { buildingId: string, rating: number }) => {
       if (!user) throw new Error("Must be logged in");
-      const { data: existingLogs } = await supabase.from("log").select("id").eq("user_id", user.id).eq("building_id", buildingId);
+      const { data: existingLogs } = await supabase.from("user_buildings").select("id").eq("user_id", user.id).eq("building_id", buildingId);
       if (existingLogs?.[0]) {
-         const { error } = await supabase.from("log").update({ rating }).eq("id", existingLogs[0].id);
+         const { error } = await supabase.from("user_buildings").update({ rating }).eq("id", existingLogs[0].id);
          if (error) throw error;
       } else {
-         const { error } = await supabase.from("log").insert({ user_id: user.id, building_id: buildingId, rating, watched_at: new Date().toISOString() });
+         const { error } = await supabase.from("user_buildings").insert({ user_id: user.id, building_id: buildingId, rating, visited_at: new Date().toISOString() });
          if (error) throw error;
       }
     },
@@ -404,7 +404,7 @@ export function SessionCard({
                 >
                   <div className={`flex gap-5 p-5 ${showGroupStats ? "pb-2" : ""}`}>
                     <div className="relative shrink-0 w-20 h-28 rounded-md overflow-hidden border bg-muted shadow-sm">
-                      <img src={building.image_url || '/placeholder.png'} className="w-full h-full object-cover" alt={building.name} />
+                      <img src={building.main_image_url || '/placeholder.png'} className="w-full h-full object-cover" alt={building.name} />
                     </div>
                     <div className="flex-1 flex flex-col justify-center min-w-0 py-1">
                       <div className="mb-2 flex justify-between items-start">
@@ -431,7 +431,7 @@ export function SessionCard({
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                        {building.year && <span>{building.year}</span>}
+                        {building.year_completed && <span>{building.year_completed}</span>}
                         <div className="basis-full h-0 sm:hidden"></div>
                         {building.architects && building.architects.map((a: string) => <Badge key={a} variant="outline" className="text-xs h-5 px-1.5 font-normal">{a}</Badge>)}
                       </div>
