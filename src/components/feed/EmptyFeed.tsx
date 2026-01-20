@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -6,19 +6,26 @@ export function EmptyFeed() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
       <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-6">
-        <Users className="h-8 w-8 text-primary" />
+        <MapPin className="h-8 w-8 text-primary" />
       </div>
       <h2 className="text-xl font-semibold text-foreground mb-2">
-        Welcome to Cineforum
+        Welcome to Archiforum
       </h2>
       <p className="text-muted-foreground mb-6 max-w-xs">
-        Your feed is empty. Follow other movie lovers to see their reviews and watchlists.
+        Your feed is empty. Follow others to see their building logs and visits.
       </p>
       <Button asChild className="bg-primary hover:bg-primary/90">
         <Link to="/search?tab=users">
-          Find Movie Lovers
+          Find People
         </Link>
       </Button>
+      <div className="mt-4">
+        <Button variant="ghost" asChild>
+            <Link to="/add-building" className="text-muted-foreground hover:text-foreground">
+                Log a building visit
+            </Link>
+        </Button>
+      </div>
     </div>
   );
 }

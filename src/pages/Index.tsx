@@ -131,6 +131,8 @@ interface FeedReview {
     name: string;
     image_url: string | null;
     address?: string | null;
+    architects?: string[] | null;
+    year?: number | null;
   };
   likes_count: number;
   comments_count: number;
@@ -179,33 +181,7 @@ export default function Index() {
       const to = from + PAGE_SIZE - 1;
 
       // Use standard query instead of RPC to avoid dependency on removed function
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from("log")
-        .select(`
-          id,
-          content,
-          rating,
-          tags,
-          created_at,
-          edited_at,
-          status,
-          user_id,
-          group_id,
-          building_id,
-          user:profiles(id, username, avatar_url),
-          building:buildings(id, name, image_url, address),
-          likes:likes(count),
-          comments:comments(count),
-          user_likes:likes(interaction_id)
-        `)
-        .eq("user_likes.user_id", user.id) // This filter might be tricky in standard query with joins, let's simplify
-        // Actually, getting is_liked status efficiently in one query is hard without RPC or lateral joins (not fully supported in simple client).
-        // I will fetch logs and then fetch is_liked separately or just ignore is_liked optimization for now and do it simpler.
-        .range(from, to)
-        .order("created_at", { ascending: false });
-
-      // Re-fetching with correct logic for `user_likes` needs a different approach or post-processing.
-      // Let's do a simpler query and then check likes.
+      // Fetched fields updated to include architects and year for the new card design.
       const { data: simpleReviews, error } = await supabase
           .from("log")
           .select(`
@@ -220,7 +196,7 @@ export default function Index() {
             group_id,
             building_id,
             user:profiles(id, username, avatar_url),
-            building:buildings(id, name, image_url, address),
+            building:buildings(id, name, image_url, address, architects, year),
             likes:likes(count),
             comments:comments(count)
           `)
@@ -229,6 +205,7 @@ export default function Index() {
 
       if (error) throw error;
 
+      // Efficiently fetch user's like status for the fetched reviews
       const reviewIds = simpleReviews.map(r => r.id);
       const { data: userLikes } = await supabase
           .from("likes")
@@ -257,6 +234,8 @@ export default function Index() {
           name: review.building?.name || "Unknown Building",
           image_url: review.building?.image_url || null,
           address: review.building?.address || null,
+          architects: review.building?.architects || null,
+          year: review.building?.year || null,
         },
         likes_count: review.likes?.[0]?.count || 0,
         comments_count: review.comments?.[0]?.count || 0,
