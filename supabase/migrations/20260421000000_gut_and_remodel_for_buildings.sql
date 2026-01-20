@@ -9,8 +9,9 @@ DROP TABLE IF EXISTS film_providers CASCADE;
 -- 3. Transformations (The Remodel)
 
 -- The `log` Table
--- We truncate first to remove all rows as requested
-TRUNCATE TABLE log;
+-- We truncate first to remove all rows as requested.
+-- referencing tables (like comments) need to be cleared too.
+TRUNCATE TABLE log CASCADE;
 
 -- Drop existing policies on log table to avoid dependency issues when dropping columns
 -- Since we don't know the exact names, we can try standard names or drop all if possible.
@@ -28,7 +29,7 @@ END $$;
 ALTER TABLE log DROP COLUMN IF EXISTS film_id;
 
 -- The `group_backlog_items` Table
-TRUNCATE TABLE group_backlog_items;
+TRUNCATE TABLE group_backlog_items CASCADE;
 ALTER TABLE group_backlog_items DROP COLUMN IF EXISTS tmdb_id;
 
 
