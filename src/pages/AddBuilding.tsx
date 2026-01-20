@@ -52,7 +52,14 @@ export default function AddBuilding() {
 
     try {
       // 1. Get coordinates for the address
-      const results = await getGeocode({ address: selectedAddress });
+      // Add a timeout to prevent hanging indefinitely
+      const getGeocodePromise = getGeocode({ address: selectedAddress });
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Geocoding timed out")), 10000)
+      );
+
+      const results = await Promise.race([getGeocodePromise, timeoutPromise]) as google.maps.GeocoderResult[];
+
       if (!results || results.length === 0) {
         toast.error("Could not find coordinates for this address.");
         setIsChecking(false);
