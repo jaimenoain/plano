@@ -13,7 +13,7 @@ interface ReviewCardProps {
     tags?: string[] | null;
     created_at: string;
     edited_at?: string | null;
-    status?: string; // Added status
+    status?: string;
     user: {
       username: string | null;
       avatar_url: string | null;
@@ -23,11 +23,13 @@ interface ReviewCardProps {
       name: string;
       image_url: string | null;
       address?: string | null;
+      architects?: string[] | null;
+      year?: number | null;
     };
     likes_count: number;
     comments_count: number;
     is_liked: boolean;
-    watch_with_users?: { id: string, avatar_url: string | null, username: string | null }[]; // Added watch_with_users
+    watch_with_users?: { id: string, avatar_url: string | null, username: string | null }[];
   };
   onLike?: (reviewId: string) => void; 
   onComment?: (reviewId: string) => void;
@@ -56,10 +58,8 @@ export function ReviewCard({
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
 
-    if (review.building.id && review.user.username) {
-        // Navigate to building specific review or just building details?
-        // Using existing pattern:
-        navigate(`/building/${slugify(review.building.name)}/${review.building.id}/${review.user.username}`);
+    if (review.building.id) {
+        navigate(`/building/${review.building.id}`);
     } else {
         navigate(`/review/${review.id}`);
     }
@@ -70,8 +70,8 @@ export function ReviewCard({
     if (onComment) {
         onComment(review.id);
     } else {
-        if (review.building.id && review.user.username) {
-            navigate(`/building/${slugify(review.building.name)}/${review.building.id}/${review.user.username}`);
+        if (review.building.id) {
+            navigate(`/building/${review.building.id}`);
         } else {
             navigate(`/review/${review.id}`);
         }
@@ -85,7 +85,26 @@ export function ReviewCard({
 
   // Title Logic
   const mainTitle = review.building.name;
-  const subTitle = review.building.address;
+
+  // Metadata Logic: Architect • Year, fallback to Address
+  const architects = review.building.architects;
+  const year = review.building.year;
+
+  let subTitle = review.building.address;
+
+  if (architects && architects.length > 0) {
+      subTitle = architects[0];
+      if (year) {
+          subTitle += ` • ${year}`;
+      }
+  } else if (year) {
+      subTitle = `${year}`;
+      if (review.building.address) {
+          // If only year is available, maybe show address too contextually,
+          // or just year. Let's show Year • Address for context.
+           subTitle += ` • ${review.building.address}`;
+      }
+  }
 
   const isWatchlist = review.status === 'watchlist';
   const watchWithUsers = review.watch_with_users || [];
@@ -125,10 +144,10 @@ export function ReviewCard({
               <img
                 src={posterUrl}
                 alt={review.building.name}
-                className="w-24 h-36 object-cover rounded-sm flex-shrink-0"
+                className="w-32 h-24 object-cover rounded-sm flex-shrink-0"
               />
             ) : (
-              <div className="w-24 h-36 bg-secondary rounded-sm flex-shrink-0 flex items-center justify-center">
+              <div className="w-32 h-24 bg-secondary rounded-sm flex-shrink-0 flex items-center justify-center">
                 <span className="text-xs text-muted-foreground">No image</span>
               </div>
             )
@@ -187,7 +206,6 @@ export function ReviewCard({
             onClick={(e) => {
               e.stopPropagation();
               onLike?.(review.id);
-              // Trigger PWA interaction check on like
               window.dispatchEvent(new CustomEvent('pwa-interaction'));
             }}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
@@ -237,9 +255,9 @@ export function ReviewCard({
         </div>
       )}
 
-      {/* 2. Poster Image - Only if NOT hidden */}
+      {/* 2. Poster Image - Updated for Architecture (4:3) */}
       {!hideBuildingInfo && (
-        <div className="aspect-[2/3] relative bg-secondary overflow-hidden">
+        <div className="aspect-[4/3] relative bg-secondary overflow-hidden">
           {posterUrl ? (
             <img
               src={posterUrl}

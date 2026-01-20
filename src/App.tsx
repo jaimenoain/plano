@@ -125,18 +125,8 @@ const router = createBrowserRouter(
       <Route path="/profile/:username" element={<Profile />} />
       <Route path="/settings" element={<Settings />} />
 
-      {/* SEO Friendly Routes */}
-      {/* <Route path="/building/:slug/:id" element={<BuildingDetails />} /> */}
-
-      {/* Nested Review Routes */}
-      {/* <Route path="/movie/:slug/:id/review/:username" element={<ReviewDetails mediaType="movie" />} /> */}
-      {/* <Route path="/tv/:slug/:id/review/:username" element={<ReviewDetails mediaType="tv" />} /> */}
-      {/* <Route path="/movie/:slug/:id/:username" element={<ReviewDetails mediaType="movie" />} /> */}
-      {/* <Route path="/tv/:slug/:id/:username" element={<ReviewDetails mediaType="tv" />} /> */}
-
-      {/* Legacy/Fallback Routes */}
-      {/* <Route path="/building/:type/:id" element={<BuildingDetails />} /> */}
-      {/* <Route path="/review/:id" element={<ReviewDetails />} /> */}
+      <Route path="/building/:id" element={<BuildingDetails />} />
+      <Route path="/review/:id" element={<ReviewDetails />} />
 
       <Route path="*" element={<NotFound />} />
     </Route>
