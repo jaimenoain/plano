@@ -23,6 +23,7 @@ import ReviewDetails from "./pages/ReviewDetails";
 import Notifications from "./pages/Notifications";
 import Groups from "./pages/Groups";
 import CreateSession from "./pages/CreateSession";
+import AddBuilding from "./pages/AddBuilding";
 
 import GroupLayout from "./pages/groups/GroupLayout";
 import GroupSessions from "./pages/groups/GroupSessions";
@@ -79,6 +80,8 @@ const router = createBrowserRouter(
       <Route path="/search" element={<Search />} />
       <Route path="/post" element={<Post />} />
       <Route path="/notifications" element={<Notifications />} />
+
+      <Route path="/add-building" element={<AddBuilding />} />
 
       <Route path="/groups" element={<Groups />} />
       

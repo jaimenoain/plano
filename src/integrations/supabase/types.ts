@@ -1024,6 +1024,21 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
+      find_nearby_buildings: {
+        Args: {
+          lat: number
+          long: number
+          radius_meters?: number
+        }
+        Returns: {
+          id: string
+          name: string
+          address: string | null
+          location_lat: number
+          location_lng: number
+          dist_meters: number
+        }[]
+      }
       get_group_building_stats: {
         Args: {
           p_group_id: string
