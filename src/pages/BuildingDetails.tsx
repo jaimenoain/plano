@@ -23,9 +23,9 @@ interface BuildingDetails {
   location: any; // PostGIS point handling usually requires parsing
   address: string;
   architects: string[];
-  year: number; // Updated from year_completed
+  year_completed: number;
   styles: string[];
-  image_url: string; // Updated from main_image_url
+  main_image_url: string;
   description: string;
   created_by: string;
 }
@@ -103,7 +103,7 @@ export default function BuildingDetails() {
       if (user) {
         // 2. Fetch User Log (using building_id) 
         const { data: logData } = await supabase
-          .from("log")
+          .from("user_buildings")
           .select("*")
           .eq("user_id", user.id)
           .eq("building_id", id)
@@ -116,7 +116,7 @@ export default function BuildingDetails() {
 
         // 3. Fetch Social Feed
         const { data: reviewData } = await supabase
-          .from("log")
+          .from("user_buildings")
           .select(`
             id, content, rating, status, tags, created_at,
             user:profiles(username, avatar_url)
@@ -158,7 +158,7 @@ export default function BuildingDetails() {
       }
 
       const { error } = await supabase
-          .from("log")
+          .from("user_buildings")
           .upsert(payload, { onConflict: 'user_id, building_id' });
 
       if (error) {
@@ -173,15 +173,15 @@ export default function BuildingDetails() {
 
   return (
     <AppLayout title={building.name} showBack>
-      <MetaHead title={building.name} image={building.image_url} />
+      <MetaHead title={building.name} image={building.main_image_url} />
 
       <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto p-4 lg:p-8">
         
         {/* LEFT: Visuals & Map (Map-First Experience ) */}
         <div className="space-y-6">
             <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
-                {building.image_url ? (
-                    <img src={building.image_url} className="w-full h-full object-cover" alt={building.name} />
+                {building.main_image_url ? (
+                    <img src={building.main_image_url} className="w-full h-full object-cover" alt={building.name} />
                 ) : (
                     <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">No Image</div>
                 )}
@@ -216,10 +216,10 @@ export default function BuildingDetails() {
             <div>
                 <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    {building.year && (
+                    {building.year_completed && (
                         <div className="flex items-center gap-1.5">
                             <Calendar className="w-4 h-4" />
-                            <span>{building.year}</span>
+                            <span>{building.year_completed}</span>
                         </div>
                     )}
                     {building.architects && (

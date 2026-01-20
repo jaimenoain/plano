@@ -61,7 +61,7 @@ interface FeedReview {
   building: {
     id: string;
     name: string;
-    image_url: string | null;
+    main_image_url: string | null;
     address?: string | null;
   };
   likes_count: number;
@@ -292,8 +292,8 @@ export default function Profile() {
   const fetchStats = async () => {
     if (!targetUserId) return;
     const [reviewsResult, pendingResult, followersResult, followingResult] = await Promise.all([
-      supabase.from("log").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "visited"),
-      supabase.from("log").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "pending"),
+      supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "visited"),
+      supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "pending"),
       supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", targetUserId),
       supabase.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", targetUserId),
     ]);
@@ -327,10 +327,10 @@ export default function Profile() {
     try {
         const status = activeTab === "reviews" ? "visited" : "pending";
         const { data: logsData, error: logsError } = await supabase
-            .from("log")
+            .from("user_buildings")
             .select(`
             id, content, rating, created_at, edited_at, user_id, building_id, tags, status,
-            building:buildings ( id, name, image_url, address )
+            building:buildings ( id, name, main_image_url, address )
             `)
             .eq("user_id", targetUserId)
             .eq("status", status)
@@ -370,7 +370,7 @@ export default function Profile() {
             building: {
                 id: item.building?.id || item.building_id,
                 name: item.building?.name || "Unknown Building",
-                image_url: item.building?.image_url || null,
+                main_image_url: item.building?.main_image_url || null,
                 address: item.building?.address || null,
             },
             tags: item.tags || [],

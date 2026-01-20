@@ -15,7 +15,7 @@ export interface FavoriteItem {
   // Film specific
   media_type?: "movie" | "tv";
   rating?: number;
-  year?: string;
+  year_completed?: string;
   reviewId?: string;
   username?: string;
 

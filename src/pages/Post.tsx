@@ -91,7 +91,7 @@ export default function Post() {
     setCheckingExisting(true);
     try {
       const { data: log } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select("*")
         .eq("building_id", buildingId)
         .eq("user_id", user.id)
@@ -115,7 +115,7 @@ export default function Post() {
   const fetchUserTags = async () => {
     if (!user) return;
     const { data } = await supabase
-      .from("log")
+      .from("user_buildings")
       .select("tags")
       .eq("user_id", user.id)
       .not("tags", "is", null);
@@ -131,7 +131,7 @@ export default function Post() {
     if (!buildingId) return;
 
     const { data } = await supabase
-      .from("log")
+      .from("user_buildings")
       .select("tags")
       .eq("building_id", buildingId)
       .eq("status", "visited")
@@ -163,13 +163,13 @@ export default function Post() {
       const baseData = { user_id: user!.id, building_id: buildingId, visibility };
       const isReview = postType === "review";
 
-      const { data: logData, error } = await supabase.from("log").upsert({
+      const { data: logData, error } = await supabase.from("user_buildings").upsert({
         ...baseData,
         status: isReview ? "visited" : "pending",
         rating: isReview ? rating : null,
         content: content.trim() || null,
         tags: selectedTags.length > 0 ? selectedTags : null,
-        watched_at: isReview ? new Date().toISOString() : null, // 'watched_at' maybe should be 'visited_at' but schema kept 'watched_at'
+        visited_at: isReview ? new Date().toISOString() : null, // 'visited_at' maybe should be 'visited_at' but schema kept 'visited_at'
       }, { onConflict: "user_id, building_id" } as any).select().single();
 
       if (error) throw error;
@@ -201,7 +201,7 @@ export default function Post() {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from("log")
+        .from("user_buildings")
         .delete()
         .eq("id", existingLogId);
 
@@ -238,8 +238,8 @@ export default function Post() {
         {checkingExisting ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> : (
           <>
             <div className="flex gap-5 py-6 hairline">
-              {buildingDetails?.image_url || paramImage ? (
-                <img src={buildingDetails?.image_url || paramImage} alt={mainTitle} className="w-32 h-auto aspect-[2/3] object-cover rounded-md shadow-md flex-shrink-0" />
+              {buildingDetails?.main_image_url || paramImage ? (
+                <img src={buildingDetails?.main_image_url || paramImage} alt={mainTitle} className="w-32 h-auto aspect-[2/3] object-cover rounded-md shadow-md flex-shrink-0" />
               ) : (
                 <div className="w-32 h-auto aspect-[2/3] bg-secondary rounded-md flex-shrink-0" />
               )}
@@ -249,7 +249,7 @@ export default function Post() {
                 
                 <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
                   {buildingDetails?.architect && <p>Architect: {buildingDetails.architect}</p>}
-                  {buildingDetails?.year && <p>Year: {buildingDetails.year}</p>}
+                  {buildingDetails?.year_completed && <p>Year: {buildingDetails.year_completed}</p>}
                 </div>
               </div>
             </div>

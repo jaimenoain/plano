@@ -178,7 +178,7 @@ export default function GroupSessions() {
       if (memberIds.length === 0) return [];
 
       const { data, error } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select("building_id, rating, content, tags, user:profiles(id, username, avatar_url)")
         .in("user_id", memberIds)
         .in("building_id", visibleBuildingIds)

@@ -12,13 +12,13 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
 
       // 1. Fetch relevant logs (pending and visited/logged) for selected members
       const { data: logs, error: logsError } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select(`
           building_id,
           user_id,
           status,
           rating,
-          watched_at
+          visited_at
         `)
         .in("user_id", selectedMemberIds)
         .in("status", ["pending", "visited"]);
@@ -30,7 +30,7 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
       const seenSet = new Set<string>(); // building_id (if seen/visited by ANY selected member)
 
       logs.forEach((log) => {
-        const isSeen = log.status === "visited" || log.rating !== null || log.watched_at !== null;
+        const isSeen = log.status === "visited" || log.rating !== null || log.visited_at !== null;
 
         if (isSeen) {
            seenSet.add(log.building_id);
@@ -76,8 +76,8 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
           return {
             id: building.id,
             name: building.name,
-            image_url: building.image_url,
-            year: building.year,
+            main_image_url: building.main_image_url,
+            year_completed: building.year_completed,
             architects: building.architects,
             overlap_count: interestedUserIds.length,
             interested_users: interestedUsers,
@@ -92,7 +92,7 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
         if (b.overlap_count !== a.overlap_count) {
           return b.overlap_count - a.overlap_count;
         }
-        return (b.year || 0) - (a.year || 0);
+        return (b.year_completed || 0) - (a.year_completed || 0);
       });
     },
     enabled: !!group?.id,

@@ -47,7 +47,7 @@ export function ManageTagsDialog({ open, onOpenChange, userId, onTagsUpdate }: M
       // Parallel fetch: logs for tags AND profile for pinned tags
       const [logsResult, profileResult] = await Promise.all([
         supabase
-          .from("log")
+          .from("user_buildings")
           .select("tags")
           .eq("user_id", userId)
           .not("tags", "is", null),
@@ -147,7 +147,7 @@ export function ManageTagsDialog({ open, onOpenChange, userId, onTagsUpdate }: M
     try {
       // 1. Fetch logs containing the old tag
       const { data: logs, error: fetchError } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select("id, tags")
         .eq("user_id", userId)
         .contains("tags", [oldTag]);
@@ -163,7 +163,7 @@ export function ManageTagsDialog({ open, onOpenChange, userId, onTagsUpdate }: M
         const uniqueNewTags = Array.from(new Set(newTags));
 
         return supabase
-          .from("log")
+          .from("user_buildings")
           .update({ tags: uniqueNewTags })
           .eq("id", log.id);
       });
@@ -209,7 +209,7 @@ export function ManageTagsDialog({ open, onOpenChange, userId, onTagsUpdate }: M
     try {
       // 1. Fetch logs containing the tag
       const { data: logs, error: fetchError } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select("id, tags")
         .eq("user_id", userId)
         .contains("tags", [tagToDelete]);
@@ -222,7 +222,7 @@ export function ManageTagsDialog({ open, onOpenChange, userId, onTagsUpdate }: M
       const updates = logs.map(log => {
         const newTags = (log.tags || []).filter(t => t !== tagToDelete);
         return supabase
-          .from("log")
+          .from("user_buildings")
           .update({ tags: newTags })
           .eq("id", log.id);
       });

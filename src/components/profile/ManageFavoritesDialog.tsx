@@ -40,7 +40,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
     setLoading(true);
     try {
       const { data } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select(`
            rating,
            film:films ( id, title, poster_path, media_type, tmdb_id, release_date )
@@ -60,7 +60,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
              title: f.title,
              poster_path: f.poster_path,
              rating: 10,
-             year: f.release_date ? f.release_date.split('-')[0] : undefined
+             year_completed: f.release_date ? f.release_date.split('-')[0] : undefined
            };
         }).filter((item, index, self) =>
             index === self.findIndex((t) => (
@@ -105,14 +105,14 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                 title: r.title || r.name,
                 poster_path: r.poster_path,
                 rating: undefined,
-                year: (r.release_date || r.first_air_date || "").split("-")[0]
+                year_completed: (r.release_date || r.first_air_date || "").split("-")[0]
              }))
              .sort((a, b) => (b.poster_path ? 1 : 0) - (a.poster_path ? 1 : 0)); // Prefer items with posters
 
            if (user && mapped.length > 0) {
              const tmdbIds = mapped.map((r) => r.id);
              const { data: userRatings } = await supabase
-               .from("log")
+               .from("user_buildings")
                .select("rating, film:films!inner(tmdb_id, media_type)")
                .eq("user_id", user.id)
                .in("film.tmdb_id", tmdbIds)
@@ -276,7 +276,7 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     <span className="font-medium truncate text-sm">{item.title}</span>
-                    {item.year && <span className="text-xs text-muted-foreground shrink-0">({item.year})</span>}
+                    {item.year_completed && <span className="text-xs text-muted-foreground shrink-0">({item.year_completed})</span>}
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
                     <span className="uppercase tracking-wider border px-1 rounded-sm">{item.media_type}</span>

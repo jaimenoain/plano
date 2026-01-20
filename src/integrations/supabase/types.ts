@@ -14,40 +14,40 @@ export interface Database {
           created_at: string
           description: string | null
           id: string
-          image_url: string | null
+          main_image_url: string | null
           location: unknown | null
           name: string
           address: string | null
           architect: string | null
           architects: string[] | null
           styles: string[] | null
-          year: number | null
+          year_completed: number | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
-          image_url?: string | null
+          main_image_url?: string | null
           location?: unknown | null
           name: string
           address?: string | null
           architect?: string | null
           architects?: string[] | null
           styles?: string[] | null
-          year?: number | null
+          year_completed?: number | null
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
-          image_url?: string | null
+          main_image_url?: string | null
           location?: unknown | null
           name?: string
           address?: string | null
           architect?: string | null
           architects?: string[] | null
           styles?: string[] | null
-          year?: number | null
+          year_completed?: number | null
         }
         Relationships: []
       }
@@ -114,7 +114,7 @@ export interface Database {
             foreignKeyName: "comments_log_id_fkey"
             columns: ["interaction_id"]
             isOneToOne: false
-            referencedRelation: "log"
+            referencedRelation: "user_buildings"
             referencedColumns: ["id"]
           },
           {
@@ -451,7 +451,7 @@ export interface Database {
             foreignKeyName: "likes_log_id_fkey"
             columns: ["interaction_id"]
             isOneToOne: false
-            referencedRelation: "log"
+            referencedRelation: "user_buildings"
             referencedColumns: ["id"]
           },
           {
@@ -463,7 +463,7 @@ export interface Database {
           }
         ]
       }
-      log: {
+      user_buildings: {
         Row: {
           content: string | null
           created_at: string
@@ -476,7 +476,7 @@ export interface Database {
           tags: string[] | null
           user_id: string
           visibility: string | null
-          watched_at: string | null
+          visited_at: string | null
         }
         Insert: {
           content?: string | null
@@ -490,7 +490,7 @@ export interface Database {
           tags?: string[] | null
           user_id: string
           visibility?: string | null
-          watched_at?: string | null
+          visited_at?: string | null
         }
         Update: {
           content?: string | null
@@ -504,7 +504,7 @@ export interface Database {
           tags?: string[] | null
           user_id?: string
           visibility?: string | null
-          watched_at?: string | null
+          visited_at?: string | null
         }
         Relationships: [
           {
@@ -583,7 +583,7 @@ export interface Database {
             foreignKeyName: "notifications_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
-            referencedRelation: "log"
+            referencedRelation: "user_buildings"
             referencedColumns: ["id"]
           },
           {

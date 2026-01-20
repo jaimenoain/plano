@@ -32,8 +32,8 @@ interface FeedReview {
   building: {
     id: string;
     name: string;
-    image_url: string | null;
-    year: number | null;
+    main_image_url: string | null;
+    year_completed: number | null;
     architects: string[] | null;
     address: string | null;
   };
@@ -101,13 +101,13 @@ export default function ReviewDetails() {
 
         try {
             // 1. Fetch Log Data
-            // Note: DB column is 'image_url', even if sometimes referred to as 'main_image_url' in requirements.
+            // Note: DB column is 'main_image_url', even if sometimes referred to as 'main_image_url' in requirements.
             const { data: reviewData, error } = await supabase
-                .from("log")
+                .from("user_buildings")
                 .select(`
                     id, content, rating, tags, created_at, user_id, building_id, status,
                     user:profiles(username, avatar_url),
-                    building:buildings(id, name, image_url, year, architects, address)
+                    building:buildings(id, name, main_image_url, year_completed, architects, address)
                 `)
                 .eq("id", paramId)
                 .single();
@@ -176,7 +176,7 @@ export default function ReviewDetails() {
                 // Try to find friends first
                 if (followingIds.length > 0) {
                     const { data: friendsData } = await supabase
-                        .from("log")
+                        .from("user_buildings")
                         .select(`
                             id, rating,
                             user:profiles(username, avatar_url)
@@ -195,7 +195,7 @@ export default function ReviewDetails() {
                 // Fallback to community
                 if (relatedData.length === 0) {
                     let query = supabase
-                        .from("log")
+                        .from("user_buildings")
                         .select(`
                             id, rating,
                             user:profiles(username, avatar_url)
@@ -416,7 +416,7 @@ export default function ReviewDetails() {
     if (!review) return;
     if (!window.confirm("Are you sure you want to delete this log? This action cannot be undone.")) return;
     try {
-        const { error } = await supabase.from("log").delete().eq("id", review.id);
+        const { error } = await supabase.from("user_buildings").delete().eq("id", review.id);
         if (error) throw error;
         toast({ title: "Log deleted" });
         navigate("/profile"); 
@@ -485,10 +485,10 @@ export default function ReviewDetails() {
   if (notFound || !review || !review.building) return <NotFound />;
 
   // Building images are typically 4:3
-  const imageUrl = review.building.image_url;
+  const imageUrl = review.building.main_image_url;
 
   const mainTitle = review.building.name;
-  const releaseYear = review.building.year;
+  const releaseYear = review.building.year_completed;
 
   const pageTitle = isBucketList
     ? `${review.user.username} wants to visit ${mainTitle}`
@@ -656,7 +656,7 @@ export default function ReviewDetails() {
                             <Button
                                 size="sm"
                                 variant="secondary"
-                                onClick={() => navigate(`/post?id=${review.building_id}&title=${encodeURIComponent(review.building.name)}&image=${encodeURIComponent(review.building.image_url || '')}`)}
+                                onClick={() => navigate(`/post?id=${review.building_id}&title=${encodeURIComponent(review.building.name)}&image=${encodeURIComponent(review.building.main_image_url || '')}`)}
                             >
                                 <Pencil className="w-4 h-4 mr-2" />
                                 Edit

@@ -17,8 +17,8 @@ interface InterestedUser {
 export interface SmartBuilding {
   id: string;
   name: string;
-  image_url: string | null;
-  year: number | null;
+  main_image_url: string | null;
+  year_completed: number | null;
   architects: string[] | null;
   overlap_count: number;
   interested_users: InterestedUser[];
@@ -36,7 +36,7 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
 
   const isInWatchlist = user && building.interested_users.some(u => u.id === user.id);
 
-  const imageUrl = building.image_url || "/placeholder.svg";
+  const imageUrl = building.main_image_url || "/placeholder.svg";
 
   // Construct Link URL
   const linkUrl = `/building/${building.id}`;
@@ -56,7 +56,7 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
     try {
       if (isInWatchlist) {
         const { error } = await supabase
-          .from("log")
+          .from("user_buildings")
           .delete()
           .eq("user_id", user.id)
           .eq("building_id", building.id)
@@ -66,7 +66,7 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
         toast.success("Removed from bucket list");
       } else {
         const { error } = await supabase
-          .from("log")
+          .from("user_buildings")
           .insert({
             user_id: user.id,
             building_id: building.id,
@@ -137,8 +137,8 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
              {building.architects && building.architects.length > 0 && (
                 <span>{building.architects[0]}</span>
              )}
-             {building.architects && building.architects.length > 0 && building.year && <span>•</span>}
-             {building.year && <span>{building.year}</span>}
+             {building.architects && building.architects.length > 0 && building.year_completed && <span>•</span>}
+             {building.year_completed && <span>{building.year_completed}</span>}
           </div>
         </div>
       </Link>
