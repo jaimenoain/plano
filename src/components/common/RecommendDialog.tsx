@@ -16,7 +16,7 @@ interface RecommendDialogProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  mode?: "recommend" | "watch_with";
+  mode?: "recommend" | "visit_with";
 }
 
 export function RecommendDialog({ building, trigger, open: controlledOpen, onOpenChange: setControlledOpen, mode = "recommend" }: RecommendDialogProps) {
@@ -37,7 +37,7 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
         const url = new URL(window.location.href);
         url.searchParams.set("invited_by", profile.username);
 
-        const textToShare = mode === "watch_with"
+        const textToShare = mode === "visit_with"
             ? `I'd like to visit this building with you! ${url.toString()}`
             : url.toString();
 
@@ -53,7 +53,7 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
     if (!user || selectedUsers.length === 0) return;
     setLoading(true);
     try {
-        const status = mode === "watch_with" ? "watch_with" : "pending";
+        const status = mode === "visit_with" ? "visit_with" : "pending";
         // 'recommendations' table logic:
         // Assuming 'recommendations' table has been updated or we need to use 'notifications' directly.
         // The memory says 'recommendations' table is deleted.
@@ -82,7 +82,7 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
 
         if (notifError) throw notifError;
 
-        const actionText = mode === "watch_with" ? "Visit request sent!" : "Recommendation sent!";
+        const actionText = mode === "visit_with" ? "Visit request sent!" : "Recommendation sent!";
         toast({ title: actionText, description: `Sent to ${selectedUsers.length} friend${selectedUsers.length > 1 ? 's' : ''}.` });
         setOpen && setOpen(false);
         setSelectedUsers([]);
@@ -94,12 +94,12 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
     }
   };
 
-  const title = mode === "watch_with" ? `Visit "${building.name}" with...` : `Recommend "${building.name}"`;
-  const description = mode === "watch_with"
+  const title = mode === "visit_with" ? `Visit "${building.name}" with...` : `Recommend "${building.name}"`;
+  const description = mode === "visit_with"
     ? "Select friends to visit this building with."
     : "Who do you think would love this building?";
-  const buttonText = mode === "watch_with" ? "Suggest to watch" : "Send Recommendation";
-  const ButtonIcon = mode === "watch_with" ? Users : Send;
+  const buttonText = mode === "visit_with" ? "Suggest to visit" : "Send Recommendation";
+  const ButtonIcon = mode === "visit_with" ? Users : Send;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
