@@ -89,7 +89,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
         .insert({
           group_id: group.id,
           title: title,
-          type: "film_selection", // Leaving this as is for now as backend might enforce it, but ideally "building_selection"
+          type: "building_selection",
           status: "open",
           created_by: user.id,
           slug: finalSlug

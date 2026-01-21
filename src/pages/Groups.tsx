@@ -4,7 +4,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, Clapperboard, Popcorn } from "lucide-react";
+import { Plus, Users, Building2, Coffee } from "lucide-react";
 import { format } from "date-fns";
 import {
   Card,
@@ -25,9 +25,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-
-const getPosterUrl = (path: string | null) => 
-  path ? `https://image.tmdb.org/t/p/w400${path}` : "/placeholder.svg";
 
 interface Group {
   id: string;
@@ -61,129 +58,6 @@ export default function Groups() {
     }
   }, [user]);
 
-  // Legacy transformation logic for fallback
-  const transformGroupData = (groupData: any): Group | null => {
-    if (!groupData) return null;
-
-    const members = groupData.group_members || [];
-    const memberCount = members.length;
-    
-    const avatars = members
-      .map((m: any) => m.profiles?.avatar_url)
-      .filter(Boolean)
-      .slice(0, 3);
-
-    const sessions = (groupData.group_sessions || []).sort((a: any, b: any) => 
-      new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
-    );
-
-    const now = new Date();
-    const upcoming = sessions.filter((s: any) => new Date(s.session_date) >= now);
-    const past = sessions.filter((s: any) => new Date(s.session_date) < now);
-
-    const nextSession = upcoming.length > 0 ? upcoming[upcoming.length - 1] : undefined;
-    const lastSession = past.length > 0 ? past[0] : undefined;
-
-    const uniquePosters = Array.from(
-      new Set(
-        sessions.flatMap((s: any) => 
-          (s.session_films || []).map((sf: any) => sf.films?.poster_path)
-        )
-      )
-    ).filter(Boolean).slice(0, 4) as string[];
-
-    return {
-      id: groupData.id,
-      slug: groupData.slug,
-      name: groupData.name,
-      description: groupData.description,
-      is_public: groupData.is_public ?? false,
-      member_count: memberCount,
-      recent_posters: uniquePosters,
-      member_avatars: avatars,
-      next_session_date: nextSession?.session_date,
-      last_session_date: lastSession?.session_date,
-      cover_url: groupData.cover_url,
-    };
-  };
-
-  const fetchGroupsLegacy = async () => {
-     // Original logic...
-     const selectQuery = `
-        *,
-        group_members (
-          profiles ( avatar_url )
-        ),
-        group_sessions (
-          session_date,
-          session_films (
-            films ( poster_path )
-          )
-        )
-      `;
-
-      // 1. Get IDs of groups I belong to
-      const { data: memberData, error: memberError } = await supabase
-        .from('group_members')
-        .select('group_id')
-        .eq('user_id', user!.id)
-        .eq('status', 'active');
-      
-      if (memberError) throw memberError;
-
-      const myGroupIds = memberData.map(m => m.group_id);
-
-      // 2. Fetch My Groups Details
-      let myGroupsList: Group[] = [];
-      if (myGroupIds.length > 0) {
-        const { data: myGroupsData, error: myGroupsError } = await supabase
-          .from('groups')
-          .select(selectQuery)
-          .in('id', myGroupIds)
-          .order('session_date', { foreignTable: 'group_sessions', ascending: false });
-
-        if (myGroupsError) throw myGroupsError;
-
-        myGroupsList = (myGroupsData || [])
-          .map(transformGroupData)
-          .filter((g): g is Group => g !== null);
-      }
-
-      return { myGroupsList, myGroupIds };
-  };
-
-  const fetchPublicGroupsLegacy = async (myGroupIds: string[]) => {
-      const selectQuery = `
-        *,
-        group_members (
-          profiles ( avatar_url )
-        ),
-        group_sessions (
-          session_date,
-          session_films (
-            films ( poster_path )
-          )
-        )
-      `;
-      let publicQuery = supabase
-        .from('groups')
-        .select(selectQuery)
-        .eq('is_public', true)
-        .order('session_date', { foreignTable: 'group_sessions', ascending: false })
-        .limit(5, { foreignTable: 'group_sessions' });
-      
-      if (myGroupIds.length > 0) {
-        publicQuery = publicQuery.not('id', 'in', `(${myGroupIds.join(',')})`);
-      }
-      
-      const { data: publicData, error: publicGroupsError } = await publicQuery;
-      if (publicGroupsError) throw publicGroupsError;
-
-      return (publicData || [])
-        .map(transformGroupData)
-        .filter((g): g is Group => g !== null);
-  };
-
   const sortGroups = (list: Group[]) => {
       return list.sort((a, b) => {
          const aHasUpcoming = !!a.next_session_date;
@@ -207,64 +81,51 @@ export default function Groups() {
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      // Optimized: Use RPC to fetch group summaries in a single query
-      try {
-        // Explicitly passing all parameters to avoid ambiguous 400 errors from PostgREST
-        // when defaults are involved or signatures mismatch slightly.
-        const { data: myGroupsData, error: myRpcError } = await supabase
-          .rpc('get_user_groups_summary', {
-            p_user_id: user!.id,
-            p_type: 'my',
-            p_limit: 50
-          });
-
-        if (myRpcError) {
-          console.error("My Groups RPC Error:", myRpcError);
-          throw myRpcError;
-        }
-
-        const mapRpcGroup = (g: any): Group => ({
-          id: g.id,
-          slug: g.slug,
-          name: g.name,
-          description: g.description,
-          is_public: g.is_public,
-          member_count: Number(g.member_count),
-          recent_posters: g.recent_posters || [],
-          member_avatars: g.member_avatars || [],
-          next_session_date: g.next_session_date,
-          last_session_date: g.last_session_date,
-          cover_url: g.cover_url,
+      // Explicitly passing all parameters to avoid ambiguous 400 errors from PostgREST
+      // when defaults are involved or signatures mismatch slightly.
+      const { data: myGroupsData, error: myRpcError } = await supabase
+        .rpc('get_user_groups_summary', {
+          p_user_id: user!.id,
+          p_type: 'my',
+          p_limit: 50
         });
 
-        const myGroupsList = sortGroups((myGroupsData || []).map(mapRpcGroup));
-        setMyGroups(myGroupsList);
-
-        const { data: publicData, error: publicRpcError } = await supabase
-          .rpc('get_user_groups_summary', {
-            p_user_id: user!.id,
-            p_type: 'public',
-            p_limit: 10
-          });
-
-        if (publicRpcError) {
-          console.error("Public Groups RPC Error:", publicRpcError);
-          throw publicRpcError;
-        }
-
-        const publicGroupsList = (publicData || []).map(mapRpcGroup);
-        setPublicGroups(publicGroupsList);
-
-      } catch (rpcError: any) {
-        // Fallback to legacy method if RPC fails (e.g. migration not applied)
-        console.warn("RPC fetch failed, falling back to legacy method. Details:", rpcError);
-
-        const { myGroupsList, myGroupIds } = await fetchGroupsLegacy();
-        setMyGroups(sortGroups(myGroupsList));
-
-        const publicGroupsList = await fetchPublicGroupsLegacy(myGroupIds);
-        setPublicGroups(publicGroupsList);
+      if (myRpcError) {
+        console.error("My Groups RPC Error:", myRpcError);
+        throw myRpcError;
       }
+
+      const mapRpcGroup = (g: any): Group => ({
+        id: g.id,
+        slug: g.slug,
+        name: g.name,
+        description: g.description,
+        is_public: g.is_public,
+        member_count: Number(g.member_count),
+        recent_posters: g.recent_posters || [],
+        member_avatars: g.member_avatars || [],
+        next_session_date: g.next_session_date,
+        last_session_date: g.last_session_date,
+        cover_url: g.cover_url,
+      });
+
+      const myGroupsList = sortGroups((myGroupsData || []).map(mapRpcGroup));
+      setMyGroups(myGroupsList);
+
+      const { data: publicData, error: publicRpcError } = await supabase
+        .rpc('get_user_groups_summary', {
+          p_user_id: user!.id,
+          p_type: 'public',
+          p_limit: 10
+        });
+
+      if (publicRpcError) {
+        console.error("Public Groups RPC Error:", publicRpcError);
+        throw publicRpcError;
+      }
+
+      const publicGroupsList = (publicData || []).map(mapRpcGroup);
+      setPublicGroups(publicGroupsList);
       
     } catch (error: any) {
       console.error("Error fetching groups:", error);
@@ -345,7 +206,7 @@ export default function Groups() {
              {[...group.recent_posters, ...group.recent_posters].slice(0, 4).map((poster, i) => (
                <div key={i} className="h-full relative">
                  <img 
-                   src={getPosterUrl(poster)} 
+                   src={poster || "/placeholder.svg"}
                    className="object-cover w-full h-full" 
                    alt=""
                  />
@@ -356,7 +217,7 @@ export default function Groups() {
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
             <div className="text-muted-foreground/20">
-               <span className="text-4xl">🎬</span>
+               <Building2 className="w-12 h-12 text-muted-foreground/40" />
             </div>
           </div>
         )}
@@ -407,7 +268,7 @@ export default function Groups() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Groups</h1>
             <p className="text-muted-foreground mt-1">
-              Create film clubs with scheduled sessions or casual groups to share movies with friends.
+              Create clubs with scheduled sessions or casual groups to share buildings with friends.
             </p>
           </div>
 
@@ -448,9 +309,9 @@ export default function Groups() {
                     >
                       <div className="flex items-center gap-2 mb-1.5">
                         <div className={`p-1.5 rounded-md ${groupType === "club" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                          <Clapperboard className="w-4 h-4" />
+                          <Building2 className="w-4 h-4" />
                         </div>
-                        <span className={`text-sm font-semibold ${groupType === "club" ? "text-primary" : ""}`}>Film Club</span>
+                        <span className={`text-sm font-semibold ${groupType === "club" ? "text-primary" : ""}`}>Architecture Club</span>
                       </div>
                       <p className="text-xs text-muted-foreground leading-snug">
                         Structured with scheduled sessions.
@@ -463,12 +324,12 @@ export default function Groups() {
                     >
                       <div className="flex items-center gap-2 mb-1.5">
                         <div className={`p-1.5 rounded-md ${groupType === "casual" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                           <Popcorn className="w-4 h-4" />
+                           <Coffee className="w-4 h-4" />
                         </div>
                         <span className={`text-sm font-semibold ${groupType === "casual" ? "text-primary" : ""}`}>Casual Group</span>
                       </div>
                       <p className="text-xs text-muted-foreground leading-snug">
-                        Friends sharing movies & watchlist.
+                        Friends sharing buildings & bucket list.
                       </p>
                     </div>
                   </div>
@@ -507,7 +368,7 @@ export default function Groups() {
                   </div>
                   <h3 className="font-semibold text-lg">No groups yet</h3>
                   <p className="text-muted-foreground mb-6 max-w-sm text-center">
-                    You haven't joined any film clubs. Create one or browse public groups to get started.
+                    You haven't joined any clubs. Create one or browse public groups to get started.
                   </p>
                   <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
                     Create First Group
