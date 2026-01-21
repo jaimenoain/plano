@@ -36,6 +36,7 @@ export interface Database {
       buildings: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           main_image_url: string | null
@@ -50,6 +51,7 @@ export interface Database {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           main_image_url?: string | null
@@ -64,6 +66,7 @@ export interface Database {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           main_image_url?: string | null
@@ -76,7 +79,15 @@ export interface Database {
           city?: string | null
           country?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "buildings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       comment_likes: {
         Row: {
