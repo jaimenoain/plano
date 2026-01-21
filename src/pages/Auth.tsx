@@ -26,6 +26,7 @@ type Profile = {
   id: string;
   username: string | null;
   avatar_url: string | null;
+  role?: string;
 };
 
 export default function Auth() {

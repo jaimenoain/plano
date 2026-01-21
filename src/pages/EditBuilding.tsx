@@ -46,19 +46,14 @@ export default function EditBuilding() {
       let hasPermission = data.created_by === user?.id;
 
       if (!hasPermission) {
-         // Attempt to check if user has an admin role in profiles, if such a column exists.
-         // Based on common patterns and previous context, we might check 'is_admin' or similar.
-         // However, without explicit schema knowledge from memory, we'll rely on the request to support "Creator or Admin".
-         // We will try to fetch the profile.
+         // Check if user has an admin role
          const { data: profile } = await supabase
             .from('profiles')
-            .select('*')
+            .select('role')
             .eq('id', user?.id)
             .single();
 
-         // Hypothetical check - adjust if schema becomes known.
-         // If no clear admin flag, we revert to strict creator check for safety.
-         if (profile && (profile.is_admin || profile.role === 'admin')) {
+         if (profile && profile.role === 'admin') {
              hasPermission = true;
          }
       }
