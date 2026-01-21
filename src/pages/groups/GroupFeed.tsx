@@ -47,9 +47,9 @@ export default function GroupFeed() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading: logsLoading
+    isLoading: entriesLoading
   } = useInfiniteQuery({
-    queryKey: ["group-logs", id, showOffSession, allGroupBuildingIds],
+    queryKey: ["group-entries", id, showOffSession, allGroupBuildingIds],
     queryFn: async ({ pageParam = 0 }) => {
       if (!group?.members) return [];
       // If we only show session buildings and there are none, return empty immediately
@@ -83,11 +83,11 @@ export default function GroupFeed() {
         
       if (error) throw error;
 
-      return (data || []).map(log => ({
-        ...log,
-        likes_count: (log as any).likes?.length || 0,
-        comments_count: (log as any).comments?.[0]?.count || 0,
-        is_liked: ((log as any).user_likes?.length || 0) > 0
+      return (data || []).map(entry => ({
+        ...entry,
+        likes_count: (entry as any).likes?.length || 0,
+        comments_count: (entry as any).comments?.[0]?.count || 0,
+        is_liked: ((entry as any).user_likes?.length || 0) > 0
       }));
     },
     getNextPageParam: (lastPage, allPages) => {
@@ -102,7 +102,7 @@ export default function GroupFeed() {
 
     // Optimistic update
     queryClient.setQueryData(
-      ["group-logs", id, showOffSession, allGroupBuildingIds],
+      ["group-entries", id, showOffSession, allGroupBuildingIds],
       (oldData: any) => {
         if (!oldData) return oldData;
         return {
@@ -129,7 +129,7 @@ export default function GroupFeed() {
     // We can assume if we just toggled it, the server state was the opposite.
 
     // Let's find the item in the cache we just updated
-    const cache = queryClient.getQueryData(["group-logs", id, showOffSession, allGroupBuildingIds]) as any;
+    const cache = queryClient.getQueryData(["group-entries", id, showOffSession, allGroupBuildingIds]) as any;
     let isLikedNow = false;
 
     // Find the review in the updated cache
@@ -153,11 +153,11 @@ export default function GroupFeed() {
       }
     } catch (error) {
       // Revert if error
-      queryClient.invalidateQueries({ queryKey: ["group-logs", id, showOffSession, allGroupBuildingIds] });
+      queryClient.invalidateQueries({ queryKey: ["group-entries", id, showOffSession, allGroupBuildingIds] });
     }
   };
 
-  const logs = data?.pages.flat() || [];
+  const entries = data?.pages.flat() || [];
 
   return (
     <div>
@@ -170,15 +170,15 @@ export default function GroupFeed() {
         <Label htmlFor="show-off-session">Off-session ratings</Label>
       </div>
 
-      {logsLoading ? (
+      {entriesLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : logs.length > 0 ? (
+      ) : entries.length > 0 ? (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {logs.map((log: any) => (
-              <ReviewCard key={log.id} review={log} onLike={handleLike} />
+            {entries.map((entry: any) => (
+              <ReviewCard key={entry.id} entry={entry} onLike={handleLike} />
             ))}
           </div>
 

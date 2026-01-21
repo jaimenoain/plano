@@ -45,7 +45,7 @@ export default function Post() {
   const [loading, setLoading] = useState(false);
   const [checkingExisting, setCheckingExisting] = useState(true);
   const [buildingDetails, setBuildingDetails] = useState<any>(null);
-  const [existingLogId, setExistingLogId] = useState<string | null>(null);
+  const [existingEntryId, setExistingEntryId] = useState<string | null>(null);
 
   // Tag states
   const [popularTags, setPopularTags] = useState<string[]>([]);
@@ -90,20 +90,20 @@ export default function Post() {
     if (!buildingId || !user) return;
     setCheckingExisting(true);
     try {
-      const { data: log } = await supabase
+      const { data: entry } = await supabase
         .from("user_buildings")
         .select("*")
         .eq("building_id", buildingId)
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (log) {
-        setExistingLogId(log.id);
-        setPostType(log.status === "pending" ? "bucket_list" : "review");
-        if (log.rating) setRating(log.rating);
-        if (log.content) setContent(log.content);
-        if (log.tags) setSelectedTags(log.tags);
-        if (log.visibility) setVisibility(log.visibility as Visibility);
+      if (entry) {
+        setExistingEntryId(entry.id);
+        setPostType(entry.status === "pending" ? "bucket_list" : "review");
+        if (entry.rating) setRating(entry.rating);
+        if (entry.content) setContent(entry.content);
+        if (entry.tags) setSelectedTags(entry.tags);
+        if (entry.visibility) setVisibility(entry.visibility as Visibility);
       }
     } catch (error) {
       console.error("Error checking existing review:", error);
@@ -163,7 +163,7 @@ export default function Post() {
       const baseData = { user_id: user!.id, building_id: buildingId, visibility };
       const isReview = postType === "review";
 
-      const { data: logData, error } = await supabase.from("user_buildings").upsert({
+      const { data: entryData, error } = await supabase.from("user_buildings").upsert({
         ...baseData,
         status: isReview ? "visited" : "pending",
         rating: isReview ? rating : null,
@@ -196,14 +196,14 @@ export default function Post() {
   };
 
   const handleDelete = async () => {
-    if (!existingLogId) return;
+    if (!existingEntryId) return;
 
     setLoading(true);
     try {
       const { error } = await supabase
         .from("user_buildings")
         .delete()
-        .eq("id", existingLogId);
+        .eq("id", existingEntryId);
 
       if (error) throw error;
 
@@ -365,7 +365,7 @@ export default function Post() {
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
               </Button>
 
-              {existingLogId ? (
+              {existingEntryId ? (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <button className="text-sm text-red-500 hover:text-red-600 hover:underline">
