@@ -28,7 +28,7 @@ export function PollCard({ poll, groupSlug, isAdmin }: PollCardProps) {
             <span>Trivia</span>
           </div>
         );
-      case 'film_selection':
+      case 'building_selection':
         return (
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider opacity-90">
             <Film className="w-3.5 h-3.5" />

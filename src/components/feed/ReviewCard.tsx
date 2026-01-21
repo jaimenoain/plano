@@ -106,7 +106,7 @@ export function ReviewCard({
       }
   }
 
-  const isWatchlist = entry.status === 'watchlist';
+  const isWatchlist = entry.status === 'pending';
   const watchWithUsers = entry.watch_with_users || [];
 
   // --- 1. DETAIL VIEW (List View) ---

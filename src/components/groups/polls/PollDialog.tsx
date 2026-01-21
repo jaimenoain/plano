@@ -19,7 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 const pollSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().optional(),
-  type: z.enum(["general", "quiz"]).default("general"),
+  type: z.enum(["general", "quiz", "building_selection"]).default("general"),
   status: z.enum(["draft", "published", "open", "closed", "live"]).default("draft"),
   show_results_before_close: z.boolean().default(false),
   questions: z.array(z.object({
@@ -28,8 +28,8 @@ const pollSchema = z.object({
     allow_custom_answer: z.boolean().default(false),
 
     // New fields for questions
-    response_type: z.enum(["text", "film", "image", "person"]).default("text"),
-    media_type: z.enum(["image", "video", "film"]).optional().nullable(),
+    response_type: z.enum(["text", "building", "image", "person"]).default("text"),
+    media_type: z.enum(["image", "video", "building"]).optional().nullable(),
     media_url: z.string().optional().nullable(),
     media_data: z.any().optional().nullable(), // Store JSON object (e.g. Building data)
 
@@ -39,7 +39,7 @@ const pollSchema = z.object({
       is_correct: z.boolean().optional(),
 
       // New fields for options
-      content_type: z.enum(["text", "film", "image", "person"]).default("text"),
+      content_type: z.enum(["text", "building", "image", "person"]).default("text"),
       media_url: z.string().optional().nullable(),
       building_id: z.string().uuid().optional().nullable()
     }).superRefine((val, ctx) => {
@@ -599,7 +599,7 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
                                                 </FormItem>
                                                 <FormItem className="flex items-center space-x-2 space-y-0">
                                                     <FormControl>
-                                                        <RadioGroupItem value="film" />
+                                                        <RadioGroupItem value="building" />
                                                     </FormControl>
                                                     <FormLabel className="font-normal">Building</FormLabel>
                                                 </FormItem>
@@ -961,7 +961,7 @@ function QuestionOptionItem({
                     </div>
                 )}
 
-                {responseType === 'film' && (
+                {responseType === 'building' && (
                     <div>
                         <p className="text-sm text-muted-foreground">Building selection temporarily unavailable.</p>
                     </div>
