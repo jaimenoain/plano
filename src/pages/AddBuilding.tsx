@@ -55,7 +55,7 @@ export default function AddBuilding() {
         const { data, error } = await supabase.rpc('find_nearby_buildings', {
           lat: markerPosition.lat,
           long: markerPosition.lng,
-          radius_meters: 100, // Increased slightly to show context, but requirements said 50m before. I'll stick to logic or keep 50m. Let's use 100m for better visibility on map.
+          radius_meters: 50, // Reduced to 50m to handle dense city centers accurately as per requirements.
           name_query: nameInput || potentialName || ""
         });
 
