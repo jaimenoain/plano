@@ -469,7 +469,7 @@ export interface Database {
           group_id: string | null
           id: string
           rating: number | null
-          status: "pending" | "visited"
+          status: "pending" | "visited" | "ignored"
           tags: string[] | null
           user_id: string
           visibility: string | null
@@ -483,7 +483,7 @@ export interface Database {
           group_id?: string | null
           id?: string
           rating?: number | null
-          status?: "pending" | "visited"
+          status?: "pending" | "visited" | "ignored"
           tags?: string[] | null
           user_id: string
           visibility?: string | null
@@ -497,7 +497,7 @@ export interface Database {
           group_id?: string | null
           id?: string
           rating?: number | null
-          status?: "pending" | "visited"
+          status?: "pending" | "visited" | "ignored"
           tags?: string[] | null
           user_id?: string
           visibility?: string | null
