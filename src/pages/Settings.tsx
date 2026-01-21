@@ -317,7 +317,7 @@ export default function Settings() {
     setExporting(true);
     try {
       const { data, error } = await supabase
-        .from('log')
+        .from('user_buildings')
         .select(`
           rating,
           content,
@@ -325,9 +325,9 @@ export default function Settings() {
           status,
           visited_at,
           created_at,
-          films (
-            title,
-            imdb_id
+          buildings (
+            name,
+            year_completed
           )
         `)
         .eq('user_id', user.id);
@@ -337,7 +337,7 @@ export default function Settings() {
       if (!data || data.length === 0) {
         toast({
           title: "No data found",
-          description: "You haven't rated or watched any films yet.",
+          description: "You haven't rated or visited any buildings yet.",
         });
         return;
       }
@@ -359,11 +359,11 @@ export default function Settings() {
       };
 
       // Generate CSV
-      const headers = ["Title", "IMDb ID", "Rating", "Review", "Tags", "Status", "Date"];
+      const headers = ["Name", "Year", "Rating", "Review", "Tags", "Status", "Date"];
       const rows = data.map((item: any) => {
         return [
-          escapeCsvCell(item.films?.title),
-          escapeCsvCell(item.films?.imdb_id),
+          escapeCsvCell(item.buildings?.name),
+          escapeCsvCell(item.buildings?.year_completed),
           escapeCsvCell(item.rating),
           escapeCsvCell(item.content),
           escapeCsvCell(item.tags ? item.tags.join("|") : ""),
@@ -377,7 +377,7 @@ export default function Settings() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `cineforum-data-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute("download", `archiforum-data-${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -332,13 +332,7 @@ export default function TinderSession() {
            const { data: existingBuilding } = await supabase
               .from('buildings')
               .select('id')
-              .eq('id', tmdbId) // Assuming tmdbId here is actually mapped to building id in this new context or we need a way to map it.
-              // Wait, previous code used 'films' table. 'buildings' table doesn't have tmdb_id.
-              // The 'tmdbId' variable name is also legacy. It comes from 'mediaData.tmdb_id'.
-              // We should probably assume mediaData might have 'building_id' or 'id' now.
-              // However, since I am only doing search & replace for now, and this logic seems slightly broken for buildings anyway (no tmdb_id),
-              // I will just replace 'film_id' with 'building_id' and 'films' with 'buildings'.
-              // I will also replace 'watchlist' with 'pending'.
+              .eq('id', tmdbId)
               .maybeSingle();
 
           const buildingId = existingBuilding?.id;

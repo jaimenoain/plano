@@ -31,13 +31,13 @@ export function BuildingFriendsActivity({ tmdbId, groupId }: BuildingFriendsActi
       if (!members || members.length === 0) return [];
       const memberIds = members.map(m => m.user_id);
 
-      // 3. Get log entries (ratings/reviews)
+      // 3. Get user_buildings entries (ratings/reviews)
       const { data: logs } = await supabase
-        .from('log')
+        .from('user_buildings')
         .select(`
           id,
           rating,
-          review,
+          content,
           status,
           created_at,
           user:profiles(id, username, avatar_url)
