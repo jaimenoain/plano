@@ -8,6 +8,7 @@ import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
 import { supabase } from "@/integrations/supabase/client";
 import { buildingSchema } from "@/lib/validations/building";
 import { resizeImage } from "@/lib/image-compression";
+import { toTitleCase } from "@/lib/utils";
 import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -198,6 +199,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting: parentIsSu
           setTags={setStyles}
           suggestions={ARCHITECTURAL_STYLES}
           placeholder="Type to search or add style..."
+          normalize={toTitleCase}
         />
         <p className="text-xs text-muted-foreground">
           Select from list or type to add custom style.

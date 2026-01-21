@@ -11,6 +11,7 @@ interface AutocompleteTagInputProps {
   suggestions: string[]
   placeholder?: string
   className?: string
+  normalize?: (value: string) => string
 }
 
 export function AutocompleteTagInput({
@@ -19,6 +20,7 @@ export function AutocompleteTagInput({
   suggestions,
   placeholder,
   className,
+  normalize,
 }: AutocompleteTagInputProps) {
   const [open, setOpen] = React.useState(false)
   const [inputValue, setInputValue] = React.useState("")
@@ -61,6 +63,11 @@ export function AutocompleteTagInput({
   const filteredSuggestions = suggestions.filter(s =>
     s.toLowerCase().includes(inputValue.toLowerCase()) && !tags.includes(s)
   );
+
+  const transformedInput = normalize ? normalize(inputValue) : inputValue;
+  const showCreateOption = inputValue.trim() !== "" &&
+                           !filteredSuggestions.some(s => s.toLowerCase() === inputValue.trim().toLowerCase()) &&
+                           !tags.includes(transformedInput.trim());
 
   return (
     <Command
@@ -109,12 +116,12 @@ export function AutocompleteTagInput({
                     {suggestion}
                   </CommandItem>
                 ))}
-                 {inputValue.trim() !== "" && !filteredSuggestions.some(s => s.toLowerCase() === inputValue.trim().toLowerCase()) && !tags.includes(inputValue.trim()) && (
+                 {showCreateOption && (
                      <CommandItem
-                        value={inputValue}
-                        onSelect={() => handleSelect(inputValue)}
+                        value={transformedInput}
+                        onSelect={() => handleSelect(transformedInput)}
                      >
-                        Create "{inputValue}"
+                        Create "{transformedInput}"
                      </CommandItem>
                  )}
               </CommandGroup>
