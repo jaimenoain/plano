@@ -9,9 +9,21 @@ interface PersonalRatingButtonProps {
   initialRating: number | null;
   onRate: (buildingId: string, rating: number) => void;
   isPending?: boolean;
+  /**
+   * Custom label text when no rating is set.
+   * Defaults to "Rate".
+   * Useful for distinguishing "Priority" context in Pending items vs "Rating" in Visited items.
+   */
+  label?: string;
 }
 
-export function PersonalRatingButton({ buildingId, initialRating, onRate, isPending = false }: PersonalRatingButtonProps) {
+export function PersonalRatingButton({
+  buildingId,
+  initialRating,
+  onRate,
+  isPending = false,
+  label = "Rate"
+}: PersonalRatingButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
 
@@ -38,7 +50,7 @@ export function PersonalRatingButton({ buildingId, initialRating, onRate, isPend
               {initialRating}/5
             </span>
           ) : (
-            <span className="text-xs">Rate</span>
+            <span className="text-xs">{label}</span>
           )}
         </Button>
       </PopoverTrigger>
@@ -76,7 +88,7 @@ export function PersonalRatingButton({ buildingId, initialRating, onRate, isPend
           })}
         </div>
         <div className="text-center mt-2 text-xs font-medium text-muted-foreground h-4">
-          {hoverRating ? `${hoverRating} / 5` : (initialRating ? `${initialRating} / 5` : "Rate this building")}
+          {hoverRating ? `${hoverRating} / 5` : (initialRating ? `${initialRating} / 5` : `${label} this building`)}
         </div>
       </PopoverContent>
     </Popover>

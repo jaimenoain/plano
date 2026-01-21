@@ -160,6 +160,8 @@ export default function BuildingDetails() {
           updated_at: new Date().toISOString()
       };
 
+      // STRICT LOGIC: Rating is only allowed for 'visited' status.
+      // Pending items cannot have a rating (per Phase 3 logic).
       if (newStatus === 'visited' && newRating > 0) {
           payload.rating = newRating; // 1-5 Integer constraint 
       } else {
