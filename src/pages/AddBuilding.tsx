@@ -23,6 +23,7 @@ interface NearbyBuilding {
   location_lat: number;
   location_lng: number;
   dist_meters: number;
+  similarity_score?: number;
 }
 
 export default function AddBuilding() {
