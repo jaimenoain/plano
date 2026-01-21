@@ -4,9 +4,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TagInput } from "@/components/ui/tag-input";
+import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
+
+const ARCHITECTURAL_STYLES = [
+  "Brutalist",
+  "Bauhaus",
+  "Gothic",
+  "Modernist",
+  "Art Deco",
+  "Neoclassical",
+  "Contemporary",
+  "Industrial",
+];
 
 export interface BuildingFormData {
   name: string;
@@ -107,14 +119,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting: parentIsSu
         main_image_url: finalImageUrl,
       };
 
-      // We await the parent submit. The parent handles its own isSubmitting state,
-      // but we also keep isUploading true until this finishes to be safe,
-      // or we rely on parentIsSubmitting which should be true by now if we passed it correctly?
-      // Actually, we are calling `await onSubmit`.
-      // The parent sets `isSubmitting` to true inside `onSubmit`.
-      // So `parentIsSubmitting` will become true.
-      // We can turn off `isUploading` after `onSubmit` returns (or if it throws).
-
       await onSubmit(formData);
 
     } catch (error) {
@@ -162,13 +166,14 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting: parentIsSu
 
       <div className="space-y-2">
         <Label>Architectural Styles</Label>
-        <TagInput
+        <AutocompleteTagInput
           tags={styles}
           setTags={setStyles}
-          placeholder="Type and press Enter to add style..."
+          suggestions={ARCHITECTURAL_STYLES}
+          placeholder="Type to search or add style..."
         />
         <p className="text-xs text-muted-foreground">
-          e.g. Modernist, Expressionist, Brutalist
+          Select from list or type to add custom style.
         </p>
       </div>
 
