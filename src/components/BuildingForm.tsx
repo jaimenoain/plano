@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TagInput } from "@/components/ui/tag-input";
 import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
 import { supabase } from "@/integrations/supabase/client";
+import { buildingSchema } from "@/lib/validations/building";
 import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -77,12 +78,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting: parentIsSu
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) {
-      toast.error("Building name is required");
-      return;
-    }
-
     setIsUploading(true);
+
     try {
       let finalImageUrl = initialValues.main_image_url;
 
@@ -110,13 +107,29 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting: parentIsSu
         finalImageUrl = publicUrl;
       }
 
-      const formData: BuildingFormData = {
+      const rawData = {
         name,
-        year_completed: year_completed ? parseInt(year_completed) : null,
+        year_completed,
         architects,
         styles,
         description,
         main_image_url: finalImageUrl,
+      };
+
+      const validationResult = buildingSchema.safeParse(rawData);
+
+      if (!validationResult.success) {
+        validationResult.error.errors.forEach((err) => {
+          toast.error(err.message);
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Ensure types match BuildingFormData
+      const formData: BuildingFormData = {
+        ...validationResult.data,
+        main_image_url: validationResult.data.main_image_url ?? null,
       };
 
       await onSubmit(formData);

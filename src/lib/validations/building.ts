@@ -1,0 +1,21 @@
+import * as z from "zod";
+
+export const buildingSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  // Preprocess handles conversion from string input (e.g. from HTML input) to number or null
+  year_completed: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    const parsed = typeof val === 'string' ? parseInt(val, 10) : Number(val);
+    return isNaN(parsed) ? null : parsed;
+  }, z.number({ invalid_type_error: "Year must be a number" })
+    .int("Year must be an integer")
+    .min(0, "Year must be positive")
+    .max(new Date().getFullYear() + 10, "Year cannot be in the far future")
+    .nullable()),
+  architects: z.array(z.string()),
+  styles: z.array(z.string()),
+  description: z.string(), // We handle empty string as valid description
+  main_image_url: z.string().nullable().optional(),
+});
+
+export type BuildingSchema = z.infer<typeof buildingSchema>;
