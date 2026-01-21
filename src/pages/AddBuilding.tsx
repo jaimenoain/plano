@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AddBuildingDetails } from "@/components/AddBuildingDetails";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface NearbyBuilding {
   id: string;
@@ -27,17 +29,23 @@ export default function AddBuilding() {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedAddress, setSelectedAddress] = useState("");
   const [potentialName, setPotentialName] = useState<string | undefined>(undefined);
+  const [nameInput, setNameInput] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showDuplicates, setShowDuplicates] = useState(false);
-  const [finalLocationData, setFinalLocationData] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [finalLocationData, setFinalLocationData] = useState<{ lat: number; lng: number; address: string; name?: string } | null>(null);
 
   const navigate = useNavigate();
 
   const handleLocationSelected = async (address: string, countryCode: string, placeName?: string) => {
     setSelectedAddress(address);
     setPotentialName(placeName);
+
+    // Auto-fill name if empty and placeName is available
+    if (!nameInput && placeName) {
+      setNameInput(placeName);
+    }
   };
 
   const handleNext = async () => {
@@ -71,7 +79,8 @@ export default function AddBuilding() {
         lat,
         long: lng,
         radius_meters: 50, // 50m radius (updated per spec)
-        name_query: potentialName // Pass the potential name for fuzzy matching
+        // Prefer explicit user input, fallback to potentialName from Google Places
+        name_query: nameInput || potentialName
       });
 
       if (error) {
@@ -86,7 +95,7 @@ export default function AddBuilding() {
         setShowDuplicates(true);
       } else {
         // No duplicates, proceed to step 2
-        proceedToStep2(lat, lng, selectedAddress);
+        proceedToStep2(lat, lng, selectedAddress, nameInput);
       }
 
     } catch (error) {
@@ -97,8 +106,8 @@ export default function AddBuilding() {
     }
   };
 
-  const proceedToStep2 = (lat: number, lng: number, address: string) => {
-    setFinalLocationData({ lat, lng, address });
+  const proceedToStep2 = (lat: number, lng: number, address: string, name?: string) => {
+    setFinalLocationData({ lat, lng, address, name });
     setStep(2);
   };
 
@@ -111,27 +120,40 @@ export default function AddBuilding() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Add a Building</h1>
         <p className="text-muted-foreground mt-2">
-          Step 1: Where is it? Search for the building's location.
+          Step 1: Search for the building by name or address.
         </p>
       </div>
 
       {!showDuplicates ? (
         <Card>
           <CardHeader>
-            <CardTitle>Location Search</CardTitle>
+            <CardTitle>Building Search</CardTitle>
             <CardDescription>
-              Search for the building by address or name. We'll check if it already exists.
+              We'll check if the building already exists in our database.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <LocationInput
-              value={selectedAddress}
-              onLocationSelected={handleLocationSelected}
-              placeholder="e.g. Empire State Building, New York"
-              // Pass empty array for searchTypes to allow "establishment" and "geocode" (all types)
-              searchTypes={[]}
-              className="w-full"
-            />
+            <div className="space-y-2">
+                <Label htmlFor="building-name">Building Name (Optional)</Label>
+                <Input
+                    id="building-name"
+                    placeholder="e.g. The Shard"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label>Location</Label>
+                <LocationInput
+                  value={selectedAddress}
+                  onLocationSelected={handleLocationSelected}
+                  placeholder="e.g. Empire State Building, New York"
+                  // Pass empty array for searchTypes to allow "establishment" and "geocode" (all types)
+                  searchTypes={[]}
+                  className="w-full"
+                />
+            </div>
 
             <Button
               onClick={handleNext}
@@ -238,7 +260,7 @@ export default function AddBuilding() {
             <Button variant="ghost" onClick={() => setShowDuplicates(false)}>
                 Back to Search
             </Button>
-            <Button onClick={() => selectedLocation && proceedToStep2(selectedLocation.lat, selectedLocation.lng, selectedAddress)}>
+            <Button onClick={() => selectedLocation && proceedToStep2(selectedLocation.lat, selectedLocation.lng, selectedAddress, nameInput)}>
                 No, create new building
             </Button>
           </div>
