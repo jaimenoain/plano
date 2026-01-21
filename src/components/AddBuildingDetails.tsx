@@ -13,6 +13,8 @@ interface AddBuildingDetailsProps {
     lng: number;
     address: string;
     name?: string;
+    city?: string | null;
+    country?: string | null;
   };
   onBack: () => void;
 }
@@ -35,6 +37,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           description: data.description,
           address: locationData.address,
           main_image_url: data.main_image_url,
+          city: locationData.city,
+          country: locationData.country,
           // location is a geography(POINT) column. We need to pass a string "POINT(lng lat)"
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown
         })

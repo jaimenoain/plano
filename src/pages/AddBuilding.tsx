@@ -16,6 +16,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
+// Helper to parse Geocoder results
+const extractLocationDetails = (result: any) => {
+  let city = null;
+  let country = null;
+
+  if (!result || !result.address_components) return { city, country };
+
+  for (const component of result.address_components) {
+    if (component.types.includes('locality')) {
+      city = component.long_name;
+    }
+    if (component.types.includes('country')) {
+      country = component.long_name;
+    }
+  }
+
+  // Fallback for city if locality is missing
+  if (!city) {
+     for (const component of result.address_components) {
+        if (component.types.includes('administrative_area_level_2')) {
+            city = component.long_name;
+            break;
+        }
+     }
+  }
+
+  return { city, country };
+};
+
 interface NearbyBuilding {
   id: string;
   name: string;
@@ -34,6 +63,7 @@ export default function AddBuilding() {
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [extractedLocation, setExtractedLocation] = useState<{ city: string | null; country: string | null }>({ city: null, country: null });
 
   // Default to London, but this will be overridden if we can get user location or just start somewhere generic
   const [viewState, setViewState] = useState({
@@ -42,7 +72,14 @@ export default function AddBuilding() {
     zoom: 12
   });
 
-  const [finalLocationData, setFinalLocationData] = useState<{ lat: number; lng: number; address: string; name?: string } | null>(null);
+  const [finalLocationData, setFinalLocationData] = useState<{
+    lat: number;
+    lng: number;
+    address: string;
+    name?: string;
+    city?: string | null;
+    country?: string | null;
+  } | null>(null);
 
   const navigate = useNavigate();
 
@@ -94,6 +131,9 @@ export default function AddBuilding() {
             longitude: lng,
             zoom: 16
           });
+
+          const details = extractLocationDetails(results[0]);
+          setExtractedLocation(details);
         }
       } catch (error) {
         console.error("Geocoding error:", error);
@@ -109,6 +149,8 @@ export default function AddBuilding() {
       const results = await getGeocode({ location: { lat, lng } });
       if (results && results.length > 0) {
         setSelectedAddress(results[0].formatted_address);
+        const details = extractLocationDetails(results[0]);
+        setExtractedLocation(details);
       }
     } catch (error) {
       console.error("Reverse geocoding error:", error);
@@ -121,7 +163,9 @@ export default function AddBuilding() {
         lat: markerPosition.lat,
         lng: markerPosition.lng,
         address: selectedAddress,
-        name: nameInput
+        name: nameInput,
+        city: extractedLocation.city,
+        country: extractedLocation.country
       });
       setStep(2);
     }
@@ -246,6 +290,8 @@ export default function AddBuilding() {
                     getGeocode({ location: { lat, lng } }).then(results => {
                         if (results && results.length > 0) {
                             setSelectedAddress(results[0].formatted_address);
+                            const details = extractLocationDetails(results[0]);
+                            setExtractedLocation(details);
                         }
                     });
                 }}
