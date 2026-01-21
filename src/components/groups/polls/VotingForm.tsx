@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: () => void }) {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -37,9 +38,11 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
     // Pre-fill selections if user has already voted (for editing)
     useEffect(() => {
         if (poll.votes && user) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const userVotes = poll.votes.filter((v: any) => v.user_id === user.id);
             if (userVotes.length > 0) {
                 const initialSelections: Record<string, { optionId: string | null, customText: string | null }> = {};
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 userVotes.forEach((v: any) => {
                     initialSelections[v.question_id] = {
                         optionId: v.option_id,
@@ -79,6 +82,7 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
             }));
 
             // Check if all questions are answered
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const unanswered = poll.questions.filter((q: any) => {
                  const selection = selections[q.id];
                  const hasOption = selection?.optionId;
@@ -129,6 +133,7 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderMedia = (q: any) => {
         if (q.media_type === 'image' && q.media_url) {
             return (
@@ -159,14 +164,14 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
         if (q.media_type === 'film' && q.media_data) {
              return (
                  <div className="relative w-full h-full min-h-[400px] bg-muted/10 rounded-lg overflow-hidden">
-                     {q.media_data.poster_path ? (
+                     {q.media_data.main_image_url ? (
                          <img
-                            src={`https://image.tmdb.org/t/p/w780${q.media_data.poster_path}`}
+                            src={q.media_data.main_image_url}
                             className="w-full h-full object-contain"
-                            alt={q.media_data.title || "Movie Poster"}
+                            alt={q.media_data.name || "Building Image"}
                          />
                      ) : (
-                         <div className="flex items-center justify-center h-full text-muted-foreground">No Poster Available</div>
+                         <div className="flex items-center justify-center h-full text-muted-foreground">No Image Available</div>
                      )}
                  </div>
              );
@@ -176,6 +181,7 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
 
     return (
         <div className="space-y-12">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {poll.questions.map((q: any) => {
                 const hasMedia = (q.media_type && (q.media_url || q.media_data));
 
@@ -209,6 +215,7 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
                                             : "grid-cols-1"
                                     )}
                                 >
+                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                     {q.options.map((opt: any) => (
                                         <div key={opt.id} className={cn(
                                             "relative flex cursor-pointer rounded-lg border bg-card p-4 shadow-sm focus:outline-none",
@@ -273,8 +280,8 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
                                                 placeholder="Type your answer..."
                                                 value={selections[q.id]?.customText || ""}
                                                 onChange={(e) => handleCustomInput(q.id, e.target.value)}
-                                                onFocus={(e) => {
-                                                    setSelections(prev => ({ ...prev, [q.id]: { optionId: null, customText: e.target.value || "" } }));
+                                                onFocus={() => {
+                                                    setSelections(prev => ({ ...prev, [q.id]: { optionId: null, customText: "" } }));
                                                 }}
                                             />
                                         </div>

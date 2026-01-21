@@ -1,7 +1,7 @@
 import { FavoriteItem } from "./types";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Quote, User, Clapperboard, Plus, Pencil } from "lucide-react";
+import { Quote, User, Building2, Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ProfileHighlightsProps {
@@ -42,35 +42,35 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
       <div className="flex flex-col gap-6">
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 1. Genres */}
+              {/* 1. Genres (Styles) */}
               {showGenres && (
                  <div className="space-y-2">
-                     <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Genres</h4>
+                     <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Styles</h4>
                      {genres.length > 0 ? (
                          <div className="flex flex-wrap gap-2">
                             {genres.map(g => (
                                 <div key={g.id} className="bg-secondary/50 border border-border/50 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
-                                    <Clapperboard className="h-3 w-3 text-muted-foreground" />
+                                    <Building2 className="h-3 w-3 text-muted-foreground" />
                                     {g.title}
                                 </div>
                             ))}
                          </div>
                      ) : (
-                         <div className="text-sm text-muted-foreground italic pl-1">No genres selected</div>
+                         <div className="text-sm text-muted-foreground italic pl-1">No styles selected</div>
                      )}
                  </div>
               )}
 
-              {/* 2. People */}
+              {/* 2. People (Architects) */}
               {showPeople && (
                  <div className="space-y-2">
-                     <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite People</h4>
+                     <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Architects</h4>
                      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
                         {people.map(p => (
                             <div key={p.id} className="flex flex-col items-center gap-2 w-20 shrink-0 snap-start">
                                  <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-border/50 shadow-sm bg-muted">
                                      {p.poster_path ? (
-                                         <img src={`https://image.tmdb.org/t/p/w200${p.poster_path}`} alt={p.title} className="w-full h-full object-cover" />
+                                         <img src={p.poster_path} alt={p.title} className="w-full h-full object-cover" />
                                      ) : (
                                          <div className="w-full h-full flex items-center justify-center bg-secondary"><User className="h-8 w-8 text-muted-foreground/50" /></div>
                                      )}

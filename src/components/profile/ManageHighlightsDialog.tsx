@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,12 +21,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Move to shared constant or keep locally if only used in profile context
+// Sample genres for architecture/design context, or keep generic if needed
 const GENRE_MAP: Record<number, string> = {
-  28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
-  99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
-  27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-Fi",
-  10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western"
+  1: "Modern", 2: "Contemporary", 3: "Brutalist", 4: "Art Deco", 5: "Gothic",
+  6: "Classical", 7: "Baroque", 8: "Renaissance", 9: "Industrial", 10: "Minimalist",
+  11: "Sustainable", 12: "Victorian", 13: "Bauhaus", 14: "Postmodern", 15: "Mid-Century"
 };
 
 interface ManageHighlightsDialogProps {
@@ -42,6 +42,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
   const [activeTab, setActiveTab] = useState("genres");
   const [personQuery, setPersonQuery] = useState("");
+  const debouncedPersonQuery = useDebounce(personQuery, 500);
   const [personResults, setPersonResults] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -106,28 +107,26 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
   // --- People Search ---
   useEffect(() => {
-    if (personQuery.length < 2) {
+    if (debouncedPersonQuery.length < 2) {
       setPersonResults([]);
       return;
     }
-    const timeout = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const { data } = await supabase.functions.invoke("tmdb-search", { body: { query: personQuery, type: "person" } });
-        if (data && data.results) {
-          const mapped = data.results.slice(0, 10).map((r: any) => ({
-            id: r.id,
-            title: r.name,
-            poster_path: r.profile_path,
-            type: 'person'
-          }));
-          setPersonResults(mapped);
-        }
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [personQuery]);
+
+    // Using search_buildings for now but technically we want search_people or similar if we have an architects table
+    // Since we don't have an architects table with images, we might have to mock this or use buildings as "people"
+    // or just search for architects in buildings metadata.
+    // Given the constraints, I will disable "People" search or adapt it to search buildings but that doesn't make sense for "People".
+    // I will comment out the TMDB call and leave it empty or mock it for now to avoid crashes.
+    // Ideally, we'd search a 'profiles' table or a dedicated 'architects' table.
+
+    // For now, let's search buildings and pretend they are people? No.
+    // Let's just return empty or maybe search profiles if user wants to highlight users?
+    // The previous code searched TMDB for people.
+    // I'll skip this implementation to avoid TMDB calls, and just log.
+    console.log("People search disabled as no architect database exists yet.");
+    setPersonResults([]);
+
+  }, [debouncedPersonQuery]);
 
   const togglePerson = (person: FavoriteItem) => {
     if (people.find(p => p.id === person.id)) {
@@ -169,15 +168,15 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
         <DialogContent className="sm:max-w-lg h-[80vh] flex flex-col p-0 gap-0">
           <DialogHeader className="p-4 border-b">
             <DialogTitle>Edit Profile Highlights</DialogTitle>
-            <DialogDescription>Share your favorite genres, people, and quotes.</DialogDescription>
+            <DialogDescription>Share your favorite styles, architects, and quotes.</DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-hidden flex flex-col">
               <div className="px-4 py-2 border-b">
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                       <TabsList className="w-full grid grid-cols-3">
-                          <TabsTrigger value="genres">Genres</TabsTrigger>
-                          <TabsTrigger value="people">People</TabsTrigger>
+                          <TabsTrigger value="genres">Styles</TabsTrigger>
+                          <TabsTrigger value="people">Architects</TabsTrigger>
                           <TabsTrigger value="quotes">Quotes</TabsTrigger>
                       </TabsList>
                   </Tabs>
@@ -185,11 +184,11 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
               <div className="flex-1 overflow-y-auto p-4">
 
-                  {/* GENRES TAB */}
+                  {/* GENRES (STYLES) TAB */}
                   {activeTab === "genres" && (
                       <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-medium">Select up to 5 genres</h4>
+                              <h4 className="text-sm font-medium">Select up to 5 styles</h4>
                               <span className="text-xs text-muted-foreground">{genres.length}/5</span>
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -213,18 +212,22 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                       </div>
                   )}
 
-                  {/* PEOPLE TAB */}
+                  {/* PEOPLE (ARCHITECTS) TAB */}
                   {activeTab === "people" && (
                       <div className="space-y-4">
                           <div className="relative">
                               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
-                                  placeholder="Search actors, directors..."
+                                  placeholder="Search architects..."
                                   value={personQuery}
                                   onChange={e => setPersonQuery(e.target.value)}
                                   className="pl-9"
                               />
                           </div>
+
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                              Architect search is coming soon.
+                          </p>
 
                           {/* Selected People */}
                           {people.length > 0 && (
@@ -235,7 +238,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                                           <div key={p.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
                                               <div className="flex items-center gap-3">
                                                   <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
-                                                      {p.poster_path && <img src={`https://image.tmdb.org/t/p/w200${p.poster_path}`} className="w-full h-full object-cover"/>}
+                                                      {p.poster_path && <img src={p.poster_path} className="w-full h-full object-cover"/>}
                                                   </div>
                                                   <span className="text-sm font-medium">{p.title}</span>
                                               </div>
@@ -266,7 +269,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                                                   )}
                                               >
                                                   <div className="h-10 w-10 rounded-full bg-muted overflow-hidden shrink-0">
-                                                      {p.poster_path && <img src={`https://image.tmdb.org/t/p/w200${p.poster_path}`} className="w-full h-full object-cover"/>}
+                                                      {p.poster_path && <img src={p.poster_path} className="w-full h-full object-cover"/>}
                                                   </div>
                                                   <span className="text-sm font-medium truncate">{p.title}</span>
                                                   {isSelected && <Check className="ml-auto h-4 w-4 text-primary" />}
@@ -294,9 +297,9 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                                   />
                                </div>
                                <div className="space-y-1">
-                                   <Label className="text-xs">Source (Movie/Character) - Optional</Label>
+                                   <Label className="text-xs">Source (Architect/Building) - Optional</Label>
                                    <Input
-                                      placeholder="e.g. The Godfather"
+                                      placeholder="e.g. Frank Lloyd Wright"
                                       value={quoteSource}
                                       onChange={e => setQuoteSource(e.target.value)}
                                    />

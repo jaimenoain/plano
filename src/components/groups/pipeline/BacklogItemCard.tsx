@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { CalendarPlus, Trash2, Edit2, Check, X, Repeat } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ScheduleDialog } from "./ScheduleDialog";
 
@@ -19,7 +18,6 @@ interface BacklogItemCardProps {
 }
 
 export function BacklogItemCard({ item, cycles, onUpdate }: BacklogItemCardProps) {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
@@ -27,8 +25,12 @@ export function BacklogItemCard({ item, cycles, onUpdate }: BacklogItemCardProps
   const [priority, setPriority] = useState(item.priority);
   const [cycleId, setCycleId] = useState(item.cycle_id || "none");
 
+  // Determine data source (legacy vs new)
+  // item.building is populated by the join in PipelineTab query
   const building = item.building;
+  const mainTitle = building?.name || "Unknown Building";
   const imageUrl = building?.main_image_url || null;
+  const year = building?.year_completed;
 
   const handleSave = async () => {
     try {
@@ -74,16 +76,13 @@ export function BacklogItemCard({ item, cycles, onUpdate }: BacklogItemCardProps
     High: { border: "border-l-rose-500", text: "text-rose-600", label: "High Priority" }
   }[priority as "Low" | "Medium" | "High"] || { border: "border-l-slate-400", text: "text-slate-500", label: "Priority" };
 
-  const mainTitle = building?.name || "Unknown Building";
-  const subTitle = building?.address || null;
-
   return (
     <Card className={`overflow-hidden transition-all border-l-4 ${priorityConfig.border}`}>
       <CardContent className="p-0 flex flex-col sm:flex-row gap-4">
         {/* Image */}
         <div className="shrink-0 w-full sm:w-24 h-36 bg-muted relative">
             {imageUrl ? (
-                 <img src={imageUrl} className="w-full h-full object-cover" alt="Building" />
+                 <img src={imageUrl} className="w-full h-full object-cover" alt={mainTitle} />
             ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                     <span className="text-xs">No Image</span>
@@ -98,8 +97,8 @@ export function BacklogItemCard({ item, cycles, onUpdate }: BacklogItemCardProps
                     <h3 className="font-bold text-lg leading-tight truncate">
                          {mainTitle}
                     </h3>
-                    {subTitle && (
-                        <p className="text-sm text-muted-foreground truncate">{subTitle}</p>
+                    {year && (
+                        <p className="text-sm text-muted-foreground truncate">{year}</p>
                     )}
                     <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
                         <span className={`font-medium ${priorityConfig.text}`}>

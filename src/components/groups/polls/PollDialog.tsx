@@ -15,7 +15,6 @@ import { Plus, Trash2, Check, Image as ImageIcon, Film, X, Edit2, ArrowUp, Arrow
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-// import { TmdbSearchInput } from "./TmdbSearchInput";
 
 const pollSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -32,7 +31,7 @@ const pollSchema = z.object({
     response_type: z.enum(["text", "film", "image", "person"]).default("text"),
     media_type: z.enum(["image", "video", "film"]).optional().nullable(),
     media_url: z.string().optional().nullable(),
-    media_data: z.any().optional().nullable(), // Store JSON object (e.g. TMDB data)
+    media_data: z.any().optional().nullable(), // Store JSON object (e.g. Building data)
 
     options: z.array(z.object({
       id: z.string().optional(), // For editing
@@ -42,7 +41,7 @@ const pollSchema = z.object({
       // New fields for options
       content_type: z.enum(["text", "film", "image", "person"]).default("text"),
       media_url: z.string().optional().nullable(),
-      tmdb_id: z.number().optional().nullable()
+      building_id: z.string().uuid().optional().nullable()
     }).superRefine((val, ctx) => {
       if (val.content_type === 'text' && val.value.length < 1) {
         ctx.addIssue({
@@ -128,7 +127,7 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
               is_correct: !!o.is_correct, // Ensure boolean
               content_type: o.content_type || "text",
               media_url: o.media_url,
-              tmdb_id: o.tmdb_id
+              building_id: o.building_id
           }))
       }))
   } : {
@@ -298,7 +297,7 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
                       is_correct: values.type === 'quiz' ? (o.is_correct || false) : null,
                       content_type: o.content_type,
                       media_url: o.media_url,
-                      tmdb_id: o.tmdb_id
+                      building_id: o.building_id
                   }).eq("id", o.id);
 
                   if (optError) throw optError;
@@ -309,7 +308,7 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
                       is_correct: values.type === 'quiz' ? (o.is_correct || false) : null,
                       content_type: o.content_type,
                       media_url: o.media_url,
-                      tmdb_id: o.tmdb_id
+                      building_id: o.building_id
                   });
 
                   if (optError) throw optError;
@@ -586,7 +585,7 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
                                                         form.setValue(`questions.${index}.options.${optIdx}.content_type`, val as any);
                                                         form.setValue(`questions.${index}.options.${optIdx}.value`, ""); // Clear value as format changed
                                                         form.setValue(`questions.${index}.options.${optIdx}.media_url`, null);
-                                                        form.setValue(`questions.${index}.options.${optIdx}.tmdb_id`, null);
+                                                        form.setValue(`questions.${index}.options.${optIdx}.building_id`, null);
                                                     });
                                                 }}
                                                 defaultValue={field.value}
@@ -602,19 +601,13 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
                                                     <FormControl>
                                                         <RadioGroupItem value="film" />
                                                     </FormControl>
-                                                    <FormLabel className="font-normal">Film</FormLabel>
+                                                    <FormLabel className="font-normal">Building</FormLabel>
                                                 </FormItem>
                                                 <FormItem className="flex items-center space-x-2 space-y-0">
                                                     <FormControl>
                                                         <RadioGroupItem value="image" />
                                                     </FormControl>
                                                     <FormLabel className="font-normal">Image</FormLabel>
-                                                </FormItem>
-                                                <FormItem className="flex items-center space-x-2 space-y-0">
-                                                    <FormControl>
-                                                        <RadioGroupItem value="person" />
-                                                    </FormControl>
-                                                    <FormLabel className="font-normal">People</FormLabel>
                                                 </FormItem>
                                             </RadioGroup>
                                         )}
@@ -740,9 +733,6 @@ function QuestionAttachment({ nestIndex }: { nestIndex: number }) {
                     <Button type="button" variant="outline" size="sm" onClick={() => setValue(`questions.${nestIndex}.media_type`, 'image')}>
                         <ImageIcon className="w-4 h-4 mr-2" /> Image
                     </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setValue(`questions.${nestIndex}.media_type`, 'film')}>
-                        <Film className="w-4 h-4 mr-2" /> Film
-                    </Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => setValue(`questions.${nestIndex}.media_type`, 'video')}>
                         Video (URL)
                     </Button>
@@ -801,13 +791,6 @@ function QuestionAttachment({ nestIndex }: { nestIndex: number }) {
                                    })()}
                                 </div>
                              )}
-                        </div>
-                    )}
-
-                    {mediaType === 'film' && (
-                        <div className="space-y-2">
-                            {/* Film Selection logic removed */}
-                            <p className="text-sm text-muted-foreground">Film selection temporarily unavailable.</p>
                         </div>
                     )}
                 </div>
@@ -893,7 +876,7 @@ function QuestionOptionItem({
     // Watch fields specific to this option
     const isCorrect = watch(`questions.${nestIndex}.options.${index}.is_correct`);
     const optionMediaUrl = watch(`questions.${nestIndex}.options.${index}.media_url`);
-    const optionTmdbId = watch(`questions.${nestIndex}.options.${index}.tmdb_id`);
+    const optionBuildingId = watch(`questions.${nestIndex}.options.${index}.building_id`);
     const optionValue = watch(`questions.${nestIndex}.options.${index}.value`);
 
     const handleOptionFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -980,13 +963,7 @@ function QuestionOptionItem({
 
                 {responseType === 'film' && (
                     <div>
-                        <p className="text-sm text-muted-foreground">Film selection temporarily unavailable.</p>
-                    </div>
-                )}
-
-                {responseType === 'person' && (
-                    <div>
-                        <p className="text-sm text-muted-foreground">Person selection temporarily unavailable.</p>
+                        <p className="text-sm text-muted-foreground">Building selection temporarily unavailable.</p>
                     </div>
                 )}
             </div>

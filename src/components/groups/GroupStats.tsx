@@ -44,7 +44,7 @@ export function GroupStats({ cachedStats, members }: GroupStatsProps) {
             <div>
                 <h3 className="text-lg font-medium">Stats Calculation in Progress</h3>
                 <p className="text-sm text-muted-foreground max-w-sm mt-1">
-                    Group statistics are calculated in the background. Please interact with the group (e.g. rate a film) to trigger an update, or check back later.
+                    Group statistics are calculated in the background. Please interact with the group (e.g. rate a building) to trigger an update, or check back later.
                 </p>
             </div>
         </div>
@@ -105,7 +105,7 @@ export function GroupStats({ cachedStats, members }: GroupStatsProps) {
             </div>
             <div className="bg-muted/20 p-4 rounded-xl border border-white/5">
                 <div className="text-2xl md:text-3xl font-black">{vibeMetrics.uniqueFilmCount}</div>
-                <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Films</div>
+                <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Buildings</div>
             </div>
             <div className="bg-muted/20 p-4 rounded-xl border border-white/5">
                 <div className="text-2xl md:text-3xl font-black">{vibeMetrics.ratingCount}</div>
@@ -133,25 +133,25 @@ export function GroupStats({ cachedStats, members }: GroupStatsProps) {
               <p className="text-xs text-muted-foreground mt-1">
                 vs. Public Average
                 <span className="block opacity-70">
-                  (Us: {vibeMetrics.avgRating.toFixed(1)} vs They: {vibeMetrics.avgTmdb.toFixed(1)})
+                  (Us: {vibeMetrics.avgRating.toFixed(1)} vs Public: {vibeMetrics.avgTmdb?.toFixed(1) || 0})
                 </span>
               </p>
             </CardContent>
           </Card>
 
-          {/* Time Sink */}
+          {/* Time Sink -> Building Count (Legacy mapping) */}
           <Card className="border-none shadow-sm bg-accent/5">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Clock className="h-4 w-4" /> Time Sink
+                <Trophy className="h-4 w-4" /> Collection Size
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {Math.round(vibeMetrics.totalRuntime / 60).toLocaleString()} <span className="text-sm font-normal text-muted-foreground">hrs</span>
+                {vibeMetrics.uniqueFilmCount}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {vibeMetrics.ratingCount} logs across {vibeMetrics.uniqueFilmCount} unique films
+                Unique buildings explored
               </p>
             </CardContent>
           </Card>
@@ -170,7 +170,7 @@ export function GroupStats({ cachedStats, members }: GroupStatsProps) {
               <p className="text-xs text-muted-foreground mt-1">
                 Standard Deviation
                 <span className="block opacity-70">
-                  {vibeMetrics.stdDev < 1 ? "Echo Chamber" : vibeMetrics.stdDev > 2 ? "Fight Club" : "Healthy Debate"}
+                  {vibeMetrics.stdDev < 1 ? "Consensus" : vibeMetrics.stdDev > 2 ? "Divisive" : "Healthy Debate"}
                 </span>
               </p>
             </CardContent>
@@ -202,8 +202,8 @@ export function GroupStats({ cachedStats, members }: GroupStatsProps) {
                     members={superlatives.hater}
                 />
                 <Podium
-                    title={scope === 'session' ? "The Participant" : "The Cinephile"}
-                    description={scope === 'session' ? "Most session films watched" : "Most films rated globally"}
+                    title={scope === 'session' ? "The Participant" : "The Explorer"}
+                    description={scope === 'session' ? "Most session buildings visited" : "Most buildings rated globally"}
                     icon={<Video className="h-4 w-4 text-primary" />}
                     members={superlatives.prolific}
                     unit="logs"
@@ -232,18 +232,18 @@ export function GroupStats({ cachedStats, members }: GroupStatsProps) {
                 />
                 <Podium
                     title="The Time Traveler"
-                    description="Oldest films watched (avg gap)"
+                    description="Oldest buildings visited (avg gap)"
                     icon={<CalendarClock className="h-4 w-4 text-teal-500" />}
                     members={superlatives.timeTraveler}
                     unit="yrs"
                 />
                 {superlatives.completist && (
                      <Podium
-                        title="Director Devotee"
-                        description="Most films by single director"
+                        title="Architect Devotee"
+                        description="Most buildings by single architect"
                         icon={<Video className="h-4 w-4 text-pink-500" />}
                         members={superlatives.completist}
-                        unit="films"
+                        unit="bldgs"
                     />
                 )}
                 {scope === 'session' && superlatives.quickestDraw && (
@@ -331,7 +331,7 @@ function GenreRadar({ data, memberData }: { data: any[], memberData?: any }) {
   return (
     <Card className="border-none shadow-sm bg-accent/5">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm">Genre DNA</CardTitle>
+        <CardTitle className="text-sm">Style DNA</CardTitle>
         <CardDescription>Group Average vs. You</CardDescription>
       </CardHeader>
       <CardContent className="h-[250px] w-full">
@@ -421,7 +421,7 @@ function HiddenGems({ gems, members }: { gems: any[], members: any[] }) {
         <CardTitle className="text-sm flex items-center gap-2 text-indigo-400">
           <Zap className="h-4 w-4" /> Hidden Gems
         </CardTitle>
-        <CardDescription>Films loved by multiple members but never watched in sessions.</CardDescription>
+        <CardDescription>Buildings loved by multiple members but never visited in sessions.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-3">
@@ -429,7 +429,7 @@ function HiddenGems({ gems, members }: { gems: any[], members: any[] }) {
           {gems.map((gem: any) => (
              <div key={gem.title} className="flex items-center justify-between gap-3 bg-background/50 p-2 rounded-lg">
                <div className="flex items-center gap-3">
-                 {gem.poster && <img src={`https://image.tmdb.org/t/p/w92${gem.poster}`} className="w-10 h-14 object-cover rounded" alt={gem.title} />}
+                 {gem.poster && <img src={gem.poster} className="w-10 h-14 object-cover rounded" alt={gem.title} />}
                  <div>
                    <div className="font-bold text-sm">{gem.title}</div>
                    <div className="text-xs text-muted-foreground">{gem.count} members rated highly</div>
@@ -468,7 +468,7 @@ function TasteCompatibility({ stats }: { stats: any }) {
     <div className="grid grid-cols-1 gap-3">
       {stats.soulmates && (
         <CompatibilityCard
-          label="Cinematic Soulmates"
+          label="Architectural Soulmates"
           desc="Highest taste correlation"
           score={stats.soulmates.score}
           m1={stats.soulmates.m1}

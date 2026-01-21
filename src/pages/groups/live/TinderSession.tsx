@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import ReactPlayer from 'react-player';
-import { slugify } from "@/lib/utils";
 import { BuildingFriendsActivity } from "./BuildingFriendsActivity";
 
 interface CardProps {
@@ -36,9 +35,9 @@ function SwipeCard({ question, onSwipe, isFront, groupId }: CardProps) {
     }
   };
 
-  const mediaData = question.media_data || {};
+  const buildingData = question.media_data || {};
   const trailerUrl = question.media_url?.includes('youtube') ? question.media_url : null;
-  const tmdbId = mediaData.tmdb_id;
+  const buildingId = buildingData.building_id || question.building_id; // Check both locations just in case
 
   return (
     <motion.div
@@ -76,7 +75,7 @@ function SwipeCard({ question, onSwipe, isFront, groupId }: CardProps) {
               </div>
             ) : (
               <img
-                src={mediaData.poster_path ? `https://image.tmdb.org/t/p/original${mediaData.poster_path}` : question.media_url}
+                src={buildingData.main_image_url || question.media_url || '/placeholder.png'}
                 alt={question.question_text}
                 className="w-full h-full object-cover"
               />
@@ -99,17 +98,19 @@ function SwipeCard({ question, onSwipe, isFront, groupId }: CardProps) {
               {question.question_text}
             </h2>
             <div className="flex flex-wrap gap-2 text-sm md:text-base text-white/80 font-medium mb-4">
-              {mediaData.release_date && <span>{new Date(mediaData.release_date).getFullYear()}</span>}
-              {mediaData.runtime && <span>• {Math.floor(mediaData.runtime / 60)}h {mediaData.runtime % 60}m</span>}
+              {buildingData.year_completed && <span>{buildingData.year_completed}</span>}
+              {buildingData.architects && buildingData.architects.length > 0 && (
+                  <span>• {buildingData.architects[0]}</span>
+              )}
             </div>
-            {mediaData.overview && (
+            {buildingData.description && (
               <p className="text-sm md:text-base text-white/70 leading-relaxed">
-                  {mediaData.overview}
+                  {buildingData.description}
               </p>
             )}
 
             {/* Friends Activity */}
-            {tmdbId && <BuildingFriendsActivity tmdbId={tmdbId} groupId={groupId} />}
+            {buildingId && <BuildingFriendsActivity buildingId={buildingId} groupId={groupId} />}
         </div>
       </div>
     </motion.div>
@@ -118,12 +119,10 @@ function SwipeCard({ question, onSwipe, isFront, groupId }: CardProps) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function WinnerCard({ question }: { question: any }) {
-    const mediaData = question.media_data || {};
+    const buildingData = question.media_data || {};
     const navigate = useNavigate();
 
-    const mediaType = "movie"; // Defaulting to movie since that's what we usually have
-    const tmdbId = mediaData.tmdb_id;
-    const slug = slugify(question.question_text);
+    const buildingId = buildingData.building_id || question.building_id;
 
     return (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-md p-6 animate-in zoom-in duration-500">
@@ -136,11 +135,11 @@ function WinnerCard({ question }: { question: any }) {
 
              <PartyPopper className="h-24 w-24 text-yellow-400 mb-6 animate-bounce" />
              <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-2">IT'S A MATCH!</h1>
-             <p className="text-2xl text-white/80 mb-8 font-light text-center">Everyone wants to watch this.</p>
+             <p className="text-2xl text-white/80 mb-8 font-light text-center">Everyone wants to visit this.</p>
 
              <div className="w-full max-w-xs aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border-4 border-yellow-400 mb-8 relative">
                  <img
-                    src={mediaData.poster_path ? `https://image.tmdb.org/t/p/w500${mediaData.poster_path}` : question.media_url}
+                    src={buildingData.main_image_url || question.media_url || '/placeholder.png'}
                     alt={question.question_text}
                     className="w-full h-full object-cover"
                  />
@@ -152,15 +151,15 @@ function WinnerCard({ question }: { question: any }) {
              <div className="flex flex-col gap-4 w-full max-w-sm">
                  <Button
                    className="w-full bg-white text-black hover:bg-white/90 text-lg py-6 rounded-full font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-                   onClick={() => tmdbId && navigate(`/${mediaType}/${slug}/${tmdbId}`)}
+                   onClick={() => buildingId && navigate(`/building/${buildingId}`)}
                  >
                     <Play className="mr-2 h-5 w-5 fill-black" />
-                    Watch Now
+                    View Details
                  </Button>
 
                  <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 rounded-full">
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Check Availability
+                    Share
                  </Button>
              </div>
         </div>
@@ -317,48 +316,23 @@ export default function TinderSession() {
       const question = poll?.questions[currentCardIndex];
       if (!question || !user) return;
 
-      const tmdbId = question.media_data?.tmdb_id;
-      if (!tmdbId) {
+      const buildingId = question.media_data?.building_id || question.building_id;
+      if (!buildingId) {
           toast.error("Cannot bookmark: missing ID");
           return;
       }
 
       toast.success("Added to your bucket list");
 
-      // We need to look up or create the building record first
-      // For now, we assume this is a "best effort" bookmarking
       try {
-          // Check if building exists
-           const { data: existingBuilding } = await supabase
-              .from('buildings')
-              .select('id')
-              .eq('id', tmdbId)
-              .maybeSingle();
-
-          const buildingId = existingBuilding?.id;
-
-          if (!buildingId) {
-             // If building doesn't exist in our DB, we'd need to fetch full details and insert it.
-             // This is complex to do here. For now, fallback or skip.
-             // But wait, the Smart Backlog used buildings ALREADY in our DB (pending/visited).
-             // So the building SHOULD exist.
-             // Unless we are in "Discovery Mode".
-             // If we are in "Smart Backlog" mode, the building exists.
-             console.log("Building ID not found immediately, might be discovery mode.");
-          }
-
-          if (buildingId) {
-             await supabase.from("user_buildings").insert({
-                 user_id: user.id,
-                 building_id: buildingId,
-                 status: 'pending'
-             });
-          } else {
-             toast.error("Could not find building in database to bookmark.");
-          }
-
+          await supabase.from("user_buildings").insert({
+              user_id: user.id,
+              building_id: buildingId,
+              status: 'pending'
+          });
       } catch (e) {
           console.error(e);
+          toast.error("Already in bucket list or error occurred.");
       }
   };
 

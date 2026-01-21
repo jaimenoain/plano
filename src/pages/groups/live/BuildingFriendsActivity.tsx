@@ -1,27 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, MessageSquare } from "lucide-react";
+import { Star } from "lucide-react";
 
 interface BuildingFriendsActivityProps {
-  tmdbId: number;
+  buildingId: string;
   groupId: string;
 }
 
-export function BuildingFriendsActivity({ tmdbId, groupId }: BuildingFriendsActivityProps) {
+export function BuildingFriendsActivity({ buildingId, groupId }: BuildingFriendsActivityProps) {
   const { data: activity, isLoading } = useQuery({
-    queryKey: ['building-friends-activity', tmdbId, groupId],
+    queryKey: ['building-friends-activity', buildingId, groupId],
     queryFn: async () => {
-      // 1. Get building_id
-      const { data: building } = await supabase
-        .from('buildings')
-        .select('id')
-        .eq('id', tmdbId) // Assuming tmdbId maps to building id or similar logic
-        .maybeSingle();
-
-      if (!building) return [];
-
-      // 2. Get group members
+      // 1. Get group members
       const { data: members } = await supabase
         .from('group_members')
         .select('user_id')
@@ -31,7 +22,7 @@ export function BuildingFriendsActivity({ tmdbId, groupId }: BuildingFriendsActi
       if (!members || members.length === 0) return [];
       const memberIds = members.map(m => m.user_id);
 
-      // 3. Get user_buildings entries (ratings/reviews)
+      // 2. Get user_buildings entries (ratings/reviews)
       const { data: logs } = await supabase
         .from('user_buildings')
         .select(`
@@ -42,14 +33,14 @@ export function BuildingFriendsActivity({ tmdbId, groupId }: BuildingFriendsActi
           created_at,
           user:profiles(id, username, avatar_url)
         `)
-        .eq('building_id', building.id)
+        .eq('building_id', buildingId)
         .in('user_id', memberIds)
         .not('status', 'eq', 'pending') // We mainly want reviews/ratings, not just "want to visit" which is implied by the voting session
         .order('created_at', { ascending: false });
 
       return logs || [];
     },
-    enabled: !!tmdbId && !!groupId
+    enabled: !!buildingId && !!groupId
   });
 
   if (isLoading) return <div className="h-20 animate-pulse bg-white/5 rounded-xl" />;

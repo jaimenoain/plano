@@ -20,30 +20,21 @@ export function BacklogSelectionTab({ groupId, onSelect }: BacklogSelectionTabPr
         .select(`
             *,
             user:profiles(username),
-            cycle:group_cycles(title)
+            cycle:group_cycles(title),
+            building:buildings(name, main_image_url)
         `)
         .eq("group_id", groupId)
         .eq("status", "Pending")
-        .order("priority", { ascending: false }) // High priority first? Logic check needed if text sort works.
-        // Priority is Text: High, Medium, Low. Alphabetical H, M, L. H comes first.
-        // Actually 'High' < 'Low'? No. 'H' < 'L'. So High is first in asc? No 'High' comes before 'Low'.
-        // We want High first.
-        // Let's rely on client sort to be safe or map it.
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // Fetch TMDB data for display
-      const withFilmData = await Promise.all(data.map(async (item) => {
-           // We only need basic info for the list
-           const { data: film } = await supabase.functions.invoke("tmdb-movie", {
-               body: { movieId: item.tmdb_id, type: "movie" } // Assuming movie
-           });
-           return { ...item, film };
-      }));
+      // Client-side sorting for priority as it is a text enum in DB often
+      // High > Medium > Low
+      const pMap: Record<string, number> = { High: 3, Medium: 2, Low: 1 };
 
-      return withFilmData.sort((a, b) => {
-         const pMap: Record<string, number> = { High: 3, Medium: 2, Low: 1 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data || []).sort((a: any, b: any) => {
          return (pMap[b.priority] || 0) - (pMap[a.priority] || 0);
       });
     },
@@ -70,13 +61,13 @@ export function BacklogSelectionTab({ groupId, onSelect }: BacklogSelectionTabPr
             {items.map(item => (
                 <div key={item.id} className="flex gap-4 p-3 border rounded-lg hover:bg-accent/50 transition-colors group relative">
                      <div className="shrink-0 w-16 h-24 bg-muted rounded overflow-hidden">
-                        {item.film?.poster_path && (
-                            <img src={`https://image.tmdb.org/t/p/w92${item.film.poster_path}`} className="w-full h-full object-cover" />
+                        {item.building?.main_image_url && (
+                            <img src={item.building.main_image_url} className="w-full h-full object-cover" />
                         )}
                      </div>
                      <div className="flex-1 min-w-0 py-1">
                         <div className="flex justify-between">
-                             <h4 className="font-semibold truncate pr-2">{item.film?.title || "Unknown"}</h4>
+                             <h4 className="font-semibold truncate pr-2">{item.building?.name || "Unknown"}</h4>
                              <Badge variant="outline" className="h-5 text-[10px] uppercase">{item.priority}</Badge>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">

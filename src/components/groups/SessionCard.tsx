@@ -13,7 +13,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { SessionRatingChart } from "@/components/groups/SessionRatingChart";
 import { slugify, createGoogleCalendarUrl } from "@/lib/utils";
-import { GENRE_MAP } from "@/lib/constants";
 import { PollCard } from "@/components/groups/polls/PollCard";
 
 function ResourceItem({ resource }: { resource: { title: string, url: string, description?: string } }) {
@@ -75,7 +74,6 @@ interface SessionCardProps {
 
 export function SessionCard({
   session,
-  group,
   user,
   isAdmin,
   slug,
@@ -290,7 +288,7 @@ export function SessionCard({
               onClick={() => navigate(`/groups/${slug}/sessions/${slugify(session.title || "session")}/${session.id}`)}
             >
               <h3 className="text-xl font-bold leading-tight">
-                {session.title || "Movie Night"}
+                {session.title || "Architecture Session"}
                 {isAdmin && session.host_notes && showHostNotesIcon && (
                   <Notebook className="w-4 h-4 text-yellow-600 inline ml-2 relative -top-0.5" />
                 )}

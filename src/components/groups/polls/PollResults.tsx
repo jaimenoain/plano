@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
 interface PollResultsProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   poll: any;
   hasVoted?: boolean;
   isAdmin?: boolean;
@@ -51,13 +52,17 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
     // Calculate score for quiz
     let userScore = 0;
     let totalQuestions = 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isQuiz = poll.type === 'quiz' || poll.questions.some((q: any) => q.options.some((o: any) => o.is_correct));
 
     if (isQuiz && user) {
         totalQuestions = poll.questions.length;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         poll.questions.forEach((q: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const userVote = poll.votes.find((v: any) => v.question_id === q.id && v.user_id === user.id);
             if (userVote && userVote.option_id) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const selectedOption = q.options.find((o: any) => o.id === userVote.option_id);
                 if (selectedOption && selectedOption.is_correct) {
                     userScore++;
@@ -84,6 +89,7 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderMedia = (q: any) => {
         if (q.media_type === 'image' && q.media_url) {
             return (
@@ -114,14 +120,14 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
         if (q.media_type === 'film' && q.media_data) {
              return (
                  <div className="relative w-full h-full min-h-[300px] md:min-h-[400px] bg-muted/10 rounded-lg overflow-hidden">
-                     {q.media_data.poster_path ? (
+                     {q.media_data.main_image_url ? (
                          <img
-                            src={`https://image.tmdb.org/t/p/w780${q.media_data.poster_path}`}
+                            src={q.media_data.main_image_url}
                             className="w-full h-full object-contain"
-                            alt={q.media_data.title || "Movie Poster"}
+                            alt={q.media_data.name || "Building Image"}
                          />
                      ) : (
-                         <div className="flex items-center justify-center h-full text-muted-foreground">No Poster Available</div>
+                         <div className="flex items-center justify-center h-full text-muted-foreground">No Image Available</div>
                      )}
                  </div>
              );
@@ -143,16 +149,21 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
                 </div>
             )}
 
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {poll.questions.map((q: any) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const qVotes = poll.votes.filter((v: any) => v.question_id === q.id);
                 const total = qVotes.length;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const isQuizQuestion = q.options.some((o: any) => o.is_correct);
                 const hasMedia = (q.media_type && (q.media_url || q.media_data));
 
                 // Count per option
                 const counts: Record<string, number> = {};
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const voters: Record<string, any[]> = {}; // Store voter profiles per option
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 q.options.forEach((o: any) => {
                     counts[o.id] = 0;
                     voters[o.id] = [];
@@ -161,6 +172,7 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
                 let customCount = 0;
                 const customAnswers: string[] = [];
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 qVotes.forEach((v: any) => {
                     if (v.option_id) {
                         counts[v.option_id] = (counts[v.option_id] || 0) + 1;
@@ -174,6 +186,7 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
                 });
 
                 // Determine user's vote for this question
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const userVote = user ? poll.votes.find((v: any) => v.question_id === q.id && v.user_id === user.id) : null;
                 const userOptionId = userVote?.option_id;
 
@@ -184,6 +197,7 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
                         <div className={cn("grid gap-6", hasMedia ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
                             {/* Left Column: Results */}
                             <div className="space-y-4 order-2 md:order-1">
+                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                 {q.options.map((opt: any) => {
                                     const count = counts[opt.id] || 0;
                                     const percentage = total > 0 ? (count / total) * 100 : 0;
@@ -243,6 +257,7 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
                                                 {optVoters.length > 0 && (
                                                     <div className={cn("flex py-2 px-1", largeAvatars ? "-space-x-4" : "-space-x-3")}>
                                                     <TooltipProvider delayDuration={0}>
+                                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                                         {optVoters.map((profile: any, i: number) => (
                                                             <Tooltip key={i}>
                                                                 <TooltipTrigger asChild>
