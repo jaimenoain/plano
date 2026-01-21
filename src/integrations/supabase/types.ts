@@ -1031,6 +1031,7 @@ export interface Database {
         Args: {
           lat: number
           long: number
+          name_query?: string | null
           radius_meters?: number
         }
         Returns: {
