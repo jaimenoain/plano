@@ -9,6 +9,30 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      blocks: {
+        Row: {
+          id: string
+          blocker_id: string
+          blocked_id: string
+          reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          blocker_id: string
+          blocked_id: string
+          reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          blocker_id?: string
+          blocked_id?: string
+          reason?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      },
       buildings: {
         Row: {
           created_at: string
@@ -787,6 +811,9 @@ export interface Database {
           title: string
           type: "general" | "building_selection" | "quiz"
           allow_multiple_votes: boolean | null
+          cycle_id: string | null
+          slug: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
@@ -800,6 +827,9 @@ export interface Database {
           title: string
           type?: "general" | "building_selection" | "quiz"
           allow_multiple_votes?: boolean | null
+          cycle_id?: string | null
+          slug?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
@@ -813,6 +843,9 @@ export interface Database {
           title?: string
           type?: "general" | "building_selection" | "quiz"
           allow_multiple_votes?: boolean | null
+          cycle_id?: string | null
+          slug?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -838,6 +871,82 @@ export interface Database {
           }
         ]
       }
+      recommendations: {
+        Row: {
+          id: string
+          recommender_id: string
+          recipient_id: string
+          building_id: string
+          status: "pending" | "accepted" | "ignored" | "watch_with"
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recommender_id: string
+          recipient_id: string
+          building_id: string
+          status?: "pending" | "accepted" | "ignored" | "watch_with"
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recommender_id?: string
+          recipient_id?: string
+          building_id?: string
+          status?: "pending" | "accepted" | "ignored" | "watch_with"
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendations_recommender_id_fkey"
+            columns: ["recommender_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_recipient_id_fkey"
+            columns: ["recipient_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_building_id_fkey"
+            columns: ["building_id"]
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
+      reports: {
+        Row: {
+          id: string
+          reporter_id: string
+          reported_id: string
+          reason: string
+          details: string | null
+          status: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          reporter_id: string
+          reported_id: string
+          reason: string
+          details?: string | null
+          status?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          reporter_id?: string
+          reported_id?: string
+          reason?: string
+          details?: string | null
+          status?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      },
       saved_views: {
         Row: {
           created_at: string
@@ -884,6 +993,11 @@ export interface Database {
           country: string | null
           location: string | null
           invited_by: string | null
+          favorites: Json | null
+          notification_preferences: Json | null
+          role: string | null
+          last_online: string | null
+          subscribed_platforms: string[] | null
         }
         Insert: {
           avatar_url?: string | null
@@ -895,6 +1009,11 @@ export interface Database {
           country?: string | null
           location?: string | null
           invited_by?: string | null
+          favorites?: Json | null
+          notification_preferences?: Json | null
+          role?: string | null
+          last_online?: string | null
+          subscribed_platforms?: string[] | null
         }
         Update: {
           avatar_url?: string | null
@@ -906,6 +1025,11 @@ export interface Database {
           country?: string | null
           location?: string | null
           invited_by?: string | null
+          favorites?: Json | null
+          notification_preferences?: Json | null
+          role?: string | null
+          last_online?: string | null
+          subscribed_platforms?: string[] | null
         }
         Relationships: [
           {
