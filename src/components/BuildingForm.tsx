@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TagInput } from "@/components/ui/tag-input";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 export interface BuildingFormData {
@@ -32,13 +32,34 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting: parentIsSu
   const [description, setDescription] = useState(initialValues.description);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(initialValues.main_image_url);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Combine loading states
   const isSubmitting = parentIsSubmitting || isUploading;
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl !== initialValues.main_image_url) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl, initialValues.main_image_url]);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setImageFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setPreviewUrl(initialValues.main_image_url);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -165,26 +186,41 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting: parentIsSu
       <div className="space-y-2">
         <Label htmlFor="image">Image</Label>
         <div className="space-y-2">
-            {initialValues.main_image_url && !imageFile && (
-                <div className="mb-2">
-                    <p className="text-xs text-muted-foreground mb-1">Current Image:</p>
-                    <img src={initialValues.main_image_url} alt="Current" className="h-32 w-auto object-cover rounded-md border" />
-                </div>
-            )}
-            <div className="flex items-center gap-4">
-                <Input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="cursor-pointer"
-                />
+          {previewUrl ? (
+            <div className="relative w-fit">
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="h-48 w-auto object-cover rounded-md border"
+              />
+              {imageFile && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md"
+                  onClick={handleRemoveImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-            {imageFile && (
-                <p className="text-sm text-muted-foreground">
-                Selected: {imageFile.name}
-                </p>
-            )}
+          ) : (
+            <div className="h-32 w-full border-2 border-dashed rounded-md flex items-center justify-center text-muted-foreground bg-muted/10">
+              No image selected
+            </div>
+          )}
+
+          <div className="flex items-center gap-4">
+            <Input
+              ref={fileInputRef}
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="cursor-pointer"
+            />
+          </div>
         </div>
       </div>
 
