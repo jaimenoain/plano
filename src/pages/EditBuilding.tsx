@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function EditBuilding() {
+  // Terminology verified: Building
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
