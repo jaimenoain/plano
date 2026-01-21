@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,12 +49,15 @@ export default function BuildingDetails() {
   const { id } = useParams(); // ID is now always UUID 
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profile } = useUserProfile();
   const { toast } = useToast();
   
   const [building, setBuilding] = useState<BuildingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
   
+  const canEdit = isCreator || profile?.role === 'admin';
+
   // User Interaction State
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
@@ -221,7 +225,7 @@ export default function BuildingDetails() {
             <div>
                 <div className="flex justify-between items-start">
                     <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
-                    {isCreator && (
+                    {canEdit && (
                         <Button variant="ghost" size="icon" asChild>
                             <Link to={`/building/${id}/edit`}>
                                 <Edit2 className="w-5 h-5" />
