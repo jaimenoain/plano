@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, MessageCircle, UserPlus, Loader2, Bell, Calendar, Sparkles, Clock, LogOut, Clapperboard, Settings } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { cn, slugify } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { NotificationSettingsDialog } from "@/components/notifications/NotificationSettingsDialog";
 import { Button } from "@/components/ui/button";
 
@@ -29,11 +29,9 @@ interface Notification {
     user?: {
         username: string | null;
     };
-    film?: {
-      title: string;
-      poster_path: string | null;
-      tmdb_id?: number;
-      media_type?: string;
+    building?: {
+      name: string;
+      main_image_url: string | null;
     };
   };
   metadata?: { provider_name?: string; status?: string };
@@ -58,13 +56,13 @@ const NOTIFICATION_QUERY = `
   resource:notifications_resource_id_fkey(
     id,
     user_id,
-    film:films(title, poster_path, tmdb_id, media_type),
+    building:buildings(name, main_image_url),
     user:profiles(username)
   ),
   recommendation:notifications_recommendation_id_fkey(
     id,
     status,
-    film:films(title, poster_path, tmdb_id, media_type)
+    building:buildings(name, main_image_url)
   ),
   session:notifications_session_id_fkey(
     id,
@@ -194,21 +192,9 @@ export default function Notifications() {
     } else if (notification.type === 'join_request') {
        if (notification.group_id) navigate(`/groups/${notification.group_id}/members`);
     } else if (notification.type === 'recommendation') {
-      // const rec = (notification as any).recommendation;
-      // if (rec?.status === 'watch_with' && rec.film?.tmdb_id && notification.actor?.username) {
-      //   const film = rec.film;
-      //   navigate(`/${film.media_type || 'movie'}/${slugify(film.title)}/${film.tmdb_id}/${notification.actor.username}`);
-      // } else {
-      //   navigate(`/profile?tab=foryou`);
-      // }
       navigate(`/profile?tab=foryou`);
     } else if (notification.resource?.id) {
-        // if (notification.resource.film?.tmdb_id && notification.resource.user?.username) {
-        //     const film = notification.resource.film;
-        //     navigate(`/${film.media_type || 'movie'}/${slugify(film.title)}/${film.tmdb_id}/${notification.resource.user.username}`);
-        // } else {
-            navigate(`/review/${notification.resource.id}`);
-        // }
+        navigate(`/review/${notification.resource.id}`);
     }
   };
 
@@ -232,12 +218,12 @@ export default function Notifications() {
 
   const getText = (n: Notification) => {
     const actorName = n.actor?.username || "Someone";
-    const filmTitle = n.resource?.film?.title || (n as any).recommendation?.film?.title;
+    const buildingName = n.resource?.building?.name || (n as any).recommendation?.building?.name;
     const providerName = n.metadata?.provider_name || "streaming";
 
     switch (n.type) {
-      case 'like': return <span><span className="font-semibold">{actorName}</span> liked your review of <span className="italic">{filmTitle || "a film"}</span></span>;
-      case 'comment': return <span><span className="font-semibold">{actorName}</span> commented on your review of <span className="italic">{filmTitle || "a film"}</span></span>;
+      case 'like': return <span><span className="font-semibold">{actorName}</span> liked your review of <span className="italic">{buildingName || "a building"}</span></span>;
+      case 'comment': return <span><span className="font-semibold">{actorName}</span> commented on your review of <span className="italic">{buildingName || "a building"}</span></span>;
       case 'group_invitation': 
         const groupName = n.group?.name || "a group";
         return <span><span className="font-semibold">{actorName}</span> added you to <span className="font-semibold">{groupName}</span></span>;
@@ -258,16 +244,16 @@ export default function Notifications() {
         const reminderGroupName = n.session?.group?.name || n.group?.name || "your group";
         return <span>Reminder: You have a session today in <span className="font-semibold">{reminderGroupName}</span>!</span>;
       case 'friend_joined': 
-        return <span>Your friend <span className="font-semibold">{actorName}</span> just joined Cineforum!</span>;
+        return <span>Your friend <span className="font-semibold">{actorName}</span> just joined Archiforum!</span>;
       case 'suggest_follow': 
         return <span>Welcome! Follow <span className="font-semibold">{actorName}</span>, who invited you to join.</span>;
       case 'recommendation':
-        if ((n as any).recommendation?.status === 'watch_with') {
-             return <span><span className="font-semibold">{actorName}</span> wants to watch <span className="italic">{filmTitle || "a film"}</span> with you</span>;
+        if ((n as any).recommendation?.status === 'visit_with') {
+             return <span><span className="font-semibold">{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
         }
-        return <span><span className="font-semibold">{actorName}</span> recommended <span className="italic">{filmTitle || "a film"}</span> for you</span>;
+        return <span><span className="font-semibold">{actorName}</span> recommended <span className="italic">{buildingName || "a building"}</span> for you</span>;
       case 'availability':
-        return <span>Good news! <span className="italic font-semibold">{filmTitle || "A film"}</span> is now available on <span className="font-semibold">{providerName}</span></span>;
+        return <span>Good news! <span className="italic font-semibold">{buildingName || "A building"}</span> is now available on <span className="font-semibold">{providerName}</span></span>;
       default: return <span>New notification</span>;
     }
   };
@@ -306,14 +292,13 @@ export default function Notifications() {
             <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
           )}
 
-          {/* TMDB Image Logic Removed */}
-          {/* {(n.resource?.film?.poster_path || (n as any).recommendation?.film?.poster_path) && (
+          {(n.resource?.building?.main_image_url || (n as any).recommendation?.building?.main_image_url) && (
             <img 
-              src={`https://image.tmdb.org/t/p/w92${n.resource?.film?.poster_path || (n as any).recommendation?.film?.poster_path}`}
-              alt="Poster" 
+              src={n.resource?.building?.main_image_url || (n as any).recommendation?.building?.main_image_url}
+              alt="Building"
               className="h-12 w-8 object-cover rounded bg-secondary ml-2"
             />
-          )} */}
+          )}
         </div>
       ))}
     </>

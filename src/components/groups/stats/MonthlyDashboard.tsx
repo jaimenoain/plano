@@ -4,10 +4,12 @@ import { Zap, PenTool, TrendingUp, User } from "lucide-react";
 
 interface MonthlyStats {
   contributor: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     member: any;
     value: number;
   };
   reviewer: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     member: any;
     value: number;
   };
@@ -66,7 +68,7 @@ export function MonthlyDashboard({ stats }: { stats: MonthlyStats }) {
             <Card className="bg-card/50 border-white/5 overflow-hidden relative group">
                 {stats.trending.poster_path && (
                     <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity">
-                         <img src={`https://image.tmdb.org/t/p/w200${stats.trending.poster_path}`} className="w-full h-full object-cover" />
+                         <img src={stats.trending.poster_path} className="w-full h-full object-cover" />
                          <div className="absolute inset-0 bg-gradient-to-l from-background to-transparent" />
                     </div>
                 )}
@@ -79,7 +81,7 @@ export function MonthlyDashboard({ stats }: { stats: MonthlyStats }) {
                     </div>
                     <div>
                          <div className="font-bold truncate pr-2">{stats.trending.title}</div>
-                         <div className="text-xs text-muted-foreground">{stats.trending.count} members watched</div>
+                         <div className="text-xs text-muted-foreground">{stats.trending.count} members visited</div>
                     </div>
                 </CardContent>
             </Card>
@@ -89,6 +91,7 @@ export function MonthlyDashboard({ stats }: { stats: MonthlyStats }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function StatCard({ label, icon, value, subtext, member, color }: any) {
     return (
         <Card className={`border-l-4 ${color} bg-card/50 shadow-sm`}>

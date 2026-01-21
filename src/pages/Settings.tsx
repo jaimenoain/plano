@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, Lock, Mail, Check, X, Search, Smartphone, Download, Database } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, Lock, Mail, Smartphone, Download, Database } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,28 +15,6 @@ import { Separator } from "@/components/ui/separator";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { LocationInput } from "@/components/ui/LocationInput";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { COUNTRIES } from "@/lib/countries";
 import { NavigationBlocker } from "@/components/common/NavigationBlocker";
 
 export default function Settings() {
@@ -56,16 +34,9 @@ export default function Settings() {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [subscribedPlatforms, setSubscribedPlatforms] = useState<string[]>([]);
-  const [availablePlatforms, setAvailablePlatforms] = useState<{name: string, logo: string}[]>([]);
-  const [loadingPlatforms, setLoadingPlatforms] = useState(false);
   
-  // FIX 1: Split the malformed useState into correct separate hooks
-  const [openCombobox, setOpenCombobox] = useState(false);
   const [exporting, setExporting] = useState(false);
   
-  // FIX 2: Add state for Manual Filtering
-  const [searchQuery, setSearchQuery] = useState("");
   const [justSaved, setJustSaved] = useState(false);
   const [initialState, setInitialState] = useState<{
     username: string;
@@ -74,7 +45,6 @@ export default function Settings() {
     location: string;
     avatarUrl: string | null;
     email: string;
-    subscribedPlatforms: string[];
   } | null>(null);
 
   useEffect(() => {
@@ -105,7 +75,6 @@ export default function Settings() {
       const avatarUrlVal = profile.avatar_url;
       const countryVal = profile.country || "";
       const locationVal = profile.location || "";
-      const platformsVal = profile.subscribed_platforms || [];
 
       setEmail(emailVal);
       setUsername(usernameVal);
@@ -113,7 +82,6 @@ export default function Settings() {
       setAvatarUrl(avatarUrlVal);
       setCountry(countryVal);
       setLocation(locationVal);
-      setSubscribedPlatforms(platformsVal);
 
       setInitialState({
         username: usernameVal,
@@ -122,12 +90,8 @@ export default function Settings() {
         location: locationVal,
         avatarUrl: avatarUrlVal,
         email: emailVal,
-        subscribedPlatforms: platformsVal,
       });
 
-      if (profile.country) {
-        fetchAvailablePlatforms(profile.country);
-      }
     }
   }, [user, authLoading, navigate, profile]);
 
@@ -141,69 +105,9 @@ export default function Settings() {
     if (email !== initialState.email) return true;
     if (newPassword !== "") return true;
 
-    if (subscribedPlatforms.length !== initialState.subscribedPlatforms.length) return true;
-
-    // Sort both arrays to ensure order doesn't affect comparison
-    const sortedCurrent = [...subscribedPlatforms].sort();
-    const sortedInitial = [...initialState.subscribedPlatforms].sort();
-
-    return JSON.stringify(sortedCurrent) !== JSON.stringify(sortedInitial);
+    return false;
   })();
 
-  const fetchAvailablePlatforms = async (countryCode: string) => {
-    if (!countryCode) return;
-    setLoadingPlatforms(true);
-    try {
-      // Fetch all providers for the country
-      const { data: tmdbResponse, error } = await supabase.functions.invoke("tmdb-providers", {
-        body: { watch_region: countryCode },
-      });
-
-      // FIX 3: Diagnostic logging (Requested in Investigation Step 2)
-      if (error) {
-        console.log("Supabase Invoke Error:", JSON.stringify(error, null, 2));
-      } else {
-        console.log("Response Data:", tmdbResponse);
-      }
-
-      if (!error && tmdbResponse?.results) {
-        const providers = tmdbResponse.results.map((p: any) => ({
-          name: p.provider_name,
-          logo: p.logo_path
-        }));
-
-        // Remove duplicates and sort alphabetically
-        const uniqueProviders = Array.from(new Map(providers.map((item: any) => [item.name, item])).values())
-          .sort((a: any, b: any) => a.name.localeCompare(b.name));
-
-        setAvailablePlatforms(uniqueProviders as {name: string, logo: string}[]);
-      } else {
-        setAvailablePlatforms([]);
-      }
-    } catch (e) {
-      console.error("Error fetching platforms", e);
-    } finally {
-      setLoadingPlatforms(false);
-    }
-  };
-
-  const addPlatform = (platformName: string) => {
-    if (!subscribedPlatforms.includes(platformName)) {
-      setSubscribedPlatforms([...subscribedPlatforms, platformName]);
-    }
-    setOpenCombobox(false);
-    setSearchQuery(""); // Clear search on selection
-  };
-
-  const removePlatform = (platformName: string) => {
-    setSubscribedPlatforms(subscribedPlatforms.filter(p => p !== platformName));
-  };
-
-  // FIX 4: Manual Filtering Logic
-  // We filter the array ourselves instead of letting the Command component do it blindly
-  const filteredPlatforms = availablePlatforms.filter((platform) =>
-    platform.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,7 +124,6 @@ export default function Settings() {
           country,
           location,
           avatar_url: avatarUrl,
-          subscribed_platforms: subscribedPlatforms,
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
@@ -260,7 +163,6 @@ export default function Settings() {
         location,
         avatarUrl,
         email,
-        subscribedPlatforms,
       });
       setJustSaved(true);
 
@@ -360,10 +262,13 @@ export default function Settings() {
 
       // Generate CSV
       const headers = ["Name", "Year", "Rating", "Review", "Tags", "Status", "Date"];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows = data.map((item: any) => {
         return [
-          escapeCsvCell(item.buildings?.name),
-          escapeCsvCell(item.buildings?.year_completed),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          escapeCsvCell((item.buildings as any)?.name),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          escapeCsvCell((item.buildings as any)?.year_completed),
           escapeCsvCell(item.rating),
           escapeCsvCell(item.content),
           escapeCsvCell(item.tags ? item.tags.join("|") : ""),
@@ -481,136 +386,12 @@ export default function Settings() {
                   setLocation(address);
                   if (code) {
                     setCountry(code);
-                    fetchAvailablePlatforms(code);
                   }
                 }}
                 placeholder="e.g. New York, USA"
               />
               <p className="text-xs text-muted-foreground">
-                This helps us show you where films are streaming in your region.
-              </p>
-            </div>
-
-            {/* Platform Selection */}
-            <div id="my-platforms" className="space-y-3 pt-2 scroll-mt-24">
-              <Label>My Platforms</Label>
-
-              {/* Active Platforms List */}
-              {subscribedPlatforms.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
-                    {subscribedPlatforms.map(platformName => {
-                      const provider = availablePlatforms.find(p => p.name === platformName);
-                      return (
-                        <div key={platformName} className="flex items-center gap-2 bg-secondary/50 pl-2 pr-1 py-1 rounded-full text-sm">
-                          {provider ? (
-                            <img
-                              src={`https://image.tmdb.org/t/p/original${provider.logo}`}
-                              alt={platformName}
-                              className="w-4 h-4 rounded-sm object-cover"
-                            />
-                          ) : (
-                            <span className="w-4 h-4 bg-muted rounded-sm" />
-                          )}
-                          <span>{platformName}</span>
-                          <button
-                            type="button"
-                            onClick={() => removePlatform(platformName)}
-                            className="p-1 hover:bg-secondary rounded-full"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
-
-              {/* Combobox for Adding Platforms */}
-              <Popover
-                open={openCombobox}
-                onOpenChange={(open) => {
-                  if (open && !country) {
-                    setOpenCombobox(false);
-                    document.getElementById("location-input")?.focus();
-                  } else {
-                    setOpenCombobox(open);
-                  }
-                }}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openCombobox}
-                    className="w-full justify-between"
-                    disabled={loadingPlatforms}
-                  >
-                    {loadingPlatforms ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Loading providers...
-                      </>
-                    ) : !country ? (
-                      <>
-                        <Search className="mr-2 h-4 w-4 opacity-50" />
-                        Please select your home location first
-                      </>
-                    ) : (
-                      <>
-                        <Search className="mr-2 h-4 w-4 opacity-50" />
-                        Search platforms...
-                      </>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                  {/* FIX 5: Disable internal filtering with shouldFilter={false} */}
-                  <Command shouldFilter={false}>
-                    <CommandInput
-                      placeholder="Search platform..."
-                      autoFocus={false}
-                      value={searchQuery}
-                      onValueChange={setSearchQuery}
-                    />
-                    <CommandList>
-                      {filteredPlatforms.length === 0 && (
-                          <CommandEmpty>No platform found.</CommandEmpty>
-                      )}
-                      <CommandGroup className="max-h-60 overflow-y-auto">
-                        {/* FIX 6: Map over our manually filtered list */}
-                        {filteredPlatforms
-                          .filter(p => !subscribedPlatforms.includes(p.name))
-                          .map((platform) => (
-                            <CommandItem
-                              key={platform.name}
-                              value={platform.name}
-                              onSelect={() => addPlatform(platform.name)}
-                              className="cursor-pointer"
-                            >
-                              <img
-                                src={`https://image.tmdb.org/t/p/original${platform.logo}`}
-                                alt={platform.name}
-                                className="w-6 h-6 rounded mr-2 object-cover"
-                              />
-                              {platform.name}
-                              <Check
-                                className={cn(
-                                  "ml-auto h-4 w-4",
-                                  subscribedPlatforms.includes(platform.name)
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-
-              <p className="text-xs text-muted-foreground">
-                Select the services you subscribe to. We'll highlight them on film pages.
+                This helps us personalize your experience.
               </p>
             </div>
           </div>
@@ -628,7 +409,7 @@ export default function Settings() {
                     <div>
                       <h3 className="font-medium">Install App</h3>
                       <p className="text-sm text-muted-foreground">
-                        Add Cineforum to your home screen for easier access.
+                        Add Archiforum to your home screen for easier access.
                       </p>
                     </div>
                     <Button type="button" onClick={promptInstall}>

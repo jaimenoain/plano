@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface ManageFavoritesDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
   const { user } = useAuth();
   const [selected, setSelected] = useState<FavoriteItem[]>(favorites);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 500);
   const [results, setResults] = useState<FavoriteItem[]>([]);
   const [suggestions, setSuggestions] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
         .from("user_buildings")
         .select(`
            rating,
-           film:films ( id, title, poster_path, media_type, tmdb_id, release_date )
+           building:buildings ( id, name, main_image_url, year_completed )
         `)
         .eq("user_id", user.id)
         .eq("rating", 10)
@@ -52,19 +54,20 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
 
       if (data) {
         // Map to FavoriteItem
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const items: FavoriteItem[] = data.map((log: any) => {
-           const f = Array.isArray(log.film) ? log.film[0] : log.film;
+           const b = Array.isArray(log.building) ? log.building[0] : log.building;
            return {
-             id: f.tmdb_id,
-             media_type: f.media_type as "movie" | "tv",
-             title: f.title,
-             poster_path: f.poster_path,
+             id: b.id,
+             media_type: "building",
+             title: b.name,
+             poster_path: b.main_image_url,
              rating: 10,
-             year_completed: f.release_date ? f.release_date.split('-')[0] : undefined
+             year_completed: b.year_completed ? String(b.year_completed) : undefined
            };
         }).filter((item, index, self) =>
             index === self.findIndex((t) => (
-                t.id === item.id && t.media_type === item.media_type
+                t.id === item.id
             ))
         );
         setSuggestions(items);
@@ -77,62 +80,52 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
   };
 
   useEffect(() => {
-     if (query.length < 2) {
+     if (debouncedQuery.length < 2) {
          setResults([]);
          return;
      }
 
      if (activeTab !== "search") setActiveTab("search");
 
-     const timeout = setTimeout(async () => {
+     const search = async () => {
         setLoading(true);
         try {
-           // We fetch movies and TV shows separately and merge since we don't have "multi" confirmed
-           const [movieRes, tvRes] = await Promise.all([
-               supabase.functions.invoke("tmdb-search", { body: { query, type: "movie" } }),
-               supabase.functions.invoke("tmdb-search", { body: { query, type: "tv" } })
-           ]);
+           const { data } = await supabase
+             .rpc('search_buildings', {
+                 search_query: debouncedQuery,
+                 limit_count: 20
+             });
 
-           let allResults: any[] = [];
-           if (movieRes.data && movieRes.data.results) allResults = [...allResults, ...movieRes.data.results.map((r: any) => ({...r, media_type: 'movie'}))];
-           if (tvRes.data && tvRes.data.results) allResults = [...allResults, ...tvRes.data.results.map((r: any) => ({...r, media_type: 'tv'}))];
-
-           // Dedupe and limit
-           let mapped = allResults
-             .map((r: any) => ({
-                id: r.id,
-                media_type: r.media_type,
-                title: r.title || r.name,
-                poster_path: r.poster_path,
-                rating: undefined,
-                year_completed: (r.release_date || r.first_air_date || "").split("-")[0]
-             }))
-             .sort((a, b) => (b.poster_path ? 1 : 0) - (a.poster_path ? 1 : 0)); // Prefer items with posters
+           // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           let mapped = (data || []).map((b: any) => ({
+              id: b.id,
+              media_type: "building",
+              title: b.name,
+              poster_path: b.main_image_url,
+              rating: undefined,
+              year_completed: b.year_completed ? String(b.year_completed) : undefined
+           }));
 
            if (user && mapped.length > 0) {
-             const tmdbIds = mapped.map((r) => r.id);
+             const buildingIds = mapped.map((r: any) => r.id);
              const { data: userRatings } = await supabase
                .from("user_buildings")
-               .select("rating, film:films!inner(tmdb_id, media_type)")
+               .select("rating, building_id")
                .eq("user_id", user.id)
-               .in("film.tmdb_id", tmdbIds)
+               .in("building_id", buildingIds)
                .not("rating", "is", null);
 
              if (userRatings) {
                const ratingMap = new Map();
+               // eslint-disable-next-line @typescript-eslint/no-explicit-any
                userRatings.forEach((log: any) => {
-                 const film = Array.isArray(log.film) ? log.film[0] : log.film;
-                 if (film && film.tmdb_id) {
-                   ratingMap.set(`${film.media_type}-${film.tmdb_id}`, log.rating);
-                 }
+                   ratingMap.set(log.building_id, log.rating);
                });
 
-               mapped = mapped.map((item) => ({
+               // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               mapped = mapped.map((item: any) => ({
                  ...item,
-                 rating:
-                   ratingMap.get(`${item.media_type}-${item.id}`) ||
-                   ratingMap.get(`movie-${item.id}`) ||
-                   ratingMap.get(`tv-${item.id}`),
+                 rating: ratingMap.get(item.id),
                }));
              }
            }
@@ -140,13 +133,14 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
            setResults(mapped);
         } catch(e) { console.error(e); }
         finally { setLoading(false); }
-     }, 500);
-     return () => clearTimeout(timeout);
-  }, [query]);
+     };
+
+     search();
+  }, [debouncedQuery]);
 
   const toggleSelection = (item: FavoriteItem) => {
-     if (selected.find(s => s.id === item.id && s.media_type === item.media_type)) {
-        setSelected(prev => prev.filter(s => !(s.id === item.id && s.media_type === item.media_type)));
+     if (selected.find(s => s.id === item.id)) {
+        setSelected(prev => prev.filter(s => !(s.id === item.id)));
      } else {
         if (selected.length >= 6) return; // Max 6
         setSelected(prev => [...prev, item]);
@@ -170,7 +164,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
              <input
                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-               placeholder="Search for films or TV shows..."
+               placeholder="Search for buildings..."
                value={query}
                onChange={(e) => {
                    setQuery(e.target.value);
@@ -198,10 +192,10 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                     <div className="text-[10px] uppercase font-bold text-muted-foreground mb-2 tracking-wider">Selected ({selected.length}/6)</div>
                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x">
                         {selected.map(item => (
-                            <div key={`${item.media_type}-${item.id}`} className="relative shrink-0 w-12 snap-start">
+                            <div key={item.id} className="relative shrink-0 w-12 snap-start">
                                 <div className="aspect-[2/3] rounded-md overflow-hidden bg-muted border shadow-sm">
                                     {item.poster_path ? (
-                                        <img src={`https://image.tmdb.org/t/p/w200${item.poster_path}`} className="w-full h-full object-cover" />
+                                        <img src={item.poster_path} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full bg-secondary" />
                                     )}
@@ -227,21 +221,21 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                           {suggestions.length === 0 && !loading && (
                               <div className="text-center py-12 px-4 text-muted-foreground text-sm">
                                   <Star className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
-                                  <p>You haven't rated any films 10/10 yet.</p>
+                                  <p>You haven't rated any buildings 10/10 yet.</p>
                                   <Button variant="link" onClick={() => setActiveTab("search")}>Search instead</Button>
                               </div>
                           )}
-                          {suggestions.map(item => <ListItem key={`${item.media_type}-${item.id}`} item={item} selected={selected} toggle={toggleSelection} />)}
+                          {suggestions.map(item => <ListItem key={item.id} item={item} selected={selected} toggle={toggleSelection} />)}
                       </TabsContent>
                   )}
 
                    <TabsContent value="search" className="mt-0 space-y-1">
                       {results.length === 0 && !loading && (
                           <div className="text-center py-12 px-4 text-muted-foreground text-sm">
-                              {query.length < 2 ? "Type to search movies and TV shows..." : "No results found."}
+                              {query.length < 2 ? "Type to search buildings..." : "No results found."}
                           </div>
                       )}
-                      {results.map(item => <ListItem key={`${item.media_type}-${item.id}`} item={item} selected={selected} toggle={toggleSelection} />)}
+                      {results.map(item => <ListItem key={item.id} item={item} selected={selected} toggle={toggleSelection} />)}
                    </TabsContent>
                </div>
             </ScrollArea>
@@ -259,7 +253,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
 }
 
 function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: FavoriteItem[], toggle: (i: FavoriteItem) => void }) {
-    const isSelected = !!selected.find(s => s.id === item.id && s.media_type === item.media_type);
+    const isSelected = !!selected.find(s => s.id === item.id);
     const isDisabled = !isSelected && selected.length >= 6;
 
     return (
@@ -271,7 +265,7 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
           )}
         >
             <div className="h-12 w-8 shrink-0 bg-muted rounded overflow-hidden shadow-sm">
-                {item.poster_path && <img src={`https://image.tmdb.org/t/p/w200${item.poster_path}`} className="w-full h-full object-cover" />}
+                {item.poster_path && <img src={item.poster_path} className="w-full h-full object-cover" />}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -279,7 +273,6 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
                     {item.year_completed && <span className="text-xs text-muted-foreground shrink-0">({item.year_completed})</span>}
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                    <span className="uppercase tracking-wider border px-1 rounded-sm">{item.media_type}</span>
                     {item.rating && (
                         <span className="flex items-center text-yellow-500 gap-0.5 font-medium">
                             <Star className="h-2.5 w-2.5 fill-current" /> {item.rating}

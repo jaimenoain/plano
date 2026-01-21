@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { FavoriteItem } from "./types";
-import { slugify } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 interface FavoritesSectionProps {
@@ -28,7 +27,7 @@ function FavoritePoster({ fav, className, onClick }: FavoritePosterProps) {
       onClick={onClick}
     >
       <img
-        src={`https://image.tmdb.org/t/p/w400${fav.poster_path}`}
+        src={fav.poster_path}
         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         alt={fav.title}
       />
@@ -64,11 +63,10 @@ export function FavoritesSection({ favorites, isOwnProfile, onManage }: Favorite
   }
 
   const handleNavigate = (fav: FavoriteItem) => {
-    const slug = slugify(fav.title);
     if (fav.reviewId) {
       navigate(`/review/${fav.reviewId}`);
     } else {
-      navigate(`/${fav.media_type}/${slug}/${fav.id}`);
+      navigate(`/building/${fav.id}`);
     }
   };
 

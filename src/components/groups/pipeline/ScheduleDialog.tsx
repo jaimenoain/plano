@@ -54,27 +54,28 @@ export function ScheduleDialog({ item, groupId, open, onOpenChange }: ScheduleDi
   });
 
   const handleConfirm = async () => {
+    // Ensure building ID is present
+    const buildingId = item.building?.id || item.building_id;
+
+    if (!buildingId) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Missing building ID for this item.",
+        });
+        return;
+    }
+
     if (selectedSessionId === "new") {
       // Navigate to create session page
       navigate(
-        `/groups/${groupId}/session/create?backlogId=${item.id}&tmdbId=${item.tmdb_id}`
+        `/groups/${groupId}/session/create?backlogId=${item.id}&buildingId=${buildingId}`
       );
       onOpenChange(false);
     } else {
       // Add to existing session
       setIsSubmitting(true);
       try {
-        // 0. Ensure building exists in DB.
-        // item.building should already be a valid object with an ID if it came from the backlog which references buildings table.
-        // The backlog item in `group_backlog_items` has `building_id`.
-        // So we can assume `item.building.id` is a UUID from our `buildings` table.
-
-        const buildingId = item.building?.id || item.building_id;
-
-        if (!buildingId) {
-             throw new Error("Missing building ID");
-        }
-
         // 1. Add building to session
         const { error: sessionError } = await supabase
           .from("session_buildings")

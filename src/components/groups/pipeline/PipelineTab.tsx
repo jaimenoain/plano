@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Plus, Sparkles } from "lucide-react";
+import { Loader2, Plus, Sparkles, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BacklogItemCard } from "./BacklogItemCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface PipelineTabProps {
   groupId: string;
@@ -26,9 +26,8 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [selectedFilm, setSelectedFilm] = useState<any | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  const [selectedBuilding, setSelectedBuilding] = useState<any | null>(null);
 
   // Add item form state
   const [priority, setPriority] = useState<"Low" | "Medium" | "High">("Medium");
@@ -47,22 +46,14 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
         .select(`
           *,
           user:profiles(id, username, avatar_url),
-          cycle:group_cycles(id, title)
+          cycle:group_cycles(id, title),
+          building:buildings(id, name, main_image_url, year_completed)
         `)
         .eq("group_id", groupId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
-      // Fetch film details for each item
-      const itemsWithFilm = await Promise.all(data.map(async (item) => {
-        const { data: filmData } = await supabase.functions.invoke("tmdb-movie", {
-          body: { movieId: item.tmdb_id, type: "movie" }, // Assuming movie for now, could be passed/stored
-        });
-        return { ...item, film: filmData };
-      }));
-
-      return itemsWithFilm;
+      return data;
     },
     enabled: !!groupId,
   });
@@ -82,32 +73,29 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
     enabled: !!groupId,
   });
 
-  const handleSearch = async (q: string) => {
-    setSearchQuery(q);
-    if (q.length < 3) {
-      setSearchResults([]);
-      return;
-    }
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ["building-search", debouncedSearch],
+    queryFn: async () => {
+      if (!debouncedSearch || debouncedSearch.length < 2) return [];
 
-    setIsSearching(true);
-    try {
-      const { data } = await supabase.functions.invoke("tmdb-search", {
-        body: { query: q, type: "multi" },
-      });
+      const { data, error } = await supabase
+        .rpc('search_buildings', {
+            search_query: debouncedSearch,
+            limit_count: 10
+        });
 
-      const filtered = (data.results || []).filter((item: any) =>
-        item.media_type === "movie" || item.media_type === "tv"
-      );
-      setSearchResults(filtered.slice(0, 10));
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+      if (error) {
+          console.error(error);
+          return [];
+      }
+      return data;
+    },
+    enabled: debouncedSearch.length >= 2,
+  });
+
 
   const handleAddItem = async () => {
-    if (!selectedFilm || !user) return;
+    if (!selectedBuilding || !user) return;
 
     try {
       const { error } = await supabase
@@ -115,7 +103,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
         .insert({
           group_id: groupId,
           user_id: user.id,
-          tmdb_id: selectedFilm.id,
+          building_id: selectedBuilding.id,
           priority: priority,
           status: "Pending",
           admin_note: note,
@@ -135,8 +123,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
 
   const resetForm = () => {
     setSearchQuery("");
-    setSearchResults([]);
-    setSelectedFilm(null);
+    setSelectedBuilding(null);
     setPriority("Medium");
     setNote("");
     setCycleId("none");
@@ -167,10 +154,10 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
       </div>
       <div className="space-y-2 max-w-sm px-4">
         <h3 className="text-xl font-semibold tracking-tight">
-          Start building your movie pipeline
+          Start building your architectural pipeline
         </h3>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Collect movie ideas, prioritize them, and plan your upcoming sessions.
+          Collect building ideas, prioritize them, and plan your upcoming sessions.
         </p>
       </div>
       <Button
@@ -203,14 +190,14 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
               <DialogTitle>Add to Pipeline</DialogTitle>
             </DialogHeader>
 
-            {!selectedFilm ? (
+            {!selectedBuilding ? (
               <div className="space-y-4 pt-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search films..."
+                    placeholder="Search buildings..."
                     value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
                   />
                 </div>
@@ -222,25 +209,24 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {searchResults.map((film) => (
+                      {searchResults?.map((building: any) => (
                         <div
-                          key={film.id}
+                          key={building.id}
                           className="flex gap-3 p-2 hover:bg-accent rounded-md cursor-pointer transition-colors"
-                          onClick={() => setSelectedFilm(film)}
+                          onClick={() => setSelectedBuilding(building)}
                         >
                           <img
-                            src={`https://image.tmdb.org/t/p/w92${film.poster_path}`}
-                            alt={film.original_title || film.title || film.name}
+                            src={building.main_image_url || '/placeholder.png'}
+                            alt={building.name}
                             className="w-10 h-14 object-cover rounded bg-muted"
                           />
                           <div>
-                            <p className="font-medium text-sm">{film.original_title || film.title || film.name}</p>
-                            {(film.title && film.title !== (film.original_title || film.title)) && (
-                              <p className="text-xs text-muted-foreground">{film.title}</p>
+                            <p className="font-medium text-sm">{building.name}</p>
+                            {building.year_completed && (
+                              <p className="text-xs text-muted-foreground">
+                                {building.year_completed}
+                              </p>
                             )}
-                            <p className="text-xs text-muted-foreground">
-                              {(film.release_date || film.first_air_date)?.split('-')[0]}
-                            </p>
                           </div>
                         </div>
                       ))}
@@ -252,16 +238,16 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
               <div className="space-y-4 pt-4">
                 <div className="flex gap-3 bg-muted/30 p-3 rounded-lg border">
                   <img
-                    src={`https://image.tmdb.org/t/p/w92${selectedFilm.poster_path}`}
-                    alt={selectedFilm.original_title || selectedFilm.title || selectedFilm.name}
+                    src={selectedBuilding.main_image_url || '/placeholder.png'}
+                    alt={selectedBuilding.name}
                     className="w-12 h-16 object-cover rounded"
                   />
                   <div>
-                    <p className="font-semibold">{selectedFilm.original_title || selectedFilm.title || selectedFilm.name}</p>
-                    {(selectedFilm.title && selectedFilm.title !== (selectedFilm.original_title || selectedFilm.title)) && (
-                        <p className="text-xs text-muted-foreground">{selectedFilm.title}</p>
+                    <p className="font-semibold">{selectedBuilding.name}</p>
+                    {selectedBuilding.year_completed && (
+                        <p className="text-xs text-muted-foreground">{selectedBuilding.year_completed}</p>
                     )}
-                    <Button variant="link" size="sm" className="h-auto p-0 text-muted-foreground" onClick={() => setSelectedFilm(null)}>Change film</Button>
+                    <Button variant="link" size="sm" className="h-auto p-0 text-muted-foreground" onClick={() => setSelectedBuilding(null)}>Change building</Button>
                   </div>
                 </div>
 
@@ -297,7 +283,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
                 <div className="space-y-2">
                   <Label>Admin Note</Label>
                   <Textarea
-                    placeholder="Why this film? Pitch ideas..."
+                    placeholder="Why this building? Pitch ideas..."
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                   />
