@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { 
-  Settings, LogOut, Film, Bookmark, Loader2, 
+  Settings, LogOut, Building2, Bookmark, Loader2,
   MoreVertical, Heart, Filter, Star, ArrowRight,
   Search, X, Share2, Edit2
 } from "lucide-react";
@@ -427,11 +427,11 @@ export default function Profile() {
 
   // --- Favorites Handlers ---
 
-  const handleSaveFavorites = async (newFilmFavorites: FavoriteItem[]) => {
+  const handleSaveFavorites = async (newBuildingFavorites: FavoriteItem[]) => {
       if (!currentUser) return;
-      // Merge with non-film favorites
-      const nonFilmFavorites = favorites.filter(f => f.type && f.type !== 'building');
-      const combined = [...newFilmFavorites, ...nonFilmFavorites];
+      // Merge with non-building favorites
+      const nonBuildingFavorites = favorites.filter(f => f.type && f.type !== 'building');
+      const combined = [...newBuildingFavorites, ...nonBuildingFavorites];
       setFavorites(combined);
 
       try {
@@ -449,9 +449,9 @@ export default function Profile() {
 
   const handleSaveHighlights = async (newHighlights: FavoriteItem[]) => {
       if (!currentUser) return;
-      // Merge with film favorites
-      const filmFavorites = favorites.filter(f => !f.type || f.type === 'building');
-      const combined = [...filmFavorites, ...newHighlights];
+      // Merge with building favorites
+      const buildingFavorites = favorites.filter(f => !f.type || f.type === 'building');
+      const combined = [...buildingFavorites, ...newHighlights];
       setFavorites(combined);
 
       try {
@@ -545,7 +545,7 @@ export default function Profile() {
       )
   }
 
-  // Filter only film favorites for the FavoritesSection
+  // Filter only building favorites for the FavoritesSection
   const buildingFavorites = favorites.filter(f => !f.type || f.type === 'building');
 
   const avatarUrl = profile?.avatar_url
@@ -575,7 +575,7 @@ export default function Profile() {
         squad={squad}
       />
 
-      {/* 2. Favorite Films (Moved to body as requested implicitly by "Add a section") */}
+      {/* 2. Favorite Buildings (Moved to body as requested implicitly by "Add a section") */}
       {/* Only show if not empty or if own profile (to empty state manageable) */}
       {(buildingFavorites.length > 0 || isOwnProfile) && (
          <FavoritesSection
@@ -658,7 +658,7 @@ export default function Profile() {
                 content.length > 0 ? (
                   <EmptyState icon={Search} label="No results found" />
                 ) : (
-                  <EmptyState icon={Film} label="No reviews yet" />
+                  <EmptyState icon={Building2} label="No visited buildings yet" />
                 )
              )}
           </TabsContent>
@@ -732,7 +732,7 @@ export default function Profile() {
         </DialogContent>
       </Dialog>
 
-      {/* Manage Favorites (Films) Dialog */}
+      {/* Manage Favorites (Buildings) Dialog */}
       <ManageFavoritesDialog
         open={showManageFavorites}
         onOpenChange={setShowManageFavorites}

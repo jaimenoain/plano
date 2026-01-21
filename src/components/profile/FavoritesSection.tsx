@@ -56,7 +56,7 @@ export function FavoritesSection({ favorites, isOwnProfile, onManage }: Favorite
             <Plus className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
           <p className="text-muted-foreground font-medium group-hover:text-foreground transition-colors">
-            Add here your top 6 favourite films
+            Add here your top 6 favourite buildings
           </p>
         </div>
       </div>
