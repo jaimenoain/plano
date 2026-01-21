@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LocationInput } from "@/components/ui/LocationInput";
 import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
-import { Loader2, MapPin, Navigation } from "lucide-react";
+import { Loader2, MapPin, Navigation, Plus, ArrowRight } from "lucide-react";
 import Map, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -15,6 +15,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/useAuth";
 
 // Helper to parse Geocoder results
 const extractLocationDetails = (result: any) => {
@@ -64,6 +73,10 @@ export default function AddBuilding() {
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [extractedLocation, setExtractedLocation] = useState<{ city: string | null; country: string | null }>({ city: null, country: null });
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Default to London, but this will be overridden if we can get user location or just start somewhere generic
   const [viewState, setViewState] = useState({
@@ -81,7 +94,6 @@ export default function AddBuilding() {
     country?: string | null;
   } | null>(null);
 
-  const navigate = useNavigate();
 
   // Debounced duplicate check
   useEffect(() => {
@@ -158,16 +170,55 @@ export default function AddBuilding() {
   };
 
   const proceedToStep2 = () => {
+    if (!markerPosition) return;
+
+    if (duplicates.length > 0) {
+      setShowDuplicateDialog(true);
+      return;
+    }
+
+    forceProceedToStep2();
+  };
+
+  const forceProceedToStep2 = () => {
     if (markerPosition) {
-      setFinalLocationData({
-        lat: markerPosition.lat,
-        lng: markerPosition.lng,
-        address: selectedAddress,
-        name: nameInput,
-        city: extractedLocation.city,
-        country: extractedLocation.country
-      });
-      setStep(2);
+        setFinalLocationData({
+            lat: markerPosition.lat,
+            lng: markerPosition.lng,
+            address: selectedAddress,
+            name: nameInput,
+            city: extractedLocation.city,
+            country: extractedLocation.country
+        });
+        setStep(2);
+        setShowDuplicateDialog(false);
+    }
+  };
+
+  const handleAddToMyList = async (buildingId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to add buildings.");
+      return;
+    }
+
+    try {
+      // Add as visited (default for "I found this building")
+      const { error } = await supabase
+        .from("user_buildings")
+        .upsert({
+          user_id: user.id,
+          building_id: buildingId,
+          status: 'visited',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id, building_id' });
+
+      if (error) throw error;
+
+      toast.success("Building added to your visited list!");
+      navigate(`/building/${buildingId}`);
+    } catch (error) {
+      console.error("Error adding building to list:", error);
+      toast.error("Failed to add building to your list.");
     }
   };
 
@@ -244,18 +295,32 @@ export default function AddBuilding() {
                 {duplicates.map((building) => (
                   <div
                     key={building.id}
-                    className="flex flex-col gap-1 p-2 rounded-md hover:bg-muted cursor-pointer text-sm border"
-                    onClick={() => navigate(`/building/${building.id}`)}
+                    className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
                   >
-                    <div className="font-medium flex justify-between items-start">
-                      <span>{building.name}</span>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                        {building.dist_meters.toFixed(0)}m
-                      </span>
+                    <div
+                        className="cursor-pointer"
+                        onClick={() => navigate(`/building/${building.id}`)}
+                    >
+                        <div className="font-medium flex justify-between items-start">
+                        <span>{building.name}</span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                            {building.dist_meters.toFixed(0)}m
+                        </span>
+                        </div>
+                        {building.address && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
+                        )}
                     </div>
-                    {building.address && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
-                    )}
+
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        className="w-full h-8 text-xs gap-1"
+                        onClick={() => handleAddToMyList(building.id)}
+                    >
+                        <Plus className="h-3 w-3" />
+                        Add to my list
+                    </Button>
                   </div>
                 ))}
               </CardContent>
@@ -352,6 +417,55 @@ export default function AddBuilding() {
           </div>
         </div>
       </div>
+
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Duplicate Building Found</DialogTitle>
+                <DialogDescription>
+                    It looks like this building is already in the database. Do you want to add this one to your list instead?
+                </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 my-2">
+                {duplicates.map((building) => (
+                  <div
+                    key={building.id}
+                    className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
+                  >
+                    <div
+                        className="cursor-pointer"
+                        onClick={() => navigate(`/building/${building.id}`)}
+                    >
+                        <div className="font-medium flex justify-between items-start">
+                        <span>{building.name}</span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                            {building.dist_meters.toFixed(0)}m
+                        </span>
+                        </div>
+                        {building.address && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
+                        )}
+                    </div>
+
+                    <Button
+                        size="sm"
+                        variant="default"
+                        className="w-full h-8 text-xs gap-1"
+                        onClick={() => handleAddToMyList(building.id)}
+                    >
+                        <Plus className="h-3 w-3" />
+                        Add to my list
+                    </Button>
+                  </div>
+                ))}
+            </div>
+            <DialogFooter className="sm:justify-start">
+                <Button variant="ghost" className="text-muted-foreground text-xs" onClick={forceProceedToStep2}>
+                    No, I want to create a new entry <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
