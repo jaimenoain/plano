@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LocationInput } from "@/components/ui/LocationInput";
 import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
-import { Loader2, MapPin, Navigation, Plus, ArrowRight } from "lucide-react";
-import Map, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
+import { Loader2, MapPin, Navigation, Plus, ArrowRight, Bookmark, Check } from "lucide-react";
+import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useNavigate } from "react-router-dom";
@@ -102,15 +102,52 @@ export default function AddBuilding() {
     const checkDuplicates = async () => {
       setCheckingDuplicates(true);
       try {
-        const { data, error } = await supabase.rpc('find_nearby_buildings', {
-          lat: markerPosition.lat,
-          long: markerPosition.lng,
-          radius_meters: 50, // Reduced to 50m to handle dense city centers accurately as per requirements.
-          name_query: nameInput || potentialName || ""
+        const queryName = nameInput || potentialName || "";
+
+        // Run two concurrent checks:
+        // 1. Strict Location Check: 50m radius, ANY name (ensure collisions are caught)
+        // 2. Fuzzy Name Check: 5km radius, matching name (catch duplicates placed slightly off)
+
+        const locationCheckPromise = supabase.rpc('find_nearby_buildings', {
+            lat: markerPosition.lat,
+            long: markerPosition.lng,
+            radius_meters: 50,
+            name_query: "" // Don't filter by name for collision detection
         });
 
-        if (error) throw error;
-        setDuplicates(data || []);
+        // Only run name check if we have a name to check
+        const nameCheckPromise = (queryName.length > 2)
+            ? supabase.rpc('find_nearby_buildings', {
+                lat: markerPosition.lat,
+                long: markerPosition.lng,
+                radius_meters: 5000, // Wider 5km radius
+                name_query: queryName
+            })
+            : Promise.resolve({ data: [] as NearbyBuilding[], error: null });
+
+        const [locationResult, nameResult] = await Promise.all([locationCheckPromise, nameCheckPromise]);
+
+        if (locationResult.error) throw locationResult.error;
+        if (nameResult.error) throw nameResult.error;
+
+        const locationData = locationResult.data || [];
+        const nameData = nameResult.data || [];
+
+        // Filter name results to ensure relevance (e.g. good similarity score)
+        // If the RPC logic is "dist < radius OR match", then passing 5000 might return everything.
+        // We filter client-side to be safe: keep if dist < 50 (covered by location check anyway) OR similarity > 0.3
+        const validNameMatches = nameData.filter(d =>
+            d.dist_meters <= 50 || (d.similarity_score && d.similarity_score > 0.3)
+        );
+
+        // Merge and deduplicate by ID
+        const allDuplicates = [...locationData, ...validNameMatches];
+        const uniqueDuplicates = Array.from(new window.Map(allDuplicates.map(item => [item.id, item])).values());
+
+        // Sort: Closer ones first, then by similarity
+        uniqueDuplicates.sort((a, b) => a.dist_meters - b.dist_meters);
+
+        setDuplicates(uniqueDuplicates);
       } catch (error) {
         console.error("Error checking duplicates:", error);
       } finally {
@@ -195,26 +232,26 @@ export default function AddBuilding() {
     }
   };
 
-  const handleAddToMyList = async (buildingId: string) => {
+  const handleAddToMyList = async (buildingId: string, status: 'pending' | 'visited') => {
     if (!user) {
       toast.error("You must be logged in to add buildings.");
       return;
     }
 
     try {
-      // Add as visited (default for "I found this building")
       const { error } = await supabase
         .from("user_buildings")
         .upsert({
           user_id: user.id,
           building_id: buildingId,
-          status: 'visited',
+          status: status,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id, building_id' });
 
       if (error) throw error;
 
-      toast.success("Building added to your visited list!");
+      const action = status === 'pending' ? "Wishlist" : "Visited list";
+      toast.success(`Building added to your ${action}!`);
       navigate(`/building/${buildingId}`);
     } catch (error) {
       console.error("Error adding building to list:", error);
@@ -312,15 +349,28 @@ export default function AddBuilding() {
                         )}
                     </div>
 
-                    <Button
-                        size="sm"
-                        variant="secondary"
-                        className="w-full h-8 text-xs gap-1"
-                        onClick={() => handleAddToMyList(building.id)}
-                    >
-                        <Plus className="h-3 w-3" />
-                        Add to my list
-                    </Button>
+                    <div className="flex gap-2 w-full">
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            className="flex-1 h-8 text-xs gap-1"
+                            onClick={() => handleAddToMyList(building.id, 'pending')}
+                            title="Add to Wishlist"
+                        >
+                            <Bookmark className="h-3 w-3" />
+                            Wishlist
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            className="flex-1 h-8 text-xs gap-1"
+                            onClick={() => handleAddToMyList(building.id, 'visited')}
+                            title="Mark as Visited"
+                        >
+                            <Check className="h-3 w-3" />
+                            Visited
+                        </Button>
+                    </div>
                   </div>
                 ))}
               </CardContent>
@@ -330,7 +380,7 @@ export default function AddBuilding() {
 
         {/* Map Area */}
         <div className="h-[600px] rounded-xl overflow-hidden border shadow-sm relative bg-muted">
-          <Map
+          <MapGL
             {...viewState}
             onMove={evt => setViewState(evt.viewState)}
             onClick={handleMapClick}
@@ -396,7 +446,7 @@ export default function AddBuilding() {
                  </div>
               </Marker>
             ))}
-          </Map>
+          </MapGL>
 
           {/* Overlay Legend or Status */}
           <div className="absolute top-4 left-4 bg-background/95 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-xs space-y-1">
@@ -447,15 +497,26 @@ export default function AddBuilding() {
                         )}
                     </div>
 
-                    <Button
-                        size="sm"
-                        variant="default"
-                        className="w-full h-8 text-xs gap-1"
-                        onClick={() => handleAddToMyList(building.id)}
-                    >
-                        <Plus className="h-3 w-3" />
-                        Add to my list
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button
+                            size="sm"
+                            variant="default"
+                            className="w-full h-8 text-xs gap-1"
+                            onClick={() => handleAddToMyList(building.id, 'pending')}
+                        >
+                            <Bookmark className="h-3 w-3" />
+                            Add to Wishlist
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            className="w-full h-8 text-xs gap-1"
+                            onClick={() => handleAddToMyList(building.id, 'visited')}
+                        >
+                            <Check className="h-3 w-3" />
+                            Mark as Visited
+                        </Button>
+                    </div>
                   </div>
                 ))}
             </div>
