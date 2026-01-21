@@ -24,6 +24,7 @@ import { FavoriteItem } from "@/components/profile/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { MetaHead } from "@/components/common/MetaHead";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // New Components
 import { UserCard } from "@/components/profile/UserCard";
@@ -327,7 +328,7 @@ export default function Profile() {
 
     try {
         const status = activeTab === "reviews" ? "visited" : "pending";
-        const { data: logsData, error: logsError } = await supabase
+        const { data: entriesData, error: entriesError } = await supabase
             .from("user_buildings")
             .select(`
             id, content, rating, created_at, edited_at, user_id, building_id, tags, status,
@@ -337,18 +338,18 @@ export default function Profile() {
             .eq("status", status)
             .order("edited_at", { ascending: false });
 
-        if (logsError) throw logsError;
+        if (entriesError) throw entriesError;
 
-        if (!logsData || logsData.length === 0) {
+        if (!entriesData || entriesData.length === 0) {
             setContent([]);
             return;
         }
 
-        const logIds = logsData.map((r) => r.id);
+        const entryIds = entriesData.map((r) => r.id);
         const [likesResult, commentsResult, userLikesResult] = await Promise.all([
-            supabase.from("likes").select("interaction_id").in("interaction_id", logIds),
-            supabase.from("comments").select("interaction_id").in("interaction_id", logIds),
-            currentUser ? supabase.from("likes").select("interaction_id").in("interaction_id", logIds).eq("user_id", currentUser.id) : Promise.resolve({ data: [] }),
+            supabase.from("likes").select("interaction_id").in("interaction_id", entryIds),
+            supabase.from("comments").select("interaction_id").in("interaction_id", entryIds),
+            currentUser ? supabase.from("likes").select("interaction_id").in("interaction_id", entryIds).eq("user_id", currentUser.id) : Promise.resolve({ data: [] }),
         ]);
 
         const likesCount = new Map();
@@ -359,7 +360,7 @@ export default function Profile() {
 
         const userLikes = new Set(userLikesResult.data?.map(l => l.interaction_id));
 
-        const formattedContent: FeedReview[] = logsData.map((item: any) => {
+        const formattedContent: FeedReview[] = entriesData.map((item: any) => {
             return {
             id: item.id,
             content: item.content,
@@ -650,7 +651,7 @@ export default function Profile() {
              ) : filteredContent.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
                    {filteredContent.map((item) => (
-                     <ReviewCard key={item.id} review={item} onLike={handleLike} hideUser />
+                     <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser />
                    ))}
                 </div>
              ) : (
@@ -668,7 +669,7 @@ export default function Profile() {
              ) : filteredContent.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
                   {filteredContent.map((item) => (
-                    <ReviewCard key={item.id} review={item} onLike={handleLike} hideUser />
+                    <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser />
                   ))}
                 </div>
              ) : (

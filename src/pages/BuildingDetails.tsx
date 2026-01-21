@@ -31,7 +31,7 @@ interface BuildingDetails {
   created_by: string;
 }
 
-interface FeedReview {
+interface FeedEntry {
   id: string;
   content: string | null;
   rating: number | null;
@@ -57,7 +57,7 @@ export default function BuildingDetails() {
   // User Interaction State
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
-  const [reviews, setReviews] = useState<FeedReview[]>([]);
+  const [entries, setEntries] = useState<FeedEntry[]>([]);
 
   // Parse location
   const coordinates = useMemo(() => {
@@ -106,21 +106,21 @@ export default function BuildingDetails() {
       }
 
       if (user) {
-        // 2. Fetch User Log (using building_id) 
-        const { data: logData } = await supabase
+        // 2. Fetch User Entry (using building_id)
+        const { data: userEntry } = await supabase
           .from("user_buildings")
           .select("*")
           .eq("user_id", user.id)
           .eq("building_id", id)
           .maybeSingle();
 
-        if (logData) {
-            setUserStatus(logData.status);
-            setMyRating(logData.rating || 0);
+        if (userEntry) {
+            setUserStatus(userEntry.status);
+            setMyRating(userEntry.rating || 0);
         }
 
         // 3. Fetch Social Feed
-        const { data: reviewData } = await supabase
+        const { data: entriesData } = await supabase
           .from("user_buildings")
           .select(`
             id, content, rating, status, tags, created_at,
@@ -129,7 +129,7 @@ export default function BuildingDetails() {
           .eq("building_id", id)
           .order("created_at", { ascending: false });
           
-        if (reviewData) setReviews(reviewData as any);
+        if (entriesData) setEntries(entriesData as any);
       }
     } catch (error: any) {
       console.error("Error:", error);
@@ -309,28 +309,28 @@ export default function BuildingDetails() {
             <div className="pt-4 border-t border-dashed">
                 <h3 className="text-lg font-bold mb-4">Community Notes</h3>
                 <div className="space-y-4">
-                    {reviews.length === 0 ? (
+                    {entries.length === 0 ? (
                         <p className="text-muted-foreground text-sm">No one has visited this building yet.</p>
                     ) : (
-                        reviews.map(review => (
-                            <div key={review.id} className="flex gap-4 p-4 bg-muted/10 rounded-lg">
+                        entries.map(entry => (
+                            <div key={entry.id} className="flex gap-4 p-4 bg-muted/10 rounded-lg">
                                 <Avatar>
-                                    <AvatarImage src={review.user.avatar_url || undefined} />
-                                    <AvatarFallback>{review.user.username?.[0]}</AvatarFallback>
+                                    <AvatarImage src={entry.user.avatar_url || undefined} />
+                                    <AvatarFallback>{entry.user.username?.[0]}</AvatarFallback>
                                 </Avatar>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-bold text-sm">{review.user.username}</span>
-                                        <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(review.created_at))} ago</span>
+                                        <span className="font-bold text-sm">{entry.user.username}</span>
+                                        <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(entry.created_at))} ago</span>
                                     </div>
-                                    {review.status === 'visited' && review.rating && (
+                                    {entry.status === 'visited' && entry.rating && (
                                         <div className="flex items-center gap-0.5 my-1">
-                                            {[...Array(review.rating)].map((_, i) => (
+                                            {[...Array(entry.rating)].map((_, i) => (
                                                 <Star key={i} className="w-3 h-3 fill-yellow-500 text-yellow-500" />
                                             ))}
                                         </div>
                                     )}
-                                    {review.content && <p className="text-sm mt-1 text-muted-foreground">{review.content}</p>}
+                                    {entry.content && <p className="text-sm mt-1 text-muted-foreground">{entry.content}</p>}
                                 </div>
                             </div>
                         ))

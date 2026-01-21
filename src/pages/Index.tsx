@@ -346,7 +346,7 @@ export default function Index() {
               {reviews.map((review) => (
                 <ReviewCard
                   key={review.id}
-                  review={review}
+                  entry={review}
                   onLike={handleLike}
                 />
               ))}

@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { slugify } from "@/lib/utils";
 
 interface ReviewCardProps {
-  review: {
+  entry: {
     id: string; 
     content: string | null;
     rating: number | null;
@@ -39,7 +39,7 @@ interface ReviewCardProps {
 }
 
 export function ReviewCard({ 
-  review, 
+  entry,
   onLike, 
   onComment, 
   isDetailView = false, 
@@ -49,48 +49,48 @@ export function ReviewCard({
   const navigate = useNavigate();
   
   // FIXED: Safety Check - Prevent crash if building data is missing
-  if (!review.building) return null;
+  if (!entry.building) return null;
 
-  const posterUrl = review.building.main_image_url || null;
+  const posterUrl = entry.building.main_image_url || null;
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isDetailView) return;
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
 
-    if (review.building.id) {
-        navigate(`/building/${review.building.id}`);
+    if (entry.building.id) {
+        navigate(`/building/${entry.building.id}`);
     } else {
-        navigate(`/review/${review.id}`);
+        navigate(`/review/${entry.id}`);
     }
   };
 
   const handleCommentClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onComment) {
-        onComment(review.id);
+        onComment(entry.id);
     } else {
-        if (review.building.id) {
-            navigate(`/building/${review.building.id}`);
+        if (entry.building.id) {
+            navigate(`/building/${entry.building.id}`);
         } else {
-            navigate(`/review/${review.id}`);
+            navigate(`/review/${entry.id}`);
         }
     }
   };
 
   // Safe user access
-  const username = review.user?.username || "Unknown User";
-  const avatarUrl = review.user?.avatar_url || undefined;
+  const username = entry.user?.username || "Unknown User";
+  const avatarUrl = entry.user?.avatar_url || undefined;
   const userInitial = username.charAt(0).toUpperCase();
 
   // Title Logic
-  const mainTitle = review.building.name;
+  const mainTitle = entry.building.name;
 
   // Metadata Logic: Architect • Year, fallback to Address
-  const architects = review.building.architects;
-  const year_completed = review.building.year_completed;
+  const architects = entry.building.architects;
+  const year_completed = entry.building.year_completed;
 
-  let subTitle = review.building.address;
+  let subTitle = entry.building.address;
 
   if (architects && architects.length > 0) {
       subTitle = architects[0];
@@ -99,15 +99,15 @@ export function ReviewCard({
       }
   } else if (year_completed) {
       subTitle = `${year_completed}`;
-      if (review.building.address) {
+      if (entry.building.address) {
           // If only year_completed is available, maybe show address too contextually,
           // or just year_completed. Let's show Year • Address for context.
-           subTitle += ` • ${review.building.address}`;
+           subTitle += ` • ${entry.building.address}`;
       }
   }
 
-  const isWatchlist = review.status === 'watchlist';
-  const watchWithUsers = review.watch_with_users || [];
+  const isWatchlist = entry.status === 'watchlist';
+  const watchWithUsers = entry.watch_with_users || [];
 
   // --- 1. DETAIL VIEW (List View) ---
   if (isDetailView) {
@@ -126,14 +126,14 @@ export function ReviewCard({
                 {username}
               </p>
               <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(review.edited_at || review.created_at), { addSuffix: true }).replace("about ", "")}
+                {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace("about ", "")}
               </p>
             </div>
           </div>
         ) : (
           <div className="mb-3">
              <p className="text-xs text-muted-foreground">
-               {formatDistanceToNow(new Date(review.edited_at || review.created_at), { addSuffix: true }).replace("about ", "")}
+               {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace("about ", "")}
              </p>
           </div>
         )}
@@ -143,7 +143,7 @@ export function ReviewCard({
             posterUrl ? (
               <img
                 src={posterUrl}
-                alt={review.building.name}
+                alt={entry.building.name}
                 className="w-32 h-24 object-cover rounded-sm flex-shrink-0"
               />
             ) : (
@@ -165,13 +165,13 @@ export function ReviewCard({
               </div>
             )}
             
-            {review.rating && (
+            {entry.rating && (
               <div className="flex items-center gap-1 mb-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
                     className={`w-3 h-3 ${
-                      i < review.rating!
+                      i < entry.rating!
                         ? "fill-yellow-500 text-yellow-500"
                         : "fill-transparent text-muted-foreground/30"
                     }`}
@@ -180,21 +180,21 @@ export function ReviewCard({
               </div>
             )}
 
-            {review.content && (
+            {entry.content && (
               <p className="text-sm text-muted-foreground mb-2">
-                {review.content}
+                {entry.content}
               </p>
             )}
 
-            {review.tags && review.tags.length > 0 && (
+            {entry.tags && entry.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {review.tags.slice(0, 3).map(tag => (
+                {entry.tags.slice(0, 3).map(tag => (
                   <Badge key={tag} variant="secondary" className="text-xs px-2 h-6 font-normal text-muted-foreground">
                     {tag}
                   </Badge>
                 ))}
-                {review.tags.length > 3 && (
-                   <span className="text-xs text-muted-foreground self-center">+{review.tags.length - 3}</span>
+                {entry.tags.length > 3 && (
+                   <span className="text-xs text-muted-foreground self-center">+{entry.tags.length - 3}</span>
                 )}
               </div>
             )}
@@ -205,24 +205,24 @@ export function ReviewCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onLike?.(review.id);
+              onLike?.(entry.id);
               window.dispatchEvent(new CustomEvent('pwa-interaction'));
             }}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
           >
             <Heart
               className={`h-4 w-4 ${
-                review.is_liked ? "fill-primary text-primary" : ""
+                entry.is_liked ? "fill-primary text-primary" : ""
               }`}
             />
-            <span className="text-xs">{review.likes_count}</span>
+            <span className="text-xs">{entry.likes_count}</span>
           </button>
           <button
             onClick={handleCommentClick}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
           >
             <MessageCircle className="h-4 w-4" />
-            <span className="text-xs">{review.comments_count}</span>
+            <span className="text-xs">{entry.comments_count}</span>
           </button>
         </div>
       </article>
@@ -249,7 +249,7 @@ export function ReviewCard({
               {username}
             </span>
             <span className="text-[10px] md:text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(review.edited_at || review.created_at)).replace("about ", "")} ago
+              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
             </span>
           </div>
         </div>
@@ -306,17 +306,17 @@ export function ReviewCard({
         )}
 
         {/* Rating Section: Big Number + Stars - RESPONSIVE TWEAK */}
-        {review.rating && (
+        {entry.rating && (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
              <span className="text-2xl md:text-3xl font-bold leading-none text-foreground tracking-tighter">
-               {review.rating}
+               {entry.rating}
              </span>
              <div className="flex items-center gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
                     className={`w-3 h-3 md:w-3.5 md:h-3.5 ${
-                      i < review.rating!
+                      i < entry.rating!
                         ? "fill-yellow-500 text-yellow-500"
                         : "fill-transparent text-muted-foreground/30"
                     }`}
@@ -337,22 +337,22 @@ export function ReviewCard({
         )}
 
         {/* Review Text: Only show if exists */}
-        {review.content && (
+        {entry.content && (
            <p className="text-sm font-medium text-foreground line-clamp-3 leading-relaxed">
-             "{review.content}"
+             "{entry.content}"
            </p>
         )}
 
         {/* Tags Section - UPDATED */}
-        {review.tags && review.tags.length > 0 && (
+        {entry.tags && entry.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-1">
-            {review.tags.slice(0, 3).map(tag => (
+            {entry.tags.slice(0, 3).map(tag => (
               <Badge key={tag} variant="secondary" className="text-xs px-2 h-6 font-normal text-muted-foreground/80">
                 {tag}
               </Badge>
             ))}
-            {review.tags.length > 3 && (
-              <span className="text-xs text-muted-foreground self-center">+{review.tags.length - 3}</span>
+            {entry.tags.length > 3 && (
+              <span className="text-xs text-muted-foreground self-center">+{entry.tags.length - 3}</span>
             )}
           </div>
         )}
@@ -362,7 +362,7 @@ export function ReviewCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onLike?.(review.id);
+              onLike?.(entry.id);
               // Trigger PWA interaction check on like
               window.dispatchEvent(new CustomEvent('pwa-interaction'));
             }}
@@ -370,10 +370,10 @@ export function ReviewCard({
           >
             <Heart
               className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${
-                review.is_liked ? "fill-primary text-primary" : ""
+                entry.is_liked ? "fill-primary text-primary" : ""
               }`}
             />
-            <span className="text-xs font-medium">{review.likes_count}</span>
+            <span className="text-xs font-medium">{entry.likes_count}</span>
           </button>
           
           <button
@@ -381,7 +381,7 @@ export function ReviewCard({
             className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group/comment"
           >
             <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
-            <span className="text-xs font-medium">{review.comments_count}</span>
+            <span className="text-xs font-medium">{entry.comments_count}</span>
           </button>
         </div>
       </div>
