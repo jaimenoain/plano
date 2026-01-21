@@ -18,7 +18,6 @@ export interface Database {
           location: unknown | null
           name: string
           address: string | null
-          architect: string | null
           architects: string[] | null
           styles: string[] | null
           year_completed: number | null
@@ -31,7 +30,6 @@ export interface Database {
           location?: unknown | null
           name: string
           address?: string | null
-          architect?: string | null
           architects?: string[] | null
           styles?: string[] | null
           year_completed?: number | null
@@ -44,7 +42,6 @@ export interface Database {
           location?: unknown | null
           name?: string
           address?: string | null
-          architect?: string | null
           architects?: string[] | null
           styles?: string[] | null
           year_completed?: number | null

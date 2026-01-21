@@ -5,13 +5,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Star } from "lucide-react";
 
 interface PersonalRatingButtonProps {
-  filmId: string;
+  buildingId: string;
   initialRating: number | null;
-  onRate: (filmId: string, rating: number) => void;
+  onRate: (buildingId: string, rating: number) => void;
   isPending?: boolean;
 }
 
-export function PersonalRatingButton({ filmId, initialRating, onRate, isPending = false }: PersonalRatingButtonProps) {
+export function PersonalRatingButton({ buildingId, initialRating, onRate, isPending = false }: PersonalRatingButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
 
@@ -61,7 +61,7 @@ export function PersonalRatingButton({ filmId, initialRating, onRate, isPending 
                 `}
                 onMouseEnter={() => setHoverRating(star)}
                 onClick={() => {
-                  onRate(filmId, star);
+                  onRate(buildingId, star);
                   setIsOpen(false);
                 }}
               >
@@ -76,7 +76,7 @@ export function PersonalRatingButton({ filmId, initialRating, onRate, isPending 
           })}
         </div>
         <div className="text-center mt-2 text-xs font-medium text-muted-foreground h-4">
-          {hoverRating ? `${hoverRating} / 5` : (initialRating ? `${initialRating} / 5` : "Rate this film")}
+          {hoverRating ? `${hoverRating} / 5` : (initialRating ? `${initialRating} / 5` : "Rate this building")}
         </div>
       </PopoverContent>
     </Popover>
