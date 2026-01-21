@@ -21,6 +21,8 @@ export interface Database {
           architects: string[] | null
           styles: string[] | null
           year_completed: number | null
+          city: string | null
+          country: string | null
         }
         Insert: {
           created_at?: string
@@ -33,6 +35,8 @@ export interface Database {
           architects?: string[] | null
           styles?: string[] | null
           year_completed?: number | null
+          city?: string | null
+          country?: string | null
         }
         Update: {
           created_at?: string
@@ -45,6 +49,8 @@ export interface Database {
           architects?: string[] | null
           styles?: string[] | null
           year_completed?: number | null
+          city?: string | null
+          country?: string | null
         }
         Relationships: []
       }
@@ -1041,6 +1047,7 @@ export interface Database {
           location_lat: number
           location_lng: number
           dist_meters: number
+          similarity_score: number
         }[]
       }
       get_group_building_stats: {
