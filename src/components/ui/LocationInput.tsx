@@ -24,7 +24,7 @@ const libraries: ("places" | "geometry" | "drawing" | "visualization")[] = [
 
 interface LocationInputProps {
   value: string;
-  onLocationSelected: (address: string, countryCode: string) => void;
+  onLocationSelected: (address: string, countryCode: string, placeName?: string) => void;
   className?: string;
   placeholder?: string;
   searchTypes?: string[];
@@ -113,7 +113,7 @@ export function LocationInput({
 
 interface PlacesAutocompleteProps {
   defaultValue: string;
-  onLocationSelected: (address: string, countryCode: string) => void;
+  onLocationSelected: (address: string, countryCode: string, placeName?: string) => void;
   placeholder: string;
   searchTypes: string[];
   id?: string;
@@ -163,7 +163,7 @@ function PlacesAutocomplete({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = async (address: string) => {
+  const handleSelect = async (address: string, placeName?: string) => {
     setValue(address, false);
     clearSuggestions();
     setOpen(false);
@@ -178,11 +178,11 @@ function PlacesAutocomplete({
 
       const countryCode = countryComponent ? countryComponent.short_name : "";
 
-      onLocationSelected(address, countryCode);
+      onLocationSelected(address, countryCode, placeName);
     } catch (error) {
       console.log("Error: ", error);
       // Fallback: save text even if geocode fails
-      onLocationSelected(address, "");
+      onLocationSelected(address, "", placeName);
     }
   };
 
@@ -215,11 +215,11 @@ function PlacesAutocomplete({
             <CommandList>
               <CommandGroup>
                 {status === "OK" &&
-                  data.map(({ place_id, description }) => (
+                  data.map(({ place_id, description, structured_formatting }) => (
                     <CommandItem
                       key={place_id}
                       value={description}
-                      onSelect={() => handleSelect(description)}
+                      onSelect={() => handleSelect(description, structured_formatting?.main_text)}
                       className="cursor-pointer"
                     >
                       <MapPin className="mr-2 h-4 w-4 shrink-0" />

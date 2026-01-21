@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AddBuildingDetails } from "@/components/AddBuildingDetails";
+import { Badge } from "@/components/ui/badge";
 
 interface NearbyBuilding {
   id: string;
@@ -25,6 +26,7 @@ interface NearbyBuilding {
 export default function AddBuilding() {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedAddress, setSelectedAddress] = useState("");
+  const [potentialName, setPotentialName] = useState<string | undefined>(undefined);
   const [isChecking, setIsChecking] = useState(false);
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -33,14 +35,9 @@ export default function AddBuilding() {
 
   const navigate = useNavigate();
 
-  const handleLocationSelected = async (address: string) => {
+  const handleLocationSelected = async (address: string, countryCode: string, placeName?: string) => {
     setSelectedAddress(address);
-    // Don't trigger check on typing, only on selection (handled via a button or specific action)
-    // But LocationInput calls this on type as well.
-    // We will trigger the check only when user explicitly confirms or we detect a "complete" selection.
-    // However, `LocationInput` logic is a bit mixed. It calls onLocationSelected on type AND on select.
-    // We'll rely on the "Continue" button or a specific effect if we want auto-detection.
-    // For now, let's add a "Next" button that triggers the check.
+    setPotentialName(placeName);
   };
 
   const handleNext = async () => {
@@ -73,7 +70,8 @@ export default function AddBuilding() {
       const { data, error } = await supabase.rpc('find_nearby_buildings', {
         lat,
         long: lng,
-        radius_meters: 50 // 50m radius (updated per spec)
+        radius_meters: 50, // 50m radius (updated per spec)
+        name_query: potentialName // Pass the potential name for fuzzy matching
       });
 
       if (error) {
@@ -157,7 +155,7 @@ export default function AddBuilding() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Potential Duplicates Found</AlertTitle>
             <AlertDescription>
-              We found existing buildings near this location. Is it one of these?
+              We found existing buildings near this location or with a matching name. Is it one of these?
             </AlertDescription>
           </Alert>
 
@@ -210,20 +208,30 @@ export default function AddBuilding() {
           </div>
 
           <div className="grid gap-4">
-            {duplicates.map((building) => (
-                <Card key={building.id} className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/building/${building.id}`)}>
-                    <div>
-                        <h4 className="font-semibold">{building.name}</h4>
-                        <p className="text-sm text-muted-foreground">{building.address}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {(building.dist_meters).toFixed(1)}m away
-                        </p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                        View Existing
-                    </Button>
-                </Card>
-            ))}
+            {duplicates.map((building) => {
+                const isNameMatch = building.dist_meters > 50; // Assume > 50m means matched by name
+                return (
+                    <Card key={building.id} className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/building/${building.id}`)}>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-semibold">{building.name}</h4>
+                                {isNameMatch && (
+                                    <Badge variant="secondary" className="text-xs">
+                                        Name Match
+                                    </Badge>
+                                )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{building.address}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {(building.dist_meters).toFixed(1)}m away
+                            </p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                            View Existing
+                        </Button>
+                    </Card>
+                );
+            })}
           </div>
 
           <div className="flex justify-between items-center pt-4 border-t">
