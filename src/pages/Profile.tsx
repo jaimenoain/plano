@@ -38,6 +38,7 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   last_online?: string | null;
+  role?: string;
 }
 
 interface Stats {
