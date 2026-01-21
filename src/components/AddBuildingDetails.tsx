@@ -12,6 +12,7 @@ interface AddBuildingDetailsProps {
     lat: number;
     lng: number;
     address: string;
+    name?: string;
   };
   onBack: () => void;
 }
@@ -57,7 +58,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
   };
 
   const initialValues: BuildingFormData = {
-    name: "",
+    name: locationData.name || "",
     year_completed: null,
     architects: [],
     styles: [],
@@ -78,7 +79,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         <CardHeader>
           <CardTitle>Building Information</CardTitle>
           <CardDescription>
-            Tell us more about {locationData.address}
+            Tell us more about {locationData.name || locationData.address}
           </CardDescription>
         </CardHeader>
         <CardContent>
