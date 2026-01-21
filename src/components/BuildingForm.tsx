@@ -7,6 +7,7 @@ import { TagInput } from "@/components/ui/tag-input";
 import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
 import { supabase } from "@/integrations/supabase/client";
 import { buildingSchema } from "@/lib/validations/building";
+import { resizeImage } from "@/lib/image-compression";
 import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -84,14 +85,27 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting: parentIsSu
       let finalImageUrl = initialValues.main_image_url;
 
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
+        let fileToUpload = imageFile;
+
+        try {
+          // Resize and compress the image before uploading
+          // Max width 2048px, quality 0.8, WebP format
+          fileToUpload = await resizeImage(imageFile);
+          console.log(`Compressed image: ${imageFile.size} -> ${fileToUpload.size} bytes`);
+        } catch (resizeError) {
+          console.error("Image compression failed, falling back to original:", resizeError);
+          // Fallback to original file if compression fails
+        }
+
+        // Use the new extension if compression succeeded (webp), otherwise keep original
+        const fileExt = fileToUpload.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         // Upload to 'building-images' bucket
         const { error: uploadError } = await supabase.storage
           .from('building-images')
-          .upload(filePath, imageFile);
+          .upload(filePath, fileToUpload);
 
         if (uploadError) {
           console.error("Upload error:", uploadError);
