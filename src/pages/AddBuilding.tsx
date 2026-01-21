@@ -24,35 +24,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
-
-// Helper to parse Geocoder results
-const extractLocationDetails = (result: any) => {
-  let city = null;
-  let country = null;
-
-  if (!result || !result.address_components) return { city, country };
-
-  for (const component of result.address_components) {
-    if (component.types.includes('locality')) {
-      city = component.long_name;
-    }
-    if (component.types.includes('country')) {
-      country = component.long_name;
-    }
-  }
-
-  // Fallback for city if locality is missing
-  if (!city) {
-     for (const component of result.address_components) {
-        if (component.types.includes('administrative_area_level_2')) {
-            city = component.long_name;
-            break;
-        }
-     }
-  }
-
-  return { city, country };
-};
+import { extractLocationDetails } from "@/lib/location-utils";
 
 interface NearbyBuilding {
   id: string;
@@ -65,6 +37,10 @@ interface NearbyBuilding {
 }
 
 export default function AddBuilding() {
+  // TODO: Refactor this to use the shared BuildingLocationPicker component.
+  // Currently, BuildingLocationPicker lacks the "nearby duplicates" visualization
+  // and interaction logic which is essential for this page.
+  // Once BuildingLocationPicker supports passing in external markers/duplicates, we can switch.
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedAddress, setSelectedAddress] = useState("");
   const [potentialName, setPotentialName] = useState<string | undefined>(undefined);

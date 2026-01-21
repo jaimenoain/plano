@@ -37,8 +37,9 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           description: data.description,
           address: locationData.address,
           main_image_url: data.main_image_url,
-          city: locationData.city,
-          country: locationData.country,
+          // Explicitly pass extracted city and country from Step 1
+          city: locationData.city || null,
+          country: locationData.country || null,
           // location is a geography(POINT) column. We need to pass a string "POINT(lng lat)"
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown
         })
