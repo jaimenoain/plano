@@ -30,7 +30,7 @@ export function ContentIntelligenceZone({ trendingBuildings }: ContentIntelligen
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium leading-none line-clamp-2">{building.name}</p>
-                <p className="text-xs text-muted-foreground">{building.log_count} interactions</p>
+                <p className="text-xs text-muted-foreground">{building.visit_count} interactions</p>
               </div>
             </div>
           ))}

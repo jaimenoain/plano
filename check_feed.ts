@@ -8,9 +8,9 @@ async function main() {
     // 1. Try to fetch a watchlist item directly from log to see structure
     console.log("Fetching a watchlist item from log...");
     const { data: logs, error: logError } = await supabase
-        .from('log')
+        .from('user_buildings')
         .select('*')
-        .eq('status', 'watchlist')
+        .eq('status', 'pending')
         .limit(1);
 
     if (logError) {
