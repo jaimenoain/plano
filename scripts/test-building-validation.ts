@@ -1,4 +1,4 @@
-import { buildingSchema } from "./building";
+import { buildingSchema } from "../src/lib/validations/building";
 import { z } from "zod";
 
 const testSchema = () => {
