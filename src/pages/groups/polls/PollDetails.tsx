@@ -23,7 +23,7 @@ import {
   BarChart2, 
   XCircle, 
   PlayCircle, 
-  Film, 
+  Building2,
   HelpCircle, 
   MoreHorizontal,
   CheckCircle2,
@@ -157,7 +157,7 @@ export default function PollDetails() {
       case 'building_selection':
         return (
           <div className="flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">
-            <Film className="w-4 h-4" />
+            <Building2 className="w-4 h-4" />
             <span>Decision</span>
           </div>
         );

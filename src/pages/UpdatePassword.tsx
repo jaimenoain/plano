@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Film, Lock } from "lucide-react";
+import { Building2, Lock } from "lucide-react";
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState("");
@@ -57,9 +57,9 @@ export default function UpdatePassword() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="flex items-center gap-3 mb-10">
-        <Film className="h-10 w-10 text-primary" />
+        <Building2 className="h-10 w-10 text-primary" />
         <span className="text-2xl font-bold tracking-tight text-foreground">
-          Cineforum
+          Archiforum
         </span>
       </div>
 
