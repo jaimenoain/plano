@@ -433,7 +433,7 @@ export function SessionCard({
                               </div>
                             </Button>
                           ) : (
-                            <PersonalRatingButton buildingId={building.id} initialRating={null} onRate={(bid, rating) => rateBuilding.mutate({ buildingId: bid, rating })} isPending={rateBuilding.isPending} />
+                            <PersonalRatingButton buildingId={building.id} initialRating={null} onRate={(bid, rating) => rateBuilding.mutate({ buildingId: bid, rating })} isLoading={rateBuilding.isPending} />
                           )}
                         </div>
                       </div>
