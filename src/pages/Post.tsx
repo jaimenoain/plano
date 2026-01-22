@@ -176,10 +176,6 @@ export default function Post() {
 
       // Handle Recommendations
       // (Simplified: remove recommendations logic if table is gone or update it later)
-      // Memory says: "All TMDB API integrations... removed".
-      // Recommendations table was removed in my types update? Yes.
-      // So I should remove this block or update it if a new rec system exists.
-      // I will comment it out for now to ensure compilation.
       /*
       if (recommendTo.length > 0) {
           // ...

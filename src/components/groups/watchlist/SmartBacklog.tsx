@@ -115,8 +115,6 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
             media_url: mediaUrl,
             media_data: {
               building_id: building.id,
-              // tmdb_id removed
-              // overview removed (not in SmartBuilding)
               year_completed: building.year_completed,
               architects: building.architects,
               main_image_url: building.main_image_url

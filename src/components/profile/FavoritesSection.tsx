@@ -27,7 +27,7 @@ function FavoritePoster({ fav, className, onClick }: FavoritePosterProps) {
       onClick={onClick}
     >
       <img
-        src={fav.poster_path}
+        src={fav.image_url || undefined}
         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         alt={fav.title}
       />

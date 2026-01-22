@@ -238,7 +238,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                                           <div key={p.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
                                               <div className="flex items-center gap-3">
                                                   <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
-                                                      {p.poster_path && <img src={p.poster_path} className="w-full h-full object-cover" alt={p.title}/>}
+                                                      {p.image_url && <img src={p.image_url} className="w-full h-full object-cover" alt={p.title}/>}
                                                   </div>
                                                   <span className="text-sm font-medium">{p.title}</span>
                                               </div>
@@ -269,7 +269,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                                                   )}
                                               >
                                                   <div className="h-10 w-10 rounded-full bg-muted overflow-hidden shrink-0">
-                                                      {p.poster_path && <img src={p.poster_path} className="w-full h-full object-cover" alt={p.title}/>}
+                                                      {p.image_url && <img src={p.image_url} className="w-full h-full object-cover" alt={p.title}/>}
                                                   </div>
                                                   <span className="text-sm font-medium truncate">{p.title}</span>
                                                   {isSelected && <Check className="ml-auto h-4 w-4 text-primary" />}

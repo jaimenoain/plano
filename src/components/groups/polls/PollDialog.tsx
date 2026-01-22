@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Check, Image as ImageIcon, Film, X, Edit2, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Check, Image as ImageIcon, Building2, X, Edit2, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -110,7 +110,8 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
   const defaultValues: Partial<PollFormValues> = pollToEdit ? {
       title: pollToEdit.title,
       description: pollToEdit.description || "",
-      type: pollToEdit.type === "film_selection" ? "general" : pollToEdit.type, // Migrate legacy type if needed
+      // Legacy "film_selection" mapped to general, or maintain "building_selection"
+      type: (pollToEdit.type === "film_selection") ? "general" : pollToEdit.type,
       status: pollToEdit.status,
       show_results_before_close: !!pollToEdit.show_results_before_close, // Ensure boolean
       questions: pollToEdit.questions.map((q: any) => ({

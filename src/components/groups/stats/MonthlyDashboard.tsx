@@ -15,7 +15,7 @@ interface MonthlyStats {
   };
   trending: {
     title: string;
-    poster_path: string | null;
+    image_url: string | null;
     count: number;
   };
 }
@@ -66,9 +66,9 @@ export function MonthlyDashboard({ stats }: { stats: MonthlyStats }) {
          {/* Trending */}
         {stats.trending && stats.trending.title && (
             <Card className="bg-card/50 border-white/5 overflow-hidden relative group">
-                {stats.trending.poster_path && (
+                {stats.trending.image_url && (
                     <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity">
-                         <img src={stats.trending.poster_path} className="w-full h-full object-cover" />
+                         <img src={stats.trending.image_url} className="w-full h-full object-cover" />
                          <div className="absolute inset-0 bg-gradient-to-l from-background to-transparent" />
                     </div>
                 )}

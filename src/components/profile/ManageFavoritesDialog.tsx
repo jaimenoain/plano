@@ -61,7 +61,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
              id: b.id,
              media_type: "building",
              title: b.name,
-             poster_path: b.main_image_url,
+             image_url: b.main_image_url,
              rating: 10,
              year_completed: b.year_completed ? String(b.year_completed) : undefined
            };
@@ -101,7 +101,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
               id: b.id,
               media_type: "building",
               title: b.name,
-              poster_path: b.main_image_url,
+              image_url: b.main_image_url,
               rating: undefined,
               year_completed: b.year_completed ? String(b.year_completed) : undefined
            }));
@@ -194,8 +194,8 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                         {selected.map(item => (
                             <div key={item.id} className="relative shrink-0 w-12 snap-start">
                                 <div className="aspect-[2/3] rounded-md overflow-hidden bg-muted border shadow-sm">
-                                    {item.poster_path ? (
-                                        <img src={item.poster_path} className="w-full h-full object-cover" />
+                                    {item.image_url ? (
+                                        <img src={item.image_url} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full bg-secondary" />
                                     )}
@@ -265,7 +265,7 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
           )}
         >
             <div className="h-12 w-8 shrink-0 bg-muted rounded overflow-hidden shadow-sm">
-                {item.poster_path && <img src={item.poster_path} className="w-full h-full object-cover" />}
+                {item.image_url && <img src={item.image_url} className="w-full h-full object-cover" />}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
