@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
-  Loader2, MapPin, Calendar, Star, Send, 
+  Loader2, MapPin, Calendar, Send,
   Trash2, Edit2, Check, Bookmark, Navigation
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -17,6 +17,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
 import { BuildingMap } from "@/components/common/BuildingMap";
+import { PersonalRatingButton } from "@/components/PersonalRatingButton";
+import { Star } from "lucide-react"; // Kept for Community Notes display if needed, but PersonalRatingButton handles the input.
 
 // --- Types ---
 interface BuildingDetails {
@@ -124,7 +126,10 @@ export default function BuildingDetails() {
         }
 
         // 3. Fetch Social Feed
-        const { data: entriesData } = await supabase
+        // DEBUG: Explicitly log this fetch attempt
+        console.log("Fetching social feed for building:", id);
+
+        const { data: entriesData, error: entriesError } = await supabase
           .from("user_buildings")
           .select(`
             id, content, rating, status, tags, created_at,
@@ -133,7 +138,13 @@ export default function BuildingDetails() {
           .eq("building_id", id)
           .order("created_at", { ascending: false });
           
-        if (entriesData) setEntries(entriesData as any);
+        if (entriesError) console.error("Error fetching feed:", entriesError);
+        if (entriesData) {
+            console.log("Fetched feed entries:", entriesData);
+            setEntries(entriesData as any);
+        }
+      } else {
+        console.log("No user, skipping feed fetch");
       }
     } catch (error: any) {
       console.error("Error:", error);
@@ -143,39 +154,61 @@ export default function BuildingDetails() {
     }
   };
 
-  const handleInteraction = async (status: 'visited' | 'pending', rating?: number) => {
+  const handleStatusChange = async (newStatus: 'visited' | 'pending') => {
       if (!user || !building) return;
-      
-      const newRating = rating !== undefined ? rating : myRating;
-      const newStatus = status;
 
       // Optimistic Update
       setUserStatus(newStatus);
-      if (rating) setMyRating(rating);
+      // Rating persists (myRating state is not changed to 0)
 
       const payload: any = {
           user_id: user.id,
-          building_id: building.id, // Updated Foreign Key 
+          building_id: building.id,
           status: newStatus,
+          rating: myRating > 0 ? myRating : null, // Persist existing rating
           updated_at: new Date().toISOString()
       };
-
-      // Allow rating for both 'visited' (Quality) and 'pending' (Priority) statuses.
-      if (newRating > 0) {
-          payload.rating = newRating;
-      } else {
-          payload.rating = null;
-      }
 
       const { error } = await supabase
           .from("user_buildings")
           .upsert(payload, { onConflict: 'user_id, building_id' });
 
       if (error) {
-          toast({ variant: "destructive", title: "Failed to save" });
-          fetchBuildingData(); // Revert on error
+          toast({ variant: "destructive", title: "Failed to save status" });
+          fetchBuildingData(); // Revert
       } else {
-          toast({ title: status === 'visited' ? "Marked as Visited" : "Added to Pending" });
+          toast({ title: newStatus === 'visited' ? "Marked as Visited" : "Added to Pending" });
+      }
+  };
+
+  const handleRate = async (buildingId: string, rating: number) => {
+       if (!user || !building) return;
+
+       setMyRating(rating);
+
+       // Default to 'visited' if no status is set, otherwise keep current status
+       const statusToUse = userStatus || 'visited';
+       if (!userStatus) {
+           setUserStatus('visited');
+       }
+
+       const payload: any = {
+          user_id: user.id,
+          building_id: building.id,
+          status: statusToUse,
+          rating: rating,
+          updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+          .from("user_buildings")
+          .upsert(payload, { onConflict: 'user_id, building_id' });
+
+      if (error) {
+          toast({ variant: "destructive", title: "Failed to save rating" });
+          fetchBuildingData();
+      } else {
+          toast({ title: "Rating saved" });
       }
   };
 
@@ -273,7 +306,7 @@ export default function BuildingDetails() {
                         <Button 
                             variant={userStatus === 'pending' ? "default" : "outline"} 
                             size="sm"
-                            onClick={() => handleInteraction('pending')}
+                            onClick={() => handleStatusChange('pending')}
                         >
                             <Bookmark className={`w-4 h-4 mr-2 ${userStatus === 'pending' ? "fill-current" : ""}`} />
                             {userStatus === 'pending' ? "Pending" : "Save"}
@@ -281,7 +314,7 @@ export default function BuildingDetails() {
                         <Button 
                             variant={userStatus === 'visited' ? "default" : "outline"} 
                             size="sm"
-                            onClick={() => handleInteraction('visited')}
+                            onClick={() => handleStatusChange('visited')}
                         >
                             <Check className="w-4 h-4 mr-2" />
                             Visited
@@ -289,21 +322,15 @@ export default function BuildingDetails() {
                     </div>
                 </div>
 
-                {/* Star System (1-5 Scale)  */}
+                {/* PersonalRatingButton Integration */}
                 <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                            key={star}
-                            onClick={() => handleInteraction(userStatus === 'pending' ? 'pending' : 'visited', star)}
-                            className="focus:outline-none transition-transform hover:scale-110"
-                        >
-                            <Star 
-                                className={`w-8 h-8 ${star <= myRating && (userStatus === 'visited' || userStatus === 'pending')
-                                    ? "fill-yellow-500 text-yellow-500" 
-                                    : "fill-transparent text-muted-foreground/30 hover:text-yellow-500/50"}`} 
-                            />
-                        </button>
-                    ))}
+                    <PersonalRatingButton
+                        buildingId={building.id}
+                        initialRating={myRating}
+                        onRate={handleRate}
+                        status={userStatus || 'visited'}
+                        label="Rate this building"
+                    />
                     {userStatus === 'pending' && (
                         <span className="text-xs text-muted-foreground ml-2">(Priority)</span> // [cite: 53]
                     )}
