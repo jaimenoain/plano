@@ -209,6 +209,7 @@ export default function AddBuilding() {
         }
       } catch (error) {
         console.error("Geocoding error:", error);
+        toast.error("Location search failed. Please click on the map to set the location manually.");
       }
     }
   };
@@ -226,6 +227,10 @@ export default function AddBuilding() {
       }
     } catch (error) {
       console.error("Reverse geocoding error:", error);
+      // We don't block the user if reverse geocoding fails, they just won't get an auto-filled address
+      if (!selectedAddress) {
+        toast.error("Could not fetch address details, but location is set.");
+      }
     }
   };
 
