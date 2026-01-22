@@ -34,6 +34,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     setIsSubmitting(true);
 
     try {
+      // We merge the form data (data) with the location data (locationData) which is passed as a prop
+      // This ensures that city and country (extracted from the map/geocoder) are persisted.
       const { data: insertedData, error } = await supabase
         .from('buildings')
         .insert({
@@ -44,6 +46,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           description: data.description,
           address: locationData.address,
           main_image_url: data.main_image_url,
+          // Explicitly including city and country from locationData
           city: locationData.city,
           country: locationData.country,
           created_by: user.id,
