@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
-  Trash2, Edit2, Check, Bookmark, Navigation
+  Trash2, Edit2, Check, Bookmark, Navigation, Users
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -19,6 +19,7 @@ import { MetaHead } from "@/components/common/MetaHead";
 import { BuildingMap } from "@/components/common/BuildingMap";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { Star } from "lucide-react"; // Kept for Community Notes display if needed, but PersonalRatingButton handles the input.
+import { UserPicker } from "@/components/common/UserPicker";
 
 // --- Types ---
 interface BuildingDetails {
@@ -64,6 +65,10 @@ export default function BuildingDetails() {
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
   const [entries, setEntries] = useState<FeedEntry[]>([]);
+
+  // Visit With state
+  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
+  const [sendingInvites, setSendingInvites] = useState(false);
 
   // Parse location
   const coordinates = useMemo(() => {
@@ -212,6 +217,49 @@ export default function BuildingDetails() {
       }
   };
 
+  const handleSendInvites = async () => {
+    if (!user || !building || selectedFriends.length === 0) return;
+    setSendingInvites(true);
+    try {
+        const status = "visit_with";
+
+        // Insert recommendation
+        const { error: recError } = await supabase
+            .from("recommendations")
+            .insert(
+                selectedFriends.map(recipientId => ({
+                    recommender_id: user.id,
+                    recipient_id: recipientId,
+                    building_id: building.id,
+                    status: status
+                }))
+            );
+
+        if (recError) throw recError;
+
+        const notifications = selectedFriends.map(recipientId => ({
+            type: 'recommendation' as const,
+            actor_id: user.id,
+            user_id: recipientId,
+            resource_id: building.id, // Linking to building
+        }));
+
+        const { error: notifError } = await supabase
+            .from("notifications")
+            .insert(notifications);
+
+        if (notifError) throw notifError;
+
+        toast({ title: "Invites sent!", description: `Sent to ${selectedFriends.length} friend${selectedFriends.length > 1 ? 's' : ''}.` });
+        setSelectedFriends([]);
+    } catch (error: any) {
+        console.error(error);
+        toast({ variant: "destructive", title: "Error", description: error.message || "Failed to send invites." });
+    } finally {
+        setSendingInvites(false);
+    }
+  };
+
   if (loading || !building) return <AppLayout title="Loading..."><div className="p-8"><Loader2 className="animate-spin" /></div></AppLayout>;
 
   return (
@@ -335,6 +383,32 @@ export default function BuildingDetails() {
                         <span className="text-xs text-muted-foreground ml-2">(Priority)</span> // [cite: 53]
                     )}
                 </div>
+
+                {/* Visit With Feature - Only visible when status is 'pending' */}
+                {userStatus === 'pending' && (
+                    <div className="pt-4 border-t border-dashed">
+                        <label className="text-sm font-medium mb-2 block">Visit with...</label>
+                        <div className="flex gap-2 items-start">
+                            <div className="flex-1">
+                                <UserPicker
+                                    selectedIds={selectedFriends}
+                                    onSelect={(id) => setSelectedFriends([...selectedFriends, id])}
+                                    onRemove={(id) => setSelectedFriends(selectedFriends.filter(uid => uid !== id))}
+                                />
+                            </div>
+                            <Button
+                                size="sm"
+                                disabled={selectedFriends.length === 0 || sendingInvites}
+                                onClick={handleSendInvites}
+                            >
+                                {sendingInvites ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                            Invite friends to join you. They'll get a notification.
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* Community Activity */}
