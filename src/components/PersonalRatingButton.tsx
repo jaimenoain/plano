@@ -10,8 +10,8 @@ interface PersonalRatingButtonProps {
   buildingId: string;
   initialRating: number | null;
   onRate: (buildingId: string, rating: number) => void;
-  status?: BuildingStatus; // Changed from isPending
-  isPending?: boolean; // Keep for backward compatibility if needed, or map to status
+  status?: BuildingStatus;
+  isLoading?: boolean; // Renamed from isPending for clarity
   label?: string;
   /**
    * Optional callback to be notified when the popover opens/closes
@@ -24,7 +24,7 @@ export function PersonalRatingButton({
   initialRating,
   onRate,
   status = 'visited', // Default to visited context if not provided
-  isPending = false, // Legacy prop
+  isLoading = false,
   label = "Rate",
   onOpenChange
 }: PersonalRatingButtonProps) {
@@ -42,17 +42,7 @@ export function PersonalRatingButton({
   // Determine context for tooltips
   // "pending" -> Priority context
   // "visited" (or others) -> Quality context
-  // Use status prop if provided, otherwise fallback to legacy isPending logic (if isPending is used as a boolean flag for loading, ignore it for context. But here isPending was likely used for "in wishlist")
-  // Actually, looking at previous code, isPending was `rateBuilding.isPending` which means LOADING state.
-  // The prompt says: "Modify this component to be 'Status Aware'. It must accept a status prop... indicates if the building is pending or visited."
-  // So I should treat `status` as the context source.
-  // And `isPending` prop in the old code was actually used for disabled state (loading).
-  // So I should rename `isPending` to `isLoading` or similar to avoid confusion, but to keep compatibility I will use `isLoading`.
-
-  const isLoading = isPending; // Alias for clarity
-  const contextStatus = status;
-
-  const isPriorityContext = contextStatus === 'pending';
+  const isPriorityContext = status === 'pending';
 
   const getRatingLabel = (rating: number) => {
     if (isPriorityContext) {
@@ -112,6 +102,7 @@ export function PersonalRatingButton({
             onMouseLeave={() => setHoverRating(null)}
             >
             {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
+                // Fill logic: if hovering, fill up to hoverRating. If not hovering, fill up to initialRating.
                 const isFilled = (hoverRating !== null ? star <= hoverRating : (initialRating || 0) >= star);
 
                 return (

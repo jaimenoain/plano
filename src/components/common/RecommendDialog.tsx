@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Send, Link as LinkIcon, Users } from "lucide-react";
+import { Loader2, Send, Link as LinkIcon, Users, Building2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { UserPicker } from "@/components/common/UserPicker";
@@ -13,6 +13,7 @@ interface RecommendDialogProps {
   building: {
     id: string; // Database UUID
     name: string;
+    image_url?: string | null;
   };
   trigger?: React.ReactNode;
   open?: boolean;
@@ -185,21 +186,31 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-            <div className="flex justify-between items-start gap-4">
-                <p className="text-sm text-muted-foreground flex-1">
-                    {description}
-                </p>
-                {/* Rating Input embedded in the dialog */}
-                <div className="shrink-0">
-                    <PersonalRatingButton
-                        buildingId={building.id}
-                        initialRating={userRating}
-                        onRate={handleRate}
-                        status={userStatus}
-                        isPending={ratingLoading}
-                        label="Rate"
-                    />
-                </div>
+            {/* Building Preview with Image */}
+            <div className="flex gap-4 items-center bg-muted/30 p-3 rounded-lg border">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-background flex items-center justify-center text-muted-foreground">
+                {building.image_url ? (
+                  <img src={building.image_url} alt={building.name} className="h-full w-full object-cover" />
+                ) : (
+                  <Building2 className="h-8 w-8 opacity-50" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium truncate">{building.name}</h4>
+                <p className="text-xs text-muted-foreground truncate">{description}</p>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center gap-4">
+                <p className="text-sm font-medium">Your Rating</p>
+                <PersonalRatingButton
+                    buildingId={building.id}
+                    initialRating={userRating}
+                    onRate={handleRate}
+                    status={userStatus}
+                    isLoading={ratingLoading}
+                    label="Rate"
+                />
             </div>
 
             <UserPicker
