@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Send, Link as LinkIcon, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { PersonalRatingButton, BuildingStatus } from "@/components/PersonalRatingButton";
 
 interface RecommendDialogProps {
   building: {
@@ -27,9 +28,84 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Rating state
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [userStatus, setUserStatus] = useState<BuildingStatus>(null);
+  const [ratingLoading, setRatingLoading] = useState(false);
+
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? setControlledOpen : setInternalOpen;
+
+  useEffect(() => {
+    if (open && user && building.id) {
+      fetchUserRating();
+    }
+  }, [open, user, building.id]);
+
+  const fetchUserRating = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from("user_buildings")
+        .select("rating, status")
+        .eq("user_id", user.id)
+        .eq("building_id", building.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setUserRating(data.rating);
+        setUserStatus(data.status as BuildingStatus);
+      } else {
+        setUserRating(null);
+        setUserStatus(null);
+      }
+    } catch (error) {
+      console.error("Error fetching user rating:", error);
+    }
+  };
+
+  const handleRate = async (buildingId: string, rating: number) => {
+    if (!user) return;
+    setRatingLoading(true);
+    try {
+        const { data: existingLog } = await supabase
+            .from("user_buildings")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("building_id", buildingId)
+            .maybeSingle();
+
+        if (existingLog) {
+            const { error } = await supabase
+                .from("user_buildings")
+                .update({ rating })
+                .eq("id", existingLog.id);
+            if (error) throw error;
+        } else {
+            const { error } = await supabase
+                .from("user_buildings")
+                .insert({
+                    user_id: user.id,
+                    building_id: buildingId,
+                    rating,
+                    status: 'visited', // Default to visited if rating directly
+                    visited_at: new Date().toISOString()
+                });
+            if (error) throw error;
+            setUserStatus('visited');
+        }
+        setUserRating(rating);
+        toast({ title: "Rating saved" });
+    } catch (error) {
+        console.error("Error saving rating:", error);
+        toast({ variant: "destructive", title: "Failed to save rating" });
+    } finally {
+        setRatingLoading(false);
+    }
+  };
 
   const handleCopyLink = async () => {
     if (!profile?.username) return;
@@ -109,9 +185,23 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-                {description}
-            </p>
+            <div className="flex justify-between items-start gap-4">
+                <p className="text-sm text-muted-foreground flex-1">
+                    {description}
+                </p>
+                {/* Rating Input embedded in the dialog */}
+                <div className="shrink-0">
+                    <PersonalRatingButton
+                        buildingId={building.id}
+                        initialRating={userRating}
+                        onRate={handleRate}
+                        status={userStatus}
+                        isPending={ratingLoading}
+                        label="Rate"
+                    />
+                </div>
+            </div>
+
             <UserPicker
                 selectedIds={selectedUsers}
                 onSelect={(id) => setSelectedUsers([...selectedUsers, id])}
