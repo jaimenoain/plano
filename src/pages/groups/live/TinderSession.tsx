@@ -371,7 +371,7 @@ export default function TinderSession() {
   };
 
   if (isLoading) return <div className="flex items-center justify-center h-screen bg-black text-white"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
-  if (error || !poll) return <div className="flex items-center justify-center h-screen bg-black text-white text-2xl">Session not found</div>;
+  if (error || !poll) return <div className="flex items-center justify-center h-screen bg-black text-white text-2xl">Trip voting not found</div>;
 
   const cards = poll.questions || [];
   const currentCard = cards[currentCardIndex];
@@ -396,6 +396,7 @@ export default function TinderSession() {
              <ArrowLeft className="h-6 w-6" />
           </Button>
           <div className="flex flex-col items-center">
+             <div className="text-[10px] font-bold tracking-widest text-white/50 uppercase mb-0.5">TRIP VOTING</div>
              <div className="font-semibold text-lg drop-shadow-md text-white/90">
                 {poll.title}
              </div>

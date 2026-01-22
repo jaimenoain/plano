@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Search, X, Loader2, Crown, Trash2, Plus, Tv, MapPin, FileText, Link as LinkIcon, BarChart2, Pencil, Sparkles, Building2 } from "lucide-react";
+import { Calendar as CalendarIcon, Search, X, Loader2, Crown, Trash2, Plus, Tv, MapPin, FileText, Link as LinkIcon, BarChart2, Pencil, Sparkles, Building2, Repeat } from "lucide-react";
 import { format } from "date-fns";
 import { cn, parseHomeBase } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -294,7 +294,7 @@ export default function CreateSession() {
       }
     } catch (error) {
       console.error("Error fetching session:", error);
-      toast({ title: "Error loading session", variant: "destructive" });
+      toast({ title: "Error loading field trip", variant: "destructive" });
       navigate(`/groups/${groupSlug}`);
     } finally {
       setLoading(false);
@@ -380,7 +380,7 @@ export default function CreateSession() {
           if (selectedBuildings.length === 1) {
              generatedDescription = `Join us for a special discussion of ${titles}. This building is a masterpiece, offering a unique perspective that is sure to spark conversation. Don't miss this opportunity to discuss it with fellow architecture lovers!`;
           } else {
-             generatedDescription = `Get ready for an incredible session! We're discussing ${titles}. These works share a thematic connection that explores deep narratives and stunning visuals.`;
+             generatedDescription = `Get ready for an incredible field trip! We're discussing ${titles}. These works share a thematic connection that explores deep narratives and stunning visuals.`;
           }
 
           // Simulate a small delay for better UX (so it feels like "thinking")
@@ -428,7 +428,7 @@ export default function CreateSession() {
       // 1. Create or Update Session
       const sessionData: SessionInsert = {
         group_id: resolvedGroupId,
-        title: title || format(date, "MMMM do 'Session'"),
+        title: title || format(date, "MMMM do 'Field Trip'"),
         description,
         host_notes: hostNotes,
         session_date: date.toISOString(),
@@ -522,7 +522,7 @@ export default function CreateSession() {
             if (linkError) throw linkError;
       }
 
-      toast({ title: isEditing ? "Session updated!" : "Session created!" });
+      toast({ title: isEditing ? "Field trip updated!" : "Field trip created!" });
       queryClient.invalidateQueries({ queryKey: ["group-sessions", groupSlug] });
       queryClient.invalidateQueries({ queryKey: ["group-sessions", resolvedGroupId] });
       navigate(`/groups/${groupSlug}`);
@@ -531,7 +531,7 @@ export default function CreateSession() {
     } catch (error: any) {
       console.error("Save session error:", error);
       toast({ 
-        title: "Error saving session", 
+        title: "Error saving field trip",
         description: error.message || "Please try again", 
         variant: "destructive" 
       });
@@ -549,7 +549,7 @@ export default function CreateSession() {
   }
 
   return (
-    <AppLayout title={isEditing ? "Edit Session" : "New Session"}>
+    <AppLayout title={isEditing ? "Edit Field Trip" : "Plan Field Trip"}>
       <div className="max-w-xl mx-auto px-4 py-6 space-y-8">
         
         {/* SECTION 1: Date & Logistics */}
@@ -852,7 +852,7 @@ export default function CreateSession() {
         {showResources && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 border-t pt-4">
                 <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Session Resources</label>
+                    <label className="text-sm font-medium">Trip Resources</label>
                     <div className="flex gap-2">
                         <Button
                         variant="ghost"
@@ -964,7 +964,7 @@ export default function CreateSession() {
                       ))}
                   </SelectContent>
                </Select>
-               <p className="text-xs text-muted-foreground">Linking a poll will display it on the session details page.</p>
+               <p className="text-xs text-muted-foreground">Linking a poll will display it on the trip details page.</p>
             </div>
         )}
 
@@ -1007,7 +1007,7 @@ export default function CreateSession() {
                 Save as Draft
             </Button>
             <Button onClick={() => handleSaveSession('published')} className="flex-1">
-                {isEditing ? "Update & Publish" : "Publish Session"}
+                {isEditing ? "Update & Publish" : "Publish Field Trip"}
             </Button>
         </div>
 

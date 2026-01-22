@@ -60,7 +60,7 @@ export function SessionDiagnosticZone() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">Session Diagnostics & Health</h2>
+          <h2 className="text-xl font-semibold tracking-tight">Field Trip Diagnostics & Health</h2>
           <p className="text-sm text-muted-foreground">Real-time monitoring and investigation tools.</p>
         </div>
         <Button onClick={loadData} variant="outline" size="sm" disabled={loading}>
@@ -110,9 +110,9 @@ export function SessionDiagnosticZone() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileWarning className="h-5 w-5" />
-              Recent Incomplete Sessions
+              Recent Incomplete Trips
             </CardTitle>
-            <CardDescription>Published sessions with no detected completion activity.</CardDescription>
+            <CardDescription>Published trips with no detected completion activity.</CardDescription>
           </CardHeader>
           <CardContent>
              <ScrollArea className="h-[200px]">
@@ -133,7 +133,7 @@ export function SessionDiagnosticZone() {
                     </TableRow>
                   )) : (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground">No incomplete sessions found (or loading...)</TableCell>
+                      <TableCell colSpan={3} className="text-center text-muted-foreground">No incomplete trips found (or loading...)</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

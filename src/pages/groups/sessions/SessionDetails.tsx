@@ -141,7 +141,7 @@ export default function SessionDetails() {
             <div className="flex justify-between items-center">
                 <Button variant="ghost" size="sm" className="w-fit -ml-2 text-muted-foreground" asChild>
                     <Link to={`/groups/${slug}`}>
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sessions
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Field Trips
                     </Link>
                 </Button>
 
@@ -160,7 +160,7 @@ export default function SessionDetails() {
                                 <BarChart2 className="w-5 h-5 text-primary" />
                              </div>
                              <div>
-                                 <h3 className="font-semibold text-primary/90">Session Poll</h3>
+                                 <h3 className="font-semibold text-primary/90">Trip Voting</h3>
                                  <p className="text-xs text-muted-foreground">Cast your vote or check the results</p>
                              </div>
                         </div>
