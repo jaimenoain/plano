@@ -488,7 +488,7 @@ export default function ReviewDetails() {
   const imageUrl = review.building.main_image_url;
 
   const mainTitle = review.building.name;
-  const releaseYear = review.building.year_completed;
+  const completionYear = review.building.year_completed;
 
   const pageTitle = isBucketList
     ? `${review.user.username} wants to visit ${mainTitle}`
@@ -691,7 +691,7 @@ export default function ReviewDetails() {
                                      </div>
                                      <div className="text-sm text-muted-foreground flex items-center gap-1">
                                         {review.building.address && <MapPin className="w-3 h-3" />}
-                                        <span className="truncate">{review.building.address || releaseYear}</span>
+                                        <span className="truncate">{review.building.address || completionYear}</span>
                                      </div>
                                 </div>
                             </div>
