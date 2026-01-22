@@ -135,17 +135,38 @@ export default function AddBuilding() {
 
         // Filter name results to ensure relevance (e.g. good similarity score)
         // If the RPC logic is "dist < radius OR match", then passing 5000 might return everything.
-        // We filter client-side to be safe: keep if dist < 50 (covered by location check anyway) OR similarity > 0.7
+        // We filter client-side to be safe: keep if dist < 50 (covered by location check anyway) OR similarity > 0.8
         const validNameMatches = nameData.filter(d =>
-            d.dist_meters <= 50 || (d.similarity_score && d.similarity_score > 0.7)
+            d.dist_meters <= 50 || (d.similarity_score && d.similarity_score > 0.8)
         );
 
         // Merge and deduplicate by ID
         const allDuplicates = [...locationData, ...validNameMatches];
         const uniqueDuplicates = Array.from(new window.Map(allDuplicates.map(item => [item.id, item])).values());
 
-        // Sort: Closer ones first, then by similarity
-        uniqueDuplicates.sort((a, b) => a.dist_meters - b.dist_meters);
+        // Sort: Exact location matches (<= 50m) first, then high-confidence name matches
+        uniqueDuplicates.sort((a, b) => {
+            const aExact = a.dist_meters <= 50;
+            const bExact = b.dist_meters <= 50;
+
+            if (aExact && !bExact) return -1;
+            if (!aExact && bExact) return 1;
+
+            // If both are exact location matches, sort by distance
+            if (aExact && bExact) {
+                return a.dist_meters - b.dist_meters;
+            }
+
+            // If both are fuzzy matches (> 50m), sort by similarity score (descending)
+            const aSim = a.similarity_score || 0;
+            const bSim = b.similarity_score || 0;
+
+            if (aSim !== bSim) {
+                return bSim - aSim;
+            }
+
+            return a.dist_meters - b.dist_meters;
+        });
 
         setDuplicates(uniqueDuplicates);
       } catch (error) {
