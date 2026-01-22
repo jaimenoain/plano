@@ -47,11 +47,11 @@ export function PersonalRatingButton({
   const getRatingLabel = (rating: number) => {
     if (isPriorityContext) {
       switch (rating) {
-        case 1: return "Low priority";
+        case 1: return "Might go someday";
         case 2: return "Backup";
         case 3: return "Interested";
         case 4: return "High priority";
-        case 5: return "Must visit"; // Critical
+        case 5: return "Must go immediately"; // Critical
         default: return `${rating} Stars`;
       }
     } else {
