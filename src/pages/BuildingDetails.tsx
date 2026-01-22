@@ -160,10 +160,9 @@ export default function BuildingDetails() {
           updated_at: new Date().toISOString()
       };
 
-      // STRICT LOGIC: Rating is only allowed for 'visited' status.
-      // Pending items cannot have a rating (per Phase 3 logic).
-      if (newStatus === 'visited' && newRating > 0) {
-          payload.rating = newRating; // 1-5 Integer constraint 
+      // Allow rating for both 'visited' (Quality) and 'pending' (Priority) statuses.
+      if (newRating > 0) {
+          payload.rating = newRating;
       } else {
           payload.rating = null;
       }
@@ -295,11 +294,11 @@ export default function BuildingDetails() {
                     {[1, 2, 3, 4, 5].map((star) => (
                         <button
                             key={star}
-                            onClick={() => handleInteraction('visited', star)}
+                            onClick={() => handleInteraction(userStatus === 'pending' ? 'pending' : 'visited', star)}
                             className="focus:outline-none transition-transform hover:scale-110"
                         >
                             <Star 
-                                className={`w-8 h-8 ${star <= myRating && userStatus === 'visited' 
+                                className={`w-8 h-8 ${star <= myRating && (userStatus === 'visited' || userStatus === 'pending')
                                     ? "fill-yellow-500 text-yellow-500" 
                                     : "fill-transparent text-muted-foreground/30 hover:text-yellow-500/50"}`} 
                             />

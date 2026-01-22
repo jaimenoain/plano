@@ -376,7 +376,6 @@ export default function AddBuilding() {
                         </div>
                         {building.address && (
                           <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
                         )}
                       </div>
                     </div>
