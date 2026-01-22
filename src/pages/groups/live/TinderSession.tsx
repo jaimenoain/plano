@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,12 +13,14 @@ import { BuildingFriendsActivity } from "./BuildingFriendsActivity";
 interface CardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   question: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  freshBuildingData?: any;
   onSwipe: (direction: "left" | "right") => void;
   isFront: boolean;
   groupId: string;
 }
 
-function SwipeCard({ question, onSwipe, isFront, groupId }: CardProps) {
+function SwipeCard({ question, freshBuildingData, onSwipe, isFront, groupId }: CardProps) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
@@ -35,9 +37,9 @@ function SwipeCard({ question, onSwipe, isFront, groupId }: CardProps) {
     }
   };
 
-  const buildingData = question.media_data || {};
+  const buildingData = freshBuildingData || question.media_data || {};
   const trailerUrl = question.media_url?.includes('youtube') ? question.media_url : null;
-  const buildingId = buildingData.building_id || question.building_id; // Check both locations just in case
+  const buildingId = buildingData.id || buildingData.building_id || question.building_id; // Check all locations just in case
 
   return (
     <motion.div
@@ -118,11 +120,11 @@ function SwipeCard({ question, onSwipe, isFront, groupId }: CardProps) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function WinnerCard({ question }: { question: any }) {
-    const buildingData = question.media_data || {};
+function WinnerCard({ question, freshBuildingData }: { question: any, freshBuildingData?: any }) {
+    const buildingData = freshBuildingData || question.media_data || {};
     const navigate = useNavigate();
 
-    const buildingId = buildingData.building_id || question.building_id;
+    const buildingId = buildingData.id || buildingData.building_id || question.building_id;
 
     return (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-md p-6 animate-in zoom-in duration-500">
@@ -202,11 +204,37 @@ export default function TinderSession() {
       if (error) throw error;
 
       if (data.questions) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data.questions.sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0));
       }
       return data;
     },
     refetchOnWindowFocus: false
+  });
+
+  // Extract building IDs from poll questions
+  const buildingIds = useMemo(() => {
+    if (!poll?.questions) return [];
+    return poll.questions
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((q: any) => q.media_data?.building_id || q.building_id)
+      .filter(Boolean);
+  }, [poll]);
+
+  // Fetch fresh building data
+  const { data: buildingsMap } = useQuery({
+    queryKey: ["poll-buildings-fresh", poll?.id],
+    queryFn: async () => {
+      if (!buildingIds.length) return {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await supabase.from('buildings').select('*').in('id', buildingIds) as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const map: Record<string, any> = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data?.forEach((b: any) => map[b.id] = b);
+      return map;
+    },
+    enabled: buildingIds.length > 0
   });
 
   // Initialize State (Skip already voted)
@@ -215,10 +243,13 @@ export default function TinderSession() {
         // Find the first question user hasn't voted on
         const votedQuestionIds = new Set(
             poll.votes
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .filter((v: any) => v.user_id === user.id)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .map((v: any) => v.question_id)
         );
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const firstUnvotedIndex = poll.questions.findIndex((q: any) => !votedQuestionIds.has(q.id));
         if (firstUnvotedIndex !== -1) {
             setCurrentCardIndex(firstUnvotedIndex);
@@ -245,7 +276,8 @@ export default function TinderSession() {
         const uniqueUsers = new Set(allPresences.map(p => p.user_id));
         setActiveUsers(uniqueUsers.size);
       })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'poll_votes', filter: `poll_id=eq.${poll.id}` }, (payload) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'poll_votes', filter: `poll_id=eq.${poll.id}` }, (_payload) => {
           // Invalidate query to fetch new votes
           queryClient.invalidateQueries({ queryKey: ["poll-tinder", pollSlug] });
       })
@@ -267,6 +299,7 @@ export default function TinderSession() {
     // Check each question for a match
     // A match is when 'Yes' votes >= Active Users
     const votesByQuestion: Record<string, string[]> = {}; // question_id -> list of user_ids who voted YES
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     poll.votes.forEach((v: any) => {
         const isYes = v.option?.option_text === 'Yes' || v.custom_answer === 'Yes';
         if (isYes) {
@@ -295,6 +328,7 @@ export default function TinderSession() {
       if (!question || !user || !poll) return;
 
       const optionText = direction === "right" ? "Yes" : "No";
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const option = question.options.find((o: any) => o.option_text === optionText);
 
       try {
@@ -342,11 +376,17 @@ export default function TinderSession() {
   const cards = poll.questions || [];
   const currentCard = cards[currentCardIndex];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const matchedQuestion = matchedQuestionId ? poll.questions.find((q: any) => q.id === matchedQuestionId) : null;
 
   if (matchedQuestion) {
-      return <WinnerCard question={matchedQuestion} />;
+      const matchedBuildingId = matchedQuestion.media_data?.building_id || matchedQuestion.building_id;
+      const matchedFreshData = buildingsMap?.[matchedBuildingId];
+      return <WinnerCard question={matchedQuestion} freshBuildingData={matchedFreshData} />;
   }
+
+  const currentBuildingId = currentCard?.media_data?.building_id || currentCard?.building_id;
+  const currentFreshData = buildingsMap?.[currentBuildingId];
 
   return (
     <div className="h-screen w-screen bg-black text-white flex flex-col overflow-hidden relative">
@@ -377,6 +417,7 @@ export default function TinderSession() {
                    <SwipeCard
                       key={currentCard.id}
                       question={currentCard}
+                      freshBuildingData={currentFreshData}
                       onSwipe={handleSwipe}
                       isFront={true}
                       groupId={poll.group_id}
