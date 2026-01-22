@@ -63,7 +63,7 @@ export function AddSessionToCycleDialog({ groupId, cycleId, onSuccess }: AddSess
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Session added to cycle" });
+      toast({ title: "Field trip added to cycle" });
       setOpen(false);
       setSelectedSessionId(null);
 
@@ -75,7 +75,7 @@ export function AddSessionToCycleDialog({ groupId, cycleId, onSuccess }: AddSess
       onSuccess?.();
     },
     onError: (error) => {
-        toast({ title: "Error adding session", description: error.message, variant: "destructive" });
+        toast({ title: "Error adding field trip", description: error.message, variant: "destructive" });
     }
   });
 
@@ -83,30 +83,30 @@ export function AddSessionToCycleDialog({ groupId, cycleId, onSuccess }: AddSess
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Plus className="mr-2 h-4 w-4" /> Add Session
+          <Plus className="mr-2 h-4 w-4" /> Add Field Trip
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Session to Cycle</DialogTitle>
+          <DialogTitle>Add Field Trip to Cycle</DialogTitle>
           <DialogDescription>
-            Select an existing session to add to this cycle. Only sessions not currently assigned to a cycle are shown.
+            Select an existing field trip to add to this cycle. Only field trips not currently assigned to a cycle are shown.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
             {isLoading ? (
-                <div className="text-center text-sm text-muted-foreground">Loading sessions...</div>
+                <div className="text-center text-sm text-muted-foreground">Loading field trips...</div>
             ) : availableSessions && availableSessions.length > 0 ? (
                 <div className="space-y-2">
                     <Select value={selectedSessionId || ""} onValueChange={setSelectedSessionId}>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a session..." />
+                            <SelectValue placeholder="Select a field trip..." />
                         </SelectTrigger>
                         <SelectContent>
                             {availableSessions.map((session) => (
                                 <SelectItem key={session.id} value={session.id}>
-                                    {session.title || "Untitled Session"} - {format(new Date(session.session_date), "MMM d, yyyy")}
+                                    {session.title || "Untitled Field Trip"} - {format(new Date(session.session_date), "MMM d, yyyy")}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -114,9 +114,9 @@ export function AddSessionToCycleDialog({ groupId, cycleId, onSuccess }: AddSess
                 </div>
             ) : (
                 <div className="text-center text-sm text-muted-foreground border border-dashed p-4 rounded-md">
-                    No unassigned sessions found.
+                    No unassigned field trips found.
                     <br />
-                    <Button variant="link" className="h-auto p-0" onClick={() => setOpen(false)}>Create a new session</Button> instead?
+                    <Button variant="link" className="h-auto p-0" onClick={() => setOpen(false)}>Plan a new field trip</Button> instead?
                 </div>
             )}
 
@@ -126,7 +126,7 @@ export function AddSessionToCycleDialog({ groupId, cycleId, onSuccess }: AddSess
                     onClick={() => addSessionMutation.mutate()}
                     disabled={!selectedSessionId || addSessionMutation.isPending}
                 >
-                    {addSessionMutation.isPending ? "Adding..." : "Add Session"}
+                    {addSessionMutation.isPending ? "Adding..." : "Add Field Trip"}
                 </Button>
             </div>
         </div>
