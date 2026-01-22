@@ -888,7 +888,7 @@ export interface Database {
           recommender_id: string
           recipient_id: string
           building_id: string
-          status: "pending" | "accepted" | "ignored" | "watch_with"
+          status: "pending" | "accepted" | "ignored" | "visit_with"
           created_at: string
         }
         Insert: {
@@ -896,7 +896,7 @@ export interface Database {
           recommender_id: string
           recipient_id: string
           building_id: string
-          status?: "pending" | "accepted" | "ignored" | "watch_with"
+          status?: "pending" | "accepted" | "ignored" | "visit_with"
           created_at?: string
         }
         Update: {
@@ -904,7 +904,7 @@ export interface Database {
           recommender_id?: string
           recipient_id?: string
           building_id?: string
-          status?: "pending" | "accepted" | "ignored" | "watch_with"
+          status?: "pending" | "accepted" | "ignored" | "visit_with"
           created_at?: string
         }
         Relationships: [
