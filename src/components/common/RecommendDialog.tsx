@@ -54,26 +54,26 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
     setLoading(true);
     try {
         const status = mode === "visit_with" ? "visit_with" : "pending";
-        // 'recommendations' table logic:
-        // Assuming 'recommendations' table has been updated or we need to use 'notifications' directly.
-        // The memory says 'recommendations' table is deleted.
-        // So I must rely on notifications ONLY or another mechanism.
-        // I will use notifications directly with 'resource_id' pointing to the building? Or create a special notification.
 
-        // Actually, if 'recommendations' table is deleted, the previous code would fail.
-        // I will assume I should send a notification of type 'recommendation'.
-        // But the schema in `types/supabase.ts` might not be fully up to date or I missed something.
-        // Let's check `types/supabase.ts` again. I don't see `recommendations` table there.
-        // So I will just send a notification.
+        // Insert recommendation
+        const { error: recError } = await supabase
+            .from("recommendations")
+            .insert(
+                selectedUsers.map(recipientId => ({
+                    recommender_id: user.id,
+                    recipient_id: recipientId,
+                    building_id: building.id,
+                    status: status
+                }))
+            );
+
+        if (recError) throw recError;
 
         const notifications = selectedUsers.map(recipientId => ({
             type: 'recommendation' as const,
             actor_id: user.id,
             user_id: recipientId,
             resource_id: building.id, // Linking to building
-            // We might need to store the message or specific type elsewhere if not supported?
-            // Notification table has `resource_id`.
-            // Let's assume this is enough.
         }));
 
         const { error: notifError } = await supabase

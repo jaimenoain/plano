@@ -22,7 +22,7 @@ const NOTIFICATION_GROUPS = [
       { id: "follow", label: "New followers" },
       { id: "friend_joined", label: "Friend joined Cineforum" },
       { id: "suggest_follow", label: "Suggested follows" },
-      { id: "recommendation", label: "Movie recommendations" },
+      { id: "recommendation", label: "Building recommendations" },
     ],
   },
   {
@@ -45,7 +45,7 @@ const NOTIFICATION_GROUPS = [
   {
     title: "Platform",
     types: [
-      { id: "availability", label: "Movie availability updates" },
+      { id: "availability", label: "Availability updates" },
     ],
   },
 ];
