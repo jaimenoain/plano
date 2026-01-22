@@ -305,24 +305,19 @@ export function ReviewCard({
           </div>
         )}
 
-        {/* Rating Section: Big Number + Stars - RESPONSIVE TWEAK */}
+        {/* Rating Section: Stars Only (Removed Big Number) - 5 Star Scale */}
         {entry.rating && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
-             <span className="text-2xl md:text-3xl font-bold leading-none text-foreground tracking-tighter">
-               {entry.rating}
-             </span>
-             <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5 mb-1">
               {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-3 h-3 md:w-3.5 md:h-3.5 ${
+                    className={`w-4 h-4 ${
                       i < entry.rating!
                         ? "fill-yellow-500 text-yellow-500"
                         : "fill-transparent text-muted-foreground/30"
                     }`}
                   />
               ))}
-            </div>
           </div>
         )}
 
