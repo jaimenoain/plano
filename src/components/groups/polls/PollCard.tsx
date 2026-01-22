@@ -125,7 +125,7 @@ export function PollCard({ poll, groupSlug, isAdmin }: PollCardProps) {
                         </div>
                     ) : isLiveNow ? (
                          <div className="text-xs font-bold flex items-center gap-2 animate-pulse">
-                            <span>Join Live Session</span>
+                            <span>Join Live Review</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                         </div>
                     ) : (

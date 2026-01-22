@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { RecommendDialog } from "@/components/common/RecommendDialog";
 
 // Helper to parse Geocoder results
 const extractLocationDetails = (result: any) => {
@@ -76,6 +77,8 @@ export default function AddBuilding() {
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [extractedLocation, setExtractedLocation] = useState<{ city: string | null; country: string | null }>({ city: null, country: null });
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [showVisitDialog, setShowVisitDialog] = useState(false);
+  const [selectedBuildingForVisit, setSelectedBuildingForVisit] = useState<{ id: string; name: string } | null>(null);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -279,8 +282,22 @@ export default function AddBuilding() {
       if (error) throw error;
 
       const action = status === 'pending' ? "Bucket List" : "Visited list";
-      toast.success(`Building added to your ${action}!`);
-      navigate(`/building/${buildingId}`);
+
+      if (status === 'pending') {
+          const building = duplicates.find(d => d.id === buildingId);
+          if (building) {
+              setSelectedBuildingForVisit({ id: buildingId, name: building.name });
+              setShowVisitDialog(true);
+              toast.success(`Building added to your ${action}!`);
+          } else {
+              toast.success(`Building added to your ${action}!`);
+              navigate(`/building/${buildingId}`);
+          }
+      } else {
+          toast.success(`Building added to your ${action}!`);
+          navigate(`/building/${buildingId}`);
+      }
+
     } catch (error) {
       console.error("Error adding building to list:", error);
       toast.error("Failed to add building to your list.");
@@ -699,6 +716,20 @@ export default function AddBuilding() {
             </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedBuildingForVisit && (
+        <RecommendDialog
+            open={showVisitDialog}
+            onOpenChange={(open) => {
+                setShowVisitDialog(open);
+                if (!open && selectedBuildingForVisit) {
+                    navigate(`/building/${selectedBuildingForVisit.id}`);
+                }
+            }}
+            building={selectedBuildingForVisit}
+            mode="visit_with"
+        />
+      )}
     </div>
   );
 }
