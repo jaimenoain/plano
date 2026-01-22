@@ -1,10 +1,10 @@
 export interface FavoriteItem {
   id: number | string;
   title: string;
-  poster_path?: string | null;
+  image_url?: string | null;
   rating?: number;
   reviewId?: string;
-  type?: 'genre' | 'person' | 'quote' | 'building';
+  type?: 'genre' | 'person' | 'quote' | 'building' | 'style' | 'architect';
   media_type?: 'building';
   year_completed?: string;
   quote_source?: string;

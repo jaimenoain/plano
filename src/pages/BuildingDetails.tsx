@@ -96,7 +96,7 @@ export default function BuildingDetails() {
   const fetchBuildingData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Building (No TMDB fallback) 
+      // 1. Fetch Building
       const { data, error } = await supabase
         .from("buildings")
         .select("*")

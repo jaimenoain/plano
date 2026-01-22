@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Radio, HelpCircle, Film, BarChart2, ArrowRight } from "lucide-react";
+import { Radio, HelpCircle, Building2, BarChart2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PollCardProps {
@@ -31,7 +31,7 @@ export function PollCard({ poll, groupSlug, isAdmin }: PollCardProps) {
       case 'building_selection':
         return (
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider opacity-90">
-            <Film className="w-3.5 h-3.5" />
+            <Building2 className="w-3.5 h-3.5" />
             <span>Decision</span>
           </div>
         );

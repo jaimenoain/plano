@@ -11,8 +11,8 @@ interface ProfileHighlightsProps {
 }
 
 export function ProfileHighlights({ favorites, isOwnProfile, onManage }: ProfileHighlightsProps) {
-  const genres = favorites.filter(f => f.type === 'genre');
-  const people = favorites.filter(f => f.type === 'person');
+  const genres = favorites.filter(f => f.type === 'genre' || f.type === 'style');
+  const people = favorites.filter(f => f.type === 'person' || f.type === 'architect');
   const quotes = favorites.filter(f => f.type === 'quote');
 
   if (!isOwnProfile && genres.length === 0 && people.length === 0 && quotes.length === 0) {
@@ -69,8 +69,8 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
                         {people.map(p => (
                             <div key={p.id} className="flex flex-col items-center gap-2 w-20 shrink-0 snap-start">
                                  <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-border/50 shadow-sm bg-muted">
-                                     {p.poster_path ? (
-                                         <img src={p.poster_path} alt={p.title} className="w-full h-full object-cover" />
+                                     {p.image_url ? (
+                                         <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
                                      ) : (
                                          <div className="w-full h-full flex items-center justify-center bg-secondary"><User className="h-8 w-8 text-muted-foreground/50" /></div>
                                      )}
