@@ -21,8 +21,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Sample genres for architecture/design context, or keep generic if needed
-const GENRE_MAP: Record<number, string> = {
+// Defined architectural styles for the platform
+const ARCHITECTURAL_STYLES: Record<number, string> = {
   1: "Modern", 2: "Contemporary", 3: "Brutalist", 4: "Art Deco", 5: "Gothic",
   6: "Classical", 7: "Baroque", 8: "Renaissance", 9: "Industrial", 10: "Minimalist",
   11: "Sustainable", 12: "Victorian", 13: "Bauhaus", 14: "Postmodern", 15: "Mid-Century"
@@ -31,19 +31,19 @@ const GENRE_MAP: Record<number, string> = {
 interface ManageHighlightsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  favorites: FavoriteItem[]; // Contains genres, people, quotes
+  favorites: FavoriteItem[]; // Contains styles, architects, quotes
   onSave: (highlights: FavoriteItem[]) => Promise<void>;
 }
 
 export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }: ManageHighlightsDialogProps) {
-  const [genres, setGenres] = useState<FavoriteItem[]>([]);
-  const [people, setPeople] = useState<FavoriteItem[]>([]);
+  const [styles, setStyles] = useState<FavoriteItem[]>([]);
+  const [architects, setArchitects] = useState<FavoriteItem[]>([]);
   const [quotes, setQuotes] = useState<FavoriteItem[]>([]);
 
-  const [activeTab, setActiveTab] = useState("genres");
-  const [personQuery, setPersonQuery] = useState("");
-  const debouncedPersonQuery = useDebounce(personQuery, 500);
-  const [personResults, setPersonResults] = useState<FavoriteItem[]>([]);
+  const [activeTab, setActiveTab] = useState("styles");
+  const [architectQuery, setArchitectQuery] = useState("");
+  const debouncedArchitectQuery = useDebounce(architectQuery, 500);
+  const [architectResults, setArchitectResults] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Quote input state
@@ -54,11 +54,13 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
   useEffect(() => {
     if (open) {
-      setGenres(favorites.filter(f => f.type === 'genre'));
-      setPeople(favorites.filter(f => f.type === 'person'));
+      // Filter by the new types: 'style' (formerly genre) and 'architect' (formerly person)
+      setStyles(favorites.filter(f => f.type === 'style' || f.type === 'genre'));
+      setArchitects(favorites.filter(f => f.type === 'architect' || f.type === 'person'));
       setQuotes(favorites.filter(f => f.type === 'quote'));
-      setPersonQuery("");
-      setPersonResults([]);
+      
+      setArchitectQuery("");
+      setArchitectResults([]);
       // Reset quote input state
       setQuoteText("");
       setQuoteSource("");
@@ -66,16 +68,16 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
   }, [open, favorites]);
 
   const hasChanges = () => {
-    const initialGenres = favorites.filter(f => f.type === 'genre').map(f => f.id).sort().join(',');
-    const currentGenres = genres.map(f => f.id).sort().join(',');
+    const initialStyles = favorites.filter(f => f.type === 'style' || f.type === 'genre').map(f => f.id).sort().join(',');
+    const currentStyles = styles.map(f => f.id).sort().join(',');
 
-    const initialPeople = favorites.filter(f => f.type === 'person').map(f => f.id).sort().join(',');
-    const currentPeople = people.map(f => f.id).sort().join(',');
+    const initialArchitects = favorites.filter(f => f.type === 'architect' || f.type === 'person').map(f => f.id).sort().join(',');
+    const currentArchitects = architects.map(f => f.id).sort().join(',');
 
     const initialQuotes = favorites.filter(f => f.type === 'quote').map(f => f.id).sort().join(',');
     const currentQuotes = quotes.map(f => f.id).sort().join(',');
 
-    return initialGenres !== currentGenres || initialPeople !== currentPeople || initialQuotes !== currentQuotes;
+    return initialStyles !== currentStyles || initialArchitects !== currentArchitects || initialQuotes !== currentQuotes;
   };
 
   const hasUnsavedQuote = quoteText.trim().length > 0;
@@ -95,45 +97,38 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
     onOpenChange(false);
   };
 
-  // --- Genres ---
-  const toggleGenre = (id: number, name: string) => {
-    if (genres.find(g => g.id === id)) {
-      setGenres(prev => prev.filter(g => g.id !== id));
+  // --- Styles ---
+  const toggleStyle = (id: number, name: string) => {
+    if (styles.find(g => g.id === id)) {
+      setStyles(prev => prev.filter(g => g.id !== id));
     } else {
-      if (genres.length >= 5) return;
-      setGenres(prev => [...prev, { id, title: name, type: 'genre' }]);
+      if (styles.length >= 5) return;
+      // Saving as new type 'style'
+      setStyles(prev => [...prev, { id, title: name, type: 'style' }]);
     }
   };
 
-  // --- People Search ---
+  // --- Architects Search ---
   useEffect(() => {
-    if (debouncedPersonQuery.length < 2) {
-      setPersonResults([]);
+    if (debouncedArchitectQuery.length < 2) {
+      setArchitectResults([]);
       return;
     }
 
-    // Using search_buildings for now but technically we want search_people or similar if we have an architects table
-    // Since we don't have an architects table with images, we might have to mock this or use buildings as "people"
-    // or just search for architects in buildings metadata.
-    // Given the constraints, I will disable "People" search or adapt it to search buildings but that doesn't make sense for "People".
-    // I will comment out the TMDB call and leave it empty or mock it for now to avoid crashes.
-    // Ideally, we'd search a 'profiles' table or a dedicated 'architects' table.
+    // TODO: Implement actual architect search against a profiles table or external API
+    // For now, we are disabling this to prevent errors as no dedicated architect database exists yet.
+    console.log("Architect search currently disabled.");
+    setArchitectResults([]);
 
-    // For now, let's search buildings and pretend they are people? No.
-    // Let's just return empty or maybe search profiles if user wants to highlight users?
-    // The previous code searched TMDB for people.
-    // I'll skip this implementation to avoid TMDB calls, and just log.
-    console.log("People search disabled as no architect database exists yet.");
-    setPersonResults([]);
+  }, [debouncedArchitectQuery]);
 
-  }, [debouncedPersonQuery]);
-
-  const togglePerson = (person: FavoriteItem) => {
-    if (people.find(p => p.id === person.id)) {
-      setPeople(prev => prev.filter(p => p.id !== person.id));
+  const toggleArchitect = (architect: FavoriteItem) => {
+    if (architects.find(p => p.id === architect.id)) {
+      setArchitects(prev => prev.filter(p => p.id !== architect.id));
     } else {
-      if (people.length >= 5) return;
-      setPeople(prev => [...prev, person]);
+      if (architects.length >= 5) return;
+      // Ensure type is set to 'architect'
+      setArchitects(prev => [...prev, { ...architect, type: 'architect' }]);
     }
   };
 
@@ -157,7 +152,12 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
   // --- Save ---
   const handleSave = async () => {
-    const combined = [...genres, ...people, ...quotes];
+    // Combine all and ensure types are strictly the new values before saving
+    const combined = [
+      ...styles.map(s => ({ ...s, type: 'style' })), 
+      ...architects.map(a => ({ ...a, type: 'architect' })), 
+      ...quotes
+    ];
     await onSave(combined);
     onOpenChange(false);
   };
@@ -175,8 +175,8 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
               <div className="px-4 py-2 border-b">
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                       <TabsList className="w-full grid grid-cols-3">
-                          <TabsTrigger value="genres">Styles</TabsTrigger>
-                          <TabsTrigger value="people">Architects</TabsTrigger>
+                          <TabsTrigger value="styles">Styles</TabsTrigger>
+                          <TabsTrigger value="architects">Architects</TabsTrigger>
                           <TabsTrigger value="quotes">Quotes</TabsTrigger>
                       </TabsList>
                   </Tabs>
@@ -184,24 +184,24 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
               <div className="flex-1 overflow-y-auto p-4">
 
-                  {/* GENRES (STYLES) TAB */}
-                  {activeTab === "genres" && (
+                  {/* STYLES TAB */}
+                  {activeTab === "styles" && (
                       <div className="space-y-4">
                           <div className="flex items-center justify-between">
                               <h4 className="text-sm font-medium">Select up to 5 styles</h4>
-                              <span className="text-xs text-muted-foreground">{genres.length}/5</span>
+                              <span className="text-xs text-muted-foreground">{styles.length}/5</span>
                           </div>
                           <div className="flex flex-wrap gap-2">
-                              {Object.entries(GENRE_MAP).map(([id, name]) => {
-                                  const isSelected = !!genres.find(g => g.id === Number(id));
+                              {Object.entries(ARCHITECTURAL_STYLES).map(([id, name]) => {
+                                  const isSelected = !!styles.find(g => g.id === Number(id));
                                   return (
                                       <Button
                                           key={id}
                                           variant={isSelected ? "default" : "outline"}
                                           size="sm"
-                                          onClick={() => toggleGenre(Number(id), name)}
+                                          onClick={() => toggleStyle(Number(id), name)}
                                           className={cn("h-8 rounded-full", isSelected ? "pl-2 pr-3" : "px-3")}
-                                          disabled={!isSelected && genres.length >= 5}
+                                          disabled={!isSelected && styles.length >= 5}
                                       >
                                           {isSelected && <Check className="mr-1.5 h-3 w-3" />}
                                           {name}
@@ -212,15 +212,15 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                       </div>
                   )}
 
-                  {/* PEOPLE (ARCHITECTS) TAB */}
-                  {activeTab === "people" && (
+                  {/* ARCHITECTS TAB */}
+                  {activeTab === "architects" && (
                       <div className="space-y-4">
                           <div className="relative">
                               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
                                   placeholder="Search architects..."
-                                  value={personQuery}
-                                  onChange={e => setPersonQuery(e.target.value)}
+                                  value={architectQuery}
+                                  onChange={e => setArchitectQuery(e.target.value)}
                                   className="pl-9"
                               />
                           </div>
@@ -229,20 +229,20 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                               Architect search is coming soon.
                           </p>
 
-                          {/* Selected People */}
-                          {people.length > 0 && (
+                          {/* Selected Architects */}
+                          {architects.length > 0 && (
                               <div className="space-y-2">
-                                  <span className="text-xs text-muted-foreground font-bold uppercase">Selected ({people.length}/5)</span>
+                                  <span className="text-xs text-muted-foreground font-bold uppercase">Selected ({architects.length}/5)</span>
                                   <div className="space-y-1">
-                                      {people.map(p => (
+                                      {architects.map(p => (
                                           <div key={p.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
                                               <div className="flex items-center gap-3">
                                                   <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
-                                                      {p.poster_path && <img src={p.poster_path} className="w-full h-full object-cover"/>}
+                                                      {p.poster_path && <img src={p.poster_path} className="w-full h-full object-cover" alt={p.title}/>}
                                                   </div>
                                                   <span className="text-sm font-medium">{p.title}</span>
                                               </div>
-                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => togglePerson(p)}>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => toggleArchitect(p)}>
                                                   <X className="h-4 w-4" />
                                               </Button>
                                           </div>
@@ -252,24 +252,24 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                           )}
 
                           {/* Search Results */}
-                          {personResults.length > 0 && (
+                          {architectResults.length > 0 && (
                                <div className="space-y-2 mt-4">
                                   <span className="text-xs text-muted-foreground font-bold uppercase">Results</span>
                                   <div className="space-y-1">
-                                      {personResults.map(p => {
-                                          const isSelected = !!people.find(sel => sel.id === p.id);
+                                      {architectResults.map(p => {
+                                          const isSelected = !!architects.find(sel => sel.id === p.id);
                                           return (
                                               <button
                                                   key={p.id}
-                                                  onClick={() => !isSelected && togglePerson(p)}
-                                                  disabled={!isSelected && people.length >= 5}
+                                                  onClick={() => !isSelected && toggleArchitect(p)}
+                                                  disabled={!isSelected && architects.length >= 5}
                                                   className={cn(
                                                       "flex items-center gap-3 p-2 rounded-md w-full text-left transition-colors",
                                                       isSelected ? "bg-primary/10 opacity-50 cursor-default" : "hover:bg-secondary"
                                                   )}
                                               >
                                                   <div className="h-10 w-10 rounded-full bg-muted overflow-hidden shrink-0">
-                                                      {p.poster_path && <img src={p.poster_path} className="w-full h-full object-cover"/>}
+                                                      {p.poster_path && <img src={p.poster_path} className="w-full h-full object-cover" alt={p.title}/>}
                                                   </div>
                                                   <span className="text-sm font-medium truncate">{p.title}</span>
                                                   {isSelected && <Check className="ml-auto h-4 w-4 text-primary" />}
