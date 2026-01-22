@@ -250,7 +250,7 @@ export default function AddBuilding() {
 
       if (error) throw error;
 
-      const action = status === 'pending' ? "Wishlist" : "Visited list";
+      const action = status === 'pending' ? "Bucket List" : "Visited list";
       toast.success(`Building added to your ${action}!`);
       navigate(`/building/${buildingId}`);
     } catch (error) {
@@ -355,10 +355,10 @@ export default function AddBuilding() {
                             variant="secondary"
                             className="flex-1 h-8 text-xs gap-1"
                             onClick={() => handleAddToMyList(building.id, 'pending')}
-                            title="Add to Wishlist"
+                            title="Add to Bucket List"
                         >
                             <Bookmark className="h-3 w-3" />
-                            Wishlist
+                            Bucket List
                         </Button>
                         <Button
                             size="sm"
@@ -505,7 +505,7 @@ export default function AddBuilding() {
                             onClick={() => handleAddToMyList(building.id, 'pending')}
                         >
                             <Bookmark className="h-3 w-3" />
-                            Add to Wishlist
+                            Add to Bucket List
                         </Button>
                         <Button
                             size="sm"
