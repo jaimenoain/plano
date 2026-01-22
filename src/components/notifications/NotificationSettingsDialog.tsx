@@ -20,7 +20,7 @@ const NOTIFICATION_GROUPS = [
     title: "Social & Contacts",
     types: [
       { id: "follow", label: "New followers" },
-      { id: "friend_joined", label: "Friend joined Cineforum" },
+      { id: "friend_joined", label: "Friend joined Archiforum" },
       { id: "suggest_follow", label: "Suggested follows" },
       { id: "recommendation", label: "Building recommendations" },
     ],
@@ -40,12 +40,6 @@ const NOTIFICATION_GROUPS = [
     types: [
       { id: "like", label: "Likes on your reviews" },
       { id: "comment", label: "Comments on your reviews" },
-    ],
-  },
-  {
-    title: "Platform",
-    types: [
-      { id: "availability", label: "Availability updates" },
     ],
   },
 ];

@@ -227,7 +227,7 @@ export default function GroupLayout() {
                  {!group.is_public && <Badge variant="outline" className="text-xs">Private</Badge>}
               </div>
               <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
-                {group.description || "A community for film lovers."}
+                {group.description || "A community for architecture lovers."}
               </p>
  {group.links && (group.links as any[]).length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-1">

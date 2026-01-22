@@ -161,7 +161,7 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
                 </div>
             );
         }
-        if (q.media_type === 'film' && q.media_data) {
+        if (q.media_type === 'building' && q.media_data) {
              return (
                  <div className="relative w-full h-full min-h-[400px] bg-muted/10 rounded-lg overflow-hidden">
                      {q.media_data.main_image_url ? (
@@ -192,13 +192,13 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
                         {/*
                             Constraint width on desktop if:
                             1. No media attachment for the question (layout is single column)
-                            2. Response type is visual (image/film) - prevents options from becoming massive
+                            2. Response type is visual (image/building) - prevents options from becoming massive
                         */}
                         <div className={cn("grid gap-6", hasMedia ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
                              {/* Options Column - Left */}
                              <div className={cn(
                                  "space-y-3 order-2 md:order-1 h-full",
-                                 (!hasMedia && (q.response_type === 'image' || q.response_type === 'film')) && "md:w-1/2"
+                                 (!hasMedia && (q.response_type === 'image' || q.response_type === 'building')) && "md:w-1/2"
                              )}>
                                 <RadioGroup
                                     value={selections[q.id]?.optionId || (selections[q.id]?.customText !== null ? "custom" : "")}
@@ -210,7 +210,7 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
                                         }
                                     }}
                                     className={cn("grid gap-3 content-start",
-                                        (q.response_type === 'image' || q.response_type === 'film' || q.response_type === 'person')
+                                        (q.response_type === 'image' || q.response_type === 'building' || q.response_type === 'person')
                                             ? (q.options.length <= 4 ? "grid-cols-2" : "grid-cols-2 lg:grid-cols-3")
                                             : "grid-cols-1"
                                     )}
@@ -242,13 +242,13 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
                                                 </div>
                                             )}
 
-                                            {q.response_type === 'film' && (
+                                            {q.response_type === 'building' && (
                                                 <div className="w-full space-y-2">
                                                     <div className="aspect-[2/3] w-full rounded-md bg-muted overflow-hidden">
                                                          {opt.media_url ? (
                                                             <img src={opt.media_url} className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No Poster</div>
+                                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No Image</div>
                                                         )}
                                                     </div>
                                                     <div className="text-center text-sm font-medium line-clamp-2">{opt.option_text}</div>
@@ -272,7 +272,7 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
                                     ))}
 
                                     {q.allow_custom_answer && (
-                                        <div className={cn("flex items-center space-x-2 mt-2 p-2", (q.response_type === 'image' || q.response_type === 'film' || q.response_type === 'person') && "col-span-2")}>
+                                        <div className={cn("flex items-center space-x-2 mt-2 p-2", (q.response_type === 'image' || q.response_type === 'building' || q.response_type === 'person') && "col-span-2")}>
                                             <RadioGroupItem value="custom" id={`custom-${q.id}`} />
                                             <Label htmlFor={`custom-${q.id}`}>Other</Label>
                                             <Input

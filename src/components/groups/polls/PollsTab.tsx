@@ -76,7 +76,7 @@ export default function PollsTab() {
         <div className="space-y-2 max-w-sm px-4">
             <h3 className="text-xl font-semibold tracking-tight">Make your group fun and engaging!</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-                Create a poll to decide the next movie, run a trivia quiz, or simply gauge preferences.
+                Create a poll to decide the next visit, run a trivia quiz, or simply gauge preferences.
             </p>
         </div>
         {isAdmin && user && (

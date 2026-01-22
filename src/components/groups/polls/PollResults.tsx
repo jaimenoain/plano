@@ -117,7 +117,7 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
                 </div>
             );
         }
-        if (q.media_type === 'film' && q.media_data) {
+        if (q.media_type === 'building' && q.media_data) {
              return (
                  <div className="relative w-full h-full min-h-[300px] md:min-h-[400px] bg-muted/10 rounded-lg overflow-hidden">
                      {q.media_data.main_image_url ? (
