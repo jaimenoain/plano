@@ -1,53 +1,48 @@
-# Gap Analysis Report - Archiforum Phase 3 Prep
+# Gap Analysis Report
 
 ## 1. Executive Summary
-The "Archiforum" migration is largely successful in its structural transition from a movie-based PWA to an architecture social network. The database schema, core types, and the critical "Add Building" workflow are aligned with the Master Plan.
+The forensic audit of the "Archiforum" codebase confirms that the migration from a movie-based PWA to an architecture social network is largely complete and aligned with the "Master Plan". The "Purge" of legacy movie logic is successful, with no active functional code remaining for TMDB or movie-specific entities. The "Add Building" workflow implements the required duplicate detection and location handling logic. Client-side constraints for ratings and status are correctly enforced.
 
-## 2. Codebase Cleanliness (The Purge)
+## 2. "The Purge" Verification (Codebase Cleanliness)
+**Status: PASS**
 
-### Status: ✅ Pass
-
-The codebase has been successfully stripped of legacy movie logic.
-
-*   **API & Functions:** No lingering `tmdb-*` calls found.
-*   **Data Types:** `Film`, `Movie`, and `StreamingProvider` types have been removed. `Notification` and `Admin` types have been updated.
-*   **Components:**
-    *   `Leaderboards.tsx` (Legacy) -> **Deleted**.
-    *   `GroupStats.tsx` (Legacy) -> **Deleted**.
-    *   `PollResults.tsx` -> **Refactored** to support `building` media type.
-    *   `VotingForm.tsx` -> **Refactored** to support `building` media type.
-    *   `NotificationSettingsDialog.tsx` -> **Cleaned** of provider availability settings.
-*   **Documentation:** Legacy `SEARCH.md` and `SEARCH_RPC_BEST_PRACTICES.md` files have been deleted.
+*   **API & Functions:** No active `tmdb-*` function calls or API keys were found.
+*   **Data Types:** `src/integrations/supabase/types.ts` correctly defines `buildings` and `user_buildings` without legacy `films` or `user_films` tables.
+*   **Ghost Code:**
+    *   **Icons:** Minor usage of `Film` icon in `src/pages/UpdatePassword.tsx` and `src/pages/groups/polls/PollDetails.tsx` (imported from `lucide-react`). This is a cosmetic issue, not functional.
+    *   **Mock Data:** `src/types/admin.ts` contains a mock data string "Indie Movie Night", likely a leftover from a template.
+    *   **Comments:** Legacy comments referencing TMDB removal exist (e.g., in `BuildingDetails.tsx`), serving as historical notes.
 
 ## 3. Feature Implementation Check ("Add Building" Workflow)
-
-### Status: ✅ Pass
-
-The "Add Building" workflow is implemented correctly according to the Master Plan specifications.
+**Status: PASS**
 
 *   **Duplicate Detection Logic:**
-    *   **Strict Check:** Confirmed 50m radius check for collision detection.
-    *   **Fuzzy Check:** Confirmed 50km radius check (`radius_meters: 50000`) with name similarity logic (`similarity_score > 0.3`).
+    *   **Implemented:** Yes, in `src/pages/AddBuilding.tsx`.
+    *   **Mechanism:** Two-pronged approach:
+        1.  **Strict Location:** 50m radius search (RPC `find_nearby_buildings`).
+        2.  **Fuzzy Name:** 50km radius search filtered client-side for `similarity_score > 0.3`.
+    *   **Logic:** Correctly sorts duplicates by distance and handles merging of results.
 *   **Location Handling:**
-    *   `AddBuildingDetails.tsx` correctly constructs the PostGIS `POINT(lng lat)` string for the `location` column.
-    *   City and Country extraction logic is centralized and functional.
+    *   **Implemented:** Yes, in `AddBuilding.tsx` and `BuildingLocationPicker.tsx`.
+    *   **Data Structure:** Handles `lat`, `lng`, `address`, `city`, and `country`. Uses `extractLocationDetails` to parse Google Maps Geocoding results for city/country.
 *   **Storage Integration:**
-    *   Images are correctly uploaded to the `building-images` bucket in `src/components/BuildingForm.tsx`.
+    *   **Implemented:** Yes, in `src/components/BuildingForm.tsx`.
+    *   **Bucket:** Correctly uploads to `building-images`.
+    *   **Optimization:** Implements image compression (2048px max, WebP, 0.8 quality).
 
 ## 4. Client-Side Constraints & Logic
+**Status: PASS**
 
-### Status: ✅ Pass
-
-The frontend logic correctly adheres to the new domain constraints.
-
-*   **Rating Scale:** `PersonalRatingButton.tsx` enforces a strict 1-5 integer scale.
+*   **Rating Scale:**
+    *   **Enforcement:** `PersonalRatingButton.tsx` explicitly renders 5 stars and handles 1-5 integer input.
+    *   **Display:** Shows "{rating}/5".
 *   **Status Logic:**
-    *   `pending` maps to "Bucket List".
-    *   `visited` maps to "Visited".
-    *   The legacy `watchlist` and `watched` terms are effectively removed from the active logic in the "Add Building" flow.
-*   **Admin Dashboard:**
-    *   Verified that `Dashboard.tsx` and `ContentIntelligenceZone.tsx` correctly use `trendingBuildings` and architectural data structures.
+    *   **Enums:** `src/types/user_buildings.ts` defines `status` as `'pending' | 'visited'`.
+    *   **Usage:** `AddBuilding.tsx` uses "Bucket List" (pending) and "Visited" (visited) actions.
+*   **Validation:**
+    *   `src/lib/validations/building.ts` enforces `year_completed` as a nullable integer and ensures `name` is present.
 
-## 5. Conclusion
-
-The codebase is clean, consistent, and ready for Phase 3 development. All identified legacy "Ghost Code" has been remediated.
+## 5. Recommendations
+*   **Cleanup:** Remove the `Film` icon usage in `PollDetails.tsx` and `UpdatePassword.tsx` and replace with `Building2` or similar to match the domain.
+*   **Cleanup:** Update the mock data in `src/types/admin.ts` to remove "Indie Movie Night".
+*   **Verification:** Ensure `src/lib/validations/building.ts` is kept in sync if new fields are added to the `buildings` table.
