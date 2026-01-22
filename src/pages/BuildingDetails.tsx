@@ -377,10 +377,10 @@ export default function BuildingDetails() {
                         initialRating={myRating}
                         onRate={handleRate}
                         status={userStatus || 'visited'}
-                        label="Rate this building"
+                        label={userStatus === 'pending' ? "Priority" : "Rating"}
                     />
                     {userStatus === 'pending' && (
-                        <span className="text-xs text-muted-foreground ml-2">(Priority)</span> // [cite: 53]
+                        <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
                     )}
                 </div>
 
