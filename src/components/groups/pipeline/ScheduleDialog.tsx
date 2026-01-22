@@ -127,10 +127,10 @@ export function ScheduleDialog({ item, groupId, open, onOpenChange }: ScheduleDi
 
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Session</label>
+            <label className="text-sm font-medium">Select Field Trip</label>
             {isLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading sessions...
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading field trips...
               </div>
             ) : (
               <Select
@@ -143,12 +143,12 @@ export function ScheduleDialog({ item, groupId, open, onOpenChange }: ScheduleDi
                 <SelectContent>
                   <SelectItem value="new">
                     <div className="flex items-center gap-2 font-medium">
-                      <Plus className="h-4 w-4" /> Schedule New Session
+                      <Plus className="h-4 w-4" /> Schedule New Field Trip
                     </div>
                   </SelectItem>
                   {upcomingSessions?.map((session) => (
                     <SelectItem key={session.id} value={session.id}>
-                      {session.title || "Untitled Session"} (
+                      {session.title || "Untitled Field Trip"} (
                       {format(new Date(session.session_date), "MMM d")})
                     </SelectItem>
                   ))}
@@ -164,7 +164,7 @@ export function ScheduleDialog({ item, groupId, open, onOpenChange }: ScheduleDi
           </Button>
           <Button onClick={handleConfirm} disabled={isSubmitting || isLoading}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {selectedSessionId === "new" ? "Continue" : "Add to Session"}
+            {selectedSessionId === "new" ? "Continue" : "Add to Field Trip"}
           </Button>
         </div>
       </DialogContent>

@@ -23,7 +23,7 @@ interface ManageTabsDialogProps {
 }
 
 const ALL_TABS = [
-  { id: "sessions", label: "Sessions", icon: Calendar, description: "Coordinate your next meetups." },
+  { id: "sessions", label: "Field Trips", icon: Calendar, description: "Coordinate your next meetups." },
   { id: "feed", label: "Feed", icon: Activity, description: "See member's activity" },
   { id: "members", label: "Members", icon: Users, description: "See who is in the group." },
   { id: "cycles", label: "Cycles", icon: Repeat, description: "Organize sessions into thematic cycles." },

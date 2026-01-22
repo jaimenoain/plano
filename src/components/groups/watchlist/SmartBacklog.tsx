@@ -68,7 +68,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
     setIsStartingSession(true);
     try {
       const topBuildings = buildings.slice(0, 15); // Top 15 buildings
-      const title = `Voting Session - ${new Date().toISOString().split('T')[0]}`;
+      const title = `Rapid Review - ${new Date().toISOString().split('T')[0]}`;
 
       // Generate unique slug
       const baseSlug = slugify(title);
@@ -154,12 +154,12 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
 
       if (optionsError) throw optionsError;
 
-      toast.success("Session started!");
+      toast.success("Review started!");
       navigate(`/groups/${group.slug}/live/${poll.slug}/tinder`);
 
     } catch (error) {
-      console.error("Failed to start session:", error);
-      toast.error("Failed to start session");
+      console.error("Failed to start review:", error);
+      toast.error("Failed to start review");
     } finally {
       setIsStartingSession(false);
     }
@@ -217,7 +217,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
         >
           <Play className="h-5 w-5 fill-current" />
           <span className="font-semibold text-base">
-            {isStartingSession ? "Creating Session..." : "Start Voting Session"}
+            {isStartingSession ? "Creating Review..." : "Start Rapid Review"}
           </span>
         </Button>
       </div>

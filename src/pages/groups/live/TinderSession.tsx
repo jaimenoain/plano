@@ -86,11 +86,11 @@ function SwipeCard({ question, freshBuildingData, onSwipe, isFront, groupId }: C
           </div>
 
           {/* Swipe Indicators */}
-          <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 border-4 border-green-500 text-green-500 rounded-xl px-4 py-2 font-bold text-4xl -rotate-12 z-10 bg-black/20 backdrop-blur-sm pointer-events-none">
-            LIKE
+          <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 border-4 border-green-500 text-green-500 rounded-xl px-4 py-2 font-bold text-2xl md:text-4xl -rotate-12 z-10 bg-black/20 backdrop-blur-sm pointer-events-none whitespace-nowrap">
+            MUST VISIT
           </motion.div>
           <motion.div style={{ opacity: nopeOpacity }} className="absolute top-8 right-8 border-4 border-red-500 text-red-500 rounded-xl px-4 py-2 font-bold text-4xl rotate-12 z-10 bg-black/20 backdrop-blur-sm pointer-events-none">
-            NOPE
+            SKIP
           </motion.div>
         </div>
 
@@ -136,7 +136,7 @@ function WinnerCard({ question, freshBuildingData }: { question: any, freshBuild
              </div>
 
              <PartyPopper className="h-24 w-24 text-yellow-400 mb-6 animate-bounce" />
-             <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-2">IT'S A MATCH!</h1>
+             <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-2 text-center">CONSENSUS REACHED!</h1>
              <p className="text-2xl text-white/80 mb-8 font-light text-center">Everyone wants to visit this.</p>
 
              <div className="w-full max-w-xs aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border-4 border-yellow-400 mb-8 relative">
@@ -371,7 +371,7 @@ export default function TinderSession() {
   };
 
   if (isLoading) return <div className="flex items-center justify-center h-screen bg-black text-white"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
-  if (error || !poll) return <div className="flex items-center justify-center h-screen bg-black text-white text-2xl">Trip voting not found</div>;
+  if (error || !poll) return <div className="flex items-center justify-center h-screen bg-black text-white text-2xl">Review not found</div>;
 
   const cards = poll.questions || [];
   const currentCard = cards[currentCardIndex];
@@ -396,7 +396,7 @@ export default function TinderSession() {
              <ArrowLeft className="h-6 w-6" />
           </Button>
           <div className="flex flex-col items-center">
-             <div className="text-[10px] font-bold tracking-widest text-white/50 uppercase mb-0.5">TRIP VOTING</div>
+             <div className="text-[10px] font-bold tracking-widest text-white/50 uppercase mb-0.5">RAPID REVIEW</div>
              <div className="font-semibold text-lg drop-shadow-md text-white/90">
                 {poll.title}
              </div>
@@ -430,7 +430,7 @@ export default function TinderSession() {
            {!currentCard && (
                <div className="text-center animate-in zoom-in duration-500">
                    <PartyPopper className="h-20 w-20 mx-auto text-yellow-400 mb-6" />
-                   <h2 className="text-3xl font-bold mb-4">You've voted on everything!</h2>
+                   <h2 className="text-3xl font-bold mb-4">Review Complete!</h2>
                    <p className="text-muted-foreground text-lg mb-8">Waiting for a match...</p>
                    <div className="flex justify-center">
                         <Loader2 className="h-8 w-8 animate-spin text-white/20" />
