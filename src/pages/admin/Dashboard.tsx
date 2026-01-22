@@ -83,7 +83,7 @@ export default function AdminDashboard() {
         {/* Zone 4: Content Intelligence */}
         <section className="space-y-4">
           <h2 className="text-xl font-semibold tracking-tight">Content Intelligence</h2>
-          <ContentIntelligenceZone trendingFilms={stats.content_intelligence.trending_films} />
+          <ContentIntelligenceZone trendingBuildings={stats.content_intelligence.trending_buildings} />
         </section>
 
         {/* Zone 4.5: Notification Intelligence */}

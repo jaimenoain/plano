@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Heart, MessageCircle, UserPlus, Loader2, Bell, Calendar, Sparkles, Clock, LogOut, Clapperboard, Settings } from "lucide-react";
+import { Heart, MessageCircle, UserPlus, Loader2, Bell, Calendar, Sparkles, Clock, LogOut, Settings } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { NotificationSettingsDialog } from "@/components/notifications/NotificationSettingsDialog";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 interface Notification {
   id: string;
   created_at: string;
-  type: 'follow' | 'like' | 'comment' | 'new_session'| 'group_invitation' | 'friend_joined' | 'suggest_follow' | 'session_reminder' | 'group_activity' | 'recommendation' | 'join_request' | 'availability';
+  type: 'follow' | 'like' | 'comment' | 'new_session'| 'group_invitation' | 'friend_joined' | 'suggest_follow' | 'session_reminder' | 'group_activity' | 'recommendation' | 'join_request';
   is_read: boolean;
   actor_id: string;
   group_id: string | null;
@@ -211,7 +211,6 @@ export default function Notifications() {
       case 'join_request': return <UserPlus className="h-4 w-4 text-primary" />;
       case 'group_activity': return <LogOut className="h-4 w-4 text-orange-500" />;
       case 'recommendation': return <Sparkles className="h-4 w-4 text-primary fill-primary" />;
-      case 'availability': return <Clapperboard className="h-4 w-4 text-green-500" />;
       default: return <Bell className="h-4 w-4" />;
     }
   };
@@ -219,7 +218,6 @@ export default function Notifications() {
   const getText = (n: Notification) => {
     const actorName = n.actor?.username || "Someone";
     const buildingName = n.resource?.building?.name || (n as any).recommendation?.building?.name;
-    const providerName = n.metadata?.provider_name || "streaming";
 
     switch (n.type) {
       case 'like': return <span><span className="font-semibold">{actorName}</span> liked your review of <span className="italic">{buildingName || "a building"}</span></span>;
@@ -252,8 +250,6 @@ export default function Notifications() {
              return <span><span className="font-semibold">{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
         }
         return <span><span className="font-semibold">{actorName}</span> recommended <span className="italic">{buildingName || "a building"}</span> for you</span>;
-      case 'availability':
-        return <span>Good news! <span className="italic font-semibold">{buildingName || "A building"}</span> is now available on <span className="font-semibold">{providerName}</span></span>;
       default: return <span>New notification</span>;
     }
   };

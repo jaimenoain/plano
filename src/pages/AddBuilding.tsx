@@ -120,7 +120,7 @@ export default function AddBuilding() {
             ? supabase.rpc('find_nearby_buildings', {
                 lat: markerPosition.lat,
                 long: markerPosition.lng,
-                radius_meters: 5000, // Wider 5km radius
+                radius_meters: 50000, // Wider 50km radius
                 name_query: queryName
             })
             : Promise.resolve({ data: [] as NearbyBuilding[], error: null });

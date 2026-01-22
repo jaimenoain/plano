@@ -49,7 +49,7 @@ export function MemberSelector({ members, selectedMemberIds, onSelectionChange }
           className="w-full justify-between md:max-w-xs h-auto py-2"
         >
           <div className="flex flex-col items-start gap-1">
-             <span className="text-xs text-muted-foreground font-normal">Who's watching?</span>
+             <span className="text-xs text-muted-foreground font-normal">Who's visiting?</span>
              <span className="font-medium truncate">
                {selectedCount === 0
                  ? "Select members..."

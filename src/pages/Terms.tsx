@@ -7,7 +7,7 @@ export default function Terms() {
       <div className="container mx-auto py-10 px-4 max-w-3xl space-y-8">
         <header className="space-y-4">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Terms and Conditions for Cineforum
+            Terms and Conditions for Archiforum
           </h1>
           <p className="text-muted-foreground">
             <strong>Last Updated:</strong> January 2026
@@ -17,14 +17,14 @@ export default function Terms() {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">1. Introduction</h2>
           <p>
-            Welcome to Cineforum ("we," "our," or "us"). By accessing or using our website and social platform (the "Service"), you agree to be bound by these Terms and Conditions ("Terms"). If you disagree with any part of these terms, you may not access the Service.
+            Welcome to Archiforum ("we," "our," or "us"). By accessing or using our website and social platform (the "Service"), you agree to be bound by these Terms and Conditions ("Terms"). If you disagree with any part of these terms, you may not access the Service.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">2. Description of Service</h2>
           <p>
-            Cineforum is a social platform designed for film enthusiasts to track viewing habits, rate films, organize watch sessions, and interact with friends. The Service is provided "as-is" and may be updated or modified at any time.
+            Archiforum is a social platform designed for architecture enthusiasts to track visits, rate buildings, organize trips, and interact with friends. The Service is provided "as-is" and may be updated or modified at any time.
           </p>
         </section>
 
@@ -44,7 +44,7 @@ export default function Terms() {
               <strong>Accuracy:</strong> You agree to provide accurate, current, and complete information during the registration process.
             </li>
             <li>
-              <strong>Username Generation:</strong> You acknowledge that Cineforum may automatically generate a username for you based on your email address, which you may be able to modify later depending on platform settings.
+              <strong>Username Generation:</strong> You acknowledge that Archiforum may automatically generate a username for you based on your email address, which you may be able to modify later depending on platform settings.
             </li>
           </ul>
         </section>
@@ -78,7 +78,7 @@ export default function Terms() {
               <strong>Ownership:</strong> You retain ownership of the ratings, reviews, lists, and other content you post ("User Content").
             </li>
             <li>
-              <strong>License:</strong> By posting User Content, you grant Cineforum a non-exclusive, worldwide, royalty-free license to use, reproduce, modify, and display your content in connection with the operation of the Service (e.g., showing your ratings to your friends or on public leaderboards).
+              <strong>License:</strong> By posting User Content, you grant Archiforum a non-exclusive, worldwide, royalty-free license to use, reproduce, modify, and display your content in connection with the operation of the Service (e.g., showing your ratings to your friends or on public leaderboards).
             </li>
             <li>
               <strong>Responsibility:</strong> You are solely responsible for your User Content and the consequences of posting it.
@@ -87,16 +87,16 @@ export default function Terms() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">6. Third-Party Data (TMDB)</h2>
+          <h2 className="text-2xl font-semibold">6. Third-Party Data</h2>
           <p>
-            This product uses the TMDB API but is not endorsed or certified by TMDB. Movie metadata, images, and other related information displayed on Cineforum are provided by The Movie Database (TMDB) and other third-party sources. We do not guarantee the accuracy or completeness of this data.
+            This product uses data from various sources. Building metadata, images, and other related information displayed on Archiforum are provided by OpenStreetMap, Google Places, and user contributions. We do not guarantee the accuracy or completeness of this data.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">7. Intellectual Property</h2>
           <p>
-            The Service and its original content (excluding User Content and third-party data), features, and functionality are and will remain the exclusive property of Cineforum. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of Cineforum.
+            The Service and its original content (excluding User Content and third-party data), features, and functionality are and will remain the exclusive property of Archiforum. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of Archiforum.
           </p>
         </section>
 
@@ -110,14 +110,14 @@ export default function Terms() {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">9. Limitation of Liability</h2>
           <p>
-            In no event shall Cineforum, its developers, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
+            In no event shall Archiforum, its developers, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">10. Privacy</h2>
           <p>
-            Your use of the Service is also governed by our Privacy Policy. By using the Service, you consent to the collection and use of information as detailed in our Privacy Policy, including the tracking of your film viewing habits for the purpose of providing social features.
+            Your use of the Service is also governed by our Privacy Policy. By using the Service, you consent to the collection and use of information as detailed in our Privacy Policy, including the tracking of your building visits for the purpose of providing social features.
           </p>
         </section>
 
