@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LocationInput } from "@/components/ui/LocationInput";
 import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
-import { Loader2, MapPin, Navigation, Plus, ArrowRight, Bookmark, Check } from "lucide-react";
+import { Loader2, MapPin, Navigation, Plus, ArrowRight, Bookmark, Check, Building2 } from "lucide-react";
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 
 // Helper to parse Geocoder results
@@ -62,6 +63,7 @@ interface NearbyBuilding {
   location_lng: number;
   dist_meters: number;
   similarity_score?: number;
+  main_image_url?: string | null;
 }
 
 export default function AddBuilding() {
@@ -356,18 +358,27 @@ export default function AddBuilding() {
                     className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
                   >
                     <div
-                        className="cursor-pointer"
-                        onClick={() => navigate(`/building/${building.id}`)}
+                      className="cursor-pointer flex gap-3"
+                      onClick={() => navigate(`/building/${building.id}`)}
                     >
+                      <Avatar className="h-10 w-10 rounded-md">
+                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
+                        <AvatarFallback className="rounded-md">
+                          <Building2 className="h-5 w-5 text-muted-foreground" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
                         <div className="font-medium flex justify-between items-start">
-                        <span>{building.name}</span>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                          <span className="truncate pr-1">{building.name}</span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {building.dist_meters.toFixed(0)}m
-                        </span>
+                          </span>
                         </div>
                         {building.address && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
                         )}
+                      </div>
                     </div>
 
                     <div className="flex gap-2 w-full">
@@ -504,18 +515,26 @@ export default function AddBuilding() {
                     className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
                   >
                     <div
-                        className="cursor-pointer"
+                        className="cursor-pointer flex gap-3"
                         onClick={() => navigate(`/building/${building.id}`)}
                     >
+                      <Avatar className="h-10 w-10 rounded-md">
+                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
+                        <AvatarFallback className="rounded-md">
+                          <Building2 className="h-5 w-5 text-muted-foreground" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
                         <div className="font-medium flex justify-between items-start">
-                        <span>{building.name}</span>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                          <span className="truncate pr-1">{building.name}</span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {building.dist_meters.toFixed(0)}m
-                        </span>
+                          </span>
                         </div>
                         {building.address && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1 truncate">{building.address}</p>
                         )}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
