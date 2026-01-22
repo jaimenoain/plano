@@ -10,13 +10,13 @@ interface SessionRatingChartProps {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomDot = (props: any) => {
-  const { cx, cy, payload, index, dataLength, setHoveredFilm } = props;
+  const { cx, cy, payload, index, dataLength, setHoveredBuilding } = props;
 
-  // Only render dots for films that belong to the current session
-  if (!payload.isSessionFilm) return null;
+  // Only render dots for buildings that belong to the current session
+  if (!payload.isSessionBuilding) return null;
 
   // Smart Positioning Logic
-  // Strategy: Alternate label position (Top/Bottom) based on the order of session films
+  // Strategy: Alternate label position (Top/Bottom) based on the order of session buildings
   // to minimize overlap between adjacent highlighted dots.
   const isEvenOrder = payload.sessionOrder % 2 === 0;
 
@@ -45,8 +45,8 @@ const CustomDot = (props: any) => {
         r={20}
         fill="transparent"
         style={{ cursor: 'pointer' }}
-        onMouseEnter={() => setHoveredFilm(payload)}
-        onMouseLeave={() => setHoveredFilm(null)}
+        onMouseEnter={() => setHoveredBuilding(payload)}
+        onMouseLeave={() => setHoveredBuilding(null)}
       />
 
       {/* Visible Dot */}
@@ -69,8 +69,8 @@ const CustomDot = (props: any) => {
         className="text-[10px] font-bold"
         dominantBaseline={preferTop ? "auto" : "hanging"}
         style={{ cursor: 'pointer' }}
-        onMouseEnter={() => setHoveredFilm(payload)}
-        onMouseLeave={() => setHoveredFilm(null)}
+        onMouseEnter={() => setHoveredBuilding(payload)}
+        onMouseLeave={() => setHoveredBuilding(null)}
       >
         {payload.displayTitle}
       </text>
@@ -78,10 +78,10 @@ const CustomDot = (props: any) => {
   );
 };
 
-const CustomTooltip = ({ active, payload, label, hoveredFilm, chartData }: TooltipProps<number, string> & { hoveredFilm?: any, chartData?: any[] }) => {
+const CustomTooltip = ({ active, payload, label, hoveredBuilding, chartData }: TooltipProps<number, string> & { hoveredBuilding?: any, chartData?: any[] }) => {
   // 1. Priority: Direct hover on dot/label
-  if (hoveredFilm) {
-    return <FilmTooltip data={hoveredFilm} />;
+  if (hoveredBuilding) {
+    return <BuildingTooltip data={hoveredBuilding} />;
   }
 
   // 2. Secondary: Hovering the chart area (active tooltip)
@@ -89,9 +89,9 @@ const CustomTooltip = ({ active, payload, label, hoveredFilm, chartData }: Toolt
     const currentIndex = label as number;
     const data = payload[0].payload;
 
-    // Find nearest session film
+    // Find nearest session building
     let nearestDist = Infinity;
-    let nearestFilm = null;
+    let nearestBuilding = null;
 
     // Search range optimization: look around the current index
     // Threshold: 5% of total width or minimum 2 steps
@@ -101,33 +101,33 @@ const CustomTooltip = ({ active, payload, label, hoveredFilm, chartData }: Toolt
     for (let i = 0; i <= threshold; i++) {
       // Check right
       if (currentIndex + i < chartData.length) {
-        if (chartData[currentIndex + i].isSessionFilm) {
+        if (chartData[currentIndex + i].isSessionBuilding) {
           nearestDist = i;
-          nearestFilm = chartData[currentIndex + i];
+          nearestBuilding = chartData[currentIndex + i];
           break; // Found closest on right (preferred if dist 0)
         }
       }
       // Check left
       if (currentIndex - i >= 0) {
-        if (chartData[currentIndex - i].isSessionFilm) {
+        if (chartData[currentIndex - i].isSessionBuilding) {
           // If we found one on right at same distance, we already broke.
           // If i=0, handled above.
           // If i>0, this is valid. Prioritize closer.
           if (i < nearestDist) {
             nearestDist = i;
-            nearestFilm = chartData[currentIndex - i];
+            nearestBuilding = chartData[currentIndex - i];
           }
           break;
         }
       }
     }
 
-    // Scenario B: Proximity Snap to Session Film
-    if (nearestFilm && nearestDist <= threshold) {
-      return <FilmTooltip data={nearestFilm} />;
+    // Scenario B: Proximity Snap to Session Building
+    if (nearestBuilding && nearestDist <= threshold) {
+      return <BuildingTooltip data={nearestBuilding} />;
     }
 
-    // Scenario A: Standard Rating Tooltip (No nearby session film)
+    // Scenario A: Standard Rating Tooltip (No nearby session building)
     return (
       <div className="bg-muted/80 backdrop-blur border border-border/50 rounded px-2 py-1 text-[10px] shadow-sm pointer-events-none">
          <span className="font-mono text-muted-foreground">Rating: {data.rating.toFixed(1)}</span>
@@ -138,7 +138,7 @@ const CustomTooltip = ({ active, payload, label, hoveredFilm, chartData }: Toolt
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const FilmTooltip = ({ data }: { data: any }) => {
+const BuildingTooltip = ({ data }: { data: any }) => {
       const showSubtitle = data.localTitle && data.localTitle !== data.displayTitle;
 
       return (
@@ -164,7 +164,7 @@ const FilmTooltip = ({ data }: { data: any }) => {
 };
 
 export function SessionRatingChart({ sessionBuildings, globalRankingData }: SessionRatingChartProps) {
-  const [hoveredFilm, setHoveredFilm] = useState<any>(null);
+  const [hoveredBuilding, setHoveredBuilding] = useState<any>(null);
 
   const chartData = useMemo(() => {
     if (!globalRankingData.length) return [];
@@ -176,33 +176,33 @@ export function SessionRatingChart({ sessionBuildings, globalRankingData }: Sess
 
     const sessionBuildingIds = new Set(sessionBuildings?.map(sf => String(sf.building.id)));
 
-    // Counter to maintain alternating label logic just for session films
+    // Counter to maintain alternating label logic just for session buildings
     let sessionOrderCounter = 0;
 
     // Map data to calculate GLOBAL ranking/percentile
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mappedData = sortedData.map((stat: any, index: number) => {
       const buildingIdStr = String(stat.building_id);
-      const isSessionFilm = sessionBuildingIds.has(buildingIdStr);
+      const isSessionBuilding = sessionBuildingIds.has(buildingIdStr);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sessionBuilding = isSessionFilm ? sessionBuildings.find((sf: any) => String(sf.building.id) === buildingIdStr) : null;
+      const sessionBuilding = isSessionBuilding ? sessionBuildings.find((sf: any) => String(sf.building.id) === buildingIdStr) : null;
 
       // Titles logic
       // Prefer original title, fallback to local, then stat title
       const displayTitle = sessionBuilding?.building?.name || stat.name || "Unknown";
 
-      // Calculate Percentile (Top X%) - relative to TOTAL rated films
+      // Calculate Percentile (Top X%) - relative to TOTAL rated buildings
       const percentile = Math.ceil(((index + 1) / totalCount) * 100);
 
       return {
         rating: stat.avg_rating,
         displayTitle,
         localTitle: null, // Removed concept of local vs original title for buildings for now
-        isSessionFilm,
+        isSessionBuilding,
         percentile,
         rank: index + 1,
-        // Assign order only if it's a session film, otherwise -1 (unused)
-        sessionOrder: isSessionFilm ? sessionOrderCounter++ : -1
+        // Assign order only if it's a session building, otherwise -1 (unused)
+        sessionOrder: isSessionBuilding ? sessionOrderCounter++ : -1
       };
     });
 
@@ -226,13 +226,13 @@ export function SessionRatingChart({ sessionBuildings, globalRankingData }: Sess
          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
               <YAxis domain={['dataMin', 'dataMax']} hide />
-              <Tooltip content={<CustomTooltip hoveredFilm={hoveredFilm} chartData={chartData} />} cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4' }} />
+              <Tooltip content={<CustomTooltip hoveredBuilding={hoveredBuilding} chartData={chartData} />} cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4' }} />
               <Line
                 type="natural"
                 dataKey="rating"
                 stroke="hsl(var(--muted-foreground)/0.5)"
                 strokeWidth={3}
-                dot={(props) => <CustomDot {...props} dataLength={chartData.length} setHoveredFilm={setHoveredFilm} />}
+                dot={(props) => <CustomDot {...props} dataLength={chartData.length} setHoveredBuilding={setHoveredBuilding} />}
                 activeDot={{ r: 6, strokeWidth: 0 }}
                 isAnimationActive={false}
               />
