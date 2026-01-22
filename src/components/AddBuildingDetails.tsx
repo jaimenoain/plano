@@ -47,8 +47,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           city: locationData.city,
           country: locationData.country,
           created_by: user.id,
-          // location is a geography(POINT) column. We need to pass a string "POINT(lng lat)"
-          location: `POINT(${locationData.lng} ${locationData.lat})` as unknown
+          location: { type: 'Point', coordinates: [locationData.lng, locationData.lat] } as unknown
         })
         .select()
         .single();
