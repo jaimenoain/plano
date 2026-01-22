@@ -50,7 +50,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           city: locationData.city,
           country: locationData.country,
           created_by: user.id,
-          location: { type: 'Point', coordinates: [locationData.lng, locationData.lat] } as unknown
+          location: `POINT(${locationData.lng} ${locationData.lat})`
         })
         .select()
         .single();
