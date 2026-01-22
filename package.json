@@ -10,6 +10,13 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "scripts": {
+  "dev": "vite",
+  "build": "vite build",
+  "gen-types": "supabase gen types typescript --project-id lnqxtomyucnnrgeapnzt --schema public > src/integrations/supabase/types.ts",
+  "lint": "eslint .",
+  "preview": "vite preview"
+},
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
     "@hookform/resolvers": "^3.10.0",
