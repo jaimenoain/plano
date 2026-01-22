@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BuildingForm, BuildingFormData } from "./BuildingForm";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AddBuildingDetailsProps {
   locationData: {
@@ -22,8 +23,14 @@ interface AddBuildingDetailsProps {
 export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleFormSubmit = async (data: BuildingFormData) => {
+    if (!user) {
+      toast.error("You must be logged in to add a building");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -39,6 +46,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           main_image_url: data.main_image_url,
           city: locationData.city,
           country: locationData.country,
+          created_by: user.id,
           location: { type: 'Point', coordinates: [locationData.lng, locationData.lat] } as unknown
         })
         .select()

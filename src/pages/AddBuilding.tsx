@@ -116,7 +116,7 @@ export default function AddBuilding() {
         });
 
         // Only run name check if we have a name to check
-        const nameCheckPromise = (queryName.length > 2)
+        const nameCheckPromise = (queryName.length >= 3)
             ? supabase.rpc('find_nearby_buildings', {
                 lat: markerPosition.lat,
                 long: markerPosition.lng,
@@ -135,9 +135,9 @@ export default function AddBuilding() {
 
         // Filter name results to ensure relevance (e.g. good similarity score)
         // If the RPC logic is "dist < radius OR match", then passing 5000 might return everything.
-        // We filter client-side to be safe: keep if dist < 50 (covered by location check anyway) OR similarity > 0.3
+        // We filter client-side to be safe: keep if dist < 50 (covered by location check anyway) OR similarity > 0.7
         const validNameMatches = nameData.filter(d =>
-            d.dist_meters <= 50 || (d.similarity_score && d.similarity_score > 0.3)
+            d.dist_meters <= 50 || (d.similarity_score && d.similarity_score > 0.7)
         );
 
         // Merge and deduplicate by ID
