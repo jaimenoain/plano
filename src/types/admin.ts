@@ -152,13 +152,13 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
   },
   user_leaderboard: {
     most_reviews: [
-      { user_id: '1', username: 'moviebuff99', avatar_url: null, count: 25 },
+      { user_id: '1', username: 'archilover99', avatar_url: null, count: 25 },
       { user_id: '2', username: 'critic_alice', avatar_url: null, count: 18 },
       { user_id: '3', username: 'joe_blogs', avatar_url: null, count: 12 },
     ],
     most_ratings: [
       { user_id: '4', username: 'rater_x', avatar_url: null, count: 150 },
-      { user_id: '1', username: 'moviebuff99', avatar_url: null, count: 140 },
+      { user_id: '1', username: 'archilover99', avatar_url: null, count: 140 },
       { user_id: '5', username: 'star_gazer', avatar_url: null, count: 110 },
     ],
     most_likes: [
@@ -169,7 +169,7 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
     most_comments: [
       { user_id: '8', username: 'chatterbox', avatar_url: null, count: 85 },
       { user_id: '6', username: 'social_butterfly', avatar_url: null, count: 60 },
-      { user_id: '1', username: 'moviebuff99', avatar_url: null, count: 45 },
+      { user_id: '1', username: 'archilover99', avatar_url: null, count: 45 },
     ],
     most_votes: [
       { user_id: '9', username: 'voter_citizen', avatar_url: null, count: 20 },
@@ -182,20 +182,20 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
       { user_id: '13', username: 'groupie_greg', avatar_url: null, count: 3 },
     ],
     most_recently_online: [
-      { user_id: '1', username: 'moviebuff99', avatar_url: null, last_online: new Date().toISOString() },
+      { user_id: '1', username: 'archilover99', avatar_url: null, last_online: new Date().toISOString() },
       { user_id: '6', username: 'social_butterfly', avatar_url: null, last_online: new Date(Date.now() - 5 * 60000).toISOString() },
       { user_id: '4', username: 'rater_x', avatar_url: null, last_online: new Date(Date.now() - 15 * 60000).toISOString() },
     ],
     most_follows_given: [
-      { user_id: '1', username: 'moviebuff99', avatar_url: null, count: 50 },
+      { user_id: '1', username: 'archilover99', avatar_url: null, count: 50 },
       { user_id: '6', username: 'social_butterfly', avatar_url: null, count: 45 },
     ],
     most_followers_gained: [
       { user_id: '2', username: 'critic_alice', avatar_url: null, count: 30 },
-      { user_id: '1', username: 'moviebuff99', avatar_url: null, count: 25 },
+      { user_id: '1', username: 'archilover99', avatar_url: null, count: 25 },
     ],
     most_sessions: [
-      { user_id: '1', username: 'moviebuff99', avatar_url: null, count: 40 },
+      { user_id: '1', username: 'archilover99', avatar_url: null, count: 40 },
       { user_id: '4', username: 'rater_x', avatar_url: null, count: 35 },
     ]
   },

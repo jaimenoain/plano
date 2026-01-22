@@ -12,7 +12,7 @@ interface MetaHeadProps {
 
 export function MetaHead({
   title,
-  description = "Track your films and share reviews.",
+  description = "Track your architecture visits and share reviews.",
   image = "/cover.jpg",
   type = "website",
   canonicalUrl,
@@ -30,7 +30,7 @@ export function MetaHead({
   return (
     <Helmet>
       {/* Standard Metadata */}
-      <title>{title ? `${title} | Cineforum` : "Cineforum"}</title>
+      <title>{title ? `${title} | Archiforum` : "Archiforum"}</title>
       <meta name="description" content={description} />
 
       {/* Robots */}
@@ -48,13 +48,13 @@ export function MetaHead({
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />
-      <meta property="og:title" content={title ? `${title} | Cineforum` : "Cineforum"} />
+      <meta property="og:title" content={title ? `${title} | Archiforum` : "Archiforum"} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={absoluteImage} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title ? `${title} | Cineforum` : "Cineforum"} />
+      <meta name="twitter:title" content={title ? `${title} | Archiforum` : "Archiforum"} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={absoluteImage} />
     </Helmet>

@@ -34,7 +34,7 @@ interface Notification {
       main_image_url: string | null;
     };
   };
-  metadata?: { provider_name?: string; status?: string };
+  metadata?: { status?: string };
   session?: {
     id: string;
     title: string | null;

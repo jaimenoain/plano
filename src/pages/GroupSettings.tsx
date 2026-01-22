@@ -369,7 +369,7 @@ export default function GroupSettings() {
                 <div className="aspect-video w-full max-w-sm rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/50 text-muted-foreground">
                    <div className="text-center p-4">
                      <p className="text-sm">No cover image set.</p>
-                     {/* <p className="text-xs mt-1">Shows latest films by default.</p> */}
+                     {/* <p className="text-xs mt-1">Shows latest buildings by default.</p> */}
                    </div>
                 </div>
               )}
