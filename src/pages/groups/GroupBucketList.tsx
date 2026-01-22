@@ -1,7 +1,7 @@
 import { useOutletContext } from "react-router-dom";
 import { SmartBacklog } from "@/components/groups/watchlist/SmartBacklog";
 
-export default function GroupWatchlist() {
+export default function GroupBucketList() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { group } = useOutletContext<{ group: any }>();
 

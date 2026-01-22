@@ -30,7 +30,7 @@ import GroupLayout from "./pages/groups/GroupLayout";
 import GroupSessions from "./pages/groups/GroupSessions";
 import GroupFeed from "./pages/groups/GroupFeed";
 import GroupMembers from "./pages/groups/GroupMembers";
-import GroupWatchlist from "./pages/groups/GroupWatchlist";
+import GroupBucketList from "./pages/groups/GroupBucketList";
 import GroupStatsView from "./pages/groups/GroupStatsView";
 import GroupCycles from "./pages/groups/cycles/GroupCycles";
 import CycleDetails from "./pages/groups/cycles/CycleDetails";
@@ -101,7 +101,7 @@ const router = createBrowserRouter(
         <Route path="feed" element={<GroupFeed />} />
         <Route path="polls" element={<PollsTab />} />
         <Route path="polls/:pollSlug" element={<PollDetails />} />
-        <Route path="watchlist" element={<GroupWatchlist />} />
+        <Route path="watchlist" element={<GroupBucketList />} />
         <Route path="pipeline" element={<PipelineTabWrapper />} />
         <Route path="members" element={<GroupMembers />} />
         <Route path="stats" element={<GroupStatsView />} />

@@ -359,7 +359,7 @@ export default function Onboarding() {
                 placeholder="Choose a display name"
               />
             </div>
-            <p className="text-[10px] text-muted-foreground">This is how other cinephiles will see you.</p>
+            <p className="text-[10px] text-muted-foreground">This is how other architecture lovers will see you.</p>
           </div>
 
           {/* Location Field (Seamlessly sets Country) */}
@@ -373,7 +373,7 @@ export default function Onboarding() {
               }}
               placeholder="e.g. New York, USA"
             />
-            <p className="text-[10px] text-muted-foreground">Helps us show local cinema info and streaming availability.</p>
+            <p className="text-[10px] text-muted-foreground">Helps us show local architecture info.</p>
           </div>
         </div>
 
