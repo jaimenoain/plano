@@ -353,62 +353,127 @@ export default function AddBuilding() {
                   Nearby Buildings
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  These buildings are already in the database.
+                  We found similar buildings in the database.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                {duplicates.map((building) => (
-                  <div
-                    key={building.id}
-                    className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
-                  >
-                    <div
-                      className="cursor-pointer flex gap-3"
-                      onClick={() => navigate(`/building/${building.id}`)}
-                    >
-                      <Avatar className="h-10 w-10 rounded-md">
-                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
-                        <AvatarFallback className="rounded-md">
-                          <Building2 className="h-5 w-5 text-muted-foreground" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium flex justify-between items-start">
-                          <span className="truncate pr-1">{building.name}</span>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {building.dist_meters.toFixed(0)}m
-                          </span>
-                        </div>
-                        {building.address && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
-                        )}
-                      </div>
-                    </div>
+              <CardContent className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
 
-                    <div className="flex gap-2 w-full">
-                        <Button
-                            size="sm"
-                            variant="secondary"
-                            className="flex-1 h-8 text-xs gap-1"
-                            onClick={() => handleAddToMyList(building.id, 'pending')}
-                            title="Add to Bucket List"
-                        >
-                            <Bookmark className="h-3 w-3" />
-                            Bucket List
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="secondary"
-                            className="flex-1 h-8 text-xs gap-1"
-                            onClick={() => handleAddToMyList(building.id, 'visited')}
-                            title="Mark as Visited"
-                        >
-                            <Check className="h-3 w-3" />
-                            Visited
-                        </Button>
+                {/* Location Matches */}
+                {duplicates.some(d => d.dist_meters <= 50) && (
+                    <div className="space-y-2">
+                        <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
+                           <MapPin className="h-3 w-3" /> Same Location
+                        </div>
+                        {duplicates.filter(d => d.dist_meters <= 50).map(building => (
+                             <div
+                                key={building.id}
+                                className="flex flex-col gap-2 p-3 rounded-md border border-amber-200/50 bg-amber-50/50 text-sm hover:bg-amber-100/50 transition-colors"
+                              >
+                                <div
+                                  className="cursor-pointer flex gap-3"
+                                  onClick={() => navigate(`/building/${building.id}`)}
+                                >
+                                  <Avatar className="h-10 w-10 rounded-md">
+                                    <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
+                                    <AvatarFallback className="rounded-md">
+                                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium flex justify-between items-start">
+                                      <span className="truncate pr-1">{building.name}</span>
+                                      <span className="text-xs text-amber-700 font-bold whitespace-nowrap">
+                                        {building.dist_meters.toFixed(0)}m
+                                      </span>
+                                    </div>
+                                    {building.address && (
+                                      <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-2 w-full">
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="flex-1 h-8 text-xs gap-1 bg-white hover:bg-white/80"
+                                        onClick={() => handleAddToMyList(building.id, 'pending')}
+                                    >
+                                        <Bookmark className="h-3 w-3" />
+                                        Bucket List
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="flex-1 h-8 text-xs gap-1 bg-white hover:bg-white/80"
+                                        onClick={() => handleAddToMyList(building.id, 'visited')}
+                                    >
+                                        <Check className="h-3 w-3" />
+                                        Visited
+                                    </Button>
+                                </div>
+                              </div>
+                        ))}
                     </div>
-                  </div>
-                ))}
+                )}
+
+                {/* Name Matches */}
+                {duplicates.some(d => d.dist_meters > 50) && (
+                    <div className="space-y-2 pt-2">
+                        <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                           Similar Names (Far Away)
+                        </div>
+                         {duplicates.filter(d => d.dist_meters > 50).map(building => (
+                             <div
+                                key={building.id}
+                                className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
+                              >
+                                <div
+                                  className="cursor-pointer flex gap-3"
+                                  onClick={() => navigate(`/building/${building.id}`)}
+                                >
+                                  <Avatar className="h-10 w-10 rounded-md">
+                                    <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
+                                    <AvatarFallback className="rounded-md">
+                                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium flex justify-between items-start">
+                                      <span className="truncate pr-1">{building.name}</span>
+                                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                        {(building.dist_meters / 1000).toFixed(1)}km
+                                      </span>
+                                    </div>
+                                    {building.address && (
+                                      <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                 <div className="flex gap-2 w-full">
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="flex-1 h-8 text-xs gap-1"
+                                        onClick={() => handleAddToMyList(building.id, 'pending')}
+                                    >
+                                        <Bookmark className="h-3 w-3" />
+                                        Bucket List
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="flex-1 h-8 text-xs gap-1"
+                                        onClick={() => handleAddToMyList(building.id, 'visited')}
+                                    >
+                                        <Check className="h-3 w-3" />
+                                        Visited
+                                    </Button>
+                                </div>
+                              </div>
+                        ))}
+                    </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -512,57 +577,120 @@ export default function AddBuilding() {
                     It looks like this building is already in the database. Do you want to add this one to your list instead?
                 </DialogDescription>
             </DialogHeader>
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 my-2">
-                {duplicates.map((building) => (
-                  <div
-                    key={building.id}
-                    className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
-                  >
-                    <div
-                        className="cursor-pointer flex gap-3"
-                        onClick={() => navigate(`/building/${building.id}`)}
-                    >
-                      <Avatar className="h-10 w-10 rounded-md">
-                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
-                        <AvatarFallback className="rounded-md">
-                          <Building2 className="h-5 w-5 text-muted-foreground" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium flex justify-between items-start">
-                          <span className="truncate pr-1">{building.name}</span>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {building.dist_meters.toFixed(0)}m
-                          </span>
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 my-2">
+                {duplicates.some(d => d.dist_meters <= 50) && (
+                    <div className="space-y-2">
+                        <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
+                            <MapPin className="h-3 w-3" /> Same Location
                         </div>
-                        {building.address && (
-                          <p className="text-xs text-muted-foreground line-clamp-1 truncate">{building.address}</p>
-                        )}
-                      </div>
+                        {duplicates.filter(d => d.dist_meters <= 50).map(building => (
+                            <div
+                                key={building.id}
+                                className="flex flex-col gap-2 p-3 rounded-md border border-amber-200/50 bg-amber-50/50 text-sm hover:bg-amber-100/50 transition-colors"
+                            >
+                                <div
+                                    className="cursor-pointer flex gap-3"
+                                    onClick={() => navigate(`/building/${building.id}`)}
+                                >
+                                    <Avatar className="h-10 w-10 rounded-md">
+                                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
+                                        <AvatarFallback className="rounded-md">
+                                            <Building2 className="h-5 w-5 text-muted-foreground" />
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium flex justify-between items-start">
+                                            <span className="truncate pr-1">{building.name}</span>
+                                            <span className="text-xs text-amber-700 font-bold whitespace-nowrap">
+                                                {building.dist_meters.toFixed(0)}m
+                                            </span>
+                                        </div>
+                                        {building.address && (
+                                            <p className="text-xs text-muted-foreground line-clamp-1 truncate">{building.address}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="w-full h-8 text-xs gap-1 bg-white hover:bg-white/80"
+                                        onClick={() => handleAddToMyList(building.id, 'pending')}
+                                    >
+                                        <Bookmark className="h-3 w-3" />
+                                        Add to Bucket List
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="w-full h-8 text-xs gap-1 bg-white hover:bg-white/80"
+                                        onClick={() => handleAddToMyList(building.id, 'visited')}
+                                    >
+                                        <Check className="h-3 w-3" />
+                                        Mark as Visited
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
+                )}
 
-                    <div className="grid grid-cols-2 gap-2">
-                        <Button
-                            size="sm"
-                            variant="default"
-                            className="w-full h-8 text-xs gap-1"
-                            onClick={() => handleAddToMyList(building.id, 'pending')}
-                        >
-                            <Bookmark className="h-3 w-3" />
-                            Add to Bucket List
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="secondary"
-                            className="w-full h-8 text-xs gap-1"
-                            onClick={() => handleAddToMyList(building.id, 'visited')}
-                        >
-                            <Check className="h-3 w-3" />
-                            Mark as Visited
-                        </Button>
+                {duplicates.some(d => d.dist_meters > 50) && (
+                    <div className="space-y-2 pt-2">
+                        <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                            Similar Names (Far Away)
+                        </div>
+                        {duplicates.filter(d => d.dist_meters > 50).map(building => (
+                            <div
+                                key={building.id}
+                                className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
+                            >
+                                <div
+                                    className="cursor-pointer flex gap-3"
+                                    onClick={() => navigate(`/building/${building.id}`)}
+                                >
+                                    <Avatar className="h-10 w-10 rounded-md">
+                                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
+                                        <AvatarFallback className="rounded-md">
+                                            <Building2 className="h-5 w-5 text-muted-foreground" />
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium flex justify-between items-start">
+                                            <span className="truncate pr-1">{building.name}</span>
+                                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                {(building.dist_meters / 1000).toFixed(1)}km
+                                            </span>
+                                        </div>
+                                        {building.address && (
+                                            <p className="text-xs text-muted-foreground line-clamp-1 truncate">{building.address}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="w-full h-8 text-xs gap-1"
+                                        onClick={() => handleAddToMyList(building.id, 'pending')}
+                                    >
+                                        <Bookmark className="h-3 w-3" />
+                                        Bucket List
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="w-full h-8 text-xs gap-1"
+                                        onClick={() => handleAddToMyList(building.id, 'visited')}
+                                    >
+                                        <Check className="h-3 w-3" />
+                                        Mark as Visited
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                  </div>
-                ))}
+                )}
             </div>
             <DialogFooter className="sm:justify-start">
                 <Button variant="ghost" className="text-muted-foreground text-xs" onClick={forceProceedToStep2}>
