@@ -13,6 +13,7 @@ import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { SessionRatingChart } from "@/components/groups/SessionRatingChart";
 import { slugify, createGoogleCalendarUrl } from "@/lib/utils";
 import { PollCard } from "@/components/groups/polls/PollCard";
+import { SessionMap } from "@/components/groups/SessionMap";
 
 function ResourceItem({ resource }: { resource: { title: string, url: string, description?: string } }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -382,6 +383,15 @@ export function SessionCard({
             </div>
           </div>
         )}
+
+        {/* Map View */}
+        <div className="px-5 pb-3">
+          <SessionMap
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            buildings={session.buildings?.map((b: any) => b.building) || []}
+            className="h-48 w-full shadow-sm border-border/50"
+          />
+        </div>
 
         <div className="divide-y divide-border/40 flex-1">
           {[...(session.buildings || [])]
