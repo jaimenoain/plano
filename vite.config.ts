@@ -17,9 +17,9 @@ export default defineConfig(({ mode }) => ({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'robots.txt', 'logo.png'],
       manifest: {
-        name: 'Cineforum',
-        short_name: 'Cineforum',
-        description: 'Cineforum PWA',
+        name: 'Archiforum',
+        short_name: 'Archiforum',
+        description: 'Archiforum PWA',
         theme_color: '#ffffff',
         display: 'standalone',
         icons: [
