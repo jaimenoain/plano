@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Star, Clock } from "lucide-react";
+import { Heart, MessageCircle, Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -92,16 +92,16 @@ export function ReviewCard({
 
   let subTitle = entry.building.address;
 
-  if (architects && architects.length > 0) {
-      subTitle = architects[0];
+  const architectsList = (architects || []).slice(0, 2).join(", ");
+
+  if (architectsList) {
+      subTitle = architectsList;
       if (year_completed) {
           subTitle += ` • ${year_completed}`;
       }
   } else if (year_completed) {
       subTitle = `${year_completed}`;
       if (entry.building.address) {
-          // If only year_completed is available, maybe show address too contextually,
-          // or just year_completed. Let's show Year • Address for context.
            subTitle += ` • ${entry.building.address}`;
       }
   }
@@ -305,8 +305,16 @@ export function ReviewCard({
           </div>
         )}
 
-        {/* Rating Section: Stars Only (Removed Big Number) - 5 Star Scale */}
-        {entry.rating && (
+        {/* Status Badges & Rating */}
+        {entry.status === 'pending' && (
+          <div className="mb-2 mt-1">
+            <Badge variant="secondary" className="font-semibold text-[10px] px-2 h-5 bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200">
+              WANT TO VISIT
+            </Badge>
+          </div>
+        )}
+
+        {entry.status === 'visited' && entry.rating && (
           <div className="flex items-center gap-0.5 mb-1">
               {Array.from({ length: 5 }).map((_, i) => (
                   <Star
@@ -318,16 +326,6 @@ export function ReviewCard({
                     }`}
                   />
               ))}
-          </div>
-        )}
-
-        {/* Watchlist Indicator */}
-        {isWatchlist && (
-          <div className="flex items-center gap-2 mb-1 mt-1">
-             <Clock className="w-4 h-4 text-blue-500 fill-blue-500/20" />
-             <span className="text-sm font-medium text-blue-500">
-               Wants to visit
-             </span>
           </div>
         )}
 
