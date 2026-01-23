@@ -67,9 +67,9 @@ test('End-to-End Add Building Verification', async ({ page }) => {
     };
   });
 
-  // Mock Supabase RPC find_nearby_buildings
-  await page.route('**/rest/v1/rpc/find_nearby_buildings', async route => {
-    console.log("Mock find_nearby_buildings intercepted");
+  // Mock Supabase RPC search_buildings
+  await page.route('**/rest/v1/rpc/search_buildings', async route => {
+    console.log("Mock search_buildings intercepted");
     const json = [
         {
             id: 'uuid-existing-1',
@@ -87,11 +87,18 @@ test('End-to-End Add Building Verification', async ({ page }) => {
             address: '500 Far Away St',
             location_lat: 52.0000,
             location_lng: -0.2000,
-            dist_meters: 60000,
+            distance_meters: 60000,
             similarity_score: 0.9
         }
     ];
-    await route.fulfill({ json });
+    // Map response to match what search_buildings returns (distance_meters)
+    // The component maps it to dist_meters, but the RPC returns distance_meters
+    const response = json.map(j => ({
+        ...j,
+        distance_meters: j.dist_meters || j.distance_meters // handle both for mock convenience
+    }));
+
+    await route.fulfill({ json: response });
   });
 
   // Mock Supabase Insert to films (was buildings)
@@ -189,6 +196,18 @@ test('End-to-End Add Building Verification', async ({ page }) => {
 
   // Verify Form Fields
   await expect(page.getByLabel('Name *')).toBeVisible();
+
+  // Verify pills exist and fields are hidden
+  await expect(page.getByRole('button', { name: 'Add Year' })).toBeVisible();
+  await expect(page.getByLabel('Year Built')).not.toBeVisible();
+
+  // Click pills to reveal
+  await page.getByRole('button', { name: 'Add Year' }).click();
+  await page.getByRole('button', { name: 'Add Architects' }).click();
+  await page.getByRole('button', { name: 'Add Style' }).click();
+  await page.getByRole('button', { name: 'Add Description' }).click();
+
+  // Now verify fields are visible
   await expect(page.getByLabel('Year Built')).toBeVisible();
   await expect(page.getByText('Architects', { exact: true })).toBeVisible();
   await expect(page.getByText('Architectural Styles', { exact: true })).toBeVisible();
