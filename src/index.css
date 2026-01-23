@@ -4,50 +4,58 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Cineforum Design System - Modern Minimalist Light Theme */
+/* Plano Design System - Modern Minimalist High-Contrast Theme */
 
 @layer base {
   :root {
-    /* Background: Subtle Off-White */
-    --background: 0 0% 98%;
-    /* Foreground: Deep Matte Charcoal */
-    --foreground: 240 10% 3.9%;
+    /* Background: Light Grey (#F5F5F5) */
+    --background: 0 0% 96%;
+    /* Foreground: Charcoal (#333333) */
+    --foreground: 0 0% 20%;
 
     /* Cards: Pure White */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 0 0% 20%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 0 0% 20%;
 
-    /* Primary: Electric Blue - Adjusted for contrast on white */
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 0 0% 98%;
+    /* Primary: Charcoal (#333333) */
+    --primary: 0 0% 20%;
+    /* Primary Foreground: Neon Lime (#EEFF41) */
+    --primary-foreground: 65 100% 63%;
 
     /* Secondary: Light Gray for buttons */
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
 
     /* Muted */
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --muted-darker: 240 4% 40%;         
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 46%;
+    --muted-darker: 0 0% 40%;
 
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 20%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 221.2 83.2% 53.3%;
+    /* Borders & Inputs: #E0E0E0 */
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+
+    /* Ring: Neon Lime (#EEFF41) */
+    --ring: 65 100% 63%;
 
     --radius: 0.5rem;
 
     /* Glassmorphism */
     --glass-bg: 0 0% 100% / 0.7;
     --glass-border: 0 0% 0% / 0.1;
+
+    /* Custom Variables */
+    --neon-lime: 65 100% 63%;
+    --charcoal: 0 0% 20%;
   }
 }
 
@@ -72,7 +80,7 @@
   }
 
   ::selection {
-    background-color: hsl(var(--primary) / 0.2);
+    background-color: hsl(var(--primary-foreground) / 0.5);
     color: hsl(var(--primary));
   }
 
