@@ -16,6 +16,7 @@ interface Building {
   main_image_url: string | null;
   location_lat: number;
   location_lng: number;
+  social_context?: string | null;
 }
 
 interface BuildingDiscoveryMapProps {
@@ -97,11 +98,30 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
 
   const pins = useMemo(() => buildings?.map(building => {
     const status = userBuildingsMap?.get(building.id);
-    const borderColor = status === 'visited'
-        ? "border-green-500"
-        : status === 'pending'
-            ? "border-yellow-500"
-            : "border-white"; // Default discovery
+
+    // Pin Protocol:
+    // Green: Visited
+    // Yellow: Pending (Wishlist)
+    // Purple: Recommended (Social Context)
+    // Grey/Default: Discovery
+
+    let pinColorClass = "border-gray-400";
+    let dotColorClass = "bg-gray-400";
+    let pinTooltip = null;
+
+    if (status === 'visited') {
+        pinColorClass = "border-green-500";
+        dotColorClass = "bg-green-500";
+        pinTooltip = <span className="ml-1 opacity-75 capitalize">(Visited)</span>;
+    } else if (status === 'pending') {
+        pinColorClass = "border-yellow-500";
+        dotColorClass = "bg-yellow-500";
+        pinTooltip = <span className="ml-1 opacity-75 capitalize">(Pending)</span>;
+    } else if (building.social_context) {
+        pinColorClass = "border-purple-500";
+        dotColorClass = "bg-purple-500";
+        pinTooltip = <span className="ml-1 opacity-90 text-purple-200">({building.social_context})</span>;
+    }
 
     return (
         <Marker
@@ -118,15 +138,15 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
             <div className="group relative flex flex-col items-center">
             {/* Tooltip */}
             <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap z-50">
-                <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg">
-                    {building.name}
-                    {status && <span className="ml-1 opacity-75 capitalize">({status})</span>}
+                <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg flex items-center gap-1">
+                    <span className="font-medium">{building.name}</span>
+                    {pinTooltip}
                 </div>
                 <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-foreground"></div>
             </div>
 
             <div className="relative">
-                <div className={`w-8 h-8 rounded-full border-2 ${borderColor} shadow-md overflow-hidden bg-background transition-colors duration-200`}>
+                <div className={`w-8 h-8 rounded-full border-2 ${pinColorClass} shadow-md overflow-hidden bg-background transition-colors duration-200`}>
                     <Avatar className="h-full w-full">
                         <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
                         <AvatarFallback className="bg-primary/10">
@@ -134,7 +154,7 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
                         </AvatarFallback>
                     </Avatar>
                 </div>
-                <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 ${status === 'visited' ? 'bg-green-500' : status === 'pending' ? 'bg-yellow-500' : 'bg-white'} rotate-45 transform translate-y-1/2 shadow-sm`}></div>
+                <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 ${dotColorClass} rotate-45 transform translate-y-1/2 shadow-sm`}></div>
             </div>
             </div>
         </Marker>
