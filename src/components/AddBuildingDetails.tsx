@@ -38,10 +38,11 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     setIsSubmitting(true);
 
     try {
+      // 1. Prepare data for legacy column support
       const architectNames = data.architects.map(a => a.name);
 
-      // Insert Building
-      // @ts-ignore - using buildings table
+      // 2. Insert Building
+      // @ts-ignore - Supabase types might be strict on PostGIS or specific columns
       const { data: insertedData, error } = await supabase
         .from('buildings')
         .insert({
@@ -50,16 +51,16 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           description: data.description,
           main_image_url: data.main_image_url,
 
-          // Location Data
+          // Location Data (Merged from Main & Feature branches)
           address: locationData.address,
           city: locationData.city,
           country: locationData.country,
           // PostGIS point format "POINT(lng lat)"
-          location: `POINT(${locationData.lng} ${locationData.lat})` as unknown,
+          location: `POINT(${locationData.lng} ${locationData.lat})`,
 
           created_by: user.id,
           styles: data.styles,
-          architects: architectNames // Maintain legacy array
+          architects: architectNames // Maintain legacy array of strings
         })
         .select()
         .single();
@@ -68,7 +69,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
       const buildingId = insertedData.id;
 
-      // Insert Architect Links
+      // 3. Insert Architect Links (Junction Table Logic)
       if (data.architects.length > 0) {
           const links = data.architects.map(a => ({
               building_id: buildingId,
@@ -82,11 +83,12 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
           if (linkError) {
               console.error("Error linking architects:", linkError);
-              // Non-fatal, but good to know
+              // Non-fatal error, but warn the user
               toast.error("Building saved, but failed to link architects.");
           }
       }
 
+      // 4. Success State
       toast.success("Building added successfully!");
       setNewBuilding({ id: insertedData.id, name: insertedData.name });
       setShowVisitDialog(true);
