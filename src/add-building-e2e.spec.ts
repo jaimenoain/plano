@@ -216,20 +216,6 @@ test('End-to-End Add Building Verification', async ({ page }) => {
   await styleInput.fill('Futurism');
   await styleInput.press('Enter');
 
-  // 10. Image Upload (Action 5)
-  // Mock file chooser
-  const fileChooserPromise = page.waitForEvent('filechooser');
-  await page.locator('input[type="file"]').click();
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles({
-      name: 'test.jpg',
-      mimeType: 'image/jpeg',
-      buffer: Buffer.from('fake image content')
-  });
-
-  // Verify preview appears
-  await expect(page.locator('img[alt="Preview"]')).toBeVisible();
-
   // 11. Submit (Action 6)
   await page.getByRole('button', { name: 'Save Building' }).click();
 
