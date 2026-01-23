@@ -189,12 +189,16 @@ export function SessionCard({
   const rateBuilding = useMutation({
     mutationFn: async ({ buildingId, rating }: { buildingId: string, rating: number }) => {
       if (!user) throw new Error("Must be logged in");
-      const { data: existingLogs } = await supabase.from("user_buildings").select("id").eq("user_id", user.id).eq("building_id", buildingId);
+      // Use legacy 'log' table
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existingLogs } = await (supabase as any).from("log").select("id").eq("user_id", user.id).eq("film_id", buildingId);
       if (existingLogs?.[0]) {
-         const { error } = await supabase.from("user_buildings").update({ rating }).eq("id", existingLogs[0].id);
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         const { error } = await (supabase as any).from("log").update({ rating }).eq("id", existingLogs[0].id);
          if (error) throw error;
       } else {
-         const { error } = await supabase.from("user_buildings").insert({ user_id: user.id, building_id: buildingId, rating, visited_at: new Date().toISOString() });
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         const { error } = await (supabase as any).from("log").insert({ user_id: user.id, film_id: buildingId, rating, visited_at: new Date().toISOString() });
          if (error) throw error;
       }
     },

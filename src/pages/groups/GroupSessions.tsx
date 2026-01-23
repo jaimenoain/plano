@@ -108,11 +108,12 @@ export default function GroupSessions() {
       today.setHours(0, 0, 0, 0);
       const filterDate = today.toISOString();
       
+      // Use legacy 'session_films' and 'films' tables until backend migration is complete
       let query = supabase
         .from("group_sessions")
         .select(`
           *, 
-          buildings:session_buildings(building_id, is_main, building:buildings(*)),
+          buildings:session_films(building_id:film_id, is_main, building:films(id, name:title, main_image_url:poster_path, release_date)),
           likes:session_likes(user_id, user:profiles(id, username, avatar_url)),
           comments_list:session_comments(id, content, created_at, user:profiles(id, username, avatar_url)),
           comments:session_comments(count),
@@ -141,6 +142,15 @@ export default function GroupSessions() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return data.map((session: any) => ({
         ...session,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        buildings: session.buildings?.map((b: any) => ({
+          ...b,
+          building: {
+            ...b.building,
+            year_completed: b.building.release_date ? new Date(b.building.release_date).getFullYear() : undefined,
+            architects: []
+          }
+        })),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         is_liked: session.likes?.some((l: any) => l.user_id === user?.id),
         likes_count: session.likes?.length || 0,
@@ -177,11 +187,12 @@ export default function GroupSessions() {
       if (user?.id && !memberIds.includes(user.id)) memberIds.push(user.id);
       if (memberIds.length === 0) return [];
 
-      const { data, error } = await supabase
-        .from("user_buildings")
-        .select("building_id, rating, status, content, tags, user:profiles(id, username, avatar_url)")
+      // Use legacy 'log' table
+      const { data, error } = await (supabase as any)
+        .from("log")
+        .select("building_id:film_id, rating, status, content, tags, user:profiles(id, username, avatar_url)")
         .in("user_id", memberIds)
-        .in("building_id", visibleBuildingIds)
+        .in("film_id", visibleBuildingIds)
         .not("rating", "is", null);
 
       if (error) throw error;
