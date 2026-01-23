@@ -291,6 +291,7 @@ export default function BuildingDetails() {
                 lat={coordinates.lat}
                 lng={coordinates.lng}
                 className="h-48 w-full"
+                status={userStatus}
               />
             ) : (
               <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">

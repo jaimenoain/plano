@@ -26,6 +26,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { RecommendDialog } from "@/components/common/RecommendDialog";
+import { useQuery } from "@tanstack/react-query";
 
 // Helper to parse Geocoder results
 const extractLocationDetails = (result: any) => {
@@ -82,6 +83,31 @@ export default function AddBuilding() {
 
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch user relationships
+  const { data: userBuildingsMap } = useQuery({
+    queryKey: ["user-buildings-map-add", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+        if (!user) return new Map();
+
+        const { data, error } = await supabase
+            .from("user_buildings")
+            .select("building_id, status")
+            .eq("user_id", user.id);
+
+        if (error) {
+            console.error("Error fetching user buildings:", error);
+            return new Map();
+        }
+
+        const map = new Map();
+        data.forEach(item => {
+            map.set(item.building_id, item.status);
+        });
+        return map;
+    }
+  });
 
   // Default to London, but this will be overridden if we can get user location or just start somewhere generic
   const [viewState, setViewState] = useState({
@@ -537,7 +563,12 @@ export default function AddBuilding() {
             )}
 
             {/* Duplicates */}
-            {duplicates.map((building) => (
+            {duplicates.map((building) => {
+              const status = userBuildingsMap?.get(building.id);
+              const pinColor = status === 'visited' ? 'bg-green-500' : status === 'pending' ? 'bg-yellow-500' : 'bg-blue-500';
+              const label = status === 'visited' ? 'V' : status === 'pending' ? 'P' : 'B';
+
+              return (
               <Marker
                 key={building.id}
                 longitude={building.location_lng}
@@ -553,17 +584,17 @@ export default function AddBuilding() {
                     {/* Tooltip */}
                     <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap">
                         <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg">
-                            {building.name}
+                            {building.name} {status && `(${status})`}
                         </div>
                         <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-foreground"></div>
                     </div>
 
-                    <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white shadow-md flex items-center justify-center text-white text-[10px] font-bold">
-                        B
+                    <div className={`w-6 h-6 rounded-full ${pinColor} border-2 border-white shadow-md flex items-center justify-center text-white text-[10px] font-bold`}>
+                        {label}
                     </div>
                  </div>
               </Marker>
-            ))}
+            )})}
           </MapGL>
 
           {/* Overlay Legend or Status */}

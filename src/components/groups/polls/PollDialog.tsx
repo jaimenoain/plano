@@ -110,8 +110,7 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
   const defaultValues: Partial<PollFormValues> = pollToEdit ? {
       title: pollToEdit.title,
       description: pollToEdit.description || "",
-      // Legacy "film_selection" mapped to general, or maintain "building_selection"
-      type: (pollToEdit.type === "film_selection") ? "general" : pollToEdit.type,
+      type: pollToEdit.type,
       status: pollToEdit.status,
       show_results_before_close: !!pollToEdit.show_results_before_close, // Ensure boolean
       questions: pollToEdit.questions.map((q: any) => ({
