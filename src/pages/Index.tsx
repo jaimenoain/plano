@@ -173,44 +173,17 @@ export default function Index() {
       if (!user) return [];
 
       const from = pageParam * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
 
-      // Use standard query instead of RPC to avoid dependency on removed function
-      // Fetched fields updated to include architects and year_completed for the new card design.
-      const { data: simpleReviews, error } = await supabase
-          .from("user_buildings")
-          .select(`
-            id,
-            content,
-            rating,
-            tags,
-            created_at,
-            edited_at,
-            status,
-            user_id,
-            group_id,
-            building_id,
-            user:profiles(id, username, avatar_url),
-            building:buildings(id, name, main_image_url, address, architects, year_completed),
-            likes:likes(count),
-            comments:comments(count)
-          `)
-          .range(from, to)
-          .order("created_at", { ascending: false });
+      // Use optimized RPC to fetch feed with all necessary data in one request
+      const { data, error } = await supabase
+        .rpc("get_feed", {
+          p_limit: PAGE_SIZE,
+          p_offset: from
+        });
 
       if (error) throw error;
 
-      // Efficiently fetch user's like status for the fetched reviews
-      const reviewIds = simpleReviews.map(r => r.id);
-      const { data: userLikes } = await supabase
-          .from("likes")
-          .select("interaction_id")
-          .in("interaction_id", reviewIds)
-          .eq("user_id", user.id);
-
-      const likedSet = new Set(userLikes?.map(l => l.interaction_id));
-
-      return (simpleReviews || []).map((review: any) => ({
+      return (data || []).map((review: any) => ({
         id: review.id,
         content: review.content,
         rating: review.rating,
@@ -221,20 +194,20 @@ export default function Index() {
         user_id: review.user_id,
         group_id: review.group_id,
         user: {
-          username: review.user?.username || null,
-          avatar_url: review.user?.avatar_url || null,
+          username: review.user_data?.username || null,
+          avatar_url: review.user_data?.avatar_url || null,
         },
         building: {
-          id: review.building?.id,
-          name: review.building?.name || "Unknown Building",
-          main_image_url: review.building?.main_image_url || null,
-          address: review.building?.address || null,
-          architects: review.building?.architects || null,
-          year_completed: review.building?.year_completed || null,
+          id: review.building_data?.id,
+          name: review.building_data?.name || "Unknown Building",
+          main_image_url: review.building_data?.main_image_url || null,
+          address: review.building_data?.address || null,
+          architects: review.building_data?.architects || null,
+          year_completed: review.building_data?.year_completed || null,
         },
-        likes_count: review.likes?.[0]?.count || 0,
-        comments_count: review.comments?.[0]?.count || 0,
-        is_liked: likedSet.has(review.id),
+        likes_count: review.likes_count || 0,
+        comments_count: review.comments_count || 0,
+        is_liked: review.is_liked,
       }));
     },
     initialPageParam: 0,
