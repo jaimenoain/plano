@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardStats } from "@/types/admin";
-import { Users, UserPlus, Activity, Share2 } from "lucide-react";
+import { Users, UserPlus, Activity, Share2, Building2, MessageSquare, Image, AlertCircle } from "lucide-react";
 
 interface PulseZoneProps {
   stats: DashboardStats['pulse'];
@@ -9,6 +9,7 @@ interface PulseZoneProps {
 export function PulseZone({ stats }: PulseZoneProps) {
   return (
     <div className="grid gap-4 md:grid-cols-4">
+      {/* User Metrics */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -51,6 +52,52 @@ export function PulseZone({ stats }: PulseZoneProps) {
         <CardContent>
           <div className="text-2xl font-bold">{stats.network_density}</div>
           <p className="text-xs text-muted-foreground">Avg followers per user</p>
+        </CardContent>
+      </Card>
+
+      {/* Content Metrics */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Buildings</CardTitle>
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.total_buildings}</div>
+          <p className="text-xs text-muted-foreground">Database entries</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
+          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.total_reviews}</div>
+          <p className="text-xs text-muted-foreground">Logs with content</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Photos</CardTitle>
+          <Image className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.total_photos}</div>
+          <p className="text-xs text-muted-foreground">Buildings with images</p>
+        </CardContent>
+      </Card>
+
+      {/* System Health */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Pending Reports</CardTitle>
+          <AlertCircle className={`h-4 w-4 ${stats.pending_reports > 0 ? "text-red-500" : "text-muted-foreground"}`} />
+        </CardHeader>
+        <CardContent>
+          <div className={`text-2xl font-bold ${stats.pending_reports > 0 ? "text-red-500" : ""}`}>{stats.pending_reports}</div>
+          <p className="text-xs text-muted-foreground">Requiring review</p>
         </CardContent>
       </Card>
     </div>
