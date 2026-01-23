@@ -84,6 +84,7 @@ export default function MergeBuildings() {
         .from('buildings')
         .select('*')
         .ilike('name', `%${query}%`)
+        .eq('is_deleted', false)
         .limit(10);
 
       if (error) throw error;
@@ -117,6 +118,9 @@ export default function MergeBuildings() {
       });
 
       if (error) throw error;
+
+      // Restore explicit soft delete (redundant with RPC but ensures safety)
+      await supabase.from('buildings').update({ is_deleted: true }).eq('id', selectedDup.id);
 
       toast.success(`Successfully merged "${selectedDup.name}" into "${selectedMaster.name}"`);
 
