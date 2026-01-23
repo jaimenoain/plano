@@ -133,7 +133,7 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
         const status = mode === "visit_with" ? "visit_with" : "pending";
 
         // Insert recommendation
-        const { error: recError } = await supabase
+        const { data: recommendations, error: recError } = await supabase
             .from("recommendations")
             .insert(
                 selectedUsers.map(recipientId => ({
@@ -142,22 +142,26 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
                     building_id: building.id,
                     status: status
                 }))
-            );
+            )
+            .select();
 
         if (recError) throw recError;
 
-        const notifications = selectedUsers.map(recipientId => ({
-            type: 'recommendation' as const,
-            actor_id: user.id,
-            user_id: recipientId,
-            resource_id: building.id, // Linking to building
-        }));
+        if (recommendations) {
+            const notifications = recommendations.map(rec => ({
+                type: (mode === 'visit_with' ? 'visit_request' : 'recommendation') as "visit_request" | "recommendation",
+                actor_id: user.id,
+                user_id: rec.recipient_id,
+                resource_id: building.id, // Linking to building (legacy/fallback)
+                recommendation_id: rec.id
+            }));
 
-        const { error: notifError } = await supabase
-            .from("notifications")
-            .insert(notifications);
+            const { error: notifError } = await supabase
+                .from("notifications")
+                .insert(notifications);
 
-        if (notifError) throw notifError;
+            if (notifError) throw notifError;
+        }
 
         const actionText = mode === "visit_with" ? "Visit request sent!" : "Recommendation sent!";
         toast({ title: actionText, description: `Sent to ${selectedUsers.length} friend${selectedUsers.length > 1 ? 's' : ''}.` });

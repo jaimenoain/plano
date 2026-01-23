@@ -86,6 +86,13 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_recommendation_id_fkey"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "recommendations"
+            referencedColumns: ["id"]
           }
         ]
       }
@@ -577,7 +584,8 @@ export interface Database {
           is_read: boolean
           resource_id: string | null
           session_id: string | null
-          type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request"
+          recommendation_id: string | null
+          type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request" | "visit_request"
           user_id: string
         }
         Insert: {
@@ -588,7 +596,8 @@ export interface Database {
           is_read?: boolean
           resource_id?: string | null
           session_id?: string | null
-          type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request"
+          recommendation_id?: string | null
+          type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request" | "visit_request"
           user_id: string
         }
         Update: {
@@ -599,7 +608,8 @@ export interface Database {
           is_read?: boolean
           resource_id?: string | null
           session_id?: string | null
-          type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request"
+          recommendation_id?: string | null
+          type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request" | "visit_request"
           user_id?: string
         }
         Relationships: [
