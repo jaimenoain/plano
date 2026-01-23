@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LocationInput } from "@/components/ui/LocationInput";
 import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
+import { importLibrary } from "@googlemaps/js-api-loader";
 import { Loader2, MapPin, Navigation, Plus, ArrowRight, Bookmark, Check, Building2 } from "lucide-react";
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
@@ -84,6 +85,28 @@ export default function AddBuilding() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [mapsLoaded, setMapsLoaded] = useState(false);
+
+  // Load Google Maps
+  useEffect(() => {
+    const loadMaps = async () => {
+        if (window.google?.maps?.places) {
+            setMapsLoaded(true);
+            return;
+        }
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        if (apiKey) {
+            try {
+                await importLibrary("places");
+                await importLibrary("geocoding");
+                setMapsLoaded(true);
+            } catch (e) {
+                console.error("Failed to load maps", e);
+            }
+        }
+    };
+    loadMaps();
+  }, []);
 
   // Fetch user relationships
   const { data: userBuildingsMap } = useQuery({
@@ -124,6 +147,8 @@ export default function AddBuilding() {
 
   // Handle URL parameters for initial location
   useEffect(() => {
+    if (!mapsLoaded) return; // Wait for maps to load
+
     const latParam = searchParams.get("lat");
     const lngParam = searchParams.get("lng");
 
@@ -153,7 +178,7 @@ export default function AddBuilding() {
         }
       }
     }
-  }, [searchParams]);
+  }, [searchParams, mapsLoaded]);
 
   const [finalLocationData, setFinalLocationData] = useState<{
     lat: number;
@@ -183,45 +208,54 @@ export default function AddBuilding() {
         let nameData: NearbyBuilding[] = [];
 
         try {
-            const locationCheckPromise = supabase.rpc('find_nearby_buildings', {
-                lat: markerPosition.lat,
-                long: markerPosition.lng,
+            // @ts-ignore
+            const locationCheckPromise = supabase.rpc('search_buildings', {
+                location_coordinates: { lat: markerPosition.lat, lng: markerPosition.lng },
                 radius_meters: 50,
-                name_query: "" // Don't filter by name for collision detection
+                query_text: ""
             });
 
             // Only run name check if we have a name to check
             const nameCheckPromise = (queryName.length >= 3)
-                ? supabase.rpc('find_nearby_buildings', {
-                    lat: markerPosition.lat,
-                    long: markerPosition.lng,
+                // @ts-ignore
+                ? supabase.rpc('search_buildings', {
+                    location_coordinates: { lat: markerPosition.lat, lng: markerPosition.lng },
                     radius_meters: 50000, // Wider 50km radius
-                    name_query: queryName
+                    query_text: queryName,
+                    sort_by: 'relevance'
                 })
-                : Promise.resolve({ data: [] as NearbyBuilding[], error: null });
+                : Promise.resolve({ data: [], error: null });
 
             const [locationResult, nameResult] = await Promise.all([locationCheckPromise, nameCheckPromise]);
 
             if (locationResult.error) {
-                console.warn("find_nearby_buildings RPC failed (likely missing), skipping duplicate check.", locationResult.error);
+                console.warn("search_buildings RPC failed", locationResult.error);
             } else {
-                locationData = locationResult.data || [];
+                // Map distance_meters to dist_meters
+                locationData = (locationResult.data || []).map((d: any) => ({
+                    ...d,
+                    dist_meters: d.distance_meters || 0
+                }));
             }
 
             if (nameResult.error) {
-                 console.warn("find_nearby_buildings RPC failed (likely missing), skipping name check.", nameResult.error);
+                 console.warn("search_buildings RPC failed", nameResult.error);
             } else {
-                nameData = nameResult.data || [];
+                // Map distance_meters to dist_meters
+                nameData = (nameResult.data || []).map((d: any) => ({
+                    ...d,
+                    dist_meters: d.distance_meters || 0
+                }));
             }
         } catch (err) {
             console.warn("Exception checking duplicates:", err);
         }
 
-        // Filter name results to ensure relevance (e.g. good similarity score)
-        // If the RPC logic is "dist < radius OR match", then passing 5000 might return everything.
-        // We filter client-side to be safe: keep if dist < 50 (covered by location check anyway) OR similarity > 0.8
+        // Filter name results to ensure relevance
+        // search_buildings handles relevance sorting, so we assume top results are relevant if they match query
+        // We filter client-side: keep if dist < 50 (covered by location check anyway) OR if we have a name query (implicit relevance)
         const validNameMatches = nameData.filter(d =>
-            d.dist_meters <= 50 || (d.similarity_score && d.similarity_score > 0.8)
+            d.dist_meters <= 50 || queryName.length >= 3
         );
 
         // Merge and deduplicate by ID
