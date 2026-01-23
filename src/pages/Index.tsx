@@ -58,7 +58,7 @@ function Landing() {
         
         {/* Hero Section */}
         <div className="flex flex-col items-center gap-6">
-          <PlanoLogo className="h-24 w-auto mb-6" />
+          <PlanoLogo className="h-32 w-auto mb-6" />
           
           <div className="space-y-4">
             {inviter ? (
