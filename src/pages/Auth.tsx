@@ -267,7 +267,7 @@ export default function Auth() {
                 <p className="text-base text-foreground">
                   Join <span className="font-bold">{inviterProfile.username}</span> and others
                 </p>
-                <p className="text-sm text-muted-foreground">on Cineforum</p>
+                <p className="text-sm text-muted-foreground">on PLANO</p>
               </div>
             </div>
           ) : (

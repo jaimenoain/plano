@@ -63,7 +63,7 @@ export function PwaPrompt() {
           toast.custom((t) => (
             <div className="bg-background border border-border p-4 rounded-lg shadow-lg flex flex-col gap-3 w-full max-w-sm pointer-events-auto">
               <div className="flex flex-col gap-1">
-                <h3 className="font-semibold text-foreground">Install Cineforum</h3>
+                <h3 className="font-semibold text-foreground">Install PLANO</h3>
                 <p className="text-sm text-muted-foreground">
                   Install our app for the best experience.
                 </p>
@@ -122,7 +122,7 @@ export function PwaPrompt() {
       <DrawerContent>
         <div className="mx-auto w-full max-w-sm">
           <DrawerHeader>
-            <DrawerTitle>Install Cineforum</DrawerTitle>
+            <DrawerTitle>Install PLANO</DrawerTitle>
             <DrawerDescription>
               Add to your Home Screen for the best experience.
             </DrawerDescription>

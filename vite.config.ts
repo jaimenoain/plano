@@ -17,9 +17,9 @@ export default defineConfig(({ mode }) => ({
       registerType: 'prompt',
       includeAssets: ['robots.txt', 'android-chrome-192x192.png', 'android-chrome-512x512.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Archiforum',
-        short_name: 'Archiforum',
-        description: 'Archiforum PWA',
+        name: 'PLANO',
+        short_name: 'PLANO',
+        description: 'PLANO PWA',
         theme_color: '#ffffff',
         display: 'standalone',
         icons: [
