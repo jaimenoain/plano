@@ -13,7 +13,7 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass safe-area-pb border-t border-white/10">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass safe-area-pb border-t border-border">
       {/* Increased height to h-20 to accommodate larger text/icons comfortably */}
       <div className="flex items-center justify-around h-20 max-w-lg mx-auto px-2 pb-2">
         {navItems.map(({ icon: Icon, label, path }) => {
@@ -29,7 +29,7 @@ export function BottomNav() {
                 "min-w-[64px] min-h-[64px] rounded-xl",
                 isActive 
                   ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               )}
             >
               <div className="relative">

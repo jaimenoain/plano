@@ -286,7 +286,7 @@ export default function Post() {
                     })}
                   </div>
                   {(hoverRating > 0 || rating > 0) && (
-                    <span className="text-4xl font-bold text-white ml-2">
+                    <span className="text-4xl font-bold text-primary ml-2">
                       {hoverRating || rating}
                     </span>
                   )}

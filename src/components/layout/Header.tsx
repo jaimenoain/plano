@@ -60,7 +60,7 @@ export function Header({ title, showLogo = true, action }: HeaderProps) {
           {/* Increased touch target size (h-10 w-10) for accessibility */}
           <Link 
             to="/notifications" 
-            className="relative h-10 w-10 flex items-center justify-center rounded-full text-foreground hover:text-primary hover:bg-white/5 transition-all"
+            className="relative h-10 w-10 flex items-center justify-center rounded-full text-foreground hover:text-primary hover:bg-accent transition-all"
             aria-label="Notifications"
           >
             <Bell className="h-6 w-6" />
@@ -74,7 +74,7 @@ export function Header({ title, showLogo = true, action }: HeaderProps) {
 
           <Link 
             to="/profile" 
-            className="h-10 w-10 flex items-center justify-center rounded-full text-foreground hover:text-primary hover:bg-white/5 transition-all"
+            className="h-10 w-10 flex items-center justify-center rounded-full text-foreground hover:text-primary hover:bg-accent transition-all"
             aria-label="My Profile"
           >
             <User className="h-6 w-6" />

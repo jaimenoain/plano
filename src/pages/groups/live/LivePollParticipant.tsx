@@ -98,19 +98,19 @@ export default function LivePollParticipant() {
       };
   }, [poll?.id, refetch]);
 
-  if (isLoading) return <div className="flex items-center justify-center h-screen bg-black text-white"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
-  if (error || !poll) return <div className="flex items-center justify-center h-screen bg-black text-white">Poll not found</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-screen bg-background text-foreground"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
+  if (error || !poll) return <div className="flex items-center justify-center h-screen bg-background text-foreground">Poll not found</div>;
 
   const activeQuestion = poll.questions.find((q: any) => q.is_live_active);
 
-  // Header component
+  // Header component - Light Mode
   const header = (
-      <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-center bg-black/20 backdrop-blur-sm z-10">
+      <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
           <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="font-mono text-sm uppercase tracking-widest text-white/80">Live Event</span>
+              <span className="font-mono text-sm uppercase tracking-widest text-muted-foreground">Live Event</span>
           </div>
-          <Button variant="ghost" size="sm" className="text-white/50 hover:text-white" onClick={() => navigate(`/groups/${slug}/polls`)}>
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => navigate(`/groups/${slug}/polls`)}>
               Exit
           </Button>
       </div>
@@ -119,10 +119,10 @@ export default function LivePollParticipant() {
   // State D: Session Closed
   if (poll.status === 'closed') {
       return (
-          <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
+          <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
               {header}
               <h1 className="text-4xl font-bold mb-4">Event Ended</h1>
-              <p className="text-xl text-white/80">Thanks for participating!</p>
+              <p className="text-xl text-muted-foreground">Thanks for participating!</p>
               <Button className="mt-8" onClick={() => navigate(`/groups/${slug}/polls`)}>
                   Back to Polls
               </Button>
@@ -133,11 +133,11 @@ export default function LivePollParticipant() {
   // State E: Leaderboard
   if (poll.status === 'leaderboard') {
       return (
-          <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 animate-in fade-in">
+          <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 animate-in fade-in">
               {header}
               <div className="w-full max-w-lg mt-12 mb-12">
                    <Leaderboard poll={poll} />
-                   <p className="text-center text-zinc-500 mt-8 animate-pulse">Waiting for host to end event...</p>
+                   <p className="text-center text-muted-foreground mt-8 animate-pulse">Waiting for host to end event...</p>
               </div>
           </div>
       );
@@ -146,12 +146,12 @@ export default function LivePollParticipant() {
   // State A: Waiting
   if (!activeQuestion) {
       return (
-          <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-black text-white flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
+          <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
               {header}
               <Zap className="h-20 w-20 text-yellow-400 mb-6 animate-pulse" />
               <h1 className="text-4xl font-bold mb-4">{poll.title}</h1>
-              <p className="text-xl text-white/80">Waiting for host to start...</p>
-              <p className="text-sm text-white/50 mt-8">Sit tight!</p>
+              <p className="text-xl text-muted-foreground">Waiting for host to start...</p>
+              <p className="text-sm text-muted-foreground/50 mt-8">Sit tight!</p>
           </div>
       );
   }
@@ -159,16 +159,16 @@ export default function LivePollParticipant() {
   // State C: Results (if revealed)
   if (activeQuestion.is_revealed) {
        return (
-          <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 animate-in zoom-in-95 duration-300">
+          <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 animate-in zoom-in-95 duration-300">
                {header}
                <div className="w-full max-w-lg space-y-6 mt-12 mb-12">
                    <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">{activeQuestion.question_text}</h2>
-                   <Card className="bg-zinc-900 border-zinc-800 text-white">
+                   <Card className="bg-card border-border shadow-lg">
                        <CardContent className="pt-6">
                             <PollResults poll={{...poll, questions: [activeQuestion]}} />
                        </CardContent>
                    </Card>
-                   <p className="text-center text-zinc-500 animate-pulse">Waiting for next question...</p>
+                   <p className="text-center text-muted-foreground animate-pulse">Waiting for next question...</p>
                </div>
           </div>
        );
@@ -179,7 +179,7 @@ export default function LivePollParticipant() {
   const hasVotedOnCurrent = poll.votes.some((v: any) => v.question_id === activeQuestion.id && v.user_id === user?.id);
 
   return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 animate-in slide-in-from-bottom-10 duration-500">
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 animate-in slide-in-from-bottom-10 duration-500">
            {header}
            <div className="w-full max-w-lg mt-12 mb-12">
                <div className="mb-8 text-center">
@@ -188,13 +188,13 @@ export default function LivePollParticipant() {
                </div>
 
                {hasVotedOnCurrent ? (
-                    <div className="text-center p-10 bg-zinc-900/50 rounded-xl border border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
-                        <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-primary/80" />
+                    <div className="text-center p-10 bg-card rounded-xl border border-border shadow-sm animate-in fade-in zoom-in-95 duration-300">
+                        <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-primary" />
                         <h3 className="text-xl font-semibold mb-2">Vote Recorded</h3>
-                        <p className="text-zinc-400">Waiting for results to be revealed...</p>
+                        <p className="text-muted-foreground">Waiting for results to be revealed...</p>
                     </div>
                ) : (
-                   <Card className="bg-zinc-900 border-zinc-800">
+                   <Card className="bg-card border-border shadow-lg">
                        <CardContent className="pt-6">
                             <VotingForm
                                 poll={{...poll, questions: [activeQuestion]}} // Pass only active question to isolate context
