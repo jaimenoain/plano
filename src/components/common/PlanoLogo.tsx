@@ -8,7 +8,7 @@ interface PlanoLogoProps extends React.SVGProps<SVGSVGElement> {
 export const PlanoLogo = ({ className, ...props }: PlanoLogoProps) => {
   return (
     <svg
-      viewBox="-30 0 358.401 96.301"
+      viewBox="-30 0 358.401 85"
       xmlns="http://www.w3.org/2000/svg"
       className={cn("w-full h-auto", className)}
       aria-label="PLANO Logo"
@@ -17,9 +17,9 @@ export const PlanoLogo = ({ className, ...props }: PlanoLogoProps) => {
       {/* Neon Band (Background) - Extended sides and bottom */}
       <rect
         x="-30"
-        y="35.6505"
+        y="44"
         width="358.401"
-        height="60.6505"
+        height="41"
         fill="#eeff41"
       />
 
