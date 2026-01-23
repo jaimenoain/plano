@@ -251,7 +251,7 @@ export default function BuildingDetails() {
 
   return (
     <AppLayout title={building.name} showBack>
-      <MetaHead title={building.name} image={building.main_image_url} />
+      <MetaHead title={building.name} image={building.main_image_url || undefined} />
 
       <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto p-4 lg:p-8">
         
