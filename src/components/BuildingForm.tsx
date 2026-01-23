@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { TagInput } from "@/components/ui/tag-input";
 import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
 import { buildingSchema } from "@/lib/validations/building";
 import { toTitleCase } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
 
 const ARCHITECTURAL_STYLES = [
   "Brutalist",
@@ -24,7 +24,7 @@ const ARCHITECTURAL_STYLES = [
 export interface BuildingFormData {
   name: string;
   year_completed: number | null;
-  architects: string[];
+  architects: Architect[];
   styles: string[];
   description: string;
   main_image_url: string | null;
@@ -40,7 +40,7 @@ interface BuildingFormProps {
 export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel }: BuildingFormProps) {
   const [name, setName] = useState(initialValues.name);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
-  const [architects, setArchitects] = useState<string[]>(initialValues.architects);
+  const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
   const [styles, setStyles] = useState<string[]>(initialValues.styles);
   const [description, setDescription] = useState(initialValues.description);
 
@@ -105,13 +105,13 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
       <div className="space-y-2">
         <Label>Architects</Label>
-        <TagInput
-          tags={architects}
-          setTags={setArchitects}
-          placeholder="Type and press Enter to add architect..."
+        <ArchitectSelect
+          selectedArchitects={architects}
+          setSelectedArchitects={setArchitects}
+          placeholder="Search architects or add new..."
         />
         <p className="text-xs text-muted-foreground">
-          Add multiple architects if applicable.
+          Add multiple architects if applicable. If not found, you can create a new one.
         </p>
       </div>
 

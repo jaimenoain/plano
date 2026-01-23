@@ -38,38 +38,62 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     setIsSubmitting(true);
 
     try {
-      // We merge the form data (data) with the location data (locationData) which is passed as a prop
-      // This ensures that city and country (extracted from the map/geocoder) are persisted.
-      const releaseDate = data.year_completed ? `${data.year_completed}-01-01` : null;
+      const architectNames = data.architects.map(a => a.name);
 
-      // @ts-ignore - films table exists, buildings does not
+      // Insert Building
+      // @ts-ignore - using buildings table
       const { data: insertedData, error } = await supabase
-        .from('films')
+        .from('buildings')
         .insert({
-          title: data.name,
-          release_date: releaseDate,
-          overview: data.description,
-          poster_path: data.main_image_url,
-          media_type: 'movie'
-          // Omitted fields not present in films table:
-          // architects, styles, address, city, country, location, created_by
+          name: data.name,
+          year_completed: data.year_completed,
+          description: data.description,
+          main_image_url: data.main_image_url,
+
+          // Location Data
+          address: locationData.address,
+          city: locationData.city,
+          country: locationData.country,
+          // PostGIS point format "POINT(lng lat)"
+          location: `POINT(${locationData.lng} ${locationData.lat})` as unknown,
+
+          created_by: user.id,
+          styles: data.styles,
+          architects: architectNames // Maintain legacy array
         })
         .select()
         .single();
 
-      if (error) {
-        console.error("Insert error:", error);
-        toast.error("Failed to save building.");
-      } else {
-        toast.success("Building added successfully!");
-        // @ts-ignore
-        setNewBuilding({ id: insertedData.id, name: insertedData.title });
-        setShowVisitDialog(true);
+      if (error) throw error;
+
+      const buildingId = insertedData.id;
+
+      // Insert Architect Links
+      if (data.architects.length > 0) {
+          const links = data.architects.map(a => ({
+              building_id: buildingId,
+              architect_id: a.id
+          }));
+
+          // @ts-ignore - junction table created in migration
+          const { error: linkError } = await supabase
+            .from('building_architects')
+            .insert(links);
+
+          if (linkError) {
+              console.error("Error linking architects:", linkError);
+              // Non-fatal, but good to know
+              toast.error("Building saved, but failed to link architects.");
+          }
       }
 
+      toast.success("Building added successfully!");
+      setNewBuilding({ id: insertedData.id, name: insertedData.name });
+      setShowVisitDialog(true);
+
     } catch (error) {
-      console.error("Unexpected error:", error);
-      toast.error("An unexpected error occurred.");
+      console.error("Error adding building:", error);
+      toast.error("Failed to save building.");
     } finally {
       setIsSubmitting(false);
     }
