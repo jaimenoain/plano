@@ -1263,6 +1263,10 @@ export interface Database {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_building_leaderboards: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

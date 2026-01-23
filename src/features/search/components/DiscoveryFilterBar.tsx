@@ -20,7 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown, MapPin, Sparkles } from "lucide-react";
+import { Check, ChevronsUpDown, MapPin, Sparkles, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -35,6 +35,7 @@ export interface DiscoveryFilterBarProps {
   availableStyles: string[];
   sortBy: 'distance' | 'relevance';
   onSortChange: (sort: 'distance' | 'relevance') => void;
+  onShowLeaderboard?: () => void;
 }
 
 export function DiscoveryFilterBar({
@@ -48,6 +49,7 @@ export function DiscoveryFilterBar({
   availableStyles,
   sortBy,
   onSortChange,
+  onShowLeaderboard,
 }: DiscoveryFilterBarProps) {
   const [openStyles, setOpenStyles] = useState(false);
 
@@ -155,6 +157,17 @@ export function DiscoveryFilterBar({
                 <span className="sr-only md:not-sr-only">Relevance</span>
             </Button>
         </div>
+
+        {/* Leaderboard Button */}
+        <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 shrink-0"
+            onClick={onShowLeaderboard}
+            title="Leaderboards"
+        >
+            <Trophy className="h-4 w-4 text-amber-500" />
+        </Button>
       </div>
     </div>
   );
