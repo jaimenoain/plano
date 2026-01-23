@@ -377,10 +377,17 @@ export default function AddBuilding() {
 
               <Button
                 onClick={proceedToStep2}
-                disabled={!markerPosition}
+                disabled={!markerPosition || checkingDuplicates}
                 className="w-full"
               >
-                Continue
+                {checkingDuplicates ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Checking...
+                  </>
+                ) : (
+                  "Continue"
+                )}
               </Button>
             </CardContent>
           </Card>
