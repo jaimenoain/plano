@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Check, Image as ImageIcon, Building2, X, Edit2, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Check, Image as ImageIcon, X, Edit2, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -599,12 +599,6 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
                                                 </FormItem>
                                                 <FormItem className="flex items-center space-x-2 space-y-0">
                                                     <FormControl>
-                                                        <RadioGroupItem value="building" />
-                                                    </FormControl>
-                                                    <FormLabel className="font-normal">Building</FormLabel>
-                                                </FormItem>
-                                                <FormItem className="flex items-center space-x-2 space-y-0">
-                                                    <FormControl>
                                                         <RadioGroupItem value="image" />
                                                     </FormControl>
                                                     <FormLabel className="font-normal">Image</FormLabel>
@@ -958,12 +952,6 @@ function QuestionOptionItem({
                                     <Input placeholder="Label (optional)" {...field} className="h-8 text-xs" />
                             )}
                         />
-                    </div>
-                )}
-
-                {responseType === 'building' && (
-                    <div>
-                        <p className="text-sm text-muted-foreground">Building selection temporarily unavailable.</p>
                     </div>
                 )}
             </div>
