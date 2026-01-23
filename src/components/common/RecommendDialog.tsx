@@ -47,18 +47,22 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
   const fetchUserRating = async () => {
     if (!user) return;
     try {
+      // @ts-ignore - log table exists, user_buildings does not
       const { data, error } = await supabase
-        .from("user_buildings")
+        .from("log")
         .select("rating, status")
         .eq("user_id", user.id)
-        .eq("building_id", building.id)
+        .eq("film_id", building.id)
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
         setUserRating(data.rating);
-        setUserStatus(data.status as BuildingStatus);
+        let status: BuildingStatus = null;
+        if (data.status === 'watchlist') status = 'pending';
+        else if (data.status === 'watched') status = 'visited';
+        setUserStatus(status);
       } else {
         setUserRating(null);
         setUserStatus(null);
@@ -72,28 +76,31 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
     if (!user) return;
     setRatingLoading(true);
     try {
+        // @ts-ignore
         const { data: existingLog } = await supabase
-            .from("user_buildings")
+            .from("log")
             .select("id")
             .eq("user_id", user.id)
-            .eq("building_id", buildingId)
+            .eq("film_id", buildingId)
             .maybeSingle();
 
         if (existingLog) {
+            // @ts-ignore
             const { error } = await supabase
-                .from("user_buildings")
+                .from("log")
                 .update({ rating })
                 .eq("id", existingLog.id);
             if (error) throw error;
         } else {
+            // @ts-ignore
             const { error } = await supabase
-                .from("user_buildings")
+                .from("log")
                 .insert({
                     user_id: user.id,
-                    building_id: buildingId,
+                    film_id: buildingId,
                     rating,
-                    status: 'visited', // Default to visited if rating directly
-                    visited_at: new Date().toISOString()
+                    status: 'watched', // Default to watched if rating directly
+                    updated_at: new Date().toISOString()
                 });
             if (error) throw error;
             setUserStatus('visited');

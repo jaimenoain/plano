@@ -78,28 +78,39 @@ export default function Post() {
 
   const fetchBuildingDetails = async () => {
     if (!buildingId) return;
+    // @ts-ignore
     const { data } = await supabase
-      .from("buildings")
+      .from("films")
       .select("*")
       .eq("id", buildingId)
       .single();
-    if (data) setBuildingDetails(data);
+
+    if (data) {
+        setBuildingDetails({
+            ...data,
+            name: data.title,
+            main_image_url: data.poster_path,
+            year_completed: data.release_date ? parseInt(data.release_date.substring(0, 4)) : null
+        });
+    }
   };
 
   const checkExistingReview = async () => {
     if (!buildingId || !user) return;
     setCheckingExisting(true);
     try {
+      // @ts-ignore
       const { data: entry } = await supabase
-        .from("user_buildings")
+        .from("log")
         .select("*")
-        .eq("building_id", buildingId)
+        .eq("film_id", buildingId)
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (entry) {
         setExistingEntryId(entry.id);
-        setPostType(entry.status === "pending" ? "bucket_list" : "review");
+        const mappedStatus = entry.status === 'watchlist' ? 'pending' : 'visited';
+        setPostType(mappedStatus === "pending" ? "bucket_list" : "review");
         if (entry.rating) setRating(entry.rating);
         if (entry.content) setContent(entry.content);
         if (entry.tags) setSelectedTags(entry.tags);
@@ -114,15 +125,16 @@ export default function Post() {
 
   const fetchUserTags = async () => {
     if (!user) return;
+    // @ts-ignore
     const { data } = await supabase
-      .from("user_buildings")
+      .from("log")
       .select("tags")
       .eq("user_id", user.id)
       .not("tags", "is", null);
 
     if (data) {
       const tags = new Set<string>();
-      data.forEach((row) => row.tags?.forEach((tag) => tags.add(tag)));
+      data.forEach((row) => row.tags?.forEach((tag: string) => tags.add(tag)));
       setUserPastTags(Array.from(tags).sort());
     }
   };
@@ -130,11 +142,12 @@ export default function Post() {
   const fetchPopularTags = async () => {
     if (!buildingId) return;
 
+    // @ts-ignore
     const { data } = await supabase
-      .from("user_buildings")
+      .from("log")
       .select("tags")
-      .eq("building_id", buildingId)
-      .eq("status", "visited")
+      .eq("film_id", buildingId)
+      .eq("status", "watched")
       .not("tags", "is", null);
 
     if (data) {
@@ -160,17 +173,20 @@ export default function Post() {
     try {
       if (!buildingId) throw new Error("No building ID");
 
-      const baseData = { user_id: user!.id, building_id: buildingId, visibility };
+      // @ts-ignore
+      const baseData = { user_id: user!.id, film_id: buildingId, visibility };
       const isReview = postType === "review";
+      const dbStatus = isReview ? 'watched' : 'watchlist';
 
-      const { data: entryData, error } = await supabase.from("user_buildings").upsert({
+      // @ts-ignore
+      const { data: entryData, error } = await supabase.from("log").upsert({
         ...baseData,
-        status: isReview ? "visited" : "pending",
+        status: dbStatus,
         rating: isReview ? rating : null,
         content: content.trim() || null,
         tags: selectedTags.length > 0 ? selectedTags : null,
-        visited_at: isReview ? new Date().toISOString() : null, // 'visited_at' maybe should be 'visited_at' but schema kept 'visited_at'
-      }, { onConflict: "user_id, building_id" } as any).select().single();
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id, film_id" } as any).select().single();
 
       if (error) throw error;
 
@@ -196,8 +212,9 @@ export default function Post() {
 
     setLoading(true);
     try {
+      // @ts-ignore
       const { error } = await supabase
-        .from("user_buildings")
+        .from("log")
         .delete()
         .eq("id", existingEntryId);
 
