@@ -101,7 +101,14 @@ test('End-to-End Add Building Verification', async ({ page }) => {
             social_score: 0
         }
     ];
-    await route.fulfill({ json });
+    // Map response to match what search_buildings returns (distance_meters)
+    // The component maps it to dist_meters, but the RPC returns distance_meters
+    const response = json.map(j => ({
+        ...j,
+        distance_meters: j.dist_meters || j.distance_meters // handle both for mock convenience
+    }));
+
+    await route.fulfill({ json: response });
   });
 
   // Mock Supabase Insert to buildings
@@ -203,6 +210,18 @@ test('End-to-End Add Building Verification', async ({ page }) => {
 
   // Verify Form Fields
   await expect(page.getByLabel('Name *')).toBeVisible();
+
+  // Verify pills exist and fields are hidden
+  await expect(page.getByRole('button', { name: 'Add Year' })).toBeVisible();
+  await expect(page.getByLabel('Year Built')).not.toBeVisible();
+
+  // Click pills to reveal
+  await page.getByRole('button', { name: 'Add Year' }).click();
+  await page.getByRole('button', { name: 'Add Architects' }).click();
+  await page.getByRole('button', { name: 'Add Style' }).click();
+  await page.getByRole('button', { name: 'Add Description' }).click();
+
+  // Now verify fields are visible
   await expect(page.getByLabel('Year Built')).toBeVisible();
   await expect(page.getByText('Architects', { exact: true })).toBeVisible();
   await expect(page.getByText('Architectural Styles', { exact: true })).toBeVisible();
