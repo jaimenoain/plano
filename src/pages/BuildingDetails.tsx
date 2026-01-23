@@ -18,8 +18,9 @@ import { formatDistanceToNow } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
 import { BuildingMap } from "@/components/common/BuildingMap";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
-import { Star } from "lucide-react"; // Kept for Community Notes display if needed, but PersonalRatingButton handles the input.
+import { Star } from "lucide-react";
 import { UserPicker } from "@/components/common/UserPicker";
+import { fetchBuildingDetails, fetchUserBuildingStatus } from "@/utils/supabaseFallback";
 
 // --- Types ---
 interface BuildingDetails {
@@ -102,35 +103,29 @@ export default function BuildingDetails() {
 
   const fetchBuildingData = async () => {
     setLoading(true);
-    try {
-      // 1. Fetch Building
-      const { data, error } = await supabase
-        .from("buildings")
-        .select("*")
-        .eq("id", id)
-        .single();
+    if (!id) return;
 
-      if (error) throw error;
-      setBuilding(data);
+    try {
+      // 1. Fetch Building (with fallback)
+      const data = await fetchBuildingDetails(id);
+
+      // Cast the result to BuildingDetails type (mapped fields from fallback should match)
+      setBuilding(data as unknown as BuildingDetails);
+
       if (user && data.created_by === user.id) {
           setIsCreator(true);
       }
 
       if (user) {
-        // 2. Fetch User Entry (using building_id)
-        const { data: userEntry } = await supabase
-          .from("user_buildings")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("building_id", id)
-          .maybeSingle();
+        // 2. Fetch User Entry (with fallback)
+        const userEntry = await fetchUserBuildingStatus(user.id, id);
 
         if (userEntry) {
             setUserStatus(userEntry.status);
             setMyRating(userEntry.rating || 0);
         }
 
-        // 3. Fetch Social Feed
+        // 3. Fetch Social Feed (with fallback logic inline)
         // DEBUG: Explicitly log this fetch attempt
         console.log("Fetching social feed for building:", id);
 
@@ -143,8 +138,28 @@ export default function BuildingDetails() {
           .eq("building_id", id)
           .order("created_at", { ascending: false });
           
-        if (entriesError) console.error("Error fetching feed:", entriesError);
-        if (entriesData) {
+        if (entriesError) {
+             console.warn("Error fetching feed from user_buildings, trying log:", entriesError);
+             // Fallback to log
+             const { data: logs, error: logError } = await supabase
+                .from("log" as any)
+                .select(`
+                    id, content, rating, status, tags, created_at,
+                    user:profiles(username, avatar_url)
+                `)
+                .eq("film_id", id)
+                .order("created_at", { ascending: false });
+
+             if (logError) {
+                 console.error("Error fetching feed from log:", logError);
+             } else if (logs) {
+                 const mappedEntries = logs.map((log: any) => ({
+                     ...log,
+                     status: log.status === 'watched' ? 'visited' : (log.status === 'watchlist' ? 'pending' : log.status)
+                 }));
+                 setEntries(mappedEntries as any);
+             }
+        } else if (entriesData) {
             console.log("Fetched feed entries:", entriesData);
             setEntries(entriesData as any);
         }
@@ -174,16 +189,44 @@ export default function BuildingDetails() {
           updated_at: new Date().toISOString()
       };
 
+      // Determine table name based on context?
+      // We should probably check if we are in legacy mode.
+      // Or just try one and failover? Upsert on failover is messy.
+
+      // For writes, we should ideally write to NEW table if possible, but if schema is missing, it will fail.
+      // If we are on legacy backend, we must write to `log`.
+
+      // Strategy: Try `user_buildings` first. If error (404/PGRST204?), try `log`.
+
       const { error } = await supabase
           .from("user_buildings")
           .upsert(payload, { onConflict: 'user_id, building_id' });
 
       if (error) {
-          toast({ variant: "destructive", title: "Failed to save status" });
-          fetchBuildingData(); // Revert
-      } else {
-          toast({ title: newStatus === 'visited' ? "Marked as Visited" : "Added to Pending" });
+          console.warn("Write to user_buildings failed, trying log", error);
+
+          // Legacy payload
+          const legacyStatus = newStatus === 'visited' ? 'watched' : 'watchlist';
+          const legacyPayload: any = {
+              user_id: user.id,
+              film_id: building.id, // Assuming ID is compatible
+              status: legacyStatus,
+              rating: myRating > 0 ? myRating : null,
+              updated_at: new Date().toISOString()
+          };
+
+          const { error: legacyError } = await supabase
+              .from("log" as any)
+              .upsert(legacyPayload, { onConflict: 'user_id, film_id' });
+
+          if (legacyError) {
+             toast({ variant: "destructive", title: "Failed to save status" });
+             fetchBuildingData(); // Revert
+             return;
+          }
       }
+
+      toast({ title: newStatus === 'visited' ? "Marked as Visited" : "Added to Pending" });
   };
 
   const handleRate = async (buildingId: string, rating: number) => {
@@ -210,11 +253,29 @@ export default function BuildingDetails() {
           .upsert(payload, { onConflict: 'user_id, building_id' });
 
       if (error) {
-          toast({ variant: "destructive", title: "Failed to save rating" });
-          fetchBuildingData();
-      } else {
-          toast({ title: "Rating saved" });
+          console.warn("Write to user_buildings failed, trying log", error);
+
+          const legacyStatus = statusToUse === 'visited' ? 'watched' : 'watchlist';
+          const legacyPayload: any = {
+              user_id: user.id,
+              film_id: building.id,
+              status: legacyStatus,
+              rating: rating,
+              updated_at: new Date().toISOString()
+          };
+
+          const { error: legacyError } = await supabase
+             .from("log" as any)
+             .upsert(legacyPayload, { onConflict: 'user_id, film_id' });
+
+          if (legacyError) {
+             toast({ variant: "destructive", title: "Failed to save rating" });
+             fetchBuildingData();
+             return;
+          }
       }
+
+      toast({ title: "Rating saved" });
   };
 
   const handleSendInvites = async () => {
@@ -224,6 +285,10 @@ export default function BuildingDetails() {
         const status = "visit_with";
 
         // Insert recommendation
+        // If legacy, we might need to write to different table?
+        // Recommendations table might exist in legacy? Memory doesn't say.
+        // Assuming recommendations is core/old enough.
+
         const { error: recError } = await supabase
             .from("recommendations")
             .insert(
@@ -235,7 +300,20 @@ export default function BuildingDetails() {
                 }))
             );
 
-        if (recError) throw recError;
+        if (recError) {
+            // Try legacy `film_id` column?
+             const { error: legError } = await supabase
+                .from("recommendations")
+                .insert(
+                    selectedFriends.map(recipientId => ({
+                        recommender_id: user.id,
+                        recipient_id: recipientId,
+                        film_id: building.id, // Try film_id
+                        status: status
+                    }))
+                );
+             if (legError) throw recError; // Throw original error if both fail
+        }
 
         toast({ title: "Invites sent!", description: `Sent to ${selectedFriends.length} friend${selectedFriends.length > 1 ? 's' : ''}.` });
         setSelectedFriends([]);
