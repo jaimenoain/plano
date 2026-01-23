@@ -9,6 +9,44 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          id: string
+          admin_id: string
+          action_type: string
+          target_type: string
+          target_id: string
+          details: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          admin_id: string
+          action_type: string
+          target_type: string
+          target_id: string
+          details?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          admin_id?: string
+          action_type?: string
+          target_type?: string
+          target_id?: string
+          details?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
       blocks: {
         Row: {
           id: string

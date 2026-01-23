@@ -33,8 +33,12 @@ interface EnrichedReport extends Report {
 export default function Moderation() {
   const [reports, setReports] = useState<EnrichedReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentAdminId(data.user?.id || null);
+    });
     fetchReports();
   }, []);
 
@@ -92,18 +96,36 @@ export default function Moderation() {
     }
   };
 
-  const handleDismiss = async (id: string) => {
+  const handleDismiss = async (report: EnrichedReport) => {
+    if (!currentAdminId) return;
     try {
-        const { error } = await supabase.from('reports').update({ status: 'dismissed' }).eq('id', id);
+        // Dismiss ALL reports for this content to clear queue
+        const { error } = await supabase
+            .from('reports')
+            .update({ status: 'dismissed' })
+            .eq('reported_id', report.reported_id);
+
         if (error) throw error;
-        setReports(prev => prev.filter(r => r.id !== id));
-        toast.success("Report dismissed");
+
+        // Log audit
+        await supabase.from('admin_audit_logs').insert({
+            admin_id: currentAdminId,
+            action_type: 'dismiss_report',
+            target_type: report.contentType,
+            target_id: report.reported_id,
+            details: { reason: report.reason, original_report_id: report.id }
+        });
+
+        setReports(prev => prev.filter(r => r.reported_id !== report.reported_id));
+        toast.success("Reports dismissed");
     } catch (error) {
+        console.error(error);
         toast.error("Failed to dismiss report");
     }
   };
 
   const handleDeleteContent = async (report: EnrichedReport) => {
+    if (!currentAdminId) return;
     if (!window.confirm("Are you sure? This will delete the content permanently.")) return;
 
     try {
@@ -118,12 +140,25 @@ export default function Moderation() {
 
         if (deleteError) throw deleteError;
 
-        // Mark report resolved
-        const { error: resolveError } = await supabase.from('reports').update({ status: 'resolved' }).eq('id', report.id);
+        // Mark ALL reports resolved
+        const { error: resolveError } = await supabase
+            .from('reports')
+            .update({ status: 'resolved' })
+            .eq('reported_id', report.reported_id);
+
         if (resolveError) throw resolveError;
 
-        setReports(prev => prev.filter(r => r.id !== report.id));
-        toast.success("Content deleted and report resolved");
+        // Log audit
+        await supabase.from('admin_audit_logs').insert({
+            admin_id: currentAdminId,
+            action_type: 'delete_content',
+            target_type: report.contentType,
+            target_id: report.reported_id,
+            details: { reason: report.reason, original_report_id: report.id }
+        });
+
+        setReports(prev => prev.filter(r => r.reported_id !== report.reported_id));
+        toast.success("Content deleted and reports resolved");
 
     } catch (error) {
         console.error(error);
@@ -183,7 +218,7 @@ export default function Moderation() {
                         </TableCell>
                         <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                                <Button size="sm" variant="ghost" onClick={() => handleDismiss(report.id)}>
+                                <Button size="sm" variant="ghost" onClick={() => handleDismiss(report)}>
                                     <CheckCircle className="h-4 w-4 mr-1" /> Dismiss
                                 </Button>
                                 <Button size="sm" variant="destructive" onClick={() => handleDeleteContent(report)} disabled={report.contentType === 'unknown'}>
