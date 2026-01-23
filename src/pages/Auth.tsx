@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { PlanoLogo } from "@/components/common/PlanoLogo";
 
 // Removed username requirement from sign-up schema
 const signUpSchema = z.object({
@@ -198,12 +199,7 @@ export default function Auth() {
   if (checkEmail) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-        <div className="flex items-center gap-3 mb-10">
-          <img src="/logo.png" alt="Cineforum" className="h-10 w-10" />
-          <span className="text-2xl font-bold tracking-tight text-foreground">
-            Cineforum
-          </span>
-        </div>
+        <PlanoLogo className="h-16 w-auto mb-10" />
 
         <div className="w-full max-w-sm text-center space-y-6">
           <div className="flex justify-center mb-4">
@@ -239,12 +235,7 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-      <div className="flex items-center gap-3 mb-10">
-        <img src="/logo.png" alt="Cineforum" className="h-10 w-10" />
-        <span className="text-2xl font-bold tracking-tight text-foreground">
-          Cineforum
-        </span>
-      </div>
+      <PlanoLogo className="h-16 w-auto mb-10" />
 
       <div className="w-full max-w-sm">
         <h1 className="text-xl font-semibold text-foreground text-center mb-6">

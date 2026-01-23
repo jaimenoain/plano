@@ -11,6 +11,7 @@ import { useInfiniteQuery, useQueryClient, InfiniteData, useQuery } from "@tanst
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MetaHead } from "@/components/common/MetaHead";
+import { PlanoLogo } from "@/components/common/PlanoLogo";
 
 // --- New Landing Page Component ---
 function Landing() {
@@ -57,15 +58,9 @@ function Landing() {
         
         {/* Hero Section */}
         <div className="flex flex-col items-center gap-6">
-          <div className="p-6 rounded-full bg-primary/10 ring-1 ring-primary/20 shadow-[0_0_30px_-10px_hsl(var(--primary)/0.3)]">
-            <img src="/logo.png" alt="Archiforum" className="h-20 w-20" />
-          </div>
+          <PlanoLogo className="h-24 w-auto mb-6" />
           
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-              Archiforum
-            </h1>
-            
             {inviter ? (
               <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-4">
                 <div className="flex items-center justify-center pl-3">

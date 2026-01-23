@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PlanoLogo } from "@/components/common/PlanoLogo";
 
 interface HeaderProps {
   title?: string;
@@ -40,11 +41,8 @@ export function Header({ title, showLogo = true, action }: HeaderProps) {
         {/* Left Section: Logo or Title */}
         <div className="flex-1 flex items-center justify-start">
           {showLogo ? (
-            <Link to="/" className="flex items-center gap-3 group">
-              <img src="/logo.png" alt="Archiforum" className="h-8 w-8" />
-              <span className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
-                Archiforum
-              </span>
+            <Link to="/">
+              <PlanoLogo className="h-10 w-auto" />
             </Link>
           ) : (
             <h1 className="text-xl font-semibold tracking-tight text-foreground truncate max-w-[200px]">
