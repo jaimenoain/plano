@@ -6,7 +6,10 @@ export interface DiscoveryBuilding {
   year_completed: number | null;
   city: string | null;
   country: string | null;
+  location_lat: number;
+  location_lng: number;
   // Optional display fields
   distance?: number;
   social_context?: string;
+  social_score?: number;
 }

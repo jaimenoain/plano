@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import MapGL, { Marker, NavigationControl } from "react-map-gl";
+import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { DiscoveryBuilding } from "@/features/search/components/types";
 
 interface Building {
   id: string;
@@ -17,9 +18,16 @@ interface Building {
   location_lng: number;
 }
 
-export function BuildingDiscoveryMap() {
+interface BuildingDiscoveryMapProps {
+    externalBuildings?: DiscoveryBuilding[];
+    onRegionChange?: (center: { lat: number, lng: number }) => void;
+    forcedCenter?: { lat: number, lng: number } | null;
+}
+
+export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forcedCenter }: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const mapRef = useRef<MapRef>(null);
 
   // Default view state (London)
   const [viewState, setViewState] = useState({
@@ -28,7 +36,18 @@ export function BuildingDiscoveryMap() {
     zoom: 12
   });
 
-  const { data: buildings, isLoading } = useQuery({
+  // Handle flyTo
+  useEffect(() => {
+    if (forcedCenter && mapRef.current) {
+        mapRef.current.flyTo({
+            center: [forcedCenter.lng, forcedCenter.lat],
+            zoom: 13,
+            duration: 1500
+        });
+    }
+  }, [forcedCenter]);
+
+  const { data: internalBuildings, isLoading: internalLoading } = useQuery({
     queryKey: ["discovery-buildings"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('find_nearby_buildings', {
@@ -45,7 +64,11 @@ export function BuildingDiscoveryMap() {
       return data as Building[];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !externalBuildings // Disable if external data provided
   });
+
+  const buildings = externalBuildings || internalBuildings || [];
+  const isLoading = externalBuildings ? false : internalLoading;
 
   // Fetch user relationships
   const { data: userBuildingsMap } = useQuery({
@@ -127,10 +150,15 @@ export function BuildingDiscoveryMap() {
   }
 
   return (
-    <div className="h-[calc(100vh-100px)] w-full rounded-xl overflow-hidden border border-white/10 relative">
+    <div className="h-full w-full rounded-xl overflow-hidden border border-white/10 relative">
       <MapGL
+        ref={mapRef}
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
+        onMoveEnd={evt => {
+            const { latitude, longitude } = evt.viewState;
+            onRegionChange?.({ lat: latitude, lng: longitude });
+        }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
         mapStyle="https://tiles.openfreemap.org/styles/liberty"
