@@ -6,9 +6,11 @@ import { DiscoveryFilterBar } from "./components/DiscoveryFilterBar";
 import { DiscoveryList } from "./components/DiscoveryList";
 import { SearchModeToggle } from "./components/SearchModeToggle";
 import { useBuildingSearch } from "./hooks/useBuildingSearch";
+import { LeaderboardDialog } from "./components/LeaderboardDialog";
 
 export default function SearchPage() {
   const navigate = useNavigate();
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const {
     searchQuery, setSearchQuery,
     selectedCity, setSelectedCity,
@@ -55,8 +57,14 @@ export default function SearchPage() {
                 availableStyles={availableStyles}
                 sortBy={sortBy}
                 onSortChange={setSortBy}
+                onShowLeaderboard={() => setShowLeaderboard(true)}
             />
         </div>
+
+        <LeaderboardDialog
+            open={showLeaderboard}
+            onOpenChange={setShowLeaderboard}
+        />
 
         <div className="flex-1 relative overflow-hidden">
             {/* Mobile View */}
