@@ -1,4 +1,3 @@
-
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import ForceGraph2D, { ForceGraphMethods } from "react-force-graph-2d";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -43,6 +42,8 @@ export function TasteWeb({ allPairs, members }: TasteWebProps) {
     }, [isFullscreen]);
 
     const graphData = useMemo(() => {
+        if (!members) return { nodes: [], links: [] };
+
         // NODES: All members
         const nodes = members.map(m => ({
             id: m.user.id,
@@ -51,9 +52,9 @@ export function TasteWeb({ allPairs, members }: TasteWebProps) {
             val: 1 // Base size
         }));
 
-        // LINKS: Based on allPairs (only positive correlations for the web usually looks better, or all)
+        // LINKS: Based on allPairs
         const links = (allPairs || [])
-            .filter(p => p.score > 0) // Only positive correlations pull nodes together
+            .filter(p => p.score > 0.1) // Only affinity > 0.1 pull nodes together
             .map(p => ({
                 source: p.u1,
                 target: p.u2,
@@ -129,12 +130,14 @@ export function TasteWeb({ allPairs, members }: TasteWebProps) {
         // Removed name label below icon as per request
     }, [isDark, nodeColor]);
 
+    if (!members || members.length < 2) return null;
+
     return (
         <Card className={`border-none shadow-sm bg-accent/5 overflow-hidden transition-all duration-500 ${isFullscreen ? "fixed inset-0 z-50 rounded-none bg-background" : ""}`}>
              <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle className="text-sm font-medium">The Taste Web</CardTitle>
-                    <CardDescription>Network graph of shared taste compatibility</CardDescription>
+                    <CardTitle className="text-sm font-medium">Affinity Network</CardTitle>
+                    <CardDescription>Network graph of shared affinity</CardDescription>
                 </div>
                 <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
                     {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -153,7 +156,7 @@ export function TasteWeb({ allPairs, members }: TasteWebProps) {
                         linkColor={() => linkColor}
                         linkWidth={link => Math.max(1, (link as any).value * 5)} // Thicker lines for stronger bonds
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        linkLabel={(link: any) => `Match: ${(link.value * 100).toFixed(0)}%`}
+                        linkLabel={(link: any) => `Affinity: ${(link.value * 100).toFixed(0)}%`}
                         nodeCanvasObject={paintNode}
                         nodePointerAreaPaint={(node: any, color, ctx) => {
                             ctx.fillStyle = color;
