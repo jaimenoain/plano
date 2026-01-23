@@ -237,19 +237,6 @@ export default function BuildingDetails() {
 
         if (recError) throw recError;
 
-        const notifications = selectedFriends.map(recipientId => ({
-            type: 'recommendation' as const,
-            actor_id: user.id,
-            user_id: recipientId,
-            resource_id: building.id, // Linking to building
-        }));
-
-        const { error: notifError } = await supabase
-            .from("notifications")
-            .insert(notifications);
-
-        if (notifError) throw notifError;
-
         toast({ title: "Invites sent!", description: `Sent to ${selectedFriends.length} friend${selectedFriends.length > 1 ? 's' : ''}.` });
         setSelectedFriends([]);
     } catch (error: any) {
