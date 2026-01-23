@@ -11,7 +11,7 @@ export function useBuildingSearch() {
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'distance' | 'relevance'>('distance');
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
 
   // Default to London
   const [userLocation, setUserLocation] = useState({
