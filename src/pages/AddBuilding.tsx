@@ -443,6 +443,7 @@ export default function AddBuilding() {
                   placeholder="e.g. The Shard"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
+                  autoComplete="off"
                 />
               </div>
 

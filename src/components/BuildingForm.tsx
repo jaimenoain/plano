@@ -94,6 +94,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Sydney Opera House"
           required
+          autoComplete="off"
         />
       </div>
 
@@ -107,6 +108,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             value={year_completed}
             onChange={(e) => setYear(e.target.value)}
             placeholder="e.g. 1973"
+            autoComplete="off"
           />
         </div>
       ) : (
@@ -183,6 +185,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Brief description of the building..."
             className="min-h-[100px]"
+            autoComplete="off"
           />
         </div>
       ) : (
