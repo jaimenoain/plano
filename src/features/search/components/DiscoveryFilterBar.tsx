@@ -79,7 +79,7 @@ export function DiscoveryFilterBar({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Cities</SelectItem>
-            {availableCities.map((city) => (
+            {(availableCities || []).map((city) => (
               <SelectItem key={city} value={city}>
                 {city}
               </SelectItem>
@@ -108,7 +108,7 @@ export function DiscoveryFilterBar({
               <CommandList>
                 <CommandEmpty>No style found.</CommandEmpty>
                 <CommandGroup>
-                  {availableStyles.map((style) => (
+                  {(availableStyles || []).map((style) => (
                     <CommandItem
                       key={style}
                       value={style}

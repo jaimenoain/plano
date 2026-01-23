@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DiscoveryBuilding } from "../components/types";
@@ -53,6 +53,7 @@ export function useBuildingSearch() {
         return data as DiscoveryBuilding[];
     },
     staleTime: 1000 * 60, // 1 min
+    placeholderData: keepPreviousData,
   });
 
   // Auto-switch to relevance on search/filter interaction
