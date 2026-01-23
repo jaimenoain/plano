@@ -1679,6 +1679,9 @@
             "$ref": "#/parameters/rowFilter.profiles.last_online"
           },
           {
+            "$ref": "#/parameters/rowFilter.profiles.language"
+          },
+          {
             "$ref": "#/parameters/select"
           },
           {
@@ -1784,6 +1787,9 @@
             "$ref": "#/parameters/rowFilter.profiles.last_online"
           },
           {
+            "$ref": "#/parameters/rowFilter.profiles.language"
+          },
+          {
             "$ref": "#/parameters/preferReturn"
           }
         ],
@@ -1839,6 +1845,9 @@
           },
           {
             "$ref": "#/parameters/rowFilter.profiles.last_online"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.language"
           },
           {
             "$ref": "#/parameters/body.profiles"
@@ -2589,6 +2598,9 @@
             "$ref": "#/parameters/rowFilter.suggestion_dismissals.created_at"
           },
           {
+            "$ref": "#/parameters/rowFilter.suggestion_dismissals.dismissed_user_id"
+          },
+          {
             "$ref": "#/parameters/select"
           },
           {
@@ -2664,6 +2676,9 @@
             "$ref": "#/parameters/rowFilter.suggestion_dismissals.created_at"
           },
           {
+            "$ref": "#/parameters/rowFilter.suggestion_dismissals.dismissed_user_id"
+          },
+          {
             "$ref": "#/parameters/preferReturn"
           }
         ],
@@ -2689,6 +2704,9 @@
           },
           {
             "$ref": "#/parameters/rowFilter.suggestion_dismissals.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.suggestion_dismissals.dismissed_user_id"
           },
           {
             "$ref": "#/parameters/body.suggestion_dismissals"
@@ -3037,6 +3055,9 @@
             "$ref": "#/parameters/rowFilter.follows.created_at"
           },
           {
+            "$ref": "#/parameters/rowFilter.follows.is_close_friend"
+          },
+          {
             "$ref": "#/parameters/select"
           },
           {
@@ -3109,6 +3130,9 @@
             "$ref": "#/parameters/rowFilter.follows.created_at"
           },
           {
+            "$ref": "#/parameters/rowFilter.follows.is_close_friend"
+          },
+          {
             "$ref": "#/parameters/preferReturn"
           }
         ],
@@ -3131,6 +3155,9 @@
           },
           {
             "$ref": "#/parameters/rowFilter.follows.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follows.is_close_friend"
           },
           {
             "$ref": "#/parameters/body.follows"
@@ -5994,6 +6021,53 @@
         ]
       }
     },
+    "/rpc/get_cine_sync_stats": {
+      "post": {
+        "parameters": [
+          {
+            "in": "body",
+            "name": "args",
+            "required": true,
+            "schema": {
+              "properties": {
+                "p_contact_ids": {
+                  "format": "uuid[]",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "p_viewer_id": {
+                  "format": "uuid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "p_viewer_id",
+                "p_contact_ids"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/parameters/preferParams"
+          }
+        ],
+        "produces": [
+          "application/json",
+          "application/vnd.pgrst.object+json;nulls=stripped",
+          "application/vnd.pgrst.object+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "(rpc) get_cine_sync_stats"
+        ]
+      }
+    },
     "/rpc/is_mutual": {
       "post": {
         "parameters": [
@@ -6852,6 +6926,10 @@
         "last_online": {
           "format": "timestamp with time zone",
           "type": "string"
+        },
+        "language": {
+          "format": "text",
+          "type": "string"
         }
       },
       "type": "object"
@@ -7085,6 +7163,11 @@
           "default": "now()",
           "format": "timestamp with time zone",
           "type": "string"
+        },
+        "dismissed_user_id": {
+          "description": "Note:\nThis is a Foreign Key to `profiles.id`.<fk table='profiles' column='id'/>",
+          "format": "uuid",
+          "type": "string"
         }
       },
       "type": "object"
@@ -7192,6 +7275,11 @@
           "default": "timezone('utc'::text, now())",
           "format": "timestamp with time zone",
           "type": "string"
+        },
+        "is_close_friend": {
+          "default": false,
+          "format": "boolean",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -8497,6 +8585,12 @@
       "in": "query",
       "type": "string"
     },
+    "rowFilter.profiles.language": {
+      "name": "language",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
     "body.session_buildings": {
       "name": "session_films",
       "description": "session_films",
@@ -8782,6 +8876,12 @@
       "in": "query",
       "type": "string"
     },
+    "rowFilter.suggestion_dismissals.dismissed_user_id": {
+      "name": "dismissed_user_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
     "body.film_availability": {
       "name": "film_availability",
       "description": "film_availability",
@@ -8902,6 +9002,12 @@
     },
     "rowFilter.follows.created_at": {
       "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.follows.is_close_friend": {
+      "name": "is_close_friend",
       "required": false,
       "in": "query",
       "type": "string"
