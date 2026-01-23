@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Building {
   id: string;
@@ -18,6 +19,7 @@ interface Building {
 
 export function BuildingDiscoveryMap() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Default view state (London)
   const [viewState, setViewState] = useState({
@@ -29,13 +31,6 @@ export function BuildingDiscoveryMap() {
   const { data: buildings, isLoading } = useQuery({
     queryKey: ["discovery-buildings"],
     queryFn: async () => {
-      // Fetch buildings using find_nearby_buildings with a very large radius to get "all" (or a significant subset)
-      // Since we want to show what's in the DB, we center the search on the current view center or a default.
-      // However, to populate the map initially, let's try to get a broad set.
-      // The RPC requires lat/long. Let's use the current view center.
-      // 500km radius should cover a lot for a "stub".
-      // Ideally we would fetch based on viewport bounds, but for now fixed fetch is okay.
-
       const { data, error } = await supabase.rpc('find_nearby_buildings', {
         lat: viewState.latitude,
         long: viewState.longitude,
@@ -49,45 +44,79 @@ export function BuildingDiscoveryMap() {
       }
       return data as Building[];
     },
-    // We might want to refetch when view changes significantly, but for a stub, once is fine or on mount.
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const pins = useMemo(() => buildings?.map(building => (
-    <Marker
-      key={building.id}
-      longitude={building.location_lng}
-      latitude={building.location_lat}
-      anchor="bottom"
-      onClick={(e) => {
-        e.originalEvent.stopPropagation();
-        navigate(`/building/${building.id}`);
-      }}
-      className="cursor-pointer hover:z-10"
-    >
-        <div className="group relative flex flex-col items-center">
-        {/* Tooltip */}
-        <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap z-50">
-            <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg">
-                {building.name}
-            </div>
-            <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-foreground"></div>
-        </div>
+  // Fetch user relationships
+  const { data: userBuildingsMap } = useQuery({
+    queryKey: ["user-buildings-map", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+        if (!user) return new Map();
 
-        <div className="relative">
-            <div className="w-8 h-8 rounded-full border-2 border-white shadow-md overflow-hidden bg-background">
-                <Avatar className="h-full w-full">
-                    <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
-                    <AvatarFallback className="bg-primary/10">
-                        <MapPin className="h-4 w-4 text-primary" />
-                    </AvatarFallback>
-                </Avatar>
+        const { data, error } = await supabase
+            .from("user_buildings")
+            .select("building_id, status")
+            .eq("user_id", user.id);
+
+        if (error) {
+            console.error("Error fetching user buildings:", error);
+            return new Map();
+        }
+
+        const map = new Map();
+        data.forEach(item => {
+            map.set(item.building_id, item.status);
+        });
+        return map;
+    }
+  });
+
+  const pins = useMemo(() => buildings?.map(building => {
+    const status = userBuildingsMap?.get(building.id);
+    const borderColor = status === 'visited'
+        ? "border-green-500"
+        : status === 'pending'
+            ? "border-yellow-500"
+            : "border-white"; // Default discovery
+
+    return (
+        <Marker
+        key={building.id}
+        longitude={building.location_lng}
+        latitude={building.location_lat}
+        anchor="bottom"
+        onClick={(e) => {
+            e.originalEvent.stopPropagation();
+            navigate(`/building/${building.id}`);
+        }}
+        className="cursor-pointer hover:z-10"
+        >
+            <div className="group relative flex flex-col items-center">
+            {/* Tooltip */}
+            <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap z-50">
+                <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg">
+                    {building.name}
+                    {status && <span className="ml-1 opacity-75 capitalize">({status})</span>}
+                </div>
+                <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-foreground"></div>
             </div>
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rotate-45 transform translate-y-1/2 shadow-sm"></div>
-        </div>
-        </div>
-    </Marker>
-  )), [buildings, navigate]);
+
+            <div className="relative">
+                <div className={`w-8 h-8 rounded-full border-2 ${borderColor} shadow-md overflow-hidden bg-background transition-colors duration-200`}>
+                    <Avatar className="h-full w-full">
+                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
+                        <AvatarFallback className="bg-primary/10">
+                            <MapPin className={`h-4 w-4 ${status ? 'text-foreground' : 'text-primary'}`} />
+                        </AvatarFallback>
+                    </Avatar>
+                </div>
+                <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 ${status === 'visited' ? 'bg-green-500' : status === 'pending' ? 'bg-yellow-500' : 'bg-white'} rotate-45 transform translate-y-1/2 shadow-sm`}></div>
+            </div>
+            </div>
+        </Marker>
+    );
+  }), [buildings, navigate, userBuildingsMap]);
 
   if (isLoading) {
     return (
