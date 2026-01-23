@@ -25,7 +25,7 @@ test.describe('Fuzzy Duplicate Prevention', () => {
     }, mockUser);
 
     // 2. Mock User Buildings (Avoid DB error on legacy backend)
-    await page.route('**/rest/v1/user_buildings*', async route => {
+    await page.route('**/rest/v1/log*', async route => {
       await route.fulfill({ json: [] });
     });
 

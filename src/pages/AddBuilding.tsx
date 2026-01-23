@@ -116,8 +116,8 @@ export default function AddBuilding() {
         if (!user) return new Map();
 
         const { data, error } = await supabase
-            .from("user_buildings")
-            .select("building_id, status")
+            .from("log")
+            .select("film_id, status")
             .eq("user_id", user.id);
 
         if (error) {
@@ -127,7 +127,7 @@ export default function AddBuilding() {
 
         const map = new Map();
         data.forEach((item: any) => {
-            map.set(item.building_id, item.status);
+            map.set(item.film_id, item.status);
         });
         return map;
     }
@@ -203,44 +203,37 @@ export default function AddBuilding() {
         let nameData: NearbyBuilding[] = [];
 
         try {
-            const locationCheckPromise = supabase.rpc('search_buildings', {
+            const locationCheckPromise = supabase.rpc('find_nearby_buildings', {
                 // @ts-ignore - types are tricky with PostGIS/Json
-                location_coordinates: { lat: markerPosition.lat, lng: markerPosition.lng },
+                lat: markerPosition.lat,
+                long: markerPosition.lng,
                 radius_meters: 50,
-                query_text: ""
+                name_query: ""
             });
 
             // Only run name check if we have a name to check
             const nameCheckPromise = (queryName.length >= 3)
-                ? supabase.rpc('search_buildings', {
+                ? supabase.rpc('find_nearby_buildings', {
                     // @ts-ignore
-                    location_coordinates: { lat: markerPosition.lat, lng: markerPosition.lng },
+                    lat: markerPosition.lat,
+                    long: markerPosition.lng,
                     radius_meters: 50000, // Wider 50km radius
-                    query_text: queryName,
-                    sort_by: 'relevance'
+                    name_query: queryName
                 })
                 : Promise.resolve({ data: [], error: null });
 
             const [locationResult, nameResult] = await Promise.all([locationCheckPromise, nameCheckPromise]);
 
             if (locationResult.error) {
-                console.warn("search_buildings RPC failed", locationResult.error);
+                console.warn("find_nearby_buildings RPC failed", locationResult.error);
             } else {
-                // Map distance_meters to dist_meters
-                locationData = (locationResult.data || []).map((d: any) => ({
-                    ...d,
-                    dist_meters: d.distance_meters || 0
-                }));
+                locationData = locationResult.data || [];
             }
 
             if (nameResult.error) {
-                 console.warn("search_buildings RPC failed", nameResult.error);
+                 console.warn("find_nearby_buildings RPC failed", nameResult.error);
             } else {
-                // Map distance_meters to dist_meters
-                nameData = (nameResult.data || []).map((d: any) => ({
-                    ...d,
-                    dist_meters: d.distance_meters || 0
-                }));
+                nameData = nameResult.data || [];
             }
         } catch (err) {
             console.warn("Exception checking duplicates:", err);
@@ -382,13 +375,13 @@ export default function AddBuilding() {
       const dbStatus = status === 'pending' ? 'pending' : 'visited';
 
       const { error } = await supabase
-        .from("user_buildings")
+        .from("log")
         .upsert({
           user_id: user.id,
-          building_id: buildingId,
+          film_id: buildingId,
           status: dbStatus,
           created_at: new Date().toISOString() // upsert needs all required fields if insert happens
-        }, { onConflict: 'user_id, building_id' });
+        }, { onConflict: 'user_id, film_id' });
 
       if (error) throw error;
 
