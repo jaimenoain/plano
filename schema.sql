@@ -60,6 +60,7 @@ CREATE TABLE public.buildings (
   year_completed integer,
   city text,
   country text,
+  is_deleted boolean DEFAULT false,
   CONSTRAINT buildings_pkey PRIMARY KEY (id),
   CONSTRAINT buildings_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
 );
