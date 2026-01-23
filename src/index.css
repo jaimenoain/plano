@@ -4,49 +4,50 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Cineforum Design System - Intergenerational High-Contrast Dark Mode */
+/* Cineforum Design System - Modern Minimalist Light Theme */
 
 @layer base {
   :root {
-    /* Background: Deep Matte Charcoal */
-    --background: 240 6% 6%;           /* Slightly lifted from 4% for better contrast */
-    --foreground: 0 0% 98%;            /* Pure White text */
+    /* Background: Subtle Off-White */
+    --background: 0 0% 98%;
+    /* Foreground: Deep Matte Charcoal */
+    --foreground: 240 10% 3.9%;
 
-    /* Cards: Lighter than background to create distinct "surfaces" */
-    --card: 240 4% 10%;                /* Distinctly lighter than bg */
-    --card-foreground: 0 0% 98%;
+    /* Cards: Pure White */
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
     
-    --popover: 240 4% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
 
-    /* Primary: Electric Blue - High Visibility */
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Electric Blue - Adjusted for contrast on white */
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 0 0% 98%;
 
-    /* Secondary */
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 98%;
+    /* Secondary: Light Gray for buttons */
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
 
     /* Muted */
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 70%;     /* Brightened from 65% for readability */
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
     --muted-darker: 240 4% 40%;         
 
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 240 4% 20%;               /* Increased contrast on borders */
-    --input: 240 4% 20%;
-    --ring: 217 91% 60%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 221.2 83.2% 53.3%;
 
-    --radius: 0.75rem;                  /* Increased radius = friendlier, less "sharp" */
+    --radius: 0.75rem;
 
     /* Glassmorphism */
-    --glass-bg: 0 0% 0% / 0.7;          /* Darker glass for better text readability */
-    --glass-border: 0 0% 100% / 0.15;
+    --glass-bg: 0 0% 100% / 0.7;
+    --glass-border: 0 0% 0% / 0.1;
   }
 }
 
@@ -90,7 +91,9 @@
 
 @layer utilities {
   .glass {
-    @apply bg-black/70 backdrop-blur-xl border-b border-white/10;
+    background: hsl(var(--glass-bg));
+    border-color: hsl(var(--glass-border));
+    @apply backdrop-blur-xl border-b;
   }
   
   .safe-area-pt {
