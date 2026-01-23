@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Heart, MessageCircle, UserPlus, Loader2, Bell, Calendar, Sparkles, Clock, LogOut, Settings } from "lucide-react";
+import { Heart, MessageCircle, UserPlus, Loader2, Bell, Calendar, Sparkles, Clock, LogOut, Settings, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { NotificationSettingsDialog } from "@/components/notifications/NotificationSettingsDialog";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 interface Notification {
   id: string;
   created_at: string;
-  type: 'follow' | 'like' | 'comment' | 'new_session'| 'group_invitation' | 'friend_joined' | 'suggest_follow' | 'session_reminder' | 'group_activity' | 'recommendation' | 'join_request';
+  type: 'follow' | 'like' | 'comment' | 'new_session'| 'group_invitation' | 'friend_joined' | 'suggest_follow' | 'session_reminder' | 'group_activity' | 'recommendation' | 'join_request' | 'visit_request';
   is_read: boolean;
   actor_id: string;
   group_id: string | null;
@@ -191,7 +191,7 @@ export default function Notifications() {
       if (notification.group_id) navigate(`/groups/${notification.group_id}`);
     } else if (notification.type === 'join_request') {
        if (notification.group_id) navigate(`/groups/${notification.group_id}/members`);
-    } else if (notification.type === 'recommendation') {
+    } else if (notification.type === 'recommendation' || notification.type === 'visit_request') {
       navigate(`/profile?tab=foryou`);
     } else if (notification.resource?.id) {
         navigate(`/review/${notification.resource.id}`);
@@ -211,6 +211,7 @@ export default function Notifications() {
       case 'join_request': return <UserPlus className="h-4 w-4 text-primary" />;
       case 'group_activity': return <LogOut className="h-4 w-4 text-orange-500" />;
       case 'recommendation': return <Sparkles className="h-4 w-4 text-primary fill-primary" />;
+      case 'visit_request': return <Users className="h-4 w-4 text-primary" />;
       default: return <Bell className="h-4 w-4" />;
     }
   };
@@ -245,6 +246,8 @@ export default function Notifications() {
         return <span>Your friend <span className="font-semibold">{actorName}</span> just joined Archiforum!</span>;
       case 'suggest_follow': 
         return <span>Welcome! Follow <span className="font-semibold">{actorName}</span>, who invited you to join.</span>;
+      case 'visit_request':
+        return <span><span className="font-semibold">{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
       case 'recommendation':
         if ((n as any).recommendation?.status === 'visit_with') {
              return <span><span className="font-semibold">{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
