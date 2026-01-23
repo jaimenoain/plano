@@ -77,9 +77,14 @@ test('End-to-End Add Building Verification', async ({ page }) => {
             address: '10 Nearby St',
             location_lat: 51.5075,
             location_lng: -0.1279,
-            dist_meters: 20,
+            distance_meters: 20,
             similarity_score: 1.0,
-            main_image_url: 'http://example.com/img.jpg'
+            main_image_url: 'http://example.com/img.jpg',
+            city: 'Test City',
+            country: 'Test Country',
+            styles: [],
+            social_context: null,
+            social_score: 0
         },
         {
             id: 'uuid-existing-2',
@@ -88,7 +93,12 @@ test('End-to-End Add Building Verification', async ({ page }) => {
             location_lat: 52.0000,
             location_lng: -0.2000,
             distance_meters: 60000,
-            similarity_score: 0.9
+            similarity_score: 0.9,
+            city: 'Far City',
+            country: 'Far Country',
+            styles: [],
+            social_context: null,
+            social_score: 0
         }
     ];
     // Map response to match what search_buildings returns (distance_meters)
@@ -101,17 +111,15 @@ test('End-to-End Add Building Verification', async ({ page }) => {
     await route.fulfill({ json: response });
   });
 
-  // Mock Supabase Insert to films (was buildings)
-  await page.route('**/rest/v1/films*', async route => {
+  // Mock Supabase Insert to buildings
+  await page.route('**/rest/v1/buildings*', async route => {
       console.log("Mock Insert intercepted", route.request().method(), route.request().url());
       if (route.request().method() === 'POST') {
           const postData = route.request().postDataJSON();
           console.log("Insert Payload:", postData);
 
-          // Verify Payload constraints (Updated for downgrade)
-          // location and architects are no longer sent
-          if (!postData.title) {
-              console.error("Missing title");
+          if (!postData.name) {
+              console.error("Missing name");
               return route.abort();
           }
 
@@ -125,6 +133,12 @@ test('End-to-End Add Building Verification', async ({ page }) => {
       } else {
           await route.continue();
       }
+  });
+
+  // Mock Supabase user_buildings (was log)
+  await page.route('**/rest/v1/user_buildings*', async route => {
+       console.log("Mock user_buildings intercepted");
+       await route.fulfill({ status: 200, json: [] });
   });
 
   // Mock Supabase Storage Upload

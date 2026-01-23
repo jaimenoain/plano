@@ -115,24 +115,19 @@ export default function AddBuilding() {
     queryFn: async () => {
         if (!user) return new Map();
 
-        // @ts-ignore - log table exists, user_buildings does not
         const { data, error } = await supabase
-            .from("log")
-            .select("film_id, status")
+            .from("user_buildings")
+            .select("building_id, status")
             .eq("user_id", user.id);
 
         if (error) {
-            console.error("Error fetching user buildings (log):", error);
+            console.error("Error fetching user buildings:", error);
             return new Map();
         }
 
         const map = new Map();
         data.forEach((item: any) => {
-            // Map film_id to building_id and status
-            let status = item.status;
-            if (status === 'watchlist') status = 'pending';
-            if (status === 'watched') status = 'visited';
-            map.set(item.film_id, status);
+            map.set(item.building_id, item.status);
         });
         return map;
     }
@@ -203,13 +198,13 @@ export default function AddBuilding() {
         // 1. Strict Location Check: 50m radius, ANY name (ensure collisions are caught)
         // 2. Fuzzy Name Check: 5km radius, matching name (catch duplicates placed slightly off)
 
-        // Wrap RPC calls in try-catch because find_nearby_buildings might not exist
+        // Wrap RPC calls in try-catch
         let locationData: NearbyBuilding[] = [];
         let nameData: NearbyBuilding[] = [];
 
         try {
-            // @ts-ignore
             const locationCheckPromise = supabase.rpc('search_buildings', {
+                // @ts-ignore - types are tricky with PostGIS/Json
                 location_coordinates: { lat: markerPosition.lat, lng: markerPosition.lng },
                 radius_meters: 50,
                 query_text: ""
@@ -217,8 +212,8 @@ export default function AddBuilding() {
 
             // Only run name check if we have a name to check
             const nameCheckPromise = (queryName.length >= 3)
-                // @ts-ignore
                 ? supabase.rpc('search_buildings', {
+                    // @ts-ignore
                     location_coordinates: { lat: markerPosition.lat, lng: markerPosition.lng },
                     radius_meters: 50000, // Wider 50km radius
                     query_text: queryName,
@@ -384,17 +379,16 @@ export default function AddBuilding() {
 
     try {
       // Map status
-      const dbStatus = status === 'pending' ? 'watchlist' : 'watched';
+      const dbStatus = status === 'pending' ? 'pending' : 'visited';
 
-      // @ts-ignore - log table exists
       const { error } = await supabase
-        .from("log")
+        .from("user_buildings")
         .upsert({
           user_id: user.id,
-          film_id: buildingId,
+          building_id: buildingId,
           status: dbStatus,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id, film_id' });
+          created_at: new Date().toISOString() // upsert needs all required fields if insert happens
+        }, { onConflict: 'user_id, building_id' });
 
       if (error) throw error;
 
