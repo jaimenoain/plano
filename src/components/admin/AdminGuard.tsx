@@ -12,8 +12,14 @@ export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!authLoading && !session) {
       navigate("/auth");
-    } else if (!authLoading && !profileLoading && profile && profile.role !== "admin") {
-      navigate("/");
+      return;
+    }
+
+    if (!authLoading && !profileLoading && profile) {
+      const isAdmin = profile.role === "admin" || profile.role === "app_admin";
+      if (!isAdmin) {
+        navigate("/admin/unauthorized");
+      }
     }
   }, [session, profile, authLoading, profileLoading, navigate]);
 
@@ -25,7 +31,9 @@ export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!session || (profile && profile.role !== "admin")) {
+  const isAdmin = profile?.role === "admin" || profile?.role === "app_admin";
+
+  if (!session || !isAdmin) {
     return null;
   }
 

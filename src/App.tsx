@@ -52,6 +52,8 @@ import { logDiagnosticError } from "./api/diagnostics";
 // Admin Imports
 import AdminDashboard from "./pages/admin/Dashboard";
 import { AdminGuard } from "./components/admin/AdminGuard";
+import AdminLayout from "./components/admin/AdminLayout";
+import Unauthorized from "./pages/admin/Unauthorized";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -87,11 +89,17 @@ const router = createBrowserRouter(
       <Route path="/groups" element={<Groups />} />
       
       {/* Admin Route */}
-      <Route path="/admin" element={
+      <Route path="/admin/unauthorized" element={<Unauthorized />} />
+      <Route element={
         <AdminGuard>
-          <AdminDashboard />
+          <AdminLayout />
         </AdminGuard>
-      } />
+      }>
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/buildings" element={<div>Buildings (Coming Soon)</div>} />
+        <Route path="/admin/users" element={<div>Users (Coming Soon)</div>} />
+        <Route path="/admin/system" element={<div>System (Coming Soon)</div>} />
+      </Route>
 
       {/* NESTED GROUP ROUTES */}
       <Route path="/groups/:slug" element={<GroupLayout />}>
