@@ -129,7 +129,7 @@ export default function GroupCycles() {
               <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground opacity-50 mb-4" />
               <h3 className="text-lg font-medium">Start your first Cycle</h3>
               <p className="text-muted-foreground max-w-sm mx-auto mb-6">
-                  Cycles are a way to group sessions together under a theme, like "Horror Month" or "Director Spotlight".
+                  Cycles are a way to group field trips together under a theme, like "Modernist Month" or "Gothic Revival".
               </p>
               <Button onClick={() => setIsCreateOpen(true)}>Create Cycle</Button>
           </div>
@@ -246,7 +246,7 @@ function CycleCard({ cycle, groupSlug, isDraft }: { cycle: any, groupSlug: strin
                              </span>
                         )}
                         <Badge variant="secondary" className="shrink-0 text-[10px] h-5 px-2">
-                            {cycle.session_count} {cycle.session_count === 1 ? 'Session' : 'Sessions'}
+                            {cycle.session_count} {cycle.session_count === 1 ? 'Trip' : 'Trips'}
                         </Badge>
                     </div>
                 </div>
@@ -258,7 +258,7 @@ function CycleCard({ cycle, groupSlug, isDraft }: { cycle: any, groupSlug: strin
                 <div className="px-6 pb-6 pt-0">
                     <div className="text-xs font-semibold text-primary flex items-center gap-2 bg-primary/5 p-2 rounded-md w-fit">
                         <Calendar className="w-3.5 h-3.5" />
-                        Next session: {nextSession.toLocaleDateString('default', { day: 'numeric', month: 'long' })}
+                        Next trip: {nextSession.toLocaleDateString('default', { day: 'numeric', month: 'long' })}
                     </div>
                 </div>
             )}

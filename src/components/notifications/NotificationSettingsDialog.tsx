@@ -22,14 +22,14 @@ const NOTIFICATION_GROUPS = [
       { id: "follow", label: "New followers" },
       { id: "friend_joined", label: "Friend joined Archiforum" },
       { id: "suggest_follow", label: "Suggested follows" },
-      { id: "recommendation", label: "Building recommendations" },
+      { id: "recommendation", label: "Building recommendations & Invites" },
     ],
   },
   {
-    title: "Groups & Sessions",
+    title: "Groups & Field Trips",
     types: [
-      { id: "new_session", label: "New session scheduled" },
-      { id: "session_reminder", label: "Session reminders" },
+      { id: "new_session", label: "New field trip scheduled" },
+      { id: "session_reminder", label: "Field trip reminders" },
       { id: "group_invitation", label: "Group invitations" },
       { id: "join_request", label: "Group join requests" },
       { id: "group_activity", label: "Group activity (member left)" },

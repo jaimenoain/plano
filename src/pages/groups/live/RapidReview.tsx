@@ -168,7 +168,7 @@ function WinnerCard({ question, freshBuildingData }: { question: any, freshBuild
     );
 }
 
-export default function TinderSession() {
+export default function RapidReview() {
   const { pollSlug, slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();

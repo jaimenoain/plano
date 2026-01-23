@@ -210,7 +210,7 @@ export default function PollDetails() {
             }}
         >
             <ArrowLeft className="h-4 w-4" />
-            <span>{poll.session?.status === 'closed' ? "Back to Session" : "Back to Polls"}</span>
+            <span>{poll.session?.status === 'closed' ? "Back to Field Trip" : "Back to Polls"}</span>
         </div>
 
         {/* REFACTORED HEADER */}
@@ -236,7 +236,7 @@ export default function PollDetails() {
                 {isLive && (
                      <Button variant="default" asChild className="animate-pulse">
                          <Link to={`/groups/${groupSlug}/live/${poll.slug}`} target="_blank">
-                             Join Live Session
+                             Join Live Event
                          </Link>
                      </Button>
                 )}
@@ -340,10 +340,10 @@ export default function PollDetails() {
                     <Radio className={cn("w-16 h-16 text-destructive", activeQuestion ? "animate-pulse" : "opacity-50")} />
                     <div className="space-y-2">
                         <h3 className="font-bold text-2xl">
-                             {activeQuestion ? "Live Session in Progress" : "Waiting for host to start..."}
+                             {activeQuestion ? "Live Event in Progress" : "Waiting for host to start..."}
                         </h3>
                         <p className="text-muted-foreground max-w-md mx-auto">
-                            This poll is being conducted live. Join the session to see questions and vote in real-time!
+                            This poll is being conducted live. Join the event to see questions and vote in real-time!
                         </p>
                     </div>
                      {hasVoted && <p className="text-sm text-muted-foreground">You have submitted votes, but can still join to spectate.</p>}

@@ -108,7 +108,7 @@ export default function LivePollProjector() {
   if (poll.status === 'closed') {
       return (
         <div className="h-screen w-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-1000 overflow-hidden">
-            <h1 className="text-6xl font-bold mb-6 tracking-tight">Session Ended</h1>
+            <h1 className="text-6xl font-bold mb-6 tracking-tight">Event Ended</h1>
             <p className="text-3xl text-white/80 font-light">Thanks for participating!</p>
         </div>
       );
@@ -129,7 +129,7 @@ export default function LivePollProjector() {
       <div className="h-screen w-screen bg-gradient-to-br from-indigo-950 to-black text-white flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-1000 overflow-hidden">
         <Zap className="h-24 w-24 text-yellow-400 mb-8 animate-pulse" />
         <h1 className="text-6xl font-bold mb-6 tracking-tight">{poll.title}</h1>
-        <p className="text-3xl text-white/80 font-light mb-12">Get ready! The session will start soon.</p>
+        <p className="text-3xl text-white/80 font-light mb-12">Get ready! The event will start soon.</p>
 
         <div className="flex flex-col items-center gap-6 bg-white/5 p-8 rounded-3xl backdrop-blur-sm border border-white/10">
             <div className="bg-white p-4 rounded-xl">

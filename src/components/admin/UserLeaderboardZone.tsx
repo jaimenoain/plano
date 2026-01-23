@@ -30,7 +30,7 @@ export function UserLeaderboardZone({ data }: UserLeaderboardZoneProps) {
     { title: "Recently Online", data: data.most_recently_online, metric: "time" },
     { title: "Most Follows", data: data.most_follows_given, metric: "follows" },
     { title: "Most Followers", data: data.most_followers_gained, metric: "followers" },
-    { title: "Most Sessions", data: data.most_sessions, metric: "visits" },
+    { title: "Most Field Trips", data: data.most_sessions, metric: "visits" },
   ];
 
   return (
