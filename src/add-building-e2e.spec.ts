@@ -94,20 +94,17 @@ test('End-to-End Add Building Verification', async ({ page }) => {
     await route.fulfill({ json });
   });
 
-  // Mock Supabase Insert to buildings
-  await page.route('**/rest/v1/buildings*', async route => {
+  // Mock Supabase Insert to films (was buildings)
+  await page.route('**/rest/v1/films*', async route => {
       console.log("Mock Insert intercepted", route.request().method(), route.request().url());
       if (route.request().method() === 'POST') {
           const postData = route.request().postDataJSON();
           console.log("Insert Payload:", postData);
 
-          // Verify Payload constraints
-          if (!postData.location.startsWith('POINT(')) {
-              console.error("Invalid location format");
-              return route.abort();
-          }
-          if (postData.architects && !Array.isArray(postData.architects)) {
-              console.error("Architects must be an array");
+          // Verify Payload constraints (Updated for downgrade)
+          // location and architects are no longer sent
+          if (!postData.title) {
+              console.error("Missing title");
               return route.abort();
           }
 

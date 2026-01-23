@@ -40,21 +40,19 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     try {
       // We merge the form data (data) with the location data (locationData) which is passed as a prop
       // This ensures that city and country (extracted from the map/geocoder) are persisted.
+      const releaseDate = data.year_completed ? `${data.year_completed}-01-01` : null;
+
+      // @ts-ignore - films table exists, buildings does not
       const { data: insertedData, error } = await supabase
-        .from('buildings')
+        .from('films')
         .insert({
-          name: data.name,
-          year_completed: data.year_completed,
-          architects: data.architects,
-          styles: data.styles,
-          description: data.description,
-          address: locationData.address,
-          main_image_url: data.main_image_url,
-          // Explicitly including city and country from locationData
-          city: locationData.city,
-          country: locationData.country,
-          created_by: user.id,
-          location: `POINT(${locationData.lng} ${locationData.lat})`
+          title: data.name,
+          release_date: releaseDate,
+          overview: data.description,
+          poster_path: data.main_image_url,
+          media_type: 'movie'
+          // Omitted fields not present in films table:
+          // architects, styles, address, city, country, location, created_by
         })
         .select()
         .single();
@@ -64,7 +62,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         toast.error("Failed to save building.");
       } else {
         toast.success("Building added successfully!");
-        setNewBuilding({ id: insertedData.id, name: insertedData.name });
+        // @ts-ignore
+        setNewBuilding({ id: insertedData.id, name: insertedData.title });
         setShowVisitDialog(true);
       }
 

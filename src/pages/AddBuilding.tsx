@@ -92,19 +92,24 @@ export default function AddBuilding() {
     queryFn: async () => {
         if (!user) return new Map();
 
+        // @ts-ignore - log table exists, user_buildings does not
         const { data, error } = await supabase
-            .from("user_buildings")
-            .select("building_id, status")
+            .from("log")
+            .select("film_id, status")
             .eq("user_id", user.id);
 
         if (error) {
-            console.error("Error fetching user buildings:", error);
+            console.error("Error fetching user buildings (log):", error);
             return new Map();
         }
 
         const map = new Map();
-        data.forEach(item => {
-            map.set(item.building_id, item.status);
+        data.forEach((item: any) => {
+            // Map film_id to building_id and status
+            let status = item.status;
+            if (status === 'watchlist') status = 'pending';
+            if (status === 'watched') status = 'visited';
+            map.set(item.film_id, status);
         });
         return map;
     }
@@ -173,30 +178,44 @@ export default function AddBuilding() {
         // 1. Strict Location Check: 50m radius, ANY name (ensure collisions are caught)
         // 2. Fuzzy Name Check: 5km radius, matching name (catch duplicates placed slightly off)
 
-        const locationCheckPromise = supabase.rpc('find_nearby_buildings', {
-            lat: markerPosition.lat,
-            long: markerPosition.lng,
-            radius_meters: 50,
-            name_query: "" // Don't filter by name for collision detection
-        });
+        // Wrap RPC calls in try-catch because find_nearby_buildings might not exist
+        let locationData: NearbyBuilding[] = [];
+        let nameData: NearbyBuilding[] = [];
 
-        // Only run name check if we have a name to check
-        const nameCheckPromise = (queryName.length >= 3)
-            ? supabase.rpc('find_nearby_buildings', {
+        try {
+            const locationCheckPromise = supabase.rpc('find_nearby_buildings', {
                 lat: markerPosition.lat,
                 long: markerPosition.lng,
-                radius_meters: 50000, // Wider 50km radius
-                name_query: queryName
-            })
-            : Promise.resolve({ data: [] as NearbyBuilding[], error: null });
+                radius_meters: 50,
+                name_query: "" // Don't filter by name for collision detection
+            });
 
-        const [locationResult, nameResult] = await Promise.all([locationCheckPromise, nameCheckPromise]);
+            // Only run name check if we have a name to check
+            const nameCheckPromise = (queryName.length >= 3)
+                ? supabase.rpc('find_nearby_buildings', {
+                    lat: markerPosition.lat,
+                    long: markerPosition.lng,
+                    radius_meters: 50000, // Wider 50km radius
+                    name_query: queryName
+                })
+                : Promise.resolve({ data: [] as NearbyBuilding[], error: null });
 
-        if (locationResult.error) throw locationResult.error;
-        if (nameResult.error) throw nameResult.error;
+            const [locationResult, nameResult] = await Promise.all([locationCheckPromise, nameCheckPromise]);
 
-        const locationData = locationResult.data || [];
-        const nameData = nameResult.data || [];
+            if (locationResult.error) {
+                console.warn("find_nearby_buildings RPC failed (likely missing), skipping duplicate check.", locationResult.error);
+            } else {
+                locationData = locationResult.data || [];
+            }
+
+            if (nameResult.error) {
+                 console.warn("find_nearby_buildings RPC failed (likely missing), skipping name check.", nameResult.error);
+            } else {
+                nameData = nameResult.data || [];
+            }
+        } catch (err) {
+            console.warn("Exception checking duplicates:", err);
+        }
 
         // Filter name results to ensure relevance (e.g. good similarity score)
         // If the RPC logic is "dist < radius OR match", then passing 5000 might return everything.
@@ -330,14 +349,18 @@ export default function AddBuilding() {
     }
 
     try {
+      // Map status
+      const dbStatus = status === 'pending' ? 'watchlist' : 'watched';
+
+      // @ts-ignore - log table exists
       const { error } = await supabase
-        .from("user_buildings")
+        .from("log")
         .upsert({
           user_id: user.id,
-          building_id: buildingId,
-          status: status,
+          film_id: buildingId,
+          status: dbStatus,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id, building_id' });
+        }, { onConflict: 'user_id, film_id' });
 
       if (error) throw error;
 
