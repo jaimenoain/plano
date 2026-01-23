@@ -73,6 +73,7 @@ export default function SearchPage() {
                             buildings={buildings}
                             isLoading={isLoading}
                             onBuildingClick={(id) => navigate(`/building/${id}`)}
+                            currentLocation={userLocation}
                          />
                     </div>
                 ) : (
@@ -93,6 +94,7 @@ export default function SearchPage() {
                         buildings={buildings}
                         isLoading={isLoading}
                         onBuildingClick={(id) => navigate(`/building/${id}`)}
+                        currentLocation={userLocation}
                     />
                 </div>
                 <div className="col-span-7 lg:col-span-8 h-full relative">

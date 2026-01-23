@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+import { MapPinPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { DiscoveryBuilding } from "./types";
 import { DiscoveryBuildingCard } from "./DiscoveryBuildingCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -6,12 +9,14 @@ interface DiscoveryListProps {
   buildings: DiscoveryBuilding[];
   isLoading: boolean;
   onBuildingClick?: (buildingId: string) => void;
+  currentLocation?: { lat: number; lng: number };
 }
 
 export function DiscoveryList({
   buildings,
   isLoading,
   onBuildingClick,
+  currentLocation,
 }: DiscoveryListProps) {
   if (isLoading) {
     return (
@@ -37,12 +42,21 @@ export function DiscoveryList({
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center h-full min-h-[50vh]">
         <div className="bg-muted rounded-full p-4 mb-4">
-            <span className="text-4xl">🏛️</span>
+          <span className="text-4xl">🏛️</span>
         </div>
-        <h3 className="text-lg font-semibold">No buildings found</h3>
-        <p className="text-muted-foreground max-w-sm mt-1">
-          Try adjusting your filters or search area to find what you're looking for.
+        <h3 className="text-lg font-semibold">No buildings found here yet</h3>
+        <p className="text-muted-foreground max-w-sm mt-1 mb-6">
+          Be the first to map this area.
         </p>
+
+        {currentLocation && (
+          <Button asChild>
+            <Link to={`/add-building?lat=${currentLocation.lat}&lng=${currentLocation.lng}`}>
+              <MapPinPlus className="mr-2 h-4 w-4" />
+              Add Building Here
+            </Link>
+          </Button>
+        )}
       </div>
     );
   }

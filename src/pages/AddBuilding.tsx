@@ -8,7 +8,7 @@ import { Loader2, MapPin, Navigation, Plus, ArrowRight, Bookmark, Check, Buildin
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { AddBuildingDetails } from "@/components/AddBuildingDetails";
 import { Badge } from "@/components/ui/badge";
@@ -83,6 +83,7 @@ export default function AddBuilding() {
 
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Fetch user relationships
   const { data: userBuildingsMap } = useQuery({
@@ -115,6 +116,39 @@ export default function AddBuilding() {
     longitude: -0.1278,
     zoom: 12
   });
+
+  // Handle URL parameters for initial location
+  useEffect(() => {
+    const latParam = searchParams.get("lat");
+    const lngParam = searchParams.get("lng");
+
+    if (latParam && lngParam) {
+      const lat = parseFloat(latParam);
+      const lng = parseFloat(lngParam);
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setViewState((prev) => ({ ...prev, latitude: lat, longitude: lng, zoom: 16 }));
+        setMarkerPosition({ lat, lng });
+
+        // Reverse geocode to get address details
+        try {
+          getGeocode({ location: { lat, lng } })
+            .then((results) => {
+              if (results && results.length > 0) {
+                setSelectedAddress(results[0].formatted_address);
+                const details = extractLocationDetails(results[0]);
+                setExtractedLocation(details);
+              }
+            })
+            .catch((error) => {
+              console.error("Initial reverse geocoding error:", error);
+            });
+        } catch (e) {
+          console.error("Geocoding failed to initialize:", e);
+        }
+      }
+    }
+  }, [searchParams]);
 
   const [finalLocationData, setFinalLocationData] = useState<{
     lat: number;
