@@ -1,11 +1,11 @@
-import { Home, Search, Users } from "lucide-react";
+import { Activity, Building2, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 // Reduced to the 3 core navigation items
 const navItems = [
-  { icon: Home, label: "Feed", path: "/" },
-  { icon: Search, label: "Buildings", path: "/search" },
+  { icon: Activity, label: "Feed", path: "/" },
+  { icon: Building2, label: "Buildings", path: "/search" },
   { icon: Users, label: "Groups", path: "/groups" },
 ];
 
@@ -23,6 +23,7 @@ export function BottomNav() {
             <Link
               key={path}
               to={path}
+              aria-label={label}
               className={cn(
                 "flex flex-col items-center justify-center gap-1.5 transition-all duration-300 relative",
                 // Minimum touch target width for accessibility

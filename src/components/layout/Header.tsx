@@ -41,9 +41,9 @@ export function Header({ title, showLogo = true, action }: HeaderProps) {
         <div className="flex-1 flex items-center justify-start">
           {showLogo ? (
             <Link to="/" className="flex items-center gap-3 group">
-              <img src="/logo.png" alt="Cineforum" className="h-8 w-8" />
+              <img src="/logo.png" alt="Archiforum" className="h-8 w-8" />
               <span className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
-                Cineforum
+                Archiforum
               </span>
             </Link>
           ) : (
