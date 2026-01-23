@@ -20,7 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown, MapPin, Sparkles, Trophy } from "lucide-react";
+import { Check, ChevronsUpDown, MapPin, Sparkles, Trophy, Locate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -36,6 +36,7 @@ export interface DiscoveryFilterBarProps {
   sortBy: 'distance' | 'relevance';
   onSortChange: (sort: 'distance' | 'relevance') => void;
   onShowLeaderboard?: () => void;
+  onUseLocation?: () => void;
 }
 
 export function DiscoveryFilterBar({
@@ -50,6 +51,7 @@ export function DiscoveryFilterBar({
   sortBy,
   onSortChange,
   onShowLeaderboard,
+  onUseLocation,
 }: DiscoveryFilterBarProps) {
   const [openStyles, setOpenStyles] = useState(false);
 
@@ -74,6 +76,17 @@ export function DiscoveryFilterBar({
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        {/* Location Button */}
+        <Button
+            variant="outline"
+            size="icon"
+            onClick={onUseLocation}
+            title="Use my location"
+            className="shrink-0"
+        >
+            <Locate className="h-4 w-4" />
+        </Button>
+
         {/* City Filter */}
         <Select value={selectedCity} onValueChange={onCityChange}>
           <SelectTrigger className="w-full sm:w-[180px]">

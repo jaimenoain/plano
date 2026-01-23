@@ -3,6 +3,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DiscoveryBuilding } from "../components/types";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
 export function useBuildingSearch() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,6 +19,14 @@ export function useBuildingSearch() {
     lat: 51.5074,
     lng: -0.1278
   });
+
+  const { location: gpsLocation, requestLocation } = useUserLocation();
+
+  useEffect(() => {
+    if (gpsLocation) {
+      setUserLocation(gpsLocation);
+    }
+  }, [gpsLocation]);
 
   // Fetch filters options
   const { data: filterOptions } = useQuery({
@@ -87,6 +96,7 @@ export function useBuildingSearch() {
       setViewMode,
       userLocation,
       updateLocation,
+      requestLocation,
       buildings: buildings || [],
       isLoading,
       availableCities: filterOptions?.cities || [],

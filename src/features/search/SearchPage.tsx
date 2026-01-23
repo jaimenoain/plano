@@ -19,7 +19,8 @@ export default function SearchPage() {
     viewMode, setViewMode,
     userLocation, updateLocation,
     buildings, isLoading,
-    availableCities, availableStyles
+    availableCities, availableStyles,
+    requestLocation
   } = useBuildingSearch();
 
   const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
@@ -58,6 +59,7 @@ export default function SearchPage() {
                 sortBy={sortBy}
                 onSortChange={setSortBy}
                 onShowLeaderboard={() => setShowLeaderboard(true)}
+                onUseLocation={requestLocation}
             />
         </div>
 
