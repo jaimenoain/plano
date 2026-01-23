@@ -291,7 +291,6 @@ export default function Auth() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-secondary border-border focus:border-primary"
             />
             {errors.email && (
               <p className="text-xs text-destructive">{errors.email}</p>
@@ -310,7 +309,7 @@ export default function Auth() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-secondary border-border focus:border-primary pr-10"
+                  className="pr-10"
                 />
                 <button
                   type="button"
@@ -338,7 +337,7 @@ export default function Auth() {
                   htmlFor="terms"
                   className="text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  I accept the <Link to="/terms" className="text-primary hover:underline" target="_blank">Terms and Conditions</Link>
+                  I accept the <Link to="/terms" className="text-foreground hover:underline decoration-[#EEFF41] decoration-2 underline-offset-4" target="_blank">Terms and Conditions</Link>
                 </Label>
               </div>
               {errors.terms && (
@@ -385,7 +384,7 @@ export default function Auth() {
                  setIsResetPassword(false);
                  setErrors({});
                }}
-               className="text-primary hover:underline font-medium"
+               className="text-foreground hover:underline decoration-[#EEFF41] decoration-2 underline-offset-4 font-medium"
              >
                Back to Sign In
              </button>
@@ -398,7 +397,7 @@ export default function Auth() {
                    setIsSignUp(!isSignUp);
                    setErrors({});
                  }}
-                 className="text-primary hover:underline font-medium"
+                 className="text-foreground hover:underline decoration-[#EEFF41] decoration-2 underline-offset-4 font-medium"
                >
                  {isSignUp ? "Sign In" : "Sign Up"}
                </button>

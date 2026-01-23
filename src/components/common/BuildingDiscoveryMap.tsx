@@ -175,27 +175,26 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
     const status = userBuildingsMap?.get(building.buildingId);
 
     // Pin Protocol:
-    // Green: Visited
-    // Yellow: Pending (Wishlist)
-    // Purple: Recommended (Social Context)
+    // Charcoal: Visited
+    // Neon (#EEFF41): Pending (Wishlist) & Social
     // Grey/Default: Discovery
 
     let pinColorClass = "border-gray-400";
-    let dotColorClass = "bg-gray-400";
+    let dotColorClass = "bg-[#333333]"; // Dark anchor point
     let pinTooltip = null;
 
     if (status === 'visited') {
-        pinColorClass = "border-green-500";
-        dotColorClass = "bg-green-500";
+        pinColorClass = "border-[#333333]"; // Charcoal
+        dotColorClass = "bg-[#333333]";
         pinTooltip = <span className="ml-1 opacity-75 capitalize">(Visited)</span>;
     } else if (status === 'pending') {
-        pinColorClass = "border-yellow-500";
-        dotColorClass = "bg-yellow-500";
+        pinColorClass = "border-[#EEFF41]"; // Neon
+        dotColorClass = "bg-[#333333]"; // Dark anchor
         pinTooltip = <span className="ml-1 opacity-75 capitalize">(Pending)</span>;
     } else if (building.social_context) {
-        pinColorClass = "border-purple-500";
-        dotColorClass = "bg-purple-500";
-        pinTooltip = <span className="ml-1 opacity-90 text-purple-200">({building.social_context})</span>;
+        pinColorClass = "border-[#EEFF41]"; // Neon
+        dotColorClass = "bg-[#333333]"; // Dark anchor
+        pinTooltip = <span className="ml-1 opacity-90">({building.social_context})</span>;
     }
 
     return (
@@ -213,11 +212,11 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
             <div className="group relative flex flex-col items-center">
             {/* Tooltip */}
             <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap z-50">
-                <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg flex items-center gap-1">
-                    <span className="font-medium">{building.name}</span>
+                <div className="bg-[#333333] text-[#EEFF41] text-xs px-2 py-1 rounded shadow-lg flex items-center gap-1 border border-[#EEFF41]">
+                    <span className="font-medium text-white">{building.name}</span>
                     {pinTooltip}
                 </div>
-                <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-foreground"></div>
+                <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
             </div>
 
             <div className="relative">
@@ -256,7 +255,7 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="https://tiles.openfreemap.org/styles/liberty"
+        mapStyle="https://tiles.openfreemap.org/styles/positron"
       >
         <NavigationControl position="bottom-right" />
         {pins}

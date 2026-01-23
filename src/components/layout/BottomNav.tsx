@@ -30,14 +30,17 @@ export function BottomNav() {
                 "min-w-[64px] min-h-[64px] rounded-xl",
                 isActive 
                   ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  : "text-gray-400 hover:text-primary"
               )}
             >
-              <div className="relative">
+              <div className="relative flex flex-col items-center">
                 <Icon 
                   className={cn("transition-all duration-300", isActive ? "h-6 w-6" : "h-6 w-6")}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
+                {isActive && (
+                  <div className="absolute -bottom-3 w-1.5 h-1.5 bg-[#EEFF41] rounded-full" />
+                )}
               </div>
               {/* Increased font size for readability */}
               <span className={cn("text-xs font-medium tracking-wide", isActive ? "opacity-100" : "opacity-80")}>
