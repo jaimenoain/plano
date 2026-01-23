@@ -43,7 +43,7 @@
     --input: 240 5.9% 90%;
     --ring: 221.2 83.2% 53.3%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     /* Glassmorphism */
     --glass-bg: 0 0% 100% / 0.7;
@@ -69,6 +69,11 @@
     /* Base font size 16px is critical for legibility */
     font-size: 16px; 
     line-height: 1.5;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary));
   }
 
   /* Improve form element usability */
