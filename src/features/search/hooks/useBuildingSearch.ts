@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DiscoveryBuilding } from "../components/types";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { searchBuildingsRpc, getDiscoveryFiltersRpc } from "@/utils/supabaseFallback";
 
 export function useBuildingSearch() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,9 +32,7 @@ export function useBuildingSearch() {
   const { data: filterOptions } = useQuery({
     queryKey: ["discovery-filters"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_discovery_filters');
-      if (error) throw error;
-      return data as { cities: string[], styles: string[] };
+      return await getDiscoveryFiltersRpc();
     }
   });
 
@@ -47,19 +45,13 @@ export function useBuildingSearch() {
             styles: selectedStyles
         };
 
-        const { data, error } = await supabase.rpc('search_buildings', {
+        return await searchBuildingsRpc({
             query_text: debouncedQuery || null,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
             radius_meters: 500000, // 500km radius
             filters: filters,
             sort_by: sortBy
         });
-
-        if (error) {
-            console.error("Search error:", error);
-            return [];
-        }
-        return data as DiscoveryBuilding[];
     },
     staleTime: 1000 * 60, // 1 min
     placeholderData: keepPreviousData,

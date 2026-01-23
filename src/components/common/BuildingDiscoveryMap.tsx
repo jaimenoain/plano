@@ -4,11 +4,11 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Loader2, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
+import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import Supercluster from "supercluster";
 
 interface Building {
@@ -52,18 +52,12 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
   const { data: internalBuildings, isLoading: internalLoading } = useQuery({
     queryKey: ["discovery-buildings"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('find_nearby_buildings', {
+      return await findNearbyBuildingsRpc({
         lat: viewState.latitude,
         long: viewState.longitude,
         radius_meters: 500000, // 500km
         name_query: ""
       });
-
-      if (error) {
-        console.error("Error fetching buildings:", error);
-        return [];
-      }
-      return data as Building[];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: !externalBuildings // Disable if external data provided
@@ -78,22 +72,7 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
     enabled: !!user,
     queryFn: async () => {
         if (!user) return new Map();
-
-        const { data, error } = await supabase
-            .from("user_buildings")
-            .select("building_id, status")
-            .eq("user_id", user.id);
-
-        if (error) {
-            console.error("Error fetching user buildings:", error);
-            return new Map();
-        }
-
-        const map = new Map();
-        data.forEach(item => {
-            map.set(item.building_id, item.status);
-        });
-        return map;
+        return await fetchUserBuildingsMap(user.id);
     }
   });
 
