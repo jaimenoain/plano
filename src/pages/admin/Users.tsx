@@ -40,12 +40,16 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
 
   const [actionUser, setActionUser] = useState<{ type: 'reset' | 'suspend', user: Profile } | null>(null);
 
   const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentAdminId(data.user?.id || null);
+    });
     fetchUsers();
   }, [page, searchQuery]);
 
@@ -81,7 +85,7 @@ export default function Users() {
   };
 
   const handleAction = async () => {
-    if (!actionUser) return;
+    if (!actionUser || !currentAdminId) return;
 
     try {
       if (actionUser.type === 'reset') {
@@ -92,6 +96,16 @@ export default function Users() {
           .eq('id', actionUser.user.id);
 
         if (error) throw error;
+
+        // Log audit
+        await supabase.from('admin_audit_logs').insert({
+            admin_id: currentAdminId,
+            action_type: 'reset_profile',
+            target_type: 'user',
+            target_id: actionUser.user.id,
+            details: { username: actionUser.user.username }
+        });
+
         toast.success("Profile reset successfully");
         setUsers(prev => prev.map(u => u.id === actionUser.user.id ? { ...u, username: genericUsername, avatar_url: null } : u));
       } else if (actionUser.type === 'suspend') {
@@ -103,6 +117,16 @@ export default function Users() {
           .eq('id', actionUser.user.id);
 
         if (error) throw error;
+
+        // Log audit
+        await supabase.from('admin_audit_logs').insert({
+            admin_id: currentAdminId,
+            action_type: newRole === 'suspended' ? 'suspend_user' : 'restore_user',
+            target_type: 'user',
+            target_id: actionUser.user.id,
+            details: { username: actionUser.user.username, previous_role: actionUser.user.role }
+        });
+
         toast.success(newRole === 'suspended' ? "User suspended" : "User restored");
         setUsers(prev => prev.map(u => u.id === actionUser.user.id ? { ...u, role: newRole } : u));
       }
