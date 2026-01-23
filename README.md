@@ -1,6 +1,6 @@
-# Cineforum
+# PLANO
 
-A social platform for film enthusiasts to share ratings, organize watch sessions, and track viewing habits with friends.
+A social platform for architecture enthusiasts to share ratings, organize field trips, and discover amazing buildings with friends.
 
 ## 🧠 AI Agent Context & Rules
 > **Critical:** Before generating code or running tests, you **MUST** read the following files:

@@ -66,7 +66,7 @@ export function BlockUserDialog({ open, onOpenChange, userId, username }: BlockU
                         Block {username}?
                     </DialogTitle>
                     <DialogDescription>
-                        They won't be able to find your profile, posts, or story on Cineforum. They won't be notified that you blocked them.
+                        They won't be able to find your profile, posts, or story on PLANO. They won't be notified that you blocked them.
                     </DialogDescription>
                 </DialogHeader>
 

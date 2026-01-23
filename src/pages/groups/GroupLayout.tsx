@@ -201,7 +201,7 @@ export default function GroupLayout() {
     <AppLayout>
       <MetaHead
         title={group.name}
-        description={group.description || "Join this group on Cineforum."}
+        description={group.description || "Join this group on PLANO."}
         image={group.cover_url ? supabase.storage.from("group_covers").getPublicUrl(group.cover_url).data.publicUrl : undefined}
       />
 
