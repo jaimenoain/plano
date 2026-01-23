@@ -21,7 +21,7 @@ export function RatingDistribution({ data }: RatingDistributionProps) {
     <Card className="border-none shadow-sm bg-accent/5">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm">Rating Distribution</CardTitle>
-        <CardDescription>Frequency of scores (1-10)</CardDescription>
+        <CardDescription>Frequency of scores (1-5)</CardDescription>
       </CardHeader>
       <CardContent className="h-[250px] w-full">
         <ChartContainer config={chartConfig} className="h-full w-full">
