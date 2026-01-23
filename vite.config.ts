@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.ico', 'robots.txt', 'logo.png'],
+      includeAssets: ['robots.txt', 'android-chrome-192x192.png', 'android-chrome-512x512.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Archiforum',
         short_name: 'Archiforum',
@@ -24,12 +24,12 @@ export default defineConfig(({ mode }) => ({
         display: 'standalone',
         icons: [
           {
-            src: 'logo2.png',
+            src: 'android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'logo2.png',
+            src: 'android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           }
