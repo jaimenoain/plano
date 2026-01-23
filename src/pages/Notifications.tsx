@@ -247,10 +247,10 @@ export default function Notifications() {
       case 'suggest_follow': 
         return <span>Welcome! Follow <span className="font-semibold">{actorName}</span>, who invited you to join.</span>;
       case 'visit_request':
-        return <span><span className="font-semibold">{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
+        return <span><span className="font-semibold">@{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
       case 'recommendation':
         if ((n as any).recommendation?.status === 'visit_with') {
-             return <span><span className="font-semibold">{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
+             return <span><span className="font-semibold">@{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
         }
         return <span><span className="font-semibold">{actorName}</span> recommended <span className="italic">{buildingName || "a building"}</span> for you</span>;
       default: return <span>New notification</span>;

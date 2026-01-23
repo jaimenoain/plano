@@ -295,7 +295,7 @@ export default function Groups() {
                     id="group-name"
                     value={newGroupName}
                     onChange={(e) => setNewGroupName(e.target.value)}
-                    placeholder="e.g. Sunday Night Classics"
+                    placeholder="e.g. Brutalist Enthusiasts"
                     onKeyDown={(e) => e.key === 'Enter' && newGroupName.trim() && handleCreateGroup()}
                   />
                 </div>
@@ -311,7 +311,7 @@ export default function Groups() {
                         <div className={`p-1.5 rounded-md ${groupType === "club" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                           <Building2 className="w-4 h-4" />
                         </div>
-                        <span className={`text-sm font-semibold ${groupType === "club" ? "text-primary" : ""}`}>Architecture Club</span>
+                        <span className={`text-sm font-semibold ${groupType === "club" ? "text-primary" : ""}`}>Architecture Group</span>
                       </div>
                       <p className="text-xs text-muted-foreground leading-snug">
                         Structured with scheduled sessions.
