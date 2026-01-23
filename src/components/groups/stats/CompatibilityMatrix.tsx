@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -21,15 +20,15 @@ export function CompatibilityMatrix({ allPairs, members }: CompatibilityMatrixPr
         matrix[m1.user.id] = {};
         members.forEach(m2 => {
             if (m1.user.id === m2.user.id) {
-                matrix[m1.user.id][m2.user.id] = 1.0; // Self correlation is 1
+                matrix[m1.user.id][m2.user.id] = 1.0; // Self affinity is 1
             } else {
-                matrix[m1.user.id][m2.user.id] = 0; // Default (or null/undefined)
+                matrix[m1.user.id][m2.user.id] = 0; // Default
             }
         });
     });
 
     // Fill with data
-    if (allPairs) {
+    if (allPairs && Array.isArray(allPairs)) {
         allPairs.forEach(p => {
             if (matrix[p.u1] && matrix[p.u2]) { // Ensure members still exist
                 matrix[p.u1][p.u2] = p.score;
@@ -41,28 +40,28 @@ export function CompatibilityMatrix({ allPairs, members }: CompatibilityMatrixPr
     // Helper to get color
     const getColor = (score: number, isSelf: boolean) => {
         if (isSelf) return "bg-muted"; // Diagonal
-        if (score === 0) return "bg-muted/20"; // No data (assuming 0 correlation is unlikely to be exact 0 if calculated, but '0' here means missing usually if we init to 0. But corr can be 0. Need check.)
-        // Actually, let's treat 0 as 0. Missing should be handled carefully.
-        // Ideally we check if pair exists in `allPairs`.
 
-        // Color Scale: -1 (Red) -> 0 (Gray) -> 1 (Green)
-        // Simple distinct classes for now
+        // 0.7 - 1.0: High Match (Green)
+        if (score >= 0.9) return "bg-green-600";
         if (score >= 0.8) return "bg-green-500";
-        if (score >= 0.6) return "bg-green-400";
-        if (score >= 0.4) return "bg-green-300";
-        if (score >= 0.2) return "bg-green-200/50";
-        if (score > -0.2 && score < 0.2) return "bg-gray-200 dark:bg-gray-800"; // Neutral
-        if (score <= -0.8) return "bg-red-500";
-        if (score <= -0.6) return "bg-red-400";
-        if (score <= -0.4) return "bg-red-300";
-        return "bg-red-200/50";
+        if (score >= 0.7) return "bg-green-400";
+
+        // 0.4 - 0.7: Neutral (Gray/Muted)
+        if (score >= 0.6) return "bg-gray-400";
+        if (score >= 0.5) return "bg-gray-300";
+        if (score >= 0.4) return "bg-gray-200 dark:bg-gray-800";
+
+        // 0.0 - 0.4: Low Match (Red)
+        if (score >= 0.3) return "bg-red-300";
+        if (score >= 0.2) return "bg-red-400";
+        return "bg-red-500";
     };
 
     return (
         <Card className="border-none shadow-sm bg-accent/5 overflow-x-auto">
             <CardHeader className="pb-4">
-                <CardTitle className="text-sm font-medium">Compatibility Matrix</CardTitle>
-                <CardDescription>Heatmap of correlation scores</CardDescription>
+                <CardTitle className="text-sm font-medium">Similarity Grid</CardTitle>
+                <CardDescription>Heatmap of affinity scores</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="min-w-[300px]">
@@ -115,7 +114,7 @@ export function CompatibilityMatrix({ allPairs, members }: CompatibilityMatrixPr
                                  const colorClass = getColor(score, isSelf);
 
                                  // Check if actually correlated (exists in allPairs or self)
-                                 const hasData = isSelf || (allPairs && allPairs.some(p => (p.u1 === rowMember.user.id && p.u2 === colMember.user.id) || (p.u1 === colMember.user.id && p.u2 === rowMember.user.id)));
+                                 const hasData = isSelf || (allPairs && Array.isArray(allPairs) && allPairs.some(p => (p.u1 === rowMember.user.id && p.u2 === colMember.user.id) || (p.u1 === colMember.user.id && p.u2 === rowMember.user.id)));
 
                                  return (
                                      <Tooltip key={colMember.user.id} delayDuration={0}>
@@ -127,7 +126,7 @@ export function CompatibilityMatrix({ allPairs, members }: CompatibilityMatrixPr
                                          <TooltipContent>
                                              <div className="text-xs">
                                                  <p className="font-bold">{rowMember.user.username} + {colMember.user.username}</p>
-                                                 {isSelf ? "Self Love" : hasData ? `Correlation: ${(score * 100).toFixed(0)}%` : "Not enough shared data"}
+                                                 {isSelf ? "Self Love" : hasData ? `Affinity: ${(score * 100).toFixed(0)}%` : "Not enough shared data"}
                                              </div>
                                          </TooltipContent>
                                      </Tooltip>
@@ -139,7 +138,7 @@ export function CompatibilityMatrix({ allPairs, members }: CompatibilityMatrixPr
 
                 <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
                     <div className="flex items-center gap-1"><div className="w-3 h-3 bg-green-500 rounded"></div> High Match</div>
-                    <div className="flex items-center gap-1"><div className="w-3 h-3 bg-gray-500/20 rounded"></div> Neutral</div>
+                    <div className="flex items-center gap-1"><div className="w-3 h-3 bg-gray-300 rounded"></div> Neutral</div>
                     <div className="flex items-center gap-1"><div className="w-3 h-3 bg-red-500 rounded"></div> Low Match</div>
                 </div>
             </CardContent>
