@@ -179,7 +179,7 @@ export default function GroupSessions() {
 
       const { data, error } = await supabase
         .from("user_buildings")
-        .select("building_id, rating, content, tags, user:profiles(id, username, avatar_url)")
+        .select("building_id, rating, status, content, tags, user:profiles(id, username, avatar_url)")
         .in("user_id", memberIds)
         .in("building_id", visibleBuildingIds)
         .not("rating", "is", null);
