@@ -6,6 +6,10 @@ export type DashboardStats = {
     active_users_24h: number;
     active_users_30d: number;
     network_density: number;
+    total_buildings: number;
+    total_reviews: number;
+    total_photos: number;
+    pending_reports: number;
   };
   activity_trends: {
     actions: {
@@ -105,6 +109,10 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
     active_users_24h: 320,
     active_users_30d: 850,
     network_density: 12.5,
+    total_buildings: 450,
+    total_reviews: 1200,
+    total_photos: 380,
+    pending_reports: 5,
   },
   activity_trends: {
     actions: Array.from({ length: 30 }, (_, i) => ({
