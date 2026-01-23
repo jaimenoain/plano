@@ -39,7 +39,7 @@ import PollDetails from "./pages/groups/polls/PollDetails";
 import LivePollAdmin from "./pages/groups/live/LivePollAdmin";
 import LivePollParticipant from "./pages/groups/live/LivePollParticipant";
 import LivePollProjector from "./pages/groups/live/LivePollProjector";
-import TinderSession from "./pages/groups/live/TinderSession";
+import RapidReview from "./pages/groups/live/RapidReview";
 import { PipelineTabWrapper } from "./components/groups/pipeline/PipelineTabWrapper";
 import SessionDetails from "./pages/groups/sessions/SessionDetails";
 import { PwaPrompt } from "./components/pwa/PwaPrompt";
@@ -111,7 +111,7 @@ const router = createBrowserRouter(
       <Route path="/groups/:slug/session/:sessionId/edit" element={<CreateSession />} />
       <Route path="/groups/:slug/live/:pollSlug/admin" element={<LivePollAdmin />} />
       <Route path="/groups/:slug/live/:pollSlug/projector" element={<LivePollProjector />} />
-      <Route path="/groups/:slug/live/:pollSlug/tinder" element={<TinderSession />} />
+      <Route path="/groups/:slug/live/:pollSlug/rapid-review" element={<RapidReview />} />
       <Route path="/groups/:slug/live/:pollSlug" element={<LivePollParticipant />} />
       <Route path="/groups/:slug/settings" element={<GroupSettings />} />
       <Route path="/groups/:slug/sessions/:sessionSlug/:sessionId" element={<GroupLayout />}>

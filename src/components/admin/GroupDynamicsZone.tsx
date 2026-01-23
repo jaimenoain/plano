@@ -28,7 +28,7 @@ export function GroupDynamicsZone({ hotGroups, sessionReliability }: GroupDynami
                 <TableHead>Group Name</TableHead>
                 <TableHead className="text-right">Members</TableHead>
                 <TableHead className="text-right">New (30d)</TableHead>
-                <TableHead className="text-right">Sessions (30d)</TableHead>
+                <TableHead className="text-right">Field Trips (30d)</TableHead>
                 <TableHead className="text-right">Activity Score</TableHead>
               </TableRow>
             </TableHeader>
@@ -50,13 +50,13 @@ export function GroupDynamicsZone({ hotGroups, sessionReliability }: GroupDynami
       <Card className="col-span-1">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <CardTitle>Session Reliability</CardTitle>
+            <CardTitle>Field Trip Reliability</CardTitle>
             <Tooltip>
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Percentage of published sessions that were completed (past date with activity).</p>
+                <p>Percentage of published field trips that were completed (past date with activity).</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -68,7 +68,7 @@ export function GroupDynamicsZone({ hotGroups, sessionReliability }: GroupDynami
             </div>
             <Progress value={reliabilityPercentage} className="w-full" />
             <p className="text-sm text-muted-foreground">
-              {sessionReliability.completed_count} completed out of {sessionReliability.published_count} published sessions.
+              {sessionReliability.completed_count} completed out of {sessionReliability.published_count} published trips.
             </p>
           </div>
         </CardContent>

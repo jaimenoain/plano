@@ -106,7 +106,7 @@ export default function GroupLayout() {
     const items = [];
 
     // Core items
-    items.push({ path: "", label: "Sessions", icon: Calendar });
+    items.push({ path: "", label: "Field Trips", icon: Calendar });
 
     if (activeTabs.includes("cycles")) items.push({ path: "cycles", label: "Cycles", icon: Repeat });
 

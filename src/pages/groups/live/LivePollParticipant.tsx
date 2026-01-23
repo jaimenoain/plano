@@ -108,7 +108,7 @@ export default function LivePollParticipant() {
       <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-center bg-black/20 backdrop-blur-sm z-10">
           <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="font-mono text-sm uppercase tracking-widest text-white/80">Live Session</span>
+              <span className="font-mono text-sm uppercase tracking-widest text-white/80">Live Event</span>
           </div>
           <Button variant="ghost" size="sm" className="text-white/50 hover:text-white" onClick={() => navigate(`/groups/${slug}/polls`)}>
               Exit
@@ -121,7 +121,7 @@ export default function LivePollParticipant() {
       return (
           <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
               {header}
-              <h1 className="text-4xl font-bold mb-4">Session Ended</h1>
+              <h1 className="text-4xl font-bold mb-4">Event Ended</h1>
               <p className="text-xl text-white/80">Thanks for participating!</p>
               <Button className="mt-8" onClick={() => navigate(`/groups/${slug}/polls`)}>
                   Back to Polls
@@ -137,7 +137,7 @@ export default function LivePollParticipant() {
               {header}
               <div className="w-full max-w-lg mt-12 mb-12">
                    <Leaderboard poll={poll} />
-                   <p className="text-center text-zinc-500 mt-8 animate-pulse">Waiting for host to end session...</p>
+                   <p className="text-center text-zinc-500 mt-8 animate-pulse">Waiting for host to end event...</p>
               </div>
           </div>
       );
