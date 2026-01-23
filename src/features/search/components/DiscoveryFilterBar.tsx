@@ -64,7 +64,7 @@ export function DiscoveryFilterBar({
       {/* Search Input */}
       <div className="flex-1 min-w-[200px]">
         <Input
-          placeholder="Search by name or architect..."
+          placeholder="Search buildings, architects..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full"
