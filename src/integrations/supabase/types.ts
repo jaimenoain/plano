@@ -1236,6 +1236,33 @@ export interface Database {
           avatar_url: string | null
         }[]
       }
+      search_buildings: {
+        Args: {
+          query_text?: string | null
+          location_coordinates?: Json | null
+          radius_meters?: number | null
+          filters?: Json | null
+          sort_by?: string | null
+        }
+        Returns: {
+          id: string
+          name: string
+          address: string | null
+          main_image_url: string | null
+          location_lat: number
+          location_lng: number
+          city: string | null
+          country: string | null
+          styles: string[] | null
+          distance_meters: number | null
+          social_context: string | null
+          social_score: number
+        }[]
+      }
+      get_discovery_filters: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
