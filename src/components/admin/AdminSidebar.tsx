@@ -5,6 +5,8 @@ import {
   Settings,
   LogOut,
   Merge,
+  ShieldAlert,
+  Image,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -42,6 +44,16 @@ const items = [
     title: "Users",
     url: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Moderation",
+    url: "/admin/moderation",
+    icon: ShieldAlert,
+  },
+  {
+    title: "Image Wall",
+    url: "/admin/images",
+    icon: Image,
   },
   {
     title: "System",

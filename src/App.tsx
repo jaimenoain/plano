@@ -53,6 +53,9 @@ import { logDiagnosticError } from "./api/diagnostics";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Buildings from "./pages/admin/Buildings";
 import MergeBuildings from "./pages/admin/MergeBuildings";
+import Users from "./pages/admin/Users";
+import Moderation from "./pages/admin/Moderation";
+import ImageWall from "./pages/admin/ImageWall";
 import { AdminGuard } from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import Unauthorized from "./pages/admin/Unauthorized";
@@ -100,7 +103,9 @@ const router = createBrowserRouter(
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/buildings" element={<Buildings />} />
         <Route path="/admin/merge" element={<MergeBuildings />} />
-        <Route path="/admin/users" element={<div>Users (Coming Soon)</div>} />
+        <Route path="/admin/users" element={<Users />} />
+        <Route path="/admin/moderation" element={<Moderation />} />
+        <Route path="/admin/images" element={<ImageWall />} />
         <Route path="/admin/system" element={<div>System (Coming Soon)</div>} />
       </Route>
 
