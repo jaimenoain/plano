@@ -9,6 +9,7 @@ import { Loader2, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
+import Supercluster from "supercluster";
 
 interface Building {
   id: string;
@@ -96,8 +97,82 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
     }
   });
 
-  const pins = useMemo(() => buildings?.map(building => {
-    const status = userBuildingsMap?.get(building.id);
+  // Clustering logic
+  const supercluster = useMemo(() => {
+    return new Supercluster({
+      radius: 40,
+      maxZoom: 16
+    });
+  }, []);
+
+  const points = useMemo(() => buildings?.map(b => ({
+    type: 'Feature' as const,
+    properties: { cluster: false, buildingId: b.id, ...b },
+    geometry: {
+      type: 'Point' as const,
+      coordinates: [b.location_lng, b.location_lat]
+    }
+  })) || [], [buildings]);
+
+  const [clusters, setClusters] = useState<any[]>([]);
+  const viewStateRef = useRef(viewState);
+  viewStateRef.current = viewState;
+
+  const updateClusters = useMemo(() => {
+    return () => {
+        if (!mapRef.current) return;
+        const bounds = mapRef.current.getBounds();
+        const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()] as [number, number, number, number];
+        const zoom = viewStateRef.current.zoom;
+        setClusters(supercluster.getClusters(bbox, Math.round(zoom)));
+    };
+  }, [supercluster]);
+
+  useEffect(() => {
+    supercluster.load(points);
+    updateClusters();
+  }, [points, supercluster, updateClusters]);
+
+  // Update clusters on map move
+  useEffect(() => {
+    updateClusters();
+  }, [viewState, updateClusters]);
+
+
+  const pins = useMemo(() => clusters.map(cluster => {
+    const [longitude, latitude] = cluster.geometry.coordinates;
+    const { cluster: isCluster, point_count: pointCount } = cluster.properties;
+
+    if (isCluster) {
+        return (
+            <Marker
+                key={`cluster-${cluster.id}`}
+                longitude={longitude}
+                latitude={latitude}
+                onClick={(e) => {
+                    e.originalEvent.stopPropagation();
+                    const expansionZoom = Math.min(
+                        supercluster.getClusterExpansionZoom(cluster.id),
+                        20
+                    );
+
+                    mapRef.current?.flyTo({
+                        center: [longitude, latitude],
+                        zoom: expansionZoom,
+                        duration: 500
+                    });
+                }}
+            >
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold shadow-md border-2 border-background cursor-pointer hover:scale-110 transition-transform">
+                    {pointCount}
+                </div>
+            </Marker>
+        );
+    }
+
+    // Leaf node
+    const building = cluster.properties as (Building & { buildingId: string });
+    const status = userBuildingsMap?.get(building.buildingId);
 
     // Pin Protocol:
     // Green: Visited
@@ -125,13 +200,13 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
 
     return (
         <Marker
-        key={building.id}
-        longitude={building.location_lng}
-        latitude={building.location_lat}
+        key={building.buildingId}
+        longitude={longitude}
+        latitude={latitude}
         anchor="bottom"
         onClick={(e) => {
             e.originalEvent.stopPropagation();
-            navigate(`/building/${building.id}`);
+            navigate(`/building/${building.buildingId}`);
         }}
         className="cursor-pointer hover:z-10"
         >
@@ -159,7 +234,7 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
             </div>
         </Marker>
     );
-  }), [buildings, navigate, userBuildingsMap]);
+  }), [clusters, navigate, userBuildingsMap, supercluster]);
 
   if (isLoading) {
     return (
