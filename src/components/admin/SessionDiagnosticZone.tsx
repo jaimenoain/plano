@@ -42,7 +42,7 @@ export function SessionDiagnosticZone() {
       if (!navigator.onLine) throw new Error("Browser is offline");
 
       // Check 2: Supabase Connection
-      const { error: dbError } = await supabase.from('profiles').select('count').limit(1).single();
+      const { error: dbError } = await supabase.from('profiles').select('id').limit(1).single();
       if (dbError) throw new Error(`Supabase connection failed: ${dbError.message}`);
 
       // Check 3: Log write access
