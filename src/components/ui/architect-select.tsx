@@ -165,6 +165,7 @@ export function ArchitectSelect({
             onBlur={() => setTimeout(() => setOpen(false), 200)}
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
+            autoComplete="off"
             className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px]"
           />
         </div>
