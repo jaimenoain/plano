@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DiscoveryBuilding } from "../components/types";
@@ -30,11 +30,11 @@ export function useBuildingSearch() {
   });
 
   // Search query
-  const { data: buildings, isLoading } = useQuery({
+  const { data: buildings, isLoading, isFetching } = useQuery({
     queryKey: ["search-buildings", debouncedQuery, selectedCity, selectedStyles, sortBy, userLocation],
     queryFn: async () => {
         const filters = {
-            cities: selectedCity === "all" ? [] : [selectedCity],
+            city: selectedCity === "all" ? null : selectedCity,
             styles: selectedStyles
         };
 
@@ -53,6 +53,7 @@ export function useBuildingSearch() {
         return data as DiscoveryBuilding[];
     },
     staleTime: 1000 * 60, // 1 min
+    placeholderData: keepPreviousData,
   });
 
   // Auto-switch to relevance on search/filter interaction
@@ -88,6 +89,7 @@ export function useBuildingSearch() {
       updateLocation,
       buildings: buildings || [],
       isLoading,
+      isFetching,
       availableCities: filterOptions?.cities || [],
       availableStyles: filterOptions?.styles || [],
   };

@@ -168,7 +168,7 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
       </MapGL>
 
       <div className="absolute top-4 left-4 bg-background/90 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-sm font-medium z-10">
-         {buildings?.length || 0} Buildings Nearby
+         {buildings?.length || 0} {buildings?.length === 1 ? 'Building' : 'Buildings'} Nearby
       </div>
     </div>
   );

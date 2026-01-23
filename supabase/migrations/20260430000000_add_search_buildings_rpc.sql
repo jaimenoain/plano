@@ -124,8 +124,11 @@ BEGIN
     AND
     -- Location Radius Filter
     (
-      v_lat IS NULL OR v_lng IS NULL OR
-      st_dwithin(b.location, st_point(v_lng, v_lat)::geography, v_radius)
+      v_city_filter IS NOT NULL OR v_country_filter IS NOT NULL OR
+      (
+        v_lat IS NULL OR v_lng IS NULL OR
+        st_dwithin(b.location, st_point(v_lng, v_lat)::geography, v_radius)
+      )
     )
     AND
     -- Text Query
