@@ -23,23 +23,36 @@ export default function GroupFeed() {
   const id = group?.id;
   const [showOffSession, setShowOffSession] = useState(false);
 
-  if (!isMember) {
-    return <JoinGroupPrompt group={group} />;
-  }
-
   // Fetch Building IDs
   const { data: allGroupBuildingIds = [] } = useQuery({
     queryKey: ["group-all-building-ids", id],
+    enabled: !!id && isMember,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Try fetching from session_buildings (new schema)
+      const { data: buildingsData, error: buildingsError } = await supabase
         .from("session_buildings")
         .select(`building_id, group_sessions!inner(group_id)`)
         .eq("group_sessions.group_id", id);
-      if (error) throw error;
-      const ids = data.map(d => d.building_id);
+
+      if (!buildingsError && buildingsData) {
+        const ids = buildingsData.map(d => d.building_id);
+        return Array.from(new Set(ids));
+      }
+
+      // Fallback to session_films (legacy schema)
+      const { data: filmsData, error: filmsError } = await supabase
+        .from("session_films" as any)
+        .select(`film_id, group_sessions!inner(group_id)`)
+        .eq("group_sessions.group_id", id);
+
+      if (filmsError) {
+        console.error("Failed to fetch session buildings/films", buildingsError, filmsError);
+        throw buildingsError || filmsError;
+      }
+
+      const ids = filmsData.map((d: any) => d.film_id);
       return Array.from(new Set(ids));
     },
-    enabled: !!id,
   });
 
   const {
@@ -50,6 +63,7 @@ export default function GroupFeed() {
     isLoading: entriesLoading
   } = useInfiniteQuery({
     queryKey: ["group-entries", id, showOffSession, allGroupBuildingIds],
+    enabled: !!id && !!group?.members && isMember && (showOffSession || allGroupBuildingIds.length > 0),
     queryFn: async ({ pageParam = 0 }) => {
       if (!group?.members) return [];
       // If we only show session buildings and there are none, return empty immediately
@@ -57,6 +71,7 @@ export default function GroupFeed() {
 
       const memberIds = group.members.map((m: any) => m.user.id);
       
+      // Try fetching from user_buildings (new schema)
       let query = supabase
         .from("user_buildings")
         .select(`
@@ -80,22 +95,78 @@ export default function GroupFeed() {
       }
 
       const { data, error } = await query;
-        
-      if (error) throw error;
 
-      return (data || []).map(entry => ({
-        ...entry,
-        likes_count: (entry as any).likes?.length || 0,
-        comments_count: (entry as any).comments?.[0]?.count || 0,
-        is_liked: ((entry as any).user_likes?.length || 0) > 0
+      if (!error) {
+        return (data || []).map(entry => ({
+          ...entry,
+          likes_count: (entry as any).likes?.length || 0,
+          comments_count: (entry as any).comments?.[0]?.count || 0,
+          is_liked: ((entry as any).user_likes?.length || 0) > 0
+        }));
+      }
+
+      // Fallback to log (legacy schema)
+      let legacyQuery = supabase
+        .from("log" as any)
+        .select(`
+          id, content, rating, created_at, edited_at, watched_at, tags, status,
+          user:profiles(id, username, avatar_url),
+          film:films(id, title, poster_path, release_date),
+          likes:likes(id),
+          comments:comments(count),
+          user_likes:likes(id)
+        `)
+        .in("user_id", memberIds)
+        .in("status", ["watched", "watchlist", "review"]) // Legacy statuses
+        .eq("user_likes.user_id", user?.id || '')
+        .order("edited_at", { ascending: false })
+        .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
+
+       if (!showOffSession) {
+        legacyQuery = legacyQuery.in("film_id", allGroupBuildingIds);
+      } else if (allGroupBuildingIds.length > 0) {
+        legacyQuery = legacyQuery.not("film_id", "in", `(${allGroupBuildingIds.join(',')})`);
+      }
+
+      const { data: legacyData, error: legacyError } = await legacyQuery;
+
+      if (legacyError) {
+         console.error("Failed to fetch user buildings/log", error, legacyError);
+         throw error || legacyError;
+      }
+
+      // Map legacy data to new shape
+      return (legacyData || []).map((entry: any) => ({
+        id: entry.id,
+        content: entry.content,
+        rating: entry.rating,
+        created_at: entry.created_at,
+        edited_at: entry.edited_at,
+        visited_at: entry.watched_at, // mapped
+        tags: entry.tags,
+        status: entry.status === 'watchlist' ? 'pending' : (entry.status === 'watched' ? 'visited' : entry.status), // mapped
+        user: entry.user,
+        building: {
+          id: entry.film?.id,
+          name: entry.film?.title, // mapped
+          main_image_url: entry.film?.poster_path ? `https://image.tmdb.org/t/p/w500${entry.film.poster_path}` : null, // mapped
+          address: null, // No address in legacy
+          year_completed: entry.film?.release_date ? parseInt(entry.film.release_date.substring(0, 4)) : null, // mapped
+        },
+        likes_count: entry.likes?.length || 0,
+        comments_count: entry.comments?.[0]?.count || 0,
+        is_liked: (entry.user_likes?.length || 0) > 0
       }));
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === PAGE_SIZE ? allPages.length : undefined;
     },
-    enabled: !!id && !!group?.members && (showOffSession || allGroupBuildingIds.length > 0),
     initialPageParam: 0,
   });
+
+  if (!isMember) {
+    return <JoinGroupPrompt group={group} />;
+  }
 
   const handleLike = async (reviewId: string) => {
     if (!user) return;
