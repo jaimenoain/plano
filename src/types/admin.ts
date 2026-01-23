@@ -130,10 +130,10 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
   },
   group_dynamics: {
     hot_groups: [
-      { group_id: '1', name: 'Cinema Club', member_count: 15, new_members_30d: 2, sessions_30d: 4, activity_score: 120 },
-      { group_id: '2', name: 'Horror Fans', member_count: 8, new_members_30d: 1, sessions_30d: 2, activity_score: 85 },
-      { group_id: '4', name: 'Scifi Geeks', member_count: 10, new_members_30d: 0, sessions_30d: 3, activity_score: 45 },
-      { group_id: '5', name: 'Documentary Crew', member_count: 5, new_members_30d: 0, sessions_30d: 0, activity_score: 10 },
+      { group_id: '1', name: 'Bauhaus Club', member_count: 15, new_members_30d: 2, sessions_30d: 4, activity_score: 120 },
+      { group_id: '2', name: 'Brutalism Fans', member_count: 8, new_members_30d: 1, sessions_30d: 2, activity_score: 85 },
+      { group_id: '4', name: 'Modernist Geeks', member_count: 10, new_members_30d: 0, sessions_30d: 3, activity_score: 45 },
+      { group_id: '5', name: 'Urban Planning Crew', member_count: 5, new_members_30d: 0, sessions_30d: 0, activity_score: 10 },
     ],
     session_reliability: {
       published_count: 15,
