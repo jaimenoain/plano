@@ -47,12 +47,12 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
   const fetchUserRating = async () => {
     if (!user) return;
     try {
-      // @ts-ignore - log table exists, user_buildings does not
+      // @ts-ignore
       const { data, error } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select("rating, status")
         .eq("user_id", user.id)
-        .eq("film_id", building.id)
+        .eq("building_id", building.id)
         .maybeSingle();
 
       if (error) throw error;
@@ -60,8 +60,8 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
       if (data) {
         setUserRating(data.rating);
         let status: BuildingStatus = null;
-        if (data.status === 'watchlist') status = 'pending';
-        else if (data.status === 'watched') status = 'visited';
+        if (data.status === 'pending') status = 'pending';
+        else if (data.status === 'visited') status = 'visited';
         setUserStatus(status);
       } else {
         setUserRating(null);
@@ -78,29 +78,29 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
     try {
         // @ts-ignore
         const { data: existingLog } = await supabase
-            .from("log")
+            .from("user_buildings")
             .select("id")
             .eq("user_id", user.id)
-            .eq("film_id", buildingId)
+            .eq("building_id", buildingId)
             .maybeSingle();
 
         if (existingLog) {
             // @ts-ignore
             const { error } = await supabase
-                .from("log")
-                .update({ rating })
+                .from("user_buildings")
+                .update({ rating, edited_at: new Date().toISOString() })
                 .eq("id", existingLog.id);
             if (error) throw error;
         } else {
             // @ts-ignore
             const { error } = await supabase
-                .from("log")
+                .from("user_buildings")
                 .insert({
                     user_id: user.id,
-                    film_id: buildingId,
+                    building_id: buildingId,
                     rating,
-                    status: 'watched', // Default to watched if rating directly
-                    updated_at: new Date().toISOString()
+                    status: 'visited', // Default to visited if rating directly
+                    edited_at: new Date().toISOString()
                 });
             if (error) throw error;
             setUserStatus('visited');

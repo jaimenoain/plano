@@ -84,7 +84,6 @@ export default function MergeBuildings() {
         .from('buildings')
         .select('*')
         .ilike('name', `%${query}%`)
-        .eq('is_deleted', false)
         .limit(10);
 
       if (error) throw error;

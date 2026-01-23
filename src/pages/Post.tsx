@@ -80,7 +80,7 @@ export default function Post() {
     if (!buildingId) return;
     // @ts-ignore
     const { data } = await supabase
-      .from("films")
+      .from("buildings")
       .select("*")
       .eq("id", buildingId)
       .single();
@@ -88,9 +88,9 @@ export default function Post() {
     if (data) {
         setBuildingDetails({
             ...data,
-            name: data.title,
-            main_image_url: data.poster_path,
-            year_completed: data.release_date ? parseInt(data.release_date.substring(0, 4)) : null
+            name: data.name,
+            main_image_url: data.main_image_url,
+            year_completed: data.year_completed
         });
     }
   };
@@ -101,16 +101,16 @@ export default function Post() {
     try {
       // @ts-ignore
       const { data: entry } = await supabase
-        .from("log")
+        .from("user_buildings")
         .select("*")
-        .eq("film_id", buildingId)
+        .eq("building_id", buildingId)
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (entry) {
         setExistingEntryId(entry.id);
-        const mappedStatus = entry.status === 'watchlist' ? 'pending' : 'visited';
-        setPostType(mappedStatus === "pending" ? "bucket_list" : "review");
+        const mappedStatus = entry.status === 'pending' ? 'bucket_list' : 'review';
+        setPostType(mappedStatus === "bucket_list" ? "bucket_list" : "review");
         if (entry.rating) setRating(entry.rating);
         if (entry.content) setContent(entry.content);
         if (entry.tags) setSelectedTags(entry.tags);
@@ -127,7 +127,7 @@ export default function Post() {
     if (!user) return;
     // @ts-ignore
     const { data } = await supabase
-      .from("log")
+      .from("user_buildings")
       .select("tags")
       .eq("user_id", user.id)
       .not("tags", "is", null);
@@ -144,10 +144,10 @@ export default function Post() {
 
     // @ts-ignore
     const { data } = await supabase
-      .from("log")
+      .from("user_buildings")
       .select("tags")
-      .eq("film_id", buildingId)
-      .eq("status", "watched")
+      .eq("building_id", buildingId)
+      .eq("status", "visited")
       .not("tags", "is", null);
 
     if (data) {
@@ -174,19 +174,19 @@ export default function Post() {
       if (!buildingId) throw new Error("No building ID");
 
       // @ts-ignore
-      const baseData = { user_id: user!.id, film_id: buildingId, visibility };
+      const baseData = { user_id: user!.id, building_id: buildingId, visibility };
       const isReview = postType === "review";
-      const dbStatus = isReview ? 'watched' : 'watchlist';
+      const dbStatus = isReview ? 'visited' : 'pending';
 
       // @ts-ignore
-      const { data: entryData, error } = await supabase.from("log").upsert({
+      const { data: entryData, error } = await supabase.from("user_buildings").upsert({
         ...baseData,
         status: dbStatus,
         rating: isReview ? rating : null,
         content: content.trim() || null,
         tags: selectedTags.length > 0 ? selectedTags : null,
-        updated_at: new Date().toISOString()
-      }, { onConflict: "user_id, film_id" } as any).select().single();
+        edited_at: new Date().toISOString()
+      }, { onConflict: "user_id, building_id" } as any).select().single();
 
       if (error) throw error;
 
@@ -214,7 +214,7 @@ export default function Post() {
     try {
       // @ts-ignore
       const { error } = await supabase
-        .from("log")
+        .from("user_buildings")
         .delete()
         .eq("id", existingEntryId);
 

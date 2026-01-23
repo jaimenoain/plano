@@ -6,7 +6,7 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
   const rpcPromise = supabase.rpc('get_admin_dashboard_stats');
 
   // 2. Start parallel queries for new metrics
-  const buildingsPromise = supabase.from('buildings').select('*', { count: 'exact', head: true }).eq('is_deleted', false);
+  const buildingsPromise = supabase.from('buildings').select('*', { count: 'exact', head: true });
   // Reviews: logs with content
   const reviewsPromise = supabase.from('user_buildings').select('*', { count: 'exact', head: true }).not('content', 'is', null);
   // Photos: buildings with main image
