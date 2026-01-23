@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { Architect } from "@/components/ui/architect-select";
 
 interface LocationData {
     lat: number;
@@ -25,6 +26,8 @@ interface NearbyBuilding {
   location_lng: number;
   dist_meters: number;
 }
+
+const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
 export default function EditBuilding() {
   const { id } = useParams();
@@ -84,10 +87,31 @@ export default function EditBuilding() {
           return;
       }
 
+      // Fetch Relations
+      // @ts-ignore
+      const { data: relations } = await supabase
+        .from('building_architects')
+        .select('architect:architects(id, name, type)')
+        .eq('building_id', id);
+
+      const relationArchitects = relations?.map((r: any) => r.architect) || [];
+
+      let finalArchitects: Architect[] = [];
+      if (relationArchitects.length > 0) {
+          finalArchitects = relationArchitects;
+      } else if (data.architects && data.architects.length > 0) {
+          // Legacy fallback
+          finalArchitects = data.architects.map((name: string) => ({
+              id: name, // Use name as ID for legacy (handled in submit)
+              name: name,
+              type: 'individual'
+          }));
+      }
+
       setInitialValues({
         name: data.name,
         year_completed: data.year_completed,
-        architects: data.architects || [],
+        architects: finalArchitects,
         styles: data.styles || [],
         description: data.description || "",
         main_image_url: data.main_image_url,
@@ -161,12 +185,14 @@ export default function EditBuilding() {
     setIsSubmitting(true);
 
     try {
+      const architectNames = formData.architects.map(a => a.name);
+
       const { error } = await supabase
         .from('buildings')
         .update({
           name: formData.name,
           year_completed: formData.year_completed,
-          architects: formData.architects,
+          architects: architectNames, // Maintain legacy array
           styles: formData.styles,
           description: formData.description,
           main_image_url: formData.main_image_url,
@@ -181,10 +207,53 @@ export default function EditBuilding() {
       if (error) {
         console.error("Update error:", error);
         toast.error("Failed to update building");
-      } else {
-        toast.success("Building updated successfully");
-        navigate(`/building/${id}`);
+        setIsSubmitting(false);
+        return;
       }
+
+      // Handle Junction Table
+      // 1. Resolve IDs for all architects
+      const resolvedIds: string[] = [];
+
+      for (const arch of formData.architects) {
+          if (isUUID(arch.id)) {
+              resolvedIds.push(arch.id);
+          } else {
+              // Legacy or Name-as-ID: Try to find or create
+              // @ts-ignore
+              const { data: existing } = await supabase.from('architects').select('id').eq('name', arch.name).maybeSingle();
+              if (existing) {
+                  resolvedIds.push(existing.id);
+              } else {
+                  // Create
+                  // @ts-ignore
+                  const { data: newArch, error: createError } = await supabase
+                    .from('architects')
+                    .insert({ name: arch.name, type: 'individual' })
+                    .select('id')
+                    .single();
+
+                  if (newArch) resolvedIds.push(newArch.id);
+                  if (createError) console.error("Error creating architect on save:", createError);
+              }
+          }
+      }
+
+      // 2. Clear existing links
+      // @ts-ignore
+      await supabase.from('building_architects').delete().eq('building_id', id);
+
+      // 3. Insert new links
+      if (resolvedIds.length > 0) {
+          const links = resolvedIds.map(aId => ({ building_id: id, architect_id: aId }));
+          // @ts-ignore
+          const { error: linkError } = await supabase.from('building_architects').insert(links);
+          if (linkError) console.error("Link error:", linkError);
+      }
+
+      toast.success("Building updated successfully");
+      navigate(`/building/${id}`);
+
     } catch (error) {
       console.error(error);
       toast.error("Unexpected error");

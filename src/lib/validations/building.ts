@@ -12,7 +12,14 @@ export const buildingSchema = z.object({
     .min(0, "Year must be positive")
     .max(new Date().getFullYear() + 10, "Year cannot be in the far future")
     .nullable()),
-  architects: z.array(z.string()),
+  // Updated to accept Architect objects
+  architects: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      type: z.enum(['individual', 'studio'])
+    })
+  ),
   styles: z.array(z.string()),
   description: z.string(), // We handle empty string as valid description
   main_image_url: z.string().nullable().optional(),

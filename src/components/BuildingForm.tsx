@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { TagInput } from "@/components/ui/tag-input";
 import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
 import { buildingSchema } from "@/lib/validations/building";
 import { toTitleCase } from "@/lib/utils";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
 
 const ARCHITECTURAL_STYLES = [
   "Brutalist",
@@ -24,7 +24,7 @@ const ARCHITECTURAL_STYLES = [
 export interface BuildingFormData {
   name: string;
   year_completed: number | null;
-  architects: string[];
+  architects: Architect[];
   styles: string[];
   description: string;
   main_image_url: string | null;
@@ -40,10 +40,11 @@ interface BuildingFormProps {
 export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel }: BuildingFormProps) {
   const [name, setName] = useState(initialValues.name);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
-  const [architects, setArchitects] = useState<string[]>(initialValues.architects);
+  const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
   const [styles, setStyles] = useState<string[]>(initialValues.styles);
   const [description, setDescription] = useState(initialValues.description);
 
+  // Mantenemos la lógica de estado de "main" para mostrar/ocultar campos
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
   const [showStyles, setShowStyles] = useState(initialValues.styles.length > 0);
@@ -71,7 +72,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         return;
       }
 
-      // Ensure types match BuildingFormData
       const formData: BuildingFormData = {
         ...validationResult.data,
         main_image_url: validationResult.data.main_image_url ?? null,
@@ -97,6 +97,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         />
       </div>
 
+      {/* SECCION 1: Año (Lógica visual de main + Input estándar) */}
       {showYear ? (
         <div className="space-y-2">
           <Label htmlFor="year_completed">Year Built</Label>
@@ -120,16 +121,17 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         </Button>
       )}
 
+      {/* SECCION 2: Arquitectos (Lógica visual de main + Componente ArchitectSelect de la nueva rama) */}
       {showArchitects ? (
         <div className="space-y-2">
           <Label>Architects</Label>
-          <TagInput
-            tags={architects}
-            setTags={setArchitects}
-            placeholder="Type and press Enter to add architect..."
+          <ArchitectSelect
+            selectedArchitects={architects}
+            setSelectedArchitects={setArchitects}
+            placeholder="Search architects or add new..."
           />
           <p className="text-xs text-muted-foreground">
-            Add multiple architects if applicable.
+            Add multiple architects if applicable. If not found, you can create a new one.
           </p>
         </div>
       ) : (
@@ -144,6 +146,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         </Button>
       )}
 
+      {/* SECCION 3: Estilos (Lógica visual de main + AutocompleteTagInput estándar) */}
       {showStyles ? (
         <div className="space-y-2">
           <Label>Architectural Styles</Label>
@@ -170,6 +173,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         </Button>
       )}
 
+      {/* SECCION 4: Descripción (Lógica visual de main + Textarea estándar) */}
       {showDescription ? (
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
