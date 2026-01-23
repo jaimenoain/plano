@@ -4,6 +4,7 @@ import {
   Users,
   Settings,
   LogOut,
+  Merge,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -31,6 +32,11 @@ const items = [
     title: "Buildings",
     url: "/admin/buildings",
     icon: Building2,
+  },
+  {
+    title: "Merge Duplicates",
+    url: "/admin/merge",
+    icon: Merge,
   },
   {
     title: "Users",
