@@ -206,14 +206,14 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
             </div>
 
             <div className="flex justify-between items-center gap-4">
-                <p className="text-sm font-medium">Your Rating</p>
+                <p className="text-sm font-medium">{userStatus === 'pending' ? 'Your Priority' : 'Your Rating'}</p>
                 <PersonalRatingButton
                     buildingId={building.id}
                     initialRating={userRating}
                     onRate={handleRate}
                     status={userStatus}
                     isLoading={ratingLoading}
-                    label="Rate"
+                    label={userStatus === 'pending' ? "Priority" : "Rate"}
                 />
             </div>
 
