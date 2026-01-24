@@ -165,7 +165,6 @@ export default function Buildings() {
           year_completed: formData.year_completed,
           architects: formData.architects,
           styles: formData.styles,
-          description: formData.description,
           main_image_url: formData.main_image_url,
 
           address: locationData.address,
@@ -330,7 +329,6 @@ export default function Buildings() {
                                 year_completed: editingBuilding.year_completed,
                                 architects: editingBuilding.architects || [],
                                 styles: editingBuilding.styles || [],
-                                description: editingBuilding.description || "",
                                 main_image_url: editingBuilding.main_image_url
                             }}
                             onSubmit={handleSaveBuilding}
