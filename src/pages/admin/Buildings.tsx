@@ -44,8 +44,8 @@ export default function Buildings() {
   // Edit State
   const [editingBuilding, setEditingBuilding] = useState<AdminBuilding | null>(null);
   const [locationData, setLocationData] = useState<{
-    lat: number;
-    lng: number;
+    lat: number | null;
+    lng: number | null;
     address: string;
     city: string | null;
     country: string | null;
@@ -134,8 +134,8 @@ export default function Buildings() {
 
   const openEditDialog = (building: AdminBuilding) => {
     // Parse location
-    let lat = 0;
-    let lng = 0;
+    let lat = null;
+    let lng = null;
 
     if (building.location) {
         if (typeof building.location === 'string') {
@@ -162,6 +162,11 @@ export default function Buildings() {
 
   const handleSaveBuilding = async (formData: BuildingFormData) => {
     if (!editingBuilding || !locationData) return;
+
+    if (locationData.lat === null || locationData.lng === null) {
+        toast.error("Please set location on the map tab");
+        return;
+    }
 
     try {
       const { error } = await supabase
