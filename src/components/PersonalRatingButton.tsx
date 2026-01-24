@@ -13,6 +13,7 @@ interface PersonalRatingButtonProps {
   status?: BuildingStatus;
   isLoading?: boolean; // Renamed from isPending for clarity
   label?: string;
+  variant?: 'popover' | 'inline';
   /**
    * Optional callback to be notified when the popover opens/closes
    */
@@ -26,6 +27,7 @@ export function PersonalRatingButton({
   status = 'visited', // Default to visited context if not provided
   isLoading = false,
   label = "Rate",
+  variant = 'popover',
   onOpenChange
 }: PersonalRatingButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,6 +73,51 @@ export function PersonalRatingButton({
     ? getRatingLabel(hoverRating)
     : (initialRating ? getRatingLabel(initialRating) : `${label} this building`);
 
+  const renderStars = () => (
+    <div className="flex flex-col items-center gap-2">
+      <div
+        className="flex items-center gap-1"
+        onMouseLeave={() => setHoverRating(null)}
+      >
+        {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
+          // Fill logic: if hovering, fill up to hoverRating. If not hovering, fill up to initialRating.
+          const isFilled = (hoverRating !== null ? star <= hoverRating : (initialRating || 0) >= star);
+
+          return (
+            <button
+              key={star}
+              type="button"
+              disabled={isLoading}
+              className={`
+                p-0.5 rounded-sm transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                ${isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
+              `}
+              onMouseEnter={() => setHoverRating(star)}
+              onClick={() => {
+                onRate(buildingId, star);
+                setIsOpen(false);
+              }}
+            >
+              <Star
+                className={`
+                  w-6 h-6 transition-colors
+                  ${isFilled ? "fill-primary text-primary" : "text-muted-foreground/20"}
+                `}
+              />
+            </button>
+          );
+        })}
+      </div>
+      <div className="text-xs font-medium text-muted-foreground h-4 text-center w-full">
+        {currentLabel}
+      </div>
+    </div>
+  );
+
+  if (variant === 'inline') {
+    return renderStars();
+  }
+
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
@@ -96,44 +143,7 @@ export function PersonalRatingButton({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-3" align="center" sideOffset={5}>
-        <div className="flex flex-col items-center gap-2">
-            <div
-            className="flex items-center gap-1"
-            onMouseLeave={() => setHoverRating(null)}
-            >
-            {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
-                // Fill logic: if hovering, fill up to hoverRating. If not hovering, fill up to initialRating.
-                const isFilled = (hoverRating !== null ? star <= hoverRating : (initialRating || 0) >= star);
-
-                return (
-                <button
-                    key={star}
-                    type="button"
-                    disabled={isLoading}
-                    className={`
-                        p-0.5 rounded-sm transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring
-                        ${isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
-                    `}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onClick={() => {
-                        onRate(buildingId, star);
-                        setIsOpen(false);
-                    }}
-                >
-                    <Star
-                    className={`
-                        w-6 h-6 transition-colors
-                        ${isFilled ? "fill-primary text-primary" : "text-muted-foreground/20"}
-                    `}
-                    />
-                </button>
-                );
-            })}
-            </div>
-            <div className="text-xs font-medium text-muted-foreground h-4 text-center w-full">
-                {currentLabel}
-            </div>
-        </div>
+        {renderStars()}
       </PopoverContent>
     </Popover>
   );

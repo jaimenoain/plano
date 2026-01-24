@@ -5,7 +5,7 @@ test('Verify Dual-Context Scoring System (Quality Mode)', async ({ page }) => {
 
   // 0. Setup Mock User Session
   await page.addInitScript(() => {
-    window.localStorage.setItem('sb-gyxspsuctbrxhwiyfvlj-auth-token', JSON.stringify({
+    window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
         access_token: "fake-token",
         refresh_token: "fake-refresh",
         expires_at: Math.floor(Date.now() / 1000) + 3600,
@@ -113,7 +113,10 @@ test('Verify Dual-Context Scoring System (Quality Mode)', async ({ page }) => {
   // Header logic: {userStatus === 'visited' ? 'Your Rating' : 'Your Interest'}
   // Initially userStatus is null, so it shows 'Your Interest'.
   await expect(page.getByText('Your Interest')).toBeVisible(); // Header
-  await expect(page.getByRole('button', { name: 'Rating' })).toBeVisible(); // Button Label
+
+  // NOTE: In Inline mode, the "Rating" button is replaced by stars directly.
+  // await expect(page.getByRole('button', { name: 'Rating' })).toBeVisible(); // Button Label - REMOVED
+
   await expect(page.getByText('(Priority)')).not.toBeVisible();
 
   // 3. Mark as Visited
@@ -124,31 +127,25 @@ test('Verify Dual-Context Scoring System (Quality Mode)', async ({ page }) => {
   await expect(page.getByText('Your Rating')).toBeVisible();
 
   // 4. Interaction with Rating
-  // Click the rating button to open popover
-  await page.getByRole('button', { name: 'Rating' }).click();
-
-  const popover = page.locator('[data-radix-popper-content-wrapper]');
-  await expect(popover).toBeVisible();
+  // Verify Stars are visible immediately (Inline)
+  // Replaced popover interaction with direct interaction
+  const stars = page.locator('button:has(svg.lucide-star)');
+  await expect(stars).toHaveCount(5);
 
   // Requirement 2: UI & Labeling Logic
   // Check for "Rating this building" text initially
-  await expect(popover.getByText('Rating this building')).toBeVisible();
-
-  // Requirement 3: Data Integrity & Constraints (1-5)
-  // Verify 5 stars exist
-  const stars = popover.locator('button > svg.lucide-star');
-  await expect(stars).toHaveCount(5);
+  await expect(page.getByText('Rating this building')).toBeVisible();
 
   // Requirement 4: Design Philosophy (Visual Feedback)
   // Hover over 1st star -> "Disappointing"
   const star1 = stars.nth(0);
   await star1.hover();
-  await expect(popover.getByText('Disappointing')).toBeVisible();
+  await expect(page.getByText('Disappointing')).toBeVisible();
 
   // Hover over 5th star -> "Masterpiece"
   const star5 = stars.nth(4);
   await star5.hover();
-  await expect(popover.getByText('Masterpiece')).toBeVisible();
+  await expect(page.getByText('Masterpiece')).toBeVisible();
 
   // Click 5th star (Rate 5)
   // We need to capture the request
@@ -169,7 +166,27 @@ test('Verify Dual-Context Scoring System (Quality Mode)', async ({ page }) => {
   expect(postData.user_id).toBe('user-uuid');
 
   // Verify UI update after rating
-  // The button should now show "5/5"
-  await expect(page.getByRole('button', { name: '5/5' })).toBeVisible();
+  // The inline component should stay inline, but maybe show selected state.
+  // In `PersonalRatingButton`, logic for "hasRated" inside `inline` variant:
+  /*
+      const renderStars = () => (
+         ...
+          {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
+             const isFilled = (hoverRating !== null ? star <= hoverRating : (initialRating || 0) >= star);
+             ...
+  */
+  // So the stars should update to reflect the new rating (filled).
+  // The test below originally checked for a button "5/5" which was the "hasRated" state of the Popover trigger button.
+  // await expect(page.getByRole('button', { name: '5/5' })).toBeVisible();
+
+  // In inline mode, there is no button "5/5". Instead, the 5 stars should be filled.
+  // We can verify that the label text changes to "Masterpiece" permanently (or at least while hovering? No, after click hover might be gone).
+  // If we move mouse away, hoverRating becomes null, so it falls back to initialRating.
+  // `getRatingLabel(initialRating)` for 5 is "Masterpiece".
+  // So we expect "Masterpiece" to be visible even without hover.
+
+  // Move mouse away to clear hover
+  await page.mouse.move(0, 0);
+  await expect(page.getByText('Masterpiece')).toBeVisible();
 
 });

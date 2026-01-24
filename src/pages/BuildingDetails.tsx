@@ -444,6 +444,7 @@ export default function BuildingDetails() {
                         onRate={handleRate}
                         status={userStatus || 'visited'}
                         label={userStatus === 'pending' ? "Priority" : "Rating"}
+                        variant="inline"
                     />
                     {userStatus === 'pending' && (
                         <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
