@@ -2,10 +2,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Star, Upload, X, Loader2, ImagePlus
+  ArrowLeft, Star, Upload, X, Loader2, ImagePlus, Link, Trash2, Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +38,10 @@ export default function WriteReview() {
   const [images, setImages] = useState<ReviewImage[]>([]);
   const [existingStatus, setExistingStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
 
+  const [links, setLinks] = useState<{ id: string, url: string, title: string }[]>([]);
+  const [newLinkUrl, setNewLinkUrl] = useState("");
+  const [newLinkTitle, setNewLinkTitle] = useState("");
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -55,7 +61,7 @@ export default function WriteReview() {
         if (user) {
           const { data: userBuilding, error: ubError } = await supabase
             .from("user_buildings")
-            .select("rating, content, status")
+            .select("id, rating, content, status")
             .eq("user_id", user.id)
             .eq("building_id", id)
             .maybeSingle();
@@ -66,6 +72,16 @@ export default function WriteReview() {
             if (userBuilding.rating) setRating(userBuilding.rating);
             if (userBuilding.content) setContent(userBuilding.content);
             setExistingStatus(userBuilding.status);
+
+            // Fetch Links
+            const { data: existingLinks } = await supabase
+              .from("review_links")
+              .select("id, url, title")
+              .eq("review_id", userBuilding.id);
+
+            if (existingLinks) {
+              setLinks(existingLinks);
+            }
           }
         }
       } catch (error) {
@@ -129,6 +145,41 @@ export default function WriteReview() {
     });
   };
 
+  const addLink = () => {
+    if (!newLinkUrl.trim()) {
+      toast({
+        variant: "destructive",
+        title: "URL required",
+        description: "Please enter a valid URL."
+      });
+      return;
+    }
+
+    try {
+      new URL(newLinkUrl); // Validate URL format
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Invalid URL",
+        description: "Please enter a valid URL (e.g. https://example.com)."
+      });
+      return;
+    }
+
+    setLinks(prev => [...prev, {
+      id: crypto.randomUUID(),
+      url: newLinkUrl,
+      title: newLinkTitle
+    }]);
+
+    setNewLinkUrl("");
+    setNewLinkTitle("");
+  };
+
+  const removeLink = (id: string) => {
+    setLinks(prev => prev.filter(l => l.id !== id));
+  };
+
   const handleSubmit = async () => {
     if (!user || !id) return;
     if (rating === 0) {
@@ -163,7 +214,32 @@ export default function WriteReview() {
 
       const reviewId = userBuilding.id;
 
-      // 2. Upload Images
+      // 2. Handle Links
+      // Delete existing links (simplest update strategy)
+      const { error: deleteLinksError } = await supabase
+        .from("review_links")
+        .delete()
+        .eq("review_id", reviewId);
+
+      if (deleteLinksError) throw deleteLinksError;
+
+      // Insert new links
+      if (links.length > 0) {
+        const linksPayload = links.map((l) => ({
+          review_id: reviewId,
+          user_id: user.id,
+          url: l.url,
+          title: l.title,
+        }));
+
+        const { error: insertLinksError } = await supabase
+          .from("review_links")
+          .insert(linksPayload);
+
+        if (insertLinksError) throw insertLinksError;
+      }
+
+      // 3. Upload Images
       if (images.length > 0) {
         const uploadPromises = images.map(async (img) => {
           const fileExt = "webp"; // We know we compressed to webp (mostly)
@@ -175,7 +251,7 @@ export default function WriteReview() {
 
           if (uploadError) throw uploadError;
 
-          // 3. Insert Image Record
+          // 4. Insert Image Record
           const { error: insertError } = await supabase
             .from('review_images')
             .insert({
@@ -272,6 +348,72 @@ export default function WriteReview() {
             onChange={(e) => setContent(e.target.value)}
             className="min-h-[150px] resize-none"
           />
+        </div>
+
+        {/* Resources & Links */}
+        <div className="space-y-4">
+          <Label className="text-sm font-medium uppercase text-muted-foreground">Resources & Links</Label>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                placeholder="https://..."
+                value={newLinkUrl}
+                onChange={(e) => setNewLinkUrl(e.target.value)}
+                className="flex-[2]"
+              />
+              <Input
+                placeholder="Title (optional)"
+                value={newLinkTitle}
+                onChange={(e) => setNewLinkTitle(e.target.value)}
+                className="flex-1"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addLink}
+              disabled={submitting}
+              className="w-full sm:w-auto self-start"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Link
+            </Button>
+          </div>
+
+          {links.length > 0 && (
+            <div className="space-y-2">
+              {links.map((link) => {
+                let domain = "";
+                try {
+                  domain = new URL(link.url).hostname;
+                } catch { }
+
+                return (
+                  <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="p-2 bg-background rounded border">
+                        <Link className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate text-sm">{link.title || link.url}</p>
+                        <p className="text-xs text-muted-foreground truncate">{domain}</p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeLink(link.id)}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Image Upload */}
