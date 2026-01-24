@@ -64,7 +64,7 @@ export function DiscoverySearchInput({
     clearSuggestions,
   } = usePlacesAutocomplete({
     requestOptions: {
-      types: ["(cities)"],
+      types: ["(regions)"],
     },
     debounce: 300,
     initOnMount: true,

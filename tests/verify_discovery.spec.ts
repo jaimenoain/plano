@@ -141,11 +141,11 @@ test('Verify Internal Discovery Engine (Forensic Audit)', async ({ page }) => {
   await page.goto('http://localhost:8080/search');
 
   // Verify Page Loaded
-  await expect(page.getByPlaceholder('Search buildings, architects, or locations...')).toBeVisible();
+  await expect(page.getByPlaceholder('Search buildings, architects...')).toBeVisible();
 
   // Test 1: Architect Search
   console.log('Testing Architect Search...');
-  await page.getByPlaceholder('Search buildings, architects, or locations...').fill('Zaha Hadid');
+  await page.getByPlaceholder('Search buildings, architects...').fill('Zaha Hadid');
 
   // Wait for results
   // Note: Scoping to Desktop container (.md:grid) and specific role to ensure uniqueness
@@ -154,8 +154,8 @@ test('Verify Internal Discovery Engine (Forensic Audit)', async ({ page }) => {
   // Test 2: Style Search (via text for now as it's easier to type)
   console.log('Testing Style Search...');
   // Clear first
-  await page.getByPlaceholder('Search buildings, architects, or locations...').fill('');
-  await page.getByPlaceholder('Search buildings, architects, or locations...').fill('Brutalist');
+  await page.getByPlaceholder('Search buildings, architects...').fill('');
+  await page.getByPlaceholder('Search buildings, architects...').fill('Brutalist');
 
   // Wait for results
   await expect(page.locator('.md\\:grid').getByRole('heading', { name: 'National Theatre' })).toBeVisible({ timeout: 5000 });
