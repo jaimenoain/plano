@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
-  Edit2, Check, Bookmark, Star
+  Edit2, Check, Bookmark, Star, MessageSquarePlus
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -396,18 +396,27 @@ export default function BuildingDetails() {
                 </div>
 
                 {/* PersonalRatingButton Integration */}
-                <div className="flex items-center gap-2">
-                    <PersonalRatingButton
-                        buildingId={building.id}
-                        initialRating={myRating}
-                        onRate={handleRate}
-                        status={userStatus || 'visited'}
-                        label={userStatus === 'pending' ? "Priority" : "Rating"}
-                        variant="inline"
-                    />
-                    {userStatus === 'pending' && (
-                        <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
-                    )}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <PersonalRatingButton
+                            buildingId={building.id}
+                            initialRating={myRating}
+                            onRate={handleRate}
+                            status={userStatus || 'visited'}
+                            label={userStatus === 'pending' ? "Priority" : "Rating"}
+                            variant="inline"
+                        />
+                        {userStatus === 'pending' && (
+                            <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
+                        )}
+                    </div>
+
+                    <Button variant="outline" size="sm" asChild>
+                        <Link to={`/building/${id}/review`}>
+                            <MessageSquarePlus className="w-4 h-4 mr-2" />
+                            {myRating > 0 ? "Edit Review" : "Write Review"}
+                        </Link>
+                    </Button>
                 </div>
 
                 {/* Note & Tags Editor */}
