@@ -13,7 +13,7 @@ interface BuildingMapProps {
   mapStyle?: string;
 }
 
-const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 export function BuildingMap({ 
   lat, 
