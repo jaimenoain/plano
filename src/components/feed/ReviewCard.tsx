@@ -233,11 +233,11 @@ export function ReviewCard({
   return (
     <article 
       onClick={handleCardClick}
-      className="group relative flex flex-col h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
+      className={`group relative flex flex-col ${(!hideBuildingInfo && posterUrl) ? 'md:grid md:grid-cols-[280px_1fr] md:min-h-[220px]' : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
     >
       {/* 1. Header: User Info - UX IMPROVED */}
       {!hideUser && (
-        <div className="p-1.5 md:p-3 flex items-center gap-1.5 md:gap-3 border-b border-border/40 bg-muted/20">
+        <div className="md:col-start-2 p-1.5 md:p-3 flex items-center gap-1.5 md:gap-3 border-b border-border/40 bg-muted/20">
           <Avatar className="h-10 w-10 md:h-12 md:w-12 border border-border/50 shadow-sm">
             <AvatarImage src={avatarUrl} />
             <AvatarFallback className="text-base md:text-lg font-bold bg-primary/10 text-primary">
@@ -257,7 +257,7 @@ export function ReviewCard({
 
       {/* 2. Poster Image - Updated for Architecture (4:3) */}
       {!hideBuildingInfo && posterUrl && (
-        <div className="aspect-[4/3] relative bg-secondary overflow-hidden">
+        <div className="aspect-[4/3] md:aspect-auto md:h-full md:col-start-1 md:row-start-1 md:row-span-2 relative bg-secondary overflow-hidden">
           <img
             src={posterUrl}
             alt={mainTitle || ""}
@@ -284,7 +284,7 @@ export function ReviewCard({
       )}
 
       {/* 3. Content Body */}
-      <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
+      <div className="md:col-start-2 flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
         {/* Building Name (Context) - Only if NOT hidden */}
         {!hideBuildingInfo && (
           <div className="mb-1">
