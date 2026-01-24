@@ -116,8 +116,8 @@ export default function AddBuilding() {
         if (!user) return new Map();
 
         const { data, error } = await supabase
-            .from("log")
-            .select("film_id, status")
+            .from("user_buildings")
+            .select("building_id, status")
             .eq("user_id", user.id);
 
         if (error) {
@@ -127,7 +127,7 @@ export default function AddBuilding() {
 
         const map = new Map();
         data.forEach((item: any) => {
-            map.set(item.film_id, item.status);
+            map.set(item.building_id, item.status);
         });
         return map;
     }
@@ -204,7 +204,6 @@ export default function AddBuilding() {
 
         try {
             const locationCheckPromise = supabase.rpc('find_nearby_buildings', {
-                // @ts-ignore - types are tricky with PostGIS/Json
                 lat: markerPosition.lat,
                 long: markerPosition.lng,
                 radius_meters: 50,
@@ -214,7 +213,6 @@ export default function AddBuilding() {
             // Only run name check if we have a name to check
             const nameCheckPromise = (queryName.length >= 3)
                 ? supabase.rpc('find_nearby_buildings', {
-                    // @ts-ignore
                     lat: markerPosition.lat,
                     long: markerPosition.lng,
                     radius_meters: 50000, // Wider 50km radius
@@ -375,13 +373,13 @@ export default function AddBuilding() {
       const dbStatus = status === 'pending' ? 'pending' : 'visited';
 
       const { error } = await supabase
-        .from("log")
+        .from("user_buildings")
         .upsert({
           user_id: user.id,
-          film_id: buildingId,
+          building_id: buildingId,
           status: dbStatus,
           created_at: new Date().toISOString() // upsert needs all required fields if insert happens
-        }, { onConflict: 'user_id, film_id' });
+        }, { onConflict: 'user_id, building_id' });
 
       if (error) throw error;
 
