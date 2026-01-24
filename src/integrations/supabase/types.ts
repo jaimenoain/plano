@@ -1294,6 +1294,18 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
+      get_people_you_may_know: {
+        Args: {
+          p_limit?: number
+        }
+        Returns: {
+          id: string
+          username: string | null
+          avatar_url: string | null
+          mutual_count: number
+          is_follows_me: boolean
+        }[]
+      },
       find_nearby_buildings: {
         Args: {
           lat: number
