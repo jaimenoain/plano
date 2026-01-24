@@ -16,6 +16,7 @@ interface ReviewCardProps {
   hideUser?: boolean;
   hideBuildingInfo?: boolean;
   imagePosition?: 'left' | 'right';
+  variant?: 'default' | 'compact';
 }
 
 export function ReviewCard({ 
@@ -26,7 +27,8 @@ export function ReviewCard({
   isDetailView = false, 
   hideUser = false,
   hideBuildingInfo = false,
-  imagePosition = 'left'
+  imagePosition = 'left',
+  variant = 'default'
 }: ReviewCardProps) {
   const navigate = useNavigate();
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
@@ -75,17 +77,33 @@ export function ReviewCard({
 
   let subTitle = entry.building.address;
 
-  const architectsList = (architects || []).slice(0, 2).join(", ");
-
-  if (architectsList) {
-      subTitle = architectsList;
-      if (year_completed) {
-          subTitle += ` • ${year_completed}`;
+  if (variant === 'compact') {
+      const parts = [];
+      if (architects && architects.length > 0) {
+          parts.push(architects.slice(0, 2).join(", "));
       }
-  } else if (year_completed) {
-      subTitle = `${year_completed}`;
-      if (entry.building.address) {
-           subTitle += ` • ${entry.building.address}`;
+      if (year_completed) {
+          parts.push(year_completed);
+      }
+
+      if (parts.length > 0) {
+          subTitle = parts.join(" • ");
+      } else {
+          subTitle = entry.building.address;
+      }
+  } else {
+      const architectsList = (architects || []).slice(0, 2).join(", ");
+
+      if (architectsList) {
+          subTitle = architectsList;
+          if (year_completed) {
+              subTitle += ` • ${year_completed}`;
+          }
+      } else if (year_completed) {
+          subTitle = `${year_completed}`;
+          if (entry.building.address) {
+              subTitle += ` • ${entry.building.address}`;
+          }
       }
   }
 
@@ -98,6 +116,8 @@ export function ReviewCard({
   const gridCols = imagePosition === 'right' ? 'md:grid-cols-[1fr_280px]' : 'md:grid-cols-[280px_1fr]';
   const mediaCol = imagePosition === 'right' ? 'md:col-start-2' : 'md:col-start-1';
   const contentCol = imagePosition === 'right' ? 'md:col-start-1' : 'md:col-start-2';
+
+  const isCompact = variant === 'compact';
 
   // --- 1. DETAIL VIEW (List View) ---
   if (isDetailView) {
@@ -224,7 +244,7 @@ export function ReviewCard({
     <article 
       onClick={handleCardClick}
       // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-      className={`group relative flex flex-col ${hasMedia ? `md:grid ${gridCols} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
+      className={`group relative flex flex-col ${!isCompact && hasMedia ? `md:grid ${gridCols} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
     >
       {/* 1. Header: User Info - UX IMPROVED */}
       {!hideUser && (
@@ -249,54 +269,83 @@ export function ReviewCard({
       {/* 2. Media Section (Gallery OR Poster) */}
       {!hideBuildingInfo && (
         entry.images && entry.images.length > 0 ? (
-          // OPTION A: User Images Gallery
-          // MERGE FIX: Added grid positioning classes (md:col-start-1...) to match Poster layout
-          <div className={`relative w-full overflow-hidden bg-secondary ${mediaCol} md:row-start-1 md:row-span-2 md:h-full`}>
-             <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full">
-                {entry.images.map((image) => (
-                  <div key={image.id} className="relative flex-none w-full aspect-[4/3] md:aspect-auto md:h-full snap-center bg-secondary">
-                     {!failedImages.has(image.id) ? (
-                       <img
-                         src={image.url}
-                         alt="Review photo"
-                         className="w-full h-full object-cover"
-                         onError={() => setFailedImages(prev => new Set(prev).add(image.id))}
-                       />
-                     ) : (
-                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                         <ImageIcon className="w-8 h-8 opacity-50" />
-                       </div>
-                     )}
-                     {/* Image Like Overlay */}
-                     <div className="absolute bottom-2 right-2 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-full z-10 min-w-[44px] min-h-[44px]">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onImageLike?.(entry.id, image.id);
-                          }}
-                          className="flex items-center justify-center gap-1.5 text-white hover:text-red-400 transition-colors w-full h-full px-3 py-1.5"
-                        >
-                          <Heart
-                             className={`w-4 h-4 ${image.is_liked ? "fill-red-500 text-red-500" : "text-white"}`}
-                          />
-                          <span className="text-xs font-medium text-white">{image.likes_count}</span>
-                        </button>
-                     </div>
-                  </div>
+          isCompact && entry.images.length > 1 ? (
+             // COMPACT GRID LAYOUT
+             <div className={`relative w-full aspect-[4/3] bg-secondary ${mediaCol} overflow-hidden grid grid-cols-2 gap-0.5`}>
+                {entry.images.slice(0, 4).map((image, index) => (
+                    <div key={image.id} className="relative w-full h-full">
+                       {!failedImages.has(image.id) ? (
+                           <img
+                             src={image.url}
+                             alt="Review photo"
+                             className="w-full h-full object-cover"
+                             onError={() => setFailedImages(prev => new Set(prev).add(image.id))}
+                           />
+                       ) : (
+                           <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
+                             <ImageIcon className="w-4 h-4 opacity-50" />
+                           </div>
+                       )}
+
+                       {/* Overlay for 4th image if more */}
+                       {index === 3 && entry.images!.length > 4 && (
+                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                               <span className="text-white font-bold text-sm">+{entry.images!.length - 3}</span>
+                           </div>
+                       )}
+                    </div>
                 ))}
              </div>
-             {/* Pagination Dots (if multiple) */}
-             {entry.images.length > 1 && (
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-                   {entry.images.map((_, i) => (
-                      <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/50" />
-                   ))}
-                </div>
-             )}
-          </div>
+          ) : (
+            // OPTION A: User Images Gallery (Standard Carousel)
+            // MERGE FIX: Added grid positioning classes (md:col-start-1...) to match Poster layout
+            <div className={`relative w-full overflow-hidden bg-secondary ${mediaCol} ${!isCompact ? 'md:row-start-1 md:row-span-2 md:h-full' : ''}`}>
+               <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full">
+                  {entry.images.map((image) => (
+                    <div key={image.id} className={`relative flex-none w-full aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} snap-center bg-secondary`}>
+                       {!failedImages.has(image.id) ? (
+                         <img
+                           src={image.url}
+                           alt="Review photo"
+                           className="w-full h-full object-cover"
+                           onError={() => setFailedImages(prev => new Set(prev).add(image.id))}
+                         />
+                       ) : (
+                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                           <ImageIcon className="w-8 h-8 opacity-50" />
+                         </div>
+                       )}
+                       {/* Image Like Overlay */}
+                       <div className="absolute bottom-2 right-2 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-full z-10 min-w-[44px] min-h-[44px]">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onImageLike?.(entry.id, image.id);
+                            }}
+                            className="flex items-center justify-center gap-1.5 text-white hover:text-red-400 transition-colors w-full h-full px-3 py-1.5"
+                          >
+                            <Heart
+                               className={`w-4 h-4 ${image.is_liked ? "fill-red-500 text-red-500" : "text-white"}`}
+                            />
+                            <span className="text-xs font-medium text-white">{image.likes_count}</span>
+                          </button>
+                       </div>
+                    </div>
+                  ))}
+               </div>
+               {/* Pagination Dots (if multiple) */}
+               {entry.images.length > 1 && (
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                     {entry.images.map((_, i) => (
+                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/50" />
+                     ))}
+                  </div>
+               )}
+            </div>
+          )
         ) : posterUrl ? (
           // OPTION B: Building Poster (Fallback)
-          <div className={`aspect-[4/3] md:aspect-auto md:h-full ${mediaCol} md:row-start-1 md:row-span-2 relative bg-secondary overflow-hidden`}>
+          <div className={`aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} ${mediaCol} ${!isCompact ? 'md:row-start-1 md:row-span-2' : ''} relative bg-secondary overflow-hidden`}>
             <img
               src={posterUrl}
               alt={mainTitle || ""}
