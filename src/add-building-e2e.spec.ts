@@ -5,7 +5,7 @@ test('End-to-End Add Building Verification', async ({ page }) => {
 
   // 0. Setup Mock User Session
   await page.addInitScript(() => {
-    window.localStorage.setItem('sb-gyxspsuctbrxhwiyfvlj-auth-token', JSON.stringify({
+    window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
         access_token: "fake-token",
         refresh_token: "fake-refresh",
         expires_at: Math.floor(Date.now() / 1000) + 3600,

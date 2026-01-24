@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('Verify Internal Discovery Engine (Forensic Audit)', async ({ page }) => {
   // 1. Setup Mock User Session (using the same as verify_scoring)
   await page.addInitScript(() => {
-    window.localStorage.setItem('sb-gyxspsuctbrxhwiyfvlj-auth-token', JSON.stringify({
+    window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
         access_token: "fake-token",
         refresh_token: "fake-refresh",
         expires_at: Math.floor(Date.now() / 1000) + 3600,
