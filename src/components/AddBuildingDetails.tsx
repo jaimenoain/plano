@@ -57,7 +57,12 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           location: `POINT(${locationData.lng} ${locationData.lat})`,
 
           created_by: user.id,
-          styles: data.styles,
+          // @ts-ignore: New columns might not be in generated types yet
+          functional_category_id: data.functional_category_id,
+          // @ts-ignore
+          functional_typology_ids: data.functional_typology_ids,
+          // @ts-ignore
+          selected_attribute_ids: data.selected_attribute_ids,
           architects: architectNames // Maintain legacy array of strings
         })
         .select()
@@ -124,7 +129,9 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     name: locationData.name || "",
     year_completed: null,
     architects: [],
-    styles: [],
+    functional_category_id: "",
+    functional_typology_ids: [],
+    selected_attribute_ids: [],
     main_image_url: null,
   };
 

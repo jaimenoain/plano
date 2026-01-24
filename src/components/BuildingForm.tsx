@@ -7,6 +7,17 @@ import { buildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { FunctionalCategory, FunctionalTypology, AttributeGroup, Attribute } from "@/types/classification";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export interface BuildingFormData {
   name: string;
@@ -39,6 +50,74 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
   // Logic for showing/hiding classification fields could be added here
   // const [showClassification, setShowClassification] = useState(...);
+
+  const handleCategoryChange = (value: string) => {
+    setCategoryId(value);
+    setTypologyIds([]); // Clear typologies when category changes
+  };
+
+  const handleAttributeGroupChange = (groupId: string, newGroupSelection: string[]) => {
+    // Find all attributes belonging to this group
+    const groupAttributeIds = attributes
+      ?.filter((attr) => attr.attribute_group_id === groupId)
+      .map((attr) => attr.id) || [];
+
+    // Filter out any attributes from this group from the current selection
+    const otherAttributes = selected_attribute_ids.filter(
+      (id) => !groupAttributeIds.includes(id)
+    );
+
+    // Combine other attributes with the new selection for this group
+    setAttributeIds([...otherAttributes, ...newGroupSelection]);
+  };
+
+  const { data: categories } = useQuery({
+    queryKey: ["functional_categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("functional_categories")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data as FunctionalCategory[];
+    },
+  });
+
+  const { data: typologies } = useQuery({
+    queryKey: ["functional_typologies"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("functional_typologies")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data as FunctionalTypology[];
+    },
+  });
+
+  const { data: attributeGroups } = useQuery({
+    queryKey: ["attribute_groups"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("attribute_groups")
+        .select("*")
+        .order("name"); // or sort_order if available, using name for now
+      if (error) throw error;
+      return data as AttributeGroup[];
+    },
+  });
+
+  const { data: attributes } = useQuery({
+    queryKey: ["attributes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("attributes")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data as Attribute[];
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,29 +219,91 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
       )}
 
       {/* SECCION 3: Classification (Categories & Typologies) */}
-      <div className="space-y-4 border rounded-md p-4">
-        <h3 className="text-sm font-medium">Classification</h3>
-        {/* TODO: Add FunctionalCategorySelect component here */}
-        <div className="text-sm text-muted-foreground italic">
-          Category selector to be implemented.
-          (Current ID: {functional_category_id || "None"})
+      <div className="space-y-6 border rounded-md p-4">
+        <h3 className="text-sm font-medium">Function</h3>
+
+        <div className="space-y-3">
+          <Label>Category</Label>
+          <Select value={functional_category_id} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories?.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* TODO: Add FunctionalTypologySelect component here */}
-         <div className="text-sm text-muted-foreground italic">
-          Typology selector to be implemented.
-          (Selected: {functional_typology_ids.length})
+        <div className="space-y-3">
+          <Label>Typology</Label>
+          {!functional_category_id ? (
+            <p className="text-sm text-muted-foreground italic">
+              Please select a category first to see available typologies.
+            </p>
+          ) : (
+            <ToggleGroup
+              type="multiple"
+              variant="outline"
+              value={functional_typology_ids}
+              onValueChange={setTypologyIds}
+              className="justify-start flex-wrap gap-2"
+            >
+              {typologies
+                ?.filter((t) => t.functional_category_id === functional_category_id)
+                .map((typology) => (
+                  <ToggleGroupItem
+                    key={typology.id}
+                    value={typology.id}
+                    className="h-8 text-sm px-3"
+                  >
+                    {typology.name}
+                  </ToggleGroupItem>
+                ))}
+            </ToggleGroup>
+          )}
         </div>
       </div>
 
       {/* SECCION 4: Attributes */}
-      <div className="space-y-4 border rounded-md p-4">
-        <h3 className="text-sm font-medium">Attributes</h3>
-        {/* TODO: Add AttributeSelect component here */}
-        <div className="text-sm text-muted-foreground italic">
-          Attribute selector to be implemented.
-           (Selected: {selected_attribute_ids.length})
-        </div>
+      <div className="space-y-6 border rounded-md p-4">
+        <h3 className="text-sm font-medium">Characteristics</h3>
+
+        {attributeGroups?.map((group) => {
+          const groupAttributes = attributes?.filter(
+            (attr) => attr.attribute_group_id === group.id
+          );
+
+          if (!groupAttributes || groupAttributes.length === 0) return null;
+
+          return (
+            <div key={group.id} className="space-y-3">
+              <Label className="text-xs uppercase text-muted-foreground tracking-wider">
+                {group.name}
+              </Label>
+              <ToggleGroup
+                type="multiple"
+                variant="outline"
+                value={selected_attribute_ids}
+                onValueChange={(newSelection) => handleAttributeGroupChange(group.id, newSelection)}
+                className="justify-start flex-wrap gap-2"
+              >
+                {groupAttributes.map((attr) => (
+                  <ToggleGroupItem
+                    key={attr.id}
+                    value={attr.id}
+                    className="h-8 text-sm px-3"
+                  >
+                    {attr.name}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+          );
+        })}
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>

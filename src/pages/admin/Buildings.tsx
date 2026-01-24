@@ -164,7 +164,12 @@ export default function Buildings() {
           name: formData.name,
           year_completed: formData.year_completed,
           architects: formData.architects,
-          styles: formData.styles,
+          // @ts-ignore
+          functional_category_id: formData.functional_category_id,
+          // @ts-ignore
+          functional_typology_ids: formData.functional_typology_ids,
+          // @ts-ignore
+          selected_attribute_ids: formData.selected_attribute_ids,
           main_image_url: formData.main_image_url,
 
           address: locationData.address,
@@ -328,7 +333,9 @@ export default function Buildings() {
                                 name: editingBuilding.name,
                                 year_completed: editingBuilding.year_completed,
                                 architects: editingBuilding.architects || [],
-                                styles: editingBuilding.styles || [],
+                                functional_category_id: (editingBuilding as any).functional_category_id || "",
+                                functional_typology_ids: (editingBuilding as any).functional_typology_ids || [],
+                                selected_attribute_ids: (editingBuilding as any).selected_attribute_ids || [],
                                 main_image_url: editingBuilding.main_image_url
                             }}
                             onSubmit={handleSaveBuilding}
