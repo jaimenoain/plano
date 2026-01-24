@@ -15,22 +15,12 @@ export function DiscoveryBuildingCard({
   socialContext,
   distance,
 }: DiscoveryBuildingCardProps) {
-  const imageUrl = building.main_image_url || "/placeholder.svg";
+  const imageUrl = building.main_image_url;
 
   return (
     <Link to={`/building/${building.id}`} className="block">
       <Card className="overflow-hidden hover:shadow-md transition-shadow group">
         <div className="flex flex-row">
-          {/* Image */}
-          <div className="w-32 h-32 relative shrink-0">
-            <img
-              src={imageUrl}
-              alt={building.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-
           {/* Content */}
           <div className="flex flex-col flex-1 p-3 justify-center">
             <div className="flex justify-between items-start gap-2">
@@ -62,6 +52,18 @@ export function DiscoveryBuildingCard({
               )}
             </div>
           </div>
+
+          {/* Image */}
+          {imageUrl && (
+            <div className="w-32 h-32 relative shrink-0">
+              <img
+                src={imageUrl}
+                alt={building.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
         </div>
       </Card>
     </Link>
