@@ -1,6 +1,6 @@
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trophy, Locate, Check } from "lucide-react";
+import { DiscoverySearchInput } from "./DiscoverySearchInput";
 
 export interface DiscoveryFilterBarProps {
   searchQuery: string;
@@ -11,6 +11,7 @@ export interface DiscoveryFilterBarProps {
   onBucketListChange: (value: boolean) => void;
   onShowLeaderboard?: () => void;
   onUseLocation?: () => void;
+  onLocationSelect?: (location: { lat: number; lng: number }) => void;
 }
 
 export function DiscoveryFilterBar({
@@ -22,16 +23,18 @@ export function DiscoveryFilterBar({
   onBucketListChange,
   onShowLeaderboard,
   onUseLocation,
+  onLocationSelect,
 }: DiscoveryFilterBarProps) {
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-background border-b md:flex-row md:items-center md:justify-between sticky top-0 z-10">
       {/* Search Input */}
       <div className="flex-1 min-w-[200px]">
-        <Input
-          placeholder="Search buildings, architects..."
+        <DiscoverySearchInput
+          placeholder="Search buildings, architects, or locations..."
           value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onSearchChange={onSearchChange}
+          onLocationSelect={onLocationSelect || (() => {})}
           className="w-full"
         />
       </div>
