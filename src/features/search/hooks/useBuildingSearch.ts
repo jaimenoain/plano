@@ -48,7 +48,7 @@ export function useBuildingSearch() {
         return await searchBuildingsRpc({
             query_text: debouncedQuery || null,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
-            radius_meters: 500000, // 500km radius
+            radius_meters: 20000000, // 20,000km radius (Global)
             filters: filters,
             sort_by: sortBy
         });
