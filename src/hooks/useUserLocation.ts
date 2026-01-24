@@ -11,30 +11,36 @@ export function useUserLocation() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const requestLocation = () => {
-    if (!navigator.geolocation) {
-      const msg = "Geolocation is not supported by your browser";
-      setError(msg);
-      toast.error(msg);
-      return;
-    }
-
-    setIsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        setIsLoading(false);
-        toast.success("Location updated");
-      },
-      (err) => {
-        setError(err.message);
-        setIsLoading(false);
-        toast.error("Unable to retrieve location: " + err.message);
+  const requestLocation = (): Promise<Location | null> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        const msg = "Geolocation is not supported by your browser";
+        setError(msg);
+        toast.error(msg);
+        resolve(null);
+        return;
       }
-    );
+
+      setIsLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setLocation(newLocation);
+          setIsLoading(false);
+          toast.success("Location updated");
+          resolve(newLocation);
+        },
+        (err) => {
+          setError(err.message);
+          setIsLoading(false);
+          toast.error("Unable to retrieve location: " + err.message);
+          resolve(null);
+        }
+      );
+    });
   };
 
   return { location, error, isLoading, requestLocation };
