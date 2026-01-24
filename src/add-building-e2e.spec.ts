@@ -80,6 +80,34 @@ test('End-to-End Add Building Verification', async ({ page }) => {
             location_lng: -0.1279,
             dist_meters: 20,
             similarity_score: 1.0,
+            main_image_url: 'http://example.com/img.jpg'
+        },
+        {
+            id: 'uuid-existing-2',
+            name: 'Test Building Duplicate Name',
+            address: '500 Far Away St',
+            location_lat: 52.0000,
+            location_lng: -0.2000,
+            dist_meters: 60000,
+            similarity_score: 0.9,
+            main_image_url: null
+        }
+    ];
+    await route.fulfill({ json });
+  });
+
+  // Mock Supabase RPC search_buildings
+  await page.route('**/rest/v1/rpc/search_buildings', async route => {
+    console.log("Mock search_buildings intercepted");
+    const json = [
+        {
+            id: 'uuid-existing-1',
+            name: 'Nearby Building',
+            address: '10 Nearby St',
+            location_lat: 51.5075,
+            location_lng: -0.1279,
+            dist_meters: 20,
+            similarity_score: 1.0,
             main_image_url: 'http://example.com/img.jpg',
         }
     ];
@@ -193,7 +221,17 @@ test('End-to-End Add Building Verification', async ({ page }) => {
   await page.getByRole('button', { name: 'Add Description' }).click();
 
   await page.getByLabel('Year Built').fill('2024');
-  await page.getByLabel('Description').fill('A test building description');
+  await page.getByLabel('Description').fill('A test building description.');
+
+  // Architects is a TagInput. Type and Enter.
+  const architectInput = page.getByPlaceholder('Search architects or add new...');
+  await architectInput.fill('Zaha Hadid');
+  await architectInput.press('Enter');
+
+  // Styles is AutocompleteTagInput.
+  const styleInput = page.getByPlaceholder('Type to search or add style...');
+  await styleInput.fill('Futurism');
+  await styleInput.press('Enter');
 
   // Skip submission verification as it's flaky in this environment
   // and my task was to fix the duplicate dialog buttons.

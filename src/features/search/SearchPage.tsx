@@ -26,6 +26,14 @@ export default function SearchPage() {
   const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
   const [lastFlownCity, setLastFlownCity] = useState<string>("all");
 
+  const handleUseLocation = async () => {
+    const loc = await requestLocation();
+    if (loc) {
+      setFlyToCenter(loc);
+      setSelectedCity("all");
+    }
+  };
+
   // Handle city fly-to logic
   useEffect(() => {
     if (selectedCity !== "all" && selectedCity !== lastFlownCity && buildings.length > 0) {
@@ -59,7 +67,7 @@ export default function SearchPage() {
                 sortBy={sortBy}
                 onSortChange={setSortBy}
                 onShowLeaderboard={() => setShowLeaderboard(true)}
-                onUseLocation={requestLocation}
+                onUseLocation={handleUseLocation}
             />
         </div>
 

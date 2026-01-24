@@ -68,7 +68,25 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
       const buildingId = insertedData.id;
 
-      // 3. Insert Architect Links (Junction Table Logic)
+      // 3. Insert User Building (Auto-add to creator's list)
+      try {
+        const { error: userBuildingError } = await supabase
+          .from('user_buildings')
+          .insert({
+            user_id: user.id,
+            building_id: buildingId,
+            status: 'visited',
+            created_at: new Date().toISOString()
+          });
+
+        if (userBuildingError) {
+          console.warn("Failed to auto-add to user list", userBuildingError);
+        }
+      } catch (err) {
+        console.warn("Exception auto-adding to user list", err);
+      }
+
+      // 4. Insert Architect Links (Junction Table Logic)
       if (data.architects.length > 0) {
           try {
             const links = data.architects.map(a => ({
@@ -90,14 +108,14 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           }
       }
 
-      // 4. Success State
+      // 5. Success State
       toast.success("Building added successfully!");
       setNewBuilding({ id: insertedData.id, name: insertedData.name });
       setShowVisitDialog(true);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding building:", error);
-      toast.error("Failed to save building.");
+      toast.error(`Failed to save building: ${error.message || "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
     }

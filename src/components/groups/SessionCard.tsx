@@ -92,13 +92,24 @@ export function SessionCard({
   const [commentsLimit, setCommentsLimit] = useState(3);
   const [commentInput, setCommentInput] = useState("");
 
-  const sDate = new Date(session.session_date);
-  const isPast = new Date() > sDate;
+  const parseSessionDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    if (dateStr.length === 10 && !dateStr.includes('T')) {
+      return new Date(`${dateStr}T00:00:00`);
+    }
+    return new Date(dateStr);
+  };
+
+  const sDate = parseSessionDate(session.session_date);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
   const sessionDate = new Date(sDate);
   sessionDate.setHours(0, 0, 0, 0);
+
+  // Only mark as past if the day has fully passed
+  const isPast = today > sessionDate;
   const isAfterToday = sessionDate > today;
 
   const hasHistory = globalRankingData?.length > 0;
@@ -189,16 +200,29 @@ export function SessionCard({
   const rateBuilding = useMutation({
     mutationFn: async ({ buildingId, rating }: { buildingId: string, rating: number }) => {
       if (!user) throw new Error("Must be logged in");
-      // Use legacy 'log' table
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: existingLogs } = await (supabase as any).from("log").select("id").eq("user_id", user.id).eq("film_id", buildingId);
+
+      const { data: existingLogs } = await supabase
+        .from("user_buildings")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("building_id", buildingId);
+
       if (existingLogs?.[0]) {
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         const { error } = await (supabase as any).from("log").update({ rating }).eq("id", existingLogs[0].id);
+         const { error } = await supabase
+           .from("user_buildings")
+           .update({ rating })
+           .eq("id", existingLogs[0].id);
          if (error) throw error;
       } else {
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         const { error } = await (supabase as any).from("log").insert({ user_id: user.id, film_id: buildingId, rating, visited_at: new Date().toISOString() });
+         const { error } = await supabase
+           .from("user_buildings")
+           .insert({
+             user_id: user.id,
+             building_id: buildingId,
+             rating,
+             visited_at: new Date().toISOString(),
+             status: 'visited'
+           });
          if (error) throw error;
       }
     },

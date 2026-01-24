@@ -259,7 +259,11 @@ export default function CreateSession() {
       if (error) throw error;
       
       if (data) {
-        setDate(new Date(data.session_date));
+        if (data.session_date.includes('T')) {
+          setDate(new Date(data.session_date));
+        } else {
+          setDate(new Date(`${data.session_date}T00:00:00`));
+        }
         setTitle(data.title || "");
         setDescription(data.description || "");
         setHostNotes(data.host_notes || "");
@@ -431,7 +435,7 @@ export default function CreateSession() {
         title: title || format(date, "MMMM do 'Field Trip'"),
         description,
         host_notes: hostNotes,
-        session_date: date.toISOString(),
+        session_date: format(date, "yyyy-MM-dd"),
         resources: resources as unknown as any,
         cycle_id: selectedCycleId,
         status: finalStatus,

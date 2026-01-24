@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { Loader2, Plus, Sparkles, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BacklogItemCard } from "./BacklogItemCard";
@@ -78,17 +79,15 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
     queryFn: async () => {
       if (!debouncedSearch || debouncedSearch.length < 2) return [];
 
-      const { data, error } = await supabase
-        .rpc('search_buildings', {
-            search_query: debouncedSearch,
-            limit_count: 10
-        });
-
-      if (error) {
+      try {
+          const data = await searchBuildingsRpc({
+              query_text: debouncedSearch
+          });
+          return data;
+      } catch (error) {
           console.error(error);
           return [];
       }
-      return data;
     },
     enabled: debouncedSearch.length >= 2,
   });
