@@ -32,6 +32,7 @@ import { BuildingLocationPicker } from "@/components/BuildingLocationPicker";
 import { Loader2, MapPin, Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { parseLocation } from "@/utils/location";
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState<AdminBuilding[]>([]);
@@ -134,21 +135,9 @@ export default function Buildings() {
 
   const openEditDialog = (building: AdminBuilding) => {
     // Parse location
-    let lat = null;
-    let lng = null;
-
-    if (building.location) {
-        if (typeof building.location === 'string') {
-            const matches = building.location.match(/POINT\(([^ ]+) ([^ ]+)\)/);
-            if (matches) {
-                lng = parseFloat(matches[1]);
-                lat = parseFloat(matches[2]);
-            }
-        } else if (typeof building.location === 'object' && (building.location as any).coordinates) {
-             lng = (building.location as any).coordinates[0];
-             lat = (building.location as any).coordinates[1];
-        }
-    }
+    const coords = parseLocation(building.location);
+    const lat = coords ? coords.lat : null;
+    const lng = coords ? coords.lng : null;
 
     setLocationData({
         lat,

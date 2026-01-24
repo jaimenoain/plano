@@ -21,6 +21,7 @@ import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { Star } from "lucide-react";
 import { UserPicker } from "@/components/common/UserPicker";
 import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } from "@/utils/supabaseFallback";
+import { parseLocation } from "@/utils/location";
 
 // --- Types ---
 interface BuildingDetails {
@@ -73,28 +74,7 @@ export default function BuildingDetails() {
 
   // Parse location
   const coordinates = useMemo(() => {
-    if (!building?.location) return null;
-
-    // Case 1: GeoJSON Object
-    if (typeof building.location === 'object' && building.location.coordinates) {
-      return {
-        lng: building.location.coordinates[0],
-        lat: building.location.coordinates[1]
-      };
-    }
-
-    // Case 2: WKT String "POINT(lng lat)"
-    if (typeof building.location === 'string') {
-      const match = building.location.match(/POINT\s*\((-?\d+\.?\d*)\s+(-?\d+\.?\d*)\)/i);
-      if (match) {
-        return {
-          lng: parseFloat(match[1]),
-          lat: parseFloat(match[2])
-        };
-      }
-    }
-
-    return null;
+    return parseLocation(building?.location);
   }, [building]);
 
   useEffect(() => {
