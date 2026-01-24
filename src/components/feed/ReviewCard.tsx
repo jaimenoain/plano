@@ -55,7 +55,7 @@ export function ReviewCard({
   hideBuildingInfo = false
 }: ReviewCardProps) {
   const navigate = useNavigate();
-  
+   
   // FIXED: Safety Check - Prevent crash if building data is missing
   if (!entry.building) return null;
 
@@ -116,6 +116,9 @@ export function ReviewCard({
 
   const isWatchlist = entry.status === 'pending';
   const watchWithUsers = entry.watch_with_users || [];
+  
+  // MERGE FIX: Determine if we have any media to show for layout calculations
+  const hasMedia = !hideBuildingInfo && ((entry.images && entry.images.length > 0) || posterUrl);
 
   // --- 1. DETAIL VIEW (List View) ---
   if (isDetailView) {
@@ -172,7 +175,7 @@ export function ReviewCard({
                 )}
               </div>
             )}
-            
+             
             {entry.rating && (
               <div className="flex items-center gap-1 mb-2">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -241,11 +244,12 @@ export function ReviewCard({
   return (
     <article 
       onClick={handleCardClick}
-      className="group relative flex flex-col h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
+      // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
+      className={`group relative flex flex-col ${hasMedia ? 'md:grid md:grid-cols-[280px_1fr] md:min-h-[220px]' : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
     >
       {/* 1. Header: User Info - UX IMPROVED */}
       {!hideUser && (
-        <div className="p-1.5 md:p-3 flex items-center gap-1.5 md:gap-3 border-b border-border/40 bg-muted/20">
+        <div className="md:col-start-2 p-1.5 md:p-3 flex items-center gap-1.5 md:gap-3 border-b border-border/40 bg-muted/20">
           <Avatar className="h-10 w-10 md:h-12 md:w-12 border border-border/50 shadow-sm">
             <AvatarImage src={avatarUrl} />
             <AvatarFallback className="text-base md:text-lg font-bold bg-primary/10 text-primary">
@@ -263,13 +267,15 @@ export function ReviewCard({
         </div>
       )}
 
-      {/* 2. Images Gallery or Poster Image */}
+      {/* 2. Media Section (Gallery OR Poster) */}
       {!hideBuildingInfo && (
         entry.images && entry.images.length > 0 ? (
-          <div className="relative w-full overflow-hidden bg-secondary">
-             <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
+          // OPTION A: User Images Gallery
+          // MERGE FIX: Added grid positioning classes (md:col-start-1...) to match Poster layout
+          <div className="relative w-full overflow-hidden bg-secondary md:col-start-1 md:row-start-1 md:row-span-2 md:h-full">
+             <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full">
                 {entry.images.map((image) => (
-                  <div key={image.id} className="relative flex-none w-full aspect-[4/3] snap-center">
+                  <div key={image.id} className="relative flex-none w-full aspect-[4/3] md:aspect-auto md:h-full snap-center">
                      <img
                        src={image.url}
                        alt="Review photo"
@@ -302,38 +308,37 @@ export function ReviewCard({
                 </div>
              )}
           </div>
-        ) : (
-          posterUrl && (
-            <div className="aspect-[4/3] relative bg-secondary overflow-hidden">
-              <img
-                src={posterUrl}
-                alt={mainTitle || ""}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+        ) : posterUrl ? (
+          // OPTION B: Building Poster (Fallback)
+          <div className="aspect-[4/3] md:aspect-auto md:h-full md:col-start-1 md:row-start-1 md:row-span-2 relative bg-secondary overflow-hidden">
+            <img
+              src={posterUrl}
+              alt={mainTitle || ""}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
 
-              {/* Watch With Facepile Overlay - Only if watchlist and has users */}
-              {isWatchlist && watchWithUsers.length > 0 && (
-                <div className="absolute bottom-2 right-2 flex -space-x-2 z-10">
-                    {watchWithUsers.slice(0, 3).map(u => (
-                      <Avatar key={u.id} className="h-6 w-6 ring-2 ring-background border border-white/20">
-                          <AvatarImage src={u.avatar_url || undefined} />
-                          <AvatarFallback className="text-[8px] bg-secondary text-foreground">{u.username?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {watchWithUsers.length > 3 && (
-                      <div className="h-6 w-6 rounded-full bg-black/60 ring-2 ring-background border border-white/20 flex items-center justify-center text-[8px] text-white">
-                          +{watchWithUsers.length - 3}
-                      </div>
-                    )}
-                </div>
-              )}
-            </div>
-          )
-        )
+            {/* Watch With Facepile Overlay - Only if watchlist and has users */}
+            {isWatchlist && watchWithUsers.length > 0 && (
+               <div className="absolute bottom-2 right-2 flex -space-x-2 z-10">
+                  {watchWithUsers.slice(0, 3).map(u => (
+                     <Avatar key={u.id} className="h-6 w-6 ring-2 ring-background border border-white/20">
+                        <AvatarImage src={u.avatar_url || undefined} />
+                        <AvatarFallback className="text-[8px] bg-secondary text-foreground">{u.username?.charAt(0)}</AvatarFallback>
+                     </Avatar>
+                  ))}
+                  {watchWithUsers.length > 3 && (
+                    <div className="h-6 w-6 rounded-full bg-black/60 ring-2 ring-background border border-white/20 flex items-center justify-center text-[8px] text-white">
+                        +{watchWithUsers.length - 3}
+                    </div>
+                  )}
+               </div>
+            )}
+          </div>
+        ) : null
       )}
 
       {/* 3. Content Body */}
-      <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
+      <div className="md:col-start-2 flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
         {/* Building Name (Context) - Only if NOT hidden */}
         {!hideBuildingInfo && (
           <div className="mb-1">
@@ -411,7 +416,7 @@ export function ReviewCard({
             />
             <span className="text-xs font-medium">{entry.likes_count}</span>
           </button>
-          
+           
           <button
             onClick={handleCommentClick}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group/comment"
