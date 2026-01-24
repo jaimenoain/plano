@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { Star, Edit, Trash2, Heart, MessageSquare, Send, Pencil, CalendarPlus, Notebook, ExternalLink } from "lucide-react";
+import { Circle, Edit, Trash2, Heart, MessageSquare, Send, Pencil, CalendarPlus, Notebook, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
@@ -455,7 +455,7 @@ export function SessionCard({
                           {myLog?.rating ? (
                             <Button variant="default" size="sm" className="h-9 px-3 bg-primary/10 border-primary/20 border" onClick={() => navigate(`/post?buildingId=${building.id}&title=${encodeURIComponent(building.name || "")}`)}>
                               <div className="flex items-center gap-1.5">
-                                <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                                <Circle className="w-4 h-4 fill-[#595959] text-[#595959]" />
                                 <span className="text-white font-bold text-base">{myLog.rating}</span>
                                 <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                               </div>
@@ -481,7 +481,7 @@ export function SessionCard({
                             {localStats.avg > 0 && (
                               <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
                                 <span>Avg:</span>
-                                <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                                <Circle className="w-3 h-3 fill-[#595959] text-[#595959]" />
                                 <span className="text-foreground">{localStats.avg.toFixed(1)}</span>
                               </div>
                             )}
@@ -511,8 +511,8 @@ export function SessionCard({
                                       </span>
                                     )}
                                     {/* Rating */}
-                                    <span className="inline-flex items-center gap-0.5 text-yellow-500 font-bold ml-1.5 text-sm">
-                                      ★{log.rating}
+                                    <span className="inline-flex items-center gap-0.5 text-[#595959] font-bold ml-1.5 text-sm">
+                                      <Circle className="w-3 h-3 fill-[#595959] text-[#595959]" />{log.rating}
                                     </span>
                                   </div>
                                 </div>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Star } from "lucide-react";
+import { Circle } from "lucide-react";
 
 export type BuildingStatus = 'pending' | 'visited' | 'ignored' | null;
 
@@ -98,10 +98,10 @@ export function PersonalRatingButton({
                 setIsOpen(false);
               }}
             >
-              <Star
+              <Circle
                 className={`
                   w-6 h-6 transition-colors
-                  ${isFilled ? "fill-primary text-primary" : "text-muted-foreground/20"}
+                  ${isFilled ? "fill-[#595959] text-[#595959]" : "text-muted-foreground/20"}
                 `}
               />
             </button>
@@ -127,14 +127,14 @@ export function PersonalRatingButton({
           className={`
             h-8 transition-all gap-1.5
             ${hasRated
-              ? "bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary border-primary/20 border"
+              ? "bg-primary/10 hover:bg-primary/20 text-[#595959] hover:text-[#595959] border-primary/20 border"
               : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }
           `}
         >
           {hasRated ? (
             <>
-              <Star className="w-3.5 h-3.5 fill-current" />
+              <Circle className="w-3.5 h-3.5 fill-[#595959]" />
               <span className="font-bold">{initialRating}/5</span>
             </>
           ) : (

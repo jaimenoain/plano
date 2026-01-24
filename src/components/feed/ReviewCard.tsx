@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, MessageCircle, Star, Image as ImageIcon } from "lucide-react";
+import { Heart, MessageCircle, Circle, Image as ImageIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -178,12 +178,12 @@ export function ReviewCard({
             {entry.rating && (
               <div className="flex items-center gap-1 mb-2">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
+                  <Circle
                     key={i}
                     className={`w-3 h-3 ${
                       i < entry.rating!
-                        ? "fill-yellow-500 text-yellow-500"
-                        : "fill-transparent text-muted-foreground/30"
+                        ? "fill-[#595959] text-[#595959]"
+                        : "fill-transparent text-muted-foreground/20"
                     }`}
                   />
                 ))}
@@ -400,12 +400,12 @@ export function ReviewCard({
         {entry.status === 'visited' && entry.rating && (
           <div className="flex items-center gap-0.5 mb-1">
               {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
+                  <Circle
                     key={i}
                     className={`w-4 h-4 ${
                       i < entry.rating!
-                        ? "fill-yellow-500 text-yellow-500"
-                        : "fill-transparent text-muted-foreground/30"
+                        ? "fill-[#595959] text-[#595959]"
+                        : "fill-transparent text-muted-foreground/20"
                     }`}
                   />
               ))}
