@@ -30,10 +30,11 @@ interface BuildingDiscoveryMapProps {
     externalBuildings?: DiscoveryBuilding[];
     onRegionChange?: (center: { lat: number, lng: number }) => void;
     onBoundsChange?: (bounds: Bounds) => void;
+    onMapInteraction?: () => void;
     forcedCenter?: { lat: number, lng: number } | null;
 }
 
-export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoundsChange, forcedCenter }: BuildingDiscoveryMapProps) {
+export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoundsChange, onMapInteraction, forcedCenter }: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
@@ -230,7 +231,12 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoun
       <MapGL
         ref={mapRef}
         {...viewState}
-        onMove={evt => setViewState(evt.viewState)}
+        onMove={evt => {
+            setViewState(evt.viewState);
+            if (evt.originalEvent) {
+                onMapInteraction?.();
+            }
+        }}
         onLoad={evt => handleMapUpdate(evt.target)}
         onMoveEnd={evt => {
             const { latitude, longitude } = evt.viewState;

@@ -24,8 +24,20 @@ export default function SearchPage() {
   const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
   const [lastFlownCity, setLastFlownCity] = useState<string>("all");
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
+  const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
+
+  // If a user types a query, we want to search the full database (ignore map bounds)
+  // until they interact with the map again to filter.
+  useEffect(() => {
+      if (searchQuery) {
+          setIgnoreMapBounds(true);
+      } else {
+          setIgnoreMapBounds(false);
+      }
+  }, [searchQuery]);
 
   const filteredBuildings = useMemo(() => {
+      if (ignoreMapBounds) return buildings;
       if (!mapBounds) return buildings;
 
       const { north, south, east, west } = mapBounds;
@@ -47,12 +59,13 @@ export default function SearchPage() {
 
           return inLat && inLng;
       });
-  }, [buildings, mapBounds]);
+  }, [buildings, mapBounds, ignoreMapBounds]);
 
   const handleUseLocation = async () => {
     const loc = await requestLocation();
     if (loc) {
       setFlyToCenter(loc);
+      setIgnoreMapBounds(false);
     }
   };
 
@@ -60,6 +73,7 @@ export default function SearchPage() {
     setFlyToCenter(loc);
     // Optimistically update location for distance sorting
     updateLocation(loc);
+    setIgnoreMapBounds(false);
   };
 
   // Handle auto-fly to user location on initial load or update
@@ -115,6 +129,7 @@ export default function SearchPage() {
                             externalBuildings={buildings}
                             onRegionChange={updateLocation}
                             onBoundsChange={setMapBounds}
+                            onMapInteraction={() => setIgnoreMapBounds(false)}
                             forcedCenter={flyToCenter}
                         />
                     </div>
@@ -135,6 +150,7 @@ export default function SearchPage() {
                          externalBuildings={buildings}
                          onRegionChange={updateLocation}
                          onBoundsChange={setMapBounds}
+                         onMapInteraction={() => setIgnoreMapBounds(false)}
                          forcedCenter={flyToCenter}
                     />
                 </div>
