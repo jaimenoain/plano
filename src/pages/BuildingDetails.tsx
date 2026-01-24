@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
-  Edit2, Check, Bookmark, Star, MessageSquarePlus, Image as ImageIcon
+  Edit2, Check, Bookmark, Star, MessageSquarePlus, Image as ImageIcon,
+  Heart, ExternalLink
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -35,6 +36,15 @@ interface BuildingDetails {
   styles: string[];
   main_image_url: string | null;
   created_by: string;
+}
+
+interface TopLink {
+  link_id: string;
+  url: string;
+  title: string | null;
+  like_count: number;
+  user_username: string | null;
+  user_avatar: string | null;
 }
 
 interface FeedEntry {
@@ -72,6 +82,7 @@ export default function BuildingDetails() {
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [userImages, setUserImages] = useState<{id: string, storage_path: string}[]>([]);
+  const [topLinks, setTopLinks] = useState<TopLink[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 
   // Note & Tags
@@ -125,6 +136,18 @@ export default function BuildingDetails() {
 
       if (user && data.created_by === user.id) {
           setIsCreator(true);
+      }
+
+      // 1.8 Fetch Top Links (RPC)
+      const { data: linksData, error: linksError } = await supabase
+        .rpc('get_building_top_links', {
+            p_building_id: id
+        });
+
+      if (linksError) {
+          console.warn("Error fetching top links:", linksError);
+      } else if (linksData) {
+          setTopLinks(linksData);
       }
 
       if (user) {
@@ -576,6 +599,46 @@ export default function BuildingDetails() {
                     </div>
                 )}
             </div>
+
+            {/* Top Community Resources */}
+            {topLinks.length > 0 && (
+                <div className="pt-4 border-t border-dashed">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
+                        Top Community Resources
+                    </h3>
+                    <div className="space-y-2">
+                        {topLinks.map(link => (
+                            <a
+                                key={link.link_id}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border group"
+                            >
+                                <div className="flex flex-col gap-0.5 overflow-hidden">
+                                    <span className="font-medium truncate pr-2 text-sm group-hover:text-primary transition-colors">
+                                        {link.title || link.url}
+                                    </span>
+                                    {link.user_username && (
+                                        <span className="text-xs text-muted-foreground">
+                                            shared by @{link.user_username}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    {link.like_count > 0 && (
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <Heart className="w-3 h-3 fill-muted-foreground/30" />
+                                            <span>{link.like_count}</span>
+                                        </div>
+                                    )}
+                                    <ExternalLink className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground" />
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Community Activity */}
             <div className="pt-4 border-t border-dashed">
