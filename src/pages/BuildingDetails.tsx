@@ -291,21 +291,6 @@ export default function BuildingDetails() {
         
         {/* LEFT: Visuals & Map (Map-First Experience ) */}
         <div className="space-y-6">
-            <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
-                {building.main_image_url ? (
-                    <img src={building.main_image_url} className="w-full h-full object-cover" alt={building.name} />
-                ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">No Image</div>
-                )}
-                {/* Overlay Address */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
-                    <div className="flex items-center gap-2 text-white/90">
-                        <MapPin className="w-4 h-4" />
-                        <span className="text-sm font-medium">{building.address}</span>
-                    </div>
-                </div>
-            </div>
-
             {/* Map Integration */}
             {coordinates ? (
               <BuildingMap
@@ -320,6 +305,19 @@ export default function BuildingDetails() {
                 <span className="text-xs uppercase tracking-widest">Location Unavailable</span>
               </div>
             )}
+
+            <div className="flex items-center gap-2 text-muted-foreground">
+                <MapPin className="w-4 h-4" />
+                <span className="text-sm font-medium">{building.address}</span>
+            </div>
+
+            <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
+                {building.main_image_url ? (
+                    <img src={building.main_image_url} className="w-full h-full object-cover" alt={building.name} />
+                ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">No Image</div>
+                )}
+            </div>
         </div>
 
         {/* RIGHT: Data & Actions */}
