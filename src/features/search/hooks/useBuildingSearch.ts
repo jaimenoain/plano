@@ -25,6 +25,53 @@ function deg2rad(deg: number) {
   return deg * (Math.PI / 180);
 }
 
+async function enrichBuildingsWithImages(buildings: DiscoveryBuilding[]) {
+  if (!buildings.length) return [];
+
+  const buildingIds = buildings.map(b => b.id);
+
+  // 1. Get reviews (user_buildings) for these buildings
+  const { data: reviews } = await supabase
+    .from('user_buildings')
+    .select('id, building_id')
+    .in('building_id', buildingIds);
+
+  if (!reviews || !reviews.length) return buildings;
+
+  const reviewIds = reviews.map(r => r.id);
+  const reviewToBuildingMap = new Map(reviews.map(r => [r.id, r.building_id]));
+
+  // 2. Get images for these reviews, ordered by likes and recency
+  const { data: images } = await supabase
+    .from('review_images')
+    .select('storage_path, likes_count, created_at, review_id')
+    .in('review_id', reviewIds)
+    .order('likes_count', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (!images || !images.length) return buildings;
+
+  // 3. Map best image to building
+  const buildingImageMap = new Map<string, string>();
+
+  for (const img of images) {
+     const buildingId = reviewToBuildingMap.get(img.review_id);
+     if (buildingId && !buildingImageMap.has(buildingId)) {
+         // Found top image for this building (since we ordered by likes/time)
+         const { data: { publicUrl } } = supabase.storage.from('review_images').getPublicUrl(img.storage_path);
+         buildingImageMap.set(buildingId, publicUrl);
+     }
+  }
+
+  // 4. Update buildings
+  return buildings.map(b => {
+      if (buildingImageMap.has(b.id)) {
+          return { ...b, main_image_url: buildingImageMap.get(b.id) || b.main_image_url };
+      }
+      return b;
+  });
+}
+
 export function useBuildingSearch() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -100,7 +147,7 @@ export function useBuildingSearch() {
             if (bError) throw bError;
 
             // 3. Map to DiscoveryBuilding and calculate distance
-            return (buildingsData || []).map((b: any) => {
+            const mappedBuildings = (buildingsData || []).map((b: any) => {
                 const distance = getDistanceFromLatLonInM(
                     userLocation.lat,
                     userLocation.lng,
@@ -122,18 +169,22 @@ export function useBuildingSearch() {
                     // social_context: could fetch social info if needed, but skipping for now
                 } as DiscoveryBuilding;
             }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
+
+            return await enrichBuildingsWithImages(mappedBuildings);
         }
 
         // Global search mode (RPC)
         const radius = 20000000; // Large radius for general search
         // Pass undefined for filters and sort_by as we removed them
-        return await searchBuildingsRpc({
+        const rpcResults = await searchBuildingsRpc({
             query_text: debouncedQuery || null,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
             radius_meters: radius,
             filters: undefined,
             sort_by: undefined
         });
+
+        return await enrichBuildingsWithImages(rpcResults);
     },
     staleTime: 1000 * 60, // 1 min
     placeholderData: keepPreviousData,

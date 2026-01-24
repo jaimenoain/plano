@@ -231,6 +231,7 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoun
       <MapGL
         ref={mapRef}
         {...viewState}
+        attributionControl={false}
         onMove={evt => {
             setViewState(evt.viewState);
             if (evt.originalEvent) {
