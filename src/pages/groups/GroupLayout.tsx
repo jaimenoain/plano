@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useParams } from "react-router-dom";
+import { Outlet, Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, Users, Calendar, Activity, BarChart3, Lock, Send, UserPlus, Repeat, ListChecks, Filter, MapPin, Link as LinkIcon, Video, Globe, Tv } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { parseHomeBase } from "@/lib/utils";
@@ -17,6 +17,7 @@ import { MetaHead } from "@/components/common/MetaHead";
 
 export default function GroupLayout() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
@@ -106,22 +107,39 @@ export default function GroupLayout() {
     const items = [];
 
     // Core items
-    items.push({ path: "", label: "Field Trips", icon: Calendar });
+    if (activeTabs.includes("sessions")) items.push({ path: "", label: "Field Trips", icon: Calendar });
 
     if (activeTabs.includes("cycles")) items.push({ path: "cycles", label: "Cycles", icon: Repeat });
 
-    items.push({ path: "feed", label: "Feed", icon: Activity });
+    if (activeTabs.includes("feed")) items.push({ path: "feed", label: "Feed", icon: Activity });
 
     if (activeTabs.includes("polls")) items.push({ path: "polls", label: "Polls", icon: ListChecks });
     if (activeTabs.includes("watchlist")) items.push({ path: "watchlist", label: "Watchlist", icon: Tv });
     if (activeTabs.includes("pipeline")) items.push({ path: "pipeline", label: "Pipeline", icon: Filter });
 
-    items.push({ path: "members", label: "Members", icon: Users });
+    if (activeTabs.includes("members")) items.push({ path: "members", label: "Members", icon: Users });
 
     if (activeTabs.includes("stats")) items.push({ path: "stats", label: "Stats", icon: BarChart3 });
 
     return items;
   }, [activeTabs]);
+
+  // Effect to redirect if we're on the root path (Field Trips) but it's disabled
+  useEffect(() => {
+    if (isLoading || !group) return;
+
+    // Check if we are at root and sessions is disabled
+    const isRoot = location.pathname.replace(/\/$/, "") === `/groups/${slug}`;
+    const sessionsActive = activeTabs.includes("sessions");
+
+    if (isRoot && !sessionsActive) {
+      // Find first active tab
+      const firstTab = navItems[0];
+      if (firstTab) {
+        navigate(`/groups/${slug}/${firstTab.path}`, { replace: true });
+      }
+    }
+  }, [location.pathname, slug, activeTabs, navItems, isLoading, group, navigate]);
 
   if (isLoading) return (
     <AppLayout>
