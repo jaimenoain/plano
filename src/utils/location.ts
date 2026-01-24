@@ -18,10 +18,64 @@ export function parseLocation(location: any): Coordinates | null {
     // Handle potential nested objects or other structures if necessary, but standard GeoJSON is above.
   }
 
-  // Case 2: WKT String "POINT(lng lat)" or "POINT (lng lat)"
+  // Case 2: String parsing (WKT or WKB Hex)
   if (typeof location === 'string') {
     let text = location;
 
+    // Case 2a: WKB Hex String
+    // Basic check: length sufficient (42 chars for standard point) and hex chars only
+    // 0101000000... (21 bytes * 2 = 42 chars) or with SRID (25 bytes * 2 = 50 chars)
+    if (text.length >= 42 && /^[0-9a-fA-F]+$/.test(text)) {
+      try {
+        const bytes = text.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16));
+        if (bytes) {
+          const buffer = new Uint8Array(bytes).buffer;
+          const view = new DataView(buffer);
+
+          let offset = 0;
+          const byteOrder = view.getUint8(offset); // 0 = Big Endian, 1 = Little Endian
+          const littleEndian = byteOrder === 1;
+          offset += 1;
+
+          const type = view.getUint32(offset, littleEndian);
+          offset += 4;
+
+          // PostGIS EWKB flags
+          const wkbPoint = 1;
+          const sridFlag = 0x20000000;
+
+          let isPoint = type === wkbPoint;
+          let hasSrid = false;
+
+          if ((type & sridFlag) === sridFlag) {
+             hasSrid = true;
+             // Remove flag to check base type
+             if ((type & ~sridFlag) === wkbPoint) {
+                 isPoint = true;
+             }
+          }
+
+          if (isPoint) {
+            if (hasSrid) {
+                offset += 4; // Skip SRID
+            }
+
+            const lng = view.getFloat64(offset, littleEndian);
+            offset += 8;
+            const lat = view.getFloat64(offset, littleEndian);
+
+            if (!isNaN(lng) && !isNaN(lat)) {
+                return { lng, lat };
+            }
+          }
+        }
+      } catch (e) {
+        // Fallthrough if WKB parsing fails
+        console.warn("Failed to parse location as WKB:", e);
+      }
+    }
+
+    // Case 2b: WKT String "POINT(lng lat)"
     // Strip SRID if present (e.g., "SRID=4326;POINT(...)")
     if (text.includes(';')) {
       text = text.split(';').pop() || '';
@@ -34,17 +88,16 @@ export function parseLocation(location: any): Coordinates | null {
     // Matches:
     // POINT
     // optional spaces
-    // ( or nothing (though standard WKT uses parens, some loose parsers might accept without) - let's enforce parens for now but allow spaces
-    // spaces
-    // number (float, scientific)
-    // spaces
+    // (
+    // optional spaces
     // number
-    // spaces
+    // separator (space AND/OR comma)
+    // number
+    // optional spaces
     // )
-    //
-    // Regex: /POINT\s*\(\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s+([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*\)/i
 
-    const regex = /POINT\s*\(\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s+([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*\)/i;
+    // Updated regex to allow comma separator
+    const regex = /POINT\s*\(\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(?:\s+|\s*,\s*)([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*\)/i;
     const match = text.match(regex);
 
     if (match) {
