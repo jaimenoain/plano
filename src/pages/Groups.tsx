@@ -271,13 +271,9 @@ export default function Groups() {
             </p>
         </div>
 
-        <PeopleYouMayKnow />
-
-        <YourContacts />
-
         {/* Groups Section */}
         <div className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-t pt-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold tracking-tight">Groups</h2>
               <p className="text-muted-foreground mt-1">
@@ -411,6 +407,11 @@ export default function Groups() {
               </TabsContent>
             </Tabs>
           )}
+        </div>
+
+        <div className="space-y-10 border-t pt-8">
+            <PeopleYouMayKnow />
+            <YourContacts />
         </div>
       </div>
     </AppLayout>
