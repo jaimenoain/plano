@@ -23,6 +23,11 @@ export function useBuildingSearch() {
   const { location: gpsLocation, requestLocation: requestLocationInternal } = useUserLocation();
 
   useEffect(() => {
+    // Attempt to get user location on mount (silently)
+    requestLocationInternal({ silent: true });
+  }, []);
+
+  useEffect(() => {
     if (gpsLocation) {
       setUserLocation(gpsLocation);
     }
