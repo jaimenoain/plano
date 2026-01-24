@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Loader2, ArrowLeft, ArrowRight, Trash2, Heart, Star, MessageCircle, Clock, Pencil, MapPin, Send } from "lucide-react";
+import { Loader2, ArrowLeft, ArrowRight, Trash2, Heart, Star, MessageCircle, Clock, Pencil, MapPin, Send, ExternalLink } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,6 +72,14 @@ interface Liker {
   };
 }
 
+interface ReviewLink {
+  id: string;
+  url: string;
+  title: string;
+  likes_count: number;
+  is_liked: boolean;
+}
+
 export default function ReviewDetails() {
   const { id: paramId } = useParams(); // This is the Log UUID
   const navigate = useNavigate();
@@ -81,6 +89,7 @@ export default function ReviewDetails() {
   const [review, setReview] = useState<FeedReview | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [relatedReviews, setRelatedReviews] = useState<RelatedReview[]>([]);
+  const [links, setLinks] = useState<ReviewLink[]>([]);
   const [likers, setLikers] = useState<Liker[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
@@ -266,6 +275,32 @@ export default function ReviewDetails() {
             }
             setComments(formattedComments);
 
+            // Links
+            const { data: linksData } = await supabase
+                .from("review_links")
+                .select("id, url, title")
+                .eq("review_id", reviewData.id);
+
+            let formattedLinks: ReviewLink[] = [];
+            if (linksData && linksData.length > 0) {
+                const linkIds = linksData.map(l => l.id);
+                // @ts-ignore
+                const { data: allLinkLikes } = await supabase
+                    .from("link_likes")
+                    .select("link_id, user_id")
+                    .in("link_id", linkIds);
+
+                formattedLinks = linksData.map(l => {
+                    const relevant = allLinkLikes?.filter((x: any) => x.link_id === l.id) || [];
+                    return {
+                        ...l,
+                        likes_count: relevant.length,
+                        is_liked: user ? relevant.some((x: any) => x.user_id === user.id) : false
+                    };
+                });
+            }
+            setLinks(formattedLinks);
+
         } catch (e) {
             console.error(e);
             setNotFound(true);
@@ -320,6 +355,32 @@ export default function ReviewDetails() {
     } catch (error) {
       console.error(error);
       // Revert on error would go here
+    }
+  };
+
+  const handleLikeLink = async (linkId: string) => {
+    if (!user) return;
+    const link = links.find(l => l.id === linkId);
+    if (!link) return;
+
+    const wasLiked = link.is_liked;
+    setLinks(prev => prev.map(l => l.id === linkId ? {
+        ...l,
+        is_liked: !wasLiked,
+        likes_count: wasLiked ? l.likes_count - 1 : l.likes_count + 1
+    } : l));
+
+    try {
+        if (wasLiked) {
+            // @ts-ignore
+            await supabase.from("link_likes").delete().eq("link_id", linkId).eq("user_id", user.id);
+        } else {
+            // @ts-ignore
+            await supabase.from("link_likes").insert({ link_id: linkId, user_id: user.id });
+        }
+    } catch (error) {
+        console.error("Error toggling link like", error);
+        // Could revert here if needed
     }
   };
 
@@ -647,6 +708,59 @@ export default function ReviewDetails() {
                                     </Badge>
                                 </Link>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Resources Section */}
+                    {links.length > 0 && (
+                        <div className="pl-16 mt-6">
+                            <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wider">Resources</h3>
+                            <div className="grid gap-2">
+                                {links.map(link => {
+                                    let domain = "";
+                                    try {
+                                        domain = new URL(link.url).hostname;
+                                    } catch { }
+
+                                    return (
+                                        <div key={link.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-white/5 group hover:bg-secondary/50 transition-colors">
+                                            <a
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-3 min-w-0 flex-1"
+                                            >
+                                                <div className="p-2 rounded bg-background/50 text-muted-foreground group-hover:text-primary transition-colors">
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-medium text-sm text-slate-200 truncate pr-2">
+                                                        {link.title || link.url}
+                                                    </p>
+                                                    {domain && (
+                                                        <p className="text-xs text-muted-foreground truncate">
+                                                            {domain}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </a>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleLikeLink(link.id)}
+                                                className={cn(
+                                                    "ml-2 h-8 px-2 gap-1.5 hover:bg-background/50",
+                                                    link.is_liked ? "text-red-500 hover:text-red-400" : "text-muted-foreground"
+                                                )}
+                                            >
+                                                <Heart className={cn("w-3.5 h-3.5", link.is_liked && "fill-current")} />
+                                                {link.likes_count > 0 && <span className="text-xs">{link.likes_count}</span>}
+                                            </Button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
 
