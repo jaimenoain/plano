@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DiscoveryBuilding } from "./types";
+import { cn } from "@/lib/utils";
 
 interface DiscoveryBuildingCardProps {
   building: DiscoveryBuilding;
@@ -29,10 +30,15 @@ export function DiscoveryBuildingCard({
               </h3>
             </div>
 
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-              {building.architects?.[0] || "Unknown Architect"}
-              {building.year_completed && ` • ${building.year_completed}`}
-            </p>
+            <div className={cn("text-xs text-muted-foreground mt-1", imageUrl ? "line-clamp-2" : "line-clamp-1")}>
+              <span>{building.architects?.[0] || "Unknown Architect"}</span>
+              {building.year_completed && (
+                <>
+                  <span>{imageUrl ? " " : " • "}</span>
+                  <span>{building.year_completed}</span>
+                </>
+              )}
+            </div>
 
             {/* Badges */}
             <div className="flex flex-wrap gap-2 mt-2">
