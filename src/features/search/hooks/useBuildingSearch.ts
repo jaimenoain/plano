@@ -54,10 +54,14 @@ export function useBuildingSearch() {
             styles: selectedStyles
         };
 
+        // If filtering by city or sorting by relevance, ignore radius (use global search)
+        // 20000km covers half the earth, effectively global
+        const radius = (selectedCity !== "all" || sortBy === "relevance") ? 20000000 : 500000;
+
         return await searchBuildingsRpc({
             query_text: debouncedQuery || null,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
-            radius_meters: 500000, // 500km radius
+            radius_meters: radius,
             filters: filters,
             sort_by: sortBy
         });
