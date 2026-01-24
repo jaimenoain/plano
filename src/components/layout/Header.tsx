@@ -1,4 +1,4 @@
-import { Bell, User } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, ReactNode } from "react";
@@ -75,13 +75,6 @@ export function Header({ title, showLogo = true, action }: HeaderProps) {
             )}
           </Link>
 
-          <Link 
-            to="/profile" 
-            className="h-10 w-10 flex items-center justify-center rounded-full text-foreground hover:text-primary hover:bg-accent transition-all"
-            aria-label="My Profile"
-          >
-            <User className="h-6 w-6" />
-          </Link>
         </div>
       </div>
     </header>
