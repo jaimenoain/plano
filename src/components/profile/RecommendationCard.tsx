@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Star, Bookmark, Trash2 } from "lucide-react";
+import { Circle, Bookmark, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { slugify, cn } from "@/lib/utils";
@@ -98,15 +98,19 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={interaction.rating ? "default" : "secondary"}
+                  variant={"secondary"}
                   size={interaction.rating ? "default" : "icon"}
-                  className={cn("h-8 w-full rounded-md transition-colors", !interaction.rating && "hover:bg-primary hover:text-primary-foreground")}
+                  className={cn("h-8 w-full rounded-md transition-colors",
+                    interaction.rating
+                      ? "bg-primary/10 text-[#595959] hover:bg-primary/20 hover:text-[#595959] border-primary/20 border"
+                      : "hover:bg-primary hover:text-primary-foreground"
+                  )}
                   onClick={() => onRate(building)}
                 >
                   {interaction.rating ? (
-                    <span className="flex items-center gap-1 font-bold"><Star className="h-3 w-3 fill-current" /> {interaction.rating}</span>
+                    <span className="flex items-center gap-1 font-bold"><Circle className="h-3 w-3 fill-current" /> {interaction.rating}</span>
                   ) : (
-                    <Star className="h-4 w-4" />
+                    <Circle className="h-4 w-4" />
                   )}
                 </Button>
               </TooltipTrigger>

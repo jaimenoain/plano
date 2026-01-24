@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { FavoriteItem } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
-import { Loader2, Search, Star, X, Check } from "lucide-react";
+import { Loader2, Search, Circle, X, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -217,7 +217,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                       <TabsContent value="suggested" className="mt-0 space-y-1">
                           {suggestions.length === 0 && !loading && (
                               <div className="text-center py-12 px-4 text-muted-foreground text-sm">
-                                  <Star className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
+                                  <Circle className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
                                   <p>You haven't rated any buildings 10/10 yet.</p>
                                   <Button variant="link" onClick={() => setActiveTab("search")}>Search instead</Button>
                               </div>
@@ -271,8 +271,8 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
                     {item.rating && (
-                        <span className="flex items-center text-yellow-500 gap-0.5 font-medium">
-                            <Star className="h-2.5 w-2.5 fill-current" /> {item.rating}
+                        <span className="flex items-center text-[#595959] gap-0.5 font-medium">
+                            <Circle className="h-2.5 w-2.5 fill-current" /> {item.rating}
                         </span>
                     )}
                 </div>
