@@ -18,7 +18,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { FollowButton } from "@/components/FollowButton";
 import { useToast } from "@/hooks/use-toast";
 import { FavoritesSection } from "@/components/profile/FavoritesSection";
-import { ManageFavoritesDialog } from "@/components/profile/ManageFavoritesDialog";
 import { ManageTagsDialog } from "@/components/profile/ManageTagsDialog";
 import { FavoriteItem } from "@/components/profile/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,7 +28,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 // New Components
 import { UserCard } from "@/components/profile/UserCard";
 import { ProfileHighlights } from "@/components/profile/ProfileHighlights";
-import { ManageHighlightsDialog } from "@/components/profile/ManageHighlightsDialog";
 import { CollectionsRow } from "@/components/profile/CollectionsRow";
 
 // --- Types ---
@@ -105,8 +103,6 @@ export default function Profile() {
 
   // Favorites
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const [showManageFavorites, setShowManageFavorites] = useState(false);
-  const [showManageHighlights, setShowManageHighlights] = useState(false);
   const [showManageTags, setShowManageTags] = useState(false);
 
   // New Profile Features
@@ -427,46 +423,6 @@ export default function Profile() {
 
   // --- Favorites Handlers ---
 
-  const handleSaveFavorites = async (newBuildingFavorites: FavoriteItem[]) => {
-      if (!currentUser) return;
-      // Merge with non-building favorites
-      const nonBuildingFavorites = favorites.filter(f => f.type && f.type !== 'building');
-      const combined = [...newBuildingFavorites, ...nonBuildingFavorites];
-      setFavorites(combined);
-
-      try {
-          const { error } = await supabase
-            .from("profiles")
-            .update({ favorites: combined as any })
-            .eq("id", currentUser.id);
-          if (error) throw error;
-          toast({ description: "Favorites updated successfully." });
-      } catch (error) {
-          console.error(error);
-          toast({ variant: "destructive", description: "Failed to save favorites." });
-      }
-  };
-
-  const handleSaveHighlights = async (newHighlights: FavoriteItem[]) => {
-      if (!currentUser) return;
-      // Merge with building favorites
-      const buildingFavorites = favorites.filter(f => !f.type || f.type === 'building');
-      const combined = [...buildingFavorites, ...newHighlights];
-      setFavorites(combined);
-
-      try {
-          const { error } = await supabase
-            .from("profiles")
-            .update({ favorites: combined as any })
-            .eq("id", currentUser.id);
-          if (error) throw error;
-          toast({ description: "Highlights updated successfully." });
-      } catch (error) {
-          console.error(error);
-          toast({ variant: "destructive", description: "Failed to save highlights." });
-      }
-  };
-
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
@@ -576,21 +532,23 @@ export default function Profile() {
       />
 
       {/* 2. Favorite Buildings (Moved to body as requested implicitly by "Add a section") */}
-      {/* Only show if not empty or if own profile (to empty state manageable) */}
-      {(buildingFavorites.length > 0 || isOwnProfile) && (
+      {/* Only show if not empty (hidden for own profile) */}
+      {!isOwnProfile && buildingFavorites.length > 0 && (
          <FavoritesSection
             favorites={buildingFavorites}
-            isOwnProfile={isOwnProfile}
-            onManage={() => setShowManageFavorites(true)}
+            isOwnProfile={false}
+            onManage={() => {}}
          />
       )}
 
       {/* 3. Highlights (Genres, People, Quotes) */}
-      <ProfileHighlights
-         favorites={favorites}
-         isOwnProfile={isOwnProfile}
-         onManage={() => setShowManageHighlights(true)}
-      />
+      {!isOwnProfile && (
+        <ProfileHighlights
+          favorites={favorites}
+          isOwnProfile={false}
+          onManage={() => {}}
+        />
+      )}
 
       {/* 4. Collections Row (Tags) */}
       {tags.length > 0 && (
@@ -731,22 +689,6 @@ export default function Profile() {
           </ScrollArea>
         </DialogContent>
       </Dialog>
-
-      {/* Manage Favorites (Buildings) Dialog */}
-      <ManageFavoritesDialog
-        open={showManageFavorites}
-        onOpenChange={setShowManageFavorites}
-        favorites={buildingFavorites}
-        onSave={handleSaveFavorites}
-      />
-
-      {/* Manage Highlights (Genres/People/Quotes) Dialog */}
-      <ManageHighlightsDialog
-        open={showManageHighlights}
-        onOpenChange={setShowManageHighlights}
-        favorites={favorites}
-        onSave={handleSaveHighlights}
-      />
 
       {/* Manage Tags Dialog */}
       {currentUser && (
