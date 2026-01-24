@@ -25,6 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { PeopleYouMayKnow } from "@/components/connect/PeopleYouMayKnow";
+import { YourContacts } from "@/components/connect/YourContacts";
 
 interface Group {
   id: string;
@@ -81,8 +83,6 @@ export default function Groups() {
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      // Explicitly passing all parameters to avoid ambiguous 400 errors from PostgREST
-      // when defaults are involved or signatures mismatch slightly.
       const { data: myGroupsData, error: myRpcError } = await supabase
         .rpc('get_user_groups_summary', {
           p_user_id: user!.id,
@@ -190,7 +190,6 @@ export default function Groups() {
       className="group cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 border-muted overflow-hidden flex flex-col h-full bg-card" 
       onClick={() => navigate(`/groups/${group.slug}`)}
     >
-      {/* Visual Header / Poster Collage */}
       <div className="h-32 bg-muted/30 relative overflow-hidden border-b border-border/50">
         {group.cover_url ? (
           <div className="h-full w-full">
@@ -261,143 +260,158 @@ export default function Groups() {
   );
 
   return (
-    <AppLayout title="Groups">
-      <div className="px-4 py-6 max-w-6xl mx-auto space-y-8">
+    <AppLayout title="Connect">
+      <div className="px-4 py-6 max-w-6xl mx-auto space-y-10">
         
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Groups</h1>
+        {/* Header */}
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight">Connect</h1>
             <p className="text-muted-foreground mt-1">
-              Create clubs with scheduled sessions or casual groups to share buildings with friends.
+              Discover people, manage contacts, and join architecture groups.
             </p>
-          </div>
-
-          <Dialog open={isCreateOpen} onOpenChange={(open) => {
-            setIsCreateOpen(open);
-            if (open) {
-              setNewGroupName("");
-              setGroupType("club");
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button className="shadow-lg shadow-primary/20">
-                <Plus className="h-4 w-4 mr-2" /> Create Group
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create a New Group</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-6 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="group-name">Group Name</Label>
-                  <Input
-                    id="group-name"
-                    value={newGroupName}
-                    onChange={(e) => setNewGroupName(e.target.value)}
-                    placeholder="e.g. Brutalist Enthusiasts"
-                    onKeyDown={(e) => e.key === 'Enter' && newGroupName.trim() && handleCreateGroup()}
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Group Type</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div
-                      onClick={() => setGroupType("club")}
-                      className={`cursor-pointer border rounded-lg p-3 hover:bg-accent/50 transition-all ${groupType === "club" ? "border-primary ring-1 ring-primary bg-accent/20" : "border-border"}`}
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div className={`p-1.5 rounded-md ${groupType === "club" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                          <Building2 className="w-4 h-4" />
-                        </div>
-                        <span className={`text-sm font-semibold ${groupType === "club" ? "text-primary" : ""}`}>Architecture Group</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-snug">
-                        Structured with scheduled sessions.
-                      </p>
-                    </div>
-
-                    <div
-                      onClick={() => setGroupType("casual")}
-                      className={`cursor-pointer border rounded-lg p-3 hover:bg-accent/50 transition-all ${groupType === "casual" ? "border-primary ring-1 ring-primary bg-accent/20" : "border-border"}`}
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div className={`p-1.5 rounded-md ${groupType === "casual" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                           <Coffee className="w-4 h-4" />
-                        </div>
-                        <span className={`text-sm font-semibold ${groupType === "casual" ? "text-primary" : ""}`}>Casual Group</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-snug">
-                        Friends sharing buildings & bucket list.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button 
-                  onClick={handleCreateGroup} 
-                  disabled={!newGroupName.trim() || isCreating}
-                >
-                  {isCreating ? "Creating..." : "Create Group"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
 
-        {loading ? (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-             {[1,2,3].map(i => (
-               <div key={i} className="h-64 rounded-xl bg-muted/20 animate-pulse" />
-             ))}
-           </div>
-        ) : (
-          <Tabs defaultValue="my-groups" className="w-full">
-            <TabsList className="w-full max-w-[400px] bg-muted/50 p-1 border border-border/50">
-              <TabsTrigger value="my-groups" className="flex-1">My Groups</TabsTrigger>
-              <TabsTrigger value="browse" className="flex-1">Browse Public</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="my-groups" className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              {myGroups.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 border border-dashed rounded-xl bg-muted/5">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-muted-foreground" />
+        <PeopleYouMayKnow />
+
+        <YourContacts />
+
+        {/* Groups Section */}
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-t pt-8">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">Groups</h2>
+              <p className="text-muted-foreground mt-1">
+                Create clubs with scheduled sessions or casual groups to share buildings with friends.
+              </p>
+            </div>
+
+            <Dialog open={isCreateOpen} onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (open) {
+                setNewGroupName("");
+                setGroupType("club");
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button className="shadow-lg shadow-primary/20">
+                  <Plus className="h-4 w-4 mr-2" /> Create Group
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create a New Group</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="group-name">Group Name</Label>
+                    <Input
+                      id="group-name"
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      placeholder="e.g. Brutalist Enthusiasts"
+                      onKeyDown={(e) => e.key === 'Enter' && newGroupName.trim() && handleCreateGroup()}
+                    />
                   </div>
-                  <h3 className="font-semibold text-lg">No groups yet</h3>
-                  <p className="text-muted-foreground mb-6 max-w-sm text-center">
-                    You haven't joined any clubs. Create one or browse public groups to get started.
-                  </p>
-                  <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
-                    Create First Group
+
+                  <div className="space-y-3">
+                    <Label>Group Type</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div
+                        onClick={() => setGroupType("club")}
+                        className={`cursor-pointer border rounded-lg p-3 hover:bg-accent/50 transition-all ${groupType === "club" ? "border-primary ring-1 ring-primary bg-accent/20" : "border-border"}`}
+                      >
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className={`p-1.5 rounded-md ${groupType === "club" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                            <Building2 className="w-4 h-4" />
+                          </div>
+                          <span className={`text-sm font-semibold ${groupType === "club" ? "text-primary" : ""}`}>Architecture Group</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          Structured with scheduled sessions.
+                        </p>
+                      </div>
+
+                      <div
+                        onClick={() => setGroupType("casual")}
+                        className={`cursor-pointer border rounded-lg p-3 hover:bg-accent/50 transition-all ${groupType === "casual" ? "border-primary ring-1 ring-primary bg-accent/20" : "border-border"}`}
+                      >
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className={`p-1.5 rounded-md ${groupType === "casual" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                             <Coffee className="w-4 h-4" />
+                          </div>
+                          <span className={`text-sm font-semibold ${groupType === "casual" ? "text-primary" : ""}`}>Casual Group</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          Friends sharing buildings & bucket list.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    onClick={handleCreateGroup}
+                    disabled={!newGroupName.trim() || isCreating}
+                  >
+                    {isCreating ? "Creating..." : "Create Group"}
                   </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {myGroups.map(group => (
-                    <GroupCard key={group.id} group={group} />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="browse" className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              {publicGroups.length === 0 ? (
-                <div className="text-center py-16 border border-dashed rounded-xl">
-                  <p className="text-muted-foreground">No public groups found.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {publicGroups.map(group => (
-                    <GroupCard key={group.id} group={group} />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {loading ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               {[1,2,3].map(i => (
+                 <div key={i} className="h-64 rounded-xl bg-muted/20 animate-pulse" />
+               ))}
+             </div>
+          ) : (
+            <Tabs defaultValue="my-groups" className="w-full">
+              <TabsList className="w-full max-w-[400px] bg-muted/50 p-1 border border-border/50">
+                <TabsTrigger value="my-groups" className="flex-1">My Groups</TabsTrigger>
+                <TabsTrigger value="browse" className="flex-1">Browse Public</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="my-groups" className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                {myGroups.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 border border-dashed rounded-xl bg-muted/5">
+                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                      <Users className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-semibold text-lg">No groups yet</h3>
+                    <p className="text-muted-foreground mb-6 max-w-sm text-center">
+                      You haven't joined any clubs. Create one or browse public groups to get started.
+                    </p>
+                    <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
+                      Create First Group
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {myGroups.map(group => (
+                      <GroupCard key={group.id} group={group} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="browse" className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                {publicGroups.length === 0 ? (
+                  <div className="text-center py-16 border border-dashed rounded-xl">
+                    <p className="text-muted-foreground">No public groups found.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {publicGroups.map(group => (
+                      <GroupCard key={group.id} group={group} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
       </div>
     </AppLayout>
   );

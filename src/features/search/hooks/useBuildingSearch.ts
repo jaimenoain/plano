@@ -110,7 +110,7 @@ export function useBuildingSearch() {
   };
 
   // Search query
-  const { data: buildings, isLoading } = useQuery({
+  const { data: buildings, isLoading, isFetching } = useQuery({
     queryKey: ["search-buildings", debouncedQuery, filterVisited, filterBucketList, userLocation, user?.id],
     queryFn: async () => {
         // Local filtering mode (My Buildings)
@@ -209,5 +209,6 @@ export function useBuildingSearch() {
       gpsLocation,
       buildings: buildings || [],
       isLoading,
+      isFetching,
   };
 }

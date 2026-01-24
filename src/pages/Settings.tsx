@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, Lock, Mail, Smartphone, Download, Database } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, Lock, Mail, Smartphone, Download, Database, LayoutTemplate } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,9 @@ import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { NavigationBlocker } from "@/components/common/NavigationBlocker";
+import { ManageFavoritesDialog } from "@/components/profile/ManageFavoritesDialog";
+import { ManageHighlightsDialog } from "@/components/profile/ManageHighlightsDialog";
+import { FavoriteItem } from "@/components/profile/types";
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth();
@@ -34,6 +37,11 @@ export default function Settings() {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  // Favorites & Highlights
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const [showManageFavorites, setShowManageFavorites] = useState(false);
+  const [showManageHighlights, setShowManageHighlights] = useState(false);
   
   const [exporting, setExporting] = useState(false);
   
@@ -91,6 +99,19 @@ export default function Settings() {
         avatarUrl: avatarUrlVal,
         email: emailVal,
       });
+
+      // Fetch favorites
+      const fetchFavorites = async () => {
+        const { data } = await supabase
+          .from("profiles")
+          .select("favorites")
+          .eq("id", user.id)
+          .single();
+        if (data) {
+          setFavorites((data.favorites as any) || []);
+        }
+      };
+      fetchFavorites();
 
     }
   }, [user, authLoading, navigate, profile]);
@@ -212,6 +233,46 @@ export default function Settings() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleSaveFavorites = async (newBuildingFavorites: FavoriteItem[]) => {
+      if (!user) return;
+      // Merge with non-building favorites
+      const nonBuildingFavorites = favorites.filter(f => f.type && f.type !== 'building');
+      const combined = [...newBuildingFavorites, ...nonBuildingFavorites];
+      setFavorites(combined);
+
+      try {
+          const { error } = await supabase
+            .from("profiles")
+            .update({ favorites: combined as any })
+            .eq("id", user.id);
+          if (error) throw error;
+          toast({ description: "Favorites updated successfully." });
+      } catch (error) {
+          console.error(error);
+          toast({ variant: "destructive", description: "Failed to save favorites." });
+      }
+  };
+
+  const handleSaveHighlights = async (newHighlights: FavoriteItem[]) => {
+      if (!user) return;
+      // Merge with building favorites
+      const buildingFavorites = favorites.filter(f => !f.type || f.type === 'building');
+      const combined = [...buildingFavorites, ...newHighlights];
+      setFavorites(combined);
+
+      try {
+          const { error } = await supabase
+            .from("profiles")
+            .update({ favorites: combined as any })
+            .eq("id", user.id);
+          if (error) throw error;
+          toast({ description: "Highlights updated successfully." });
+      } catch (error) {
+          console.error(error);
+          toast({ variant: "destructive", description: "Failed to save highlights." });
+      }
   };
 
   const handleExportData = async () => {
@@ -398,6 +459,32 @@ export default function Settings() {
 
           <Separator />
 
+          {/* Profile Content Section */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <LayoutTemplate className="h-4 w-4" /> Profile Customization
+            </h2>
+            <div className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                   <h3 className="font-medium">All-time Favourites</h3>
+                   <p className="text-sm text-muted-foreground">Select up to 6 buildings to showcase on your profile.</p>
+                </div>
+                <Button type="button" variant="outline" onClick={() => setShowManageFavorites(true)}>Manage</Button>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div>
+                   <h3 className="font-medium">Highlights</h3>
+                   <p className="text-sm text-muted-foreground">Add favorite styles, architects, and quotes.</p>
+                </div>
+                <Button type="button" variant="outline" onClick={() => setShowManageHighlights(true)}>Manage</Button>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
           {/* App Experience Section */}
           {(isInstallable || isIOS) && (
             <div className="space-y-4">
@@ -495,6 +582,22 @@ export default function Settings() {
           </Button>
         </form>
       </div>
+
+      {/* Manage Favorites (Buildings) Dialog */}
+      <ManageFavoritesDialog
+        open={showManageFavorites}
+        onOpenChange={setShowManageFavorites}
+        favorites={favorites.filter(f => !f.type || f.type === 'building')}
+        onSave={handleSaveFavorites}
+      />
+
+      {/* Manage Highlights (Genres/People/Quotes) Dialog */}
+      <ManageHighlightsDialog
+        open={showManageHighlights}
+        onOpenChange={setShowManageHighlights}
+        favorites={favorites}
+        onSave={handleSaveHighlights}
+      />
     </AppLayout>
   );
 }

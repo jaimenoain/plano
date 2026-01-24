@@ -27,17 +27,33 @@ export interface Bounds {
 }
 
 interface BuildingDiscoveryMapProps {
-    externalBuildings?: DiscoveryBuilding[];
-    onRegionChange?: (center: { lat: number, lng: number }) => void;
-    onBoundsChange?: (bounds: Bounds) => void;
-    onMapInteraction?: () => void;
-    forcedCenter?: { lat: number, lng: number } | null;
+  externalBuildings?: DiscoveryBuilding[];
+  onRegionChange?: (center: { lat: number, lng: number }) => void;
+  onBoundsChange?: (bounds: Bounds) => void;
+  onMapInteraction?: () => void;
+  forcedCenter?: { lat: number, lng: number } | null;
+  forcedBounds?: Bounds | null;
+  isFetching?: boolean;
+  autoZoomOnLowCount?: boolean;
 }
 
-export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoundsChange, onMapInteraction, forcedCenter }: BuildingDiscoveryMapProps) {
+export function BuildingDiscoveryMap({
+  externalBuildings,
+  onRegionChange,
+  onBoundsChange,
+  onMapInteraction,
+  forcedCenter,
+  forcedBounds,
+  isFetching,
+  autoZoomOnLowCount
+}: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
+
+  // State to track user interaction to disable auto-zoom
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
+  const [isMapMoving, setIsMapMoving] = useState(false);
 
   // Default view state (London)
   const [viewState, setViewState] = useState({
@@ -46,16 +62,24 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoun
     zoom: 12
   });
 
-  // Handle flyTo
+  // Handle flyTo or fitBounds
   useEffect(() => {
-    if (forcedCenter && mapRef.current) {
+    if (forcedBounds && mapRef.current) {
+        mapRef.current.fitBounds(
+            [
+                [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
+                [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
+            ],
+            { padding: 20, duration: 1500 }
+        );
+    } else if (forcedCenter && mapRef.current) {
         mapRef.current.flyTo({
             center: [forcedCenter.lng, forcedCenter.lat],
             zoom: 13,
             duration: 1500
         });
     }
-  }, [forcedCenter]);
+  }, [forcedCenter, forcedBounds]);
 
   const { data: internalBuildings, isLoading: internalLoading } = useQuery({
     queryKey: ["discovery-buildings"],
@@ -125,6 +149,33 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoun
     updateClusters();
   }, [viewState, updateClusters]);
 
+  // Auto-zoom logic
+  useEffect(() => {
+    // Only proceed if auto-zoom is enabled and user hasn't interacted
+    if (!autoZoomOnLowCount || userHasInteracted || isMapMoving || isFetching) return;
+
+    // Ensure we have buildings to check against
+    if (!buildings || buildings.length === 0) return;
+
+    // Check minimum zoom level to prevent zooming out to world view excessively
+    if (viewState.zoom <= 2) return;
+
+    const visibleCount = clusters.reduce((acc, cluster) => {
+        return acc + (cluster.properties.point_count || 1);
+    }, 0);
+
+    // If visible count is less than 5 AND we have more buildings available
+    if (visibleCount < 5 && visibleCount < buildings.length) {
+        const timer = setTimeout(() => {
+            setViewState(prev => ({
+                ...prev,
+                zoom: prev.zoom - 1
+            }));
+        }, 500); // 0.5s delay to pace the zoom out
+
+        return () => clearTimeout(timer);
+    }
+  }, [clusters, buildings, autoZoomOnLowCount, userHasInteracted, isMapMoving, isFetching, viewState.zoom]);
 
   const pins = useMemo(() => clusters.map(cluster => {
     const [longitude, latitude] = cluster.geometry.coordinates;
@@ -235,11 +286,14 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoun
         onMove={evt => {
             setViewState(evt.viewState);
             if (evt.originalEvent) {
+                setUserHasInteracted(true);
                 onMapInteraction?.();
             }
         }}
+        onMoveStart={() => setIsMapMoving(true)}
         onLoad={evt => handleMapUpdate(evt.target)}
         onMoveEnd={evt => {
+            setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;
             onRegionChange?.({ lat: latitude, lng: longitude });
             handleMapUpdate(evt.target);
