@@ -29,7 +29,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UserCard } from "@/components/profile/UserCard";
 import { ProfileHighlights } from "@/components/profile/ProfileHighlights";
 import { CollectionsRow } from "@/components/profile/CollectionsRow";
+import { SocialContextSection } from "@/components/profile/SocialContextSection";
 import { FeedReview } from "@/types/feed";
+import { useProfileComparison } from "@/hooks/useProfileComparison";
 
 // --- Types ---
 interface Profile {
@@ -84,6 +86,8 @@ export default function Profile() {
 
   // New Profile Features
   const [squad, setSquad] = useState<Profile[]>([]);
+
+  const { profileComparison } = useProfileComparison(currentUser?.id, targetUserId);
 
   const [userListDialog, setUserListDialog] = useState<{ open: boolean; type: "followers" | "following" }>({
     open: false,
@@ -537,6 +541,11 @@ export default function Profile() {
         onTabChange={(tab) => handleTabChange(tab, true)}
         squad={squad}
       />
+
+      {/* Social Context Section */}
+      {!isOwnProfile && (
+        <SocialContextSection mutualAffinityUsers={profileComparison.mutualAffinityUsers} />
+      )}
 
       {/* 2. Favorite Buildings (Moved to body as requested implicitly by "Add a section") */}
       {/* Only show if not empty (hidden for own profile) */}
