@@ -32,9 +32,10 @@ interface BuildingDiscoveryMapProps {
     onBoundsChange?: (bounds: Bounds) => void;
     onMapInteraction?: () => void;
     forcedCenter?: { lat: number, lng: number } | null;
+    forcedBounds?: Bounds | null;
 }
 
-export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoundsChange, onMapInteraction, forcedCenter }: BuildingDiscoveryMapProps) {
+export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoundsChange, onMapInteraction, forcedCenter, forcedBounds }: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
@@ -46,16 +47,24 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoun
     zoom: 12
   });
 
-  // Handle flyTo
+  // Handle flyTo or fitBounds
   useEffect(() => {
-    if (forcedCenter && mapRef.current) {
+    if (forcedBounds && mapRef.current) {
+        mapRef.current.fitBounds(
+            [
+                [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
+                [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
+            ],
+            { padding: 20, duration: 1500 }
+        );
+    } else if (forcedCenter && mapRef.current) {
         mapRef.current.flyTo({
             center: [forcedCenter.lng, forcedCenter.lat],
             zoom: 13,
             duration: 1500
         });
     }
-  }, [forcedCenter]);
+  }, [forcedCenter, forcedBounds]);
 
   const { data: internalBuildings, isLoading: internalLoading } = useQuery({
     queryKey: ["discovery-buildings"],
