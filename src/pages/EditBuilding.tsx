@@ -113,7 +113,9 @@ export default function EditBuilding() {
         name: data.name,
         year_completed: data.year_completed,
         architects: finalArchitects,
-        styles: data.styles || [],
+        functional_category_id: (data as any).functional_category_id || "",
+        functional_typology_ids: (data as any).functional_typology_ids || [],
+        selected_attribute_ids: (data as any).selected_attribute_ids || [],
         main_image_url: data.main_image_url,
       });
 
@@ -188,7 +190,12 @@ export default function EditBuilding() {
           name: formData.name,
           year_completed: formData.year_completed,
           architects: architectNames, // Maintain legacy array
-          styles: formData.styles,
+          // @ts-ignore
+          functional_category_id: formData.functional_category_id,
+          // @ts-ignore
+          functional_typology_ids: formData.functional_typology_ids,
+          // @ts-ignore
+          selected_attribute_ids: formData.selected_attribute_ids,
           main_image_url: formData.main_image_url,
 
           address: locationData.address,
