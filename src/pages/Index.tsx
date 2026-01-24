@@ -133,6 +133,12 @@ interface FeedReview {
   likes_count: number;
   comments_count: number;
   is_liked: boolean;
+  images?: {
+    id: string;
+    url: string;
+    likes_count: number;
+    is_liked: boolean;
+  }[];
 }
 
 const PAGE_SIZE = 36;
@@ -184,7 +190,44 @@ export default function Index() {
 
       if (error) throw error;
 
-      return (data || []).map((review: any) => ({
+      const feedData = data || [];
+      const reviewIds = feedData.map((r: any) => r.id);
+
+      // Fetch review images
+      const { data: imagesData } = await supabase
+        .from('review_images')
+        .select('id, review_id, storage_path, likes_count')
+        .in('review_id', reviewIds);
+
+      // Fetch user likes for these images
+      let likedImageIds: string[] = [];
+      if (imagesData && imagesData.length > 0) {
+        const imageIds = imagesData.map(img => img.id);
+        const { data: likesData } = await supabase
+          .from('image_likes')
+          .select('image_id')
+          .eq('user_id', user.id)
+          .in('image_id', imageIds);
+
+        if (likesData) {
+            likedImageIds = likesData.map(l => l.image_id);
+        }
+      }
+
+      // Map images by review_id
+      const imagesByReviewId = (imagesData || []).reduce((acc: any, img) => {
+         if (!acc[img.review_id]) acc[img.review_id] = [];
+         const { data: { publicUrl } } = supabase.storage.from('review_images').getPublicUrl(img.storage_path);
+         acc[img.review_id].push({
+             id: img.id,
+             url: publicUrl,
+             likes_count: img.likes_count || 0,
+             is_liked: likedImageIds.includes(img.id)
+         });
+         return acc;
+      }, {});
+
+      return feedData.map((review: any) => ({
         id: review.id,
         content: review.content,
         rating: review.rating,
@@ -209,6 +252,7 @@ export default function Index() {
         likes_count: review.likes_count || 0,
         comments_count: review.comments_count || 0,
         is_liked: review.is_liked,
+        images: imagesByReviewId[review.id] || [],
       }));
     },
     initialPageParam: 0,
@@ -283,6 +327,79 @@ export default function Index() {
     }
   };
 
+  const handleImageLike = async (reviewId: string, imageId: string) => {
+    if (!user) return;
+
+    const review = reviews.find(r => r.id === reviewId);
+    if (!review) return;
+    const image = review.images?.find(i => i.id === imageId);
+    if (!image) return;
+
+    // Optimistic Update
+    queryClient.setQueryData<InfiniteData<FeedReview[]>>(["feed", user.id, showGroupActivity], (oldData) => {
+      if (!oldData) return undefined;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page) =>
+          page.map((r) => {
+            if (r.id === reviewId) {
+                return {
+                    ...r,
+                    images: r.images?.map(img => {
+                        if (img.id === imageId) {
+                            return {
+                                ...img,
+                                is_liked: !img.is_liked,
+                                likes_count: img.is_liked ? img.likes_count - 1 : img.likes_count + 1
+                            };
+                        }
+                        return img;
+                    })
+                };
+            }
+            return r;
+          })
+        ),
+      };
+    });
+
+    try {
+        if (image.is_liked) {
+            await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
+        } else {
+            await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
+        }
+    } catch (error) {
+        // Revert
+        queryClient.setQueryData<InfiniteData<FeedReview[]>>(["feed", user.id, showGroupActivity], (oldData) => {
+            if (!oldData) return undefined;
+            return {
+                ...oldData,
+                pages: oldData.pages.map((page) =>
+                page.map((r) => {
+                    if (r.id === reviewId) {
+                        return {
+                            ...r,
+                            images: r.images?.map(img => {
+                                if (img.id === imageId) {
+                                    return {
+                                        ...img,
+                                        is_liked: image.is_liked,
+                                        likes_count: image.likes_count
+                                    };
+                                }
+                                return img;
+                            })
+                        };
+                    }
+                    return r;
+                })
+                ),
+            };
+        });
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
@@ -315,6 +432,7 @@ export default function Index() {
                     key={review.id}
                     entry={review}
                     onLike={handleLike}
+                    onImageLike={handleImageLike}
                   />
                 ))}
 

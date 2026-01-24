@@ -30,8 +30,15 @@ interface ReviewCardProps {
     comments_count: number;
     is_liked: boolean;
     watch_with_users?: { id: string, avatar_url: string | null, username: string | null }[];
+    images?: {
+      id: string;
+      url: string;
+      likes_count: number;
+      is_liked: boolean;
+    }[];
   };
-  onLike?: (reviewId: string) => void; 
+  onLike?: (reviewId: string) => void;
+  onImageLike?: (reviewId: string, imageId: string) => void;
   onComment?: (reviewId: string) => void;
   isDetailView?: boolean;
   hideUser?: boolean;
@@ -40,7 +47,8 @@ interface ReviewCardProps {
 
 export function ReviewCard({ 
   entry,
-  onLike, 
+  onLike,
+  onImageLike,
   onComment, 
   isDetailView = false, 
   hideUser = false,
@@ -255,32 +263,73 @@ export function ReviewCard({
         </div>
       )}
 
-      {/* 2. Poster Image - Updated for Architecture (4:3) */}
-      {!hideBuildingInfo && posterUrl && (
-        <div className="aspect-[4/3] relative bg-secondary overflow-hidden">
-          <img
-            src={posterUrl}
-            alt={mainTitle || ""}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-
-          {/* Watch With Facepile Overlay - Only if watchlist and has users */}
-          {isWatchlist && watchWithUsers.length > 0 && (
-             <div className="absolute bottom-2 right-2 flex -space-x-2 z-10">
-                {watchWithUsers.slice(0, 3).map(u => (
-                   <Avatar key={u.id} className="h-6 w-6 ring-2 ring-background border border-white/20">
-                      <AvatarImage src={u.avatar_url || undefined} />
-                      <AvatarFallback className="text-[8px] bg-secondary text-foreground">{u.username?.charAt(0)}</AvatarFallback>
-                   </Avatar>
+      {/* 2. Images Gallery or Poster Image */}
+      {!hideBuildingInfo && (
+        entry.images && entry.images.length > 0 ? (
+          <div className="relative w-full overflow-hidden bg-secondary">
+             <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
+                {entry.images.map((image) => (
+                  <div key={image.id} className="relative flex-none w-full aspect-[4/3] snap-center">
+                     <img
+                       src={image.url}
+                       alt="Review photo"
+                       className="w-full h-full object-cover"
+                     />
+                     {/* Image Like Overlay */}
+                     <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onImageLike?.(entry.id, image.id);
+                          }}
+                          className="flex items-center gap-1 text-white hover:text-red-400 transition-colors"
+                        >
+                          <Heart
+                             className={`w-3.5 h-3.5 ${image.is_liked ? "fill-red-500 text-red-500" : "text-white"}`}
+                          />
+                          <span className="text-[10px] font-medium text-white">{image.likes_count}</span>
+                        </button>
+                     </div>
+                  </div>
                 ))}
-                {watchWithUsers.length > 3 && (
-                   <div className="h-6 w-6 rounded-full bg-black/60 ring-2 ring-background border border-white/20 flex items-center justify-center text-[8px] text-white">
-                      +{watchWithUsers.length - 3}
-                   </div>
-                )}
              </div>
-          )}
-        </div>
+             {/* Pagination Dots (if multiple) */}
+             {entry.images.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                   {entry.images.map((_, i) => (
+                      <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/50" />
+                   ))}
+                </div>
+             )}
+          </div>
+        ) : (
+          posterUrl && (
+            <div className="aspect-[4/3] relative bg-secondary overflow-hidden">
+              <img
+                src={posterUrl}
+                alt={mainTitle || ""}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+
+              {/* Watch With Facepile Overlay - Only if watchlist and has users */}
+              {isWatchlist && watchWithUsers.length > 0 && (
+                <div className="absolute bottom-2 right-2 flex -space-x-2 z-10">
+                    {watchWithUsers.slice(0, 3).map(u => (
+                      <Avatar key={u.id} className="h-6 w-6 ring-2 ring-background border border-white/20">
+                          <AvatarImage src={u.avatar_url || undefined} />
+                          <AvatarFallback className="text-[8px] bg-secondary text-foreground">{u.username?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {watchWithUsers.length > 3 && (
+                      <div className="h-6 w-6 rounded-full bg-black/60 ring-2 ring-background border border-white/20 flex items-center justify-center text-[8px] text-white">
+                          +{watchWithUsers.length - 3}
+                      </div>
+                    )}
+                </div>
+              )}
+            </div>
+          )
+        )
       )}
 
       {/* 3. Content Body */}
