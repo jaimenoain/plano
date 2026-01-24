@@ -5,7 +5,6 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, MapPin } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
@@ -158,21 +157,17 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
     // Neon (#EEFF41): Pending (Wishlist) & Social
     // Grey/Default: Discovery
 
-    let pinColorClass = "border-gray-400";
-    let dotColorClass = "bg-[#333333]"; // Dark anchor point
+    let pinColorClass = "text-gray-500 fill-background";
     let pinTooltip = null;
 
     if (status === 'visited') {
-        pinColorClass = "border-[#333333]"; // Charcoal
-        dotColorClass = "bg-[#333333]";
+        pinColorClass = "text-[#333333] fill-[#333333]"; // Charcoal
         pinTooltip = <span className="ml-1 opacity-75 capitalize">(Visited)</span>;
     } else if (status === 'pending') {
-        pinColorClass = "border-[#EEFF41]"; // Neon
-        dotColorClass = "bg-[#333333]"; // Dark anchor
+        pinColorClass = "text-[#EEFF41] fill-[#EEFF41]"; // Neon
         pinTooltip = <span className="ml-1 opacity-75 capitalize">(Pending)</span>;
     } else if (building.social_context) {
-        pinColorClass = "border-[#EEFF41]"; // Neon
-        dotColorClass = "bg-[#333333]"; // Dark anchor
+        pinColorClass = "text-[#EEFF41] fill-[#EEFF41]"; // Neon
         pinTooltip = <span className="ml-1 opacity-90">({building.social_context})</span>;
     }
 
@@ -198,17 +193,7 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
                 <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
             </div>
 
-            <div className="relative">
-                <div className={`w-8 h-8 rounded-full border-2 ${pinColorClass} shadow-md overflow-hidden bg-background transition-colors duration-200`}>
-                    <Avatar className="h-full w-full">
-                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
-                        <AvatarFallback className="bg-primary/10">
-                            <MapPin className={`h-4 w-4 ${status ? 'text-foreground' : 'text-primary'}`} />
-                        </AvatarFallback>
-                    </Avatar>
-                </div>
-                <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 ${dotColorClass} rotate-45 transform translate-y-1/2 shadow-sm`}></div>
-            </div>
+            <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform hover:scale-110`} />
             </div>
         </Marker>
     );
