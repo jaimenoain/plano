@@ -446,7 +446,7 @@ export default function BuildingDetails() {
                         <div className="flex justify-end">
                             <Button size="sm" onClick={handleSaveNote} disabled={isSavingNote}>
                                 {isSavingNote && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                Save Note
+                                Save
                             </Button>
                         </div>
                     </div>
