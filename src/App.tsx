@@ -25,6 +25,7 @@ import Groups from "./pages/Groups";
 import CreateSession from "./pages/CreateSession";
 import AddBuilding from "./pages/AddBuilding";
 import EditBuilding from "./pages/EditBuilding";
+import WriteReview from "./pages/WriteReview";
 
 import GroupLayout from "./pages/groups/GroupLayout";
 import GroupSessions from "./pages/groups/GroupSessions";
@@ -144,6 +145,7 @@ const router = createBrowserRouter(
 
       <Route path="/building/:id" element={<BuildingDetails />} />
       <Route path="/building/:id/edit" element={<EditBuilding />} />
+      <Route path="/building/:id/review" element={<WriteReview />} />
       <Route path="/review/:id" element={<ReviewDetails />} />
 
       <Route path="*" element={<NotFound />} />
