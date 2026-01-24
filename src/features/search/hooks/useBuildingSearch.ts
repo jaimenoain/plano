@@ -54,10 +54,14 @@ export function useBuildingSearch() {
             styles: selectedStyles
         };
 
+        // When searching with text, we lift the distance limit to global (20,000km)
+        // Otherwise use default 500km radius around user location
+        const radius = debouncedQuery ? 20000000 : 500000;
+
         return await searchBuildingsRpc({
             query_text: debouncedQuery || null,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
-            radius_meters: 500000, // 500km radius
+            radius_meters: radius,
             filters: filters,
             sort_by: sortBy
         });
