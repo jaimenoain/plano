@@ -9,6 +9,7 @@ import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-mo
 import { toast } from "sonner";
 import ReactPlayer from 'react-player';
 import { BuildingFriendsActivity } from "./BuildingFriendsActivity";
+import { upsertUserBuilding } from "@/utils/supabaseFallback";
 
 interface CardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -359,7 +360,7 @@ export default function RapidReview() {
       toast.success("Added to your bucket list");
 
       try {
-          await supabase.from("user_buildings").insert({
+          await upsertUserBuilding({
               user_id: user.id,
               building_id: buildingId,
               status: 'pending'

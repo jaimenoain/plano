@@ -208,3 +208,76 @@ export const fetchUserBuildingStatus = async (userId: string, buildingId: string
 
      return null;
 };
+
+export const upsertUserBuilding = async (data: {
+  user_id: string;
+  building_id: string;
+  status: 'visited' | 'pending';
+  rating?: number | null;
+  content?: string | null;
+  tags?: string[] | null;
+  visibility?: string;
+  edited_at?: string;
+}) => {
+  try {
+    const { data: result, error } = await supabase
+      .from("user_buildings")
+      .upsert(data, { onConflict: "user_id, building_id" } as any)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return result;
+  } catch (error) {
+    console.warn("upsert user_buildings failed, falling back to log", error);
+
+    // Fallback: Map to log table
+    // legacy status: 'visited' -> 'watched', 'pending' -> 'watchlist'
+    const legacyStatus = data.status === 'visited' ? 'watched' : 'watchlist';
+
+    const legacyData = {
+      user_id: data.user_id,
+      film_id: data.building_id,
+      status: legacyStatus,
+      rating: data.rating || null,
+      // Note: content, tags, visibility are not supported in legacy log table and are dropped
+    };
+
+    const { data: logResult, error: logError } = await supabase
+      .from("log" as any)
+      .upsert(legacyData, { onConflict: "user_id, film_id" } as any)
+      .select()
+      .single();
+
+    if (logError) throw logError;
+
+    // Map back result to match user_buildings shape (partially)
+    return {
+        ...logResult,
+        building_id: logResult.film_id,
+        status: logResult.status === 'watched' ? 'visited' : (logResult.status === 'watchlist' ? 'pending' : logResult.status)
+    };
+  }
+};
+
+export const deleteUserBuilding = async (id: string) => {
+    try {
+        const { error } = await supabase
+            .from("user_buildings")
+            .delete()
+            .eq("id", id);
+
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.warn("delete user_buildings failed, falling back to log", error);
+
+        const { error: logError } = await supabase
+            .from("log" as any)
+            .delete()
+            .eq("id", id);
+
+        if (logError) throw logError;
+        return true;
+    }
+};
