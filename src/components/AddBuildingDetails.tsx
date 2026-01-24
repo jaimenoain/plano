@@ -42,14 +42,13 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
       const architectNames = data.architects.map(a => a.name);
 
       // 2. Insert Building
-      // @ts-ignore - Supabase types might be strict on PostGIS or specific columns
       const { data: insertedData, error } = await supabase
-        .from('films')
+        .from('buildings')
         .insert({
           name: data.name,
           year_completed: data.year_completed,
           description: data.description,
-          poster_path: data.main_image_url, // Legacy mapping
+          main_image_url: data.main_image_url,
 
           // Location Data (Merged from Main & Feature branches)
           address: locationData.address,
@@ -77,7 +76,6 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
                 architect_id: a.id
             }));
 
-            // @ts-ignore - junction table created in migration
             const { error: linkError } = await supabase
                 .from('building_architects')
                 .insert(links);
