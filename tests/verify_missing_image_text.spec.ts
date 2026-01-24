@@ -90,5 +90,6 @@ test('Verify Building Details Missing Image Text', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'No Image Building' })).toBeVisible();
 
   // Check for the new text
-  await expect(page.getByText('No image yet - be the first to add a photo of this building', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'No image yet' })).toBeVisible();
+  await expect(page.getByText('Be the first to add a photo of this building')).toBeVisible();
 });

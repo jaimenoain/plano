@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
-  Edit2, Check, Bookmark, Star, MessageSquarePlus
+  Edit2, Check, Bookmark, Star, MessageSquarePlus, Image as ImageIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -320,7 +320,11 @@ export default function BuildingDetails() {
                 {building.main_image_url ? (
                     <img src={building.main_image_url || undefined} className="w-full h-full object-cover" alt={building.name} />
                 ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-center p-4">No image yet - be the first to add a photo of this building</div>
+                    <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground text-center p-6">
+                        <ImageIcon className="w-12 h-12 text-muted-foreground/20 mb-3" />
+                        <h3 className="font-medium text-muted-foreground mb-1">No image yet</h3>
+                        <p className="text-xs text-muted-foreground/50 max-w-[200px]">Be the first to add a photo of this building</p>
+                    </div>
                 )}
             </div>
         </div>
