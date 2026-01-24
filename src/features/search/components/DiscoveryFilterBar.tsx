@@ -1,14 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { LocationInput } from "@/components/ui/LocationInput";
-import { Check, ChevronsUpDown, MapPin, Sparkles, Trophy, Locate } from "lucide-react";
+import { Check, ChevronsUpDown, MapPin, Sparkles, Trophy, Locate, Users, Building2 } from "lucide-react";
 import { DiscoverySearchInput } from "./DiscoverySearchInput";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+
+export type SearchScope = 'content' | 'users';
 
 export interface DiscoveryFilterBarProps {
   // Search Props
   searchQuery: string;
   onSearchChange: (value: string) => void;
+  searchScope?: SearchScope;
+  onSearchScopeChange?: (scope: SearchScope) => void;
   
   // Location Props
   onLocationSelect: (address: string, countryCode: string, placeName?: string) => void;
@@ -52,6 +56,8 @@ export function DiscoveryFilterBar({
   onBucketListChange,
   onShowLeaderboard,
   onUseLocation,
+  searchScope,
+  onSearchScopeChange,
 }: DiscoveryFilterBarProps) {
   const [openStyles, setOpenStyles] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
@@ -68,22 +74,47 @@ export function DiscoveryFilterBar({
     <div className="flex flex-col gap-4 p-4 bg-background border-b md:flex-row md:items-center md:justify-between sticky top-0 z-10">
       {/* Search Inputs */}
       <div className="flex flex-col md:flex-row gap-2 flex-1 min-w-[200px]">
+        {onSearchScopeChange && (
+          <div className="flex p-1 bg-muted rounded-lg shrink-0 w-fit self-center md:self-auto">
+            <Button
+              variant={searchScope === 'content' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => onSearchScopeChange('content')}
+              className={cn("h-8 px-3 text-xs font-medium", searchScope === 'content' && "bg-background shadow-sm")}
+            >
+              <Building2 className="w-3.5 h-3.5 mr-2" />
+              Buildings
+            </Button>
+            <Button
+              variant={searchScope === 'users' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => onSearchScopeChange('users')}
+              className={cn("h-8 px-3 text-xs font-medium", searchScope === 'users' && "bg-background shadow-sm")}
+            >
+              <Users className="w-3.5 h-3.5 mr-2" />
+              People
+            </Button>
+          </div>
+        )}
+
         <DiscoverySearchInput
-          placeholder="Search buildings, architects..."
+          placeholder={searchScope === 'users' ? "Search people..." : "Search buildings, architects..."}
           value={searchQuery}
           onSearchChange={onSearchChange}
           className="w-full"
         />
-        <LocationInput
-          value={locationQuery}
-          onLocationSelected={(address, country, place) => {
-            setLocationQuery(address);
-            onLocationSelect(address, country, place);
-          }}
-          placeholder="Search location..."
-          searchTypes={["(regions)"]}
-          className="w-full"
-        />
+        {(!searchScope || searchScope === 'content') && (
+          <LocationInput
+            value={locationQuery}
+            onLocationSelected={(address, country, place) => {
+              setLocationQuery(address);
+              onLocationSelect(address, country, place);
+            }}
+            placeholder="Search location..."
+            searchTypes={["(regions)"]}
+            className="w-full"
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
