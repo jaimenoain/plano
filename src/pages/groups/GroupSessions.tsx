@@ -216,13 +216,13 @@ export default function GroupSessions() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <MetaHead
         title={group?.name}
-        description={group?.description || `Join field trips in ${group?.name}`}
+        description={group?.description || `Join events in ${group?.name}`}
       />
       
       {isAdmin && (
         <div className="flex justify-end px-2">
           <Button onClick={() => navigate(`/groups/${slug}/session/create`)} size="sm" className="w-full sm:w-auto">
-            <CalendarPlus className="mr-2 h-4 w-4" /> Plan Field Trip
+            <CalendarPlus className="mr-2 h-4 w-4" /> Plan Event
           </Button>
         </div>
       )}
@@ -293,8 +293,8 @@ export default function GroupSessions() {
         ) : sessions.length === 0 ? (
           <div className="text-center py-20 bg-muted/10 rounded-xl border border-dashed">
             <Calendar className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-            <h3 className="font-medium text-lg">No field trips found</h3>
-            <p className="text-muted-foreground">There are no {sessionFilter} field trips scheduled.</p>
+            <h3 className="font-medium text-lg">No events found</h3>
+            <p className="text-muted-foreground">There are no {sessionFilter} events scheduled.</p>
           </div>
         ) : (
           <>
@@ -317,7 +317,7 @@ export default function GroupSessions() {
             {hasNextPage && (
               <div className="pt-4 flex justify-center">
                 <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                  {isFetchingNextPage ? "Loading..." : "Load previous field trips"}
+                  {isFetchingNextPage ? "Loading..." : "Load previous events"}
                 </Button>
               </div>
             )}

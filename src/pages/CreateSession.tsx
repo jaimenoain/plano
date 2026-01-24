@@ -301,7 +301,7 @@ export default function CreateSession() {
       }
     } catch (error) {
       console.error("Error fetching session:", error);
-      toast({ title: "Error loading field trip", variant: "destructive" });
+      toast({ title: "Error loading event", variant: "destructive" });
       navigate(`/groups/${groupSlug}`);
     } finally {
       setLoading(false);
@@ -435,7 +435,7 @@ export default function CreateSession() {
       // 1. Create or Update Session
       const sessionData: SessionInsert = {
         group_id: resolvedGroupId,
-        title: title || format(date, "MMMM do 'Field Trip'"),
+        title: title || format(date, "MMMM do 'Event'"),
         description,
         host_notes: hostNotes,
         session_date: format(date, "yyyy-MM-dd"),
@@ -529,7 +529,7 @@ export default function CreateSession() {
             if (linkError) throw linkError;
       }
 
-      toast({ title: isEditing ? "Field trip updated!" : "Field trip created!" });
+      toast({ title: isEditing ? "Event updated!" : "Event created!" });
       queryClient.invalidateQueries({ queryKey: ["group-sessions", groupSlug] });
       queryClient.invalidateQueries({ queryKey: ["group-sessions", resolvedGroupId] });
       navigate(`/groups/${groupSlug}`);
@@ -538,7 +538,7 @@ export default function CreateSession() {
     } catch (error: any) {
       console.error("Save session error:", error);
       toast({ 
-        title: "Error saving field trip",
+        title: "Error saving event",
         description: error.message || "Please try again", 
         variant: "destructive" 
       });
@@ -556,7 +556,7 @@ export default function CreateSession() {
   }
 
   return (
-    <AppLayout title={isEditing ? "Edit Field Trip" : "Plan Field Trip"}>
+    <AppLayout title={isEditing ? "Edit Event" : "Plan Event"}>
       <div className="max-w-xl mx-auto px-4 py-6 space-y-8">
         
         {/* SECTION 1: Date & Logistics */}
@@ -864,7 +864,7 @@ export default function CreateSession() {
         {showResources && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 border-t pt-4">
                 <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Trip Resources</label>
+                    <label className="text-sm font-medium">Event Resources</label>
                     <div className="flex gap-2">
                         <Button
                         variant="ghost"
@@ -976,7 +976,7 @@ export default function CreateSession() {
                       ))}
                   </SelectContent>
                </Select>
-               <p className="text-xs text-muted-foreground">Linking a poll will display it on the trip details page.</p>
+               <p className="text-xs text-muted-foreground">Linking a poll will display it on the event details page.</p>
             </div>
         )}
 
@@ -1024,7 +1024,7 @@ export default function CreateSession() {
                 Save as Draft
             </Button>
             <Button onClick={() => handleSaveSession('published')} className="flex-1">
-                {isEditing ? "Update & Publish" : "Publish Field Trip"}
+                {isEditing ? "Update & Publish" : "Publish Event"}
             </Button>
         </div>
 

@@ -141,7 +141,7 @@ export default function SessionDetails() {
             <div className="flex justify-between items-center">
                 <Button variant="ghost" size="sm" className="w-fit -ml-2 text-muted-foreground" asChild>
                     <Link to={`/groups/${slug}`}>
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Field Trips
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
                     </Link>
                 </Button>
 

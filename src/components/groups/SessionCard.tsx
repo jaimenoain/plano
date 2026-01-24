@@ -151,7 +151,7 @@ export function SessionCard({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["group-sessions"] });
-      toast({ title: "Field trip deleted successfully" });
+      toast({ title: "Event deleted successfully" });
     }
   });
 
@@ -255,7 +255,7 @@ export function SessionCard({
     ].filter(Boolean).join('\n');
 
     const url = createGoogleCalendarUrl({
-      title: session.title || "Architecture Field Trip",
+      title: session.title || "Architecture Event",
       description,
       startTime: sDate,
     });
@@ -316,7 +316,7 @@ export function SessionCard({
               onClick={() => navigate(`/groups/${slug}/sessions/${slugify(session.title || "session")}/${session.id}`)}
             >
               <h3 className="text-xl font-bold leading-tight">
-                {session.title || "Architecture Field Trip"}
+                {session.title || "Architecture Event"}
                 {isAdmin && session.host_notes && showHostNotesIcon && (
                   <Notebook className="w-4 h-4 text-yellow-600 inline ml-2 relative -top-0.5" />
                 )}
