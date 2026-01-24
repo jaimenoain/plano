@@ -31,6 +31,7 @@ import { UserCard } from "@/components/profile/UserCard";
 import { ProfileHighlights } from "@/components/profile/ProfileHighlights";
 import { ManageHighlightsDialog } from "@/components/profile/ManageHighlightsDialog";
 import { CollectionsRow } from "@/components/profile/CollectionsRow";
+import { FeedReview } from "@/types/feed";
 
 // --- Types ---
 interface Profile {
@@ -47,30 +48,6 @@ interface Stats {
   pending: number;
   followers: number;
   following: number;
-}
-
-interface FeedReview {
-  id: string;
-  content: string | null;
-  rating: number | null;
-  created_at: string;
-  edited_at?: string | null;
-  status?: string;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-  };
-  building: {
-    id: string;
-    name: string;
-    main_image_url: string | null;
-    address?: string | null;
-  };
-  likes_count: number;
-  comments_count: number;
-  is_liked: boolean;
-  tags?: string[];
-  watch_with_users?: { id: string, avatar_url: string | null, username: string | null }[];
 }
 
 interface UserListItem {
@@ -332,7 +309,7 @@ export default function Profile() {
             .from("user_buildings")
             .select(`
             id, content, rating, created_at, edited_at, user_id, building_id, tags, status,
-            building:buildings ( id, name, main_image_url, address )
+            building:buildings ( id, name, main_image_url, address, year_completed, architects )
             `)
             .eq("user_id", targetUserId)
             .eq("status", status)
@@ -346,10 +323,20 @@ export default function Profile() {
         }
 
         const entryIds = entriesData.map((r) => r.id);
-        const [likesResult, commentsResult, userLikesResult] = await Promise.all([
+
+        // Fetch review images
+        const { data: imagesData } = await supabase
+          .from('review_images')
+          .select('id, review_id, storage_path, likes_count')
+          .in('review_id', entryIds);
+
+        const imageIds = imagesData?.map(img => img.id) || [];
+
+        const [likesResult, commentsResult, userLikesResult, imageLikesResult] = await Promise.all([
             supabase.from("likes").select("interaction_id").in("interaction_id", entryIds),
             supabase.from("comments").select("interaction_id").in("interaction_id", entryIds),
             currentUser ? supabase.from("likes").select("interaction_id").in("interaction_id", entryIds).eq("user_id", currentUser.id) : Promise.resolve({ data: [] }),
+            currentUser && imageIds.length > 0 ? supabase.from("image_likes").select("image_id").in("image_id", imageIds).eq("user_id", currentUser.id) : Promise.resolve({ data: [] }),
         ]);
 
         const likesCount = new Map();
@@ -359,6 +346,23 @@ export default function Profile() {
         commentsResult.data?.forEach(c => commentsCount.set(c.interaction_id, (commentsCount.get(c.interaction_id) || 0) + 1));
 
         const userLikes = new Set(userLikesResult.data?.map(l => l.interaction_id));
+        const userLikedImages = new Set(imageLikesResult.data?.map((l: any) => l.image_id));
+
+        // Group images by review_id
+        const imagesByReviewId = new Map();
+        imagesData?.forEach(img => {
+            const { data: { publicUrl } } = supabase.storage.from("review_images").getPublicUrl(img.storage_path);
+            const imageObj = {
+                id: img.id,
+                url: publicUrl,
+                likes_count: img.likes_count || 0,
+                is_liked: userLikedImages.has(img.id)
+            };
+            if (!imagesByReviewId.has(img.review_id)) {
+                imagesByReviewId.set(img.review_id, []);
+            }
+            imagesByReviewId.get(img.review_id).push(imageObj);
+        });
 
         const formattedContent: FeedReview[] = entriesData.map((item: any) => {
             return {
@@ -374,12 +378,15 @@ export default function Profile() {
                 name: item.building?.name || "Unknown Building",
                 main_image_url: item.building?.main_image_url || null,
                 address: item.building?.address || null,
+                year_completed: item.building?.year_completed || null,
+                architects: item.building?.architects || null,
             },
             tags: item.tags || [],
             likes_count: likesCount.get(item.id) || 0,
             comments_count: commentsCount.get(item.id) || 0,
             is_liked: userLikes.has(item.id),
             watch_with_users: [], // Removed watch_with for now
+            images: imagesByReviewId.get(item.id) || [],
             };
         });
 
@@ -651,7 +658,7 @@ export default function Profile() {
              ) : filteredContent.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
                    {filteredContent.map((item) => (
-                     <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser />
+                     <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser variant="compact" />
                    ))}
                 </div>
              ) : (
@@ -669,7 +676,7 @@ export default function Profile() {
              ) : filteredContent.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
                   {filteredContent.map((item) => (
-                    <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser />
+                    <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser variant="compact" />
                   ))}
                 </div>
              ) : (
