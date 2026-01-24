@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import GroupSettings from "./pages/GroupSettings";
 import NotFound from "./pages/NotFound";
 import BuildingDetails from "./pages/BuildingDetails";
+import ArchitectDetails from "./pages/ArchitectDetails";
 import ReviewDetails from "./pages/ReviewDetails";
 import Notifications from "./pages/Notifications";
 import Groups from "./pages/Groups";
@@ -145,6 +146,7 @@ const router = createBrowserRouter(
 
       <Route path="/building/:id" element={<BuildingDetails />} />
       <Route path="/building/:id/edit" element={<EditBuilding />} />
+      <Route path="/architect/:id" element={<ArchitectDetails />} />
       {/* Review Flow */}
       <Route path="/building/:id/review" element={<WriteReview />} />
       <Route path="/review/:id" element={<ReviewDetails />} />
