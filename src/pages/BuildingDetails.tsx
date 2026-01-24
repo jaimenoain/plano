@@ -1,14 +1,13 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
-  Trash2, Edit2, Check, Bookmark, Navigation, Users
+  Edit2, Check, Bookmark, Star
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,9 +17,8 @@ import { formatDistanceToNow } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
 import { BuildingMap } from "@/components/common/BuildingMap";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
-import { Star } from "lucide-react";
 import { UserPicker } from "@/components/common/UserPicker";
-import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } from "@/utils/supabaseFallback";
+import { fetchBuildingDetails } from "@/utils/supabaseFallback";
 
 // --- Types ---
 interface BuildingDetails {
@@ -31,7 +29,7 @@ interface BuildingDetails {
   architects: string[];
   year_completed: number;
   styles: string[];
-  main_image_url: string;
+  main_image_url: string | null;
   description: string;
   created_by: string;
 }
@@ -40,7 +38,7 @@ interface FeedEntry {
   id: string;
   content: string | null;
   rating: number | null;
-  status: 'visited' | 'pending'; // Updated Enum 
+  status: 'visited' | 'pending';
   tags: string[] | null;
   created_at: string;
   user: {
@@ -50,7 +48,7 @@ interface FeedEntry {
 }
 
 export default function BuildingDetails() {
-  const { id } = useParams(); // ID is now always UUID 
+  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useUserProfile();
@@ -106,27 +104,38 @@ export default function BuildingDetails() {
     if (!id) return;
 
     try {
-      // 1. Fetch Building (with fallback)
+      // 1. Fetch Building (with fallback logic in utility)
       const data = await fetchBuildingDetails(id);
 
-      // Cast the result to BuildingDetails type (mapped fields from fallback should match)
-      setBuilding(data as unknown as BuildingDetails);
+      // Sanitize main_image_url to ensure it's null if empty string
+      const sanitizedBuilding = {
+        ...data,
+        main_image_url: data.main_image_url || null
+      };
+
+      setBuilding(sanitizedBuilding as unknown as BuildingDetails);
 
       if (user && data.created_by === user.id) {
           setIsCreator(true);
       }
 
       if (user) {
-        // 2. Fetch User Entry (with fallback)
-        const userEntry = await fetchUserBuildingStatus(user.id, id);
+        // 2. Fetch User Entry (Direct Supabase call)
+        const { data: userEntry, error: userEntryError } = await supabase
+            .from("user_buildings")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("building_id", id)
+            .maybeSingle();
 
         if (userEntry) {
             setUserStatus(userEntry.status);
             setMyRating(userEntry.rating || 0);
+        } else if (userEntryError) {
+            console.error("Error fetching user status:", userEntryError);
         }
 
-        // 3. Fetch Social Feed (with fallback logic inline)
-        // DEBUG: Explicitly log this fetch attempt
+        // 3. Fetch Social Feed (Direct Supabase call)
         console.log("Fetching social feed for building:", id);
 
         const { data: entriesData, error: entriesError } = await supabase
@@ -139,29 +148,19 @@ export default function BuildingDetails() {
           .order("created_at", { ascending: false });
           
         if (entriesError) {
-             console.warn("Error fetching feed from user_buildings, trying log:", entriesError);
-             // Fallback to log
-             const { data: logs, error: logError } = await supabase
-                .from("log" as any)
-                .select(`
-                    id, content, rating, status, tags, created_at,
-                    user:profiles(username, avatar_url)
-                `)
-                .eq("film_id", id)
-                .order("created_at", { ascending: false });
-
-             if (logError) {
-                 console.error("Error fetching feed from log:", logError);
-             } else if (logs) {
-                 const mappedEntries = logs.map((log: any) => ({
-                     ...log,
-                     status: log.status === 'watched' ? 'visited' : (log.status === 'watchlist' ? 'pending' : log.status)
-                 }));
-                 setEntries(mappedEntries as any);
-             }
+             console.warn("Error fetching feed:", entriesError);
+             toast({ variant: "destructive", title: "Could not load activity feed" });
         } else if (entriesData) {
             console.log("Fetched feed entries:", entriesData);
-            setEntries(entriesData as any);
+            // Sanitize entries
+            const sanitizedEntries = entriesData.map((e: any) => ({
+                ...e,
+                user: {
+                    ...e.user,
+                    avatar_url: e.user.avatar_url || null
+                }
+            }));
+            setEntries(sanitizedEntries);
         }
       } else {
         console.log("No user, skipping feed fetch");
@@ -182,13 +181,16 @@ export default function BuildingDetails() {
       // Rating persists (myRating state is not changed to 0)
 
       try {
-          await upsertUserBuilding({
+          const { error } = await supabase.from("user_buildings").upsert({
               user_id: user.id,
               building_id: building.id,
               status: newStatus,
               rating: myRating > 0 ? myRating : null,
               edited_at: new Date().toISOString()
-          });
+          }, { onConflict: 'user_id, building_id' });
+
+          if (error) throw error;
+
           toast({ title: newStatus === 'visited' ? "Marked as Visited" : "Added to Pending" });
       } catch (error) {
           console.error("Status update failed", error);
@@ -209,13 +211,16 @@ export default function BuildingDetails() {
        }
 
        try {
-           await upsertUserBuilding({
+           const { error } = await supabase.from("user_buildings").upsert({
                user_id: user.id,
                building_id: building.id,
                status: statusToUse,
                rating: rating,
                edited_at: new Date().toISOString()
-           });
+           }, { onConflict: 'user_id, building_id' });
+
+           if (error) throw error;
+
            toast({ title: "Rating saved" });
        } catch (error) {
            console.error("Rating failed", error);
@@ -230,11 +235,6 @@ export default function BuildingDetails() {
     try {
         const status = "visit_with";
 
-        // Insert recommendation
-        // If legacy, we might need to write to different table?
-        // Recommendations table might exist in legacy? Memory doesn't say.
-        // Assuming recommendations is core/old enough.
-
         const { error: recError } = await supabase
             .from("recommendations")
             .insert(
@@ -246,20 +246,7 @@ export default function BuildingDetails() {
                 }))
             );
 
-        if (recError) {
-            // Try legacy `film_id` column?
-             const { error: legError } = await supabase
-                .from("recommendations")
-                .insert(
-                    selectedFriends.map(recipientId => ({
-                        recommender_id: user.id,
-                        recipient_id: recipientId,
-                        film_id: building.id, // Try film_id
-                        status: status
-                    }))
-                );
-             if (legError) throw recError; // Throw original error if both fail
-        }
+        if (recError) throw recError;
 
         toast({ title: "Invites sent!", description: `Sent to ${selectedFriends.length} friend${selectedFriends.length > 1 ? 's' : ''}.` });
         setSelectedFriends([]);
