@@ -84,10 +84,17 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
 
             setBuildings(formattedBuildings);
         }
-      } catch (err) {
+      } catch (err: any) {
         if (isMounted) {
             console.error("Error fetching architect data:", err);
-            setError(err instanceof Error ? err : new Error("Unknown error"));
+
+            // Handle "Row not found" specifically
+            if (err.code === 'PGRST116') {
+                setError(new Error("Architect not found"));
+            } else {
+                setError(err instanceof Error ? err : new Error("Unknown error"));
+            }
+
             setArchitect(null);
             setBuildings([]);
         }
