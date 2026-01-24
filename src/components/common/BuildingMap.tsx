@@ -27,7 +27,7 @@ export function BuildingMap({ lat, lng, className, status }: BuildingMapProps) {
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="https://tiles.openfreemap.org/styles/liberty"
+        mapStyle="https://tiles.openfreemap.org/styles/positron"
       >
         <NavigationControl position="bottom-right" />
         <Marker
