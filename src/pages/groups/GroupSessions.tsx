@@ -10,6 +10,7 @@ import { MetaHead } from "@/components/common/MetaHead";
 import { SessionCard } from "@/components/groups/SessionCard";
 import { CalendarPlus, Calendar } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
+import { format } from "date-fns";
 import { PollDialog } from "@/components/groups/polls/PollDialog";
 import { useToast } from "@/hooks/use-toast";
 import { JoinGroupDialog } from "@/components/groups/JoinGroupDialog";
@@ -37,7 +38,7 @@ export default function GroupSessions() {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const filterDate = today.toISOString();
+      const filterDate = format(today, "yyyy-MM-dd");
 
       // Check upcoming
       const { count: upcomingCount } = await supabase
@@ -106,7 +107,7 @@ export default function GroupSessions() {
     queryFn: async ({ pageParam = 0 }) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const filterDate = today.toISOString();
+      const filterDate = format(today, "yyyy-MM-dd");
       
       // Fetch from session_buildings (new schema)
       let query = supabase
