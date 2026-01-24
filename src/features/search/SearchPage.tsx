@@ -20,7 +20,7 @@ export default function SearchPage() {
     filterBucketList, setFilterBucketList,
     viewMode, setViewMode,
     userLocation, updateLocation,
-    buildings, isLoading,
+    buildings, isLoading, isFetching,
     requestLocation, gpsLocation
   } = useBuildingSearch();
 
@@ -142,6 +142,13 @@ export default function SearchPage() {
     }
   }, [gpsLocation]);
 
+  // Check if we are in the default clean state (no search/filters) to enable auto-zoom
+  const isDefaultState = !searchQuery &&
+                         !filterVisited &&
+                         !filterBucketList &&
+                         selectedCity === "all" &&
+                         selectedStyles.length === 0;
+
   return (
     <AppLayout title="Discovery" showLogo={false}>
       {/* Container to fit available height within AppLayout */}
@@ -201,6 +208,8 @@ export default function SearchPage() {
                   onBoundsChange={setMapBounds}
                   onMapInteraction={() => setIgnoreMapBounds(false)}
                   forcedCenter={flyToCenter}
+                  isFetching={isFetching}
+                  autoZoomOnLowCount={isDefaultState}
                 />
               </div>
             )}
@@ -222,6 +231,8 @@ export default function SearchPage() {
                 onBoundsChange={setMapBounds}
                 onMapInteraction={() => setIgnoreMapBounds(false)}
                 forcedCenter={flyToCenter}
+                isFetching={isFetching}
+                autoZoomOnLowCount={isDefaultState}
               />
             </div>
           </div>
