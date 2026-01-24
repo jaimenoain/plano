@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MetaHead } from "@/components/common/MetaHead";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
+import { FeedReview } from "@/types/feed";
 
 // --- New Landing Page Component ---
 function Landing() {
@@ -107,39 +108,6 @@ function Landing() {
 }
 
 // --- Main Index Component ---
-
-interface FeedReview {
-  id: string;
-  content: string | null;
-  rating: number | null;
-  tags?: string[] | null;
-  created_at: string;
-  edited_at?: string | null;
-  status: string;
-  user_id: string;
-  group_id?: string | null;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-  };
-  building: {
-    id: string;
-    name: string;
-    main_image_url: string | null;
-    address?: string | null;
-    architects?: string[] | null;
-    year_completed?: number | null;
-  };
-  likes_count: number;
-  comments_count: number;
-  is_liked: boolean;
-  images?: {
-    id: string;
-    url: string;
-    likes_count: number;
-    is_liked: boolean;
-  }[];
-}
 
 const PAGE_SIZE = 36;
 

@@ -283,6 +283,7 @@ export default function WriteReview() {
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
+              disabled={submitting}
             >
               <ImagePlus className="w-4 h-4 mr-2" />
               Add Photos
@@ -294,6 +295,7 @@ export default function WriteReview() {
               accept="image/*"
               multiple
               onChange={handleImageSelect}
+              disabled={submitting}
             />
           </div>
 
@@ -325,7 +327,7 @@ export default function WriteReview() {
           </Button>
           <Button onClick={handleSubmit} disabled={submitting || rating === 0}>
             {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Publish Review
+            {submitting ? "Publishing..." : "Publish Review"}
           </Button>
         </div>
 
