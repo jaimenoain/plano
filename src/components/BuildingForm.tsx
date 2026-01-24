@@ -3,29 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
 import { buildingSchema } from "@/lib/validations/building";
-import { toTitleCase } from "@/lib/utils";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
-
-const ARCHITECTURAL_STYLES = [
-  "Brutalist",
-  "Bauhaus",
-  "Gothic",
-  "Modernist",
-  "Art Deco",
-  "Neoclassical",
-  "Contemporary",
-  "Industrial",
-];
 
 export interface BuildingFormData {
   name: string;
   year_completed: number | null;
   architects: Architect[];
-  styles: string[];
+  functional_category_id: string;
+  functional_typology_ids: string[];
+  selected_attribute_ids: string[];
   main_image_url: string | null;
 }
 
@@ -40,12 +29,16 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [name, setName] = useState(initialValues.name);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
   const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
-  const [styles, setStyles] = useState<string[]>(initialValues.styles);
+  const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id);
+  const [functional_typology_ids, setTypologyIds] = useState<string[]>(initialValues.functional_typology_ids);
+  const [selected_attribute_ids, setAttributeIds] = useState<string[]>(initialValues.selected_attribute_ids);
 
   // Mantenemos la lógica de estado de "main" para mostrar/ocultar campos
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
-  const [showStyles, setShowStyles] = useState(initialValues.styles.length > 0);
+
+  // Logic for showing/hiding classification fields could be added here
+  // const [showClassification, setShowClassification] = useState(...);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +48,9 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         name,
         year_completed,
         architects,
-        styles,
+        functional_category_id,
+        functional_typology_ids,
+        selected_attribute_ids,
         main_image_url: initialValues.main_image_url,
       };
 
@@ -144,32 +139,31 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         </Button>
       )}
 
-      {/* SECCION 3: Estilos (Lógica visual de main + AutocompleteTagInput estándar) */}
-      {showStyles ? (
-        <div className="space-y-2">
-          <Label>Architectural Styles</Label>
-          <AutocompleteTagInput
-            tags={styles}
-            setTags={setStyles}
-            suggestions={ARCHITECTURAL_STYLES}
-            placeholder="Type to search or add style..."
-            normalize={toTitleCase}
-          />
-          <p className="text-xs text-muted-foreground">
-            Select from list or type to add custom style.
-          </p>
+      {/* SECCION 3: Classification (Categories & Typologies) */}
+      <div className="space-y-4 border rounded-md p-4">
+        <h3 className="text-sm font-medium">Classification</h3>
+        {/* TODO: Add FunctionalCategorySelect component here */}
+        <div className="text-sm text-muted-foreground italic">
+          Category selector to be implemented.
+          (Current ID: {functional_category_id || "None"})
         </div>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="rounded-full h-8"
-          onClick={() => setShowStyles(true)}
-        >
-          <Plus className="h-3 w-3 mr-1" /> Add Style
-        </Button>
-      )}
+
+        {/* TODO: Add FunctionalTypologySelect component here */}
+         <div className="text-sm text-muted-foreground italic">
+          Typology selector to be implemented.
+          (Selected: {functional_typology_ids.length})
+        </div>
+      </div>
+
+      {/* SECCION 4: Attributes */}
+      <div className="space-y-4 border rounded-md p-4">
+        <h3 className="text-sm font-medium">Attributes</h3>
+        {/* TODO: Add AttributeSelect component here */}
+        <div className="text-sm text-muted-foreground italic">
+          Attribute selector to be implemented.
+           (Selected: {selected_attribute_ids.length})
+        </div>
+      </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? (
