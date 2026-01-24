@@ -28,7 +28,7 @@ export function BuildingMap({
     ? "text-[#333333] fill-[#333333]" // Charcoal
     : status === 'pending'
       ? "text-yellow-500 fill-yellow-500/20"
-      : "text-blue-500 fill-blue-500/20";
+      : "text-gray-500 fill-background";
 
   // When expanded, we remove the default containment styling (relative, rounded, border)
   // to allow full screen behavior controlled by the parent's className.
