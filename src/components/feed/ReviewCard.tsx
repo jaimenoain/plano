@@ -256,19 +256,13 @@ export function ReviewCard({
       )}
 
       {/* 2. Poster Image - Updated for Architecture (4:3) */}
-      {!hideBuildingInfo && (
+      {!hideBuildingInfo && posterUrl && (
         <div className="aspect-[4/3] relative bg-secondary overflow-hidden">
-          {posterUrl ? (
-            <img
-              src={posterUrl}
-              alt={mainTitle || ""}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              No image
-            </div>
-          )}
+          <img
+            src={posterUrl}
+            alt={mainTitle || ""}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
 
           {/* Watch With Facepile Overlay - Only if watchlist and has users */}
           {isWatchlist && watchWithUsers.length > 0 && (
