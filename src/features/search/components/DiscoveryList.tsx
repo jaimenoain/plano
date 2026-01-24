@@ -8,28 +8,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface DiscoveryListProps {
   buildings: DiscoveryBuilding[];
   isLoading: boolean;
-  onBuildingClick?: (buildingId: string) => void;
   currentLocation?: { lat: number; lng: number };
 }
 
 export function DiscoveryList({
   buildings,
   isLoading,
-  onBuildingClick,
   currentLocation,
 }: DiscoveryListProps) {
   if (isLoading) {
     return (
       <div className="space-y-4 p-4">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="flex flex-col sm:flex-row h-auto sm:h-48 overflow-hidden rounded-xl border bg-card text-card-foreground shadow">
-             <Skeleton className="h-48 sm:w-48 w-full sm:h-full shrink-0" />
+          <div key={i} className="flex flex-row h-auto overflow-hidden rounded-xl border bg-card text-card-foreground shadow">
+             <Skeleton className="w-32 h-32 shrink-0" />
              <div className="flex-1 p-4 space-y-2">
-                 <Skeleton className="h-6 w-3/4" />
-                 <Skeleton className="h-4 w-1/2" />
-                 <div className="flex gap-2 pt-4">
-                     <Skeleton className="h-5 w-20" />
-                     <Skeleton className="h-5 w-24" />
+                 <Skeleton className="h-5 w-3/4" />
+                 <Skeleton className="h-3 w-1/2" />
+                 <div className="flex gap-2 pt-2">
+                     <Skeleton className="h-4 w-16" />
+                     <Skeleton className="h-4 w-20" />
                  </div>
              </div>
           </div>
@@ -69,7 +67,6 @@ export function DiscoveryList({
           building={building}
           distance={building.distance}
           socialContext={building.social_context}
-          onClick={() => onBuildingClick?.(building.id)}
         />
       ))}
     </div>

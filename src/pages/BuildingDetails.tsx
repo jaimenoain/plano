@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
-  Edit2, Check, Bookmark, Star, Image as ImageIcon
+  Edit2, Check, Bookmark, Star, MessageSquarePlus, Image as ImageIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -318,7 +318,7 @@ export default function BuildingDetails() {
 
             <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
                 {building.main_image_url ? (
-                    <img src={building.main_image_url} className="w-full h-full object-cover" alt={building.name} />
+                    <img src={building.main_image_url || undefined} className="w-full h-full object-cover" alt={building.name} />
                 ) : (
                     <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground text-center p-6">
                         <ImageIcon className="w-12 h-12 text-muted-foreground/20 mb-3" />
@@ -400,18 +400,27 @@ export default function BuildingDetails() {
                 </div>
 
                 {/* PersonalRatingButton Integration */}
-                <div className="flex items-center gap-2">
-                    <PersonalRatingButton
-                        buildingId={building.id}
-                        initialRating={myRating}
-                        onRate={handleRate}
-                        status={userStatus || 'visited'}
-                        label={userStatus === 'pending' ? "Priority" : "Rating"}
-                        variant="inline"
-                    />
-                    {userStatus === 'pending' && (
-                        <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
-                    )}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <PersonalRatingButton
+                            buildingId={building.id}
+                            initialRating={myRating}
+                            onRate={handleRate}
+                            status={userStatus || 'visited'}
+                            label={userStatus === 'pending' ? "Priority" : "Rating"}
+                            variant="inline"
+                        />
+                        {userStatus === 'pending' && (
+                            <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
+                        )}
+                    </div>
+
+                    <Button variant="outline" size="sm" asChild>
+                        <Link to={`/building/${id}/review`}>
+                            <MessageSquarePlus className="w-4 h-4 mr-2" />
+                            {myRating > 0 ? "Edit Review" : "Write Review"}
+                        </Link>
+                    </Button>
                 </div>
 
                 {/* Note & Tags Editor */}
