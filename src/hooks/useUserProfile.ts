@@ -11,6 +11,7 @@ export interface UserProfile {
   location: string | null;
   subscribed_platforms: string[] | null;
   role: string | null;
+  profile_sections?: any;
 }
 
 export function useUserProfile() {
@@ -29,7 +30,7 @@ export function useUserProfile() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role")
+          .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role, profile_sections")
           .eq("id", user.id)
           .single();
 
@@ -51,7 +52,7 @@ export function useUserProfile() {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role")
+      .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role, profile_sections")
       .eq("id", user.id)
       .single();
     if (data) {

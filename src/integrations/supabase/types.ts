@@ -1132,6 +1132,7 @@ export interface Database {
           invited_by: string | null
           favorites: Json | null
           notification_preferences: Json | null
+          profile_sections: Json | null
           role: string | null
           last_online: string | null
           subscribed_platforms: string[] | null
@@ -1148,6 +1149,7 @@ export interface Database {
           invited_by?: string | null
           favorites?: Json | null
           notification_preferences?: Json | null
+          profile_sections?: Json | null
           role?: string | null
           last_online?: string | null
           subscribed_platforms?: string[] | null
@@ -1164,6 +1166,7 @@ export interface Database {
           invited_by?: string | null
           favorites?: Json | null
           notification_preferences?: Json | null
+          profile_sections?: Json | null
           role?: string | null
           last_online?: string | null
           subscribed_platforms?: string[] | null
