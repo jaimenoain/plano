@@ -742,26 +742,6 @@ export default function AddBuilding() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="w-full h-8 text-xs gap-1 bg-white hover:bg-white/80"
-                                        onClick={() => handleAddToMyList(building.id, 'pending')}
-                                    >
-                                        <Bookmark className="h-3 w-3" />
-                                        Add to Bucket List
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="w-full h-8 text-xs gap-1 bg-white hover:bg-white/80"
-                                        onClick={() => handleAddToMyList(building.id, 'visited')}
-                                    >
-                                        <Check className="h-3 w-3" />
-                                        Mark as Visited
-                                    </Button>
-                                </div>
                             </div>
                         ))}
                     </div>
@@ -798,26 +778,6 @@ export default function AddBuilding() {
                                             <p className="text-xs text-muted-foreground line-clamp-1 truncate">{building.address}</p>
                                         )}
                                     </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="w-full h-8 text-xs gap-1"
-                                        onClick={() => handleAddToMyList(building.id, 'pending')}
-                                    >
-                                        <Bookmark className="h-3 w-3" />
-                                        Bucket List
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="w-full h-8 text-xs gap-1"
-                                        onClick={() => handleAddToMyList(building.id, 'visited')}
-                                    >
-                                        <Check className="h-3 w-3" />
-                                        Mark as Visited
-                                    </Button>
                                 </div>
                             </div>
                         ))}
