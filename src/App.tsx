@@ -145,6 +145,7 @@ const router = createBrowserRouter(
 
       <Route path="/building/:id" element={<BuildingDetails />} />
       <Route path="/building/:id/edit" element={<EditBuilding />} />
+      {/* Review Flow */}
       <Route path="/building/:id/review" element={<WriteReview />} />
       <Route path="/review/:id" element={<ReviewDetails />} />
 
