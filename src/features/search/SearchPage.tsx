@@ -97,7 +97,6 @@ export default function SearchPage() {
                          <DiscoveryList
                             buildings={buildings}
                             isLoading={isLoading}
-                            onBuildingClick={(id) => navigate(`/building/${id}`)}
                             currentLocation={userLocation}
                          />
                     </div>
@@ -118,7 +117,6 @@ export default function SearchPage() {
                     <DiscoveryList
                         buildings={buildings}
                         isLoading={isLoading}
-                        onBuildingClick={(id) => navigate(`/building/${id}`)}
                         currentLocation={userLocation}
                     />
                 </div>
