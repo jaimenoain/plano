@@ -1,10 +1,13 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useArchitect } from "@/hooks/useArchitect";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { MetaHead } from "@/components/common/MetaHead";
+import { MapPin } from "lucide-react";
 
 export default function ArchitectDetails() {
   const { id } = useParams<{ id: string }>();
@@ -21,13 +24,15 @@ export default function ArchitectDetails() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="space-y-4">
-                <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
-              </div>
+              <Card key={i} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <Skeleton className="aspect-[4/3] w-full rounded-none" />
+                  <div className="p-4 space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
@@ -43,6 +48,9 @@ export default function ArchitectDetails() {
           <p className="text-muted-foreground">
             The architect you are looking for does not exist or an error occurred.
           </p>
+          <Button asChild variant="secondary">
+             <Link to="/">Return to Home</Link>
+          </Button>
         </div>
       </AppLayout>
     );
@@ -50,6 +58,10 @@ export default function ArchitectDetails() {
 
   return (
     <AppLayout showBack>
+      <MetaHead
+        title={architect.name}
+        image={buildings[0]?.main_image_url || '/placeholder.png'}
+      />
       <div className="px-4 py-6 md:px-6 space-y-8 animate-fade-in">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">{architect.name}</h1>
@@ -59,8 +71,14 @@ export default function ArchitectDetails() {
         </div>
 
         {buildings.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground bg-muted/30 rounded-lg">
-            <p>No buildings found for this architect.</p>
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-muted/30 rounded-lg border border-dashed">
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+              <MapPin className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">No designs listed yet</h3>
+            <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+              We haven't added any buildings for this architect yet.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
