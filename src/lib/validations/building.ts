@@ -21,7 +21,6 @@ export const buildingSchema = z.object({
     })
   ),
   styles: z.array(z.string()),
-  description: z.string(), // We handle empty string as valid description
   main_image_url: z.string().nullable().optional(),
 });
 

@@ -13,13 +13,11 @@ export default function SearchPage() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const {
     searchQuery, setSearchQuery,
-    selectedCity, setSelectedCity,
-    selectedStyles, setSelectedStyles,
-    sortBy, setSortBy,
+    filterVisited, setFilterVisited,
+    filterBucketList, setFilterBucketList,
     viewMode, setViewMode,
     userLocation, updateLocation,
     buildings, isLoading,
-    availableCities, availableStyles,
     requestLocation, gpsLocation
   } = useBuildingSearch();
 
@@ -55,7 +53,6 @@ export default function SearchPage() {
     const loc = await requestLocation();
     if (loc) {
       setFlyToCenter(loc);
-      setSelectedCity("all");
     }
   };
 
@@ -66,22 +63,6 @@ export default function SearchPage() {
       }
   }, [gpsLocation]);
 
-  // Handle city fly-to logic
-  useEffect(() => {
-    if (selectedCity !== "all" && selectedCity !== lastFlownCity && buildings.length > 0) {
-        // Check if the first building is actually in the selected city
-        // (to avoid flying to a building from a previous query if there's a race condition,
-        // though useQuery usually handles this)
-        const match = buildings.find(b => b.city === selectedCity);
-        if (match) {
-            setFlyToCenter({ lat: match.location_lat, lng: match.location_lng });
-            setLastFlownCity(selectedCity);
-        }
-    } else if (selectedCity === "all" && lastFlownCity !== "all") {
-        setLastFlownCity("all");
-    }
-  }, [selectedCity, buildings, lastFlownCity]);
-
   return (
     <AppLayout title="Discovery" showLogo={false}>
       {/* Container to fit available height within AppLayout */}
@@ -90,14 +71,10 @@ export default function SearchPage() {
              <DiscoveryFilterBar
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
-                selectedCity={selectedCity}
-                onCityChange={setSelectedCity}
-                availableCities={availableCities}
-                selectedStyles={selectedStyles}
-                onStylesChange={setSelectedStyles}
-                availableStyles={availableStyles}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
+                showVisited={filterVisited}
+                onVisitedChange={setFilterVisited}
+                showBucketList={filterBucketList}
+                onBucketListChange={setFilterBucketList}
                 onShowLeaderboard={() => setShowLeaderboard(true)}
                 onUseLocation={handleUseLocation}
             />
