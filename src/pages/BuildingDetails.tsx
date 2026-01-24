@@ -33,7 +33,6 @@ interface BuildingDetails {
   year_completed: number;
   styles: string[];
   main_image_url: string | null;
-  description: string;
   created_by: string;
 }
 
@@ -380,9 +379,6 @@ export default function BuildingDetails() {
                             <Badge key={style} variant="outline" className="border-white/20">{style}</Badge>
                         ))}
                     </div>
-                )}
-                {building.description && (
-                  <p className="mt-4 text-muted-foreground">{building.description}</p>
                 )}
             </div>
 

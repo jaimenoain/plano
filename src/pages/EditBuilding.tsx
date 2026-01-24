@@ -114,7 +114,6 @@ export default function EditBuilding() {
         year_completed: data.year_completed,
         architects: finalArchitects,
         styles: data.styles || [],
-        description: data.description || "",
         main_image_url: data.main_image_url,
       });
 
@@ -190,7 +189,6 @@ export default function EditBuilding() {
           year_completed: formData.year_completed,
           architects: architectNames, // Maintain legacy array
           styles: formData.styles,
-          description: formData.description,
           main_image_url: formData.main_image_url,
 
           address: locationData.address,

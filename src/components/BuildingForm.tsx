@@ -26,7 +26,6 @@ export interface BuildingFormData {
   year_completed: number | null;
   architects: Architect[];
   styles: string[];
-  description: string;
   main_image_url: string | null;
 }
 
@@ -42,13 +41,11 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
   const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
   const [styles, setStyles] = useState<string[]>(initialValues.styles);
-  const [description, setDescription] = useState(initialValues.description);
 
   // Mantenemos la lógica de estado de "main" para mostrar/ocultar campos
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
   const [showStyles, setShowStyles] = useState(initialValues.styles.length > 0);
-  const [showDescription, setShowDescription] = useState(!!initialValues.description);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +56,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         year_completed,
         architects,
         styles,
-        description,
         main_image_url: initialValues.main_image_url,
       };
 
@@ -172,31 +168,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
           onClick={() => setShowStyles(true)}
         >
           <Plus className="h-3 w-3 mr-1" /> Add Style
-        </Button>
-      )}
-
-      {/* SECCION 4: Descripción (Lógica visual de main + Textarea estándar) */}
-      {showDescription ? (
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Brief description of the building..."
-            className="min-h-[100px]"
-            autoComplete="off"
-          />
-        </div>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="rounded-full h-8"
-          onClick={() => setShowDescription(true)}
-        >
-          <Plus className="h-3 w-3 mr-1" /> Add Description
         </Button>
       )}
 
