@@ -81,6 +81,7 @@ export function DiscoveryFilterBar({
             onLocationSelect(address, country, place);
           }}
           placeholder="Search location..."
+          searchTypes={["(regions)"]}
           className="w-full"
         />
       </div>
