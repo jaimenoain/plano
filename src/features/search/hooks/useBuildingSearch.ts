@@ -104,6 +104,7 @@ export function useBuildingSearch() {
       userLocation,
       updateLocation,
       requestLocation,
+      gpsLocation,
       buildings: buildings || [],
       isLoading,
       availableCities: filterOptions?.cities || [],

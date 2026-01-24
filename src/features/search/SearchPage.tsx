@@ -20,7 +20,7 @@ export default function SearchPage() {
     userLocation, updateLocation,
     buildings, isLoading,
     availableCities, availableStyles,
-    requestLocation
+    requestLocation, gpsLocation
   } = useBuildingSearch();
 
   const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
@@ -36,13 +36,10 @@ export default function SearchPage() {
 
   // Handle auto-fly to user location on initial load or update
   useEffect(() => {
-      // Check if userLocation is different from default London
-      const isDefault = userLocation.lat === 51.5074 && userLocation.lng === -0.1278;
-
-      if (!isDefault) {
-          setFlyToCenter(userLocation);
+      if (gpsLocation) {
+          setFlyToCenter(gpsLocation);
       }
-  }, [userLocation]);
+  }, [gpsLocation]);
 
   // Handle city fly-to logic
   useEffect(() => {
