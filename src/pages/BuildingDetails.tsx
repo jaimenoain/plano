@@ -521,7 +521,7 @@ export default function BuildingDetails() {
                                                 return (
                                                     <img
                                                         key={img.id}
-                                                        src={publicUrl}
+                                                        src={publicUrl || undefined}
                                                         className="h-24 w-24 object-cover rounded-md border bg-muted"
                                                         alt="Review photo"
                                                     />

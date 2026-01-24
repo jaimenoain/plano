@@ -26,6 +26,7 @@ export function MetaHead({
     return `${window.location.origin}${img.startsWith("/") ? "" : "/"}${img}`;
   };
 
+  // Safeguard: Ensure valid image URL, defaulting to cover if empty/null
   const absoluteImage = getAbsoluteImageUrl(image || "/cover.jpg");
 
   return (

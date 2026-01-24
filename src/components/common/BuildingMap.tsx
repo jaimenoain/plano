@@ -46,7 +46,7 @@ export function BuildingMap({
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={mapStyle || DEFAULT_MAP_STYLE}
+        mapStyle={mapStyle || DEFAULT_MAP_STYLE} // Safeguard: Fallback to default if empty string
         attributionControl={false}
       >
         <NavigationControl position="bottom-right" />
