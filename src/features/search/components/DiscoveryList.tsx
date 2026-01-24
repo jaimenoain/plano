@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPinPlus } from "lucide-react";
+import { Building2, MapPinPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DiscoveryBuilding } from "./types";
 import { DiscoveryBuildingCard } from "./DiscoveryBuildingCard";
@@ -40,7 +40,7 @@ export function DiscoveryList({
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center h-full min-h-[50vh]">
         <div className="bg-muted rounded-full p-4 mb-4">
-          <span className="text-4xl">🏛️</span>
+          <Building2 className="h-10 w-10 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-semibold">No buildings found here yet</h3>
         <p className="text-muted-foreground max-w-sm mt-1 mb-6">

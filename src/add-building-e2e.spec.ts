@@ -218,10 +218,8 @@ test('End-to-End Add Building Verification', async ({ page }) => {
 
   // Click pills to reveal
   await page.getByRole('button', { name: 'Add Year' }).click();
-  await page.getByRole('button', { name: 'Add Description' }).click();
 
   await page.getByLabel('Year Built').fill('2024');
-  await page.getByLabel('Description').fill('A test building description.');
 
   // Architects is a TagInput. Type and Enter.
   const architectInput = page.getByPlaceholder('Search architects or add new...');
