@@ -82,6 +82,7 @@ export default function CreateSession() {
   const [showResources, setShowResources] = useState(false);
   const [showCycle, setShowCycle] = useState(false);
   const [showPoll, setShowPoll] = useState(false);
+  const [showBuildings, setShowBuildings] = useState(false);
 
   const isEditing = !!sessionId;
 
@@ -184,6 +185,7 @@ export default function CreateSession() {
           if (buildingData) {
               addBuilding(buildingData);
               setMainBuildingId(buildId);
+              setShowBuildings(true);
           }
       } catch (e) {
           console.error("Error fetching backlog building", e);
@@ -289,6 +291,7 @@ export default function CreateSession() {
           .filter(Boolean);
           
         setSelectedBuildings(buildings);
+        if (buildings.length > 0) setShowBuildings(true);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mainEntry = data.buildings.find((f: any) => f.is_main);
@@ -648,8 +651,12 @@ export default function CreateSession() {
         </div>
 
         {/* SECTION 2: Buildings (Hero) */}
-        <div className="space-y-4">
-          <label className="text-sm font-medium">Buildings / Sites</label>
+        {showBuildings && (
+        <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Buildings / Sites</label>
+              <Button variant="ghost" size="sm" onClick={() => { setShowBuildings(false); setSelectedBuildings([]); setMainBuildingId(null); }} className="h-6 text-xs text-muted-foreground">Cancel</Button>
+          </div>
 
           <Tabs defaultValue="search" className="w-full">
             <TabsList className="w-full grid grid-cols-2">
@@ -799,6 +806,7 @@ export default function CreateSession() {
             })}
           </div>
         </div>
+        )}
 
         {/* SECTION 3: Synopsis */}
         <div className="space-y-4">
@@ -974,6 +982,11 @@ export default function CreateSession() {
 
             {/* Utility Row (Progressive Disclosure Triggers) */}
             <div className="flex gap-4 text-sm text-muted-foreground pt-1 flex-wrap">
+                {!showBuildings && (
+                    <button onClick={() => setShowBuildings(true)} className="flex items-center gap-1 hover:text-primary transition-colors">
+                    <Building2 className="w-4 h-4" /> Add Building
+                    </button>
+                )}
                 {!showHostNotes && (
                     <button onClick={() => setShowHostNotes(true)} className="flex items-center gap-1 hover:text-primary transition-colors">
                     <FileText className="w-4 h-4" /> Add Host Note
