@@ -11,8 +11,8 @@ import { toast } from "sonner";
 import { Architect } from "@/components/ui/architect-select";
 
 interface LocationData {
-    lat: number;
-    lng: number;
+    lat: number | null;
+    lng: number | null;
     address: string;
     city: string | null;
     country: string | null;
@@ -118,8 +118,8 @@ export default function EditBuilding() {
       });
 
       // Parse location
-      let lat = 51.5074;
-      let lng = -0.1278;
+      let lat = null;
+      let lng = null;
 
       if (data.location) {
         if (typeof data.location === 'string') {
@@ -153,6 +153,7 @@ export default function EditBuilding() {
   // Duplicate Check Effect
   useEffect(() => {
     if (!locationData || !id) return;
+    if (locationData.lat === null || locationData.lng === null) return;
 
     const checkDuplicates = async () => {
       setCheckingDuplicates(true);
@@ -182,6 +183,12 @@ export default function EditBuilding() {
 
   const handleSubmit = async (formData: BuildingFormData) => {
     if (!locationData) return;
+
+    if (locationData.lat === null || locationData.lng === null) {
+        toast.error("Please ensure the location is set on the map");
+        return;
+    }
+
     setIsSubmitting(true);
 
     try {

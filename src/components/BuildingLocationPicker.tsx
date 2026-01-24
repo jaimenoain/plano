@@ -10,8 +10,8 @@ import { Label } from "@/components/ui/label";
 
 interface BuildingLocationPickerProps {
   initialLocation: {
-    lat: number;
-    lng: number;
+    lat: number | null;
+    lng: number | null;
     address: string;
   };
   onLocationChange: (location: {
@@ -25,29 +25,68 @@ interface BuildingLocationPickerProps {
 
 export function BuildingLocationPicker({ initialLocation, onLocationChange }: BuildingLocationPickerProps) {
   const [selectedAddress, setSelectedAddress] = useState(initialLocation.address);
-  const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number }>({
-    lat: initialLocation.lat,
-    lng: initialLocation.lng,
-  });
+  const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(
+    initialLocation.lat !== null && initialLocation.lng !== null
+      ? { lat: initialLocation.lat, lng: initialLocation.lng }
+      : null
+  );
 
   const [viewState, setViewState] = useState({
-    latitude: initialLocation.lat,
-    longitude: initialLocation.lng,
+    latitude: initialLocation.lat ?? 51.5074,
+    longitude: initialLocation.lng ?? -0.1278,
     zoom: 15,
   });
 
   // Update view state if initialLocation changes (e.g. data loaded)
   useEffect(() => {
-    setViewState(prev => ({
-        ...prev,
-        latitude: initialLocation.lat,
-        longitude: initialLocation.lng,
-    }));
-    setMarkerPosition({
-        lat: initialLocation.lat,
-        lng: initialLocation.lng
-    });
+    if (initialLocation.lat !== null && initialLocation.lng !== null) {
+      setViewState(prev => ({
+          ...prev,
+          latitude: initialLocation.lat!,
+          longitude: initialLocation.lng!,
+      }));
+      setMarkerPosition({
+          lat: initialLocation.lat,
+          lng: initialLocation.lng
+      });
+    }
     setSelectedAddress(initialLocation.address);
+
+    // Auto-geocode if location is missing but address is present
+    if ((initialLocation.lat === null || initialLocation.lng === null) && initialLocation.address) {
+      // Use getGeocode to attempt to resolve address
+      // Note: We need to ensure Google Maps script is loaded.
+      // LocationInput loads it, but we might be racing.
+      // However, usually geocode requests handle this queueing.
+
+      const attemptGeocode = async () => {
+         try {
+             // Basic check if google is available, though getGeocode handles it internally usually?
+             // actually use-places-autocomplete getGeocode might fail if not loaded.
+             // But let's try.
+             const results = await getGeocode({ address: initialLocation.address });
+             if (results && results.length > 0) {
+                 const { lat, lng } = await getLatLng(results[0]);
+                 const details = extractLocationDetails(results[0]);
+
+                 setMarkerPosition({ lat, lng });
+                 setViewState(prev => ({ ...prev, latitude: lat, longitude: lng }));
+
+                 onLocationChange({
+                     lat,
+                     lng,
+                     address: results[0].formatted_address,
+                     city: details.city,
+                     country: details.country
+                 });
+             }
+         } catch (err) {
+             console.log("Auto-geocode on load failed (maybe script not ready or address invalid):", err);
+         }
+      };
+
+      attemptGeocode();
+    }
   }, [initialLocation.lat, initialLocation.lng, initialLocation.address]);
 
 
@@ -177,18 +216,20 @@ export function BuildingLocationPicker({ initialLocation, onLocationChange }: Bu
             cursor="crosshair"
           >
             <NavigationControl position="top-right" />
-            <Marker
-                longitude={markerPosition.lng}
-                latitude={markerPosition.lat}
-                anchor="bottom"
-                draggable
-                onDragEnd={handleMarkerDragEnd}
-            >
-                <div className="flex flex-col items-center">
-                    <MapPin className="h-8 w-8 text-red-600 fill-red-600 drop-shadow-md" />
-                    <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
-                </div>
-            </Marker>
+            {markerPosition && (
+              <Marker
+                  longitude={markerPosition.lng}
+                  latitude={markerPosition.lat}
+                  anchor="bottom"
+                  draggable
+                  onDragEnd={handleMarkerDragEnd}
+              >
+                  <div className="flex flex-col items-center">
+                      <MapPin className="h-8 w-8 text-red-600 fill-red-600 drop-shadow-md" />
+                      <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
+                  </div>
+              </Marker>
+            )}
           </Map>
        </div>
     </div>
