@@ -1,12 +1,13 @@
-import { Activity, Building2, Users } from "lucide-react";
+import { Activity, Building2, Users, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-// Reduced to the 3 core navigation items
+// Core navigation items
 const navItems = [
   { icon: Activity, label: "Feed", path: "/" },
   { icon: Building2, label: "Buildings", path: "/search" },
-  { icon: Users, label: "Groups", path: "/groups" },
+  { icon: Users, label: "Connect", path: "/groups" },
+  { icon: User, label: "You", path: "/profile" },
 ];
 
 export function BottomNav() {
