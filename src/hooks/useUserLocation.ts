@@ -11,12 +11,12 @@ export function useUserLocation() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const requestLocation = (): Promise<Location | null> => {
+  const requestLocation = (options?: { silent?: boolean }): Promise<Location | null> => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
         const msg = "Geolocation is not supported by your browser";
         setError(msg);
-        toast.error(msg);
+        if (!options?.silent) toast.error(msg);
         resolve(null);
         return;
       }
@@ -30,13 +30,13 @@ export function useUserLocation() {
           };
           setLocation(newLocation);
           setIsLoading(false);
-          toast.success("Location updated");
+          if (!options?.silent) toast.success("Location updated");
           resolve(newLocation);
         },
         (err) => {
           setError(err.message);
           setIsLoading(false);
-          toast.error("Unable to retrieve location: " + err.message);
+          if (!options?.silent) toast.error("Unable to retrieve location: " + err.message);
           resolve(null);
         }
       );
