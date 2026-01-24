@@ -1,42 +1,14 @@
-import { Heart, MessageCircle, Star } from "lucide-react";
+import { useState } from "react";
+import { Heart, MessageCircle, Star, Image as ImageIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { slugify } from "@/lib/utils";
+import { FeedReview } from "@/types/feed";
 
 interface ReviewCardProps {
-  entry: {
-    id: string; 
-    content: string | null;
-    rating: number | null;
-    tags?: string[] | null;
-    created_at: string;
-    edited_at?: string | null;
-    status?: string;
-    user: {
-      username: string | null;
-      avatar_url: string | null;
-    };
-    building: {
-      id: string;
-      name: string;
-      main_image_url: string | null;
-      address?: string | null;
-      architects?: string[] | null;
-      year_completed?: number | null;
-    };
-    likes_count: number;
-    comments_count: number;
-    is_liked: boolean;
-    watch_with_users?: { id: string, avatar_url: string | null, username: string | null }[];
-    images?: {
-      id: string;
-      url: string;
-      likes_count: number;
-      is_liked: boolean;
-    }[];
-  };
+  entry: FeedReview;
   onLike?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
   onComment?: (reviewId: string) => void;
@@ -55,6 +27,7 @@ export function ReviewCard({
   hideBuildingInfo = false
 }: ReviewCardProps) {
   const navigate = useNavigate();
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
    
   // FIXED: Safety Check - Prevent crash if building data is missing
   if (!entry.building) return null;
@@ -275,25 +248,32 @@ export function ReviewCard({
           <div className="relative w-full overflow-hidden bg-secondary md:col-start-1 md:row-start-1 md:row-span-2 md:h-full">
              <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full">
                 {entry.images.map((image) => (
-                  <div key={image.id} className="relative flex-none w-full aspect-[4/3] md:aspect-auto md:h-full snap-center">
-                     <img
-                       src={image.url}
-                       alt="Review photo"
-                       className="w-full h-full object-cover"
-                     />
+                  <div key={image.id} className="relative flex-none w-full aspect-[4/3] md:aspect-auto md:h-full snap-center bg-secondary">
+                     {!failedImages.has(image.id) ? (
+                       <img
+                         src={image.url}
+                         alt="Review photo"
+                         className="w-full h-full object-cover"
+                         onError={() => setFailedImages(prev => new Set(prev).add(image.id))}
+                       />
+                     ) : (
+                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                         <ImageIcon className="w-8 h-8 opacity-50" />
+                       </div>
+                     )}
                      {/* Image Like Overlay */}
-                     <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full z-10">
+                     <div className="absolute bottom-2 right-2 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-full z-10 min-w-[44px] min-h-[44px]">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             onImageLike?.(entry.id, image.id);
                           }}
-                          className="flex items-center gap-1 text-white hover:text-red-400 transition-colors"
+                          className="flex items-center justify-center gap-1.5 text-white hover:text-red-400 transition-colors w-full h-full px-3 py-1.5"
                         >
                           <Heart
-                             className={`w-3.5 h-3.5 ${image.is_liked ? "fill-red-500 text-red-500" : "text-white"}`}
+                             className={`w-4 h-4 ${image.is_liked ? "fill-red-500 text-red-500" : "text-white"}`}
                           />
-                          <span className="text-[10px] font-medium text-white">{image.likes_count}</span>
+                          <span className="text-xs font-medium text-white">{image.likes_count}</span>
                         </button>
                      </div>
                   </div>
