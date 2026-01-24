@@ -75,7 +75,7 @@ test('verify poll results visual', async ({ page }) => {
 
   // Mock Auth - we need to inject the session into localStorage
   await page.addInitScript(user => {
-    window.localStorage.setItem('sb-gyxspsuctbrxhwiyfvlj-auth-token', JSON.stringify({
+    window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
       access_token: "fake-token",
       refresh_token: "fake-refresh-token",
       user: user,

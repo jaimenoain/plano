@@ -20,6 +20,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import {
+  fetchBuildingDetails as fetchBuildingDetailsRpc,
+  fetchUserBuildingStatus,
+  upsertUserBuilding,
+  deleteUserBuilding
+} from "@/utils/supabaseFallback";
 import { UserPicker } from "@/components/common/UserPicker";
 
 type Visibility = "public" | "contacts" | "private";
@@ -78,20 +84,18 @@ export default function Post() {
 
   const fetchBuildingDetails = async () => {
     if (!buildingId) return;
-    // @ts-ignore
-    const { data } = await supabase
-      .from("buildings")
-      .select("*")
-      .eq("id", buildingId)
-      .single();
-
-    if (data) {
+    try {
+      const data = await fetchBuildingDetailsRpc(buildingId);
+      if (data) {
         setBuildingDetails({
-            ...data,
-            name: data.name,
-            main_image_url: data.main_image_url,
-            year_completed: data.year_completed
+          ...data,
+          name: data.name,
+          main_image_url: data.main_image_url,
+          year_completed: data.year_completed
         });
+      }
+    } catch (error) {
+      console.error("Error fetching building details:", error);
     }
   };
 
@@ -99,13 +103,7 @@ export default function Post() {
     if (!buildingId || !user) return;
     setCheckingExisting(true);
     try {
-      // @ts-ignore
-      const { data: entry } = await supabase
-        .from("user_buildings")
-        .select("*")
-        .eq("building_id", buildingId)
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const entry = await fetchUserBuildingStatus(user.id, buildingId);
 
       if (entry) {
         setExistingEntryId(entry.id);
@@ -173,22 +171,19 @@ export default function Post() {
     try {
       if (!buildingId) throw new Error("No building ID");
 
-      // @ts-ignore
-      const baseData = { user_id: user!.id, building_id: buildingId, visibility };
       const isReview = postType === "review";
       const dbStatus = isReview ? 'visited' : 'pending';
 
-      // @ts-ignore
-      const { data: entryData, error } = await supabase.from("user_buildings").upsert({
-        ...baseData,
+      await upsertUserBuilding({
+        user_id: user!.id,
+        building_id: buildingId,
         status: dbStatus,
         rating: isReview ? rating : null,
         content: content.trim() || null,
         tags: selectedTags.length > 0 ? selectedTags : null,
+        visibility,
         edited_at: new Date().toISOString()
-      }, { onConflict: "user_id, building_id" } as any).select().single();
-
-      if (error) throw error;
+      });
 
       // Handle Recommendations
       // (Simplified: remove recommendations logic if table is gone or update it later)
@@ -212,13 +207,7 @@ export default function Post() {
 
     setLoading(true);
     try {
-      // @ts-ignore
-      const { error } = await supabase
-        .from("user_buildings")
-        .delete()
-        .eq("id", existingEntryId);
-
-      if (error) throw error;
+      await deleteUserBuilding(existingEntryId);
 
       toast({ title: "Removed from your list" });
       navigate("/");

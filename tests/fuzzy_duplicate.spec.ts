@@ -15,7 +15,7 @@ test.describe('Fuzzy Duplicate Prevention', () => {
   test.beforeEach(async ({ page }) => {
     // 1. Mock Auth
     await page.addInitScript(user => {
-      window.localStorage.setItem('sb-gyxspsuctbrxhwiyfvlj-auth-token', JSON.stringify({
+      window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
         access_token: "fake-token",
         refresh_token: "fake-refresh-token",
         user: user,
