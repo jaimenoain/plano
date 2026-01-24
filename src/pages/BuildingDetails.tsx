@@ -8,6 +8,8 @@ import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { TagInput } from "@/components/ui/tag-input";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +68,12 @@ export default function BuildingDetails() {
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
   const [entries, setEntries] = useState<FeedEntry[]>([]);
 
+  // Note & Tags
+  const [note, setNote] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [showNoteEditor, setShowNoteEditor] = useState(false);
+  const [isSavingNote, setIsSavingNote] = useState(false);
+
   // Visit With state
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [sendingInvites, setSendingInvites] = useState(false);
@@ -111,6 +119,11 @@ export default function BuildingDetails() {
         if (userEntry) {
             setUserStatus(userEntry.status);
             setMyRating(userEntry.rating || 0);
+            setNote(userEntry.content || "");
+            setTags(userEntry.tags || []);
+            if (userEntry.content || (userEntry.tags && userEntry.tags.length > 0)) {
+                setShowNoteEditor(true);
+            }
         } else if (userEntryError) {
             console.error("Error fetching user status:", userEntryError);
         }
@@ -156,6 +169,7 @@ export default function BuildingDetails() {
   const handleStatusChange = async (newStatus: 'visited' | 'pending') => {
       if (!user || !building) return;
 
+      setShowNoteEditor(true);
       // Optimistic Update
       setUserStatus(newStatus);
       // Rating persists (myRating state is not changed to 0)
@@ -182,6 +196,7 @@ export default function BuildingDetails() {
   const handleRate = async (buildingId: string, rating: number) => {
        if (!user || !building) return;
 
+       setShowNoteEditor(true);
        setMyRating(rating);
 
        // Default to 'visited' if no status is set, otherwise keep current status
@@ -207,6 +222,34 @@ export default function BuildingDetails() {
            toast({ variant: "destructive", title: "Failed to save rating" });
            fetchBuildingData();
        }
+  };
+
+  const handleSaveNote = async () => {
+      if (!user || !building) return;
+      setIsSavingNote(true);
+
+      const statusToUse = userStatus || 'visited';
+      if (!userStatus) setUserStatus('visited');
+
+      try {
+          const { error } = await supabase.from("user_buildings").upsert({
+              user_id: user.id,
+              building_id: building.id,
+              status: statusToUse,
+              rating: myRating > 0 ? myRating : null,
+              content: note,
+              tags: tags,
+              edited_at: new Date().toISOString()
+          }, { onConflict: 'user_id, building_id' });
+
+          if (error) throw error;
+          toast({ title: "Note saved" });
+      } catch (error: any) {
+          console.error("Save note failed", error);
+          toast({ variant: "destructive", title: "Failed to save note" });
+      } finally {
+          setIsSavingNote(false);
+      }
   };
 
   const handleSendInvites = async () => {
@@ -363,6 +406,35 @@ export default function BuildingDetails() {
                         <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
                     )}
                 </div>
+
+                {/* Note & Tags Editor */}
+                {showNoteEditor && (
+                    <div className="pt-4 border-t border-dashed space-y-3 animate-in fade-in slide-in-from-top-2">
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium uppercase text-muted-foreground">Private Note</label>
+                            <Textarea
+                                placeholder="Write a private note..."
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                className="resize-none"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                             <label className="text-xs font-medium uppercase text-muted-foreground">Tags</label>
+                             <TagInput
+                                tags={tags}
+                                setTags={setTags}
+                                placeholder="Add tags..."
+                             />
+                        </div>
+                        <div className="flex justify-end">
+                            <Button size="sm" onClick={handleSaveNote} disabled={isSavingNote}>
+                                {isSavingNote && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Save Note
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Visit With Feature - Only visible when status is 'pending' */}
                 {userStatus === 'pending' && (
