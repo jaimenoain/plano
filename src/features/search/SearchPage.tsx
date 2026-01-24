@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
+import { BuildingDiscoveryMap, Bounds } from "@/components/common/BuildingDiscoveryMap";
 import { DiscoveryFilterBar } from "./components/DiscoveryFilterBar";
 import { DiscoveryList } from "./components/DiscoveryList";
 import { SearchModeToggle } from "./components/SearchModeToggle";
@@ -22,6 +22,32 @@ export default function SearchPage() {
   } = useBuildingSearch();
 
   const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
+  const [lastFlownCity, setLastFlownCity] = useState<string>("all");
+  const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
+
+  const filteredBuildings = useMemo(() => {
+      if (!mapBounds) return buildings;
+
+      const { north, south, east, west } = mapBounds;
+      return buildings.filter(b => {
+          const lat = b.location_lat;
+          const lng = b.location_lng;
+
+          // Basic bounds check
+          const inLat = lat <= north && lat >= south;
+
+          // Handle dateline crossing if necessary (if west > east)
+          let inLng = false;
+          if (west <= east) {
+              inLng = lng >= west && lng <= east;
+          } else {
+              // crossing dateline
+              inLng = lng >= west || lng <= east;
+          }
+
+          return inLat && inLng;
+      });
+  }, [buildings, mapBounds]);
 
   const handleUseLocation = async () => {
     const loc = await requestLocation();
@@ -71,7 +97,7 @@ export default function SearchPage() {
                 {viewMode === 'list' ? (
                     <div className="h-full overflow-y-auto bg-background pb-20">
                          <DiscoveryList
-                            buildings={buildings}
+                            buildings={filteredBuildings}
                             isLoading={isLoading}
                             currentLocation={userLocation}
                          />
@@ -81,6 +107,7 @@ export default function SearchPage() {
                         <BuildingDiscoveryMap
                             externalBuildings={buildings}
                             onRegionChange={updateLocation}
+                            onBoundsChange={setMapBounds}
                             forcedCenter={flyToCenter}
                         />
                     </div>
@@ -91,7 +118,7 @@ export default function SearchPage() {
             <div className="hidden md:grid grid-cols-12 h-full w-full">
                 <div className="col-span-5 lg:col-span-4 h-full overflow-y-auto border-r bg-background/50 backdrop-blur-sm z-10 pb-4">
                     <DiscoveryList
-                        buildings={buildings}
+                        buildings={filteredBuildings}
                         isLoading={isLoading}
                         currentLocation={userLocation}
                     />
@@ -100,6 +127,7 @@ export default function SearchPage() {
                     <BuildingDiscoveryMap
                          externalBuildings={buildings}
                          onRegionChange={updateLocation}
+                         onBoundsChange={setMapBounds}
                          forcedCenter={flyToCenter}
                     />
                 </div>

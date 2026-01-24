@@ -19,13 +19,21 @@ interface Building {
   social_context?: string | null;
 }
 
+export interface Bounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
 interface BuildingDiscoveryMapProps {
     externalBuildings?: DiscoveryBuilding[];
     onRegionChange?: (center: { lat: number, lng: number }) => void;
+    onBoundsChange?: (bounds: Bounds) => void;
     forcedCenter?: { lat: number, lng: number } | null;
 }
 
-export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forcedCenter }: BuildingDiscoveryMapProps) {
+export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, onBoundsChange, forcedCenter }: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
@@ -207,15 +215,27 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
     );
   }
 
+  const handleMapUpdate = (map: maplibregl.Map) => {
+      const bounds = map.getBounds();
+      onBoundsChange?.({
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest()
+      });
+  };
+
   return (
     <div className="h-full w-full rounded-xl overflow-hidden border border-white/10 relative">
       <MapGL
         ref={mapRef}
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
+        onLoad={evt => handleMapUpdate(evt.target)}
         onMoveEnd={evt => {
             const { latitude, longitude } = evt.viewState;
             onRegionChange?.({ lat: latitude, lng: longitude });
+            handleMapUpdate(evt.target);
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
@@ -224,10 +244,6 @@ export function BuildingDiscoveryMap({ externalBuildings, onRegionChange, forced
         <NavigationControl position="bottom-right" />
         {pins}
       </MapGL>
-
-      <div className="absolute top-4 left-4 bg-background/90 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-sm font-medium z-10">
-         {buildings?.length || 0} Buildings Nearby
-      </div>
     </div>
   );
 }
