@@ -20,13 +20,22 @@ export function useBuildingSearch() {
     lng: -0.1278
   });
 
-  const { location: gpsLocation, requestLocation } = useUserLocation();
+  const { location: gpsLocation, requestLocation: requestLocationInternal } = useUserLocation();
 
   useEffect(() => {
     if (gpsLocation) {
       setUserLocation(gpsLocation);
     }
   }, [gpsLocation]);
+
+  const requestLocation = async () => {
+    const loc = await requestLocationInternal();
+    if (loc) {
+      setUserLocation(loc);
+      return loc;
+    }
+    return null;
+  };
 
   // Fetch filters options
   const { data: filterOptions } = useQuery({
