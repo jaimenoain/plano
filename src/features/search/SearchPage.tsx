@@ -12,7 +12,7 @@ import { getGeocode, getLatLng } from "use-places-autocomplete";
 export default function SearchPage() {
   const navigate = useNavigate();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  
+   
   // 1. Existing hooks
   const {
     searchQuery, setSearchQuery,
@@ -24,13 +24,26 @@ export default function SearchPage() {
     requestLocation, gpsLocation
   } = useBuildingSearch();
 
-  // 2. New State for Feature Branch Filters (City, Style, Sort)
+  // 2. New State (Merged Feature + Main)
+  // Feature: Map Interaction controls
+  const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
+  const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
+  const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
+
+  // Main: Filter controls
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("distance");
 
-  const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
-  const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
+  // If a user types a query, we want to search the full database (ignore map bounds)
+  // until they interact with the map again to filter.
+  useEffect(() => {
+      if (searchQuery) {
+          setIgnoreMapBounds(true);
+      } else {
+          setIgnoreMapBounds(false);
+      }
+  }, [searchQuery]);
 
   // 3. Derive Available Options from Data (Required for the new FilterBar)
   const availableCities = useMemo(() => {
@@ -47,8 +60,9 @@ export default function SearchPage() {
   const filteredBuildings = useMemo(() => {
     let result = buildings;
 
-    // A. Apply Map Bounds (Existing)
-    if (mapBounds) {
+    // A. Apply Map Bounds (Merged Logic)
+    // Only filter by bounds if we have them AND we aren't explicitly ignoring them (e.g. during text search)
+    if (!ignoreMapBounds && mapBounds) {
       const { north, south, east, west } = mapBounds;
       result = result.filter(b => {
         const lat = b.location_lat;
@@ -64,7 +78,7 @@ export default function SearchPage() {
       });
     }
 
-    // B. Apply New Filters (Feature Branch)
+    // B. Apply New Filters (Main Branch)
     if (selectedCity !== "all") {
       result = result.filter(b => b.city === selectedCity);
     }
@@ -75,7 +89,7 @@ export default function SearchPage() {
       );
     }
 
-    // C. Apply Sorting (Feature Branch)
+    // C. Apply Sorting (Main Branch)
     // Note: 'distance' sorting is usually handled by the backend/hook or geospatial logic, 
     // but here is a placeholder for client-side sort if needed.
     if (sortBy === "name") {
@@ -83,17 +97,19 @@ export default function SearchPage() {
     }
 
     return result;
-  }, [buildings, mapBounds, selectedCity, selectedStyles, sortBy]);
+  }, [buildings, mapBounds, ignoreMapBounds, selectedCity, selectedStyles, sortBy]);
+
+  // 5. Merged Handlers
 
   const handleUseLocation = async () => {
     const loc = await requestLocation();
     if (loc) {
       setFlyToCenter(loc);
-      updateLocation(loc); // Ensure we update context for distance calc
+      updateLocation(loc); 
+      setIgnoreMapBounds(false); // Feature: Reset bounds ignore on explicit location use
     }
   };
 
-  // 5. Merged Handler: Combines Geocoding (Feature) with Location Update (Main)
   const handleLocationSearch = async (address: string, countryCode: string, placeName?: string) => {
     // Only trigger fly-to if it's a selection or explicit search
     if (!address || (!countryCode && !placeName)) return;
@@ -104,12 +120,15 @@ export default function SearchPage() {
         const { lat, lng } = await getLatLng(results[0]);
         const newLoc = { lat, lng };
         
-        // Feature: Fly to location and reset city filter
+        // Feature: Fly to location
         setFlyToCenter(newLoc);
-        setSelectedCity("all");
         
-        // Main: Optimistically update user location for distance sorting
+        // Main: Reset city filter & Optimistically update user location
+        setSelectedCity("all");
         updateLocation(newLoc);
+
+        // Feature: Re-enable bounds filtering once we fly to the new location
+        setIgnoreMapBounds(false);
       }
     } catch (error) {
       console.error("Geocoding error:", error);
@@ -180,6 +199,7 @@ export default function SearchPage() {
                   externalBuildings={buildings}
                   onRegionChange={updateLocation}
                   onBoundsChange={setMapBounds}
+                  onMapInteraction={() => setIgnoreMapBounds(false)}
                   forcedCenter={flyToCenter}
                 />
               </div>
@@ -200,6 +220,7 @@ export default function SearchPage() {
                 externalBuildings={buildings}
                 onRegionChange={updateLocation}
                 onBoundsChange={setMapBounds}
+                onMapInteraction={() => setIgnoreMapBounds(false)}
                 forcedCenter={flyToCenter}
               />
             </div>
