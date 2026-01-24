@@ -56,6 +56,12 @@ export default function SearchPage() {
     }
   };
 
+  const handleLocationSelect = (loc: { lat: number; lng: number }) => {
+    setFlyToCenter(loc);
+    // Optimistically update location for distance sorting
+    updateLocation(loc);
+  };
+
   // Handle auto-fly to user location on initial load or update
   useEffect(() => {
       if (gpsLocation) {
@@ -77,6 +83,7 @@ export default function SearchPage() {
                 onBucketListChange={setFilterBucketList}
                 onShowLeaderboard={() => setShowLeaderboard(true)}
                 onUseLocation={handleUseLocation}
+                onLocationSelect={handleLocationSelect}
             />
         </div>
 
