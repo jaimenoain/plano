@@ -34,6 +34,16 @@ export default function SearchPage() {
     }
   };
 
+  // Handle auto-fly to user location on initial load or update
+  useEffect(() => {
+      // Check if userLocation is different from default London
+      const isDefault = userLocation.lat === 51.5074 && userLocation.lng === -0.1278;
+
+      if (!isDefault) {
+          setFlyToCenter(userLocation);
+      }
+  }, [userLocation]);
+
   // Handle city fly-to logic
   useEffect(() => {
     if (selectedCity !== "all" && selectedCity !== lastFlownCity && buildings.length > 0) {
