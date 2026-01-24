@@ -27,6 +27,7 @@ export default function SearchPage() {
   // 2. New State (Merged Feature + Main)
   // Feature: Map Interaction controls
   const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
+  const [flyToBounds, setFlyToBounds] = useState<Bounds | null>(null);
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
   const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
 
@@ -105,6 +106,7 @@ export default function SearchPage() {
     const loc = await requestLocation();
     if (loc) {
       setFlyToCenter(loc);
+      setFlyToBounds(null);
       updateLocation(loc); 
       setIgnoreMapBounds(false); // Feature: Reset bounds ignore on explicit location use
     }
@@ -120,8 +122,21 @@ export default function SearchPage() {
         const { lat, lng } = await getLatLng(results[0]);
         const newLoc = { lat, lng };
         
-        // Feature: Fly to location
-        setFlyToCenter(newLoc);
+        // Check for viewport bounds (e.g. for countries)
+        const viewport = results[0].geometry.viewport;
+        if (viewport) {
+           setFlyToBounds({
+              north: typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lat() : (viewport as any).northeast.lat,
+              east: typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lng() : (viewport as any).northeast.lng,
+              south: typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lat() : (viewport as any).southwest.lat,
+              west: typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lng() : (viewport as any).southwest.lng,
+           });
+           setFlyToCenter(null);
+        } else {
+           // Feature: Fly to location
+           setFlyToCenter(newLoc);
+           setFlyToBounds(null);
+        }
         
         // Main: Reset city filter & Optimistically update user location
         setSelectedCity("all");
@@ -210,6 +225,7 @@ export default function SearchPage() {
                   forcedCenter={flyToCenter}
                   isFetching={isFetching}
                   autoZoomOnLowCount={isDefaultState}
+                  forcedBounds={flyToBounds}
                 />
               </div>
             )}
@@ -233,6 +249,7 @@ export default function SearchPage() {
                 forcedCenter={flyToCenter}
                 isFetching={isFetching}
                 autoZoomOnLowCount={isDefaultState}
+                forcedBounds={flyToBounds}
               />
             </div>
           </div>
