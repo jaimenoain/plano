@@ -50,8 +50,8 @@ export function useBuildingSearch() {
     queryKey: ["search-buildings", debouncedQuery, selectedCity, selectedStyles, sortBy, userLocation],
     queryFn: async () => {
         const filters = {
-            cities: selectedCity === "all" ? [] : [selectedCity],
-            styles: selectedStyles
+            cities: selectedCity === "all" ? undefined : [selectedCity],
+            styles: selectedStyles.length > 0 ? selectedStyles : undefined
         };
 
       const radius = (selectedCity !== "all" || sortBy === "relevance") ? 20000000 : 500000;
