@@ -320,7 +320,7 @@ export default function BuildingDetails() {
                 {building.main_image_url ? (
                     <img src={building.main_image_url} className="w-full h-full object-cover" alt={building.name} />
                 ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">No Image</div>
+                    <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-center p-4">No image yet - be the first to add a photo of this building</div>
                 )}
             </div>
         </div>

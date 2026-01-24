@@ -10,9 +10,20 @@ interface BuildingMapProps {
   status?: 'visited' | 'pending' | null;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  mapStyle?: string;
 }
 
-export function BuildingMap({ lat, lng, className, status, isExpanded, onToggleExpand }: BuildingMapProps) {
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+
+export function BuildingMap({ 
+  lat, 
+  lng, 
+  className, 
+  status, 
+  isExpanded, 
+  onToggleExpand, 
+  mapStyle 
+}: BuildingMapProps) {
   const pinColor = status === 'visited'
     ? "text-[#333333] fill-[#333333]" // Charcoal
     : status === 'pending'
@@ -35,7 +46,7 @@ export function BuildingMap({ lat, lng, className, status, isExpanded, onToggleE
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="https://tiles.openfreemap.org/styles/positron"
+        mapStyle={mapStyle || DEFAULT_MAP_STYLE}
         attributionControl={false}
       >
         <NavigationControl position="bottom-right" />

@@ -302,46 +302,59 @@ export default function Index() {
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
       ) : (
-        /* Updated Grid for slicker mobile layout with vertical spacing */
-        <div className="flex flex-col gap-6 px-2 md:px-6 pt-6 md:pt-8 pb-24 max-w-7xl mx-auto">
-
-          {/* Group Activity Toggle removed for simplicity in this phase or keep if needed */}
-
+        <div className="px-2 md:px-6 pt-6 md:pt-8 pb-24 mx-auto w-full">
           {reviews.length === 0 ? (
             <EmptyFeed />
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {reviews.map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  entry={review}
-                  onLike={handleLike}
-                />
-              ))}
-            </div>
-          )}
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+              {/* Feed Column */}
+              <div className="w-full lg:w-2/3 flex flex-col gap-6">
+                {reviews.map((review) => (
+                  <ReviewCard
+                    key={review.id}
+                    entry={review}
+                    onLike={handleLike}
+                  />
+                ))}
 
-          {hasNextPage && reviews.length > 0 && (
-            <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
-               {isFetchingNextPage ? (
-                 <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
-               ) : isError ? (
-                 <Button
-                   variant="ghost"
-                   onClick={() => fetchNextPage()}
-                   className="text-muted-foreground hover:text-foreground"
-                 >
-                   Error loading more. Click to retry.
-                 </Button>
-               ) : (
-                 <Button
-                   variant="ghost"
-                   onClick={() => fetchNextPage()}
-                   className="text-muted-foreground hover:text-foreground"
-                 >
-                   Load More
-                 </Button>
-               )}
+                {hasNextPage && (
+                  <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
+                    {isFetchingNextPage ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+                    ) : isError ? (
+                      <Button
+                        variant="ghost"
+                        onClick={() => fetchNextPage()}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        Error loading more. Click to retry.
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        onClick={() => fetchNextPage()}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        Load More
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Sidebar Column */}
+              <div className="hidden lg:block lg:w-1/3 sticky top-20">
+                 <div className="space-y-4">
+                    <div className="p-5 border rounded-xl bg-card shadow-sm">
+                       <h3 className="font-semibold mb-2">Trending</h3>
+                       <p className="text-sm text-muted-foreground">
+                         Discover popular buildings and active discussions in the community.
+                         <br/><br/>
+                         (Coming soon)
+                       </p>
+                    </div>
+                 </div>
+              </div>
             </div>
           )}
         </div>
