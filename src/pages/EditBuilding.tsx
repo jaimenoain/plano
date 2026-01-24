@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Architect } from "@/components/ui/architect-select";
+import { parseLocation } from "@/lib/location-utils";
 
 interface LocationData {
     lat: number | null;
@@ -118,25 +119,11 @@ export default function EditBuilding() {
       });
 
       // Parse location
-      let lat = null;
-      let lng = null;
-
-      if (data.location) {
-        if (typeof data.location === 'string') {
-            const matches = data.location.match(/POINT\(([^ ]+) ([^ ]+)\)/);
-            if (matches) {
-                lng = parseFloat(matches[1]);
-                lat = parseFloat(matches[2]);
-            }
-        } else if (typeof data.location === 'object' && data.location.coordinates) {
-             lng = data.location.coordinates[0];
-             lat = data.location.coordinates[1];
-        }
-      }
+      const coords = parseLocation(data.location);
 
       setLocationData({
-          lat,
-          lng,
+          lat: coords?.lat ?? null,
+          lng: coords?.lng ?? null,
           address: data.address || "",
           city: data.city,
           country: data.country

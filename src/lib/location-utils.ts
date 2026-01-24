@@ -25,3 +25,29 @@ export const extractLocationDetails = (result: any) => {
 
   return { city, country };
 };
+
+export const parseLocation = (location: any): { lat: number, lng: number } | null => {
+  if (!location) return null;
+
+  // Case 1: GeoJSON Object
+  if (typeof location === 'object' && location.coordinates) {
+    return {
+      lng: location.coordinates[0],
+      lat: location.coordinates[1]
+    };
+  }
+
+  // Case 2: WKT String "POINT(lng lat)"
+  if (typeof location === 'string') {
+    // Matches "POINT(lng lat)" or "POINT (lng lat)" with optional decimals
+    const match = location.match(/POINT\s*\((-?\d+\.?\d*)\s+(-?\d+\.?\d*)\)/i);
+    if (match) {
+      return {
+        lng: parseFloat(match[1]),
+        lat: parseFloat(match[2])
+      };
+    }
+  }
+
+  return null;
+};
