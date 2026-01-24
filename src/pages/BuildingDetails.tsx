@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { TagInput } from "@/components/ui/tag-input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,6 +84,7 @@ export default function BuildingDetails() {
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [userImages, setUserImages] = useState<{id: string, storage_path: string}[]>([]);
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
+  const [linksLoading, setLinksLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
   // Note & Tags
@@ -138,17 +140,8 @@ export default function BuildingDetails() {
           setIsCreator(true);
       }
 
-      // 1.8 Fetch Top Links (RPC)
-      const { data: linksData, error: linksError } = await supabase
-        .rpc('get_building_top_links', {
-            p_building_id: id
-        });
-
-      if (linksError) {
-          console.warn("Error fetching top links:", linksError);
-      } else if (linksData) {
-          setTopLinks(linksData);
-      }
+      // 1.8 Fetch Top Links (RPC) - non-blocking
+      fetchTopLinks(id);
 
       if (user) {
         // 2. Fetch User Entry (Direct Supabase call)
@@ -215,6 +208,21 @@ export default function BuildingDetails() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchTopLinks = async (buildingId: string) => {
+      setLinksLoading(true);
+      const { data: linksData, error: linksError } = await supabase
+        .rpc('get_building_top_links', {
+            p_building_id: buildingId
+        });
+
+      if (linksError) {
+          console.warn("Error fetching top links:", linksError);
+      } else if (linksData) {
+          setTopLinks(linksData);
+      }
+      setLinksLoading(false);
   };
 
   const handleStatusChange = async (newStatus: 'visited' | 'pending') => {
@@ -601,41 +609,61 @@ export default function BuildingDetails() {
             </div>
 
             {/* Top Community Resources */}
-            {topLinks.length > 0 && (
+            {(linksLoading || topLinks.length > 0) && (
                 <div className="pt-4 border-t border-dashed">
                     <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
                         Top Community Resources
                     </h3>
                     <div className="space-y-2">
-                        {topLinks.map(link => (
-                            <a
-                                key={link.link_id}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border group"
-                            >
-                                <div className="flex flex-col gap-0.5 overflow-hidden">
-                                    <span className="font-medium truncate pr-2 text-sm group-hover:text-primary transition-colors">
-                                        {link.title || link.url}
-                                    </span>
-                                    {link.user_username && (
-                                        <span className="text-xs text-muted-foreground">
-                                            shared by @{link.user_username}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-3 shrink-0">
-                                    {link.like_count > 0 && (
-                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                            <Heart className="w-3 h-3 fill-muted-foreground/30" />
-                                            <span>{link.like_count}</span>
+                        {linksLoading ? (
+                            <>
+                                <Skeleton className="h-12 w-full rounded-lg" />
+                                <Skeleton className="h-12 w-full rounded-lg" />
+                            </>
+                        ) : (
+                            topLinks.map(link => {
+                                let domain = "";
+                                try {
+                                    domain = new URL(link.url).hostname;
+                                } catch { }
+                                const displayDomain = domain || link.url;
+                                const hasTitle = !!link.title;
+
+                                return (
+                                    <a
+                                        key={link.link_id}
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border group"
+                                    >
+                                        <div className="flex flex-col gap-0.5 overflow-hidden">
+                                            <span className="font-medium truncate pr-2 text-sm group-hover:text-primary transition-colors">
+                                                {hasTitle ? link.title : displayDomain}
+                                            </span>
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                {hasTitle && (
+                                                    <span className="truncate max-w-[150px]">{displayDomain}</span>
+                                                )}
+                                                {hasTitle && link.user_username && <span>•</span>}
+                                                {link.user_username && (
+                                                    <span>shared by @{link.user_username}</span>
+                                                )}
+                                            </div>
                                         </div>
-                                    )}
-                                    <ExternalLink className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground" />
-                                </div>
-                            </a>
-                        ))}
+                                        <div className="flex items-center gap-3 shrink-0">
+                                            {link.like_count > 0 && (
+                                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                    <Heart className="w-3 h-3 fill-muted-foreground/30" />
+                                                    <span>{link.like_count}</span>
+                                                </div>
+                                            )}
+                                            <ExternalLink className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground" />
+                                        </div>
+                                    </a>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
             )}

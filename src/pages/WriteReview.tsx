@@ -146,6 +146,15 @@ export default function WriteReview() {
   };
 
   const addLink = () => {
+    if (links.length >= 5) {
+      toast({
+        variant: "destructive",
+        title: "Limit reached",
+        description: "Maximum 5 links allowed."
+      });
+      return;
+    }
+
     if (!newLinkUrl.trim()) {
       toast({
         variant: "destructive",
@@ -155,8 +164,13 @@ export default function WriteReview() {
       return;
     }
 
+    let urlToValidate = newLinkUrl.trim();
+    if (!/^https?:\/\//i.test(urlToValidate)) {
+      urlToValidate = "https://" + urlToValidate;
+    }
+
     try {
-      new URL(newLinkUrl); // Validate URL format
+      new URL(urlToValidate); // Validate URL format
     } catch {
       toast({
         variant: "destructive",
@@ -168,7 +182,7 @@ export default function WriteReview() {
 
     setLinks(prev => [...prev, {
       id: crypto.randomUUID(),
-      url: newLinkUrl,
+      url: urlToValidate,
       title: newLinkTitle
     }]);
 
