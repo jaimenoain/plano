@@ -57,7 +57,10 @@ export const fetchUserBuildingsMap = async (userId: string): Promise<Map<string,
         .select("building_id, status")
         .eq("user_id", userId);
 
-    if (error) throw error;
+    if (error) {
+        console.warn("Error fetching user buildings map:", error);
+        return new Map();
+    }
 
     const map = new Map();
     data.forEach(item => map.set(item.building_id, item.status));

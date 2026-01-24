@@ -148,7 +148,7 @@ test('End-to-End Add Building Verification', async ({ page }) => {
       }
   });
 
-  // Mock Supabase user_buildings (was log)
+  // Mock Supabase user_buildings
   await page.route('**/rest/v1/user_buildings*', async route => {
        console.log("Mock user_buildings intercepted");
        await route.fulfill({ status: 200, json: [] });
