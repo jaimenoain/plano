@@ -30,6 +30,7 @@ interface BuildingDetails {
   location: any; // PostGIS point handling usually requires parsing
   address: string;
   architects: string[];
+  relational_architects?: { id: string, name: string }[];
   year_completed: number;
   styles: string[];
   main_image_url: string | null;
@@ -104,8 +105,19 @@ export default function BuildingDetails() {
       const data = await fetchBuildingDetails(id);
 
       // Sanitize main_image_url to ensure it's null if empty string
+      // 1.5 Fetch Relational Architects
+      const { data: relationalArchitectsData } = await supabase
+        .from("building_architects")
+        .select("architect:architects(id, name)")
+        .eq("building_id", id);
+
+      const relationalArchitects = relationalArchitectsData
+        ?.map((item: any) => item.architect)
+        .filter((a: any) => a) || [];
+
       const sanitizedBuilding = {
         ...data,
+        relational_architects: relationalArchitects,
         main_image_url: data.main_image_url || null
       };
 
@@ -365,11 +377,22 @@ export default function BuildingDetails() {
                             <span>{building.year_completed}</span>
                         </div>
                     )}
-                    {building.architects && (
+                    {(building.relational_architects && building.relational_architects.length > 0) ? (
+                        <div className="flex items-center gap-1.5">
+                            {building.relational_architects.map((arch, i) => (
+                                <span key={arch.id}>
+                                    <Link to={`/architect/${arch.id}`} className="hover:underline text-primary">
+                                        {arch.name}
+                                    </Link>
+                                    {i < building.relational_architects!.length - 1 && ", "}
+                                </span>
+                            ))}
+                        </div>
+                    ) : (building.architects && (
                         <div className="flex items-center gap-1.5">
                             <span>{building.architects.join(", ")}</span>
                         </div>
-                    )}
+                    ))}
                 </div>
                 
                 {/* Styles Tags */}
