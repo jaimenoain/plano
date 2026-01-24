@@ -20,6 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { LocationInput } from "@/components/ui/LocationInput";
 import { Check, ChevronsUpDown, MapPin, Sparkles, Trophy, Locate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -27,6 +28,7 @@ import { useState } from "react";
 export interface DiscoveryFilterBarProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
+  onLocationSelect: (address: string, countryCode: string, placeName?: string) => void;
   selectedCity: string;
   onCityChange: (value: string) => void;
   availableCities: string[];
@@ -42,6 +44,7 @@ export interface DiscoveryFilterBarProps {
 export function DiscoveryFilterBar({
   searchQuery,
   onSearchChange,
+  onLocationSelect,
   selectedCity,
   onCityChange,
   availableCities,
@@ -54,6 +57,7 @@ export function DiscoveryFilterBar({
   onUseLocation,
 }: DiscoveryFilterBarProps) {
   const [openStyles, setOpenStyles] = useState(false);
+  const [locationQuery, setLocationQuery] = useState("");
 
   const toggleStyle = (style: string) => {
     if (selectedStyles.includes(style)) {
@@ -65,12 +69,21 @@ export function DiscoveryFilterBar({
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-background border-b md:flex-row md:items-center md:justify-between sticky top-0 z-10">
-      {/* Search Input */}
-      <div className="flex-1 min-w-[200px]">
+      {/* Search Inputs */}
+      <div className="flex flex-col md:flex-row gap-2 flex-1 min-w-[200px]">
         <Input
           placeholder="Search buildings, architects..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
+          className="w-full"
+        />
+        <LocationInput
+          value={locationQuery}
+          onLocationSelected={(address, country, place) => {
+            setLocationQuery(address);
+            onLocationSelect(address, country, place);
+          }}
+          placeholder="Search location..."
           className="w-full"
         />
       </div>

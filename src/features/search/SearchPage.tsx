@@ -7,6 +7,7 @@ import { DiscoveryList } from "./components/DiscoveryList";
 import { SearchModeToggle } from "./components/SearchModeToggle";
 import { useBuildingSearch } from "./hooks/useBuildingSearch";
 import { LeaderboardDialog } from "./components/LeaderboardDialog";
+import { getGeocode, getLatLng } from "use-places-autocomplete";
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -32,6 +33,24 @@ export default function SearchPage() {
       setFlyToCenter(loc);
       setSelectedCity("all");
     }
+  };
+
+  const handleLocationSearch = async (address: string, countryCode: string, placeName?: string) => {
+      // Only trigger fly-to if it's a selection (has countryCode or placeName)
+      // or if address is cleared (handled by LocationInput clearing?)
+      if (!address || (!countryCode && !placeName)) return;
+
+      try {
+          const results = await getGeocode({ address });
+          if (results && results.length > 0) {
+              const { lat, lng } = await getLatLng(results[0]);
+              setFlyToCenter({ lat, lng });
+              // Clear city selection to allow free exploration
+              setSelectedCity("all");
+          }
+      } catch (error) {
+          console.error("Geocoding error:", error);
+      }
   };
 
   // Handle auto-fly to user location on initial load or update
@@ -65,6 +84,7 @@ export default function SearchPage() {
              <DiscoveryFilterBar
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
+                onLocationSelect={handleLocationSearch}
                 selectedCity={selectedCity}
                 onCityChange={setSelectedCity}
                 availableCities={availableCities}
