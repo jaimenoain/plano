@@ -8,9 +8,12 @@ interface BuildingMapProps {
   lng: number;
   className?: string;
   status?: 'visited' | 'pending' | null;
+  mapStyle?: string;
 }
 
-export function BuildingMap({ lat, lng, className, status }: BuildingMapProps) {
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+
+export function BuildingMap({ lat, lng, className, status, mapStyle }: BuildingMapProps) {
   const pinColor = status === 'visited'
     ? "text-green-500 fill-green-500/20"
     : status === 'pending'
@@ -27,7 +30,7 @@ export function BuildingMap({ lat, lng, className, status }: BuildingMapProps) {
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="https://tiles.openfreemap.org/styles/liberty"
+        mapStyle={mapStyle || DEFAULT_MAP_STYLE}
       >
         <NavigationControl position="bottom-right" />
         <Marker

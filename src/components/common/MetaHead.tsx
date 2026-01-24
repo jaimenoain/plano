@@ -21,11 +21,12 @@ export function MetaHead({
 }: MetaHeadProps) {
   // Ensure image is absolute URL
   const getAbsoluteImageUrl = (img: string) => {
+    if (!img) return undefined;
     if (img.startsWith("http")) return img;
     return `${window.location.origin}${img.startsWith("/") ? "" : "/"}${img}`;
   };
 
-  const absoluteImage = getAbsoluteImageUrl(image);
+  const absoluteImage = getAbsoluteImageUrl(image || "/cover.jpg");
 
   return (
     <Helmet>
