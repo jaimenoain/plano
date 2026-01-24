@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ReviewCard } from "@/components/feed/ReviewCard";
 import { EmptyFeed } from "@/components/feed/EmptyFeed";
+import { PeopleYouMayKnow } from "@/components/feed/PeopleYouMayKnow";
 import { useAuth } from "@/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { supabase } from "@/integrations/supabase/client";
@@ -353,6 +354,7 @@ export default function Index() {
                          (Coming soon)
                        </p>
                     </div>
+                    <PeopleYouMayKnow />
                  </div>
               </div>
             </div>
