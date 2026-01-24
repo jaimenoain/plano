@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FavoriteItem } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { Loader2, Search, Star, X, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -90,14 +91,11 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
      const search = async () => {
         setLoading(true);
         try {
-           const { data } = await supabase
-             .rpc('search_buildings', {
-                 search_query: debouncedQuery,
-                 limit_count: 20
-             });
+           const data = await searchBuildingsRpc({
+               query_text: debouncedQuery
+           });
 
-           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-           let mapped = (data || []).map((b: any) => ({
+           let mapped = (data || []).map((b) => ({
               id: b.id,
               media_type: "building",
               title: b.name,
@@ -107,7 +105,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
            }));
 
            if (user && mapped.length > 0) {
-             const buildingIds = mapped.map((r: any) => r.id);
+             const buildingIds = mapped.map((r) => r.id);
              const { data: userRatings } = await supabase
                .from("user_buildings")
                .select("rating, building_id")
@@ -122,8 +120,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                    ratingMap.set(log.building_id, log.rating);
                });
 
-               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-               mapped = mapped.map((item: any) => ({
+               mapped = mapped.map((item) => ({
                  ...item,
                  rating: ratingMap.get(item.id),
                }));
@@ -179,7 +176,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
            </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col overflow-hidden">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "suggested" | "search")} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-4 pt-2">
                 <TabsList className="w-full">
                     <TabsTrigger value="suggested" className="flex-1">Your Top Rated</TabsTrigger>
