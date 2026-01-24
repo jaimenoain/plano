@@ -416,6 +416,7 @@ export default function BuildingDetails() {
                     </div>
 
                     <Button variant="outline" size="sm" asChild>
+                        {/* Navigation to Write Review */}
                         <Link to={`/building/${id}/review`}>
                             <MessageSquarePlus className="w-4 h-4 mr-2" />
                             {myRating > 0 ? "Edit Review" : "Write Review"}
