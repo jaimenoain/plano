@@ -71,6 +71,8 @@ export default function BuildingDetails() {
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
   const [entries, setEntries] = useState<FeedEntry[]>([]);
+  const [userImages, setUserImages] = useState<{id: string, storage_path: string}[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Note & Tags
   const [note, setNote] = useState("");
@@ -118,7 +120,7 @@ export default function BuildingDetails() {
         // 2. Fetch User Entry (Direct Supabase call)
         const { data: userEntry, error: userEntryError } = await supabase
             .from("user_buildings")
-            .select("*")
+            .select("*, images:review_images(id, storage_path)")
             .eq("user_id", user.id)
             .eq("building_id", id)
             .maybeSingle();
@@ -128,11 +130,17 @@ export default function BuildingDetails() {
             setMyRating(userEntry.rating || 0);
             setNote(userEntry.content || "");
             setTags(userEntry.tags || []);
+            // @ts-ignore - Supabase types join inference can be tricky
+            setUserImages(userEntry.images || []);
+            setIsEditing(false);
             if (userEntry.content || (userEntry.tags && userEntry.tags.length > 0)) {
                 setShowNoteEditor(true);
             }
-        } else if (userEntryError) {
-            console.error("Error fetching user status:", userEntryError);
+        } else {
+            setIsEditing(true);
+            if (userEntryError) {
+                console.error("Error fetching user status:", userEntryError);
+            }
         }
 
         // 3. Fetch Social Feed (Direct Supabase call)
@@ -253,6 +261,7 @@ export default function BuildingDetails() {
 
           if (error) throw error;
           toast({ title: "Note saved" });
+          setIsEditing(false);
       } catch (error: any) {
           console.error("Save note failed", error);
           toast({ variant: "destructive", title: "Failed to save note" });
@@ -379,84 +388,147 @@ export default function BuildingDetails() {
 
             {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
             <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                        {userStatus === 'visited' ? 'Your Rating' : 'Your Interest'}
-                    </h3>
-                    
-                    {/* Toggle Status */}
-                    <div className="flex gap-2">
-                        <Button 
-                            variant={userStatus === 'pending' ? "default" : "outline"} 
-                            size="sm"
-                            onClick={() => handleStatusChange('pending')}
-                        >
-                            <Bookmark className={`w-4 h-4 mr-2 ${userStatus === 'pending' ? "fill-current" : ""}`} />
-                            {userStatus === 'pending' ? "Pending" : "Save"}
-                        </Button>
-                        <Button 
-                            variant={userStatus === 'visited' ? "default" : "outline"} 
-                            size="sm"
-                            onClick={() => handleStatusChange('visited')}
-                        >
-                            <Check className="w-4 h-4 mr-2" />
-                            Visited
-                        </Button>
-                    </div>
-                </div>
-
-                {/* PersonalRatingButton Integration */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <PersonalRatingButton
-                            buildingId={building.id}
-                            initialRating={myRating}
-                            onRate={handleRate}
-                            status={userStatus || 'visited'}
-                            label={userStatus === 'pending' ? "Priority" : "Rating"}
-                            variant="inline"
-                        />
-                        {userStatus === 'pending' && (
-                            <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
-                        )}
-                    </div>
-
-                    <Button variant="outline" size="sm" asChild>
-                        {/* Navigation to Write Review */}
-                        <Link to={`/building/${id}/review`}>
-                            <MessageSquarePlus className="w-4 h-4 mr-2" />
-                            {myRating > 0 ? "Edit Review" : "Write Review"}
-                        </Link>
-                    </Button>
-                </div>
-
-                {/* Note & Tags Editor */}
-                {showNoteEditor && (
-                    <div className="pt-4 border-t border-dashed space-y-3 animate-in fade-in slide-in-from-top-2">
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium uppercase text-muted-foreground">Private Note</label>
-                            <Textarea
-                                placeholder="Write a private note..."
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                className="resize-none"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                             <label className="text-xs font-medium uppercase text-muted-foreground">Tags</label>
-                             <TagInput
-                                tags={tags}
-                                setTags={setTags}
-                                placeholder="Add tags..."
-                             />
-                        </div>
-                        <div className="flex justify-end">
-                            <Button size="sm" onClick={handleSaveNote} disabled={isSavingNote}>
-                                {isSavingNote && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                Save
+                {!isEditing && userStatus ? (
+                    // Summary View
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                                Your Activity
+                            </h3>
+                            <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
+                                <Edit2 className="w-4 h-4" />
                             </Button>
                         </div>
+
+                        <div className="flex flex-wrap gap-4 items-center">
+                            {userStatus === 'visited' ? (
+                                <Badge className="bg-green-600 hover:bg-green-700">Visited</Badge>
+                            ) : (
+                                <Badge variant="secondary">Saved</Badge>
+                            )}
+
+                            {userStatus === 'visited' && myRating > 0 && (
+                                <div className="flex items-center gap-0.5">
+                                    {[...Array(myRating)].map((_, i) => (
+                                        <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {note && <p className="text-sm text-foreground/90">{note}</p>}
+
+                        {tags && tags.length > 0 && (
+                             <div className="flex flex-wrap gap-2">
+                                {tags.map(tag => (
+                                    <Badge key={tag} variant="outline" className="text-xs">
+                                        {tag}
+                                    </Badge>
+                                ))}
+                             </div>
+                        )}
+
+                        {userImages && userImages.length > 0 && (
+                            <div className="flex gap-2 overflow-x-auto pb-2">
+                                {userImages.map((img) => {
+                                    const { data: { publicUrl } } = supabase.storage
+                                        .from("review_images")
+                                        .getPublicUrl(img.storage_path);
+                                    return (
+                                        <img
+                                            key={img.id}
+                                            src={publicUrl}
+                                            className="h-24 w-24 object-cover rounded-md border bg-muted"
+                                            alt="Review photo"
+                                        />
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
+                ) : (
+                    // Edit View
+                    <>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                                {userStatus === 'visited' ? 'Your Rating' : 'Your Interest'}
+                            </h3>
+
+                            {/* Toggle Status */}
+                            <div className="flex gap-2">
+                                <Button
+                                    variant={userStatus === 'pending' ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handleStatusChange('pending')}
+                                >
+                                    <Bookmark className={`w-4 h-4 mr-2 ${userStatus === 'pending' ? "fill-current" : ""}`} />
+                                    {userStatus === 'pending' ? "Pending" : "Save"}
+                                </Button>
+                                <Button
+                                    variant={userStatus === 'visited' ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handleStatusChange('visited')}
+                                >
+                                    <Check className="w-4 h-4 mr-2" />
+                                    Visited
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* PersonalRatingButton Integration */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <PersonalRatingButton
+                                    buildingId={building.id}
+                                    initialRating={myRating}
+                                    onRate={handleRate}
+                                    status={userStatus || 'visited'}
+                                    label={userStatus === 'pending' ? "Priority" : "Rating"}
+                                    variant="inline"
+                                />
+                                {userStatus === 'pending' && (
+                                    <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
+                                )}
+                            </div>
+
+                            <Button variant="outline" size="sm" asChild>
+                                {/* Navigation to Write Review */}
+                                <Link to={`/building/${id}/review`}>
+                                    <MessageSquarePlus className="w-4 h-4 mr-2" />
+                                    {myRating > 0 ? "Edit Review" : "Write Review"}
+                                </Link>
+                            </Button>
+                        </div>
+
+                        {/* Note & Tags Editor */}
+                        {showNoteEditor && (
+                            <div className="pt-4 border-t border-dashed space-y-3 animate-in fade-in slide-in-from-top-2">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium uppercase text-muted-foreground">Private Note</label>
+                                    <Textarea
+                                        placeholder="Write a private note..."
+                                        value={note}
+                                        onChange={(e) => setNote(e.target.value)}
+                                        className="resize-none"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium uppercase text-muted-foreground">Tags</label>
+                                    <TagInput
+                                        tags={tags}
+                                        setTags={setTags}
+                                        placeholder="Add tags..."
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button size="sm" onClick={handleSaveNote} disabled={isSavingNote}>
+                                        {isSavingNote && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                        Save
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* Visit With Feature - Only visible when status is 'pending' */}
