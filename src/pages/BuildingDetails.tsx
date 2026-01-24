@@ -48,6 +48,10 @@ interface FeedEntry {
     username: string | null;
     avatar_url: string | null;
   };
+  images: {
+    id: string;
+    storage_path: string;
+  }[];
 }
 
 export default function BuildingDetails() {
@@ -138,7 +142,8 @@ export default function BuildingDetails() {
           .from("user_buildings")
           .select(`
             id, content, rating, status, tags, created_at,
-            user:profiles(username, avatar_url)
+            user:profiles(username, avatar_url),
+            images:review_images(id, storage_path)
           `)
           .eq("building_id", id)
           .order("created_at", { ascending: false });
@@ -154,7 +159,8 @@ export default function BuildingDetails() {
                 user: {
                     ...e.user,
                     avatar_url: e.user.avatar_url || null
-                }
+                },
+                images: e.images || []
             }));
             setEntries(sanitizedEntries);
         }
@@ -506,6 +512,23 @@ export default function BuildingDetails() {
                                         </div>
                                     )}
                                     {entry.content && <p className="text-sm mt-1 text-muted-foreground">{entry.content}</p>}
+                                    {entry.images && entry.images.length > 0 && (
+                                        <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+                                            {entry.images.map((img) => {
+                                                const { data: { publicUrl } } = supabase.storage
+                                                    .from("review_images")
+                                                    .getPublicUrl(img.storage_path);
+                                                return (
+                                                    <img
+                                                        key={img.id}
+                                                        src={publicUrl}
+                                                        className="h-24 w-24 object-cover rounded-md border bg-muted"
+                                                        alt="Review photo"
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
