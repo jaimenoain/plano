@@ -165,6 +165,10 @@ test('Verify Dual-Context Scoring System (Quality Mode)', async ({ page }) => {
   expect(postData.building_id).toBe(buildingId);
   expect(postData.user_id).toBe('user-uuid');
 
+  // Verify Timestamp usage (Fix for 400 Bad Request)
+  expect(postData.edited_at).toBeDefined();
+  expect(postData.updated_at).toBeUndefined();
+
   // Verify UI update after rating
   // The inline component should stay inline, but maybe show selected state.
   // In `PersonalRatingButton`, logic for "hasRated" inside `inline` variant:

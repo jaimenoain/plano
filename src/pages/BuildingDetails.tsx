@@ -20,7 +20,7 @@ import { BuildingMap } from "@/components/common/BuildingMap";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { Star } from "lucide-react";
 import { UserPicker } from "@/components/common/UserPicker";
-import { fetchBuildingDetails, fetchUserBuildingStatus } from "@/utils/supabaseFallback";
+import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } from "@/utils/supabaseFallback";
 
 // --- Types ---
 interface BuildingDetails {
@@ -181,52 +181,20 @@ export default function BuildingDetails() {
       setUserStatus(newStatus);
       // Rating persists (myRating state is not changed to 0)
 
-      const payload: any = {
-          user_id: user.id,
-          building_id: building.id,
-          status: newStatus,
-          rating: myRating > 0 ? myRating : null, // Persist existing rating
-          updated_at: new Date().toISOString()
-      };
-
-      // Determine table name based on context?
-      // We should probably check if we are in legacy mode.
-      // Or just try one and failover? Upsert on failover is messy.
-
-      // For writes, we should ideally write to NEW table if possible, but if schema is missing, it will fail.
-      // If we are on legacy backend, we must write to `log`.
-
-      // Strategy: Try `user_buildings` first. If error (404/PGRST204?), try `log`.
-
-      const { error } = await supabase
-          .from("user_buildings")
-          .upsert(payload, { onConflict: 'user_id, building_id' });
-
-      if (error) {
-          console.warn("Write to user_buildings failed, trying log", error);
-
-          // Legacy payload
-          const legacyStatus = newStatus === 'visited' ? 'watched' : 'watchlist';
-          const legacyPayload: any = {
+      try {
+          await upsertUserBuilding({
               user_id: user.id,
-              film_id: building.id, // Assuming ID is compatible
-              status: legacyStatus,
+              building_id: building.id,
+              status: newStatus,
               rating: myRating > 0 ? myRating : null,
-              updated_at: new Date().toISOString()
-          };
-
-          const { error: legacyError } = await supabase
-              .from("log" as any)
-              .upsert(legacyPayload, { onConflict: 'user_id, film_id' });
-
-          if (legacyError) {
-             toast({ variant: "destructive", title: "Failed to save status" });
-             fetchBuildingData(); // Revert
-             return;
-          }
+              edited_at: new Date().toISOString()
+          });
+          toast({ title: newStatus === 'visited' ? "Marked as Visited" : "Added to Pending" });
+      } catch (error) {
+          console.error("Status update failed", error);
+          toast({ variant: "destructive", title: "Failed to save status" });
+          fetchBuildingData(); // Revert
       }
-
-      toast({ title: newStatus === 'visited' ? "Marked as Visited" : "Added to Pending" });
   };
 
   const handleRate = async (buildingId: string, rating: number) => {
@@ -240,42 +208,20 @@ export default function BuildingDetails() {
            setUserStatus('visited');
        }
 
-       const payload: any = {
-          user_id: user.id,
-          building_id: building.id,
-          status: statusToUse,
-          rating: rating,
-          updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase
-          .from("user_buildings")
-          .upsert(payload, { onConflict: 'user_id, building_id' });
-
-      if (error) {
-          console.warn("Write to user_buildings failed, trying log", error);
-
-          const legacyStatus = statusToUse === 'visited' ? 'watched' : 'watchlist';
-          const legacyPayload: any = {
-              user_id: user.id,
-              film_id: building.id,
-              status: legacyStatus,
-              rating: rating,
-              updated_at: new Date().toISOString()
-          };
-
-          const { error: legacyError } = await supabase
-             .from("log" as any)
-             .upsert(legacyPayload, { onConflict: 'user_id, film_id' });
-
-          if (legacyError) {
-             toast({ variant: "destructive", title: "Failed to save rating" });
-             fetchBuildingData();
-             return;
-          }
-      }
-
-      toast({ title: "Rating saved" });
+       try {
+           await upsertUserBuilding({
+               user_id: user.id,
+               building_id: building.id,
+               status: statusToUse,
+               rating: rating,
+               edited_at: new Date().toISOString()
+           });
+           toast({ title: "Rating saved" });
+       } catch (error) {
+           console.error("Rating failed", error);
+           toast({ variant: "destructive", title: "Failed to save rating" });
+           fetchBuildingData();
+       }
   };
 
   const handleSendInvites = async () => {
