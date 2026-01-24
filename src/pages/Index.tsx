@@ -433,6 +433,7 @@ export default function Index() {
                     entry={review}
                     onLike={handleLike}
                     onImageLike={handleImageLike}
+                    imagePosition="right"
                   />
                 ))}
 
