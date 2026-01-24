@@ -30,7 +30,7 @@ export function BuildingMap({ lat, lng, className, status, mapStyle }: BuildingM
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={mapStyle || DEFAULT_MAP_STYLE}
+        mapStyle="https://tiles.openfreemap.org/styles/positron"
       >
         <NavigationControl position="bottom-right" />
         <Marker
