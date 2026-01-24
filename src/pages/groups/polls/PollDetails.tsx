@@ -210,7 +210,7 @@ export default function PollDetails() {
             }}
         >
             <ArrowLeft className="h-4 w-4" />
-            <span>{poll.session?.status === 'closed' ? "Back to Field Trip" : "Back to Polls"}</span>
+            <span>{poll.session?.status === 'closed' ? "Back to Event" : "Back to Polls"}</span>
         </div>
 
         {/* REFACTORED HEADER */}
