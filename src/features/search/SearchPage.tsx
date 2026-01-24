@@ -2,16 +2,20 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { BuildingDiscoveryMap, Bounds } from "@/components/common/BuildingDiscoveryMap";
-import { DiscoveryFilterBar } from "./components/DiscoveryFilterBar";
+import { DiscoveryFilterBar, SearchScope } from "./components/DiscoveryFilterBar";
 import { DiscoveryList } from "./components/DiscoveryList";
 import { SearchModeToggle } from "./components/SearchModeToggle";
 import { useBuildingSearch } from "./hooks/useBuildingSearch";
 import { LeaderboardDialog } from "./components/LeaderboardDialog";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
+import { useUserSearch } from "./hooks/useUserSearch";
+import { UserSearchNudge } from "./components/UserSearchNudge";
+import { UserResultsList } from "./components/UserResultsList";
 
 export default function SearchPage() {
   const navigate = useNavigate();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [searchScope, setSearchScope] = useState<SearchScope>('content');
    
   // 1. Existing hooks
   const {
@@ -25,6 +29,22 @@ export default function SearchPage() {
   } = useBuildingSearch();
 
   // 2. New State (Merged Feature + Main)
+
+  // Feature: User Search Integration
+  const { users: foundUsers, isLoading: isUserSearchLoading } = useUserSearch({
+    searchQuery,
+    limit: searchScope === 'users' ? 20 : 5,
+    enabled: searchQuery.length >= 3
+  });
+
+  const handleUserSingleMatch = (username: string) => {
+    navigate(`/profile/${username}`);
+  };
+
+  const handleUserMultipleMatch = () => {
+    setSearchScope('users');
+  };
+
   // Feature: Map Interaction controls
   const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
   const [flyToBounds, setFlyToBounds] = useState<Bounds | null>(null);
@@ -190,8 +210,18 @@ export default function SearchPage() {
             // --- Shared Props ---
             onShowLeaderboard={() => setShowLeaderboard(true)}
             onUseLocation={handleUseLocation}
+            searchScope={searchScope}
+            onSearchScopeChange={setSearchScope}
           />
         </div>
+
+        {searchScope === 'content' && searchQuery.length >= 3 && foundUsers.length > 0 && (
+           <UserSearchNudge
+             users={foundUsers}
+             onSingleMatch={handleUserSingleMatch}
+             onMultipleMatch={handleUserMultipleMatch}
+           />
+        )}
 
         <LeaderboardDialog
           open={showLeaderboard}
@@ -199,60 +229,68 @@ export default function SearchPage() {
         />
 
         <div className="flex-1 relative overflow-hidden">
-          {/* Mobile View */}
-          <div className="md:hidden h-full w-full relative">
-            <SearchModeToggle
-              mode={viewMode}
-              onModeChange={setViewMode}
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30"
-            />
-
-            {viewMode === 'list' ? (
-              <div className="h-full overflow-y-auto bg-background pb-20">
-                <DiscoveryList
-                  buildings={filteredBuildings}
-                  isLoading={isLoading}
-                  currentLocation={userLocation}
+          {searchScope === 'users' ? (
+             <div className="h-full w-full overflow-y-auto bg-background p-0">
+               <UserResultsList users={foundUsers} isLoading={isUserSearchLoading} />
+             </div>
+          ) : (
+            <>
+              {/* Mobile View */}
+              <div className="md:hidden h-full w-full relative">
+                <SearchModeToggle
+                  mode={viewMode}
+                  onModeChange={setViewMode}
+                  className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30"
                 />
-              </div>
-            ) : (
-              <div className="h-full w-full">
-                <BuildingDiscoveryMap
-                  externalBuildings={buildings}
-                  onRegionChange={updateLocation}
-                  onBoundsChange={setMapBounds}
-                  onMapInteraction={() => setIgnoreMapBounds(false)}
-                  forcedCenter={flyToCenter}
-                  isFetching={isFetching}
-                  autoZoomOnLowCount={isDefaultState}
-                  forcedBounds={flyToBounds}
-                />
-              </div>
-            )}
-          </div>
 
-          {/* Desktop Split View */}
-          <div className="hidden md:grid grid-cols-12 h-full w-full">
-            <div className="col-span-5 lg:col-span-4 h-full overflow-y-auto border-r bg-background/50 backdrop-blur-sm z-10 pb-4">
-              <DiscoveryList
-                buildings={filteredBuildings}
-                isLoading={isLoading}
-                currentLocation={userLocation}
-              />
-            </div>
-            <div className="col-span-7 lg:col-span-8 h-full relative">
-              <BuildingDiscoveryMap
-                externalBuildings={buildings}
-                onRegionChange={updateLocation}
-                onBoundsChange={setMapBounds}
-                onMapInteraction={() => setIgnoreMapBounds(false)}
-                forcedCenter={flyToCenter}
-                isFetching={isFetching}
-                autoZoomOnLowCount={isDefaultState}
-                forcedBounds={flyToBounds}
-              />
-            </div>
-          </div>
+                {viewMode === 'list' ? (
+                  <div className="h-full overflow-y-auto bg-background pb-20">
+                    <DiscoveryList
+                      buildings={filteredBuildings}
+                      isLoading={isLoading}
+                      currentLocation={userLocation}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-full w-full">
+                    <BuildingDiscoveryMap
+                      externalBuildings={buildings}
+                      onRegionChange={updateLocation}
+                      onBoundsChange={setMapBounds}
+                      onMapInteraction={() => setIgnoreMapBounds(false)}
+                      forcedCenter={flyToCenter}
+                      isFetching={isFetching}
+                      autoZoomOnLowCount={isDefaultState}
+                      forcedBounds={flyToBounds}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop Split View */}
+              <div className="hidden md:grid grid-cols-12 h-full w-full">
+                <div className="col-span-5 lg:col-span-4 h-full overflow-y-auto border-r bg-background/50 backdrop-blur-sm z-10 pb-4">
+                  <DiscoveryList
+                    buildings={filteredBuildings}
+                    isLoading={isLoading}
+                    currentLocation={userLocation}
+                  />
+                </div>
+                <div className="col-span-7 lg:col-span-8 h-full relative">
+                  <BuildingDiscoveryMap
+                    externalBuildings={buildings}
+                    onRegionChange={updateLocation}
+                    onBoundsChange={setMapBounds}
+                    onMapInteraction={() => setIgnoreMapBounds(false)}
+                    forcedCenter={flyToCenter}
+                    isFetching={isFetching}
+                    autoZoomOnLowCount={isDefaultState}
+                    forcedBounds={flyToBounds}
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </AppLayout>
