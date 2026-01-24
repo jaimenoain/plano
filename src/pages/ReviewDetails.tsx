@@ -373,14 +373,22 @@ export default function ReviewDetails() {
     try {
         if (wasLiked) {
             // @ts-ignore
-            await supabase.from("link_likes").delete().eq("link_id", linkId).eq("user_id", user.id);
+            const { error } = await supabase.from("link_likes").delete().eq("link_id", linkId).eq("user_id", user.id);
+            if (error) throw error;
         } else {
             // @ts-ignore
-            await supabase.from("link_likes").insert({ link_id: linkId, user_id: user.id });
+            const { error } = await supabase.from("link_likes").insert({ link_id: linkId, user_id: user.id });
+            if (error) throw error;
         }
     } catch (error) {
         console.error("Error toggling link like", error);
-        // Could revert here if needed
+        toast({ variant: "destructive", title: "Error", description: "Failed to update like." });
+        // Revert optimistic update
+        setLinks(prev => prev.map(l => l.id === linkId ? {
+            ...l,
+            is_liked: wasLiked,
+            likes_count: wasLiked ? l.likes_count + 1 : l.likes_count - 1
+        } : l));
     }
   };
 
@@ -722,6 +730,9 @@ export default function ReviewDetails() {
                                         domain = new URL(link.url).hostname;
                                     } catch { }
 
+                                    const displayDomain = domain || link.url;
+                                    const hasTitle = !!link.title;
+
                                     return (
                                         <div key={link.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-white/5 group hover:bg-secondary/50 transition-colors">
                                             <a
@@ -735,11 +746,11 @@ export default function ReviewDetails() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="font-medium text-sm text-slate-200 truncate pr-2">
-                                                        {link.title || link.url}
+                                                        {hasTitle ? link.title : displayDomain}
                                                     </p>
-                                                    {domain && (
+                                                    {hasTitle && (
                                                         <p className="text-xs text-muted-foreground truncate">
-                                                            {domain}
+                                                            {displayDomain}
                                                         </p>
                                                     )}
                                                 </div>
@@ -750,11 +761,11 @@ export default function ReviewDetails() {
                                                 size="sm"
                                                 onClick={() => handleLikeLink(link.id)}
                                                 className={cn(
-                                                    "ml-2 h-8 px-2 gap-1.5 hover:bg-background/50",
+                                                    "ml-2 h-11 min-w-[44px] px-3 gap-1.5 hover:bg-background/50 rounded-full",
                                                     link.is_liked ? "text-red-500 hover:text-red-400" : "text-muted-foreground"
                                                 )}
                                             >
-                                                <Heart className={cn("w-3.5 h-3.5", link.is_liked && "fill-current")} />
+                                                <Heart className={cn("w-4 h-4", link.is_liked && "fill-current")} />
                                                 {link.likes_count > 0 && <span className="text-xs">{link.likes_count}</span>}
                                             </Button>
                                         </div>
