@@ -40,6 +40,7 @@ interface Profile {
   bio: string | null;
   last_online?: string | null;
   role?: string;
+  profile_sections?: { favorites?: boolean; highlights?: boolean } | null;
 }
 
 interface Stats {
@@ -196,7 +197,7 @@ export default function Profile() {
       setLoading(true);
       let uid: string | null = null;
 
-      let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online");
+      let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, profile_sections");
       let data: any = null;
 
       if (routeUsername) {
@@ -225,7 +226,7 @@ export default function Profile() {
         uid = currentUser.id;
         const res = await supabase
           .from("profiles")
-          .select("id, username, avatar_url, bio, favorites, last_online")
+          .select("id, username, avatar_url, bio, favorites, last_online, profile_sections")
           .eq("id", uid)
           .maybeSingle();
         data = res.data;
@@ -554,6 +555,10 @@ export default function Profile() {
         : supabase.storage.from("avatars").getPublicUrl(profile.avatar_url).data.publicUrl)
     : undefined;
 
+  // Determine visibility of sections
+  const showFavorites = profile?.profile_sections?.favorites === true;
+  const showHighlights = profile?.profile_sections?.highlights === true;
+
   return (
     <AppLayout title={profile?.username || "Profile"} showLogo={false} showBack={!isOwnProfile}>
       <MetaHead
@@ -576,8 +581,8 @@ export default function Profile() {
       />
 
       {/* 2. Favorite Buildings (Moved to body as requested implicitly by "Add a section") */}
-      {/* Only show if not empty or if own profile (to empty state manageable) */}
-      {(buildingFavorites.length > 0 || isOwnProfile) && (
+      {/* Only show if explicitly enabled in settings, even for the owner */}
+      {showFavorites && (buildingFavorites.length > 0 || isOwnProfile) && (
          <FavoritesSection
             favorites={buildingFavorites}
             isOwnProfile={isOwnProfile}
@@ -586,11 +591,13 @@ export default function Profile() {
       )}
 
       {/* 3. Highlights (Genres, People, Quotes) */}
-      <ProfileHighlights
-         favorites={favorites}
-         isOwnProfile={isOwnProfile}
-         onManage={() => setShowManageHighlights(true)}
-      />
+      {showHighlights && (
+        <ProfileHighlights
+           favorites={favorites}
+           isOwnProfile={isOwnProfile}
+           onManage={() => setShowManageHighlights(true)}
+        />
+      )}
 
       {/* 4. Collections Row (Tags) */}
       {tags.length > 0 && (

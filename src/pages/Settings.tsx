@@ -16,6 +16,7 @@ import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { NavigationBlocker } from "@/components/common/NavigationBlocker";
+import { Switch } from "@/components/ui/switch";
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth();
@@ -34,6 +35,8 @@ export default function Settings() {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  const [profileSections, setProfileSections] = useState({ favorites: false, highlights: false });
   
   const [exporting, setExporting] = useState(false);
   
@@ -45,6 +48,7 @@ export default function Settings() {
     location: string;
     avatarUrl: string | null;
     email: string;
+    profileSections: { favorites: boolean; highlights: boolean };
   } | null>(null);
 
   useEffect(() => {
@@ -75,6 +79,11 @@ export default function Settings() {
       const avatarUrlVal = profile.avatar_url;
       const countryVal = profile.country || "";
       const locationVal = profile.location || "";
+      const sectionsVal = profile.profile_sections ?
+        (typeof profile.profile_sections === 'object' ?
+           { favorites: !!(profile.profile_sections as any).favorites, highlights: !!(profile.profile_sections as any).highlights }
+           : { favorites: false, highlights: false })
+        : { favorites: false, highlights: false };
 
       setEmail(emailVal);
       setUsername(usernameVal);
@@ -82,6 +91,7 @@ export default function Settings() {
       setAvatarUrl(avatarUrlVal);
       setCountry(countryVal);
       setLocation(locationVal);
+      setProfileSections(sectionsVal);
 
       setInitialState({
         username: usernameVal,
@@ -90,6 +100,7 @@ export default function Settings() {
         location: locationVal,
         avatarUrl: avatarUrlVal,
         email: emailVal,
+        profileSections: sectionsVal,
       });
 
     }
@@ -104,6 +115,8 @@ export default function Settings() {
     if (avatarUrl !== initialState.avatarUrl) return true;
     if (email !== initialState.email) return true;
     if (newPassword !== "") return true;
+    if (profileSections.favorites !== initialState.profileSections.favorites) return true;
+    if (profileSections.highlights !== initialState.profileSections.highlights) return true;
 
     return false;
   })();
@@ -125,6 +138,7 @@ export default function Settings() {
           location,
           avatar_url: avatarUrl,
           updated_at: new Date().toISOString(),
+          profile_sections: profileSections,
         })
         .eq("id", user.id);
 
@@ -163,6 +177,7 @@ export default function Settings() {
         location,
         avatarUrl,
         email,
+        profileSections,
       });
       setJustSaved(true);
 
@@ -393,6 +408,34 @@ export default function Settings() {
               <p className="text-xs text-muted-foreground">
                 This helps us personalize your experience.
               </p>
+            </div>
+
+            <div className="space-y-4 pt-2">
+                <h3 className="font-medium text-sm text-foreground">Profile Sections</h3>
+
+                <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="show-favorites" className="text-base">All-time Favourites</Label>
+                        <p className="text-sm text-muted-foreground">Show your top 6 buildings on your profile.</p>
+                    </div>
+                    <Switch
+                        id="show-favorites"
+                        checked={profileSections.favorites}
+                        onCheckedChange={(checked) => setProfileSections(prev => ({ ...prev, favorites: checked }))}
+                    />
+                </div>
+
+                <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="show-highlights" className="text-base">Highlights</Label>
+                        <p className="text-sm text-muted-foreground">Show your favorite genres, architects, and quotes.</p>
+                    </div>
+                    <Switch
+                        id="show-highlights"
+                        checked={profileSections.highlights}
+                        onCheckedChange={(checked) => setProfileSections(prev => ({ ...prev, highlights: checked }))}
+                    />
+                </div>
             </div>
           </div>
 
