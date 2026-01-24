@@ -78,6 +78,9 @@ export default function BuildingDetails() {
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [sendingInvites, setSendingInvites] = useState(false);
 
+  // Map state
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+
   // Parse location
   const coordinates = useMemo(() => {
     return parseLocation(building?.location);
@@ -296,8 +299,10 @@ export default function BuildingDetails() {
               <BuildingMap
                 lat={coordinates.lat}
                 lng={coordinates.lng}
-                className="h-48 w-full"
+                className={isMapExpanded ? "fixed inset-0 z-[100] h-screen w-screen rounded-none border-0" : "h-48 w-full transition-all duration-300"}
                 status={userStatus}
+                isExpanded={isMapExpanded}
+                onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
               />
             ) : (
               <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">
