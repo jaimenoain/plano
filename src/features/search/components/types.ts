@@ -12,6 +12,14 @@ export interface DiscoveryBuilding {
   distance?: number;
   social_context?: string;
   social_score?: number;
+  contact_raters?: ContactRater[];
+}
+
+export interface ContactRater {
+  id: string;
+  avatar_url: string | null;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 export interface LeaderboardBuilding {

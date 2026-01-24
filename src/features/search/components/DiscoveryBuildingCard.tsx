@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DiscoveryBuilding } from "./types";
@@ -51,6 +52,25 @@ export function DiscoveryBuildingCard({
                 </Badge>
               )}
             </div>
+
+            {/* Facepile */}
+            {building.contact_raters && building.contact_raters.length > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex -space-x-2">
+                  {building.contact_raters.slice(0, 3).map((rater) => (
+                    <Avatar key={rater.id} className="w-5 h-5 border border-background">
+                      <AvatarImage src={rater.avatar_url || undefined} />
+                      <AvatarFallback className="text-[8px]">{rater.first_name?.[0] || "?"}</AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {building.contact_raters.length === 1 && building.contact_raters[0].first_name
+                    ? `Rated by ${building.contact_raters[0].first_name}`
+                    : `${building.contact_raters.length} contacts rated this`}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Image */}

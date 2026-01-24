@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
-import { DiscoveryBuilding } from "../components/types";
+import { DiscoveryBuilding, ContactRater } from "../components/types";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,51 +25,94 @@ function deg2rad(deg: number) {
   return deg * (Math.PI / 180);
 }
 
-async function enrichBuildingsWithImages(buildings: DiscoveryBuilding[]) {
+async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string) {
   if (!buildings.length) return [];
 
   const buildingIds = buildings.map(b => b.id);
+  let enrichedBuildings = [...buildings];
 
-  // 1. Get reviews (user_buildings) for these buildings
+  // 1. Image Enrichment
   const { data: reviews } = await supabase
     .from('user_buildings')
     .select('id, building_id')
     .in('building_id', buildingIds);
 
-  if (!reviews || !reviews.length) return buildings;
+  if (reviews && reviews.length) {
+    const reviewIds = reviews.map(r => r.id);
+    const reviewToBuildingMap = new Map(reviews.map(r => [r.id, r.building_id]));
 
-  const reviewIds = reviews.map(r => r.id);
-  const reviewToBuildingMap = new Map(reviews.map(r => [r.id, r.building_id]));
+    const { data: images } = await supabase
+        .from('review_images')
+        .select('storage_path, likes_count, created_at, review_id')
+        .in('review_id', reviewIds)
+        .order('likes_count', { ascending: false })
+        .order('created_at', { ascending: false });
 
-  // 2. Get images for these reviews, ordered by likes and recency
-  const { data: images } = await supabase
-    .from('review_images')
-    .select('storage_path, likes_count, created_at, review_id')
-    .in('review_id', reviewIds)
-    .order('likes_count', { ascending: false })
-    .order('created_at', { ascending: false });
-
-  if (!images || !images.length) return buildings;
-
-  // 3. Map best image to building
-  const buildingImageMap = new Map<string, string>();
-
-  for (const img of images) {
-     const buildingId = reviewToBuildingMap.get(img.review_id);
-     if (buildingId && !buildingImageMap.has(buildingId)) {
-         // Found top image for this building (since we ordered by likes/time)
-         const { data: { publicUrl } } = supabase.storage.from('review_images').getPublicUrl(img.storage_path);
-         buildingImageMap.set(buildingId, publicUrl);
-     }
+    if (images && images.length) {
+        const buildingImageMap = new Map<string, string>();
+        for (const img of images) {
+            const buildingId = reviewToBuildingMap.get(img.review_id);
+            if (buildingId && !buildingImageMap.has(buildingId)) {
+                const { data: { publicUrl } } = supabase.storage.from('review_images').getPublicUrl(img.storage_path);
+                buildingImageMap.set(buildingId, publicUrl);
+            }
+        }
+        enrichedBuildings = enrichedBuildings.map(b => {
+            if (buildingImageMap.has(b.id)) {
+                return { ...b, main_image_url: buildingImageMap.get(b.id) || b.main_image_url };
+            }
+            return b;
+        });
+    }
   }
 
-  // 4. Update buildings
-  return buildings.map(b => {
-      if (buildingImageMap.has(b.id)) {
-          return { ...b, main_image_url: buildingImageMap.get(b.id) || b.main_image_url };
-      }
-      return b;
-  });
+  // 2. Social Enrichment (Facepile)
+  if (userId) {
+    const { data: follows } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', userId);
+
+    const contactIds = follows?.map(f => f.following_id) || [];
+
+    if (contactIds.length > 0) {
+        const { data: contactRatings } = await supabase
+            .from('user_buildings')
+            .select(`
+                building_id,
+                user:profiles!inner(id, first_name, last_name, avatar_url)
+            `)
+            .in('building_id', buildingIds)
+            .in('user_id', contactIds)
+            .not('rating', 'is', null);
+
+        if (contactRatings && contactRatings.length > 0) {
+            const ratingsMap = new Map<string, ContactRater[]>();
+
+            contactRatings.forEach((item: any) => {
+                const user = Array.isArray(item.user) ? item.user[0] : item.user;
+                const rater: ContactRater = {
+                    id: user.id,
+                    avatar_url: user.avatar_url,
+                    first_name: user.first_name,
+                    last_name: user.last_name
+                };
+
+                if (!ratingsMap.has(item.building_id)) {
+                    ratingsMap.set(item.building_id, []);
+                }
+                ratingsMap.get(item.building_id)?.push(rater);
+            });
+
+            enrichedBuildings = enrichedBuildings.map(b => ({
+                ...b,
+                contact_raters: ratingsMap.get(b.id) || []
+            }));
+        }
+    }
+  }
+
+  return enrichedBuildings;
 }
 
 export function useBuildingSearch() {
@@ -170,7 +213,7 @@ export function useBuildingSearch() {
                 } as DiscoveryBuilding;
             }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
-            return await enrichBuildingsWithImages(mappedBuildings);
+            return await enrichBuildings(mappedBuildings, user?.id);
         }
 
         // Global search mode (RPC)
@@ -184,7 +227,7 @@ export function useBuildingSearch() {
             sort_by: undefined
         });
 
-        return await enrichBuildingsWithImages(rpcResults);
+        return await enrichBuildings(rpcResults, user?.id);
     },
     staleTime: 1000 * 60, // 1 min
     placeholderData: keepPreviousData,
