@@ -356,6 +356,7 @@ export default function EditBuilding() {
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
               submitLabel="Update Building"
+              mode="edit"
             />
           </CardContent>
         </Card>
