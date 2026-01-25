@@ -206,7 +206,7 @@ export default function SearchPage() {
   return (
     <AppLayout title="Discovery" showLogo={false}>
       {/* Container to fit available height within AppLayout */}
-      <div className="flex flex-col h-[calc(100vh_-_8.5rem_-_env(safe-area-inset-bottom))] w-full">
+      <div className="flex flex-col h-[calc(100dvh_-_9.5rem_-_env(safe-area-inset-bottom))] w-full">
         <div className="w-full bg-background z-20 border-b">
           <DiscoveryFilterBar
             searchQuery={searchQuery}
