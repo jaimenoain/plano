@@ -63,6 +63,7 @@ export default function SearchPage() {
           setIgnoreMapBounds(true);
       } else {
           setIgnoreMapBounds(false);
+          setSearchScope('content');
       }
   }, [searchQuery]);
 
@@ -211,7 +212,6 @@ export default function SearchPage() {
             onShowLeaderboard={() => setShowLeaderboard(true)}
             onUseLocation={handleUseLocation}
             searchScope={searchScope}
-            onSearchScopeChange={setSearchScope}
           />
         </div>
 
