@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { MapPin } from "lucide-react";
@@ -7,29 +7,41 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { extractLocationDetails } from "@/lib/location-utils";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface BuildingLocationPickerProps {
   initialLocation: {
     lat: number | null;
     lng: number | null;
     address: string;
+    city?: string | null;
+    country?: string | null;
   };
+  initialPrecision?: 'exact' | 'approximate';
   onLocationChange: (location: {
     lat: number;
     lng: number;
     address: string;
     city: string | null;
     country: string | null;
+    precision: 'exact' | 'approximate';
   }) => void;
 }
 
-export function BuildingLocationPicker({ initialLocation, onLocationChange }: BuildingLocationPickerProps) {
+export function BuildingLocationPicker({ initialLocation, initialPrecision = 'exact', onLocationChange }: BuildingLocationPickerProps) {
   const [selectedAddress, setSelectedAddress] = useState(initialLocation.address);
+  const [locationPrecision, setLocationPrecision] = useState<'exact' | 'approximate'>(initialPrecision);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(
     initialLocation.lat !== null && initialLocation.lng !== null
       ? { lat: initialLocation.lat, lng: initialLocation.lng }
       : null
   );
+
+  // Store details to re-emit when precision changes
+  const [locationDetails, setLocationDetails] = useState<{city: string | null, country: string | null}>({
+      city: initialLocation.city || null,
+      country: initialLocation.country || null
+  });
 
   const [viewState, setViewState] = useState({
     latitude: initialLocation.lat ?? 51.5074,
@@ -51,19 +63,17 @@ export function BuildingLocationPicker({ initialLocation, onLocationChange }: Bu
       });
     }
     setSelectedAddress(initialLocation.address);
+    if (initialLocation.city !== undefined) {
+        setLocationDetails({
+            city: initialLocation.city || null,
+            country: initialLocation.country || null
+        });
+    }
 
     // Auto-geocode if location is missing but address is present
     if ((initialLocation.lat === null || initialLocation.lng === null) && initialLocation.address) {
-      // Use getGeocode to attempt to resolve address
-      // Note: We need to ensure Google Maps script is loaded.
-      // LocationInput loads it, but we might be racing.
-      // However, usually geocode requests handle this queueing.
-
       const attemptGeocode = async () => {
          try {
-             // Basic check if google is available, though getGeocode handles it internally usually?
-             // actually use-places-autocomplete getGeocode might fail if not loaded.
-             // But let's try.
              const results = await getGeocode({ address: initialLocation.address });
              if (results && results.length > 0) {
                  const { lat, lng } = await getLatLng(results[0]);
@@ -71,23 +81,62 @@ export function BuildingLocationPicker({ initialLocation, onLocationChange }: Bu
 
                  setMarkerPosition({ lat, lng });
                  setViewState(prev => ({ ...prev, latitude: lat, longitude: lng }));
+                 setLocationDetails(details);
 
                  onLocationChange({
                      lat,
                      lng,
                      address: results[0].formatted_address,
                      city: details.city,
-                     country: details.country
+                     country: details.country,
+                     precision: locationPrecision
                  });
              }
          } catch (err) {
-             console.log("Auto-geocode on load failed (maybe script not ready or address invalid):", err);
+             console.log("Auto-geocode on load failed:", err);
          }
       };
 
       attemptGeocode();
     }
-  }, [initialLocation.lat, initialLocation.lng, initialLocation.address]);
+  }, [initialLocation.lat, initialLocation.lng, initialLocation.address, initialLocation.city, initialLocation.country]);
+
+  // Handle precision change specifically
+  const handlePrecisionChange = (checked: boolean) => {
+      const newPrecision = checked ? 'approximate' : 'exact';
+      setLocationPrecision(newPrecision);
+
+      if (markerPosition) {
+          onLocationChange({
+              lat: markerPosition.lat,
+              lng: markerPosition.lng,
+              address: selectedAddress,
+              city: locationDetails.city,
+              country: locationDetails.country,
+              precision: newPrecision
+          });
+      }
+  };
+
+  const updateLocation = (
+      lat: number,
+      lng: number,
+      address: string,
+      details: {city: string | null, country: string | null}
+  ) => {
+      setMarkerPosition({ lat, lng });
+      setSelectedAddress(address);
+      setLocationDetails(details);
+
+      onLocationChange({
+          lat,
+          lng,
+          address,
+          city: details.city,
+          country: details.country,
+          precision: locationPrecision
+      });
+  };
 
 
   const handleLocationSelected = async (address: string, countryCode: string, placeName?: string) => {
@@ -99,7 +148,6 @@ export function BuildingLocationPicker({ initialLocation, onLocationChange }: Bu
         const results = await getGeocode({ address });
         if (results && results.length > 0) {
           const { lat, lng } = await getLatLng(results[0]);
-          setMarkerPosition({ lat, lng });
           setViewState({
             latitude: lat,
             longitude: lng,
@@ -107,14 +155,7 @@ export function BuildingLocationPicker({ initialLocation, onLocationChange }: Bu
           });
 
           const details = extractLocationDetails(results[0]);
-
-          onLocationChange({
-            lat,
-            lng,
-            address: results[0].formatted_address,
-            city: details.city,
-            country: details.country
-          });
+          updateLocation(lat, lng, results[0].formatted_address, details);
         }
       } catch (error) {
         console.error("Geocoding error:", error);
@@ -124,35 +165,20 @@ export function BuildingLocationPicker({ initialLocation, onLocationChange }: Bu
 
   const handleMapClick = async (event: MapMouseEvent) => {
     const { lat, lng } = event.lngLat;
+    // Optimistic update
     setMarkerPosition({ lat, lng });
 
     try {
       const results = await getGeocode({ location: { lat, lng } });
       if (results && results.length > 0) {
         const address = results[0].formatted_address;
-        setSelectedAddress(address);
         const details = extractLocationDetails(results[0]);
-
-        onLocationChange({
-            lat,
-            lng,
-            address,
-            city: details.city,
-            country: details.country
-        });
+        updateLocation(lat, lng, address, details);
       }
     } catch (error) {
       console.error("Reverse geocoding error:", error);
-      // Even if reverse geocoding fails, we update lat/lng
-      // We might want to keep the old address or clear it?
-      // For now, let's just trigger update with old address or empty
-       onLocationChange({
-            lat,
-            lng,
-            address: selectedAddress, // keep old address or maybe should set to "Custom Location"
-            city: null, // unsure
-            country: null // unsure
-        });
+       // Fallback with existing address or empty
+       updateLocation(lat, lng, selectedAddress, { city: null, country: null });
     }
   };
 
@@ -164,26 +190,12 @@ export function BuildingLocationPicker({ initialLocation, onLocationChange }: Bu
         const results = await getGeocode({ location: { lat, lng } });
         if (results && results.length > 0) {
             const address = results[0].formatted_address;
-            setSelectedAddress(address);
             const details = extractLocationDetails(results[0]);
-
-            onLocationChange({
-                lat,
-                lng,
-                address,
-                city: details.city,
-                country: details.country
-            });
+            updateLocation(lat, lng, address, details);
         }
       } catch (error) {
           console.error("Reverse geocoding error:", error);
-           onLocationChange({
-            lat,
-            lng,
-            address: selectedAddress,
-            city: null,
-            country: null
-        });
+          updateLocation(lat, lng, selectedAddress, { city: null, country: null });
       }
   };
 
@@ -202,6 +214,25 @@ export function BuildingLocationPicker({ initialLocation, onLocationChange }: Bu
             <p className="text-xs text-muted-foreground">
               Search or drag the pin on the map to change location.
             </p>
+          </div>
+
+          <div className="flex items-start space-x-2 pt-2">
+            <Checkbox
+                id="approximate-location-picker"
+                checked={locationPrecision === 'approximate'}
+                onCheckedChange={handlePrecisionChange}
+            />
+            <div className="grid gap-1.5 leading-none">
+                <Label
+                    htmlFor="approximate-location-picker"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                    Approximate Location
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                    Check this if the exact location is unknown. The pin will represent a general area (e.g. city center).
+                </p>
+            </div>
           </div>
        </div>
 
@@ -225,7 +256,13 @@ export function BuildingLocationPicker({ initialLocation, onLocationChange }: Bu
                   onDragEnd={handleMarkerDragEnd}
               >
                   <div className="flex flex-col items-center">
-                      <MapPin className="h-8 w-8 text-red-600 fill-red-600 drop-shadow-md" />
+                      <MapPin
+                        className={`h-8 w-8 drop-shadow-md transition-colors ${
+                            locationPrecision === 'approximate'
+                                ? "text-amber-500 fill-amber-500"
+                                : "text-red-600 fill-red-600"
+                        }`}
+                      />
                       <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
                   </div>
               </Marker>

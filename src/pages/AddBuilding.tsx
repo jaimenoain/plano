@@ -15,6 +15,7 @@ import { AddBuildingDetails } from "@/components/AddBuildingDetails";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -72,6 +73,7 @@ interface NearbyBuilding {
 export default function AddBuilding() {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedAddress, setSelectedAddress] = useState("");
+  const [locationPrecision, setLocationPrecision] = useState<'exact' | 'approximate'>('exact');
   const [potentialName, setPotentialName] = useState<string | undefined>(undefined);
   const [nameInput, setNameInput] = useState("");
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
@@ -182,6 +184,7 @@ export default function AddBuilding() {
     name?: string;
     city?: string | null;
     country?: string | null;
+    precision: 'exact' | 'approximate';
   } | null>(null);
 
 
@@ -355,7 +358,8 @@ export default function AddBuilding() {
             address: selectedAddress,
             name: nameInput,
             city: extractedLocation.city,
-            country: extractedLocation.country
+            country: extractedLocation.country,
+            precision: locationPrecision
         });
         setStep(2);
         setShowDuplicateDialog(false);
@@ -450,6 +454,25 @@ export default function AddBuilding() {
                 <p className="text-xs text-muted-foreground">
                   Search or click on the map to set location.
                 </p>
+              </div>
+
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                    id="approximate-location-add"
+                    checked={locationPrecision === 'approximate'}
+                    onCheckedChange={(checked) => setLocationPrecision(checked ? 'approximate' : 'exact')}
+                />
+                <div className="grid gap-1.5 leading-none">
+                    <Label
+                        htmlFor="approximate-location-add"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                        Approximate Location
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                        Check this if the exact location is unknown. The pin will represent a general area (e.g. city center).
+                    </p>
+                </div>
               </div>
 
               <Button
@@ -640,7 +663,13 @@ export default function AddBuilding() {
                 }}
               >
                 <div className="flex flex-col items-center">
-                    <MapPin className="h-8 w-8 text-red-600 fill-red-600 drop-shadow-md" />
+                    <MapPin
+                        className={`h-8 w-8 drop-shadow-md transition-colors ${
+                            locationPrecision === 'approximate'
+                                ? "text-amber-500 fill-amber-500"
+                                : "text-red-600 fill-red-600"
+                        }`}
+                    />
                     <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
                 </div>
               </Marker>
@@ -684,7 +713,7 @@ export default function AddBuilding() {
           {/* Overlay Legend or Status */}
           <div className="absolute top-4 left-4 bg-background/95 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-xs space-y-1">
              <div className="flex items-center gap-2">
-                 <MapPin className="h-3 w-3 text-red-600" />
+                 <MapPin className={`h-3 w-3 ${locationPrecision === 'approximate' ? "text-amber-500" : "text-red-600"}`} />
                  <span>Selected Location</span>
              </div>
              <div className="flex items-center gap-2">

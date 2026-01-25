@@ -50,6 +50,7 @@ export default function Buildings() {
     address: string;
     city: string | null;
     country: string | null;
+    precision: 'exact' | 'approximate';
   } | null>(null);
 
   const ITEMS_PER_PAGE = 20;
@@ -144,7 +145,9 @@ export default function Buildings() {
         lng,
         address: building.address || "",
         city: building.city,
-        country: building.country
+        country: building.country,
+        // @ts-ignore
+        precision: building.location_precision || 'exact'
     });
     setEditingBuilding(building);
   };
@@ -176,6 +179,8 @@ export default function Buildings() {
           city: locationData.city,
           country: locationData.country,
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown,
+          // @ts-ignore
+          location_precision: locationData.precision,
 
           // Implicitly verified if edited by admin? Maybe optional.
           // Let's keep existing status unless changed.
@@ -352,8 +357,11 @@ export default function Buildings() {
                             initialLocation={{
                                 lat: locationData.lat,
                                 lng: locationData.lng,
-                                address: locationData.address
+                                address: locationData.address,
+                                city: locationData.city,
+                                country: locationData.country
                             }}
+                            initialPrecision={locationData.precision}
                             onLocationChange={(newLoc) => setLocationData(newLoc)}
                         />
                     </TabsContent>

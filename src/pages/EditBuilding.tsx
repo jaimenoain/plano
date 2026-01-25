@@ -17,6 +17,7 @@ interface LocationData {
     address: string;
     city: string | null;
     country: string | null;
+    precision: 'exact' | 'approximate';
 }
 
 interface NearbyBuilding {
@@ -149,7 +150,9 @@ export default function EditBuilding() {
           lng,
           address: data.address || "",
           city: data.city,
-          country: data.country
+          country: data.country,
+          // @ts-ignore: location_precision is a new column
+          precision: data.location_precision || 'exact'
       });
 
     } catch (error) {
@@ -218,7 +221,9 @@ export default function EditBuilding() {
           address: locationData.address,
           city: locationData.city,
           country: locationData.country,
-          location: `POINT(${locationData.lng} ${locationData.lat})` as unknown
+          location: `POINT(${locationData.lng} ${locationData.lat})` as unknown,
+          // @ts-ignore: location_precision is a new column
+          location_precision: locationData.precision
         })
         .eq('id', id);
 
@@ -326,8 +331,11 @@ export default function EditBuilding() {
                     initialLocation={{
                         lat: locationData.lat,
                         lng: locationData.lng,
-                        address: locationData.address
+                        address: locationData.address,
+                        city: locationData.city,
+                        country: locationData.country
                     }}
+                    initialPrecision={locationData.precision}
                     onLocationChange={(newLoc) => setLocationData({
                         ...newLoc
                     })}
