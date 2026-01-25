@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Architect } from "@/components/ui/architect-select";
+import { StyleSummary } from "@/components/ui/style-select";
 import { parseLocation } from "@/utils/location";
 
 interface LocationData {
@@ -101,6 +102,15 @@ export default function EditBuilding() {
 
       const finalArchitects: Architect[] = relationArchitects;
 
+      // Fetch Styles
+      // @ts-ignore
+      const { data: styleRelations } = await supabase
+        .from('building_styles')
+        .select('style:architectural_styles(id, name, slug)')
+        .eq('building_id', id);
+
+      const styles = styleRelations?.map((r: any) => r.style) || [];
+
       // Fetch Typologies
       // @ts-ignore
       const { data: typologies } = await supabase
@@ -124,6 +134,7 @@ export default function EditBuilding() {
         name: data.name,
         year_completed: data.year_completed,
         architects: finalArchitects,
+        styles: styles,
         functional_category_id: (data as any).functional_category_id || "",
         functional_typology_ids: typologyIds,
         selected_attribute_ids: attributeIds,
@@ -233,6 +244,16 @@ export default function EditBuilding() {
           // @ts-ignore
           const { error: linkError } = await supabase.from('building_architects').insert(links);
           if (linkError) console.error("Link error:", linkError);
+      }
+
+      // Handle Styles Junction Table
+      // @ts-ignore
+      await supabase.from('building_styles').delete().eq('building_id', id);
+      if (formData.styles.length > 0) {
+          const sLinks = formData.styles.map(s => ({ building_id: id, style_id: s.id }));
+          // @ts-ignore
+          const { error: sError } = await supabase.from('building_styles').insert(sLinks);
+          if (sError) console.error("Style link error:", sError);
       }
 
       // Handle Typologies Junction Table

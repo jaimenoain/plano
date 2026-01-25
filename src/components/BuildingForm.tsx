@@ -6,6 +6,7 @@ import { buildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
+import { StyleSelect, StyleSummary } from "@/components/ui/style-select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionalCategory, FunctionalTypology, AttributeGroup, Attribute } from "@/types/classification";
@@ -24,6 +25,7 @@ export interface BuildingFormData {
   name: string;
   year_completed: number | null;
   architects: Architect[];
+  styles: StyleSummary[];
   functional_category_id: string;
   functional_typology_ids: string[];
   selected_attribute_ids: string[];
@@ -41,12 +43,14 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [name, setName] = useState(initialValues.name);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
   const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
+  const [styles, setStyles] = useState<StyleSummary[]>(initialValues.styles || []);
   const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id);
   const [functional_typology_ids, setTypologyIds] = useState<string[]>(initialValues.functional_typology_ids);
   const [selected_attribute_ids, setAttributeIds] = useState<string[]>(initialValues.selected_attribute_ids);
 
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
+  const [showStyles, setShowStyles] = useState((initialValues.styles || []).length > 0);
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["functional_categories"],
@@ -124,6 +128,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         name,
         year_completed,
         architects,
+        styles,
         functional_category_id,
         functional_typology_ids,
         selected_attribute_ids,
@@ -213,6 +218,28 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             onClick={() => setShowArchitects(true)}
           >
             <Plus className="h-3 w-3 mr-1" /> Add Architects
+          </Button>
+        )}
+
+        {/* Styles */}
+        {showStyles ? (
+          <div className="space-y-2">
+            <Label>Architectural Styles</Label>
+            <StyleSelect
+              selectedStyles={styles}
+              setSelectedStyles={setStyles}
+              placeholder="Search styles or add new..."
+            />
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full h-8"
+            onClick={() => setShowStyles(true)}
+          >
+            <Plus className="h-3 w-3 mr-1" /> Add Styles
           </Button>
         )}
       </div>

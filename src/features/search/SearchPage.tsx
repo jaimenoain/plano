@@ -92,7 +92,7 @@ export default function SearchPage() {
   }, [buildings]);
 
   const availableStyles = useMemo(() => {
-    const styles = new Set(buildings.flatMap(b => b.architecture_styles || []));
+    const styles = new Set(buildings.flatMap(b => b.styles?.map(s => s.name) || []));
     return Array.from(styles).sort();
   }, [buildings]);
 
@@ -125,7 +125,7 @@ export default function SearchPage() {
 
     if (selectedStyles.length > 0) {
       result = result.filter(b => 
-        b.architecture_styles?.some(style => selectedStyles.includes(style))
+        b.styles?.some(style => selectedStyles.includes(style.name))
       );
     }
 

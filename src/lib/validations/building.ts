@@ -20,6 +20,13 @@ export const buildingSchema = z.object({
       type: z.enum(['individual', 'studio'])
     })
   ),
+  styles: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string()
+    })
+  ).optional().default([]),
   functional_category_id: z.string().uuid("Category is required"),
   functional_typology_ids: z.array(z.string().uuid())
     .min(1, "At least one typology is required")

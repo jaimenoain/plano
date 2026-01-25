@@ -13,11 +13,11 @@ export const searchBuildingsRpc = async (params: {
   return data as DiscoveryBuilding[];
 };
 
-export const getDiscoveryFiltersRpc = async (): Promise<{ cities: string[]; styles: string[] }> => {
+export const getDiscoveryFiltersRpc = async (): Promise<{ cities: string[]; styles: {id: string, name: string, slug: string}[] }> => {
   try {
     const { data, error } = await supabase.rpc('get_discovery_filters');
     if (error) throw error;
-    return data as { cities: string[]; styles: string[] };
+    return data as { cities: string[]; styles: {id: string, name: string, slug: string}[] };
   } catch (error) {
     console.warn("get_discovery_filters RPC failed", error);
     return { cities: [], styles: [] };
@@ -70,14 +70,17 @@ export const fetchUserBuildingsMap = async (userId: string): Promise<Map<string,
 export const fetchBuildingDetails = async (id: string) => {
     const { data, error } = await supabase
         .from("buildings")
-        .select("*")
+        .select("*, styles:building_styles(style:architectural_styles(id, name))")
         .eq("id", id)
         .maybeSingle();
 
     if (error) throw error;
     if (!data) throw new Error("Building not found");
 
-    return data;
+    // Transform styles from nested structure to flat array of objects
+    const styles = (data.styles as any)?.map((s: any) => s.style) || [];
+
+    return { ...data, styles };
 };
 
 export const fetchUserBuildingStatus = async (userId: string, buildingId: string) => {

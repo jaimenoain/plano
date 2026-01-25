@@ -54,7 +54,7 @@ interface BuildingDetails {
   architects: string[];
   relational_architects?: { id: string, name: string }[];
   year_completed: number;
-  styles: string[];
+  styles: { id: string, name: string }[];
   main_image_url: string | null;
   created_by: string;
 }
@@ -127,10 +127,10 @@ const BuildingHeader = ({ building, canEdit, className }: BuildingHeaderProps) =
             </div>
 
             {/* Styles Tags */}
-            {building.styles && (
+            {building.styles && building.styles.length > 0 && (
                 <div className="flex gap-2 mt-4">
                     {building.styles.map(style => (
-                        <Badge key={style} variant="outline" className="border-white/20">{style}</Badge>
+                        <Badge key={style.id} variant="outline" className="border-white/20">{style.name}</Badge>
                     ))}
                 </div>
             )}

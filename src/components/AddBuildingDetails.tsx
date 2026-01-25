@@ -144,6 +144,25 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         }
       }
 
+      // 8. Insert Styles (Junction Table)
+      if (data.styles && data.styles.length > 0) {
+        try {
+          const styleLinks = data.styles.map(s => ({
+            building_id: buildingId,
+            style_id: s.id
+          }));
+
+          // @ts-ignore
+          const { error: styleError } = await supabase
+            .from('building_styles')
+            .insert(styleLinks);
+
+          if (styleError) console.error("Error linking styles:", styleError);
+        } catch (err) {
+          console.error("Failed to insert styles", err);
+        }
+      }
+
       // 7. Success State
       toast.success("Building added successfully!");
       setNewBuilding({ id: insertedData.id, name: insertedData.name });
@@ -161,6 +180,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     name: locationData.name || "",
     year_completed: null,
     architects: [],
+    styles: [],
     functional_category_id: "",
     functional_typology_ids: [],
     selected_attribute_ids: [],
