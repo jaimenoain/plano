@@ -4,11 +4,36 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin } from "lucide-react";
+import { Loader2, MapPin, Layers } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import Supercluster from "supercluster";
+
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
+
+const SATELLITE_STYLE = {
+  version: 8,
+  sources: {
+    "satellite-tiles": {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      ],
+      tileSize: 256,
+      attribution: "&copy; Esri"
+    }
+  },
+  layers: [
+    {
+      id: "satellite-layer",
+      type: "raster",
+      source: "satellite-tiles",
+      minzoom: 0,
+      maxzoom: 22
+    }
+  ]
+};
 
 interface Building {
   id: string;
@@ -51,6 +76,7 @@ export function BuildingDiscoveryMap({
   const navigate = useNavigate();
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
+  const [isSatellite, setIsSatellite] = useState(false);
 
   // State to track user interaction to disable auto-zoom
   const [userHasInteracted, setUserHasInteracted] = useState(false);
@@ -357,11 +383,23 @@ export function BuildingDiscoveryMap({
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="https://tiles.openfreemap.org/styles/positron"
+        mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
       >
         <NavigationControl position="bottom-right" />
         {pins}
       </MapGL>
+
+      <button
+          onClick={(e) => {
+              e.stopPropagation();
+              setIsSatellite(!isSatellite);
+          }}
+          className="absolute top-2 left-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10 flex items-center gap-2"
+          title={isSatellite ? "Show Map" : "Show Satellite"}
+      >
+          <Layers className="w-4 h-4" />
+          <span className="text-xs font-medium">{isSatellite ? "Map" : "Satellite"}</span>
+      </button>
     </div>
   );
 }
