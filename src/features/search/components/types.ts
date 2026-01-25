@@ -1,8 +1,13 @@
+export interface ArchitectSummary {
+  id: string;
+  name: string;
+}
+
 export interface DiscoveryBuilding {
   id: string;
   name: string;
   main_image_url: string | null;
-  architects: string[] | null;
+  architects: ArchitectSummary[] | null;
   year_completed: number | null;
   city: string | null;
   country: string | null;

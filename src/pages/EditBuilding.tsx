@@ -99,17 +99,7 @@ export default function EditBuilding() {
 
       const relationArchitects = relations?.map((r: any) => r.architect) || [];
 
-      let finalArchitects: Architect[] = [];
-      if (relationArchitects.length > 0) {
-          finalArchitects = relationArchitects;
-      } else if (data.architects && data.architects.length > 0) {
-          // Legacy fallback
-          finalArchitects = data.architects.map((name: string) => ({
-              id: name, // Use name as ID for legacy (handled in submit)
-              name: name,
-              type: 'individual'
-          }));
-      }
+      const finalArchitects: Architect[] = relationArchitects;
 
       // Fetch Typologies
       // @ts-ignore
@@ -205,14 +195,11 @@ export default function EditBuilding() {
     setIsSubmitting(true);
 
     try {
-      const architectNames = formData.architects.map(a => a.name);
-
       const { error } = await supabase
         .from('buildings')
         .update({
           name: formData.name,
           year_completed: formData.year_completed,
-          architects: architectNames, // Maintain legacy array
           // @ts-ignore
           functional_category_id: formData.functional_category_id,
           // Removed legacy column updates for typologies/attributes
@@ -235,40 +222,14 @@ export default function EditBuilding() {
       }
 
       // Handle Architects Junction Table
-      // 1. Resolve IDs for all architects
-      const resolvedIds: string[] = [];
-
-      for (const arch of formData.architects) {
-          if (isUUID(arch.id)) {
-              resolvedIds.push(arch.id);
-          } else {
-              // Legacy or Name-as-ID: Try to find or create
-              // @ts-ignore
-              const { data: existing } = await supabase.from('architects').select('id').eq('name', arch.name).maybeSingle();
-              if (existing) {
-                  resolvedIds.push(existing.id);
-              } else {
-                  // Create
-                  // @ts-ignore
-                  const { data: newArch, error: createError } = await supabase
-                    .from('architects')
-                    .insert({ name: arch.name, type: 'individual' })
-                    .select('id')
-                    .single();
-
-                  if (newArch) resolvedIds.push(newArch.id);
-                  if (createError) console.error("Error creating architect on save:", createError);
-              }
-          }
-      }
-
-      // 2. Clear existing links
+      // 1. Clear existing links
       // @ts-ignore
       await supabase.from('building_architects').delete().eq('building_id', id);
 
-      // 3. Insert new links
-      if (resolvedIds.length > 0) {
-          const links = resolvedIds.map(aId => ({ building_id: id, architect_id: aId }));
+      // 2. Insert new links
+      // We assume formData.architects contains valid UUIDs from the ArchitectSelect component
+      if (formData.architects.length > 0) {
+          const links = formData.architects.map(a => ({ building_id: id, architect_id: a.id }));
           // @ts-ignore
           const { error: linkError } = await supabase.from('building_architects').insert(links);
           if (linkError) console.error("Link error:", linkError);

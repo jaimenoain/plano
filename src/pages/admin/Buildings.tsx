@@ -44,6 +44,7 @@ export default function Buildings() {
 
   // Edit State
   const [editingBuilding, setEditingBuilding] = useState<AdminBuilding | null>(null);
+  const [formValues, setFormValues] = useState<BuildingFormData | null>(null);
   const [locationData, setLocationData] = useState<{
     lat: number | null;
     lng: number | null;
@@ -134,7 +135,7 @@ export default function Buildings() {
     }
   };
 
-  const openEditDialog = (building: AdminBuilding) => {
+  const openEditDialog = async (building: AdminBuilding) => {
     // Parse location
     const coords = parseLocation(building.location);
     const lat = coords ? coords.lat : null;
@@ -149,6 +150,40 @@ export default function Buildings() {
         // @ts-ignore
         precision: building.location_precision || 'exact'
     });
+
+    // Fetch Relations
+    // @ts-ignore
+    const { data: relations } = await supabase
+      .from('building_architects')
+      .select('architect:architects(id, name, type)')
+      .eq('building_id', building.id);
+
+    const relationArchitects = relations?.map((r: any) => r.architect) || [];
+
+    // @ts-ignore
+    const { data: typologies } = await supabase
+        .from('building_functional_typologies')
+        .select('typology_id')
+        .eq('building_id', building.id);
+    const typologyIds = typologies?.map((t: any) => t.typology_id) || [];
+
+    // @ts-ignore
+    const { data: attributes } = await supabase
+        .from('building_attributes')
+        .select('attribute_id')
+        .eq('building_id', building.id);
+    const attributeIds = attributes?.map((a: any) => a.attribute_id) || [];
+
+    setFormValues({
+        name: building.name,
+        year_completed: building.year_completed,
+        architects: relationArchitects,
+        functional_category_id: (building as any).functional_category_id || "",
+        functional_typology_ids: typologyIds,
+        selected_attribute_ids: attributeIds,
+        main_image_url: building.main_image_url
+    });
+
     setEditingBuilding(building);
   };
 
@@ -166,7 +201,7 @@ export default function Buildings() {
         .update({
           name: formData.name,
           year_completed: formData.year_completed,
-          architects: formData.architects,
+          // Architects removed from here (handled via relation)
           // @ts-ignore
           functional_category_id: formData.functional_category_id,
           // @ts-ignore
@@ -181,16 +216,49 @@ export default function Buildings() {
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown,
           // @ts-ignore
           location_precision: locationData.precision,
-
-          // Implicitly verified if edited by admin? Maybe optional.
-          // Let's keep existing status unless changed.
         })
         .eq('id', editingBuilding.id);
 
       if (error) throw error;
 
+      const id = editingBuilding.id;
+
+      // Handle Architects Junction Table
+      // 1. Clear existing links
+      // @ts-ignore
+      await supabase.from('building_architects').delete().eq('building_id', id);
+
+      // 2. Insert new links
+      if (formData.architects.length > 0) {
+          const links = formData.architects.map(a => ({ building_id: id, architect_id: a.id }));
+          // @ts-ignore
+          const { error: linkError } = await supabase.from('building_architects').insert(links);
+          if (linkError) console.error("Link error:", linkError);
+      }
+
+      // Handle Typologies Junction Table
+      // @ts-ignore
+      await supabase.from('building_functional_typologies').delete().eq('building_id', id);
+      if (formData.functional_typology_ids.length > 0) {
+          const tLinks = formData.functional_typology_ids.map(tid => ({ building_id: id, typology_id: tid }));
+          // @ts-ignore
+          const { error: tError } = await supabase.from('building_functional_typologies').insert(tLinks);
+          if (tError) console.error("Typology link error:", tError);
+      }
+
+      // Handle Attributes Junction Table
+      // @ts-ignore
+      await supabase.from('building_attributes').delete().eq('building_id', id);
+      if (formData.selected_attribute_ids.length > 0) {
+          const aLinks = formData.selected_attribute_ids.map(aid => ({ building_id: id, attribute_id: aid }));
+          // @ts-ignore
+          const { error: aError } = await supabase.from('building_attributes').insert(aLinks);
+          if (aError) console.error("Attribute link error:", aError);
+      }
+
       toast.success("Building updated");
       setEditingBuilding(null);
+      setFormValues(null);
       fetchBuildings(); // Refresh list
     } catch (error) {
       console.error(error);
@@ -325,7 +393,7 @@ export default function Buildings() {
                 <DialogTitle>Edit Building: {editingBuilding?.name}</DialogTitle>
             </DialogHeader>
 
-            {editingBuilding && locationData && (
+            {editingBuilding && locationData && formValues && (
                 <Tabs defaultValue="details">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="details">Details</TabsTrigger>
@@ -334,15 +402,7 @@ export default function Buildings() {
 
                     <TabsContent value="details" className="mt-4">
                         <BuildingForm
-                            initialValues={{
-                                name: editingBuilding.name,
-                                year_completed: editingBuilding.year_completed,
-                                architects: editingBuilding.architects || [],
-                                functional_category_id: (editingBuilding as any).functional_category_id || "",
-                                functional_typology_ids: (editingBuilding as any).functional_typology_ids || [],
-                                selected_attribute_ids: (editingBuilding as any).selected_attribute_ids || [],
-                                main_image_url: editingBuilding.main_image_url
-                            }}
+                            initialValues={formValues}
                             onSubmit={handleSaveBuilding}
                             isSubmitting={false}
                             submitLabel="Save Changes"

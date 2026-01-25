@@ -32,7 +32,7 @@ export function DiscoveryBuildingCard({
             </div>
 
             <div className={cn("text-xs text-muted-foreground mt-1", imageUrl ? "line-clamp-2" : "line-clamp-1")}>
-              <span>{building.architects?.[0] || "Unknown Architect"}</span>
+              <span>{building.architects?.[0]?.name || "Unknown Architect"}</span>
               {building.year_completed && (
                 <>
                   <span>{imageUrl ? " " : " • "}</span>
