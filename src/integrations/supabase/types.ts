@@ -47,6 +47,27 @@ export interface Database {
           }
         ]
       },
+      architects: {
+        Row: {
+          id: string
+          name: string
+          type: "individual" | "studio"
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          type?: "individual" | "studio"
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          type?: "individual" | "studio"
+          created_at?: string
+        }
+        Relationships: []
+      },
       blocks: {
         Row: {
           id: string
@@ -71,6 +92,36 @@ export interface Database {
         }
         Relationships: []
       },
+      building_architects: {
+        Row: {
+          building_id: string
+          architect_id: string
+        }
+        Insert: {
+          building_id: string
+          architect_id: string
+        }
+        Update: {
+          building_id?: string
+          architect_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_architects_architect_id_fkey"
+            columns: ["architect_id"]
+            isOneToOne: false
+            referencedRelation: "architects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_architects_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
       buildings: {
         Row: {
           created_at: string
@@ -81,11 +132,12 @@ export interface Database {
           location: unknown | null
           name: string
           address: string | null
-          architects: string[] | null
-          styles: string[] | null
+          // architects: string[] | null -- DEPRECATED
+          // styles: string[] | null -- DEPRECATED
           year_completed: number | null
           city: string | null
           country: string | null
+          functional_category_id: string | null
           location_precision: Database["public"]["Enums"]["location_precision"]
         }
         Insert: {
@@ -97,11 +149,12 @@ export interface Database {
           location?: unknown | null
           name: string
           address?: string | null
-          architects?: string[] | null
-          styles?: string[] | null
+          // architects?: string[] | null
+          // styles?: string[] | null
           year_completed?: number | null
           city?: string | null
           country?: string | null
+          functional_category_id?: string | null
           location_precision?: Database["public"]["Enums"]["location_precision"]
         }
         Update: {
@@ -113,11 +166,12 @@ export interface Database {
           location?: unknown | null
           name?: string
           address?: string | null
-          architects?: string[] | null
-          styles?: string[] | null
+          // architects?: string[] | null
+          // styles?: string[] | null
           year_completed?: number | null
           city?: string | null
           country?: string | null
+          functional_category_id?: string | null
           location_precision?: Database["public"]["Enums"]["location_precision"]
         }
         Relationships: [
@@ -1425,8 +1479,8 @@ export interface Database {
           location_lng: number
           city: string | null
           country: string | null
-          styles: string[] | null
-          architects: string[] | null
+          styles: Json | null
+          architects: Json | null
           year_completed: number | null
           distance_meters: number | null
           social_context: string | null

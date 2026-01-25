@@ -114,7 +114,7 @@ export default function GroupSessions() {
         .from("group_sessions")
         .select(`
           *, 
-          buildings:session_buildings(building_id, is_main, building:buildings(id, name, main_image_url, year_completed)),
+          buildings:session_buildings(building_id, is_main, building:buildings(id, name, main_image_url, year_completed, architects:building_architects(architect:architects(name, id)))),
           likes:session_likes(user_id, user:profiles(id, username, avatar_url)),
           comments_list:session_comments(id, content, created_at, user:profiles(id, username, avatar_url)),
           comments:session_comments(count),
@@ -149,7 +149,7 @@ export default function GroupSessions() {
           building: {
             ...b.building,
             year_completed: b.building.year_completed,
-            architects: []
+            architects: b.building.architects?.map((a: any) => a.architect).filter(Boolean) || []
           }
         })),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Plus, Clock, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Architect } from "@/types/architect";
 
 interface InterestedUser {
   id: string;
@@ -19,7 +20,7 @@ export interface SmartBuilding {
   name: string;
   main_image_url: string | null;
   year_completed: number | null;
-  architects: string[] | null;
+  architects: Architect[] | null;
   overlap_count: number;
   interested_users: InterestedUser[];
   total_selected_members: number;
@@ -135,7 +136,7 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
           </h3>
           <div className="flex items-center gap-2 text-xs text-white/80 mt-1">
              {building.architects && building.architects.length > 0 && (
-                <span>{building.architects[0]}</span>
+                <span>{building.architects[0].name}</span>
              )}
              {building.architects && building.architects.length > 0 && building.year_completed && <span>•</span>}
              {building.year_completed && <span>{building.year_completed}</span>}

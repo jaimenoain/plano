@@ -97,7 +97,7 @@ export function ArchitectSelect({
   }
 
   const initiateCreate = () => {
-      setNewArchitectName(inputValue);
+      setNewArchitectName(inputValue.trim());
       setNewArchitectType('individual'); // default
       setShowCreateDialog(true);
       setOpen(false); // Close dropdown

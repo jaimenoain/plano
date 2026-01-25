@@ -64,7 +64,7 @@ export default function MergeBuildings() {
           console.warn("get_potential_duplicates RPC failed (possibly not applied):", error);
           return;
       }
-      setPotentialDuplicates(data as unknown as PotentialDuplicate[]);
+      setPotentialDuplicates(data as PotentialDuplicate[]);
     } catch (error) {
       console.error("Error fetching potential duplicates:", error);
       toast.error("Failed to fetch potential duplicates");
@@ -80,15 +80,21 @@ export default function MergeBuildings() {
     }
     setLoading(true);
     try {
+      // @ts-ignore
       const { data, error } = await supabase
         .from('buildings')
-        .select('*')
+        .select('*, architects:building_architects(architect:architects(name, id))')
         .ilike('name', `%${query}%`)
         .eq('is_deleted', false)
         .limit(10);
 
       if (error) throw error;
-      setResults(data as unknown as AdminBuilding[]);
+      // Transform relational data
+      const transformedData = data.map((b: any) => ({
+          ...b,
+          architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || []
+      }));
+      setResults(transformedData as AdminBuilding[]);
     } catch (error) {
       console.error("Search error:", error);
     } finally {
@@ -146,8 +152,31 @@ export default function MergeBuildings() {
         .in('id', [id1, id2]);
 
        if (error) throw error;
-       const b1 = (data as unknown as AdminBuilding[]).find(b => b.id === id1);
-       const b2 = (data as unknown as AdminBuilding[]).find(b => b.id === id2);
+       // We need to manually shape the architects for the AdminBuilding type because the query returns flattened rows or nested relations?
+       // The query here is `select('*')`. It returns columns. `architects` is deprecated column (string[] or null).
+       // Wait, `select('*')` returns the columns. Does it return the relation? No.
+       // So `architects` will be the string array (deprecated).
+       // But AdminBuilding expects Architect[] | null.
+       // If we want to support the new relation in `loadPair`, we need to update the query here too.
+       // Otherwise `b1.architects` (string[]) won't match `AdminBuilding` (Architect[]).
+       // And `BuildingCard` expects objects `a.name`.
+
+       // So I must update this query to fetch the relation.
+
+       const { data: rawData, error: loadError } = await supabase
+        .from('buildings')
+        .select('*, architects:building_architects(architect:architects(name, id))')
+        .in('id', [id1, id2]);
+
+       if (loadError) throw loadError;
+
+       const transformed = rawData.map((b: any) => ({
+          ...b,
+          architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || []
+       })) as AdminBuilding[];
+
+       const b1 = transformed.find(b => b.id === id1);
+       const b2 = transformed.find(b => b.id === id2);
 
        if (b1) setSelectedMaster(b1);
        if (b2) setSelectedDup(b2);
@@ -173,8 +202,8 @@ export default function MergeBuildings() {
         </CardHeader>
         <CardContent className="text-sm space-y-2">
             {building.address && <div className="text-muted-foreground">{building.address}</div>}
-            {building.architects && building.architects.length > 0 && (
-                <div>Architects: {building.architects.join(", ")}</div>
+            {building.architects && Array.isArray(building.architects) && building.architects.length > 0 && (
+                <div>Architects: {(building.architects as any[]).map(a => a.name).join(", ")}</div>
             )}
             <div className="text-xs text-muted-foreground break-all">ID: {building.id}</div>
         </CardContent>

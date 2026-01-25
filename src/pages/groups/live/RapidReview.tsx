@@ -228,11 +228,20 @@ export default function RapidReview() {
     queryFn: async () => {
       if (!buildingIds.length) return {};
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await supabase.from('buildings').select('*').in('id', buildingIds) as any;
+      const { data } = await supabase
+        .from('buildings')
+        .select('*, architects:building_architects(architect:architects(name, id))')
+        .in('id', buildingIds) as any;
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const map: Record<string, any> = {};
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data?.forEach((b: any) => map[b.id] = b);
+      data?.forEach((b: any) => {
+          map[b.id] = {
+              ...b,
+              architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || []
+          };
+      });
       return map;
     },
     enabled: buildingIds.length > 0
