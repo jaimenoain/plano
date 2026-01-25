@@ -3,11 +3,18 @@ export interface ArchitectSummary {
   name: string;
 }
 
+export interface StyleSummary {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface DiscoveryBuilding {
   id: string;
   name: string;
   main_image_url: string | null;
   architects: ArchitectSummary[] | null;
+  styles: StyleSummary[] | null;
   year_completed: number | null;
   city: string | null;
   country: string | null;
