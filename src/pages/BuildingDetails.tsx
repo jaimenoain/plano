@@ -112,7 +112,7 @@ const BuildingHeader = ({ building, canEdit, className }: BuildingHeaderProps) =
                         <span>{building.year_completed}</span>
                     </div>
                 )}
-                {(building.relational_architects && building.relational_architects.length > 0) ? (
+                {(building.relational_architects && building.relational_architects.length > 0) && (
                     <div className="flex items-center gap-1.5">
                         {building.relational_architects.map((arch, i) => (
                             <span key={arch.id}>
@@ -123,11 +123,7 @@ const BuildingHeader = ({ building, canEdit, className }: BuildingHeaderProps) =
                             </span>
                         ))}
                     </div>
-                ) : (building.architects && (
-                    <div className="flex items-center gap-1.5">
-                        <span>{building.architects.join(", ")}</span>
-                    </div>
-                ))}
+                )}
             </div>
 
             {/* Styles Tags */}

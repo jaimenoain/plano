@@ -39,9 +39,6 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     setIsSubmitting(true);
 
     try {
-      // 1. Prepare data for legacy column support
-      const architectNames = data.architects.map(a => a.name);
-
       // 2. Insert Building
       const { data: insertedData, error } = await supabase
         .from('buildings')
@@ -62,7 +59,6 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           created_by: user.id,
           // @ts-ignore: New column functional_category_id
           functional_category_id: data.functional_category_id,
-          architects: architectNames // Maintain legacy array of strings
         })
         .select()
         .single();
