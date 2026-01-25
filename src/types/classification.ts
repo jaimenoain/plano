@@ -8,21 +8,22 @@ export interface FunctionalCategory {
 export interface FunctionalTypology {
   id: string;
   name: string;
-  functional_category_id: string;
+  parent_category_id: string;
+  slug: string;
   created_at: string;
 }
 
 export interface AttributeGroup {
   id: string;
   name: string;
-  functional_category_id: string | null;
-  machine_name: string;
+  slug: string;
   created_at: string;
 }
 
 export interface Attribute {
   id: string;
   name: string;
-  attribute_group_id: string;
+  group_id: string;
+  slug: string;
   created_at: string;
 }
