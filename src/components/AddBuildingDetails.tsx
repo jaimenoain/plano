@@ -17,6 +17,7 @@ interface AddBuildingDetailsProps {
     name?: string;
     city?: string | null;
     country?: string | null;
+    precision?: 'exact' | 'approximate';
   };
   onBack: () => void;
 }
@@ -55,6 +56,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           country: locationData.country,
           // PostGIS point format "POINT(lng lat)"
           location: `POINT(${locationData.lng} ${locationData.lat})`,
+          // @ts-ignore
+          location_precision: locationData.precision || 'exact',
 
           created_by: user.id,
           // @ts-ignore: New column functional_category_id
