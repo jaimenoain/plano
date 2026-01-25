@@ -14,6 +14,7 @@ import { SessionRatingChart } from "@/components/groups/SessionRatingChart";
 import { slugify, createGoogleCalendarUrl } from "@/lib/utils";
 import { PollCard } from "@/components/groups/polls/PollCard";
 import { SessionMap } from "@/components/groups/SessionMap";
+import { getBuildingImageUrl } from "@/utils/image";
 
 function ResourceItem({ resource }: { resource: { title: string, url: string, description?: string } }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -439,7 +440,7 @@ export function SessionCard({
                 >
                   <div className={`flex gap-5 p-5 ${showGroupStats ? "pb-2" : ""}`}>
                     <div className="relative shrink-0 w-20 h-28 rounded-md overflow-hidden border bg-muted shadow-sm">
-                      <img src={building.main_image_url || '/placeholder.png'} className="w-full h-full object-cover" alt={building.name} />
+                      <img src={getBuildingImageUrl(building.main_image_url) || '/placeholder.png'} className="w-full h-full object-cover" alt={building.name} />
                     </div>
                     <div className="flex-1 flex flex-col justify-center min-w-0 py-1">
                       <div className="mb-2 flex justify-between items-start">

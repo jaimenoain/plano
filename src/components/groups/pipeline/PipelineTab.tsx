@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface PipelineTabProps {
   groupId: string;
@@ -215,7 +216,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
                           onClick={() => setSelectedBuilding(building)}
                         >
                           <img
-                            src={building.main_image_url || '/placeholder.png'}
+                            src={getBuildingImageUrl(building.main_image_url) || '/placeholder.png'}
                             alt={building.name}
                             className="w-10 h-14 object-cover rounded bg-muted"
                           />
@@ -237,7 +238,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
               <div className="space-y-4 pt-4">
                 <div className="flex gap-3 bg-muted/30 p-3 rounded-lg border">
                   <img
-                    src={selectedBuilding.main_image_url || '/placeholder.png'}
+                    src={getBuildingImageUrl(selectedBuilding.main_image_url) || '/placeholder.png'}
                     alt={selectedBuilding.name}
                     className="w-12 h-16 object-cover rounded"
                   />

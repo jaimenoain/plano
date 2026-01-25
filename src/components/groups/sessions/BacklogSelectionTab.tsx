@@ -4,6 +4,7 @@ import { Loader2, AlertCircle, Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface BacklogSelectionTabProps {
   groupId: string;
@@ -62,7 +63,7 @@ export function BacklogSelectionTab({ groupId, onSelect }: BacklogSelectionTabPr
                 <div key={item.id} className="flex gap-4 p-3 border rounded-lg hover:bg-accent/50 transition-colors group relative">
                      <div className="shrink-0 w-16 h-24 bg-muted rounded overflow-hidden">
                         {item.building?.main_image_url && (
-                            <img src={item.building.main_image_url} className="w-full h-full object-cover" />
+                            <img src={getBuildingImageUrl(item.building.main_image_url)} className="w-full h-full object-cover" />
                         )}
                      </div>
                      <div className="flex-1 min-w-0 py-1">

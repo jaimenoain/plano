@@ -14,6 +14,7 @@ export interface ReviewBuilding {
   id: string;
   name: string;
   address?: string | null;
+  main_image_url?: string | null;
   architects?: string[] | null;
   year_completed?: number | null;
 }

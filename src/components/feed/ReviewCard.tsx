@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { slugify } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface ReviewCardProps {
   entry: FeedReview;
@@ -36,7 +37,7 @@ export function ReviewCard({
   // FIXED: Safety Check - Prevent crash if building data is missing
   if (!entry.building) return null;
 
-  const posterUrl = null;
+  const posterUrl = getBuildingImageUrl(entry.building.main_image_url);
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isDetailView) return;

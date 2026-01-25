@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface ManageFavoritesDialogProps {
   open: boolean;
@@ -62,7 +63,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
              id: b.id,
              media_type: "building",
              title: b.name,
-             image_url: b.main_image_url,
+             image_url: getBuildingImageUrl(b.main_image_url),
              rating: 10,
              year_completed: b.year_completed ? String(b.year_completed) : undefined
            };
@@ -99,7 +100,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
               id: b.id,
               media_type: "building",
               title: b.name,
-              image_url: b.main_image_url,
+              image_url: getBuildingImageUrl(b.main_image_url),
               rating: undefined,
               year_completed: b.year_completed ? String(b.year_completed) : undefined
            }));

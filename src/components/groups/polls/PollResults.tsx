@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Lock, CheckCircle2, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface PollResultsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -118,11 +119,12 @@ export function PollResults({ poll, hasVoted, isAdmin = false, largeAvatars = fa
             );
         }
         if (q.media_type === 'building' && q.media_data) {
+             const imageUrl = getBuildingImageUrl(q.media_data.main_image_url);
              return (
                  <div className="relative w-full h-full min-h-[300px] md:min-h-[400px] bg-muted/10 rounded-lg overflow-hidden">
-                     {q.media_data.main_image_url ? (
+                     {imageUrl ? (
                          <img
-                            src={q.media_data.main_image_url}
+                            src={imageUrl}
                             className="w-full h-full object-contain"
                             alt={q.media_data.name || "Building Image"}
                          />

@@ -2,6 +2,7 @@ import { LeaderboardBuilding } from "./types";
 import { cn } from "@/lib/utils";
 import { Eye, Star, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface LeaderboardCardProps {
   building: LeaderboardBuilding;
@@ -11,7 +12,7 @@ interface LeaderboardCardProps {
 
 export function LeaderboardCard({ building, rank, type }: LeaderboardCardProps) {
   const navigate = useNavigate();
-  const imageUrl = building.main_image_url || "/placeholder.svg";
+  const imageUrl = getBuildingImageUrl(building.main_image_url) || "/placeholder.svg";
 
   return (
     <div

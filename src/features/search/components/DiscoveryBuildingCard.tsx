@@ -5,6 +5,7 @@ import { MapPin, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DiscoveryBuilding } from "./types";
 import { cn } from "@/lib/utils";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface DiscoveryBuildingCardProps {
   building: DiscoveryBuilding;
@@ -17,7 +18,7 @@ export function DiscoveryBuildingCard({
   socialContext,
   distance,
 }: DiscoveryBuildingCardProps) {
-  const imageUrl = building.main_image_url;
+  const imageUrl = getBuildingImageUrl(building.main_image_url);
 
   return (
     <Link to={`/building/${building.id}`} className="block">

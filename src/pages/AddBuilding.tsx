@@ -29,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { RecommendDialog } from "@/components/common/RecommendDialog";
 import { useQuery } from "@tanstack/react-query";
+import { getBuildingImageUrl } from "@/utils/image";
 
 // Helper to parse Geocoder results
 const extractLocationDetails = (result: any) => {
@@ -794,7 +795,7 @@ export default function AddBuilding() {
                                     onClick={() => navigate(`/building/${building.id}`)}
                                 >
                                     <Avatar className="h-10 w-10 rounded-md">
-                                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
+                                      <AvatarImage src={getBuildingImageUrl(building.main_image_url) || undefined} alt={building.name} className="object-cover" />
                                         <AvatarFallback className="rounded-md">
                                             <Building2 className="h-5 w-5 text-muted-foreground" />
                                         </AvatarFallback>
