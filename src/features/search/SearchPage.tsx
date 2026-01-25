@@ -240,7 +240,7 @@ export default function SearchPage() {
                 <SearchModeToggle
                   mode={viewMode}
                   onModeChange={setViewMode}
-                  className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30"
+                  className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50"
                 />
 
                 {viewMode === 'list' ? (
