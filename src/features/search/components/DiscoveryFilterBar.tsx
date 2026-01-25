@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { LocationInput } from "@/components/ui/LocationInput";
-import { MapPin, ListFilter, Locate, Check, Trophy, Sparkles, Users } from "lucide-react";
+import { MapPin, ListFilter, Locate, Check, Trophy, Sparkles, Users, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -58,7 +58,22 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
     (props.selectedCity && props.selectedCity !== 'all');
 
   return (
-    <div className="flex items-center justify-end p-4 border-b bg-background sticky top-0 z-20 gap-2">
+    <div className="flex items-center p-4 border-b bg-background sticky top-0 z-20 gap-2">
+       {/* Search Input */}
+       <div className="flex-1 relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+              placeholder={
+                  props.searchScope === 'users' ? "Search people..." :
+                  props.searchScope === 'architects' ? "Search architects..." :
+                  "Search buildings, architects..."
+              }
+              className="pl-8"
+              value={props.searchQuery}
+              onChange={(e) => props.onSearchChange(e.target.value)}
+          />
+       </div>
+
        {/* Button 1: Pin Icon -> Location Dialog */}
        <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
           <DialogTrigger asChild>
@@ -104,23 +119,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                  <SheetTitle>Filters</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-6 py-6">
-                 {/* 1. Content Search */}
-                 <div className="space-y-2">
-                    <label className="text-sm font-medium">Search Content</label>
-                    <Input
-                        placeholder={
-                            props.searchScope === 'users' ? "Search people..." :
-                            props.searchScope === 'architects' ? "Search architects..." :
-                            "Search buildings, architects..."
-                        }
-                        value={props.searchQuery}
-                        onChange={(e) => props.onSearchChange(e.target.value)}
-                    />
-                 </div>
-
-                 <Separator />
-
-                 {/* 2. City Filter */}
+                 {/* 1. City Filter */}
                  {(!props.searchScope || props.searchScope === 'content') && (
                      <div className="space-y-2">
                         <label className="text-sm font-medium flex items-center gap-2">
