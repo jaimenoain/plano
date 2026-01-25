@@ -320,7 +320,9 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
                   <ToggleGroup
                     type="multiple"
                     variant="outline"
-                    value={selected_attribute_ids}
+                    value={selected_attribute_ids.filter((id) =>
+                      groupAttributes.some((attr) => attr.id === id)
+                    )}
                     onValueChange={(newSelection) => handleAttributeGroupChange(group.id, newSelection)}
                     className="justify-start flex-wrap gap-2"
                   >
