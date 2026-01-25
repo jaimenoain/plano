@@ -2,10 +2,17 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
-  Edit2, Check, Bookmark, Star, MessageSquarePlus, Image as ImageIcon,
-  Heart, ExternalLink
+  Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
+  Heart, ExternalLink, Circle
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +89,7 @@ export default function BuildingDetails() {
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
   const [entries, setEntries] = useState<FeedEntry[]>([]);
+  const [displayImages, setDisplayImages] = useState<{id: string, url: string}[]>([]);
   const [userImages, setUserImages] = useState<{id: string, storage_path: string}[]>([]);
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
   const [linksLoading, setLinksLoading] = useState(true);
@@ -169,39 +177,72 @@ export default function BuildingDetails() {
                 console.error("Error fetching user status:", userEntryError);
             }
         }
-
-        // 3. Fetch Social Feed (Direct Supabase call)
-        console.log("Fetching social feed for building:", id);
-
-        const { data: entriesData, error: entriesError } = await supabase
-          .from("user_buildings")
-          .select(`
-            id, content, rating, status, tags, created_at,
-            user:profiles(username, avatar_url),
-            images:review_images(id, storage_path)
-          `)
-          .eq("building_id", id)
-          .order("created_at", { ascending: false });
-          
-        if (entriesError) {
-             console.warn("Error fetching feed:", entriesError);
-             toast({ variant: "destructive", title: "Could not load activity feed" });
-        } else if (entriesData) {
-            console.log("Fetched feed entries:", entriesData);
-            // Sanitize entries
-            const sanitizedEntries = entriesData.map((e: any) => ({
-                ...e,
-                user: {
-                    ...e.user,
-                    avatar_url: e.user.avatar_url || null
-                },
-                images: e.images || []
-            }));
-            setEntries(sanitizedEntries);
-        }
-      } else {
-        console.log("No user, skipping feed fetch");
       }
+
+      // 3. Fetch Social Feed (Direct Supabase call) - NOW GLOBAL
+      console.log("Fetching social feed for building:", id);
+
+      const { data: entriesData, error: entriesError } = await supabase
+        .from("user_buildings")
+        .select(`
+          id, content, rating, status, tags, created_at,
+          user:profiles(username, avatar_url),
+          images:review_images(id, storage_path, likes_count)
+        `)
+        .eq("building_id", id)
+        .order("created_at", { ascending: false });
+
+      const communityImages: {id: string, url: string, likes_count: number, created_at: string}[] = [];
+
+      if (entriesError) {
+            console.warn("Error fetching feed:", entriesError);
+            // toast({ variant: "destructive", title: "Could not load activity feed" });
+      } else if (entriesData) {
+          console.log("Fetched feed entries:", entriesData);
+          
+          // Extract images
+          entriesData.forEach((entry: any) => {
+              if (entry.images && entry.images.length > 0) {
+                  entry.images.forEach((img: any) => {
+                        const { data: { publicUrl } } = supabase.storage
+                              .from("review_images")
+                              .getPublicUrl(img.storage_path);
+                      communityImages.push({
+                          id: img.id,
+                          url: publicUrl,
+                          likes_count: img.likes_count || 0,
+                          created_at: entry.created_at
+                      });
+                  });
+              }
+          });
+
+          // Sort images
+          communityImages.sort((a, b) => {
+              if (b.likes_count !== a.likes_count) return b.likes_count - a.likes_count;
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          });
+
+          // Sanitize entries
+          const sanitizedEntries = entriesData.map((e: any) => ({
+              ...e,
+              user: {
+                  ...e.user,
+                  avatar_url: e.user.avatar_url || null
+              },
+              images: e.images || []
+          }));
+          setEntries(sanitizedEntries);
+      }
+
+      // Combine with main image
+      const images = [];
+      if (sanitizedBuilding.main_image_url) {
+          images.push({ id: 'main', url: sanitizedBuilding.main_image_url });
+      }
+      // We just push simple objects
+      images.push(...communityImages.map(img => ({ id: img.id, url: img.url })));
+      setDisplayImages(images);
     } catch (error: any) {
       console.error("Error:", error);
       toast({ variant: "destructive", title: "Error", description: "Building not found" });
@@ -374,8 +415,26 @@ export default function BuildingDetails() {
             </div>
 
             <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
-                {building.main_image_url ? (
-                    <img src={building.main_image_url || undefined} className="w-full h-full object-cover" alt={building.name} />
+                {displayImages.length > 0 ? (
+                    <Carousel className="w-full h-full">
+                        <CarouselContent className="h-full ml-0">
+                            {displayImages.map((img) => (
+                                <CarouselItem key={img.id} className="pl-0 h-full">
+                                    <img
+                                      src={img.url}
+                                      className="w-full h-full object-cover"
+                                      alt={building.name}
+                                    />
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        {displayImages.length > 1 && (
+                            <>
+                                <CarouselPrevious className="left-2 bg-black/50 border-transparent text-white hover:bg-black/70 hover:text-white" />
+                                <CarouselNext className="right-2 bg-black/50 border-transparent text-white hover:bg-black/70 hover:text-white" />
+                            </>
+                        )}
+                    </Carousel>
                 ) : (
                     <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground text-center p-6">
                         <ImageIcon className="w-12 h-12 text-muted-foreground/20 mb-3" />
@@ -452,15 +511,18 @@ export default function BuildingDetails() {
 
                         <div className="flex flex-wrap gap-4 items-center">
                             {userStatus === 'visited' ? (
-                                <Badge className="bg-green-600 hover:bg-green-700">Visited</Badge>
+                                <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">Visited</Badge>
                             ) : (
                                 <Badge variant="secondary">Saved</Badge>
                             )}
 
                             {userStatus === 'visited' && myRating > 0 && (
                                 <div className="flex items-center gap-0.5">
-                                    {[...Array(myRating)].map((_, i) => (
-                                        <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                                    {[...Array(5)].map((_, i) => (
+                                        <Circle
+                                          key={i}
+                                          className={`w-4 h-4 ${i < myRating ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
+                                        />
                                     ))}
                                 </div>
                             )}
@@ -688,8 +750,11 @@ export default function BuildingDetails() {
                                     </div>
                                     {entry.status === 'visited' && entry.rating && (
                                         <div className="flex items-center gap-0.5 my-1">
-                                            {[...Array(entry.rating)].map((_, i) => (
-                                                <Star key={i} className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                                            {[...Array(5)].map((_, i) => (
+                                                <Circle
+                                                  key={i}
+                                                  className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
+                                                />
                                             ))}
                                         </div>
                                     )}
