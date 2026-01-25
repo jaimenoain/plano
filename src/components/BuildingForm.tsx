@@ -357,7 +357,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
                       <ToggleGroupItem
                         key={attr.id}
                         value={attr.id}
-                        className="h-8 text-sm px-3 data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground border-input"
+                        className="h-8 text-sm px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                       >
                         {attr.name}
                       </ToggleGroupItem>
