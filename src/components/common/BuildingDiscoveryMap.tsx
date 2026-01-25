@@ -303,7 +303,7 @@ export function BuildingDiscoveryMap({
             </div>
 
             {isApproximate ? (
-                <div className={`w-5 h-5 rounded-full border-2 border-background ${dotBgClass} drop-shadow-md transition-transform hover:scale-110`} />
+                <div className={`w-6 h-6 rounded-full border-2 border-background ${dotBgClass} drop-shadow-md transition-transform hover:scale-110`} />
             ) : (
                 <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform hover:scale-110`} />
             )}

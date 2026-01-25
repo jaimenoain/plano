@@ -5,6 +5,16 @@ import {
   Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import {
   Carousel,
@@ -111,6 +121,7 @@ export default function BuildingDetails() {
 
   // Map state
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
 
   // Parse location
   const coordinates = useMemo(() => {
@@ -429,15 +440,43 @@ export default function BuildingDetails() {
                     <span className="text-sm font-medium">{building.address}</span>
                 </div>
                 {coordinates && (
-                    <Button variant="outline" size="sm" asChild className="shrink-0 h-8">
-                        <a
-                            href={`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                    <>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0 h-8"
+                            onClick={() => {
+                                if (building.location_precision === 'approximate') {
+                                    setShowDirectionsAlert(true);
+                                } else {
+                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, '_blank');
+                                }
+                            }}
                         >
                             {building.location_precision === 'approximate' ? "Get Directions (Approximate)" : "Get Directions"}
-                        </a>
-                    </Button>
+                        </Button>
+
+                        <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This building's location is approximate. The directions will guide you to the general vicinity (e.g. village center).
+                                        <br/><br/>
+                                        Please look around when you arrive.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => {
+                                         window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, '_blank');
+                                    }}>
+                                        Get Directions
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </>
                 )}
             </div>
 
