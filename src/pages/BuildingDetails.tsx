@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
   Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
-  Heart, ExternalLink, Circle
+  Heart, ExternalLink, Circle, AlertTriangle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { TagInput } from "@/components/ui/tag-input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -396,6 +397,15 @@ export default function BuildingDetails() {
         {/* LEFT: Visuals & Map (Map-First Experience ) */}
         <div className="space-y-6">
             {/* Map Integration */}
+            {building.location_precision === 'approximate' && (
+                <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-500 dark:text-amber-400">
+                    <AlertTriangle className="h-4 w-4 stroke-amber-500 dark:stroke-amber-400" />
+                    <AlertDescription className="ml-2">
+                        Exact location not verified. This marker indicates the general village/locality.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             {coordinates ? (
               <BuildingMap
                 lat={coordinates.lat}
@@ -413,9 +423,22 @@ export default function BuildingDetails() {
               </div>
             )}
 
-            <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm font-medium">{building.address}</span>
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4 shrink-0" />
+                    <span className="text-sm font-medium">{building.address}</span>
+                </div>
+                {coordinates && (
+                    <Button variant="outline" size="sm" asChild className="shrink-0 h-8">
+                        <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {building.location_precision === 'approximate' ? "Get Directions (Approximate)" : "Get Directions"}
+                        </a>
+                    </Button>
+                )}
             </div>
 
             <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
