@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
+import { getBuildingImageUrl } from "@/utils/image";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: () => void }) {
@@ -162,11 +163,12 @@ export function VotingForm({ poll, onVoteSuccess }: { poll: any, onVoteSuccess: 
             );
         }
         if (q.media_type === 'building' && q.media_data) {
+             const imageUrl = getBuildingImageUrl(q.media_data.main_image_url);
              return (
                  <div className="relative w-full h-full min-h-[400px] bg-muted/10 rounded-lg overflow-hidden">
-                     {q.media_data.main_image_url ? (
+                     {imageUrl ? (
                          <img
-                            src={q.media_data.main_image_url}
+                            src={imageUrl}
                             className="w-full h-full object-contain"
                             alt={q.media_data.name || "Building Image"}
                          />

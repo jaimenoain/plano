@@ -81,7 +81,6 @@ export const editBuildingSchema = z.object({
     .refine((items) => !items || new Set(items).size === items.length, {
       message: "Duplicate attributes are not allowed",
     }),
-  main_image_url: z.string().nullable().optional(),
 });
 
 export type BuildingSchema = z.infer<typeof buildingSchema>;

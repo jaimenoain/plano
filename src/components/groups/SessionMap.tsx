@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
+import { getBuildingImageUrl } from "@/utils/image";
 
 // Helper to parse PostGIS POINT string (WKT)
 // Format: POINT(lng lat)
@@ -136,7 +137,7 @@ export function SessionMap({ buildings, className, interactive = true }: Session
                     <div className="relative transform transition-transform hover:scale-110">
                         <div className="w-8 h-8 rounded-full border-2 border-white shadow-md overflow-hidden bg-background">
                             <Avatar className="h-full w-full">
-                                <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
+                                <AvatarImage src={getBuildingImageUrl(building.main_image_url) || undefined} alt={building.name} className="object-cover" />
                                 <AvatarFallback className="bg-primary/10">
                                     <MapPin className="h-4 w-4 text-primary" />
                                 </AvatarFallback>

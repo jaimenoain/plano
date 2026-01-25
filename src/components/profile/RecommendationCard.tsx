@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { slugify, cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { getBuildingImageUrl } from "@/utils/image";
 import {
   Tooltip,
   TooltipContent,
@@ -53,14 +54,15 @@ interface RecommendationCardProps {
 export function RecommendationCard({ recommendation, interaction, onDismiss, onRate, onWatchlist }: RecommendationCardProps) {
   const { building, recommender } = recommendation;
   const year_completed = building.year_completed;
+  const imageUrl = getBuildingImageUrl(building.main_image_url);
 
   return (
     <div className="bg-card border border-border/50 rounded-lg overflow-hidden flex flex-col h-full animate-in fade-in zoom-in-95 duration-300">
       <div className="relative aspect-[2/3] group cursor-pointer overflow-hidden">
         <Link to={`/building/${building.id}`}>
-            {building.main_image_url ? (
+            {imageUrl ? (
             <img
-                src={building.main_image_url}
+                src={imageUrl}
                 alt={building.name}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />

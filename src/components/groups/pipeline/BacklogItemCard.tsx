@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CalendarPlus, Trash2, Edit2, Check, X, Repeat } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScheduleDialog } from "./ScheduleDialog";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface BacklogItemCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,7 +30,7 @@ export function BacklogItemCard({ item, cycles, onUpdate }: BacklogItemCardProps
   // item.building is populated by the join in PipelineTab query
   const building = item.building;
   const mainTitle = building?.name || "Unknown Building";
-  const imageUrl = building?.main_image_url || null;
+  const imageUrl = getBuildingImageUrl(building?.main_image_url) || null;
   const year = building?.year_completed;
 
   const handleSave = async () => {

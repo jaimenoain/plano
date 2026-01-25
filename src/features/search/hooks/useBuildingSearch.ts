@@ -6,6 +6,7 @@ import { useUserLocation } from "@/hooks/useUserLocation";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getBuildingImageUrl } from "@/utils/image";
 
 // Helper to calculate Haversine distance in meters
 function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -28,43 +29,15 @@ function deg2rad(deg: number) {
 async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string) {
   if (!buildings.length) return [];
 
-  const buildingIds = buildings.map(b => b.id);
   let enrichedBuildings = [...buildings];
+  const buildingIds = buildings.map(b => b.id);
 
-  // 1. Image Enrichment
-  const { data: reviews } = await supabase
-    .from('user_buildings')
-    .select('id, building_id')
-    .in('building_id', buildingIds);
-
-  if (reviews && reviews.length) {
-    const reviewIds = reviews.map(r => r.id);
-    const reviewToBuildingMap = new Map(reviews.map(r => [r.id, r.building_id]));
-
-    const { data: images } = await supabase
-        .from('review_images')
-        .select('storage_path, likes_count, created_at, review_id')
-        .in('review_id', reviewIds)
-        .order('likes_count', { ascending: false })
-        .order('created_at', { ascending: false });
-
-    if (images && images.length) {
-        const buildingImageMap = new Map<string, string>();
-        for (const img of images) {
-            const buildingId = reviewToBuildingMap.get(img.review_id);
-            if (buildingId && !buildingImageMap.has(buildingId)) {
-                const { data: { publicUrl } } = supabase.storage.from('review_images').getPublicUrl(img.storage_path);
-                buildingImageMap.set(buildingId, publicUrl);
-            }
-        }
-        enrichedBuildings = enrichedBuildings.map(b => {
-            if (buildingImageMap.has(b.id)) {
-                return { ...b, main_image_url: buildingImageMap.get(b.id) || null };
-            }
-            return b;
-        });
-    }
-  }
+  // 1. Image URL Transformation (using helper)
+  // RPC returns the path in main_image_url. We need to convert it to a full URL.
+  enrichedBuildings = enrichedBuildings.map(b => ({
+      ...b,
+      main_image_url: getBuildingImageUrl(b.main_image_url) || null
+  }));
 
   // 2. Social Enrichment (Facepile)
   if (userId) {
@@ -177,9 +150,10 @@ export function useBuildingSearch() {
             const buildingIds = userBuildings.map(ub => ub.building_id);
 
             // 2. Fetch building details
+            // Explicitly select main_image_url (computed column)
             let query = supabase
                 .from('buildings')
-                .select('*, architects:building_architects(architect:architects(name, id))')
+                .select('*, main_image_url, architects:building_architects(architect:architects(name, id))')
                 .in('id', buildingIds);
 
             if (debouncedQuery) {
@@ -201,7 +175,7 @@ export function useBuildingSearch() {
                 return {
                     id: b.id,
                     name: b.name,
-                    main_image_url: null,
+                    main_image_url: b.main_image_url, // Pass path, enriched later
                     architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || [],
                     year_completed: b.year_completed,
                     city: b.city,
@@ -209,7 +183,6 @@ export function useBuildingSearch() {
                     location_lat: b.location_lat,
                     location_lng: b.location_lng,
                     distance: distance,
-                    // social_context: could fetch social info if needed, but skipping for now
                 } as DiscoveryBuilding;
             }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
@@ -218,7 +191,6 @@ export function useBuildingSearch() {
 
         // Global search mode (RPC)
         const radius = 20000000; // Large radius for general search
-        // Pass undefined for filters and sort_by as we removed them
         const rpcResults = await searchBuildingsRpc({
             query_text: debouncedQuery || null,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
@@ -227,6 +199,8 @@ export function useBuildingSearch() {
             sort_by: undefined
         });
 
+        // RPC returns main_image_url as path now (from computed column)
+        // enrichBuildings will transform it to URL
         return await enrichBuildings(rpcResults, user?.id);
     },
     staleTime: 1000 * 60, // 1 min

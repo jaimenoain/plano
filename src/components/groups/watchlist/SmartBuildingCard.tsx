@@ -8,6 +8,7 @@ import { Plus, Clock, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Architect } from "@/types/architect";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface InterestedUser {
   id: string;
@@ -37,7 +38,7 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
 
   const isInWatchlist = user && building.interested_users.some(u => u.id === user.id);
 
-  const imageUrl = building.main_image_url || "/placeholder.svg";
+  const imageUrl = getBuildingImageUrl(building.main_image_url) || "/placeholder.svg";
 
   // Construct Link URL
   const linkUrl = `/building/${building.id}`;

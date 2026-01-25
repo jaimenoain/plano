@@ -102,7 +102,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
       // 2. Prepare Questions
       const questionPromises = topBuildings.map(async (building, index) => {
           const mediaUrl = building.main_image_url; // Use internal image url
-          const mediaType = "image";
+          const mediaType = "building";
 
           return {
             poll_id: poll.id,

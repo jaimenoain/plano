@@ -56,7 +56,7 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
       // @ts-ignore
       const { data: buildingDetails, error: buildingsError } = await supabase
         .from("buildings")
-        .select("*, architects:building_architects(architect:architects(name, id))")
+        .select("*, main_image_url, architects:building_architects(architect:architects(name, id))")
         .in("id", candidateBuildingIds);
 
       if (buildingsError) throw buildingsError;
