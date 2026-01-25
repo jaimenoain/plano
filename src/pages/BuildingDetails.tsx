@@ -587,8 +587,8 @@ export default function BuildingDetails() {
                             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                                 Your Activity
                             </h3>
-                            <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
-                                <Edit2 className="w-4 h-4" />
+                            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+                                Edit
                             </Button>
                         </div>
 
