@@ -31,7 +31,7 @@ export function useUserProfile() {
           .from("profiles")
           .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         // @ts-ignore
@@ -53,7 +53,7 @@ export function useUserProfile() {
       .from("profiles")
       .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
     if (data) {
       // @ts-ignore
       setProfile(data);
