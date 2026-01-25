@@ -59,7 +59,7 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string) 
         }
         enrichedBuildings = enrichedBuildings.map(b => {
             if (buildingImageMap.has(b.id)) {
-                return { ...b, main_image_url: buildingImageMap.get(b.id) || b.main_image_url };
+                return { ...b, main_image_url: buildingImageMap.get(b.id) || null };
             }
             return b;
         });
@@ -201,7 +201,7 @@ export function useBuildingSearch() {
                 return {
                     id: b.id,
                     name: b.name,
-                    main_image_url: b.main_image_url,
+                    main_image_url: null,
                     architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || [],
                     year_completed: b.year_completed,
                     city: b.city,

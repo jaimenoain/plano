@@ -51,7 +51,6 @@ export type DashboardStats = {
     trending_buildings: {
       building_id: string;
       name: string;
-      main_image_url: string | null;
       visit_count: number;
     }[];
   };
@@ -150,11 +149,11 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
   },
   content_intelligence: {
     trending_buildings: [
-      { building_id: '1', name: 'Empire State Building', main_image_url: '/empire.jpg', visit_count: 45 },
-      { building_id: '2', name: 'Fallingwater', main_image_url: '/fallingwater.jpg', visit_count: 32 },
-      { building_id: '3', name: 'Guggenheim Museum', main_image_url: '/guggenheim.jpg', visit_count: 28 },
-      { building_id: '4', name: 'Sydney Opera House', main_image_url: '/sydney.jpg', visit_count: 15 },
-      { building_id: '5', name: 'Burj Khalifa', main_image_url: '/burj.jpg', visit_count: 12 },
+      { building_id: '1', name: 'Empire State Building', visit_count: 45 },
+      { building_id: '2', name: 'Fallingwater', visit_count: 32 },
+      { building_id: '3', name: 'Guggenheim Museum', visit_count: 28 },
+      { building_id: '4', name: 'Sydney Opera House', visit_count: 15 },
+      { building_id: '5', name: 'Burj Khalifa', visit_count: 12 },
     ],
   },
   user_leaderboard: {

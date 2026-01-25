@@ -126,9 +126,7 @@ export interface Database {
         Row: {
           created_at: string
           created_by: string | null
-          description: string | null
           id: string
-          main_image_url: string | null
           location: unknown | null
           name: string
           address: string | null
@@ -143,9 +141,7 @@ export interface Database {
         Insert: {
           created_at?: string
           created_by?: string | null
-          description?: string | null
           id?: string
-          main_image_url?: string | null
           location?: unknown | null
           name: string
           address?: string | null
@@ -160,9 +156,7 @@ export interface Database {
         Update: {
           created_at?: string
           created_by?: string | null
-          description?: string | null
           id?: string
-          main_image_url?: string | null
           location?: unknown | null
           name?: string
           address?: string | null
@@ -1417,7 +1411,6 @@ export interface Database {
           location_lng: number
           dist_meters: number
           similarity_score: number
-          main_image_url: string | null
           location_precision: Database["public"]["Enums"]["location_precision"]
         }[]
       }
@@ -1474,7 +1467,6 @@ export interface Database {
           id: string
           name: string
           address: string | null
-          main_image_url: string | null
           location_lat: number
           location_lng: number
           city: string | null

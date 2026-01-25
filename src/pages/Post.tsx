@@ -90,7 +90,6 @@ export default function Post() {
         setBuildingDetails({
           ...data,
           name: data.name,
-          main_image_url: data.main_image_url,
           year_completed: data.year_completed
         });
       }
@@ -240,8 +239,8 @@ export default function Post() {
         {checkingExisting ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> : (
           <>
             <div className="flex gap-5 py-6 hairline">
-              {buildingDetails?.main_image_url || paramImage ? (
-                <img src={buildingDetails?.main_image_url || paramImage} alt={mainTitle} className="w-32 h-auto aspect-[2/3] object-cover rounded-md shadow-md flex-shrink-0" />
+              {paramImage ? (
+                <img src={paramImage} alt={mainTitle} className="w-32 h-auto aspect-[2/3] object-cover rounded-md shadow-md flex-shrink-0" />
               ) : (
                 <div className="w-32 h-auto aspect-[2/3] bg-secondary rounded-md flex-shrink-0" />
               )}

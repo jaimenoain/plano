@@ -60,7 +60,6 @@ export default function ArchitectDetails() {
     <AppLayout showBack>
       <MetaHead
         title={architect.name}
-        image={buildings[0]?.main_image_url || '/placeholder.png'}
       />
       <div className="px-4 py-6 md:px-6 space-y-8 animate-fade-in">
         <div className="space-y-2">
@@ -90,18 +89,9 @@ export default function ArchitectDetails() {
               >
                 <CardContent className="p-0">
                   <AspectRatio ratio={4 / 3}>
-                    {building.main_image_url ? (
-                      <img
-                        src={building.main_image_url}
-                        alt={building.name}
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
                       <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
                         No Image
                       </div>
-                    )}
                   </AspectRatio>
                   <div className="p-4 space-y-1">
                     <h3 className="font-semibold text-lg line-clamp-1">{building.name}</h3>

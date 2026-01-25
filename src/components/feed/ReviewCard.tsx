@@ -36,7 +36,7 @@ export function ReviewCard({
   // FIXED: Safety Check - Prevent crash if building data is missing
   if (!entry.building) return null;
 
-  const posterUrl = entry.building.main_image_url || null;
+  const posterUrl = null;
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isDetailView) return;

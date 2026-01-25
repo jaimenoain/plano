@@ -13,7 +13,6 @@ export interface ReviewUser {
 export interface ReviewBuilding {
   id: string;
   name: string;
-  main_image_url: string | null;
   address?: string | null;
   architects?: string[] | null;
   year_completed?: number | null;

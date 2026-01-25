@@ -12,7 +12,7 @@ export interface StyleSummary {
 export interface DiscoveryBuilding {
   id: string;
   name: string;
-  main_image_url: string | null;
+  main_image_url?: string | null;
   architects: ArchitectSummary[] | null;
   styles: StyleSummary[] | null;
   year_completed: number | null;
@@ -40,7 +40,6 @@ export interface LeaderboardBuilding {
   name: string;
   city: string | null;
   country: string | null;
-  main_image_url: string | null;
   visit_count?: number;
   avg_rating?: number;
   rating_count?: number;

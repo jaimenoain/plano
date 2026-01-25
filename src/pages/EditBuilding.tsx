@@ -138,7 +138,6 @@ export default function EditBuilding() {
         functional_category_id: (data as any).functional_category_id || "",
         functional_typology_ids: typologyIds,
         selected_attribute_ids: attributeIds,
-        main_image_url: data.main_image_url,
       });
 
       // Parse location
@@ -214,7 +213,6 @@ export default function EditBuilding() {
           // @ts-ignore
           functional_category_id: formData.functional_category_id,
           // Removed legacy column updates for typologies/attributes
-          main_image_url: formData.main_image_url,
 
           address: locationData.address,
           city: locationData.city,
