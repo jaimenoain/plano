@@ -14,7 +14,6 @@ export interface DiscoveryFilterBarProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   searchScope?: SearchScope;
-  onSearchScopeChange?: (scope: SearchScope) => void;
   
   // Location Props
   onLocationSelect: (address: string, countryCode: string, placeName?: string) => void;
@@ -59,7 +58,6 @@ export function DiscoveryFilterBar({
   onShowLeaderboard,
   onUseLocation,
   searchScope,
-  onSearchScopeChange,
 }: DiscoveryFilterBarProps) {
   const [openStyles, setOpenStyles] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
@@ -80,29 +78,6 @@ export function DiscoveryFilterBar({
       <div className="hidden md:flex flex-row items-center justify-between gap-4 p-4">
         {/* Search Inputs */}
         <div className="flex flex-row gap-2 flex-1 min-w-[200px]">
-          {onSearchScopeChange && (
-            <div className="flex p-1 bg-muted rounded-lg shrink-0 w-fit self-center">
-              <Button
-                variant={searchScope === 'content' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => onSearchScopeChange('content')}
-                className={cn("h-8 px-3 text-xs font-medium", searchScope === 'content' && "bg-background shadow-sm")}
-              >
-                <Building2 className="w-3.5 h-3.5 mr-2" />
-                Buildings
-              </Button>
-              <Button
-                variant={searchScope === 'users' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => onSearchScopeChange('users')}
-                className={cn("h-8 px-3 text-xs font-medium", searchScope === 'users' && "bg-background shadow-sm")}
-              >
-                <Users className="w-3.5 h-3.5 mr-2" />
-                People
-              </Button>
-            </div>
-          )}
-
           <DiscoverySearchInput
             placeholder={searchScope === 'users' ? "Search people..." : "Search buildings, architects..."}
             value={searchQuery}
@@ -231,33 +206,6 @@ export function DiscoveryFilterBar({
             </SheetHeader>
 
             <div className="flex flex-col gap-6 pb-6">
-              {/* Scope */}
-              {onSearchScopeChange && (
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Search Scope</h3>
-                  <div className="flex p-1 bg-muted rounded-lg w-full">
-                    <Button
-                      variant={searchScope === 'content' ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => onSearchScopeChange('content')}
-                      className={cn("flex-1", searchScope === 'content' && "bg-background shadow-sm")}
-                    >
-                      <Building2 className="w-4 h-4 mr-2" />
-                      Buildings
-                    </Button>
-                    <Button
-                      variant={searchScope === 'users' ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => onSearchScopeChange('users')}
-                      className={cn("flex-1", searchScope === 'users' && "bg-background shadow-sm")}
-                    >
-                      <Users className="w-4 h-4 mr-2" />
-                      People
-                    </Button>
-                  </div>
-                </div>
-              )}
-
               {/* Filters */}
               <div className="flex flex-col gap-2">
                 <h3 className="text-sm font-medium text-muted-foreground">Filter Buildings</h3>
