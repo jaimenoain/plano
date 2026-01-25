@@ -67,7 +67,6 @@ interface NearbyBuilding {
   location_lng: number;
   dist_meters: number;
   similarity_score?: number;
-  main_image_url?: string | null;
   location_precision?: 'exact' | 'approximate';
 }
 
@@ -530,7 +529,6 @@ export default function AddBuilding() {
                                   onClick={() => navigate(`/building/${building.id}`)}
                                 >
                                   <Avatar className="h-10 w-10 rounded-md">
-                                    <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
                                     <AvatarFallback className="rounded-md">
                                       <Building2 className="h-5 w-5 text-muted-foreground" />
                                     </AvatarFallback>
@@ -760,7 +758,6 @@ export default function AddBuilding() {
                                     onClick={() => navigate(`/building/${building.id}`)}
                                 >
                                     <Avatar className="h-10 w-10 rounded-md">
-                                        <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
                                         <AvatarFallback className="rounded-md">
                                             <Building2 className="h-5 w-5 text-muted-foreground" />
                                         </AvatarFallback>

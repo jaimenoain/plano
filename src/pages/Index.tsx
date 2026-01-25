@@ -212,7 +212,6 @@ export default function Index() {
         building: {
           id: review.building_data?.id,
           name: review.building_data?.name || "Unknown Building",
-          main_image_url: review.building_data?.main_image_url || null,
           address: review.building_data?.address || null,
           architects: review.building_data?.architects || null,
           year_completed: review.building_data?.year_completed || null,

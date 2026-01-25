@@ -55,7 +55,6 @@ interface BuildingDetails {
   architects: Architect[];
   year_completed: number;
   styles: { id: string, name: string }[];
-  main_image_url: string | null;
   created_by: string;
 }
 
@@ -193,7 +192,6 @@ export default function BuildingDetails() {
       // 1. Fetch Building (with fallback logic in utility)
       const data = await fetchBuildingDetails(id);
 
-      // Sanitize main_image_url to ensure it's null if empty string
       // 1.5 Fetch Relational Architects
       const { data: relationalArchitectsData } = await supabase
         .from("building_architects")
@@ -207,7 +205,6 @@ export default function BuildingDetails() {
       const sanitizedBuilding = {
         ...data,
         architects: relationalArchitects,
-        main_image_url: data.main_image_url || null
       };
 
       setBuilding(sanitizedBuilding as unknown as BuildingDetails);
@@ -305,9 +302,6 @@ export default function BuildingDetails() {
 
       // Combine with main image
       const images = [];
-      if (sanitizedBuilding.main_image_url) {
-          images.push({ id: 'main', url: sanitizedBuilding.main_image_url });
-      }
       // We just push simple objects
       images.push(...communityImages.map(img => ({ id: img.id, url: img.url })));
       setDisplayImages(images);
@@ -454,7 +448,7 @@ export default function BuildingDetails() {
 
   return (
     <AppLayout title={building.name} showBack>
-      <MetaHead title={building.name} image={building.main_image_url || undefined} />
+      <MetaHead title={building.name} />
 
       {/* Building Header - Mobile Only */}
       <BuildingHeader building={building} canEdit={canEdit} className="lg:hidden p-4 pb-0" />

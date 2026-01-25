@@ -29,7 +29,6 @@ export interface BuildingFormData {
   functional_category_id: string;
   functional_typology_ids: string[];
   selected_attribute_ids: string[];
-  main_image_url: string | null;
 }
 
 interface BuildingFormProps {
@@ -132,7 +131,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         functional_category_id,
         functional_typology_ids,
         selected_attribute_ids,
-        main_image_url: initialValues.main_image_url,
       };
 
       const validationResult = buildingSchema.safeParse(rawData);
@@ -146,7 +144,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
       const formData: BuildingFormData = {
         ...validationResult.data,
-        main_image_url: validationResult.data.main_image_url ?? null,
       };
 
       await onSubmit(formData);

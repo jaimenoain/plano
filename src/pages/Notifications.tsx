@@ -31,7 +31,6 @@ interface Notification {
     };
     building?: {
       name: string;
-      main_image_url: string | null;
     };
   };
   metadata?: { status?: string };
@@ -56,13 +55,13 @@ const NOTIFICATION_QUERY = `
   resource:notifications_resource_id_fkey(
     id,
     user_id,
-    building:buildings(name, main_image_url),
+    building:buildings(name),
     user:profiles(username)
   ),
   recommendation:notifications_recommendation_id_fkey(
     id,
     status,
-    building:buildings(name, main_image_url)
+    building:buildings(name)
   ),
   session:notifications_session_id_fkey(
     id,
@@ -289,14 +288,6 @@ export default function Notifications() {
 
           {!n.is_read && (
             <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
-          )}
-
-          {(n.resource?.building?.main_image_url || (n as any).recommendation?.building?.main_image_url) && (
-            <img 
-              src={n.resource?.building?.main_image_url || (n as any).recommendation?.building?.main_image_url}
-              alt="Building"
-              className="h-12 w-8 object-cover rounded bg-secondary ml-2"
-            />
           )}
         </div>
       ))}

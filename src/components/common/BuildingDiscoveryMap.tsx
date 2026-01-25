@@ -38,7 +38,6 @@ const SATELLITE_STYLE = {
 interface Building {
   id: string;
   name: string;
-  main_image_url: string | null;
   location_lat: number;
   location_lng: number;
   social_context?: string | null;

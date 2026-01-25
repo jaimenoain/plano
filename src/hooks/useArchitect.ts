@@ -10,7 +10,6 @@ export interface Architect {
 export interface ArchitectBuilding {
   id: string;
   name: string;
-  main_image_url: string | null;
   city: string | null;
   country: string | null;
   year_completed: number | null;
@@ -66,7 +65,6 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
             building:buildings(
               id,
               name,
-              main_image_url,
               city,
               country,
               year_completed

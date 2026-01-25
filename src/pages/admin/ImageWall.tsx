@@ -27,14 +27,6 @@ export default function ImageWall() {
   const fetchImages = async () => {
     setLoading(true);
     try {
-      // Fetch recent buildings
-      const { data: buildings } = await supabase
-        .from("buildings")
-        .select("id, name, main_image_url, created_at")
-        .not("main_image_url", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
       // Fetch recent profiles
       const { data: profiles } = await supabase
         .from("profiles")
@@ -44,19 +36,6 @@ export default function ImageWall() {
         .limit(50);
 
       const combined: ImageItem[] = [];
-
-      if (buildings) {
-        buildings.forEach((b: any) => {
-           combined.push({
-             id: b.id,
-             url: b.main_image_url,
-             type: 'building',
-             name: b.name,
-             date: b.created_at,
-             uniqueKey: `building:${b.id}`
-           });
-        });
-      }
 
       if (profiles) {
         profiles.forEach((p: any) => {
@@ -101,16 +80,7 @@ export default function ImageWall() {
         const itemsToDelete = images.filter(img => selectedKeys.has(img.uniqueKey));
 
         // Group by type
-        const buildingIds = itemsToDelete.filter(i => i.type === 'building').map(i => i.id);
         const profileIds = itemsToDelete.filter(i => i.type === 'profile').map(i => i.id);
-
-        if (buildingIds.length > 0) {
-            const { error } = await supabase
-                .from('buildings')
-                .update({ main_image_url: null })
-                .in('id', buildingIds);
-            if (error) throw error;
-        }
 
         if (profileIds.length > 0) {
              const { error } = await supabase

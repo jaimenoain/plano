@@ -181,7 +181,6 @@ export default function Buildings() {
         functional_category_id: (building as any).functional_category_id || "",
         functional_typology_ids: typologyIds,
         selected_attribute_ids: attributeIds,
-        main_image_url: building.main_image_url
     });
 
     setEditingBuilding(building);
@@ -208,7 +207,6 @@ export default function Buildings() {
           functional_typology_ids: formData.functional_typology_ids,
           // @ts-ignore
           selected_attribute_ids: formData.selected_attribute_ids,
-          main_image_url: formData.main_image_url,
 
           address: locationData.address,
           city: locationData.city,

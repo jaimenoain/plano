@@ -45,7 +45,6 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         .insert({
           name: data.name,
           year_completed: data.year_completed,
-          main_image_url: data.main_image_url,
 
           // Location Data (Merged from Main & Feature branches)
           address: locationData.address,
@@ -184,7 +183,6 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     functional_category_id: "",
     functional_typology_ids: [],
     selected_attribute_ids: [],
-    main_image_url: null,
   };
 
   return (
