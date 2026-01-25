@@ -10,28 +10,29 @@ export function useLoginTracker() {
   useEffect(() => {
     if (!session?.user) return;
 
-    // Check if we've already tracked login for this browser session
-    const hasTracked = sessionStorage.getItem(LOGIN_TRACKING_KEY);
-
-    // We also check a local storage timestamp to ensure we track at least once per day
-    // even if the browser session persists (re-opened tab).
-    // Actually, "sessionStorage" is cleared on tab close, which is a good proxy for "session".
-    // But let's add a daily check just in case.
+    // We rely on localStorage timestamp to ensure we only track once per day per device/browser profile.
+    // sessionStorage check is insufficient as it clears on tab close, causing redundant calls on new tabs.
     const lastTrackedTime = localStorage.getItem(`${LOGIN_TRACKING_KEY}_ts`);
     const now = new Date();
     const isNewDay = !lastTrackedTime ||
       new Date(lastTrackedTime).toDateString() !== now.toDateString();
 
-    if (!hasTracked || isNewDay) {
+    if (isNewDay) {
       const track = async () => {
         try {
           const { error } = await supabase.rpc('track_login');
-          if (!error) {
+
+          // Update storage if success or if it was a conflict (already tracked today).
+          // Code '23505' is PostgreSQL unique violation.
+          // We also check for generic conflict message just in case.
+          if (!error || error.code === '23505' || error.message?.toLowerCase().includes('conflict')) {
             sessionStorage.setItem(LOGIN_TRACKING_KEY, 'true');
             localStorage.setItem(`${LOGIN_TRACKING_KEY}_ts`, now.toISOString());
+          } else {
+            console.error('Failed to track login:', error);
           }
         } catch (err) {
-          console.error('Failed to track login:', err);
+          console.error('Failed to track login exception:', err);
         }
       };
 
