@@ -17,6 +17,7 @@ interface Building {
   location_lat: number;
   location_lng: number;
   social_context?: string | null;
+  location_precision?: 'exact' | 'approximate';
 }
 
 export interface Bounds {
