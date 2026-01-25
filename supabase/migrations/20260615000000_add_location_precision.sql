@@ -4,6 +4,9 @@ CREATE TYPE location_precision AS ENUM ('exact', 'approximate');
 -- Add column to buildings table
 ALTER TABLE buildings ADD COLUMN location_precision location_precision DEFAULT 'exact' NOT NULL;
 
+-- Drop existing function to allow return type change
+DROP FUNCTION IF EXISTS find_nearby_buildings(double precision, double precision, double precision, text);
+
 -- Update find_nearby_buildings RPC
 CREATE OR REPLACE FUNCTION find_nearby_buildings(
   lat double precision,
@@ -69,6 +72,9 @@ BEGIN
     similarity_score DESC;
 END;
 $$;
+
+-- Drop existing function to allow return type change
+DROP FUNCTION IF EXISTS search_buildings(text, jsonb, int, jsonb, text);
 
 -- Update search_buildings RPC
 CREATE OR REPLACE FUNCTION search_buildings(
