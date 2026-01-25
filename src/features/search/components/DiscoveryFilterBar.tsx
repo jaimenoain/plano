@@ -75,9 +75,9 @@ export function DiscoveryFilterBar({
   return (
     <div className="bg-background border-b sticky top-0 z-10">
       {/* Desktop View */}
-      <div className="hidden md:flex flex-row items-center justify-between gap-4 p-4">
-        {/* Search Inputs */}
-        <div className="flex flex-row gap-2 flex-1 min-w-[200px]">
+      <div className="hidden md:grid grid-cols-12 h-full w-full">
+        {/* Left Side: Main Search */}
+        <div className="col-span-5 lg:col-span-4 p-4 border-r flex items-center">
           <DiscoverySearchInput
             placeholder={
               searchScope === 'users' ? "Search people..." :
@@ -89,62 +89,68 @@ export function DiscoveryFilterBar({
             onLocationSelect={() => {}}
             className="w-full"
           />
-          {(!searchScope || searchScope === 'content') && (
-            <LocationInput
-              value={locationQuery}
-              onLocationSelected={(address, country, place) => {
-                setLocationQuery(address);
-                onLocationSelect(address, country, place);
-              }}
-              placeholder="Search location..."
-              searchTypes={["(regions)"]}
-              className="w-full"
-            />
-          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Location Button */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onUseLocation}
-            title="Use my location"
-            className="shrink-0"
-          >
-            <Locate className="h-4 w-4" />
-          </Button>
+        {/* Right Side: Location Search + Filters */}
+        <div className="col-span-7 lg:col-span-8 p-4 flex items-center justify-between gap-4">
+          <div className="w-full max-w-sm">
+            {(!searchScope || searchScope === 'content') && (
+              <LocationInput
+                value={locationQuery}
+                onLocationSelected={(address, country, place) => {
+                  setLocationQuery(address);
+                  onLocationSelect(address, country, place);
+                }}
+                placeholder="Search location..."
+                searchTypes={["(regions)"]}
+                className="w-full"
+              />
+            )}
+          </div>
 
-          {/* Visited Filter */}
-          <Button
-            variant={showVisited ? "secondary" : "outline"}
-            onClick={() => onVisitedChange(!showVisited)}
-            className="shrink-0"
-          >
-            {showVisited && <Check className="mr-2 h-4 w-4" />}
-            Visited
-          </Button>
+          <div className="flex items-center gap-2 ml-auto">
+            {/* Location Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onUseLocation}
+              title="Use my location"
+              className="shrink-0"
+            >
+              <Locate className="h-4 w-4" />
+            </Button>
 
-          {/* Bucket List Filter */}
-          <Button
-            variant={showBucketList ? "secondary" : "outline"}
-            onClick={() => onBucketListChange(!showBucketList)}
-            className="shrink-0"
-          >
-            {showBucketList && <Check className="mr-2 h-4 w-4" />}
-            Bucket List
-          </Button>
+            {/* Visited Filter */}
+            <Button
+              variant={showVisited ? "secondary" : "outline"}
+              onClick={() => onVisitedChange(!showVisited)}
+              className="shrink-0"
+            >
+              {showVisited && <Check className="mr-2 h-4 w-4" />}
+              Visited
+            </Button>
 
-          {/* Leaderboard Button */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 shrink-0"
-            onClick={onShowLeaderboard}
-            title="Leaderboards"
-          >
-            <Trophy className="h-4 w-4 text-amber-500" />
-          </Button>
+            {/* Bucket List Filter */}
+            <Button
+              variant={showBucketList ? "secondary" : "outline"}
+              onClick={() => onBucketListChange(!showBucketList)}
+              className="shrink-0"
+            >
+              {showBucketList && <Check className="mr-2 h-4 w-4" />}
+              Bucket List
+            </Button>
+
+            {/* Leaderboard Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={onShowLeaderboard}
+              title="Leaderboards"
+            >
+              <Trophy className="h-4 w-4 text-amber-500" />
+            </Button>
+          </div>
         </div>
       </div>
 
