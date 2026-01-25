@@ -11,6 +11,9 @@ import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { useUserSearch } from "./hooks/useUserSearch";
 import { UserSearchNudge } from "./components/UserSearchNudge";
 import { UserResultsList } from "./components/UserResultsList";
+import { useArchitectSearch } from "./hooks/useArchitectSearch";
+import { ArchitectSearchNudge } from "./components/ArchitectSearchNudge";
+import { ArchitectResultsList } from "./components/ArchitectResultsList";
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -43,6 +46,21 @@ export default function SearchPage() {
 
   const handleUserMultipleMatch = () => {
     setSearchScope('users');
+  };
+
+  // Feature: Architect Search Integration
+  const { architects: foundArchitects, isLoading: isArchitectSearchLoading } = useArchitectSearch({
+    searchQuery,
+    limit: searchScope === 'architects' ? 20 : 5,
+    enabled: searchQuery.length >= 3
+  });
+
+  const handleArchitectSingleMatch = (id: string) => {
+    navigate(`/architect/${id}`);
+  };
+
+  const handleArchitectMultipleMatch = () => {
+    setSearchScope('architects');
   };
 
   // Feature: Map Interaction controls
@@ -215,12 +233,19 @@ export default function SearchPage() {
           />
         </div>
 
-        {searchScope === 'content' && searchQuery.length >= 3 && foundUsers.length > 0 && (
-           <UserSearchNudge
-             users={foundUsers}
-             onSingleMatch={handleUserSingleMatch}
-             onMultipleMatch={handleUserMultipleMatch}
-           />
+        {searchScope === 'content' && searchQuery.length >= 3 && (
+           <div className="flex flex-col">
+             <UserSearchNudge
+               users={foundUsers}
+               onSingleMatch={handleUserSingleMatch}
+               onMultipleMatch={handleUserMultipleMatch}
+             />
+             <ArchitectSearchNudge
+               architects={foundArchitects}
+               onSingleMatch={handleArchitectSingleMatch}
+               onMultipleMatch={handleArchitectMultipleMatch}
+             />
+           </div>
         )}
 
         <LeaderboardDialog
@@ -232,6 +257,10 @@ export default function SearchPage() {
           {searchScope === 'users' ? (
              <div className="h-full w-full overflow-y-auto bg-background p-0">
                <UserResultsList users={foundUsers} isLoading={isUserSearchLoading} />
+             </div>
+          ) : searchScope === 'architects' ? (
+             <div className="h-full w-full overflow-y-auto bg-background p-0">
+               <ArchitectResultsList architects={foundArchitects} isLoading={isArchitectSearchLoading} />
              </div>
           ) : (
             <>

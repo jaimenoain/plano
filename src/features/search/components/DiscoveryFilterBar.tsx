@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-export type SearchScope = 'content' | 'users';
+export type SearchScope = 'content' | 'users' | 'architects';
 
 export interface DiscoveryFilterBarProps {
   // Search Props
@@ -79,7 +79,11 @@ export function DiscoveryFilterBar({
         {/* Search Inputs */}
         <div className="flex flex-row gap-2 flex-1 min-w-[200px]">
           <DiscoverySearchInput
-            placeholder={searchScope === 'users' ? "Search people..." : "Search buildings, architects..."}
+            placeholder={
+              searchScope === 'users' ? "Search people..." :
+              searchScope === 'architects' ? "Search architects..." :
+              "Search buildings, architects..."
+            }
             value={searchQuery}
             onSearchChange={onSearchChange}
             onLocationSelect={() => {}}
@@ -147,7 +151,11 @@ export function DiscoveryFilterBar({
       {/* Mobile View */}
       <div className="flex md:hidden flex-row items-center gap-2 p-2">
         <DiscoverySearchInput
-          placeholder={searchScope === 'users' ? "Search people..." : "Search..."}
+          placeholder={
+            searchScope === 'users' ? "Search people..." :
+            searchScope === 'architects' ? "Search architects..." :
+            "Search..."
+          }
           value={searchQuery}
           onSearchChange={onSearchChange}
           onLocationSelect={() => {}}
