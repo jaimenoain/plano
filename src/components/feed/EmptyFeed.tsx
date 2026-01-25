@@ -21,7 +21,7 @@ export function EmptyFeed() {
       </Button>
       <div className="mt-4">
         <Button variant="ghost" asChild>
-            <Link to="/add-building" className="text-muted-foreground hover:text-foreground">
+            <Link to="/search" className="text-muted-foreground hover:text-foreground">
                 Log a building visit
             </Link>
         </Button>
