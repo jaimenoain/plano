@@ -74,13 +74,17 @@ export function ManageTabsDialog({ group, open, onOpenChange }: ManageTabsDialog
   };
 
   const sortedTabs = useMemo(() => {
+    // Sort based on the initial/saved state (group.active_tabs) instead of current local state (activeTabs)
+    // This prevents the list from jumping around while the user is toggling switches.
+    const initialActive = group?.active_tabs || ["sessions", "feed", "members"];
+
     return [...ALL_TABS].sort((a, b) => {
-      const aActive = activeTabs.includes(a.id);
-      const bActive = activeTabs.includes(b.id);
+      const aActive = initialActive.includes(a.id);
+      const bActive = initialActive.includes(b.id);
       if (aActive === bActive) return 0;
       return aActive ? -1 : 1;
     });
-  }, [activeTabs]);
+  }, [group]);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && hasChanges) {
