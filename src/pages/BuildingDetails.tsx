@@ -38,6 +38,7 @@ interface BuildingDetails {
   id: string;
   name: string;
   location: any; // PostGIS point handling usually requires parsing
+  location_precision?: 'exact' | 'approximate';
   address: string;
   architects: string[];
   relational_architects?: { id: string, name: string }[];
@@ -403,6 +404,7 @@ export default function BuildingDetails() {
                 status={userStatus}
                 isExpanded={isMapExpanded}
                 onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
+                locationPrecision={building.location_precision}
               />
             ) : (
               <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">

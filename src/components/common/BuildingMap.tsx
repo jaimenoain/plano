@@ -12,6 +12,7 @@ interface BuildingMapProps {
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   mapStyle?: string | object;
+  locationPrecision?: 'exact' | 'approximate';
 }
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -46,15 +47,23 @@ export function BuildingMap({
   status, 
   isExpanded, 
   onToggleExpand, 
-  mapStyle 
+  mapStyle,
+  locationPrecision = 'exact'
 }: BuildingMapProps) {
   const [isSatellite, setIsSatellite] = useState(false);
 
-  const pinColor = status === 'visited'
-    ? "text-[#333333] fill-[#333333]" // Charcoal
-    : status === 'pending'
-      ? "text-yellow-500 fill-yellow-500/20"
-      : "text-gray-500 fill-background";
+  const isApproximate = locationPrecision === 'approximate';
+
+  let pinColor = "text-gray-500 fill-background";
+  let dotBgClass = "bg-gray-500";
+
+  if (status === 'visited') {
+    pinColor = "text-[#333333] fill-[#333333]"; // Charcoal
+    dotBgClass = "bg-[#333333]";
+  } else if (status === 'pending') {
+    pinColor = "text-yellow-500 fill-yellow-500/20";
+    dotBgClass = "bg-yellow-500";
+  }
 
   // When expanded, we remove the default containment styling (relative, rounded, border)
   // to allow full screen behavior controlled by the parent's className.
@@ -79,9 +88,13 @@ export function BuildingMap({
         <Marker
           longitude={lng}
           latitude={lat}
-          anchor="bottom"
+          anchor={isApproximate ? "center" : "bottom"}
         >
-            <MapPin className={`w-8 h-8 drop-shadow-lg ${pinColor}`} />
+            {isApproximate ? (
+               <div className={`w-5 h-5 rounded-full border-2 border-background ${dotBgClass} drop-shadow-lg`} />
+            ) : (
+               <MapPin className={`w-8 h-8 drop-shadow-lg ${pinColor}`} />
+            )}
         </Marker>
       </Map>
 
