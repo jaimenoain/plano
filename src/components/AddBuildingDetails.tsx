@@ -207,6 +207,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
             onSubmit={handleFormSubmit}
             isSubmitting={isSubmitting}
             submitLabel="Save Building"
+            mode="create"
           />
         </CardContent>
       </Card>

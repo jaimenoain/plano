@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { buildingSchema } from "@/lib/validations/building";
+import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
@@ -26,7 +26,7 @@ export interface BuildingFormData {
   year_completed: number | null;
   architects: Architect[];
   styles: StyleSummary[];
-  functional_category_id: string;
+  functional_category_id: string | null;
   functional_typology_ids: string[];
   selected_attribute_ids: string[];
 }
@@ -36,14 +36,15 @@ interface BuildingFormProps {
   onSubmit: (data: BuildingFormData) => Promise<void>;
   isSubmitting: boolean;
   submitLabel: string;
+  mode?: 'create' | 'edit';
 }
 
-export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel }: BuildingFormProps) {
+export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create' }: BuildingFormProps) {
   const [name, setName] = useState(initialValues.name);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
   const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
   const [styles, setStyles] = useState<StyleSummary[]>(initialValues.styles || []);
-  const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id);
+  const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id || "");
   const [functional_typology_ids, setTypologyIds] = useState<string[]>(initialValues.functional_typology_ids);
   const [selected_attribute_ids, setAttributeIds] = useState<string[]>(initialValues.selected_attribute_ids);
 
@@ -133,7 +134,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         selected_attribute_ids,
       };
 
-      const validationResult = buildingSchema.safeParse(rawData);
+      const schema = mode === 'edit' ? editBuildingSchema : buildingSchema;
+      const validationResult = schema.safeParse(rawData);
 
       if (!validationResult.success) {
         validationResult.error.errors.forEach((err) => {
@@ -144,6 +146,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
       const formData: BuildingFormData = {
         ...validationResult.data,
+        functional_category_id: validationResult.data.functional_category_id ?? null,
       };
 
       await onSubmit(formData);
@@ -157,13 +160,13 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Name *</Label>
+          <Label htmlFor="name">Name {mode === 'create' && "*"}</Label>
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Sydney Opera House"
-            required
+            required={mode === 'create'}
             autoComplete="off"
           />
         </div>
@@ -252,7 +255,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="category-select">Category *</Label>
+            <Label htmlFor="category-select">Category {mode === 'create' && "*"}</Label>
             {isLoadingCategories ? (
                <Skeleton className="h-10 w-full" />
             ) : (
@@ -272,7 +275,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
           </div>
 
           <div className="space-y-2">
-            <Label>Typology *</Label>
+            <Label>Typology {mode === 'create' && "*"}</Label>
             {isLoadingTypologies ? (
                <div className="flex flex-wrap gap-2">
                  <Skeleton className="h-8 w-24" />
