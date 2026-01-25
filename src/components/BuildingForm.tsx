@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { buildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 
 export interface BuildingFormData {
   name: string;
@@ -44,34 +45,10 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [functional_typology_ids, setTypologyIds] = useState<string[]>(initialValues.functional_typology_ids);
   const [selected_attribute_ids, setAttributeIds] = useState<string[]>(initialValues.selected_attribute_ids);
 
-  // Mantenemos la lógica de estado de "main" para mostrar/ocultar campos
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
 
-  // Logic for showing/hiding classification fields could be added here
-  // const [showClassification, setShowClassification] = useState(...);
-
-  const handleCategoryChange = (value: string) => {
-    setCategoryId(value);
-    setTypologyIds([]); // Clear typologies when category changes
-  };
-
-  const handleAttributeGroupChange = (groupId: string, newGroupSelection: string[]) => {
-    // Find all attributes belonging to this group
-    const groupAttributeIds = attributes
-      ?.filter((attr) => attr.attribute_group_id === groupId)
-      .map((attr) => attr.id) || [];
-
-    // Filter out any attributes from this group from the current selection
-    const otherAttributes = selected_attribute_ids.filter(
-      (id) => !groupAttributeIds.includes(id)
-    );
-
-    // Combine other attributes with the new selection for this group
-    setAttributeIds([...otherAttributes, ...newGroupSelection]);
-  };
-
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["functional_categories"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -83,7 +60,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
     },
   });
 
-  const { data: typologies } = useQuery({
+  const { data: typologies, isLoading: isLoadingTypologies } = useQuery({
     queryKey: ["functional_typologies"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -95,19 +72,19 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
     },
   });
 
-  const { data: attributeGroups } = useQuery({
+  const { data: attributeGroups, isLoading: isLoadingGroups } = useQuery({
     queryKey: ["attribute_groups"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("attribute_groups")
         .select("*")
-        .order("name"); // or sort_order if available, using name for now
+        .order("name");
       if (error) throw error;
       return data as AttributeGroup[];
     },
   });
 
-  const { data: attributes } = useQuery({
+  const { data: attributes, isLoading: isLoadingAttributes } = useQuery({
     queryKey: ["attributes"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -118,6 +95,26 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
       return data as Attribute[];
     },
   });
+
+  const handleCategoryChange = (value: string) => {
+    setCategoryId(value);
+    setTypologyIds([]); // Clear typologies when category changes
+  };
+
+  const handleAttributeGroupChange = (groupId: string, newGroupSelection: string[]) => {
+    // Find all attributes belonging to this group
+    const groupAttributeIds = attributes
+      ?.filter((attr) => attr.group_id === groupId)
+      .map((attr) => attr.id) || [];
+
+    // Filter out any attributes from this group from the current selection
+    const otherAttributes = selected_attribute_ids.filter(
+      (id) => !groupAttributeIds.includes(id)
+    );
+
+    // Combine other attributes with the new selection for this group
+    setAttributeIds([...otherAttributes, ...newGroupSelection]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,158 +152,196 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="name">Name *</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Sydney Opera House"
-          required
-          autoComplete="off"
-        />
-      </div>
-
-      {/* SECCION 1: Año (Lógica visual de main + Input estándar) */}
-      {showYear ? (
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="year_completed">Year Built</Label>
+          <Label htmlFor="name">Name *</Label>
           <Input
-            id="year_completed"
-            type="number"
-            value={year_completed}
-            onChange={(e) => setYear(e.target.value)}
-            placeholder="e.g. 1973"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Sydney Opera House"
+            required
             autoComplete="off"
           />
         </div>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="rounded-full h-8"
-          onClick={() => setShowYear(true)}
-        >
-          <Plus className="h-3 w-3 mr-1" /> Add Year
-        </Button>
-      )}
 
-      {/* SECCION 2: Arquitectos (Lógica visual de main + Componente ArchitectSelect de la nueva rama) */}
-      {showArchitects ? (
-        <div className="space-y-2">
-          <Label>Architects</Label>
-          <ArchitectSelect
-            selectedArchitects={architects}
-            setSelectedArchitects={setArchitects}
-            placeholder="Search architects or add new..."
-          />
-          <p className="text-xs text-muted-foreground">
-            Add multiple architects if applicable. If not found, you can create a new one.
-          </p>
-        </div>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="rounded-full h-8"
-          onClick={() => setShowArchitects(true)}
-        >
-          <Plus className="h-3 w-3 mr-1" /> Add Architects
-        </Button>
-      )}
+        {/* Year Built */}
+        {showYear ? (
+          <div className="space-y-2">
+            <Label htmlFor="year_completed">Year Built</Label>
+            <Input
+              id="year_completed"
+              type="number"
+              value={year_completed}
+              onChange={(e) => setYear(e.target.value)}
+              placeholder="e.g. 1973"
+              autoComplete="off"
+            />
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full h-8"
+            onClick={() => setShowYear(true)}
+          >
+            <Plus className="h-3 w-3 mr-1" /> Add Year
+          </Button>
+        )}
 
-      {/* SECCION 3: Classification (Categories & Typologies) */}
-      <div className="space-y-6 border rounded-md p-4">
-        <h3 className="text-sm font-medium">Function</h3>
-
-        <div className="space-y-3">
-          <Label>Category</Label>
-          <Select value={functional_category_id} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories?.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-3">
-          <Label>Typology</Label>
-          {!functional_category_id ? (
-            <p className="text-sm text-muted-foreground italic">
-              Please select a category first to see available typologies.
+        {/* Architects */}
+        {showArchitects ? (
+          <div className="space-y-2">
+            <Label>Architects</Label>
+            <ArchitectSelect
+              selectedArchitects={architects}
+              setSelectedArchitects={setArchitects}
+              placeholder="Search architects or add new..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Add multiple architects if applicable. If not found, you can create a new one.
             </p>
-          ) : (
-            <ToggleGroup
-              type="multiple"
-              variant="outline"
-              value={functional_typology_ids}
-              onValueChange={setTypologyIds}
-              className="justify-start flex-wrap gap-2"
-            >
-              {typologies
-                ?.filter((t) => t.functional_category_id === functional_category_id)
-                .map((typology) => (
-                  <ToggleGroupItem
-                    key={typology.id}
-                    value={typology.id}
-                    className="h-8 text-sm px-3"
-                  >
-                    {typology.name}
-                  </ToggleGroupItem>
-                ))}
-            </ToggleGroup>
-          )}
-        </div>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full h-8"
+            onClick={() => setShowArchitects(true)}
+          >
+            <Plus className="h-3 w-3 mr-1" /> Add Architects
+          </Button>
+        )}
       </div>
 
-      {/* SECCION 4: Attributes */}
-      <div className="space-y-6 border rounded-md p-4">
-        <h3 className="text-sm font-medium">Characteristics</h3>
+      <Separator />
 
-        {attributeGroups?.map((group) => {
-          const groupAttributes = attributes?.filter(
-            (attr) => attr.attribute_group_id === group.id
-          );
+      {/* Functional Classification */}
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-base font-semibold">Functional Classification</h3>
+          <p className="text-sm text-muted-foreground">Define the primary purpose of the building.</p>
+        </div>
 
-          if (!groupAttributes || groupAttributes.length === 0) return null;
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="category-select">Category *</Label>
+            {isLoadingCategories ? (
+               <Skeleton className="h-10 w-full" />
+            ) : (
+              <Select value={functional_category_id} onValueChange={handleCategoryChange}>
+                <SelectTrigger id="category-select" className="w-full">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
-          return (
-            <div key={group.id} className="space-y-3">
-              <Label className="text-xs uppercase text-muted-foreground tracking-wider">
-                {group.name}
-              </Label>
+          <div className="space-y-2">
+            <Label>Typology *</Label>
+            {isLoadingTypologies ? (
+               <div className="flex flex-wrap gap-2">
+                 <Skeleton className="h-8 w-24" />
+                 <Skeleton className="h-8 w-32" />
+                 <Skeleton className="h-8 w-20" />
+               </div>
+            ) : !functional_category_id ? (
+              <div className="p-4 border border-dashed rounded-md text-sm text-muted-foreground text-center bg-muted/20">
+                Please select a category first to see available typologies.
+              </div>
+            ) : (
               <ToggleGroup
                 type="multiple"
                 variant="outline"
-                value={selected_attribute_ids}
-                onValueChange={(newSelection) => handleAttributeGroupChange(group.id, newSelection)}
+                value={functional_typology_ids}
+                onValueChange={setTypologyIds}
                 className="justify-start flex-wrap gap-2"
               >
-                {groupAttributes.map((attr) => (
-                  <ToggleGroupItem
-                    key={attr.id}
-                    value={attr.id}
-                    className="h-8 text-sm px-3"
-                  >
-                    {attr.name}
-                  </ToggleGroupItem>
-                ))}
+                {typologies
+                  ?.filter((t) => t.parent_category_id === functional_category_id)
+                  .map((typology) => (
+                    <ToggleGroupItem
+                      key={typology.id}
+                      value={typology.id}
+                      className="h-8 text-sm px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
+                      {typology.name}
+                    </ToggleGroupItem>
+                  ))}
               </ToggleGroup>
-            </div>
-          );
-        })}
+            )}
+            {functional_category_id && (typologies || []).filter(t => t.parent_category_id === functional_category_id).length === 0 && (
+                 <p className="text-sm text-muted-foreground">No typologies found for this category.</p>
+            )}
+          </div>
+        </div>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Separator />
+
+      {/* Characteristics / Attributes */}
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-base font-semibold">Characteristics</h3>
+          <p className="text-sm text-muted-foreground">Add tags to describe the building's features.</p>
+        </div>
+
+        {isLoadingGroups || isLoadingAttributes ? (
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-32" />
+            <div className="flex gap-2"><Skeleton className="h-8 w-20" /><Skeleton className="h-8 w-24" /></div>
+            <Skeleton className="h-4 w-32" />
+             <div className="flex gap-2"><Skeleton className="h-8 w-24" /><Skeleton className="h-8 w-20" /></div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {attributeGroups?.map((group) => {
+              const groupAttributes = attributes?.filter(
+                (attr) => attr.group_id === group.id
+              );
+
+              if (!groupAttributes || groupAttributes.length === 0) return null;
+
+              return (
+                <div key={group.id} className="space-y-3">
+                  <Label className="text-xs uppercase text-muted-foreground tracking-wider font-semibold">
+                    {group.name}
+                  </Label>
+                  <ToggleGroup
+                    type="multiple"
+                    variant="outline"
+                    value={selected_attribute_ids}
+                    onValueChange={(newSelection) => handleAttributeGroupChange(group.id, newSelection)}
+                    className="justify-start flex-wrap gap-2"
+                  >
+                    {groupAttributes.map((attr) => (
+                      <ToggleGroupItem
+                        key={attr.id}
+                        value={attr.id}
+                        className="h-8 text-sm px-3 data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground border-input"
+                      >
+                        {attr.name}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <Button type="submit" className="w-full mt-6" disabled={isSubmitting}>
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

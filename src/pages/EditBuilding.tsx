@@ -89,6 +89,7 @@ export default function EditBuilding() {
       }
 
       // Fetch Relations
+      // Architects
       // @ts-ignore
       const { data: relations } = await supabase
         .from('building_architects')
@@ -109,13 +110,32 @@ export default function EditBuilding() {
           }));
       }
 
+      // Fetch Typologies
+      // @ts-ignore
+      const { data: typologies } = await supabase
+        .from('building_functional_typologies')
+        .select('typology_id')
+        .eq('building_id', id);
+
+      const typologyIds = typologies?.map((t: any) => t.typology_id) || [];
+
+      // Fetch Attributes
+      // @ts-ignore
+      const { data: attributes } = await supabase
+        .from('building_attributes')
+        .select('attribute_id')
+        .eq('building_id', id);
+
+      const attributeIds = attributes?.map((a: any) => a.attribute_id) || [];
+
+
       setInitialValues({
         name: data.name,
         year_completed: data.year_completed,
         architects: finalArchitects,
         functional_category_id: (data as any).functional_category_id || "",
-        functional_typology_ids: (data as any).functional_typology_ids || [],
-        selected_attribute_ids: (data as any).selected_attribute_ids || [],
+        functional_typology_ids: typologyIds,
+        selected_attribute_ids: attributeIds,
         main_image_url: data.main_image_url,
       });
 
@@ -192,10 +212,7 @@ export default function EditBuilding() {
           architects: architectNames, // Maintain legacy array
           // @ts-ignore
           functional_category_id: formData.functional_category_id,
-          // @ts-ignore
-          functional_typology_ids: formData.functional_typology_ids,
-          // @ts-ignore
-          selected_attribute_ids: formData.selected_attribute_ids,
+          // Removed legacy column updates for typologies/attributes
           main_image_url: formData.main_image_url,
 
           address: locationData.address,
@@ -212,7 +229,7 @@ export default function EditBuilding() {
         return;
       }
 
-      // Handle Junction Table
+      // Handle Architects Junction Table
       // 1. Resolve IDs for all architects
       const resolvedIds: string[] = [];
 
@@ -250,6 +267,26 @@ export default function EditBuilding() {
           // @ts-ignore
           const { error: linkError } = await supabase.from('building_architects').insert(links);
           if (linkError) console.error("Link error:", linkError);
+      }
+
+      // Handle Typologies Junction Table
+      // @ts-ignore
+      await supabase.from('building_functional_typologies').delete().eq('building_id', id);
+      if (formData.functional_typology_ids.length > 0) {
+          const tLinks = formData.functional_typology_ids.map(tid => ({ building_id: id, typology_id: tid }));
+          // @ts-ignore
+          const { error: tError } = await supabase.from('building_functional_typologies').insert(tLinks);
+          if (tError) console.error("Typology link error:", tError);
+      }
+
+      // Handle Attributes Junction Table
+      // @ts-ignore
+      await supabase.from('building_attributes').delete().eq('building_id', id);
+      if (formData.selected_attribute_ids.length > 0) {
+          const aLinks = formData.selected_attribute_ids.map(aid => ({ building_id: id, attribute_id: aid }));
+          // @ts-ignore
+          const { error: aError } = await supabase.from('building_attributes').insert(aLinks);
+          if (aError) console.error("Attribute link error:", aError);
       }
 
       toast.success("Building updated successfully");

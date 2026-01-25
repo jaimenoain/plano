@@ -57,12 +57,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           location: `POINT(${locationData.lng} ${locationData.lat})`,
 
           created_by: user.id,
-          // @ts-ignore: New columns might not be in generated types yet
+          // @ts-ignore: New column functional_category_id
           functional_category_id: data.functional_category_id,
-          // @ts-ignore
-          functional_typology_ids: data.functional_typology_ids,
-          // @ts-ignore
-          selected_attribute_ids: data.selected_attribute_ids,
           architects: architectNames // Maintain legacy array of strings
         })
         .select()
@@ -98,21 +94,58 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
                 architect_id: a.id
             }));
 
+            // @ts-ignore
             const { error: linkError } = await supabase
                 .from('building_architects')
                 .insert(links);
 
             if (linkError) {
-                console.warn("Error linking architects (table might be missing):", linkError);
-                // Non-fatal error, but warn the user
-                // toast.error("Building saved, but failed to link architects.");
+                console.warn("Error linking architects:", linkError);
             }
           } catch (err) {
-              console.warn("Failed to insert building_architects, likely missing table", err);
+              console.warn("Failed to insert building_architects", err);
           }
       }
 
-      // 5. Success State
+      // 5. Insert Typologies (Junction Table)
+      if (data.functional_typology_ids.length > 0) {
+        try {
+          const typologyLinks = data.functional_typology_ids.map(tId => ({
+            building_id: buildingId,
+            typology_id: tId
+          }));
+
+          // @ts-ignore
+          const { error: typoError } = await supabase
+            .from('building_functional_typologies')
+            .insert(typologyLinks);
+
+          if (typoError) console.error("Error linking typologies:", typoError);
+        } catch (err) {
+          console.error("Failed to insert typologies", err);
+        }
+      }
+
+      // 6. Insert Attributes (Junction Table)
+      if (data.selected_attribute_ids.length > 0) {
+        try {
+          const attributeLinks = data.selected_attribute_ids.map(aId => ({
+            building_id: buildingId,
+            attribute_id: aId
+          }));
+
+          // @ts-ignore
+          const { error: attrError } = await supabase
+            .from('building_attributes')
+            .insert(attributeLinks);
+
+          if (attrError) console.error("Error linking attributes:", attrError);
+        } catch (err) {
+          console.error("Failed to insert attributes", err);
+        }
+      }
+
+      // 7. Success State
       toast.success("Building added successfully!");
       setNewBuilding({ id: insertedData.id, name: insertedData.name });
       setShowVisitDialog(true);

@@ -21,8 +21,16 @@ export const buildingSchema = z.object({
     })
   ),
   functional_category_id: z.string().uuid("Category is required"),
-  functional_typology_ids: z.array(z.string().uuid()).min(1, "At least one typology is required"),
-  selected_attribute_ids: z.array(z.string().uuid()).optional(),
+  functional_typology_ids: z.array(z.string().uuid())
+    .min(1, "At least one typology is required")
+    .refine((items) => new Set(items).size === items.length, {
+      message: "Duplicate typologies are not allowed",
+    }),
+  selected_attribute_ids: z.array(z.string().uuid())
+    .optional()
+    .refine((items) => !items || new Set(items).size === items.length, {
+      message: "Duplicate attributes are not allowed",
+    }),
   main_image_url: z.string().nullable().optional(),
 });
 
