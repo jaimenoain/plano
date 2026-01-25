@@ -53,9 +53,10 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
       if (candidateBuildingIds.length === 0) return [];
 
       // 4. Fetch Building Details for candidates
+      // @ts-ignore
       const { data: buildingDetails, error: buildingsError } = await supabase
         .from("buildings")
-        .select("*")
+        .select("*, architects:building_architects(architect:architects(name, id))")
         .in("id", candidateBuildingIds);
 
       if (buildingsError) throw buildingsError;
@@ -78,7 +79,8 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
             name: building.name,
             main_image_url: building.main_image_url,
             year_completed: building.year_completed,
-            architects: building.architects,
+            // @ts-ignore
+            architects: building.architects?.map((a: any) => a.architect).filter(Boolean) || [],
             overlap_count: interestedUserIds.length,
             interested_users: interestedUsers,
             total_selected_members: selectedMemberIds.length,

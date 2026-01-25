@@ -72,6 +72,7 @@ export default function SearchPage() {
   // Main: Filter controls
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
+  const [selectedArchitects, setSelectedArchitects] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("distance");
 
   // If a user types a query, we want to search the full database (ignore map bounds)
@@ -94,6 +95,11 @@ export default function SearchPage() {
   const availableStyles = useMemo(() => {
     const styles = new Set(buildings.flatMap(b => b.styles?.map(s => s.name) || []));
     return Array.from(styles).sort();
+  }, [buildings]);
+
+  const availableArchitects = useMemo(() => {
+    const architects = new Set(buildings.flatMap(b => b.architects?.map(a => a.name) || []));
+    return Array.from(architects).sort();
   }, [buildings]);
 
   // 4. Merged Filtering Logic
@@ -126,6 +132,12 @@ export default function SearchPage() {
     if (selectedStyles.length > 0) {
       result = result.filter(b => 
         b.styles?.some(style => selectedStyles.includes(style.name))
+      );
+    }
+
+    if (selectedArchitects.length > 0) {
+      result = result.filter(b =>
+        b.architects?.some(arch => selectedArchitects.includes(arch.name))
       );
     }
 
@@ -219,6 +231,9 @@ export default function SearchPage() {
             selectedStyles={selectedStyles}
             onStylesChange={setSelectedStyles}
             availableStyles={availableStyles}
+            selectedArchitects={selectedArchitects}
+            onArchitectsChange={setSelectedArchitects}
+            availableArchitects={availableArchitects}
             sortBy={sortBy}
             onSortChange={setSortBy}
             // --- Main Branch Props (Visited/Bucket Toggles) ---

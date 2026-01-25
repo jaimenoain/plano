@@ -81,9 +81,9 @@ test('Verify Internal Discovery Engine (Forensic Audit)', async ({ page }) => {
                       location_lng: 49.8698,
                       address: 'Baku, Azerbaijan',
                       main_image_url: 'https://example.com/zaha.jpg',
-                      architects: ['Zaha Hadid'],
+                      architects: [{ id: 'arch-1', name: 'Zaha Hadid' }],
                       year_completed: 2012,
-                      styles: ['Neo-Futurism'],
+                      styles: [{ id: 'style-1', name: 'Neo-Futurism', slug: 'neo-futurism' }],
                       city: 'Baku',
                       country: 'Azerbaijan',
                       social_score: 100
@@ -103,9 +103,9 @@ test('Verify Internal Discovery Engine (Forensic Audit)', async ({ page }) => {
                       location_lng: -0.1143,
                       address: 'London, UK',
                       main_image_url: 'https://example.com/national.jpg',
-                      architects: ['Denys Lasdun'],
+                      architects: [{ id: 'arch-2', name: 'Denys Lasdun' }],
                       year_completed: 1976,
-                      styles: ['Brutalist'],
+                      styles: [{ id: 'style-2', name: 'Brutalist', slug: 'brutalist' }],
                       city: 'London',
                       country: 'UK',
                       social_score: 90

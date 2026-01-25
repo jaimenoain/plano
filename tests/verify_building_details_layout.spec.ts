@@ -62,9 +62,11 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
                   name: 'Test Building',
                   location: { type: 'Point', coordinates: [-0.1278, 51.5074] },
                   address: '123 Test St, London',
-                  architects: ['Test Architect'],
+                  // architects is fetched separately now, but keeping it here harmlessly if needed by legacy
+                  architects: [],
                   year_completed: 2020,
-                  styles: ['Modern'],
+                  // styles must match the nested structure expected by fetchBuildingDetails
+                  styles: [{ style: { id: 'style1', name: 'Modern' } }],
                   main_image_url: 'https://example.com/image.jpg',
                   description: 'A test building',
                   created_by: 'user-other'
@@ -80,6 +82,16 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify(null)
+      });
+  });
+
+  await page.route('**/rest/v1/building_architects*', async route => {
+      await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+              { architect: { id: 'arch1', name: 'Test Architect' } }
+          ])
       });
   });
 

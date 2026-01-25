@@ -1,11 +1,27 @@
 import { Button } from "@/components/ui/button";
 import { LocationInput } from "@/components/ui/LocationInput";
-import { Check, ChevronsUpDown, MapPin, Sparkles, Trophy, Locate, Users, Building2, ListFilter } from "lucide-react";
+import { Check, ChevronsUpDown, MapPin, Sparkles, Trophy, Locate, Users, Building2, ListFilter, XCircle } from "lucide-react";
 import { DiscoverySearchInput } from "./DiscoverySearchInput";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 export type SearchScope = 'content' | 'users' | 'architects';
 
@@ -26,6 +42,11 @@ export interface DiscoveryFilterBarProps {
   selectedStyles: string[];
   onStylesChange: (styles: string[]) => void;
   availableStyles: string[];
+
+  // Architect Props
+  selectedArchitects?: string[];
+  onArchitectsChange?: (architects: string[]) => void;
+  availableArchitects?: string[];
   
   // Toggle Props
   showVisited: boolean;
@@ -49,6 +70,9 @@ export function DiscoveryFilterBar({
   selectedStyles,
   onStylesChange,
   availableStyles,
+  selectedArchitects = [],
+  onArchitectsChange,
+  availableArchitects = [],
   sortBy,
   onSortChange,
   showVisited,
@@ -59,18 +83,9 @@ export function DiscoveryFilterBar({
   onUseLocation,
   searchScope,
 }: DiscoveryFilterBarProps) {
-  const [openStyles, setOpenStyles] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
-
-  const toggleStyle = (style: string) => {
-    if (selectedStyles.includes(style)) {
-      onStylesChange(selectedStyles.filter((s) => s !== style));
-    } else {
-      onStylesChange([...selectedStyles, style]);
-    }
-  };
 
   return (
     <div className="bg-background border-b sticky top-0 z-10">
@@ -92,65 +107,101 @@ export function DiscoveryFilterBar({
         </div>
 
         {/* Right Side: Location Search + Filters */}
-        <div className="col-span-7 lg:col-span-8 p-4 flex items-center justify-between gap-4">
-          <div className="w-full max-w-sm">
-            {(!searchScope || searchScope === 'content') && (
-              <LocationInput
-                value={locationQuery}
-                onLocationSelected={(address, country, place) => {
-                  setLocationQuery(address);
-                  onLocationSelect(address, country, place);
-                }}
-                placeholder="Search location..."
-                searchTypes={["(regions)"]}
-                className="w-full"
-              />
-            )}
-          </div>
+        <div className="col-span-7 lg:col-span-8 p-4 flex items-center gap-4">
+           {/* Filters Row */}
+           <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
+               {/* Location Filter (City) */}
+               {(!searchScope || searchScope === 'content') && (
+                 <>
+                   <FilterDropdown
+                      title="City"
+                      options={availableCities}
+                      selectedValues={selectedCity && selectedCity !== 'all' ? [selectedCity] : []}
+                      onSelect={(val) => onCityChange(val === selectedCity ? 'all' : val)}
+                      icon={<MapPin className="mr-2 h-4 w-4" />}
+                      single
+                   />
 
-          <div className="flex items-center gap-2 ml-auto">
-            {/* Location Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onUseLocation}
-              title="Use my location"
-              className="shrink-0"
-            >
-              <Locate className="h-4 w-4" />
-            </Button>
+                   <Separator orientation="vertical" className="h-6" />
+                 </>
+               )}
 
-            {/* Visited Filter */}
-            <Button
-              variant={showVisited ? "secondary" : "outline"}
-              onClick={() => onVisitedChange(!showVisited)}
-              className="shrink-0"
-            >
-              {showVisited && <Check className="mr-2 h-4 w-4" />}
-              Visited
-            </Button>
+               {/* Style Filter */}
+               {(!searchScope || searchScope === 'content') && (
+                   <FilterDropdown
+                      title="Styles"
+                      options={availableStyles}
+                      selectedValues={selectedStyles}
+                      onSelect={(val) => {
+                          const newStyles = selectedStyles.includes(val)
+                             ? selectedStyles.filter(s => s !== val)
+                             : [...selectedStyles, val];
+                          onStylesChange(newStyles);
+                      }}
+                      icon={<Sparkles className="mr-2 h-4 w-4" />}
+                   />
+               )}
 
-            {/* Bucket List Filter */}
-            <Button
-              variant={showBucketList ? "secondary" : "outline"}
-              onClick={() => onBucketListChange(!showBucketList)}
-              className="shrink-0"
-            >
-              {showBucketList && <Check className="mr-2 h-4 w-4" />}
-              Bucket List
-            </Button>
+               {/* Architect Filter */}
+               {(!searchScope || searchScope === 'content') && onArchitectsChange && (
+                   <FilterDropdown
+                      title="Architects"
+                      options={availableArchitects}
+                      selectedValues={selectedArchitects}
+                      onSelect={(val) => {
+                          const newArchitects = selectedArchitects.includes(val)
+                             ? selectedArchitects.filter(a => a !== val)
+                             : [...selectedArchitects, val];
+                          onArchitectsChange(newArchitects);
+                      }}
+                      icon={<Users className="mr-2 h-4 w-4" />}
+                   />
+               )}
+           </div>
 
-            {/* Leaderboard Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 shrink-0"
-              onClick={onShowLeaderboard}
-              title="Leaderboards"
-            >
-              <Trophy className="h-4 w-4 text-amber-500" />
-            </Button>
-          </div>
+           <div className="flex items-center gap-2 ml-auto shrink-0">
+             {/* Location Button */}
+             <Button
+                variant="outline"
+                size="icon"
+                onClick={onUseLocation}
+                title="Use my location"
+                className="shrink-0"
+              >
+                <Locate className="h-4 w-4" />
+              </Button>
+
+              {/* Visited Filter */}
+              <Button
+                variant={showVisited ? "secondary" : "outline"}
+                onClick={() => onVisitedChange(!showVisited)}
+                className="shrink-0"
+              >
+                {showVisited && <Check className="mr-2 h-4 w-4" />}
+                Visited
+              </Button>
+
+              {/* Bucket List Filter */}
+              <Button
+                variant={showBucketList ? "secondary" : "outline"}
+                onClick={() => onBucketListChange(!showBucketList)}
+                className="shrink-0"
+              >
+                {showBucketList && <Check className="mr-2 h-4 w-4" />}
+                Bucket List
+              </Button>
+
+               {/* Leaderboard Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                onClick={onShowLeaderboard}
+                title="Leaderboards"
+              >
+                <Trophy className="h-4 w-4 text-amber-500" />
+              </Button>
+           </div>
         </div>
       </div>
 
@@ -209,7 +260,7 @@ export function DiscoveryFilterBar({
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="shrink-0" aria-label="Filters">
               <ListFilter className="h-5 w-5 text-muted-foreground" />
-              {(showVisited || showBucketList) && (
+              {(showVisited || showBucketList || (selectedStyles.length > 0) || (selectedArchitects.length > 0)) && (
                 <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
               )}
             </Button>
@@ -243,6 +294,52 @@ export function DiscoveryFilterBar({
                 </div>
               </div>
 
+              {/* Mobile Styles Filter */}
+              <div className="space-y-2">
+                 <h3 className="text-sm font-medium text-muted-foreground">Architectural Styles</h3>
+                 <div className="flex flex-wrap gap-2">
+                     {availableStyles.slice(0, 10).map(style => (
+                         <Badge
+                             key={style}
+                             variant={selectedStyles.includes(style) ? "default" : "outline"}
+                             className="cursor-pointer"
+                             onClick={() => {
+                                 const newStyles = selectedStyles.includes(style)
+                                    ? selectedStyles.filter(s => s !== style)
+                                    : [...selectedStyles, style];
+                                 onStylesChange(newStyles);
+                             }}
+                         >
+                             {style}
+                         </Badge>
+                     ))}
+                 </div>
+              </div>
+
+               {/* Mobile Architects Filter */}
+               {onArchitectsChange && (
+                   <div className="space-y-2">
+                     <h3 className="text-sm font-medium text-muted-foreground">Architects</h3>
+                     <div className="flex flex-wrap gap-2">
+                         {availableArchitects.slice(0, 10).map(arch => (
+                             <Badge
+                                 key={arch}
+                                 variant={selectedArchitects.includes(arch) ? "default" : "outline"}
+                                 className="cursor-pointer"
+                                 onClick={() => {
+                                     const newArchitects = selectedArchitects.includes(arch)
+                                        ? selectedArchitects.filter(a => a !== arch)
+                                        : [...selectedArchitects, arch];
+                                     onArchitectsChange(newArchitects);
+                                 }}
+                             >
+                                 {arch}
+                             </Badge>
+                         ))}
+                     </div>
+                  </div>
+               )}
+
               {/* Tools */}
               <div className="flex flex-col gap-2">
                  <h3 className="text-sm font-medium text-muted-foreground">Tools</h3>
@@ -264,4 +361,100 @@ export function DiscoveryFilterBar({
       </div>
     </div>
   );
+}
+
+// --- Helper Component: Filter Dropdown ---
+interface FilterDropdownProps {
+    title: string;
+    options: string[];
+    selectedValues: string[];
+    onSelect: (value: string) => void;
+    icon?: React.ReactNode;
+    single?: boolean;
+}
+
+function FilterDropdown({ title, options, selectedValues, onSelect, icon, single }: FilterDropdownProps) {
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 border-dashed">
+                    {icon}
+                    {title}
+                    {selectedValues.length > 0 && (
+                        <>
+                            <Separator orientation="vertical" className="mx-2 h-4" />
+                            <Badge variant="secondary" className="rounded-sm px-1 font-normal lg:hidden">
+                                {selectedValues.length}
+                            </Badge>
+                            <div className="hidden space-x-1 lg:flex">
+                                {selectedValues.length > 2 ? (
+                                    <Badge variant="secondary" className="rounded-sm px-1 font-normal">
+                                        {selectedValues.length} selected
+                                    </Badge>
+                                ) : (
+                                    options
+                                        .filter((option) => selectedValues.includes(option))
+                                        .map((option) => (
+                                            <Badge
+                                                key={option}
+                                                variant="secondary"
+                                                className="rounded-sm px-1 font-normal"
+                                            >
+                                                {option}
+                                            </Badge>
+                                        ))
+                                )}
+                            </div>
+                        </>
+                    )}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0" align="start">
+                <Command>
+                    <CommandInput placeholder={`Filter ${title}...`} />
+                    <CommandList>
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup>
+                            {options.map((option) => {
+                                const isSelected = selectedValues.includes(option);
+                                return (
+                                    <CommandItem
+                                        key={option}
+                                        onSelect={() => onSelect(option)}
+                                    >
+                                        <div
+                                            className={cn(
+                                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                                isSelected
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "opacity-50 [&_svg]:invisible"
+                                            )}
+                                        >
+                                            <Check className={cn("h-4 w-4")} />
+                                        </div>
+                                        <span>{option}</span>
+                                    </CommandItem>
+                                );
+                            })}
+                        </CommandGroup>
+                        {selectedValues.length > 0 && (
+                            <>
+                                <CommandSeparator />
+                                <CommandGroup>
+                                    <CommandItem
+                                        onSelect={() => {
+                                            selectedValues.forEach(v => onSelect(v));
+                                        }}
+                                        className="justify-center text-center"
+                                    >
+                                        Clear filters
+                                    </CommandItem>
+                                </CommandGroup>
+                            </>
+                        )}
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    )
 }

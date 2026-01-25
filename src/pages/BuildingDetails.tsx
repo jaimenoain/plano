@@ -43,6 +43,7 @@ import { UserPicker } from "@/components/common/UserPicker";
 import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
 import { ImageDetailsDialog } from "@/components/ImageDetailsDialog";
+import { Architect } from "@/types/architect";
 
 // --- Types ---
 interface BuildingDetails {
@@ -51,8 +52,7 @@ interface BuildingDetails {
   location: any; // PostGIS point handling usually requires parsing
   location_precision?: 'exact' | 'approximate';
   address: string;
-  architects: string[];
-  relational_architects?: { id: string, name: string }[];
+  architects: Architect[];
   year_completed: number;
   styles: { id: string, name: string }[];
   main_image_url: string | null;
@@ -112,14 +112,14 @@ const BuildingHeader = ({ building, canEdit, className }: BuildingHeaderProps) =
                         <span>{building.year_completed}</span>
                     </div>
                 )}
-                {(building.relational_architects && building.relational_architects.length > 0) && (
+                {(building.architects && building.architects.length > 0) && (
                     <div className="flex items-center gap-1.5">
-                        {building.relational_architects.map((arch, i) => (
+                        {building.architects.map((arch, i) => (
                             <span key={arch.id}>
                                 <Link to={`/architect/${arch.id}`} className="hover:underline text-primary">
                                     {arch.name}
                                 </Link>
-                                {i < building.relational_architects!.length - 1 && ", "}
+                                {i < building.architects.length - 1 && ", "}
                             </span>
                         ))}
                     </div>
@@ -206,7 +206,7 @@ export default function BuildingDetails() {
 
       const sanitizedBuilding = {
         ...data,
-        relational_architects: relationalArchitects,
+        architects: relationalArchitects,
         main_image_url: data.main_image_url || null
       };
 

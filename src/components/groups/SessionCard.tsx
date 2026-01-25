@@ -468,7 +468,7 @@ export function SessionCard({
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                         {building.year_completed && <span>{building.year_completed}</span>}
                         <div className="basis-full h-0 sm:hidden"></div>
-                        {building.architects && building.architects.map((a: string) => <Badge key={a} variant="outline" className="text-xs h-5 px-1.5 font-normal">{a}</Badge>)}
+                        {building.architects && building.architects.map((a: any) => <Badge key={a.id} variant="outline" className="text-xs h-5 px-1.5 font-normal">{a.name}</Badge>)}
                       </div>
                     </div>
                   </div>

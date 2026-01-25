@@ -179,7 +179,7 @@ export function useBuildingSearch() {
             // 2. Fetch building details
             let query = supabase
                 .from('buildings')
-                .select('*')
+                .select('*, architects:building_architects(architect:architects(name, id))')
                 .in('id', buildingIds);
 
             if (debouncedQuery) {
@@ -202,7 +202,7 @@ export function useBuildingSearch() {
                     id: b.id,
                     name: b.name,
                     main_image_url: b.main_image_url,
-                    architects: b.architects,
+                    architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || [],
                     year_completed: b.year_completed,
                     city: b.city,
                     country: b.country,
