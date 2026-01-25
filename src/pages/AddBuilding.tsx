@@ -68,6 +68,7 @@ interface NearbyBuilding {
   dist_meters: number;
   similarity_score?: number;
   main_image_url?: string | null;
+  location_precision?: 'exact' | 'approximate';
 }
 
 export default function AddBuilding() {
@@ -209,7 +210,7 @@ export default function AddBuilding() {
             const locationCheckPromise = supabase.rpc('find_nearby_buildings', {
                 lat: markerPosition.lat,
                 long: markerPosition.lng,
-                radius_meters: 50,
+                radius_meters: 2000,
                 name_query: ""
             });
 
@@ -247,8 +248,13 @@ export default function AddBuilding() {
             d.dist_meters <= 50 || queryName.length >= 3
         );
 
+        // Filter location results: keep if <= 50m OR if approximate (within 2km)
+        const relevantLocationMatches = locationData.filter(d =>
+            d.dist_meters <= 50 || d.location_precision === 'approximate'
+        );
+
         // Merge and deduplicate by ID
-        const allDuplicates = [...locationData, ...validNameMatches];
+        const allDuplicates = [...relevantLocationMatches, ...validNameMatches];
         const uniqueDuplicates = Array.from(new window.Map(allDuplicates.map(item => [item.id, item])).values());
 
         // Sort: Exact location matches (<= 50m) first, then high-confidence name matches
@@ -509,12 +515,12 @@ export default function AddBuilding() {
               <CardContent className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
 
                 {/* Location Matches */}
-                {duplicates.some(d => d.dist_meters <= 50) && (
+                {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
                     <div className="space-y-2">
                         <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
-                           <MapPin className="h-3 w-3" /> Same Location
+                           <MapPin className="h-3 w-3" /> Same Location / Vicinity
                         </div>
-                        {duplicates.filter(d => d.dist_meters <= 50).map(building => (
+                        {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
                              <div
                                 key={building.id}
                                 className="flex flex-col gap-2 p-3 rounded-md border border-amber-200/50 bg-amber-50/50 text-sm hover:bg-amber-100/50 transition-colors"
@@ -568,12 +574,12 @@ export default function AddBuilding() {
                 )}
 
                 {/* Name Matches */}
-                {duplicates.some(d => d.dist_meters > 50) && (
+                {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
                     <div className="space-y-2 pt-2">
                         <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
                            Similar Names (Far Away)
                         </div>
-                         {duplicates.filter(d => d.dist_meters > 50).map(building => (
+                         {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
                              <div
                                 key={building.id}
                                 className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
@@ -739,12 +745,12 @@ export default function AddBuilding() {
                 </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 my-2">
-                {duplicates.some(d => d.dist_meters <= 50) && (
+                {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
                     <div className="space-y-2">
                         <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
-                            <MapPin className="h-3 w-3" /> Same Location
+                            <MapPin className="h-3 w-3" /> Same Location / Vicinity
                         </div>
-                        {duplicates.filter(d => d.dist_meters <= 50).map(building => (
+                        {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
                             <div
                                 key={building.id}
                                 className="flex flex-col gap-2 p-3 rounded-md border border-amber-200/50 bg-amber-50/50 text-sm hover:bg-amber-100/50 transition-colors"
@@ -776,12 +782,12 @@ export default function AddBuilding() {
                     </div>
                 )}
 
-                {duplicates.some(d => d.dist_meters > 50) && (
+                {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
                     <div className="space-y-2 pt-2">
                         <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
                             Similar Names (Far Away)
                         </div>
-                        {duplicates.filter(d => d.dist_meters > 50).map(building => (
+                        {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
                             <div
                                 key={building.id}
                                 className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
