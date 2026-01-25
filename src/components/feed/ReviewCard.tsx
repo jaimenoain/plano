@@ -239,15 +239,8 @@ export function ReviewCard({
     );
   }
 
-  // --- 2. GRID VIEW (Social Layout Final) ---
-  return (
-    <article 
-      onClick={handleCardClick}
-      // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-      className={`group relative flex flex-col ${!isCompact && hasMedia ? `md:grid ${gridCols} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
-    >
-      {/* 1. Header: User Info - UX IMPROVED */}
-      {!hideUser && (
+  // Define components for render
+  const Header = !hideUser && (
         <div className={`${contentCol} p-1.5 md:p-3 flex items-center gap-1.5 md:gap-3 border-b border-border/40 bg-muted/20`}>
           <Avatar className="h-10 w-10 md:h-12 md:w-12 border border-border/50 shadow-sm">
             <AvatarImage src={avatarUrl} />
@@ -264,13 +257,12 @@ export function ReviewCard({
             </span>
           </div>
         </div>
-      )}
+  );
 
-      {/* 2. Media Section (Gallery OR Poster) */}
-      {!hideBuildingInfo && (
+  const Media = !hideBuildingInfo && (
         entry.images && entry.images.length > 0 ? (
           isCompact && entry.images.length > 1 ? (
-             // COMPACT GRID LAYOUT
+             // COMPACT GRID LAYOUT for IMAGES
              <div className={`relative w-full aspect-[4/3] bg-secondary ${mediaCol} overflow-hidden grid grid-cols-2 gap-0.5`}>
                 {entry.images.slice(0, 4).map((image, index) => (
                     <div key={image.id} className="relative w-full h-full">
@@ -298,7 +290,6 @@ export function ReviewCard({
              </div>
           ) : (
             // OPTION A: User Images Gallery (Standard Carousel)
-            // MERGE FIX: Added grid positioning classes (md:col-start-1...) to match Poster layout
             <div className={`relative w-full overflow-hidden bg-secondary ${mediaCol} ${!isCompact ? 'md:row-start-1 md:row-span-2 md:h-full' : ''}`}>
                <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full">
                   {entry.images.map((image) => (
@@ -352,7 +343,7 @@ export function ReviewCard({
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
 
-            {/* Watch With Facepile Overlay - Only if watchlist and has users */}
+            {/* Watch With Facepile Overlay */}
             {isWatchlist && watchWithUsers.length > 0 && (
                <div className="absolute bottom-2 right-2 flex -space-x-2 z-10">
                   {watchWithUsers.slice(0, 3).map(u => (
@@ -370,10 +361,10 @@ export function ReviewCard({
             )}
           </div>
         ) : null
-      )}
+  );
 
-      {/* 3. Content Body */}
-      <div className={`${contentCol} flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2`}>
+  const ContentBody = (
+      <>
         {/* Building Name (Context) - Only if NOT hidden */}
         {!hideBuildingInfo && (
           <div className="mb-1">
@@ -419,7 +410,7 @@ export function ReviewCard({
            </p>
         )}
 
-        {/* Tags Section - UPDATED */}
+        {/* Tags Section */}
         {entry.tags && entry.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-1">
             {entry.tags.slice(0, 3).map(tag => (
@@ -432,9 +423,11 @@ export function ReviewCard({
             )}
           </div>
         )}
+      </>
+  );
 
-        {/* 4. Action Footer */}
-        <div className="mt-auto pt-3 flex items-center gap-4 border-t border-border/50">
+  const Footer = (
+        <div className={`flex items-center gap-4 ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border/50' : 'mt-auto pt-3 border-t border-border/50'}`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -460,7 +453,35 @@ export function ReviewCard({
             <span className="text-xs font-medium">{entry.comments_count}</span>
           </button>
         </div>
-      </div>
+  );
+
+  return (
+    <article
+      onClick={handleCardClick}
+      // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
+      className={`group relative flex flex-col ${!isCompact && hasMedia ? `md:grid ${gridCols} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
+    >
+      {Header}
+
+      {isCompact ? (
+        // COMPACT LAYOUT: Header -> Text -> Media -> Footer
+        <>
+            <div className={`flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2`}>
+                {ContentBody}
+            </div>
+            {Media}
+            {Footer}
+        </>
+      ) : (
+        // DEFAULT LAYOUT: Header -> Media -> (Text + Footer)
+        <>
+            {Media}
+            <div className={`${contentCol} flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2`}>
+                {ContentBody}
+                {Footer}
+            </div>
+        </>
+      )}
     </article>
   );
 }
