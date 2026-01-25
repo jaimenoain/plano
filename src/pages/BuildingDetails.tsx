@@ -75,6 +75,63 @@ interface FeedEntry {
   }[];
 }
 
+// --- Reusable Header Component ---
+interface BuildingHeaderProps {
+  building: BuildingDetails;
+  canEdit: boolean;
+  className?: string;
+}
+
+const BuildingHeader = ({ building, canEdit, className }: BuildingHeaderProps) => {
+    return (
+        <div className={className}>
+            <div className="flex justify-between items-start">
+                <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
+                {canEdit && (
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link to={`/building/${building.id}/edit`}>
+                            <Edit2 className="w-5 h-5" />
+                        </Link>
+                    </Button>
+                )}
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                {building.year_completed && (
+                    <div className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4" />
+                        <span>{building.year_completed}</span>
+                    </div>
+                )}
+                {(building.relational_architects && building.relational_architects.length > 0) ? (
+                    <div className="flex items-center gap-1.5">
+                        {building.relational_architects.map((arch, i) => (
+                            <span key={arch.id}>
+                                <Link to={`/architect/${arch.id}`} className="hover:underline text-primary">
+                                    {arch.name}
+                                </Link>
+                                {i < building.relational_architects!.length - 1 && ", "}
+                            </span>
+                        ))}
+                    </div>
+                ) : (building.architects && (
+                    <div className="flex items-center gap-1.5">
+                        <span>{building.architects.join(", ")}</span>
+                    </div>
+                ))}
+            </div>
+
+            {/* Styles Tags */}
+            {building.styles && (
+                <div className="flex gap-2 mt-4">
+                    {building.styles.map(style => (
+                        <Badge key={style} variant="outline" className="border-white/20">{style}</Badge>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function BuildingDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -392,7 +449,10 @@ export default function BuildingDetails() {
     <AppLayout title={building.name} showBack>
       <MetaHead title={building.name} image={building.main_image_url || undefined} />
 
-      <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto p-4 lg:p-8">
+      {/* Building Header - Mobile Only */}
+      <BuildingHeader building={building} canEdit={canEdit} className="lg:hidden p-4 pb-0" />
+
+      <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto p-4 lg:p-8 pt-4">
         
         {/* LEFT: Visuals & Map (Map-First Experience ) */}
         <div className="space-y-6">
@@ -476,52 +536,8 @@ export default function BuildingDetails() {
         {/* RIGHT: Data & Actions */}
         <div className="space-y-8 mt-6 lg:mt-0">
             
-            {/* Header Info */}
-            <div>
-                <div className="flex justify-between items-start">
-                    <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
-                    {canEdit && (
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/building/${id}/edit`}>
-                                <Edit2 className="w-5 h-5" />
-                            </Link>
-                        </Button>
-                    )}
-                </div>
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    {building.year_completed && (
-                        <div className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4" />
-                            <span>{building.year_completed}</span>
-                        </div>
-                    )}
-                    {(building.relational_architects && building.relational_architects.length > 0) ? (
-                        <div className="flex items-center gap-1.5">
-                            {building.relational_architects.map((arch, i) => (
-                                <span key={arch.id}>
-                                    <Link to={`/architect/${arch.id}`} className="hover:underline text-primary">
-                                        {arch.name}
-                                    </Link>
-                                    {i < building.relational_architects!.length - 1 && ", "}
-                                </span>
-                            ))}
-                        </div>
-                    ) : (building.architects && (
-                        <div className="flex items-center gap-1.5">
-                            <span>{building.architects.join(", ")}</span>
-                        </div>
-                    ))}
-                </div>
-                
-                {/* Styles Tags */}
-                {building.styles && (
-                    <div className="flex gap-2 mt-4">
-                        {building.styles.map(style => (
-                            <Badge key={style} variant="outline" className="border-white/20">{style}</Badge>
-                        ))}
-                    </div>
-                )}
-            </div>
+            {/* Header Info - Desktop Only */}
+            <BuildingHeader building={building} canEdit={canEdit} className="hidden lg:block" />
 
             {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
             <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4">
