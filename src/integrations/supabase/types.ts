@@ -86,6 +86,7 @@ export interface Database {
           year_completed: number | null
           city: string | null
           country: string | null
+          location_precision: Database["public"]["Enums"]["location_precision"]
         }
         Insert: {
           created_at?: string
@@ -101,6 +102,7 @@ export interface Database {
           year_completed?: number | null
           city?: string | null
           country?: string | null
+          location_precision?: Database["public"]["Enums"]["location_precision"]
         }
         Update: {
           created_at?: string
@@ -116,6 +118,7 @@ export interface Database {
           year_completed?: number | null
           city?: string | null
           country?: string | null
+          location_precision?: Database["public"]["Enums"]["location_precision"]
         }
         Relationships: [
           {
@@ -1321,6 +1324,8 @@ export interface Database {
           location_lng: number
           dist_meters: number
           similarity_score: number
+          main_image_url: string | null
+          location_precision: Database["public"]["Enums"]["location_precision"]
         }[]
       }
       get_group_building_stats: {
@@ -1382,9 +1387,12 @@ export interface Database {
           city: string | null
           country: string | null
           styles: string[] | null
+          architects: string[] | null
+          year_completed: number | null
           distance_meters: number | null
           social_context: string | null
           social_score: number
+          location_precision: Database["public"]["Enums"]["location_precision"]
         }[]
       }
       get_discovery_filters: {
@@ -1397,7 +1405,7 @@ export interface Database {
       }
     }
     Enums: {
-      [_ in never]: never
+      location_precision: "exact" | "approximate"
     }
     CompositeTypes: {
       [_ in never]: never
