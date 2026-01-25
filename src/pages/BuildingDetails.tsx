@@ -744,6 +744,14 @@ export default function BuildingDetails() {
                 )}
             </div>
 
+            {canEdit && (
+                <div className="flex justify-end mt-2 mb-2">
+                    <Link to={`/building/${building.id}/edit`} className="text-xs text-muted-foreground hover:underline">
+                        Edit building information
+                    </Link>
+                </div>
+            )}
+
             {/* Top Community Resources */}
             {(linksLoading || topLinks.length > 0) && (
                 <div className="pt-4 border-t border-dashed">
