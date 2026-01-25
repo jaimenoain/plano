@@ -31,6 +31,7 @@ import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { UserPicker } from "@/components/common/UserPicker";
 import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
+import { ImageDetailsDialog } from "@/components/ImageDetailsDialog";
 
 // --- Types ---
 interface BuildingDetails {
@@ -91,6 +92,7 @@ export default function BuildingDetails() {
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [displayImages, setDisplayImages] = useState<{id: string, url: string}[]>([]);
   const [userImages, setUserImages] = useState<{id: string, storage_path: string}[]>([]);
+  const [selectedImage, setSelectedImage] = useState<{id: string, url: string} | null>(null);
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
   const [linksLoading, setLinksLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -422,8 +424,9 @@ export default function BuildingDetails() {
                                 <CarouselItem key={img.id} className="pl-0 h-full">
                                     <img
                                       src={img.url}
-                                      className="w-full h-full object-cover"
+                                      className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                                       alt={building.name}
+                                      onClick={() => setSelectedImage({ id: img.id, url: img.url })}
                                     />
                                 </CarouselItem>
                             ))}
@@ -550,8 +553,9 @@ export default function BuildingDetails() {
                                         <img
                                             key={img.id}
                                             src={publicUrl}
-                                            className="h-24 w-24 object-cover rounded-md border bg-muted"
+                                            className="h-24 w-24 object-cover rounded-md border bg-muted cursor-pointer hover:opacity-90 transition-opacity"
                                             alt="Review photo"
+                                            onClick={() => setSelectedImage({ id: img.id, url: publicUrl })}
                                         />
                                     );
                                 })}
@@ -769,8 +773,9 @@ export default function BuildingDetails() {
                                                     <img
                                                         key={img.id}
                                                         src={publicUrl}
-                                                        className="h-24 w-24 object-cover rounded-md border bg-muted"
+                                                        className="h-24 w-24 object-cover rounded-md border bg-muted cursor-pointer hover:opacity-90 transition-opacity"
                                                         alt="Review photo"
+                                                        onClick={() => setSelectedImage({ id: img.id, url: publicUrl })}
                                                     />
                                                 );
                                             })}
@@ -785,6 +790,13 @@ export default function BuildingDetails() {
 
         </div>
       </div>
+
+      <ImageDetailsDialog
+        imageId={selectedImage?.id || null}
+        initialUrl={selectedImage?.url || null}
+        isOpen={!!selectedImage}
+        onClose={() => setSelectedImage(null)}
+      />
     </AppLayout>
   );
 }
