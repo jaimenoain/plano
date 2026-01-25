@@ -113,18 +113,41 @@ export function BuildingDiscoveryMap({
   const supercluster = useMemo(() => {
     return new Supercluster({
       radius: 40,
-      maxZoom: 16
+      maxZoom: 14 // Reduced maxZoom to break clusters earlier for approximate locations
     });
   }, []);
 
-  const points = useMemo(() => buildings?.map(b => ({
-    type: 'Feature' as const,
-    properties: { cluster: false, buildingId: b.id, ...b },
-    geometry: {
-      type: 'Point' as const,
-      coordinates: [b.location_lng, b.location_lat]
+  const points = useMemo(() => buildings?.map(b => {
+    let [lng, lat] = [b.location_lng, b.location_lat];
+
+    // Jitter logic for approximate locations to prevent perfect stacking
+    if (b.location_precision === 'approximate') {
+        let hash = 0;
+        const seed = b.id;
+        for (let i = 0; i < seed.length; i++) {
+            hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+            hash |= 0;
+        }
+
+        // ~200-300m spread to ensure visual separation
+        // (0.001 deg is approx 111m lat / 70m lng in London)
+        // Multiplier 0.005 provides enough spread to be distinct at zoom 14-15
+        const latOffset = (((hash % 1000) / 1000) - 0.5) * 0.005;
+        const lngOffset = ((((hash * 17) % 1000) / 1000) - 0.5) * 0.005;
+
+        lng += lngOffset;
+        lat += latOffset;
     }
-  })) || [], [buildings]);
+
+    return {
+        type: 'Feature' as const,
+        properties: { cluster: false, buildingId: b.id, ...b },
+        geometry: {
+            type: 'Point' as const,
+            coordinates: [lng, lat]
+        }
+    };
+  }) || [], [buildings]);
 
   const [clusters, setClusters] = useState<any[]>([]);
   const viewStateRef = useRef(viewState);
@@ -190,10 +213,24 @@ export function BuildingDiscoveryMap({
                 latitude={latitude}
                 onClick={(e) => {
                     e.originalEvent.stopPropagation();
-                    const expansionZoom = Math.min(
+                    let expansionZoom = Math.min(
                         supercluster.getClusterExpansionZoom(cluster.id),
                         20
                     );
+
+                    // Check if this is a cluster of approximate locations
+                    // If so, we want to zoom deep enough to reveal the jittered points
+                    const leaves = supercluster.getLeaves(cluster.id, Infinity);
+                    const isAllApproximate = leaves.every(l => l.properties.location_precision === 'approximate');
+
+                    if (isAllApproximate) {
+                         // Force zoom to a level where jitter is clearly visible (15+)
+                         expansionZoom = Math.max(expansionZoom, 15);
+                    }
+
+                    if (expansionZoom <= viewState.zoom) {
+                        expansionZoom = viewState.zoom + 2;
+                    }
 
                     mapRef.current?.flyTo({
                         center: [longitude, latitude],
@@ -202,7 +239,10 @@ export function BuildingDiscoveryMap({
                     });
                 }}
             >
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold shadow-md border-2 border-background cursor-pointer hover:scale-110 transition-transform">
+                <div
+                    data-testid="cluster-marker"
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold shadow-md border-2 border-background cursor-pointer hover:scale-110 transition-transform"
+                >
                     {pointCount}
                 </div>
             </Marker>
@@ -212,6 +252,7 @@ export function BuildingDiscoveryMap({
     // Leaf node
     const building = cluster.properties as (Building & { buildingId: string });
     const status = userBuildingsMap?.get(building.buildingId);
+    const isApproximate = building.location_precision === 'approximate';
 
     // Pin Protocol:
     // Charcoal: Visited
@@ -219,16 +260,20 @@ export function BuildingDiscoveryMap({
     // Grey/Default: Discovery
 
     let pinColorClass = "text-gray-500 fill-background";
+    let dotBgClass = "bg-gray-500";
     let pinTooltip = null;
 
     if (status === 'visited') {
         pinColorClass = "text-[#333333] fill-[#333333]"; // Charcoal
+        dotBgClass = "bg-[#333333]";
         pinTooltip = <span className="ml-1 opacity-75 capitalize">(Visited)</span>;
     } else if (status === 'pending') {
         pinColorClass = "text-[#EEFF41] fill-[#EEFF41]"; // Neon
+        dotBgClass = "bg-[#EEFF41]";
         pinTooltip = <span className="ml-1 opacity-75 capitalize">(Pending)</span>;
     } else if (building.social_context) {
         pinColorClass = "text-[#EEFF41] fill-[#EEFF41]"; // Neon
+        dotBgClass = "bg-[#EEFF41]";
         pinTooltip = <span className="ml-1 opacity-90">({building.social_context})</span>;
     }
 
@@ -237,14 +282,17 @@ export function BuildingDiscoveryMap({
         key={building.buildingId}
         longitude={longitude}
         latitude={latitude}
-        anchor="bottom"
+        anchor={isApproximate ? "center" : "bottom"}
         onClick={(e) => {
             e.originalEvent.stopPropagation();
             navigate(`/building/${building.buildingId}`);
         }}
         className="cursor-pointer hover:z-10"
         >
-            <div className="group relative flex flex-col items-center">
+            <div
+                data-testid={isApproximate ? "approximate-dot" : "exact-pin"}
+                className="group relative flex flex-col items-center"
+            >
             {/* Tooltip */}
             <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap z-50">
                 <div className="bg-[#333333] text-[#EEFF41] text-xs px-2 py-1 rounded shadow-lg flex items-center gap-1 border border-[#EEFF41]">
@@ -254,7 +302,11 @@ export function BuildingDiscoveryMap({
                 <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
             </div>
 
-            <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform hover:scale-110`} />
+            {isApproximate ? (
+                <div className={`w-5 h-5 rounded-full border-2 border-background ${dotBgClass} drop-shadow-md transition-transform hover:scale-110`} />
+            ) : (
+                <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform hover:scale-110`} />
+            )}
             </div>
         </Marker>
     );
@@ -279,7 +331,11 @@ export function BuildingDiscoveryMap({
   };
 
   return (
-    <div className="h-full w-full rounded-xl overflow-hidden border border-white/10 relative">
+    <div
+        className="h-full w-full rounded-xl overflow-hidden border border-white/10 relative"
+        data-zoom={viewState.zoom}
+        data-testid="map-container"
+    >
       <MapGL
         ref={mapRef}
         {...viewState}
