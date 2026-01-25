@@ -1,7 +1,8 @@
+import { useState } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MapPin, Maximize2, Minimize2 } from "lucide-react";
+import { Layers, MapPin, Maximize2, Minimize2 } from "lucide-react";
 
 interface BuildingMapProps {
   lat: number;
@@ -10,10 +11,33 @@ interface BuildingMapProps {
   status?: 'visited' | 'pending' | null;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
-  mapStyle?: string;
+  mapStyle?: string | object;
 }
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
+
+const SATELLITE_STYLE = {
+  version: 8,
+  sources: {
+    "satellite-tiles": {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      ],
+      tileSize: 256,
+      attribution: "&copy; Esri"
+    }
+  },
+  layers: [
+    {
+      id: "satellite-layer",
+      type: "raster",
+      source: "satellite-tiles",
+      minzoom: 0,
+      maxzoom: 22
+    }
+  ]
+};
 
 export function BuildingMap({ 
   lat, 
@@ -24,6 +48,8 @@ export function BuildingMap({
   onToggleExpand, 
   mapStyle 
 }: BuildingMapProps) {
+  const [isSatellite, setIsSatellite] = useState(false);
+
   const pinColor = status === 'visited'
     ? "text-[#333333] fill-[#333333]" // Charcoal
     : status === 'pending'
@@ -46,7 +72,7 @@ export function BuildingMap({
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={mapStyle || DEFAULT_MAP_STYLE}
+        mapStyle={isSatellite ? SATELLITE_STYLE : (mapStyle || DEFAULT_MAP_STYLE)}
         attributionControl={false}
       >
         <NavigationControl position="bottom-right" />
@@ -58,6 +84,20 @@ export function BuildingMap({
             <MapPin className={`w-8 h-8 drop-shadow-lg ${pinColor}`} />
         </Marker>
       </Map>
+
+      {isExpanded && (
+        <button
+            onClick={(e) => {
+                e.stopPropagation();
+                setIsSatellite(!isSatellite);
+            }}
+            className="absolute top-2 left-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10 flex items-center gap-2"
+            title={isSatellite ? "Show Map" : "Show Satellite"}
+        >
+            <Layers className="w-4 h-4" />
+            <span className="text-xs font-medium">{isSatellite ? "Map" : "Satellite"}</span>
+        </button>
+      )}
 
       {onToggleExpand && (
         <button
