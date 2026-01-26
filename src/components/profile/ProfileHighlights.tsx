@@ -41,49 +41,26 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
       {/* Content */}
       <div className="flex flex-col gap-6">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 1. Genres (Styles) */}
-              {showGenres && (
-                 <div className="space-y-2">
-                     <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Styles</h4>
-                     {genres.length > 0 ? (
-                         <div className="flex flex-wrap gap-2">
-                            {genres.map(g => (
-                                <div key={g.id} className="bg-secondary/50 border border-border/50 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
-                                    <Building2 className="h-3 w-3 text-muted-foreground" />
-                                    {g.title}
-                                </div>
-                            ))}
-                         </div>
-                     ) : (
-                         <div className="text-sm text-muted-foreground italic pl-1">No styles selected</div>
-                     )}
-                 </div>
-              )}
-
-              {/* 2. People (Architects) */}
-              {showPeople && (
-                 <div className="space-y-2">
-                     <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Architects</h4>
-                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
-                        {people.map(p => (
-                            <div key={p.id} className="flex flex-col items-center gap-2 w-20 shrink-0 snap-start">
-                                 <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-border/50 shadow-sm bg-muted">
-                                     {p.image_url ? (
-                                         <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
-                                     ) : (
-                                         <div className="w-full h-full flex items-center justify-center bg-secondary"><User className="h-8 w-8 text-muted-foreground/50" /></div>
-                                     )}
-                                 </div>
-                                 <span className="text-xs text-center font-medium leading-tight line-clamp-2">{p.title}</span>
+          {/* 1. Genres (Styles) */}
+          {showGenres && (
+             <div className="space-y-2">
+                 <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Styles</h4>
+                 {genres.length > 0 ? (
+                     <div className="flex flex-wrap gap-2">
+                        {genres.map(g => (
+                            <div key={g.id} className="bg-secondary/50 border border-border/50 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
+                                <Building2 className="h-3 w-3 text-muted-foreground" />
+                                {g.title}
                             </div>
                         ))}
                      </div>
-                 </div>
-              )}
-          </div>
+                 ) : (
+                     <div className="text-sm text-muted-foreground italic pl-1">No styles selected</div>
+                 )}
+             </div>
+          )}
 
-          {/* 3. Quotes */}
+          {/* 2. Quotes */}
           {(quotes.length > 0) && (
              <div className="space-y-2">
                  <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Quotes</h4>
@@ -96,6 +73,27 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
                                  <p className="text-xs text-muted-foreground text-right">— {q.quote_source}</p>
                              )}
                         </Card>
+                    ))}
+                 </div>
+             </div>
+          )}
+
+          {/* 3. People (Architects) */}
+          {showPeople && (
+             <div className="space-y-2">
+                 <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Architects</h4>
+                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
+                    {people.map(p => (
+                        <div key={p.id} className="flex flex-col items-center gap-2 w-20 shrink-0 snap-start">
+                             <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-border/50 shadow-sm bg-muted">
+                                 {p.image_url ? (
+                                     <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                                 ) : (
+                                     <div className="w-full h-full flex items-center justify-center bg-secondary"><User className="h-8 w-8 text-muted-foreground/50" /></div>
+                                 )}
+                             </div>
+                             <span className="text-xs text-center font-medium leading-tight line-clamp-2">{p.title}</span>
+                        </div>
                     ))}
                  </div>
              </div>
