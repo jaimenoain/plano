@@ -181,6 +181,19 @@ export default function BuildingDetails() {
   }, [building]);
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isMapExpanded) {
+        setIsMapExpanded(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMapExpanded]);
+
+  useEffect(() => {
     if (id) fetchBuildingData();
   }, [id, user]);
 

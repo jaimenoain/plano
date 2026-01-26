@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) => {
+test('Verify Map Full Screen Toggle with ESC', async ({ page }) => {
   // 1. Mock Session
   await page.addInitScript(() => {
     window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
@@ -18,7 +18,7 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
     }));
   });
 
-  // 2. Mock Google Maps
+  // 2. Mock Google Maps (Required for dependencies even if MapLibre is used)
   await page.addInitScript(() => {
     window.google = {
       maps: {
@@ -62,10 +62,8 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
                   name: 'Test Building',
                   location: { type: 'Point', coordinates: [-0.1278, 51.5074] },
                   address: '123 Test St, London',
-                  // architects is fetched separately now, but keeping it here harmlessly if needed by legacy
                   architects: [],
                   year_completed: 2020,
-                  // styles must match the nested structure expected by fetchBuildingDetails
                   styles: [{ style: { id: 'style1', name: 'Modern' } }],
                   main_image_url: 'https://example.com/image.jpg',
                   description: 'A test building',
@@ -81,27 +79,7 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
       await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify([
-            {
-                id: 'entry1',
-                content: 'Nice',
-                rating: 5,
-                status: 'visited',
-                tags: [],
-                created_at: new Date().toISOString(),
-                user: { username: 'testuser', avatar_url: null },
-                images: [{ id: 'img1', storage_path: 'path/to/img.jpg', likes_count: 5 }]
-            }
-          ])
-      });
-  });
-
-  // Mock image storage
-  await page.route('**/storage/v1/object/public/**', async route => {
-      await route.fulfill({
-          status: 200,
-          contentType: 'image/jpeg',
-          body: Buffer.from('fake-image-data')
+          body: JSON.stringify(null)
       });
   });
 
@@ -115,6 +93,15 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
       });
   });
 
+  // Mock image
+  await page.route('**/storage/v1/object/public/**', async route => {
+     await route.fulfill({
+         status: 200,
+         contentType: 'image/png',
+         body: Buffer.from('fake-image')
+     });
+  });
+
   // 4. Navigate
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('http://localhost:8080/building/b1');
@@ -122,26 +109,36 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
   // 5. Verification
   await expect(page.getByRole('heading', { name: 'Test Building' })).toBeVisible();
 
-  // Check Left Column Children Order
-  const mapContainer = page.locator('.h-48');
-  const addressText = page.getByText('123 Test St, London');
-  const image = page.getByRole('img', { name: 'Test Building' });
+  // Find the button with title "Expand Map"
+  const expandBtn = page.getByTitle('Expand Map');
+  await expect(expandBtn).toBeVisible();
 
-  await expect(mapContainer).toBeVisible();
-  await expect(addressText).toBeVisible();
-  await expect(image).toBeVisible();
+  // Click Expand
+  await expandBtn.click();
 
-  const mapBox = await mapContainer.boundingBox();
-  const addressBox = await addressText.boundingBox();
-  const imageBox = await image.boundingBox();
+  // Wait for the state update
+  await page.waitForTimeout(500);
 
-  if (!mapBox || !addressBox || !imageBox) throw new Error("Elements not found");
+  // Check for the presence of the collapse button, which title changes to "Collapse Map"
+  const collapseBtn = page.getByTitle('Collapse Map');
+  await expect(collapseBtn).toBeVisible();
 
-  console.log('Map Y:', mapBox.y);
-  console.log('Address Y:', addressBox.y);
-  console.log('Image Y:', imageBox.y);
+  // Find the map container again. Since the class changed, we can check for the fixed class.
+  const expandedMap = page.locator('.fixed.inset-0');
+  await expect(expandedMap).toBeVisible();
 
-  // Assert Order: Map < Address < Image
-  expect(mapBox.y).toBeLessThan(addressBox.y);
-  expect(addressBox.y).toBeLessThan(imageBox.y);
+  // Press ESC
+  await page.keyboard.press('Escape');
+
+  // Verify it collapsed
+  // The collapse button should be gone (or rather, the expand button should be back)
+  await expect(page.getByTitle('Expand Map')).toBeVisible();
+
+  // The fixed map container should no longer be visible/exist
+  await expect(expandedMap).not.toBeVisible();
+
+  // Verify the small map container is there
+  const smallMap = page.locator('.h-48');
+  await expect(smallMap).toBeVisible();
+
 });
