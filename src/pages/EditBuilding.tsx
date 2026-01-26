@@ -85,26 +85,6 @@ export default function EditBuilding() {
       // @ts-ignore
       setBuildingShortId(data.short_id);
 
-      // Permission Check
-      let hasPermission = data.created_by === user?.id;
-      if (!hasPermission) {
-         const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user?.id)
-            .single();
-
-         if (profile && profile.role === 'admin') {
-             hasPermission = true;
-         }
-      }
-
-      if (!hasPermission) {
-          toast.error("You don't have permission to edit this building.");
-          navigate(getBuildingUrl(data.id, data.slug, data.short_id));
-          return;
-      }
-
       // Fetch Relations
       // Architects
       // @ts-ignore
