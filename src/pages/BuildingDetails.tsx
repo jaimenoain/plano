@@ -166,6 +166,7 @@ export default function BuildingDetails() {
   const [tags, setTags] = useState<string[]>([]);
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [isSavingNote, setIsSavingNote] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
   // Visit With state
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -425,6 +426,31 @@ export default function BuildingDetails() {
           toast({ variant: "destructive", title: "Failed to save note" });
       } finally {
           setIsSavingNote(false);
+      }
+  };
+
+  const handleDelete = async () => {
+      if (!user || !building) return;
+
+      try {
+          const { error } = await supabase
+              .from("user_buildings")
+              .delete()
+              .eq("user_id", user.id)
+              .eq("building_id", building.id);
+
+          if (error) throw error;
+
+          setUserStatus(null);
+          setMyRating(0);
+          setNote("");
+          setTags([]);
+          setIsEditing(false);
+
+          toast({ title: "Removed from list" });
+      } catch (error) {
+          console.error("Delete failed", error);
+          toast({ variant: "destructive", title: "Failed to remove" });
       }
   };
 
@@ -727,6 +753,18 @@ export default function BuildingDetails() {
                                 </div>
                             </div>
                         )}
+
+                        {userStatus && (
+                            <div className="flex justify-center mt-4 border-t border-dashed pt-4">
+                                <Button
+                                    variant="link"
+                                    className="text-muted-foreground hover:text-destructive h-auto p-0 text-xs"
+                                    onClick={() => setShowDeleteAlert(true)}
+                                >
+                                    Remove from my list
+                                </Button>
+                            </div>
+                        )}
                     </>
                 )}
 
@@ -888,6 +926,23 @@ export default function BuildingDetails() {
         isOpen={!!selectedImage}
         onClose={() => setSelectedImage(null)}
       />
+
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Remove from list?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      This will delete your rating, status, and any private notes for this building. This action cannot be undone.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Remove
+                  </AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
