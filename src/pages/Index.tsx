@@ -211,6 +211,8 @@ export default function Index() {
         },
         building: {
           id: review.building_data?.id,
+          short_id: review.building_data?.short_id,
+          slug: review.building_data?.slug,
           name: review.building_data?.name || "Unknown Building",
           address: review.building_data?.address || null,
           architects: review.building_data?.architects || null,

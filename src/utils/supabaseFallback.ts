@@ -69,11 +69,19 @@ export const fetchUserBuildingsMap = async (userId: string): Promise<Map<string,
 };
 
 export const fetchBuildingDetails = async (id: string) => {
-    const { data, error } = await supabase
-        .from("buildings")
-        .select("*, styles:building_styles(style:architectural_styles(id, name))")
-        .eq("id", id)
-        .maybeSingle();
+    let query = supabase.from("buildings").select("*, styles:building_styles(style:architectural_styles(id, name))");
+
+    // Check if id is UUID
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    if (isUUID) {
+        query = query.eq("id", id);
+    } else {
+        // Assume short_id
+        query = query.eq("short_id", parseInt(id));
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) throw error;
     if (!data) throw new Error("Building not found");

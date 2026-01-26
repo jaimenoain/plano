@@ -144,10 +144,15 @@ const router = createBrowserRouter(
       <Route path="/profile/:username" element={<Profile />} />
       <Route path="/settings" element={<Settings />} />
 
+      <Route path="/building/:id/:slug" element={<BuildingDetails />} />
       <Route path="/building/:id" element={<BuildingDetails />} />
+
+      <Route path="/building/:id/:slug/edit" element={<EditBuilding />} />
       <Route path="/building/:id/edit" element={<EditBuilding />} />
+
       <Route path="/architect/:id" element={<ArchitectDetails />} />
       {/* Review Flow */}
+      <Route path="/building/:id/:slug/review" element={<WriteReview />} />
       <Route path="/building/:id/review" element={<WriteReview />} />
       <Route path="/review/:id" element={<ReviewDetails />} />
 

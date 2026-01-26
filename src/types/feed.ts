@@ -12,6 +12,8 @@ export interface ReviewUser {
 
 export interface ReviewBuilding {
   id: string;
+  short_id?: number | null;
+  slug?: string | null;
   name: string;
   address?: string | null;
   main_image_url?: string | null;

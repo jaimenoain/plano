@@ -11,6 +11,8 @@ export interface StyleSummary {
 
 export interface DiscoveryBuilding {
   id: string;
+  short_id?: number | null;
+  slug?: string | null;
   name: string;
   // This can be a full URL (legacy/external) or a storage path (user uploads).
   // Use getBuildingImageUrl() utility to display it.

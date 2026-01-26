@@ -44,10 +44,13 @@ import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } fro
 import { parseLocation } from "@/utils/location";
 import { ImageDetailsDialog } from "@/components/ImageDetailsDialog";
 import { Architect } from "@/types/architect";
+import { getBuildingUrl } from "@/utils/url";
 
 // --- Types ---
 interface BuildingDetails {
   id: string;
+  short_id?: number | null;
+  slug?: string | null;
   name: string;
   location: any; // PostGIS point handling usually requires parsing
   location_precision?: 'exact' | 'approximate';
@@ -98,7 +101,7 @@ const BuildingHeader = ({ building, showEditLink, className }: BuildingHeaderPro
                 <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
                 {showEditLink && (
                     <Button variant="ghost" size="icon" asChild>
-                        <Link to={`/building/${building.id}/edit`}>
+                        <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}>
                             <Edit2 className="w-5 h-5" />
                         </Link>
                     </Button>
@@ -718,7 +721,7 @@ export default function BuildingDetails() {
 
                             <Button variant="outline" size="sm" asChild>
                                 {/* Navigation to Write Review */}
-                                <Link to={`/building/${id}/review`}>
+                                <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}>
                                     <MessageSquarePlus className="w-4 h-4 mr-2" />
                                     {myRating > 0 ? "Edit Review" : "Write Review"}
                                 </Link>
@@ -797,7 +800,7 @@ export default function BuildingDetails() {
 
             {user && (
                 <div className="flex justify-end mt-2 mb-2">
-                    <Link to={`/building/${building.id}/edit`} className="text-xs text-muted-foreground hover:underline">
+                    <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"} className="text-xs text-muted-foreground hover:underline">
                         Edit building information
                     </Link>
                 </div>

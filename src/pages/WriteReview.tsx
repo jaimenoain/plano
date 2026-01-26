@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { resizeImage } from "@/lib/image-compression";
+import { getBuildingUrl } from "@/utils/url";
 
 interface ReviewImage {
   id: string;
@@ -30,6 +31,9 @@ export default function WriteReview() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [buildingName, setBuildingName] = useState("");
+  const [buildingId, setBuildingId] = useState<string | null>(null);
+  const [buildingSlug, setBuildingSlug] = useState<string | null>(null);
+  const [buildingShortId, setBuildingShortId] = useState<number | null>(null);
 
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
@@ -48,14 +52,23 @@ export default function WriteReview() {
         if (!id) return;
 
         // 1. Fetch Building Name
-        const { data: building, error: buildingError } = await supabase
-          .from("buildings")
-          .select("name")
-          .eq("id", id)
-          .single();
+        let query = supabase.from("buildings").select("id, name, slug, short_id");
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id!);
+        if (isUUID) {
+            query = query.eq("id", id);
+        } else {
+            query = query.eq("short_id", parseInt(id!));
+        }
+
+        const { data: building, error: buildingError } = await query.single();
 
         if (buildingError) throw buildingError;
         setBuildingName(building.name);
+        setBuildingId(building.id);
+        // @ts-ignore
+        setBuildingSlug(building.slug);
+        // @ts-ignore
+        setBuildingShortId(building.short_id);
 
         // 2. Fetch Existing Review/Status
         if (user) {
@@ -63,7 +76,7 @@ export default function WriteReview() {
             .from("user_buildings")
             .select("id, rating, content, status")
             .eq("user_id", user.id)
-            .eq("building_id", id)
+            .eq("building_id", building.id)
             .maybeSingle();
 
           if (ubError) throw ubError;
@@ -195,7 +208,7 @@ export default function WriteReview() {
   };
 
   const handleSubmit = async () => {
-    if (!user || !id) return;
+    if (!user || !buildingId) return;
     if (rating === 0) {
       toast({
         variant: "destructive",
@@ -214,7 +227,7 @@ export default function WriteReview() {
         .from("user_buildings")
         .upsert({
           user_id: user.id,
-          building_id: id,
+          building_id: buildingId,
           rating: rating,
           content: content,
           status: statusToUse,
@@ -257,7 +270,7 @@ export default function WriteReview() {
       if (images.length > 0) {
         const uploadPromises = images.map(async (img) => {
           const fileExt = "webp"; // We know we compressed to webp (mostly)
-          const fileName = `${user.id}/${id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const fileName = `${user.id}/${buildingId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
           const { error: uploadError } = await supabase.storage
             .from('review_images')
@@ -281,7 +294,7 @@ export default function WriteReview() {
       }
 
       toast({ title: "Review published!" });
-      navigate(`/building/${id}`);
+      navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {
       console.error("Submission error:", error);
