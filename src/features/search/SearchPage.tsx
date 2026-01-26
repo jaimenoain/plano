@@ -25,6 +25,8 @@ export default function SearchPage() {
     searchQuery, setSearchQuery,
     filterVisited, setFilterVisited,
     filterBucketList, setFilterBucketList,
+    filterContacts, setFilterContacts,
+    minRating, setMinRating,
     viewMode, setViewMode,
     userLocation, updateLocation,
     buildings, isLoading, isFetching,
@@ -70,8 +72,6 @@ export default function SearchPage() {
   const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
 
   // Main: Filter controls
-  const [selectedCity, setSelectedCity] = useState<string>("all");
-  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedArchitects, setSelectedArchitects] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("distance");
 
@@ -87,16 +87,6 @@ export default function SearchPage() {
   }, [searchQuery]);
 
   // 3. Derive Available Options from Data (Required for the new FilterBar)
-  const availableCities = useMemo(() => {
-    const cities = new Set(buildings.map(b => b.city).filter(Boolean));
-    return Array.from(cities).sort();
-  }, [buildings]);
-
-  const availableStyles = useMemo(() => {
-    const styles = new Set(buildings.flatMap(b => b.styles?.map(s => s.name) || []));
-    return Array.from(styles).sort();
-  }, [buildings]);
-
   const availableArchitects = useMemo(() => {
     const architects = new Set(buildings.flatMap(b => b.architects?.map(a => a.name) || []));
     return Array.from(architects).sort();
@@ -125,16 +115,6 @@ export default function SearchPage() {
     }
 
     // B. Apply New Filters (Main Branch)
-    if (selectedCity !== "all") {
-      result = result.filter(b => b.city === selectedCity);
-    }
-
-    if (selectedStyles.length > 0) {
-      result = result.filter(b => 
-        b.styles?.some(style => selectedStyles.includes(style.name))
-      );
-    }
-
     if (selectedArchitects.length > 0) {
       result = result.filter(b =>
         b.architects?.some(arch => selectedArchitects.includes(arch.name))
@@ -149,7 +129,7 @@ export default function SearchPage() {
     }
 
     return result;
-  }, [buildings, mapBounds, ignoreMapBounds, selectedCity, selectedStyles, sortBy]);
+  }, [buildings, mapBounds, ignoreMapBounds, selectedArchitects, sortBy]);
 
   // 5. Merged Handlers
 
@@ -189,8 +169,7 @@ export default function SearchPage() {
            setFlyToBounds(null);
         }
         
-        // Main: Reset city filter & Optimistically update user location
-        setSelectedCity("all");
+        // Main: Optimistically update user location
         updateLocation(newLoc);
 
         // Feature: Re-enable bounds filtering once we fly to the new location
@@ -212,8 +191,9 @@ export default function SearchPage() {
   const isDefaultState = !searchQuery &&
                          !filterVisited &&
                          !filterBucketList &&
-                         selectedCity === "all" &&
-                         selectedStyles.length === 0;
+                         !filterContacts &&
+                         minRating === 0 &&
+                         selectedArchitects.length === 0;
 
   return (
     <AppLayout title="Discovery" showLogo={false}>
@@ -225,12 +205,6 @@ export default function SearchPage() {
             onSearchChange={setSearchQuery}
             // --- Feature Branch Props (Location Search & New Filters) ---
             onLocationSelect={handleLocationSearch}
-            selectedCity={selectedCity}
-            onCityChange={setSelectedCity}
-            availableCities={availableCities}
-            selectedStyles={selectedStyles}
-            onStylesChange={setSelectedStyles}
-            availableStyles={availableStyles}
             selectedArchitects={selectedArchitects}
             onArchitectsChange={setSelectedArchitects}
             availableArchitects={availableArchitects}
@@ -241,6 +215,10 @@ export default function SearchPage() {
             onVisitedChange={setFilterVisited}
             showBucketList={filterBucketList}
             onBucketListChange={setFilterBucketList}
+            filterContacts={filterContacts}
+            onFilterContactsChange={setFilterContacts}
+            minRating={minRating}
+            onMinRatingChange={setMinRating}
             // --- Shared Props ---
             onShowLeaderboard={() => setShowLeaderboard(true)}
             onUseLocation={handleUseLocation}

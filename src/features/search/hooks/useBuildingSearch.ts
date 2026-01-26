@@ -95,6 +95,8 @@ export function useBuildingSearch() {
 
   const [filterVisited, setFilterVisited] = useState(false);
   const [filterBucketList, setFilterBucketList] = useState(false);
+  const [filterContacts, setFilterContacts] = useState(false);
+  const [minRating, setMinRating] = useState<number>(0);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
 
   // Default to London
@@ -127,29 +129,71 @@ export function useBuildingSearch() {
 
   // Search query
   const { data: buildings, isLoading, isFetching } = useQuery({
-    queryKey: ["search-buildings", debouncedQuery, filterVisited, filterBucketList, userLocation, user?.id],
+    queryKey: ["search-buildings", debouncedQuery, filterVisited, filterBucketList, filterContacts, minRating, userLocation, user?.id],
     queryFn: async () => {
-        // Local filtering mode (My Buildings)
-        if (filterVisited || filterBucketList) {
+        // Local filtering mode (My Buildings or Contacts)
+        if (filterVisited || filterBucketList || filterContacts) {
             if (!user) return [];
 
             const statuses: string[] = [];
             if (filterVisited) statuses.push('visited');
             if (filterBucketList) statuses.push('pending');
 
-            // 1. Fetch user buildings IDs
-            const { data: userBuildings, error: ubError } = await supabase
-                .from('user_buildings')
-                .select('building_id')
-                .eq('user_id', user.id)
-                .in('status', statuses);
+            // If contacts is checked but no status, default to both (implied "All from contacts")
+            if (statuses.length === 0 && filterContacts) {
+                statuses.push('visited', 'pending');
+            }
 
-            if (ubError) throw ubError;
-            if (!userBuildings || userBuildings.length === 0) return [];
+            let buildingIds: string[] = [];
 
-            const buildingIds = userBuildings.map(ub => ub.building_id);
+            if (filterContacts) {
+                // 1. Fetch contacts
+                const { data: follows } = await supabase
+                    .from('follows')
+                    .select('following_id')
+                    .eq('follower_id', user.id);
 
-            // 2. Fetch building details
+                const contactIds = follows?.map(f => f.following_id) || [];
+
+                if (contactIds.length > 0) {
+                    // 2. Fetch contact buildings
+                    let query = supabase
+                        .from('user_buildings')
+                        .select('building_id')
+                        .in('user_id', contactIds)
+                        .in('status', statuses);
+
+                    if (minRating > 0) {
+                        query = query.gte('rating', minRating);
+                    }
+
+                    const { data: contactBuildings, error: cbError } = await query;
+                    if (cbError) throw cbError;
+
+                    // Deduplicate IDs since multiple contacts might have visited the same building
+                    buildingIds = Array.from(new Set(contactBuildings?.map(cb => cb.building_id) || []));
+                }
+            } else {
+                // 1. Fetch user buildings IDs
+                let query = supabase
+                    .from('user_buildings')
+                    .select('building_id')
+                    .eq('user_id', user.id)
+                    .in('status', statuses);
+
+                if (minRating > 0) {
+                    query = query.gte('rating', minRating);
+                }
+
+                const { data: userBuildings, error: ubError } = await query;
+
+                if (ubError) throw ubError;
+                buildingIds = userBuildings?.map(ub => ub.building_id) || [];
+            }
+
+            if (buildingIds.length === 0) return [];
+
+            // 3. Fetch building details
             // Explicitly select main_image_url (computed column)
             let query = supabase
                 .from('buildings')
@@ -218,6 +262,10 @@ export function useBuildingSearch() {
       setFilterVisited,
       filterBucketList,
       setFilterBucketList,
+      filterContacts,
+      setFilterContacts,
+      minRating,
+      setMinRating,
       viewMode,
       setViewMode,
       userLocation,
