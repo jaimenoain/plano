@@ -363,12 +363,12 @@ export default function Groups() {
 
               <TabsContent value="my-groups" className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
                 {myGroups.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 border border-dashed rounded-xl bg-muted/5">
+                  <div className="flex flex-col items-center justify-center py-8 border border-dashed rounded-xl bg-muted/5">
                     <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
                       <Users className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <h3 className="font-semibold text-lg">No groups yet</h3>
-                    <p className="text-muted-foreground mb-6 max-w-sm text-center">
+                    <p className="text-muted-foreground mb-4 max-w-sm text-center">
                       You haven't joined any clubs. Create one or browse public groups to get started.
                     </p>
                     <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
