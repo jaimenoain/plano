@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
   Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle
+  Heart, ExternalLink, Circle, AlertTriangle, MessageCircle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -56,6 +56,18 @@ interface BuildingDetails {
   year_completed: number;
   styles: { id: string, name: string }[];
   created_by: string;
+}
+
+interface DisplayImage {
+  id: string;
+  url: string;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  user?: {
+    username: string | null;
+    avatar_url: string | null;
+  };
 }
 
 interface TopLink {
@@ -154,7 +166,7 @@ export default function BuildingDetails() {
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
   const [entries, setEntries] = useState<FeedEntry[]>([]);
-  const [displayImages, setDisplayImages] = useState<{id: string, url: string}[]>([]);
+  const [displayImages, setDisplayImages] = useState<DisplayImage[]>([]);
   const [userImages, setUserImages] = useState<{id: string, storage_path: string}[]>([]);
   const [selectedImage, setSelectedImage] = useState<{id: string, url: string} | null>(null);
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
@@ -266,12 +278,12 @@ export default function BuildingDetails() {
         .select(`
           id, content, rating, status, tags, created_at,
           user:profiles(username, avatar_url),
-          images:review_images(id, storage_path, likes_count)
+          images:review_images(id, storage_path, likes_count, created_at, comments:image_comments(count))
         `)
         .eq("building_id", id)
         .order("created_at", { ascending: false });
 
-      const communityImages: {id: string, url: string, likes_count: number, created_at: string}[] = [];
+      const communityImages: DisplayImage[] = [];
 
       if (entriesError) {
             console.warn("Error fetching feed:", entriesError);
@@ -286,12 +298,18 @@ export default function BuildingDetails() {
                         const { data: { publicUrl } } = supabase.storage
                               .from("review_images")
                               .getPublicUrl(img.storage_path);
-                      communityImages.push({
-                          id: img.id,
-                          url: publicUrl,
-                          likes_count: img.likes_count || 0,
-                          created_at: entry.created_at
-                      });
+
+                        // Parse comments count
+                        const commentsCount = img.comments && img.comments.length > 0 ? img.comments[0].count : 0;
+
+                        communityImages.push({
+                            id: img.id,
+                            url: publicUrl,
+                            likes_count: img.likes_count || 0,
+                            comments_count: commentsCount,
+                            created_at: img.created_at || entry.created_at,
+                            user: entry.user
+                        });
                   });
               }
           });
@@ -315,9 +333,9 @@ export default function BuildingDetails() {
       }
 
       // Combine with main image
-      const images = [];
+      const images: DisplayImage[] = [];
       // We just push simple objects
-      images.push(...communityImages.map(img => ({ id: img.id, url: img.url })));
+      images.push(...communityImages);
       setDisplayImages(images);
     } catch (error: any) {
       console.error("Error:", error);
@@ -574,13 +592,39 @@ export default function BuildingDetails() {
                     <Carousel className="w-full h-full">
                         <CarouselContent className="h-full ml-0">
                             {displayImages.map((img) => (
-                                <CarouselItem key={img.id} className="pl-0 h-full">
+                                <CarouselItem key={img.id} className="pl-0 h-full relative">
                                     <img
                                       src={img.url}
                                       className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                                       alt={building.name}
                                       onClick={() => setSelectedImage({ id: img.id, url: img.url })}
                                     />
+                                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white pointer-events-none">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="w-8 h-8 border border-white/20">
+                                                    <AvatarImage src={img.user?.avatar_url || undefined} />
+                                                    <AvatarFallback className="text-black bg-white">{img.user?.username?.[0]}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-semibold leading-none drop-shadow-sm">{img.user?.username || 'Unknown'}</span>
+                                                    <span className="text-xs text-white/80 drop-shadow-sm">
+                                                        {formatDistanceToNow(new Date(img.created_at), { addSuffix: true })}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-1">
+                                                    <Heart className="w-4 h-4 fill-white/20 drop-shadow-sm" />
+                                                    <span className="text-xs font-medium drop-shadow-sm">{img.likes_count}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <MessageCircle className="w-4 h-4 drop-shadow-sm" />
+                                                    <span className="text-xs font-medium drop-shadow-sm">{img.comments_count}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </CarouselItem>
                             ))}
                         </CarouselContent>
