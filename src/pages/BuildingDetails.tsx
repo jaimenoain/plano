@@ -881,17 +881,21 @@ export default function BuildingDetails() {
                                         <span className="font-bold text-sm">{entry.user.username}</span>
                                         <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(entry.created_at))} ago</span>
                                     </div>
-                                    {entry.rating && (
-                                        <div className="flex items-center gap-0.5 my-1">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Circle
-                                                  key={i}
-                                                  className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-                                    {entry.content && <p className="text-sm mt-1 text-muted-foreground">{entry.content}</p>}
+
+                                    <Link to={`/review/${entry.id}`} className="block group">
+                                        {entry.rating && (
+                                            <div className="flex items-center gap-0.5 my-1 group-hover:opacity-80 transition-opacity">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Circle
+                                                      key={i}
+                                                      className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+                                        {entry.content && <p className="text-sm mt-1 text-muted-foreground group-hover:text-foreground transition-colors">{entry.content}</p>}
+                                    </Link>
+
                                     {entry.images && entry.images.length > 0 && (
                                         <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
                                             {entry.images.map((img) => {
