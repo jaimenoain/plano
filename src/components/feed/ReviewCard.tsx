@@ -1,13 +1,26 @@
 import { useState } from "react";
-import { Heart, MessageCircle, Circle, Image as ImageIcon } from "lucide-react";
+import { Heart, MessageCircle, Circle, Image as ImageIcon, Bookmark } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
+
+function getCityFromAddress(address: string | null | undefined): string {
+  if (!address) return "";
+  const parts = address.split(',').map(p => p.trim());
+  if (parts.length >= 2) {
+      return parts[parts.length - 2];
+  }
+  return parts[0];
+}
 
 interface ReviewCardProps {
   entry: FeedReview;
@@ -33,10 +46,38 @@ export function ReviewCard({
   variant = 'default'
 }: ReviewCardProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
    
   // FIXED: Safety Check - Prevent crash if building data is missing
   if (!entry.building) return null;
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    if (!entry.building?.id) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("user_buildings").upsert({
+          user_id: user.id,
+          building_id: entry.building.id,
+          status: 'pending',
+          edited_at: new Date().toISOString()
+      }, { onConflict: 'user_id, building_id' });
+
+      if (error) throw error;
+
+      toast({ title: "Saved to your list" });
+    } catch (error) {
+      console.error("Save failed", error);
+      toast({ variant: "destructive", title: "Failed to save" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const posterUrl = getBuildingImageUrl(entry.building.main_image_url);
 
@@ -239,21 +280,31 @@ export function ReviewCard({
   }
 
   // Define components for render
+  const city = getCityFromAddress(entry.building.address);
+  const action = entry.status === 'pending' ? 'saved' : 'visited';
+
   const Header = !hideUser && (
-        <div className={`p-1.5 md:p-3 flex items-center gap-1.5 md:gap-3 border-b border-border/40 bg-muted/20`}>
-          <Avatar className="h-10 w-10 md:h-12 md:w-12 border border-border/50 shadow-sm">
+        <div className={`p-3 md:p-4 flex items-center gap-3 border-b border-border/40`}>
+          <Avatar className="h-10 w-10 border border-border/50">
             <AvatarImage src={avatarUrl} />
-            <AvatarFallback className="text-base md:text-lg font-bold bg-primary/10 text-primary">
-              {userInitial}
-            </AvatarFallback>
+            <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
-          <div className="flex flex-col min-w-0">
-            <span className="text-base md:text-lg font-bold text-foreground leading-tight truncate">
-              {username}
-            </span>
-            <span className="text-[10px] md:text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-            </span>
+          <div className="text-sm md:text-base text-foreground leading-snug">
+            <span className="font-semibold">{username}</span>
+            <span className="text-muted-foreground"> {action} </span>
+            <span className="font-semibold text-foreground">{mainTitle}</span>
+            {city && <span className="text-muted-foreground"> in {city}</span>}
+            {entry.rating && entry.rating > 0 && (
+                 <span className="inline-flex items-center ml-2 gap-0.5 align-middle">
+                     {Array.from({ length: 5 }).map((_, i) => (
+                        <Circle
+                           key={i}
+                           className={`w-2 h-2 ${i < entry.rating! ? "fill-foreground text-foreground" : "fill-transparent text-muted-foreground/30"}`}
+                        />
+                     ))}
+                 </span>
+            )}
+            <span className="text-muted-foreground text-xs ml-2">• {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago</span>
           </div>
         </div>
   );
@@ -305,21 +356,6 @@ export function ReviewCard({
                            <ImageIcon className="w-8 h-8 opacity-50" />
                          </div>
                        )}
-                       {/* Image Like Overlay */}
-                       <div className="absolute bottom-2 right-2 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-full z-10 min-w-[44px] min-h-[44px]">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onImageLike?.(entry.id, image.id);
-                            }}
-                            className="flex items-center justify-center gap-1.5 text-white hover:text-red-400 transition-colors w-full h-full px-3 py-1.5"
-                          >
-                            <Heart
-                               className={`w-4 h-4 ${image.is_liked ? "fill-red-500 text-red-500" : "text-white"}`}
-                            />
-                            <span className="text-xs font-medium text-white">{image.likes_count}</span>
-                          </button>
-                       </div>
                     </div>
                   ))}
                </div>
@@ -341,28 +377,11 @@ export function ReviewCard({
               alt={mainTitle || ""}
               className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${!isCompact ? 'md:absolute md:inset-0' : ''}`}
             />
-
-            {/* Watch With Facepile Overlay */}
-            {isWatchlist && watchWithUsers.length > 0 && (
-               <div className="absolute bottom-2 right-2 flex -space-x-2 z-10">
-                  {watchWithUsers.slice(0, 3).map(u => (
-                     <Avatar key={u.id} className="h-6 w-6 ring-2 ring-background border border-white/20">
-                        <AvatarImage src={u.avatar_url || undefined} />
-                        <AvatarFallback className="text-[8px] bg-secondary text-foreground">{u.username?.charAt(0)}</AvatarFallback>
-                     </Avatar>
-                  ))}
-                  {watchWithUsers.length > 3 && (
-                    <div className="h-6 w-6 rounded-full bg-black/60 ring-2 ring-background border border-white/20 flex items-center justify-center text-[8px] text-white">
-                        +{watchWithUsers.length - 3}
-                    </div>
-                  )}
-               </div>
-            )}
           </div>
         ) : null
   );
 
-  const ContentBody = (
+  const ContentBody = isCompact ? (
       <>
         {/* Building Name (Context) - Only if NOT hidden */}
         {!hideBuildingInfo && (
@@ -423,6 +442,23 @@ export function ReviewCard({
           </div>
         )}
       </>
+  ) : (
+      <>
+        {entry.content && (
+           <p className="text-sm text-foreground mb-2 leading-relaxed">
+             {entry.content}
+           </p>
+        )}
+        {entry.tags && entry.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {entry.tags.map(tag => (
+              <Badge key={tag} variant="secondary" className="text-xs px-2 h-6 font-normal text-muted-foreground/80">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </>
   );
 
   const Footer = (
@@ -451,6 +487,17 @@ export function ReviewCard({
             <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
             <span className="text-xs font-medium">{entry.comments_count}</span>
           </button>
+
+          {!isCompact && (
+             <button
+               onClick={handleSave}
+               className={`flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors ml-auto ${isSaving ? 'opacity-50' : ''}`}
+               disabled={isSaving}
+             >
+               <Bookmark className="h-4 w-4" />
+               <span className="text-xs font-medium">Save</span>
+             </button>
+          )}
         </div>
   );
 
