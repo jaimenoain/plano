@@ -211,6 +211,8 @@ END;
 $$;
 
 -- 4. Update get_feed RPC
+DROP FUNCTION IF EXISTS get_feed(INT, INT);
+
 CREATE OR REPLACE FUNCTION get_feed(p_limit INT, p_offset INT)
 RETURNS TABLE (
   id UUID,
@@ -279,6 +281,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY INVOKER;
 
 -- 5. Update find_nearby_buildings RPC
+DROP FUNCTION IF EXISTS find_nearby_buildings(double precision, double precision, double precision, text);
+
 CREATE OR REPLACE FUNCTION find_nearby_buildings(
   lat double precision,
   long double precision,
