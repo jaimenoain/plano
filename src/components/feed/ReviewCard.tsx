@@ -113,12 +113,9 @@ export function ReviewCard({
   
   // MERGE FIX: Determine if we have any media to show for layout calculations
   const hasMedia = !hideBuildingInfo && ((entry.images && entry.images.length > 0) || posterUrl);
-
-  const gridCols = imagePosition === 'right' ? 'md:grid-cols-[1fr_280px]' : 'md:grid-cols-[280px_1fr]';
-  const mediaCol = imagePosition === 'right' ? 'md:col-start-2' : 'md:col-start-1';
-  const contentCol = imagePosition === 'right' ? 'md:col-start-1' : 'md:col-start-2';
-
   const isCompact = variant === 'compact';
+
+  const flexDirection = imagePosition === 'right' ? 'md:flex-row' : 'md:flex-row-reverse';
 
   // --- 1. DETAIL VIEW (List View) ---
   if (isDetailView) {
@@ -242,7 +239,7 @@ export function ReviewCard({
 
   // Define components for render
   const Header = !hideUser && (
-        <div className={`${contentCol} p-1.5 md:p-3 flex items-center gap-1.5 md:gap-3 border-b border-border/40 bg-muted/20`}>
+        <div className={`p-1.5 md:p-3 flex items-center gap-1.5 md:gap-3 border-b border-border/40 bg-muted/20`}>
           <Avatar className="h-10 w-10 md:h-12 md:w-12 border border-border/50 shadow-sm">
             <AvatarImage src={avatarUrl} />
             <AvatarFallback className="text-base md:text-lg font-bold bg-primary/10 text-primary">
@@ -264,7 +261,7 @@ export function ReviewCard({
         entry.images && entry.images.length > 0 ? (
           isCompact && entry.images.length > 1 ? (
              // COMPACT GRID LAYOUT for IMAGES
-             <div className={`relative w-full aspect-[4/3] bg-secondary ${mediaCol} overflow-hidden grid grid-cols-2 gap-0.5`}>
+             <div className={`relative w-full aspect-[4/3] bg-secondary overflow-hidden grid grid-cols-2 gap-0.5`}>
                 {entry.images.slice(0, 4).map((image, index) => (
                     <div key={image.id} className="relative w-full h-full">
                        {!failedImages.has(image.id) ? (
@@ -291,8 +288,8 @@ export function ReviewCard({
              </div>
           ) : (
             // OPTION A: User Images Gallery (Standard Carousel)
-            <div className={`relative w-full overflow-hidden bg-secondary ${mediaCol} ${!isCompact ? 'md:row-start-1 md:row-span-2 md:h-full' : ''}`}>
-               <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full">
+            <div className={`relative w-full overflow-hidden bg-secondary ${!isCompact ? 'md:w-[280px] md:shrink-0' : 'aspect-[4/3]'}`}>
+               <div className={`flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full ${!isCompact ? 'md:absolute md:inset-0' : ''}`}>
                   {entry.images.map((image) => (
                     <div key={image.id} className={`relative flex-none w-full aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} snap-center bg-secondary`}>
                        {!failedImages.has(image.id) ? (
@@ -337,11 +334,11 @@ export function ReviewCard({
           )
         ) : posterUrl ? (
           // OPTION B: Building Poster (Fallback)
-          <div className={`aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} ${mediaCol} ${!isCompact ? 'md:row-start-1 md:row-span-2' : ''} relative bg-secondary overflow-hidden`}>
+          <div className={`relative bg-secondary overflow-hidden aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:w-[280px] md:shrink-0' : ''}`}>
             <img
               src={posterUrl}
               alt={mainTitle || ""}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${!isCompact ? 'md:absolute md:inset-0' : ''}`}
             />
 
             {/* Watch With Facepile Overlay */}
@@ -460,13 +457,12 @@ export function ReviewCard({
     <article
       onClick={handleCardClick}
       // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-      className={`group relative flex flex-col ${!isCompact && hasMedia ? `md:grid ${gridCols} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
+      className={`group relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
     >
-      {Header}
-
       {isCompact ? (
         // COMPACT LAYOUT: Header -> Text -> Media -> Footer
         <>
+            {Header}
             <div className={`flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2`}>
                 {ContentBody}
             </div>
@@ -476,11 +472,14 @@ export function ReviewCard({
       ) : (
         // DEFAULT LAYOUT: Header -> Media -> (Text + Footer)
         <>
-            {Media}
-            <div className={`${contentCol} flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2`}>
-                {ContentBody}
-                {Footer}
+            <div className="flex flex-col flex-1 min-w-0">
+               {Header}
+               <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
+                   {ContentBody}
+                   {Footer}
+               </div>
             </div>
+            {Media}
         </>
       )}
     </article>
