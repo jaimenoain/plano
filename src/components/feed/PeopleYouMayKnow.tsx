@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/FollowButton";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 
 export function PeopleYouMayKnow() {
   const { user } = useAuth();
@@ -27,7 +28,7 @@ export function PeopleYouMayKnow() {
       <div className="space-y-4">
         {suggestions.map((person) => (
           <div key={person.id} className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+            <Link to={`/profile/${person.username || person.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={person.avatar_url || undefined} />
                 <AvatarFallback>{person.username?.[0]?.toUpperCase()}</AvatarFallback>
@@ -40,7 +41,7 @@ export function PeopleYouMayKnow() {
                    </span>
                 )}
               </div>
-            </div>
+            </Link>
             <FollowButton userId={person.id} isFollower={person.is_follows_me} />
           </div>
         ))}
