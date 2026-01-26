@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { slugify, cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 import {
   Tooltip,
   TooltipContent,
@@ -32,6 +33,8 @@ interface Recommendation {
   id: string;
   building: {
     id: string;
+    short_id?: number | null;
+    slug?: string | null;
     name: string;
     main_image_url: string | null;
     year_completed: number | null;
@@ -59,7 +62,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
   return (
     <div className="bg-card border border-border/50 rounded-lg overflow-hidden flex flex-col h-full animate-in fade-in zoom-in-95 duration-300">
       <div className="relative aspect-[2/3] group cursor-pointer overflow-hidden">
-        <Link to={`/building/${building.id}`}>
+        <Link to={getBuildingUrl(building.id, building.slug, building.short_id)}>
             {imageUrl ? (
             <img
                 src={imageUrl}
@@ -76,7 +79,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
 
       <div className="p-3 flex flex-col flex-1 gap-2">
         <div>
-            <Link to={`/building/${building.id}`} className="hover:underline">
+            <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="hover:underline">
                  <h3 className="font-semibold leading-tight line-clamp-1" title={building.name}>{building.name}</h3>
             </Link>
             <p className="text-xs text-muted-foreground mt-0.5">{year_completed} • {formatDistanceToNow(new Date(recommendation.created_at))} ago</p>

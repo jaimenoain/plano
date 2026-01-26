@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Architect } from "@/components/ui/architect-select";
 import { StyleSummary } from "@/components/ui/style-select";
 import { parseLocation } from "@/utils/location";
+import { getBuildingUrl } from "@/utils/url";
 
 interface LocationData {
     lat: number | null;
@@ -42,6 +43,9 @@ export default function EditBuilding() {
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const [buildingId, setBuildingId] = useState<string | null>(null);
+  const [buildingSlug, setBuildingSlug] = useState<string | null>(null);
+  const [buildingShortId, setBuildingShortId] = useState<number | null>(null);
 
   useEffect(() => {
     if (id && user) {
@@ -53,11 +57,16 @@ export default function EditBuilding() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from('buildings')
-        .select('*')
-        .eq('id', id)
-        .single();
+      let query = supabase.from('buildings').select('*');
+
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id!);
+      if (isUUID) {
+          query = query.eq('id', id);
+      } else {
+          query = query.eq('short_id', parseInt(id!));
+      }
+
+      const { data, error } = await query.single();
 
       if (error) {
         toast.error("Building not found");
@@ -69,6 +78,12 @@ export default function EditBuilding() {
           navigate('/');
           return;
       }
+
+      setBuildingId(data.id);
+      // @ts-ignore
+      setBuildingSlug(data.slug);
+      // @ts-ignore
+      setBuildingShortId(data.short_id);
 
       // Permission Check
       let hasPermission = data.created_by === user?.id;
@@ -86,7 +101,7 @@ export default function EditBuilding() {
 
       if (!hasPermission) {
           toast.error("You don't have permission to edit this building.");
-          navigate(`/building/${id}`);
+          navigate(getBuildingUrl(data.id, data.slug, data.short_id));
           return;
       }
 
@@ -96,7 +111,7 @@ export default function EditBuilding() {
       const { data: relations } = await supabase
         .from('building_architects')
         .select('architect:architects(id, name, type)')
-        .eq('building_id', id);
+        .eq('building_id', data.id);
 
       const relationArchitects = relations?.map((r: any) => r.architect) || [];
 
@@ -107,7 +122,7 @@ export default function EditBuilding() {
       const { data: styleRelations } = await supabase
         .from('building_styles')
         .select('style:architectural_styles(id, name, slug)')
-        .eq('building_id', id);
+        .eq('building_id', data.id);
 
       const styles = styleRelations?.map((r: any) => r.style) || [];
 
@@ -116,7 +131,7 @@ export default function EditBuilding() {
       const { data: typologies } = await supabase
         .from('building_functional_typologies')
         .select('typology_id')
-        .eq('building_id', id);
+        .eq('building_id', data.id);
 
       const typologyIds = typologies?.map((t: any) => t.typology_id) || [];
 
@@ -125,7 +140,7 @@ export default function EditBuilding() {
       const { data: attributes } = await supabase
         .from('building_attributes')
         .select('attribute_id')
-        .eq('building_id', id);
+        .eq('building_id', data.id);
 
       const attributeIds = attributes?.map((a: any) => a.attribute_id) || [];
 
@@ -165,7 +180,7 @@ export default function EditBuilding() {
 
   // Duplicate Check Effect
   useEffect(() => {
-    if (!locationData || !id) return;
+    if (!locationData || !buildingId) return;
     if (locationData.lat === null || locationData.lng === null) return;
 
     const checkDuplicates = async () => {
@@ -180,7 +195,7 @@ export default function EditBuilding() {
 
         if (error) throw error;
 
-        const others = (data || []).filter((b: any) => b.id !== id);
+        const others = (data || []).filter((b: any) => b.id !== buildingId);
         setDuplicates(others);
 
       } catch (error) {
@@ -192,10 +207,10 @@ export default function EditBuilding() {
 
     const timer = setTimeout(checkDuplicates, 800);
     return () => clearTimeout(timer);
-  }, [locationData?.lat, locationData?.lng, id]);
+  }, [locationData?.lat, locationData?.lng, buildingId]);
 
   const handleSubmit = async (formData: BuildingFormData) => {
-    if (!locationData) return;
+    if (!locationData || !buildingId) return;
 
     if (locationData.lat === null || locationData.lng === null) {
         toast.error("Please ensure the location is set on the map");
@@ -221,7 +236,7 @@ export default function EditBuilding() {
           // @ts-ignore: location_precision is a new column
           location_precision: locationData.precision
         })
-        .eq('id', id);
+        .eq('id', buildingId);
 
       if (error) {
         console.error("Update error:", error);
@@ -233,12 +248,12 @@ export default function EditBuilding() {
       // Handle Architects Junction Table
       // 1. Clear existing links
       // @ts-ignore
-      await supabase.from('building_architects').delete().eq('building_id', id);
+      await supabase.from('building_architects').delete().eq('building_id', buildingId);
 
       // 2. Insert new links
       // We assume formData.architects contains valid UUIDs from the ArchitectSelect component
       if (formData.architects.length > 0) {
-          const links = formData.architects.map(a => ({ building_id: id, architect_id: a.id }));
+          const links = formData.architects.map(a => ({ building_id: buildingId, architect_id: a.id }));
           // @ts-ignore
           const { error: linkError } = await supabase.from('building_architects').insert(links);
           if (linkError) console.error("Link error:", linkError);
@@ -246,9 +261,9 @@ export default function EditBuilding() {
 
       // Handle Styles Junction Table
       // @ts-ignore
-      await supabase.from('building_styles').delete().eq('building_id', id);
+      await supabase.from('building_styles').delete().eq('building_id', buildingId);
       if (formData.styles.length > 0) {
-          const sLinks = formData.styles.map(s => ({ building_id: id, style_id: s.id }));
+          const sLinks = formData.styles.map(s => ({ building_id: buildingId, style_id: s.id }));
           // @ts-ignore
           const { error: sError } = await supabase.from('building_styles').insert(sLinks);
           if (sError) console.error("Style link error:", sError);
@@ -256,9 +271,9 @@ export default function EditBuilding() {
 
       // Handle Typologies Junction Table
       // @ts-ignore
-      await supabase.from('building_functional_typologies').delete().eq('building_id', id);
+      await supabase.from('building_functional_typologies').delete().eq('building_id', buildingId);
       if (formData.functional_typology_ids.length > 0) {
-          const tLinks = formData.functional_typology_ids.map(tid => ({ building_id: id, typology_id: tid }));
+          const tLinks = formData.functional_typology_ids.map(tid => ({ building_id: buildingId, typology_id: tid }));
           // @ts-ignore
           const { error: tError } = await supabase.from('building_functional_typologies').insert(tLinks);
           if (tError) console.error("Typology link error:", tError);
@@ -266,16 +281,16 @@ export default function EditBuilding() {
 
       // Handle Attributes Junction Table
       // @ts-ignore
-      await supabase.from('building_attributes').delete().eq('building_id', id);
+      await supabase.from('building_attributes').delete().eq('building_id', buildingId);
       if (formData.selected_attribute_ids.length > 0) {
-          const aLinks = formData.selected_attribute_ids.map(aid => ({ building_id: id, attribute_id: aid }));
+          const aLinks = formData.selected_attribute_ids.map(aid => ({ building_id: buildingId, attribute_id: aid }));
           // @ts-ignore
           const { error: aError } = await supabase.from('building_attributes').insert(aLinks);
           if (aError) console.error("Attribute link error:", aError);
       }
 
       toast.success("Building updated successfully");
-      navigate(`/building/${id}`);
+      navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {
       console.error(error);

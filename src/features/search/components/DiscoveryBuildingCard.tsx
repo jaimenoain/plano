@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { DiscoveryBuilding } from "./types";
 import { cn } from "@/lib/utils";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 
 interface DiscoveryBuildingCardProps {
   building: DiscoveryBuilding;
@@ -21,7 +22,7 @@ export function DiscoveryBuildingCard({
   const imageUrl = getBuildingImageUrl(building.main_image_url);
 
   return (
-    <Link to={`/building/${building.id}`} className="block">
+    <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="block">
       <Card className="overflow-hidden hover:shadow-md transition-shadow group">
         <div className="flex flex-row">
           {/* Content */}

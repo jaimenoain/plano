@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { slugify } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 
 interface ReviewCardProps {
   entry: FeedReview;
@@ -45,7 +46,7 @@ export function ReviewCard({
     if (target.closest('button')) return;
 
     if (entry.building.id) {
-        navigate(`/building/${entry.building.id}`);
+        navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
     } else {
         navigate(`/review/${entry.id}`);
     }
@@ -57,7 +58,7 @@ export function ReviewCard({
         onComment(entry.id);
     } else {
         if (entry.building.id) {
-            navigate(`/building/${entry.building.id}`);
+            navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
         } else {
             navigate(`/review/${entry.id}`);
         }
