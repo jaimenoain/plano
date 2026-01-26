@@ -96,7 +96,11 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                     onLocationSelected={(address, country, place) => {
                          setLocationQuery(address);
                          props.onLocationSelect(address, country, place);
-                         setLocationDialogOpen(false);
+
+                         // Only close if we have a definitive selection (country or place name)
+                         if (country || place) {
+                             setLocationDialogOpen(false);
+                         }
                     }}
                     placeholder="City, Region or Country..."
                     searchTypes={["(regions)"]}
