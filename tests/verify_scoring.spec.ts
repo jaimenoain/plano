@@ -46,9 +46,9 @@ test('Verify Dual-Context Scoring System (Quality Mode)', async ({ page }) => {
       name: 'Test Architecture Building',
       location: 'POINT(-0.1278 51.5074)',
       address: '123 Test St',
-      architects: ['Zaha Hadid'],
+      architects: [{ id: 'arch-1', name: 'Zaha Hadid' }],
       year_completed: 2020,
-      styles: ['Futurism'],
+      styles: [{ style: { id: 'style-1', name: 'Futurism' } }],
       main_image_url: 'http://example.com/img.jpg',
       description: 'A test building.',
       created_by: 'other-user-id'
@@ -62,6 +62,11 @@ test('Verify Dual-Context Scoring System (Quality Mode)', async ({ page }) => {
       } else {
           await route.continue();
       }
+  });
+
+  // Mock Building Architects
+  await page.route('**/rest/v1/building_architects*', async route => {
+      await route.fulfill({ json: [] });
   });
 
   // Mock User Buildings (Feed/Status)
@@ -129,7 +134,7 @@ test('Verify Dual-Context Scoring System (Quality Mode)', async ({ page }) => {
   // 4. Interaction with Rating
   // Verify Stars are visible immediately (Inline)
   // Replaced popover interaction with direct interaction
-  const stars = page.locator('button:has(svg.lucide-star)');
+  const stars = page.locator('button:has(svg.lucide-circle)');
   await expect(stars).toHaveCount(5);
 
   // Requirement 2: UI & Labeling Logic

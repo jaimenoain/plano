@@ -16,7 +16,7 @@ This report documents the verification of the "Dual-Context Scoring System" migr
     - Uses `isPriorityContext` derived from `status === 'pending'`.
     - If `status` is `'visited'` (or default), it enters "Quality context".
 - **Visual Feedback**:
-    - **Pending**: "Might go someday" ... "Must go immediately"
+    - **Pending**: "Might go someday" ... "Must go"
     - **Visited**: "Disappointing" ... "Masterpiece"
 - **Labeling**:
     - In `BuildingDetails.tsx`, the `PersonalRatingButton` is passed `label={userStatus === 'pending' ? "Priority" : "Rating"}`.

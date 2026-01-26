@@ -53,7 +53,7 @@ export function PersonalRatingButton({
         case 2: return "Backup";
         case 3: return "Interested";
         case 4: return "High priority";
-        case 5: return "Must go immediately"; // Critical
+        case 5: return "Must go"; // Critical
         default: return `${rating} Stars`;
       }
     } else {
