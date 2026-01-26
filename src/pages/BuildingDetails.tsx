@@ -87,16 +87,16 @@ interface FeedEntry {
 // --- Reusable Header Component ---
 interface BuildingHeaderProps {
   building: BuildingDetails;
-  canEdit: boolean;
+  showEditLink: boolean;
   className?: string;
 }
 
-const BuildingHeader = ({ building, canEdit, className }: BuildingHeaderProps) => {
+const BuildingHeader = ({ building, showEditLink, className }: BuildingHeaderProps) => {
     return (
         <div className={className}>
             <div className="flex justify-between items-start">
                 <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
-                {canEdit && (
+                {showEditLink && (
                     <Button variant="ghost" size="icon" asChild>
                         <Link to={`/building/${building.id}/edit`}>
                             <Edit2 className="w-5 h-5" />
@@ -464,7 +464,7 @@ export default function BuildingDetails() {
       <MetaHead title={building.name} />
 
       {/* Building Header - Mobile Only */}
-      <BuildingHeader building={building} canEdit={canEdit} className="lg:hidden p-4 pb-0" />
+      <BuildingHeader building={building} showEditLink={!!user} className="lg:hidden p-4 pb-0" />
 
       <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto p-4 lg:p-8 pt-4">
         
@@ -579,7 +579,7 @@ export default function BuildingDetails() {
         <div className="space-y-8 mt-6 lg:mt-0">
             
             {/* Header Info - Desktop Only */}
-            <BuildingHeader building={building} canEdit={canEdit} className="hidden lg:block" />
+            <BuildingHeader building={building} showEditLink={!!user} className="hidden lg:block" />
 
             {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
             <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4">
@@ -757,7 +757,7 @@ export default function BuildingDetails() {
                 )}
             </div>
 
-            {canEdit && (
+            {user && (
                 <div className="flex justify-end mt-2 mb-2">
                     <Link to={`/building/${building.id}/edit`} className="text-xs text-muted-foreground hover:underline">
                         Edit building information
