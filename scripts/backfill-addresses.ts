@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import fetch from 'node-fetch'; // Ensure node-fetch is installed: npm install node-fetch
 
+// Load environment variables
 dotenv.config();
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -9,51 +9,39 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const googleMapsKey = process.env.GOOGLE_MAPS_API_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey || !googleMapsKey) {
-  console.error('❌ Missing credentials in .env');
+  console.error('❌ Missing credentials (SUPABASE_URL, SERVICE_KEY, or GOOGLE_MAPS_API_KEY) in .env');
   process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Config
-const BATCH_SIZE = 5; // Low batch size to avoid rate limits
-const DELAY_MS = 200; // Delay between batches
+// ------------------------------------------------------------------
+// CONFIGURATION
+// ------------------------------------------------------------------
+const BATCH_SIZE = 5;      // Process 5 items concurrently
+const DELAY_MS = 250;      // Wait 250ms between batches to be nice to Google API
 
 async function backfillAddresses() {
-  console.log('🔄 Fetching buildings without addresses...');
+  console.log('🔄 Fetching buildings missing addresses...');
 
-  // Fetch buildings where address is NULL. 
-  // We cast PostGIS location to lat/lng for easy use.
-  const { data: buildings, error } = await supabase
-    .from('buildings')
-    .select('id, name, location')
-    .is('address', null)
-    .not('location', 'is', null);
+  // 1. Get buildings using the RPC function we just created
+  const { data: buildings, error } = await supabase.rpc('get_buildings_missing_address');
 
   if (error) {
-    console.error('Error fetching buildings:', error);
+    console.error('❌ Error fetching buildings:', error.message);
     return;
   }
 
-  // If fetching raw PostGIS hex, we might need a stored proc to get lat/lng. 
-  // A cleaner way is to use an RPC or raw SQL, but let's try a direct RPC approach 
-  // if you have many rows, otherwise, we can use a raw query helper.
-  
-  // Alternative: Use a raw query to get cleaner data
-  // Note: This requires the permissions to run raw sql via rpc if "location" comes back as binary
-  const { data: cleanBuildings, error: rawError } = await supabase.rpc('get_buildings_missing_address');
-  
-  // If you don't have this RPC, create it (SQL provided below script).
-  // Fallback if you can't run the RPC right now:
-  if (rawError) {
-      console.error("❌ RPC 'get_buildings_missing_address' not found. Please run the SQL migration first.");
-      return;
+  if (!buildings || buildings.length === 0) {
+    console.log('✅ No buildings found needing address backfill.');
+    return;
   }
 
-  console.log(`found ${cleanBuildings.length} buildings to process.`);
+  console.log(`📍 Found ${buildings.length} buildings to process.`);
 
-  for (let i = 0; i < cleanBuildings.length; i += BATCH_SIZE) {
-    const batch = cleanBuildings.slice(i, i + BATCH_SIZE);
+  // 2. Process in batches
+  for (let i = 0; i < buildings.length; i += BATCH_SIZE) {
+    const batch = buildings.slice(i, i + BATCH_SIZE);
     
     await Promise.all(batch.map(async (b: any) => {
       try {
@@ -61,42 +49,50 @@ async function backfillAddresses() {
         const res = await fetch(url);
         const json = await res.json();
 
-        if (json.status === 'OK' && json.results[0]) {
+        if (json.status === 'OK' && json.results?.[0]) {
           const result = json.results[0];
           const formattedAddress = result.formatted_address;
           
-          // Extract city/country from components
-          let city = null;
-          let country = null;
+          // Extract cleaner city/country if needed, or stick with what we have
+          let googleCity = null;
+          let googleCountry = null;
 
           result.address_components.forEach((comp: any) => {
-            if (comp.types.includes('locality')) city = comp.long_name;
-            if (comp.types.includes('country')) country = comp.long_name;
+            if (comp.types.includes('locality')) googleCity = comp.long_name;
+            if (comp.types.includes('country')) googleCountry = comp.long_name;
           });
 
-          // Update Supabase
+          // 3. Update Supabase
           const { error: updateError } = await supabase
             .from('buildings')
             .update({ 
               address: formattedAddress,
-              city: city || b.city, // Keep existing if Google fails
-              country: country || b.country 
+              // Only overwrite city/country if we didn't have them originally
+              city: b.city || googleCity,
+              country: b.country || googleCountry
             })
             .eq('id', b.id);
 
-          if (updateError) throw updateError;
-          console.log(`✅ Updated: ${b.name}`);
+          if (updateError) {
+             console.error(`❌ DB Error ${b.name}:`, updateError.message);
+          } else {
+             console.log(`✅ Updated: ${b.name} -> ${formattedAddress}`);
+          }
         } else {
-          console.warn(`⚠️ No address found for: ${b.name} (${json.status})`);
+          console.warn(`⚠️ Google couldn't find address for: ${b.name} (${json.status})`);
         }
       } catch (err) {
-        console.error(`❌ Error updating ${b.name}:`, err);
+        console.error(`❌ Network Error ${b.name}:`, err);
       }
     }));
 
-    // Rate limit safety delay
-    await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+    // Rate limit pause
+    if (i + BATCH_SIZE < buildings.length) {
+      await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+    }
   }
+  
+  console.log('🎉 Backfill complete!');
 }
 
 backfillAddresses();
