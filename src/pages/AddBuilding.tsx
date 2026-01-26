@@ -303,7 +303,7 @@ export default function AddBuilding() {
 
     // Only move map if this seems like a genuine selection (has country code or place name)
     // or if the address is long enough to be specific.
-    if (countryCode || placeName || address.length > 5) {
+    if (countryCode || placeName) {
       try {
         const results = await getGeocode({ address });
         if (results && results.length > 0) {
