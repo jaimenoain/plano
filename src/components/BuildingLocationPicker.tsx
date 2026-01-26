@@ -143,7 +143,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
     setSelectedAddress(address);
 
     // Only move map if this seems like a genuine selection
-    if (countryCode || placeName || address.length > 5) {
+    if (countryCode || placeName) {
       try {
         const results = await getGeocode({ address });
         if (results && results.length > 0) {
