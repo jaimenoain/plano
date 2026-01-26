@@ -198,6 +198,13 @@ export function BuildingDiscoveryMap({
     updateClusters();
   }, [viewState, updateClusters]);
 
+  // Effect to latch userHasInteracted if auto-zoom is disabled externally (e.g. via search/filter)
+  useEffect(() => {
+    if (!autoZoomOnLowCount) {
+      setUserHasInteracted(true);
+    }
+  }, [autoZoomOnLowCount]);
+
   // Auto-zoom logic
   useEffect(() => {
     // Only proceed if auto-zoom is enabled and user hasn't interacted
@@ -238,6 +245,9 @@ export function BuildingDiscoveryMap({
                 latitude={latitude}
                 onClick={(e) => {
                     e.originalEvent.stopPropagation();
+                    setUserHasInteracted(true);
+                    onMapInteraction?.();
+
                     let expansionZoom = Math.min(
                         supercluster.getClusterExpansionZoom(cluster.id),
                         20
@@ -335,7 +345,7 @@ export function BuildingDiscoveryMap({
             </div>
         </Marker>
     );
-  }), [clusters, navigate, userBuildingsMap, supercluster]);
+  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom]);
 
   if (isLoading) {
     return (
@@ -372,7 +382,17 @@ export function BuildingDiscoveryMap({
                 onMapInteraction?.();
             }
         }}
-        onMoveStart={() => setIsMapMoving(true)}
+        onDragStart={() => {
+            setUserHasInteracted(true);
+            onMapInteraction?.();
+        }}
+        onMoveStart={(evt) => {
+            setIsMapMoving(true);
+            if (evt.originalEvent) {
+                setUserHasInteracted(true);
+                onMapInteraction?.();
+            }
+        }}
         onLoad={evt => handleMapUpdate(evt.target)}
         onMoveEnd={evt => {
             setIsMapMoving(false);
@@ -391,6 +411,8 @@ export function BuildingDiscoveryMap({
       <button
           onClick={(e) => {
               e.stopPropagation();
+              setUserHasInteracted(true);
+              onMapInteraction?.();
               setIsSatellite(!isSatellite);
           }}
           className="absolute top-2 left-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10 flex items-center gap-2"
