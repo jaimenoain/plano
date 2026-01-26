@@ -240,7 +240,8 @@ export function useBuildingSearch() {
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
             radius_meters: radius,
             filters: undefined,
-            sort_by: undefined
+            sort_by: undefined,
+            p_limit: 500
         });
 
         // RPC returns main_image_url as path now (from computed column)

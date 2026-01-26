@@ -7,6 +7,7 @@ export const searchBuildingsRpc = async (params: {
   radius_meters?: number;
   filters?: { cities?: string[]; styles?: string[] };
   sort_by?: 'distance' | 'relevance';
+  p_limit?: number;
 }): Promise<DiscoveryBuilding[]> => {
   const { data, error } = await supabase.rpc('search_buildings', params);
   if (error) throw error;
