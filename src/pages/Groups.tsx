@@ -263,14 +263,6 @@ export default function Groups() {
     <AppLayout title="Connect">
       <div className="px-4 py-6 max-w-6xl mx-auto space-y-10">
         
-        {/* Header */}
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight">Connect</h1>
-            <p className="text-muted-foreground mt-1">
-              Discover people, manage contacts, and join architecture groups.
-            </p>
-        </div>
-
         {/* Groups Section */}
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
