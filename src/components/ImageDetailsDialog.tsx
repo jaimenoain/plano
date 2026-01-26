@@ -222,7 +222,10 @@ export function ImageDetailsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden flex flex-col md:flex-row gap-0 border-none bg-background sm:rounded-lg">
+      <DialogContent
+        hideCloseButton
+        className="max-w-5xl h-[90vh] p-0 overflow-hidden flex flex-col md:flex-row gap-0 border-none bg-background sm:rounded-lg"
+      >
         {/* Hidden titles for accessibility */}
         <DialogTitle className="sr-only">Image Details</DialogTitle>
         <DialogDescription className="sr-only">View full size image and comments</DialogDescription>
