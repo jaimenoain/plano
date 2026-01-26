@@ -58,6 +58,7 @@ import MergeBuildings from "./pages/admin/MergeBuildings";
 import Users from "./pages/admin/Users";
 import Moderation from "./pages/admin/Moderation";
 import ImageWall from "./pages/admin/ImageWall";
+import BuildingAudit from "./pages/admin/BuildingAudit";
 import { AdminGuard } from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import Unauthorized from "./pages/admin/Unauthorized";
@@ -108,6 +109,7 @@ const router = createBrowserRouter(
         <Route path="/admin/users" element={<Users />} />
         <Route path="/admin/moderation" element={<Moderation />} />
         <Route path="/admin/images" element={<ImageWall />} />
+        <Route path="/admin/audit" element={<BuildingAudit />} />
         <Route path="/admin/system" element={<div>System (Coming Soon)</div>} />
       </Route>
 

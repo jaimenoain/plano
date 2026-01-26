@@ -7,6 +7,7 @@ import {
   Merge,
   ShieldAlert,
   Image,
+  History,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -54,6 +55,11 @@ const items = [
     title: "Image Wall",
     url: "/admin/images",
     icon: Image,
+  },
+  {
+    title: "Audit Logs",
+    url: "/admin/audit",
+    icon: History,
   },
   {
     title: "System",
