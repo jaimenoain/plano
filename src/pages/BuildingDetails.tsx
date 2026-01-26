@@ -602,7 +602,7 @@ export default function BuildingDetails() {
                                 <Badge variant="secondary">Saved</Badge>
                             )}
 
-                            {userStatus === 'visited' && myRating > 0 && (
+                            {myRating > 0 && (
                                 <div className="flex items-center gap-0.5">
                                     {[...Array(5)].map((_, i) => (
                                         <Circle
@@ -843,7 +843,7 @@ export default function BuildingDetails() {
                                         <span className="font-bold text-sm">{entry.user.username}</span>
                                         <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(entry.created_at))} ago</span>
                                     </div>
-                                    {entry.status === 'visited' && entry.rating && (
+                                    {entry.rating && (
                                         <div className="flex items-center gap-0.5 my-1">
                                             {[...Array(5)].map((_, i) => (
                                                 <Circle

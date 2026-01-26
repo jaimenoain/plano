@@ -386,7 +386,7 @@ export function ReviewCard({
           </div>
         )}
 
-        {entry.status === 'visited' && entry.rating && (
+        {entry.rating && (
           <div className="flex items-center gap-0.5 mb-1">
               {Array.from({ length: 5 }).map((_, i) => (
                   <Circle
