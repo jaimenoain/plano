@@ -3,6 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { FeedReview } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
+import { cn } from "@/lib/utils";
 
 interface FeedClusterCardProps {
   entries: FeedReview[];
@@ -57,7 +58,7 @@ export function FeedClusterCard({
       className="group relative flex flex-col w-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer mb-6"
     >
       {/* Header */}
-      <div className="p-4 flex items-center gap-3 border-b border-border/40">
+      <div className={cn("p-4 flex items-center gap-3", images.length > 0 && "border-b border-border/40")}>
         <Avatar className="h-10 w-10 border border-border/50">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback>{userInitial}</AvatarFallback>
@@ -79,31 +80,29 @@ export function FeedClusterCard({
       </div>
 
       {/* Visual Preview (Collage/Grid) */}
-      <div className="w-full bg-secondary aspect-[4/3] relative">
-          {images.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                  No preview available
-              </div>
-          ) : images.length === 1 ? (
-              <img src={images[0]} className="w-full h-full object-cover" alt="Cluster preview" />
+      {images.length > 0 && (
+        <div className="w-full bg-secondary aspect-[4/3] relative">
+          {images.length === 1 ? (
+            <img src={images[0]} className="w-full h-full object-cover" alt="Cluster preview" />
           ) : (
-              <div className={`grid h-full w-full gap-0.5 ${images.length === 2 ? 'grid-cols-2' : 'grid-cols-2 grid-rows-2'}`}>
-                  {images.map((url, i) => (
-                      <div key={i} className={`relative w-full h-full overflow-hidden ${
-                          images.length === 3 && i === 0 ? 'row-span-2' : ''
-                      }`}>
-                          <img src={url} className="w-full h-full object-cover" alt={`Building ${i}`} />
-                          {/* If we have more than 4, show overlay on the last one */}
-                          {i === 3 && uniqueCount > 4 && (
-                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                  <span className="text-white font-bold text-lg">+{uniqueCount - 3}</span>
-                              </div>
-                          )}
-                      </div>
-                  ))}
-              </div>
+            <div className={`grid h-full w-full gap-0.5 ${images.length === 2 ? 'grid-cols-2' : 'grid-cols-2 grid-rows-2'}`}>
+              {images.map((url, i) => (
+                <div key={i} className={`relative w-full h-full overflow-hidden ${
+                  images.length === 3 && i === 0 ? 'row-span-2' : ''
+                }`}>
+                  <img src={url} className="w-full h-full object-cover" alt={`Building ${i}`} />
+                  {/* If we have more than 4, show overlay on the last one */}
+                  {i === 3 && uniqueCount > 4 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">+{uniqueCount - 3}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
-      </div>
+        </div>
+      )}
 
       {/* No Footer - Direct Navigation */}
     </article>
