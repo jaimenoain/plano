@@ -7,7 +7,7 @@ import { getBuildingUrl } from "@/utils/url";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeftRight, Check, Trash2, ArrowLeft, AlertTriangle, Image as ImageIcon } from "lucide-react";
+import { Loader2, ArrowLeftRight, Check, Trash2, ArrowLeft, AlertTriangle, Image as ImageIcon, Pencil, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -21,9 +21,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getBuildingImageUrl } from "@/utils/image";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
 
-interface ComparisonBuilding extends AdminBuilding {
-    // Add any specific extra fields if needed
+interface ComparisonBuilding extends Omit<AdminBuilding, 'architects'> {
+    architects: { id: string; name: string; type?: 'individual' | 'studio' }[];
 }
 
 export default function MergeComparison() {
@@ -45,6 +48,10 @@ export default function MergeComparison() {
     const [impact, setImpact] = useState({ reviews: 0, photos: 0 });
     const [impactLoading, setImpactLoading] = useState(false);
 
+    // Edit State
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState<ComparisonBuilding | null>(null);
+
     useEffect(() => {
         if (targetId && sourceId) {
             fetchBuildings(targetId, sourceId);
@@ -64,7 +71,7 @@ export default function MergeComparison() {
             // @ts-ignore
             const { data, error } = await supabase
                 .from('buildings')
-                .select('*, architects:building_architects(architect:architects(name, id))')
+                .select('*, architects:building_architects(architect:architects(name, id, type))')
                 .in('id', [id1, id2]);
 
             if (error) throw error;
@@ -109,9 +116,71 @@ export default function MergeComparison() {
     };
 
     const handleSwap = () => {
+        setIsEditing(false); // Reset edit mode
         const temp = targetPointer;
         setTargetPointer(sourcePointer);
         setSourcePointer(temp);
+    };
+
+    const handleEditStart = () => {
+        const target = buildings.find(b => b.id === targetPointer);
+        if (target) {
+            // Deep copy to avoid mutating state directly
+            setEditForm(JSON.parse(JSON.stringify(target)));
+            setIsEditing(true);
+        }
+    };
+
+    const handleEditSave = async () => {
+        if (!editForm || !targetPointer) return;
+
+        try {
+            // 1. Update scalar fields
+            const { error: buildError } = await supabase
+                .from('buildings')
+                .update({
+                    name: editForm.name,
+                    city: editForm.city,
+                    address: editForm.address,
+                    year_completed: editForm.year_completed
+                })
+                .eq('id', targetPointer);
+
+            if (buildError) throw buildError;
+
+            // 2. Update Architects
+            // First delete existing
+            const { error: delError } = await supabase
+                .from('building_architects')
+                .delete()
+                .eq('building_id', targetPointer);
+
+            if (delError) throw delError;
+
+            // Then insert new
+            if (editForm.architects && editForm.architects.length > 0) {
+                const { error: insError } = await supabase
+                    .from('building_architects')
+                    .insert(
+                        editForm.architects.map(a => ({
+                            building_id: targetPointer,
+                            architect_id: a.id
+                        }))
+                    );
+
+                if (insError) throw insError;
+            }
+
+            // 3. Update local state
+            setBuildings(prev => prev.map(b => b.id === targetPointer ? editForm : b));
+            setIsEditing(false);
+            toast.success("Target building updated successfully");
+
+        } catch (error) {
+            console.error("Error updating building:", error);
+            // @ts-ignore
+            toast.error("Failed to update building: " + error.message);
+        }
     };
 
     const handleMerge = async () => {
@@ -226,7 +295,23 @@ export default function MergeComparison() {
                 <Card className="border-2 border-green-200 bg-green-50/30 overflow-hidden shadow-sm">
                     <div className="bg-green-100/80 p-3 text-green-800 font-bold flex justify-between items-center border-b border-green-200">
                         <span className="flex items-center gap-2"><Check className="h-5 w-5" /> TARGET (KEEP)</span>
-                        <Badge className="bg-green-600 hover:bg-green-700">Surviving Record</Badge>
+                        <div className="flex items-center gap-2">
+                             {!isEditing ? (
+                                <Button size="sm" variant="ghost" onClick={handleEditStart} className="h-7 px-2 text-green-800 hover:text-green-900 hover:bg-green-200/50">
+                                    <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                                </Button>
+                             ) : (
+                                 <div className="flex gap-1">
+                                     <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-100/50">
+                                         <X className="h-3.5 w-3.5 mr-1" /> Cancel
+                                     </Button>
+                                     <Button size="sm" variant="default" onClick={handleEditSave} className="h-7 px-2 bg-green-600 hover:bg-green-700">
+                                         <Save className="h-3.5 w-3.5 mr-1" /> Save
+                                     </Button>
+                                 </div>
+                             )}
+                            <Badge className="bg-green-600 hover:bg-green-700 hidden sm:inline-flex">Surviving</Badge>
+                        </div>
                     </div>
                     <div className="aspect-video w-full bg-muted relative overflow-hidden group">
                         {targetBuilding.hero_image ? (
@@ -243,30 +328,81 @@ export default function MergeComparison() {
                         )}
                     </div>
                     <CardContent className="p-6 space-y-4">
-                        <div>
-                            <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Name</div>
-                            <div className="text-xl font-bold truncate" title={targetBuilding.name}>{targetBuilding.name}</div>
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Architect</div>
-                            <div className="text-lg truncate">
-                                {targetBuilding.architects?.map(a => a.name).join(", ") || "Unknown Architect"}
+                        {isEditing && editForm ? (
+                            <div className="space-y-3">
+                                <div className="space-y-1">
+                                    <div className="text-xs text-muted-foreground font-semibold uppercase">Name</div>
+                                    <Input
+                                        value={editForm.name}
+                                        onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                        className="bg-white"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="text-xs text-muted-foreground font-semibold uppercase">Architect</div>
+                                    <ArchitectSelect
+                                        selectedArchitects={editForm.architects as SelectArchitect[]}
+                                        setSelectedArchitects={(a) => setEditForm({ ...editForm, architects: a })}
+                                        placeholder="Select architects..."
+                                        className="bg-white"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <div className="text-xs text-muted-foreground font-semibold uppercase">Year</div>
+                                        <Input
+                                            type="number"
+                                            value={editForm.year_completed || ''}
+                                            onChange={e => setEditForm({ ...editForm, year_completed: e.target.value ? parseInt(e.target.value) : null })}
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="text-xs text-muted-foreground font-semibold uppercase">City</div>
+                                        <Input
+                                            value={editForm.city || ''}
+                                            onChange={e => setEditForm({ ...editForm, city: e.target.value })}
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="text-xs text-muted-foreground font-semibold uppercase">Address</div>
+                                    <Textarea
+                                        value={editForm.address || ''}
+                                        onChange={e => setEditForm({ ...editForm, address: e.target.value })}
+                                        className="bg-white min-h-[60px]"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                             <div>
-                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Year</div>
-                                <div>{targetBuilding.year_completed || "N/A"}</div>
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">City</div>
-                                <div className="truncate" title={targetBuilding.city || ""}>{targetBuilding.city || "N/A"}</div>
-                            </div>
-                        </div>
-                        <div>
-                             <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Address</div>
-                             <div className="text-sm break-words line-clamp-2" title={targetBuilding.address || ""}>{targetBuilding.address || "N/A"}</div>
-                        </div>
+                        ) : (
+                            <>
+                                <div>
+                                    <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Name</div>
+                                    <div className="text-xl font-bold truncate" title={targetBuilding.name}>{targetBuilding.name}</div>
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Architect</div>
+                                    <div className="text-lg truncate">
+                                        {targetBuilding.architects?.map(a => a.name).join(", ") || "Unknown Architect"}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                     <div>
+                                        <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Year</div>
+                                        <div>{targetBuilding.year_completed || "N/A"}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">City</div>
+                                        <div className="truncate" title={targetBuilding.city || ""}>{targetBuilding.city || "N/A"}</div>
+                                    </div>
+                                </div>
+                                <div>
+                                     <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Address</div>
+                                     <div className="text-sm break-words line-clamp-2" title={targetBuilding.address || ""}>{targetBuilding.address || "N/A"}</div>
+                                </div>
+                            </>
+                        )}
                         <div className="pt-4 border-t border-green-200">
                              <div className="text-xs font-mono text-green-700/70 truncate" title={targetBuilding.id}>{targetBuilding.id}</div>
                         </div>
