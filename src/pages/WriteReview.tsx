@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Circle, Upload, X, Loader2, ImagePlus, Link, Trash2, Plus
+  ArrowLeft, Circle, Upload, X, Loader2, ImagePlus, Link as LinkIcon, Trash2, Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +53,9 @@ export default function WriteReview() {
   const [links, setLinks] = useState<{ id: string, url: string, title: string }[]>([]);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newLinkTitle, setNewLinkTitle] = useState("");
+
+  const [showLists, setShowLists] = useState(false);
+  const [showLinks, setShowLinks] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -111,7 +114,10 @@ export default function WriteReview() {
           if (userBuilding) {
             if (userBuilding.rating) setRating(userBuilding.rating);
             if (userBuilding.content) setContent(userBuilding.content);
-            if (userBuilding.tags) setTags(userBuilding.tags);
+            if (userBuilding.tags) {
+              setTags(userBuilding.tags);
+              if (userBuilding.tags.length > 0) setShowLists(true);
+            }
             setExistingStatus(userBuilding.status);
 
             // Fetch Links
@@ -122,6 +128,7 @@ export default function WriteReview() {
 
             if (existingLinks) {
               setLinks(existingLinks);
+              if (existingLinks.length > 0) setShowLinks(true);
             }
 
             // Fetch Images
@@ -452,129 +459,157 @@ export default function WriteReview() {
           />
         </div>
 
-        {/* Lists (Tags) */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium uppercase text-muted-foreground">Lists</label>
-          <AutocompleteTagInput
-            tags={tags}
-            setTags={setTags}
-            suggestions={suggestions}
-            placeholder="Add to list..."
-            normalize={(v) => v.trim()}
-          />
-        </div>
-
-        {/* Resources & Links */}
+        {/* Image Upload - Prominent */}
         <div className="space-y-4">
-          <Label className="text-sm font-medium uppercase text-muted-foreground">Resources & Links</Label>
+          <label className="text-sm font-medium uppercase text-muted-foreground">Photos</label>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            multiple
+            onChange={handleImageSelect}
+            disabled={submitting}
+          />
 
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                placeholder="https://..."
-                value={newLinkUrl}
-                onChange={(e) => setNewLinkUrl(e.target.value)}
-                className="flex-[2]"
-              />
-              <Input
-                placeholder="Title (optional)"
-                value={newLinkTitle}
-                onChange={(e) => setNewLinkTitle(e.target.value)}
-                className="flex-1"
-              />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addLink}
-              disabled={submitting}
-              className="w-full sm:w-auto self-start"
+          {images.length === 0 ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-muted-foreground/50 cursor-pointer transition-all gap-3"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Link
-            </Button>
-          </div>
-
-          {links.length > 0 && (
-            <div className="space-y-2">
-              {links.map((link) => {
-                let domain = "";
-                try {
-                  domain = new URL(link.url).hostname;
-                } catch { }
-
-                return (
-                  <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="p-2 bg-background rounded border">
-                        <Link className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium truncate text-sm">{link.title || link.url}</p>
-                        <p className="text-xs text-muted-foreground truncate">{domain}</p>
-                      </div>
+              <div className="p-4 bg-muted rounded-full">
+                <ImagePlus className="w-8 h-8" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium text-lg">Add Photos</p>
+                <p className="text-sm text-muted-foreground">Share what this place looks like</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+               <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                  {images.map((img) => (
+                    <div key={img.id} className="relative aspect-square group rounded-lg overflow-hidden border bg-muted">
+                      <img
+                        src={img.preview}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={() => removeImage(img.id)}
+                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeLink(link.id)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                );
-              })}
+                  ))}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="aspect-square flex flex-col items-center justify-center border-2 border-dashed rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                  >
+                    <Plus className="w-6 h-6 mb-1" />
+                    <span className="text-xs font-medium">Add</span>
+                  </button>
+               </div>
             </div>
           )}
         </div>
 
-        {/* Image Upload */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium uppercase text-muted-foreground">Photos</label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={submitting}
-            >
-              <ImagePlus className="w-4 h-4 mr-2" />
-              Add Photos
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3">
+          {!showLists && (
+            <Button variant="outline" size="sm" onClick={() => setShowLists(true)} className="gap-2">
+               <Plus className="w-4 h-4" /> Add to list
             </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*"
-              multiple
-              onChange={handleImageSelect}
-              disabled={submitting}
+          )}
+          {!showLinks && (
+            <Button variant="outline" size="sm" onClick={() => setShowLinks(true)} className="gap-2">
+               <LinkIcon className="w-4 h-4" /> Add link
+            </Button>
+          )}
+        </div>
+
+        {/* Lists (Tags) */}
+        {showLists && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <label className="text-sm font-medium uppercase text-muted-foreground">Lists</label>
+            <AutocompleteTagInput
+              tags={tags}
+              setTags={setTags}
+              suggestions={suggestions}
+              placeholder="Add to list..."
+              normalize={(v) => v.trim()}
             />
           </div>
+        )}
 
-          {images.length > 0 && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-              {images.map((img) => (
-                <div key={img.id} className="relative aspect-square group rounded-lg overflow-hidden border bg-muted">
-                  <img
-                    src={img.preview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    onClick={() => removeImage(img.id)}
-                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+        {/* Resources & Links */}
+        {showLinks && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+            <Label className="text-sm font-medium uppercase text-muted-foreground">Resources & Links</Label>
+
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  placeholder="https://..."
+                  value={newLinkUrl}
+                  onChange={(e) => setNewLinkUrl(e.target.value)}
+                  className="flex-[2]"
+                />
+                <Input
+                  placeholder="Title (optional)"
+                  value={newLinkTitle}
+                  onChange={(e) => setNewLinkTitle(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addLink}
+                disabled={submitting}
+                className="w-full sm:w-auto self-start"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Link
+              </Button>
             </div>
-          )}
-        </div>
+
+            {links.length > 0 && (
+              <div className="space-y-2">
+                {links.map((link) => {
+                  let domain = "";
+                  try {
+                    domain = new URL(link.url).hostname;
+                  } catch { }
+
+                  return (
+                    <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="p-2 bg-background rounded border">
+                          <LinkIcon className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate text-sm">{link.title || link.url}</p>
+                          <p className="text-xs text-muted-foreground truncate">{domain}</p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeLink(link.id)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Submit Actions */}
         <div className="pt-4 flex justify-end gap-4">
