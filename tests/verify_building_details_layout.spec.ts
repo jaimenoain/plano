@@ -53,12 +53,12 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
   // 3. Mock Network
   await page.route('**/rest/v1/buildings*', async route => {
       const url = route.request().url();
-      if (url.includes('id=eq.b1')) {
+      if (url.includes('id=eq.00000000-0000-0000-0000-000000000001')) {
           await route.fulfill({
               status: 200,
               contentType: 'application/json',
               body: JSON.stringify({
-                  id: 'b1',
+                  id: '00000000-0000-0000-0000-000000000001',
                   name: 'Test Building',
                   location: { type: 'Point', coordinates: [-0.1278, 51.5074] },
                   address: '123 Test St, London',
@@ -117,7 +117,7 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
 
   // 4. Navigate
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('http://localhost:8080/building/b1');
+  await page.goto('http://localhost:8080/building/00000000-0000-0000-0000-000000000001');
 
   // 5. Verification
   await expect(page.getByRole('heading', { name: 'Test Building' })).toBeVisible();

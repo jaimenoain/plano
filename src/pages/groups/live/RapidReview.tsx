@@ -104,7 +104,7 @@ function SwipeCard({ question, freshBuildingData, onSwipe, isFront, groupId }: C
             <div className="flex flex-wrap gap-2 text-sm md:text-base text-white/80 font-medium mb-4">
               {buildingData.year_completed && <span>{buildingData.year_completed}</span>}
               {buildingData.architects && buildingData.architects.length > 0 && (
-                  <span>• {buildingData.architects[0]}</span>
+                  <span>• {typeof buildingData.architects[0] === 'string' ? buildingData.architects[0] : buildingData.architects[0]?.name}</span>
               )}
             </div>
             {buildingData.description && (
