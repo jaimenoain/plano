@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { EmptyFeed } from "@/components/feed/EmptyFeed";
@@ -216,8 +216,8 @@ export default function Index() {
     }
   }, [isLoadMoreVisible, hasNextPage, isFetchingNextPage, fetchNextPage, isError]);
 
-  const reviews = data?.pages.flatMap((page) => page) || [];
-  const aggregatedReviews = aggregateFeed(reviews);
+  const reviews = useMemo(() => data?.pages.flatMap((page) => page) || [], [data]);
+  const aggregatedReviews = useMemo(() => aggregateFeed(reviews), [reviews]);
 
   const handleLike = async (reviewId: string) => {
     if (!user) return;
