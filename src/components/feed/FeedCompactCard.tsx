@@ -121,20 +121,11 @@ export function FeedCompactCard({
       </div>
 
       {/* Content Body */}
-      {(entry.status === 'pending' || entry.content) && (
+      {entry.content && (
         <div className="px-4 py-3 flex flex-col gap-2">
-           {entry.status === 'pending' && (
-               <div>
-                  <Badge variant="secondary" className="font-semibold text-[10px] px-2 h-5 bg-blue-50 text-blue-600 border-blue-200">
-                    WANT TO VISIT
-                  </Badge>
-               </div>
-           )}
-          {entry.content && (
-             <p className="text-sm text-foreground leading-relaxed">
-               {entry.content}
-             </p>
-          )}
+           <p className="text-sm text-foreground leading-relaxed">
+             {entry.content}
+           </p>
         </div>
       )}
 
