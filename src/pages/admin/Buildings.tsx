@@ -176,6 +176,8 @@ export default function Buildings() {
 
     setFormValues({
         name: building.name,
+        // @ts-ignore
+        hero_image_url: building.hero_image_url,
         year_completed: building.year_completed,
         architects: relationArchitects,
         functional_category_id: (building as any).functional_category_id || "",
@@ -199,6 +201,8 @@ export default function Buildings() {
         .from('buildings')
         .update({
           name: formData.name,
+          // @ts-ignore
+          hero_image_url: formData.hero_image_url,
           year_completed: formData.year_completed,
           // Architects removed from here (handled via relation)
           // @ts-ignore

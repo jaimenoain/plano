@@ -2,6 +2,7 @@ import * as z from "zod";
 
 export const buildingSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  hero_image_url: z.string().nullable().optional(),
   // Preprocess handles conversion from string input (e.g. from HTML input) to number or null
   year_completed: z.preprocess((val) => {
     if (val === "" || val === null || val === undefined) return null;
@@ -42,6 +43,7 @@ export const buildingSchema = z.object({
 
 export const editBuildingSchema = z.object({
   name: z.string().optional(),
+  hero_image_url: z.string().nullable().optional(),
   year_completed: z.preprocess((val) => {
     if (val === "" || val === null || val === undefined) return null;
     const parsed = typeof val === 'string' ? parseInt(val, 10) : Number(val);
