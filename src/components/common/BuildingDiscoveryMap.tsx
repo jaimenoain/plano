@@ -60,6 +60,7 @@ interface BuildingDiscoveryMapProps {
   forcedBounds?: Bounds | null;
   isFetching?: boolean;
   autoZoomOnLowCount?: boolean;
+  resetInteractionTrigger?: number;
 }
 
 export function BuildingDiscoveryMap({
@@ -70,7 +71,8 @@ export function BuildingDiscoveryMap({
   forcedCenter,
   forcedBounds,
   isFetching,
-  autoZoomOnLowCount
+  autoZoomOnLowCount,
+  resetInteractionTrigger
 }: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -204,6 +206,13 @@ export function BuildingDiscoveryMap({
       setUserHasInteracted(true);
     }
   }, [autoZoomOnLowCount]);
+
+  // Effect to reset user interaction state when triggered externally (e.g. on new search)
+  useEffect(() => {
+    if (resetInteractionTrigger !== undefined) {
+      setUserHasInteracted(false);
+    }
+  }, [resetInteractionTrigger]);
 
   // Auto-zoom logic
   useEffect(() => {
