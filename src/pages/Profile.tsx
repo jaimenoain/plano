@@ -83,6 +83,7 @@ export default function Profile() {
   // Favorites
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [showManageTags, setShowManageTags] = useState(false);
+  const [allTags, setAllTags] = useState<string[]>([]);
 
   // New Profile Features
   const [squad, setSquad] = useState<Profile[]>([]);
@@ -104,7 +105,7 @@ export default function Profile() {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("tab", tab);
     newParams.delete("search");
-    newParams.delete("tag");
+    // Tag filter persists across tabs now
     setSearchParams(newParams, { replace: true, preventScrollReset: true });
 
     requestAnimationFrame(() => {
@@ -228,26 +229,40 @@ export default function Profile() {
       checkIfFollowing();
       fetchTabContent();
       fetchSquad();
+      fetchAllTags();
     }
   }, [targetUserId, activeTab, currentUser]);
 
   // --- Logic ---
 
-  // Computed: Unique Tags
-  const tags = useMemo(() => {
-    const tagMap = new Map<string, number>();
-    content.forEach(item => {
-      item.tags?.forEach(tag => {
-        tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-      });
-    });
+  const fetchAllTags = async () => {
+    if (!targetUserId) return;
+    try {
+      const { data, error } = await supabase
+        .from("user_buildings")
+        .select("tags")
+        .eq("user_id", targetUserId);
 
-    const sortedByFreq = Array.from(tagMap.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([tag]) => tag);
+      if (error) throw error;
 
-    return sortedByFreq;
-  }, [content]);
+      if (data) {
+        const tagMap = new Map<string, number>();
+        data.forEach((item) => {
+          item.tags?.forEach((tag) => {
+            tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+          });
+        });
+
+        const sortedByFreq = Array.from(tagMap.entries())
+          .sort((a, b) => b[1] - a[1])
+          .map(([tag]) => tag);
+
+        setAllTags(sortedByFreq);
+      }
+    } catch (error) {
+      console.error("Error fetching tags:", error);
+    }
+  };
 
   // Computed: Filtered Content
   const filteredContent = useMemo(() => {
@@ -566,10 +581,10 @@ export default function Profile() {
       )}
 
       {/* 4. Collections Row (Tags) */}
-      {tags.length > 0 && (
+      {allTags.length > 0 && (
           <div id="tags-section" className="scroll-mt-24">
               <CollectionsRow
-                tags={tags}
+                tags={allTags}
                 selectedTag={selectedTag}
                 onTagSelect={handleTagChange}
                 onShare={handleShare}
@@ -711,7 +726,10 @@ export default function Profile() {
           open={showManageTags}
           onOpenChange={setShowManageTags}
           userId={currentUser.id}
-          onTagsUpdate={fetchTabContent}
+          onTagsUpdate={() => {
+            fetchTabContent();
+            fetchAllTags();
+          }}
         />
       )}
     </AppLayout>
