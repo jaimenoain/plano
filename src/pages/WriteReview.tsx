@@ -389,14 +389,16 @@ export default function WriteReview() {
         {/* Rating */}
         <div className="space-y-2">
           <label className="text-sm font-medium uppercase text-muted-foreground">Rating</label>
-          <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-2"
+            onMouseLeave={() => setHoverRating(null)}
+          >
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
                 type="button"
                 className="focus:outline-none transition-transform hover:scale-110"
                 onMouseEnter={() => setHoverRating(star)}
-                onMouseLeave={() => setHoverRating(null)}
                 onClick={() => setRating(star)}
               >
                 <Circle
