@@ -97,6 +97,7 @@ export function useBuildingSearch() {
   const [filterBucketList, setFilterBucketList] = useState(false);
   const [filterContacts, setFilterContacts] = useState(false);
   const [minRating, setMinRating] = useState<number>(0);
+  const [selectedArchitects, setSelectedArchitects] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
 
   // Default to London
@@ -129,7 +130,7 @@ export function useBuildingSearch() {
 
   // Search query
   const { data: buildings, isLoading, isFetching } = useQuery({
-    queryKey: ["search-buildings", debouncedQuery, filterVisited, filterBucketList, filterContacts, minRating, userLocation, user?.id],
+    queryKey: ["search-buildings", debouncedQuery, filterVisited, filterBucketList, filterContacts, minRating, selectedArchitects, userLocation, user?.id],
     queryFn: async () => {
         // Local filtering mode (My Buildings or Contacts)
         if (filterVisited || filterBucketList || filterContacts) {
@@ -230,7 +231,14 @@ export function useBuildingSearch() {
                 } as DiscoveryBuilding;
             }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
-            return await enrichBuildings(mappedBuildings, user?.id);
+            // Local Architect Filter
+            const filteredMappedBuildings = selectedArchitects.length > 0
+                ? mappedBuildings.filter((b: any) =>
+                    b.architects?.some((a: any) => selectedArchitects.includes(a.name))
+                  )
+                : mappedBuildings;
+
+            return await enrichBuildings(filteredMappedBuildings, user?.id);
         }
 
         // Global search mode (RPC)
@@ -239,7 +247,7 @@ export function useBuildingSearch() {
             query_text: debouncedQuery || null,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
             radius_meters: radius,
-            filters: undefined,
+            filters: { architects: selectedArchitects.length > 0 ? selectedArchitects : undefined },
             sort_by: undefined,
             p_limit: 500
         });
@@ -267,6 +275,8 @@ export function useBuildingSearch() {
       setFilterContacts,
       minRating,
       setMinRating,
+      selectedArchitects,
+      setSelectedArchitects,
       viewMode,
       setViewMode,
       userLocation,

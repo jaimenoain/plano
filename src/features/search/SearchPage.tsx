@@ -27,6 +27,7 @@ export default function SearchPage() {
     filterBucketList, setFilterBucketList,
     filterContacts, setFilterContacts,
     minRating, setMinRating,
+    selectedArchitects, setSelectedArchitects,
     viewMode, setViewMode,
     userLocation, updateLocation,
     buildings, isLoading, isFetching,
@@ -72,7 +73,6 @@ export default function SearchPage() {
   const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
 
   // Main: Filter controls
-  const [selectedArchitects, setSelectedArchitects] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("distance");
 
   // If a user types a query, we want to search the full database (ignore map bounds)
@@ -114,13 +114,6 @@ export default function SearchPage() {
       });
     }
 
-    // B. Apply New Filters (Main Branch)
-    if (selectedArchitects.length > 0) {
-      result = result.filter(b =>
-        b.architects?.some(arch => selectedArchitects.includes(arch.name))
-      );
-    }
-
     // C. Apply Sorting (Main Branch)
     // Note: 'distance' sorting is usually handled by the backend/hook or geospatial logic, 
     // but here is a placeholder for client-side sort if needed.
@@ -129,7 +122,7 @@ export default function SearchPage() {
     }
 
     return result;
-  }, [buildings, mapBounds, ignoreMapBounds, selectedArchitects, sortBy]);
+  }, [buildings, mapBounds, ignoreMapBounds, sortBy]);
 
   // 5. Merged Handlers
 

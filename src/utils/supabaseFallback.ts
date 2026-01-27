@@ -5,7 +5,7 @@ export const searchBuildingsRpc = async (params: {
   query_text: string | null;
   location_coordinates?: { lat: number; lng: number };
   radius_meters?: number;
-  filters?: { cities?: string[]; styles?: string[] };
+  filters?: { cities?: string[]; styles?: string[]; architects?: string[] };
   sort_by?: 'distance' | 'relevance';
   p_limit?: number;
 }): Promise<DiscoveryBuilding[]> => {
