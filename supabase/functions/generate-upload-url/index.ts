@@ -43,10 +43,9 @@ Deno.serve(async (req) => {
     )
 
     // 4. Debug User Token Verification
-    const token = authHeader.replace(/^Bearer\s+/i, '')
-    console.log(`Verifying token (length: ${token.length})`)
+    console.log("Verifying user token")
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
 
     if (userError || !user) {
       console.error("Auth Failed:", JSON.stringify(userError))
