@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
-import { Loader2, Plus, Image as ImageIcon, X } from "lucide-react";
+import { Loader2, Plus, Image as ImageIcon, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
 import { StyleSelect, StyleSummary } from "@/components/ui/style-select";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionalCategory, FunctionalTypology, AttributeGroup, Attribute } from "@/types/classification";
 import {
@@ -54,6 +54,11 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id || "");
   const [functional_typology_ids, setTypologyIds] = useState<string[]>(initialValues.functional_typology_ids);
   const [selected_attribute_ids, setAttributeIds] = useState<string[]>(initialValues.selected_attribute_ids);
+  const [isAddingTypology, setIsAddingTypology] = useState(false);
+  const [newTypologyName, setNewTypologyName] = useState("");
+  const [isAddingTypologyLoading, setIsAddingTypologyLoading] = useState(false);
+
+  const queryClient = useQueryClient();
 
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
@@ -157,6 +162,47 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
     // Combine other attributes with the new selection for this group
     setAttributeIds([...otherAttributes, ...newGroupSelection]);
+  };
+
+  const handleAddTypology = async () => {
+    if (!newTypologyName.trim()) return;
+
+    if (!functional_category_id) {
+        toast.error("Please select a category first");
+        return;
+    }
+
+    try {
+      setIsAddingTypologyLoading(true);
+      const slug = newTypologyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+      const { data, error } = await supabase
+        .from("functional_typologies")
+        .insert({
+          name: newTypologyName,
+          parent_category_id: functional_category_id,
+          slug: slug
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ["functional_typologies"] });
+
+      // Add to selection
+      setTypologyIds(prev => [...prev, data.id]);
+
+      setNewTypologyName("");
+      setIsAddingTypology(false);
+      toast.success("Typology added successfully");
+
+    } catch (error) {
+      console.error("Error adding typology:", error);
+      toast.error("Failed to add typology");
+    } finally {
+      setIsAddingTypologyLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -399,6 +445,57 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
                       {typology.name}
                     </ToggleGroupItem>
                   ))}
+
+                  {isAddingTypology ? (
+                    <div className="flex items-center gap-1 ml-2">
+                        <Input
+                            value={newTypologyName}
+                            onChange={(e) => setNewTypologyName(e.target.value)}
+                            className="h-8 w-40 text-sm"
+                            placeholder="New typology"
+                            autoFocus
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddTypology();
+                                }
+                            }}
+                            disabled={isAddingTypologyLoading}
+                        />
+                        <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={handleAddTypology}
+                            disabled={isAddingTypologyLoading}
+                        >
+                            {isAddingTypologyLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                                setIsAddingTypology(false);
+                                setNewTypologyName("");
+                            }}
+                            disabled={isAddingTypologyLoading}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ) : (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-8 text-sm px-2 text-muted-foreground hover:text-foreground ml-1"
+                        onClick={() => setIsAddingTypology(true)}
+                    >
+                        <Plus className="h-3 w-3 mr-1" /> Add another
+                    </Button>
+                )}
               </ToggleGroup>
             )}
             {functional_category_id && (typologies || []).filter(t => t.parent_category_id === functional_category_id).length === 0 && (
