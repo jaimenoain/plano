@@ -62,6 +62,8 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
                   name: 'Test Building',
                   location: { type: 'Point', coordinates: [-0.1278, 51.5074] },
                   address: '123 Test St, London',
+                  city: 'London',
+                  country: 'UK',
                   // architects is fetched separately now, but keeping it here harmlessly if needed by legacy
                   architects: [],
                   year_completed: 2020,
@@ -124,7 +126,7 @@ test('Verify Building Details Layout (Map > Address > Image)', async ({ page }) 
 
   // Check Left Column Children Order
   const mapContainer = page.locator('.h-48');
-  const addressText = page.getByText('123 Test St, London');
+  const addressText = page.getByText('London, UK');
   const image = page.getByRole('img', { name: 'Test Building' });
 
   await expect(mapContainer).toBeVisible();
