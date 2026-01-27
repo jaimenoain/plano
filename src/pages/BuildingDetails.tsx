@@ -55,6 +55,8 @@ interface BuildingDetails {
   location: any; // PostGIS point handling usually requires parsing
   location_precision?: 'exact' | 'approximate';
   address: string;
+  city: string | null;
+  country: string | null;
   architects: Architect[];
   year_completed: number;
   styles: { id: string, name: string }[];
@@ -557,7 +559,9 @@ export default function BuildingDetails() {
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="w-4 h-4 shrink-0" />
-                    <span className="text-sm font-medium">{building.address}</span>
+                    <span className="text-sm font-medium">
+                        {[building.city, building.country].filter(Boolean).join(", ") || building.address}
+                    </span>
                 </div>
                 {coordinates && (
                     <>
