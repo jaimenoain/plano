@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS get_feed(INT, INT);
+
 CREATE OR REPLACE FUNCTION get_feed(p_limit INT, p_offset INT)
 RETURNS TABLE (
   id UUID,
