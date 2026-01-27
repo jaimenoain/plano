@@ -7,7 +7,7 @@ import { getBuildingUrl } from "@/utils/url";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeftRight, Check, Trash2, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Loader2, ArrowLeftRight, Check, Trash2, ArrowLeft, AlertTriangle, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -198,7 +198,15 @@ export default function MergeComparison() {
     const targetBuilding = buildings.find(b => b.id === targetPointer);
     const sourceBuilding = buildings.find(b => b.id === sourcePointer);
 
-    if (!targetBuilding || !sourceBuilding) return <div>Error: Buildings not found</div>;
+    if (!targetBuilding || !sourceBuilding) {
+        return (
+            <div className="container mx-auto py-8 px-4 max-w-7xl flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+                <AlertTriangle className="h-16 w-16 text-muted-foreground opacity-20" />
+                <h2 className="text-xl font-semibold text-muted-foreground">Buildings not found</h2>
+                <Button onClick={() => navigate('/admin/merge')}>Return to Merge Tool</Button>
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto py-8 px-4 max-w-7xl">
@@ -220,25 +228,28 @@ export default function MergeComparison() {
                         <span className="flex items-center gap-2"><Check className="h-5 w-5" /> TARGET (KEEP)</span>
                         <Badge className="bg-green-600 hover:bg-green-700">Surviving Record</Badge>
                     </div>
-                    <div className="aspect-video w-full bg-muted relative overflow-hidden">
+                    <div className="aspect-video w-full bg-muted relative overflow-hidden group">
                         {targetBuilding.hero_image ? (
                             <img
                                 src={getBuildingImageUrl(targetBuilding.hero_image)}
                                 alt={targetBuilding.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500"
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full text-muted-foreground">No Image</div>
+                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 bg-muted/50">
+                                <ImageIcon className="h-12 w-12 mb-2" />
+                                <span className="text-sm font-medium">No Image</span>
+                            </div>
                         )}
                     </div>
                     <CardContent className="p-6 space-y-4">
                         <div>
                             <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Name</div>
-                            <div className="text-xl font-bold">{targetBuilding.name}</div>
+                            <div className="text-xl font-bold truncate" title={targetBuilding.name}>{targetBuilding.name}</div>
                         </div>
                         <div>
                             <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Architect</div>
-                            <div className="text-lg">
+                            <div className="text-lg truncate">
                                 {targetBuilding.architects?.map(a => a.name).join(", ") || "Unknown Architect"}
                             </div>
                         </div>
@@ -249,15 +260,15 @@ export default function MergeComparison() {
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">City</div>
-                                <div>{targetBuilding.city || "N/A"}</div>
+                                <div className="truncate" title={targetBuilding.city || ""}>{targetBuilding.city || "N/A"}</div>
                             </div>
                         </div>
                         <div>
                              <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Address</div>
-                             <div className="text-sm">{targetBuilding.address || "N/A"}</div>
+                             <div className="text-sm break-words line-clamp-2" title={targetBuilding.address || ""}>{targetBuilding.address || "N/A"}</div>
                         </div>
                         <div className="pt-4 border-t border-green-200">
-                             <div className="text-xs font-mono text-green-700/70">{targetBuilding.id}</div>
+                             <div className="text-xs font-mono text-green-700/70 truncate" title={targetBuilding.id}>{targetBuilding.id}</div>
                         </div>
                     </CardContent>
                 </Card>
@@ -282,26 +293,29 @@ export default function MergeComparison() {
                         <span className="flex items-center gap-2"><Trash2 className="h-5 w-5" /> SOURCE (REMOVE)</span>
                         <Badge variant="destructive">Will be Deleted</Badge>
                     </div>
-                     <div className="aspect-video w-full bg-muted relative overflow-hidden">
+                    <div className="aspect-video w-full bg-muted relative overflow-hidden group">
                         {sourceBuilding.hero_image ? (
                             <img
                                 src={getBuildingImageUrl(sourceBuilding.hero_image)}
                                 alt={sourceBuilding.name}
-                                className="w-full h-full object-cover grayscale opacity-90"
+                                className="w-full h-full object-cover grayscale opacity-90 transition-transform group-hover:scale-105 duration-500"
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full text-muted-foreground">No Image</div>
+                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 bg-muted/50">
+                                <ImageIcon className="h-12 w-12 mb-2" />
+                                <span className="text-sm font-medium">No Image</span>
+                            </div>
                         )}
                          <div className="absolute inset-0 bg-red-500/10 mix-blend-multiply" />
                     </div>
                     <CardContent className="p-6 space-y-4">
                         <div>
                             <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Name</div>
-                            <div className="text-xl font-bold text-red-900/80 line-through decoration-red-500/50">{sourceBuilding.name}</div>
+                            <div className="text-xl font-bold text-red-900/80 line-through decoration-red-500/50 truncate" title={sourceBuilding.name}>{sourceBuilding.name}</div>
                         </div>
                         <div>
                             <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Architect</div>
-                            <div className="text-lg text-red-900/80">
+                            <div className="text-lg text-red-900/80 truncate">
                                 {sourceBuilding.architects?.map(a => a.name).join(", ") || "Unknown Architect"}
                             </div>
                         </div>
@@ -312,15 +326,15 @@ export default function MergeComparison() {
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">City</div>
-                                <div className="text-red-900/80">{sourceBuilding.city || "N/A"}</div>
+                                <div className="text-red-900/80 truncate" title={sourceBuilding.city || ""}>{sourceBuilding.city || "N/A"}</div>
                             </div>
                         </div>
                         <div>
                              <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Address</div>
-                             <div className="text-sm text-red-900/80">{sourceBuilding.address || "N/A"}</div>
+                             <div className="text-sm text-red-900/80 break-words line-clamp-2" title={sourceBuilding.address || ""}>{sourceBuilding.address || "N/A"}</div>
                         </div>
                          <div className="pt-4 border-t border-red-200">
-                             <div className="text-xs font-mono text-red-700/70">{sourceBuilding.id}</div>
+                             <div className="text-xs font-mono text-red-700/70 truncate" title={sourceBuilding.id}>{sourceBuilding.id}</div>
                         </div>
                     </CardContent>
                 </Card>
@@ -353,8 +367,13 @@ export default function MergeComparison() {
                             <div>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button size="lg" variant="destructive" className="px-8 h-14 text-lg shadow-lg hover:shadow-xl transition-all">
-                                            Confirm and Unify
+                                        <Button
+                                            size="lg"
+                                            variant="destructive"
+                                            className="px-8 h-14 text-lg shadow-lg hover:shadow-xl transition-all"
+                                            disabled={merging || impactLoading}
+                                        >
+                                            {merging ? <Loader2 className="animate-spin mr-2" /> : "Confirm and Unify"}
                                         </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
