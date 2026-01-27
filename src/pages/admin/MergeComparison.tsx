@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminBuilding } from "@/types/admin_building";
+import { useAuth } from "@/hooks/useAuth";
+import { getBuildingUrl } from "@/utils/url";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +29,7 @@ interface ComparisonBuilding extends AdminBuilding {
 export default function MergeComparison() {
     const { targetId, sourceId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [merging, setMerging] = useState(false);
@@ -112,7 +115,7 @@ export default function MergeComparison() {
     };
 
     const handleMerge = async () => {
-        if (!targetPointer || !sourcePointer) return;
+        if (!targetPointer || !sourcePointer || !user) return;
 
         setMerging(true);
         try {
@@ -126,10 +129,28 @@ export default function MergeComparison() {
             // Ensure soft delete is marked (redundant safety)
             await supabase.from('buildings').update({ is_deleted: true }).eq('id', sourcePointer);
 
-            toast.success("Buildings merged successfully");
-            navigate('/admin/merge');
+            // Audit Log
+            await supabase.from('admin_audit_logs').insert({
+                admin_id: user.id,
+                action_type: 'merge_buildings',
+                target_type: 'buildings',
+                target_id: targetPointer,
+                details: {
+                    merged_source_id: sourcePointer,
+                    source_name: buildings.find(b => b.id === sourcePointer)?.name
+                }
+            });
+
+            toast.success("Buildings merged successfully. Redirecting...");
+
+            // Redirect to survivor
+            const target = buildings.find(b => b.id === targetPointer);
+            // @ts-ignore
+            navigate(getBuildingUrl(targetPointer, target?.slug, target?.short_id));
+
         } catch (error) {
             console.error("Merge failed:", error);
+            // @ts-ignore
             toast.error("Merge failed: " + error.message);
         } finally {
             setMerging(false);
