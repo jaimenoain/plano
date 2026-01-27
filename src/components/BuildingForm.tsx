@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
 import { StyleSelect, StyleSummary } from "@/components/ui/style-select";
@@ -20,9 +20,13 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { resizeImage } from "@/lib/image-compression";
+import { useAuth } from "@/hooks/useAuth";
+import { getBuildingImageUrl } from "@/utils/image";
 
 export interface BuildingFormData {
   name: string;
+  hero_image_url?: string | null;
   year_completed: number | null;
   architects: Architect[];
   styles: StyleSummary[];
@@ -40,7 +44,9 @@ interface BuildingFormProps {
 }
 
 export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create' }: BuildingFormProps) {
+  const { user } = useAuth();
   const [name, setName] = useState(initialValues.name);
+  const [heroImage, setHeroImage] = useState<string | null>(initialValues.hero_image_url || null);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
   const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
   const [styles, setStyles] = useState<StyleSummary[]>(initialValues.styles || []);
@@ -51,6 +57,46 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
   const [showStyles, setShowStyles] = useState((initialValues.styles || []).length > 0);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!user) {
+      toast.error("You must be logged in to upload images");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const compressedFile = await resizeImage(file);
+
+      const fileExt = "webp";
+      const filePath = `${user.id}/hero/${crypto.randomUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('review_images')
+        .upload(filePath, compressedFile);
+
+      if (uploadError) throw uploadError;
+
+      setHeroImage(filePath);
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+      // Reset input so same file can be selected again if needed
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const removeImage = () => {
+    setHeroImage(null);
+  };
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["functional_categories"],
@@ -126,6 +172,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
     try {
       const rawData = {
         name,
+        hero_image_url: heroImage,
         year_completed,
         architects,
         styles,
@@ -159,6 +206,58 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-4">
+        {/* Main Image Upload */}
+        <div className="space-y-2">
+          <Label>Main Image</Label>
+          <div className="flex flex-col gap-4">
+            {heroImage ? (
+              <div className="relative aspect-video w-full max-w-sm rounded-lg overflow-hidden border bg-muted">
+                <img
+                  src={getBuildingImageUrl(heroImage)}
+                  alt="Building hero"
+                  className="w-full h-full object-cover"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full"
+                  onClick={removeImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div
+                className="flex items-center justify-center w-full max-w-sm aspect-video border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                      <span className="text-sm">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="h-8 w-8" />
+                      <span className="text-sm">Click to upload image</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={isUploading}
+            />
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="name">Name {mode === 'create' && "*"}</Label>
           <Input
@@ -370,8 +469,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         )}
       </div>
 
-      <Button type="submit" className="w-full mt-6" disabled={isSubmitting}>
-        {isSubmitting ? (
+      <Button type="submit" className="w-full mt-6" disabled={isSubmitting || isUploading}>
+        {isSubmitting || isUploading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Saving...

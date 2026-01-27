@@ -44,6 +44,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         .from('buildings')
         .insert({
           name: data.name,
+          // @ts-ignore
+          hero_image_url: data.hero_image_url,
           year_completed: data.year_completed,
 
           // Location Data (Merged from Main & Feature branches)
@@ -177,6 +179,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
   const initialValues: BuildingFormData = {
     name: locationData.name || "",
+    hero_image_url: null,
     year_completed: null,
     architects: [],
     styles: [],

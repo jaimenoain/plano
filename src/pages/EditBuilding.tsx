@@ -127,6 +127,8 @@ export default function EditBuilding() {
 
       setInitialValues({
         name: data.name,
+        // @ts-ignore
+        hero_image_url: data.hero_image_url,
         year_completed: data.year_completed,
         architects: finalArchitects,
         styles: styles,
@@ -204,6 +206,8 @@ export default function EditBuilding() {
         .from('buildings')
         .update({
           name: formData.name,
+          // @ts-ignore
+          hero_image_url: formData.hero_image_url,
           year_completed: formData.year_completed,
           // @ts-ignore
           functional_category_id: formData.functional_category_id,
