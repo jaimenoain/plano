@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Search, X, Loader2, Crown, Trash2, Plus, Tv, MapPin, FileText, Link as LinkIcon, BarChart2, Pencil, Sparkles, Building2, Repeat } from "lucide-react";
+import { Calendar as CalendarIcon, Search, X, Loader2, Crown, Trash2, Plus, Tv, MapPin, FileText, Link as LinkIcon, BarChart2, Pencil, Sparkles, Building2, Repeat, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn, parseHomeBase } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -52,6 +52,7 @@ export default function CreateSession() {
   const queryClient = useQueryClient();
 
   const [date, setDate] = useState<Date>();
+  const [time, setTime] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [hostNotes, setHostNotes] = useState("");
@@ -262,7 +263,11 @@ export default function CreateSession() {
       
       if (data) {
         if (data.session_date.includes('T')) {
-          setDate(new Date(data.session_date));
+          const d = new Date(data.session_date);
+          setDate(d);
+          if (d.getHours() !== 0 || d.getMinutes() !== 0) {
+            setTime(format(d, "HH:mm"));
+          }
         } else {
           setDate(new Date(`${data.session_date}T00:00:00`));
         }
@@ -433,12 +438,21 @@ export default function CreateSession() {
       }
 
       // 1. Create or Update Session
+      let sessionDateISO = format(date, "yyyy-MM-dd");
+      if (time) {
+          const [hours, minutes] = time.split(':').map(Number);
+          const newDate = new Date(date);
+          newDate.setHours(hours);
+          newDate.setMinutes(minutes);
+          sessionDateISO = newDate.toISOString();
+      }
+
       const sessionData: SessionInsert = {
         group_id: resolvedGroupId,
         title: title || format(date, "MMMM do 'Event'"),
         description,
         host_notes: hostNotes,
-        session_date: format(date, "yyyy-MM-dd"),
+        session_date: sessionDateISO,
         resources: resources as unknown as any,
         cycle_id: selectedCycleId,
         status: finalStatus,
@@ -585,6 +599,30 @@ export default function CreateSession() {
                     />
                     </PopoverContent>
                 </Popover>
+            </div>
+
+            {/* Time Field */}
+            <div className="space-y-2">
+                {!time ? (
+                    <Button variant="ghost" size="sm" onClick={() => setTime("12:00")} className="h-9 px-3 text-muted-foreground">
+                        <Clock className="mr-2 h-4 w-4" /> Add Time
+                    </Button>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <div className="relative">
+                            <Clock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="time"
+                                value={time}
+                                onChange={(e) => setTime(e.target.value)}
+                                className="pl-9 w-32"
+                            />
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setTime("")} className="h-9 w-9 text-muted-foreground hover:text-destructive">
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* Logistics Summary Line */}
