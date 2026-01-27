@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Star, Upload, X, Loader2, ImagePlus, Link, Trash2, Plus
+  ArrowLeft, Circle, Upload, X, Loader2, ImagePlus, Link, Trash2, Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -399,10 +399,10 @@ export default function WriteReview() {
                 onMouseLeave={() => setHoverRating(null)}
                 onClick={() => setRating(star)}
               >
-                <Star
+                <Circle
                   className={`w-8 h-8 transition-colors ${
                     star <= (hoverRating ?? rating)
-                      ? "fill-primary text-primary"
+                      ? "fill-[#595959] text-[#595959]"
                       : "text-muted-foreground/20"
                   }`}
                 />

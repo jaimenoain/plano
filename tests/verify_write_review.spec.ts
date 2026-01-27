@@ -18,43 +18,66 @@ test('Verify Write Review Page', async ({ page }) => {
     }));
   });
 
-  const buildingId = 'building-123';
+  const buildingId = '00000000-0000-0000-0000-000000000123';
 
   // 2. Mock Network Requests
   await page.route('**', async route => {
     const url = route.request().url();
     const method = route.request().method();
 
-    // Mock Building Details for Review Page (fetching name)
-    // Query: select name, id=eq...
-    if (url.includes(`rest/v1/buildings`) && url.includes(`select=name`) && url.includes(`id=eq.${buildingId}`)) {
-       await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ name: 'Test Building' })
-       });
-       return;
+    // Mock Auth User
+    if (url.includes('auth/v1/user')) {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                id: "user-uuid",
+                email: "test@example.com",
+                aud: "authenticated",
+                role: "authenticated"
+            })
+        });
+        return;
     }
 
-    // Mock Building Details for the main page (more fields)
-    if (url.includes(`rest/v1/buildings`) && url.includes(`id=eq.${buildingId}`) && !url.includes(`select=name`)) {
+    // Mock Review Links Delete
+    if (url.includes('rest/v1/review_links') && method === 'DELETE') {
+        await route.fulfill({ status: 204 });
+        return;
+    }
+
+    // Mock Building Details (Handle all fetches for this building)
+    if (url.includes(`rest/v1/buildings`) && (url.includes(`id=eq.${buildingId}`) || url.includes(`short_id=eq.123`))) {
        await route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
               id: buildingId,
               name: 'Test Building',
-              location: null, // location parsing handles null
+              slug: 'test-building',
+              short_id: 123,
+              location: null,
               address: '123 Test St',
               created_by: 'other-user',
               main_image_url: null,
-              architects: ['Test Architect'],
+              styles: [{ style: { id: 'style-1', name: 'Modern' } }],
               year_completed: 2020,
-              styles: ['Modern'],
               description: 'A test building'
           })
        });
        return;
+    }
+
+    // Mock Building Architects
+    if (url.includes('rest/v1/building_architects')) {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify([
+                { architect: { id: 'arch-1', name: 'Test Architect' } }
+            ])
+        });
+        return;
     }
 
     // Mock Existing Review (null initially)
@@ -104,7 +127,26 @@ test('Verify Write Review Page', async ({ page }) => {
        return;
     }
 
-    // Mock Image Upload
+    // Mock generate-upload-url function
+    if (url.includes('functions/v1/generate-upload-url')) {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ uploadUrl: 'http://localhost:8080/fake-s3-upload', key: 'fake-key' })
+        });
+        return;
+    }
+
+    // Mock PUT to fake-s3-upload
+    if (url.includes('fake-s3-upload')) {
+        await route.fulfill({
+            status: 200,
+            body: 'OK'
+        });
+        return;
+    }
+
+    // Mock Image Upload (Legacy/Direct) - keeping just in case
     if (url.includes('storage/v1/object/review_images')) {
         console.log('Intercepted Image Upload');
         await route.fulfill({
@@ -134,37 +176,28 @@ test('Verify Write Review Page', async ({ page }) => {
     }
   });
 
-  // 3. Test Navigation from Building Details
-  console.log('Navigating to Building Details...');
-  await page.goto(`http://localhost:8080/building/${buildingId}`);
-
-  // Verify "Write Review" button exists
-  // It might be "Write Review" or "Edit Review" depending on state, but we mocked null existing review.
-  const reviewLink = page.getByRole('link', { name: 'Write Review' });
-  await expect(reviewLink).toBeVisible();
-
-  // Click it
-  await reviewLink.click();
+  // 3. Go directly to Review Page
+  console.log('Navigating to Review Page...');
+  await page.goto(`http://localhost:8080/building/${buildingId}/review`);
 
   // Verify we are on the review page
-  await expect(page).toHaveURL(new RegExp(`/building/${buildingId}/review`));
   await expect(page.getByRole('heading', { name: 'Test Building' })).toBeVisible();
 
   // 4. Fill Review
   console.log('Filling review...');
-  const starButtons = page.locator('button:has(.lucide-star)');
+  const ratingButtons = page.locator('button:has(.lucide-circle)');
   // Depending on implementation, there might be more star icons (e.g. in header?), but let's assume the rating ones are unique buttons
-  // The rating buttons are: <button ...><Star .../></button>
+  // The rating buttons are: <button ...><Circle .../></button>
   // Let's filter by aria-label or just take the set.
-  // There are 5 stars.
-  await expect(starButtons).toHaveCount(5);
-  await starButtons.nth(3).click(); // 4th star
+  // There are 5 circles.
+  await expect(ratingButtons).toHaveCount(5);
+  await ratingButtons.nth(3).click(); // 4th circle
 
   // Check text "4/5"
   await expect(page.getByText('4/5')).toBeVisible();
 
   // Fill text
-  await page.getByRole('textbox').fill('This is a test review.');
+  await page.getByPlaceholder('What did you think about this building?').fill('This is a test review.');
 
   // 5. Upload Image
   console.log('Uploading image...');
@@ -188,7 +221,7 @@ test('Verify Write Review Page', async ({ page }) => {
 
   // 7. Verify Redirect
   // Wait for navigation
-  await expect(page).toHaveURL(`http://localhost:8080/building/${buildingId}`);
+  await expect(page).toHaveURL(`http://localhost:8080/building/123/test-building`);
   console.log('Successfully redirected.');
 
   // Check that we are back on building details
