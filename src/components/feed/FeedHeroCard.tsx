@@ -111,28 +111,28 @@ export function FeedHeroCard({
           <span className="font-semibold text-foreground/80"> {actionText} </span> {/* Active Action */}
           <span className="font-bold text-foreground">{mainTitle}</span>
           {city && <span className="text-muted-foreground font-normal"> in {city}</span>}
+          {entry.rating && entry.rating > 0 && (
+             <span className="inline-flex items-center ml-2 gap-0.5 align-middle">
+                 {Array.from({ length: 5 }).map((_, i) => (
+                    <Circle
+                       key={i}
+                       className={`w-3.5 h-3.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
+                    />
+                 ))}
+             </span>
+          )}
           <span className="text-muted-foreground text-xs ml-2">• {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago</span>
         </div>
       </div>
 
-      {/* Content Body (Review Text + Rating) */}
-      <div className="px-4 py-3 flex flex-col gap-2">
-         {entry.rating && entry.rating > 0 && (
-             <div className="flex items-center gap-0.5">
-                 {Array.from({ length: 5 }).map((_, i) => (
-                    <Circle
-                       key={i}
-                       className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
-                    />
-                 ))}
-             </div>
-        )}
-        {entry.content && (
+      {/* Content Body (Review Text) */}
+      {entry.content && (
+        <div className="px-4 py-3 flex flex-col gap-2">
            <p className="text-sm text-foreground leading-relaxed">
              {entry.content}
            </p>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Hero Images (UGC) */}
       {/* Requirement: Max aspect ratio 4:5. Taller center-cropped. */}

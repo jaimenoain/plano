@@ -104,35 +104,37 @@ export function FeedCompactCard({
           <span className="text-muted-foreground"> {actionText} </span>
           <span className="font-semibold text-foreground">{mainTitle}</span>
           {city && <span className="text-muted-foreground font-normal"> in {city}</span>}
+          {entry.rating && entry.rating > 0 && (
+             <span className="inline-flex items-center ml-2 gap-0.5 align-middle">
+                 {Array.from({ length: 5 }).map((_, i) => (
+                    <Circle
+                       key={i}
+                       className={`w-3.5 h-3.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
+                    />
+                 ))}
+             </span>
+          )}
           <span className="text-muted-foreground text-xs ml-2">• {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago</span>
         </div>
       </div>
 
       {/* Content Body */}
-      <div className="px-4 py-3 flex flex-col gap-2">
-         {entry.status === 'pending' && (
-             <div>
-                <Badge variant="secondary" className="font-semibold text-[10px] px-2 h-5 bg-blue-50 text-blue-600 border-blue-200">
-                  WANT TO VISIT
-                </Badge>
-             </div>
-         )}
-         {entry.rating && entry.rating > 0 && (
-             <div className="flex items-center gap-0.5">
-                 {Array.from({ length: 5 }).map((_, i) => (
-                    <Circle
-                       key={i}
-                       className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
-                    />
-                 ))}
-             </div>
-        )}
-        {entry.content && (
-           <p className="text-sm text-foreground leading-relaxed">
-             {entry.content}
-           </p>
-        )}
-      </div>
+      {(entry.status === 'pending' || entry.content) && (
+        <div className="px-4 py-3 flex flex-col gap-2">
+           {entry.status === 'pending' && (
+               <div>
+                  <Badge variant="secondary" className="font-semibold text-[10px] px-2 h-5 bg-blue-50 text-blue-600 border-blue-200">
+                    WANT TO VISIT
+                  </Badge>
+               </div>
+           )}
+          {entry.content && (
+             <p className="text-sm text-foreground leading-relaxed">
+               {entry.content}
+             </p>
+          )}
+        </div>
+      )}
 
       {/* Stock Image */}
       {posterUrl && (
