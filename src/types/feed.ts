@@ -46,4 +46,5 @@ export interface FeedReview {
   is_liked: boolean;
   images?: ReviewImage[];
   watch_with_users?: WatchWithUser[];
+  viewer_status?: string;
 }
