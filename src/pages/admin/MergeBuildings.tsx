@@ -197,13 +197,15 @@ export default function MergeBuildings() {
                 </Badge>
                 {building.is_verified && <Badge variant="outline" className="border-green-500 text-green-600">Verified</Badge>}
             </div>
-            <CardTitle className="mt-2">{building.name}</CardTitle>
-            <CardDescription>{building.year_completed || "Unknown Year"} • {building.city || "Unknown City"}, {building.country || "Unknown Country"}</CardDescription>
+            <CardTitle className="mt-2 break-words leading-tight">{building.name}</CardTitle>
+            <CardDescription className="line-clamp-1" title={`${building.year_completed || "Unknown Year"} • ${building.city || "Unknown City"}, ${building.country || "Unknown Country"}`}>
+                {building.year_completed || "Unknown Year"} • {building.city || "Unknown City"}, {building.country || "Unknown Country"}
+            </CardDescription>
         </CardHeader>
         <CardContent className="text-sm space-y-2">
-            {building.address && <div className="text-muted-foreground">{building.address}</div>}
+            {building.address && <div className="text-muted-foreground line-clamp-2" title={building.address}>{building.address}</div>}
             {building.architects && Array.isArray(building.architects) && building.architects.length > 0 && (
-                <div>Architects: {(building.architects as any[]).map(a => a.name).join(", ")}</div>
+                <div className="line-clamp-2">Architects: {(building.architects as any[]).map(a => a.name).join(", ")}</div>
             )}
             <div className="text-xs text-muted-foreground break-all">ID: {building.id}</div>
         </CardContent>
@@ -243,11 +245,11 @@ export default function MergeBuildings() {
                         {masterResults.map(b => (
                             <div
                                 key={b.id}
-                                className="p-2 hover:bg-accent cursor-pointer flex justify-between"
+                                className="p-2 hover:bg-accent cursor-pointer flex justify-between items-center gap-2"
                                 onClick={() => { setSelectedMaster(b); setMasterSearch(""); }}
                             >
-                                <span>{b.name}</span>
-                                <span className="text-muted-foreground text-sm">{b.city}</span>
+                                <span className="truncate font-medium">{b.name}</span>
+                                <span className="text-muted-foreground text-xs whitespace-nowrap">{b.city}</span>
                             </div>
                         ))}
                     </div>
@@ -290,11 +292,11 @@ export default function MergeBuildings() {
                         {dupResults.map(b => (
                             <div
                                 key={b.id}
-                                className="p-2 hover:bg-accent cursor-pointer flex justify-between"
+                                className="p-2 hover:bg-accent cursor-pointer flex justify-between items-center gap-2"
                                 onClick={() => { setSelectedDup(b); setDupSearch(""); }}
                             >
-                                <span>{b.name}</span>
-                                <span className="text-muted-foreground text-sm">{b.city}</span>
+                                <span className="truncate font-medium">{b.name}</span>
+                                <span className="text-muted-foreground text-xs whitespace-nowrap">{b.city}</span>
                             </div>
                         ))}
                     </div>
