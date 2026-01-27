@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
-import { MapPin } from "lucide-react";
+import { MapPin, Layers } from "lucide-react";
 import Map, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -28,9 +28,35 @@ interface BuildingLocationPickerProps {
   }) => void;
 }
 
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+
+const SATELLITE_STYLE = {
+  version: 8,
+  sources: {
+    "satellite-tiles": {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      ],
+      tileSize: 256,
+      attribution: "&copy; Esri"
+    }
+  },
+  layers: [
+    {
+      id: "satellite-layer",
+      type: "raster",
+      source: "satellite-tiles",
+      minzoom: 0,
+      maxzoom: 22
+    }
+  ]
+};
+
 export function BuildingLocationPicker({ initialLocation, initialPrecision = 'exact', onLocationChange }: BuildingLocationPickerProps) {
   const [selectedAddress, setSelectedAddress] = useState(initialLocation.address);
   const [locationPrecision, setLocationPrecision] = useState<'exact' | 'approximate'>(initialPrecision);
+  const [isSatellite, setIsSatellite] = useState(true);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(
     initialLocation.lat !== null && initialLocation.lng !== null
       ? { lat: initialLocation.lat, lng: initialLocation.lng }
@@ -243,7 +269,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
             onClick={handleMapClick}
             mapLib={maplibregl}
             style={{ width: "100%", height: "100%" }}
-            mapStyle="https://tiles.openfreemap.org/styles/liberty"
+            mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
             cursor="crosshair"
           >
             <NavigationControl position="top-right" />
@@ -268,6 +294,19 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
               </Marker>
             )}
           </Map>
+
+          <button
+            onClick={(e) => {
+                e.stopPropagation();
+                setIsSatellite(!isSatellite);
+            }}
+            className="absolute top-2 left-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10 flex items-center gap-2"
+            title={isSatellite ? "Show Map" : "Show Satellite"}
+            type="button"
+          >
+            <Layers className="w-4 h-4" />
+            <span className="text-xs font-medium">{isSatellite ? "Map" : "Satellite"}</span>
+          </button>
        </div>
     </div>
   );

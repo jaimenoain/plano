@@ -104,6 +104,8 @@ export function FeedCompactCard({
           <span className="text-muted-foreground"> {actionText} </span>
           <span className="font-semibold text-foreground">{mainTitle}</span>
           {city && <span className="text-muted-foreground font-normal"> in {city}</span>}
+          
+          {/* Merged Logic: Rating displayed inline in Header */}
           {entry.rating && entry.rating > 0 && (
              <span className="inline-flex items-center ml-2 gap-0.5 align-middle">
                  {Array.from({ length: 5 }).map((_, i) => (
