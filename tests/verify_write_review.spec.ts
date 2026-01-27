@@ -118,6 +118,9 @@ test('Verify Write Review Page', async ({ page }) => {
        if (requestData.rating !== 4 || requestData.content !== 'This is a test review.') {
            console.error('Unexpected payload:', requestData);
        }
+       if (requestData.visibility !== 'private') {
+           console.error('Expected visibility to be private, got:', requestData.visibility);
+       }
 
        await route.fulfill({
           status: 200,
@@ -200,6 +203,12 @@ test('Verify Write Review Page', async ({ page }) => {
 
   // Check text "4/5"
   await expect(page.getByText('4/5')).toBeVisible();
+
+  // Verify default visibility is Public and change to Private
+  await expect(page.getByText('Visibility: Public')).toBeVisible();
+  await page.getByText('Visibility: Public').click();
+  await page.getByRole('menuitem', { name: 'Private' }).click();
+  await expect(page.getByText('Visibility: Private')).toBeVisible();
 
   // Fill text
   await page.getByPlaceholder('What did you think about this building?').fill('This is a test review.');
