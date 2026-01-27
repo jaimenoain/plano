@@ -13,8 +13,10 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
   const flushCluster = () => {
     if (pendingCluster.length === 0) return;
 
-    if (pendingCluster.length === 1) {
-      aggregated.push({ type: 'compact', entry: pendingCluster[0] });
+    if (pendingCluster.length < 4) {
+      pendingCluster.forEach(entry => {
+        aggregated.push({ type: 'compact', entry });
+      });
     } else {
       // Check for location consistency
       // We look at the city of the buildings.
