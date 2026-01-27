@@ -28,7 +28,7 @@ const ALL_TABS = [
   { id: "members", label: "Members", icon: Users, description: "See who is in the group." },
   { id: "cycles", label: "Cycles", icon: Repeat, description: "Organize sessions into thematic cycles." },
   { id: "polls", label: "Polls", icon: ListChecks, description: "Test members, vote on decisions, gauge opinions" },
-  { id: "watchlist", label: "Watchlist", icon: Tv, description: "Decide together what to watch" },
+  { id: "watchlist", label: "Bucket List", icon: Tv, description: "Decide together what to visit" },
   { id: "pipeline", label: "Pipeline", icon: Filter, description: "Create a backlog of buildings to visit" },
   { id: "stats", label: "Stats", icon: BarChart3, description: "Analyze group viewing habits." },
 ];
