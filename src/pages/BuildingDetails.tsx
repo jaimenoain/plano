@@ -647,8 +647,10 @@ export default function BuildingDetails() {
                             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                                 Your Activity
                             </h3>
-                            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-                                Edit
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}>
+                                    Edit
+                                </Link>
                             </Button>
                         </div>
 
