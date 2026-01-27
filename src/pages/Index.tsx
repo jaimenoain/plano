@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { ReviewCard } from "@/components/feed/ReviewCard";
 import { EmptyFeed } from "@/components/feed/EmptyFeed";
 import { PeopleYouMayKnow } from "@/components/feed/PeopleYouMayKnow";
 import { useAuth } from "@/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { useInfiniteQuery, useQueryClient, InfiniteData, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MetaHead } from "@/components/common/MetaHead";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { FeedReview } from "@/types/feed";
+import { aggregateFeed } from "@/lib/feed-aggregation";
+import { FeedHeroCard } from "@/components/feed/FeedHeroCard";
+import { FeedClusterCard } from "@/components/feed/FeedClusterCard";
+import { FeedCompactCard } from "@/components/feed/FeedCompactCard";
 
 // --- New Landing Page Component ---
 function Landing() {
@@ -159,41 +162,6 @@ export default function Index() {
       if (error) throw error;
 
       const feedData = data || [];
-      const reviewIds = feedData.map((r: any) => r.id);
-
-      // Fetch review images
-      const { data: imagesData } = await supabase
-        .from('review_images')
-        .select('id, review_id, storage_path, likes_count')
-        .in('review_id', reviewIds);
-
-      // Fetch user likes for these images
-      let likedImageIds: string[] = [];
-      if (imagesData && imagesData.length > 0) {
-        const imageIds = imagesData.map(img => img.id);
-        const { data: likesData } = await supabase
-          .from('image_likes')
-          .select('image_id')
-          .eq('user_id', user.id)
-          .in('image_id', imageIds);
-
-        if (likesData) {
-            likedImageIds = likesData.map(l => l.image_id);
-        }
-      }
-
-      // Map images by review_id
-      const imagesByReviewId = (imagesData || []).reduce((acc: any, img) => {
-         if (!acc[img.review_id]) acc[img.review_id] = [];
-         const { data: { publicUrl } } = supabase.storage.from('review_images').getPublicUrl(img.storage_path);
-         acc[img.review_id].push({
-             id: img.id,
-             url: publicUrl,
-             likes_count: img.likes_count || 0,
-             is_liked: likedImageIds.includes(img.id)
-         });
-         return acc;
-      }, {});
 
       return feedData.map((review: any) => ({
         id: review.id,
@@ -215,13 +183,24 @@ export default function Index() {
           slug: review.building_data?.slug,
           name: review.building_data?.name || "Unknown Building",
           address: review.building_data?.address || null,
+          city: review.building_data?.city || null,
+          country: review.building_data?.country || null,
+          main_image_url: review.building_data?.main_image_url || null,
           architects: review.building_data?.architects || null,
           year_completed: review.building_data?.year_completed || null,
         },
         likes_count: review.likes_count || 0,
         comments_count: review.comments_count || 0,
         is_liked: review.is_liked,
-        images: imagesByReviewId[review.id] || [],
+        images: (review.review_images || []).map((img: any) => {
+            const { data: { publicUrl } } = supabase.storage.from('review_images').getPublicUrl(img.storage_path);
+            return {
+                id: img.id,
+                url: publicUrl,
+                likes_count: img.likes_count || 0,
+                is_liked: img.is_liked
+            };
+        }),
       }));
     },
     initialPageParam: 0,
@@ -238,6 +217,7 @@ export default function Index() {
   }, [isLoadMoreVisible, hasNextPage, isFetchingNextPage, fetchNextPage, isError]);
 
   const reviews = data?.pages.flatMap((page) => page) || [];
+  const aggregatedReviews = aggregateFeed(reviews);
 
   const handleLike = async (reviewId: string) => {
     if (!user) return;
@@ -396,15 +376,20 @@ export default function Index() {
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               {/* Feed Column */}
               <div className="w-full lg:w-2/3 flex flex-col gap-6">
-                {reviews.map((review) => (
-                  <ReviewCard
-                    key={review.id}
-                    entry={review}
-                    onLike={handleLike}
-                    onImageLike={handleImageLike}
-                    imagePosition="right"
-                  />
-                ))}
+                {aggregatedReviews.map((item) => {
+                  const key = item.type === 'cluster' ? `cluster-${item.entries[0].id}` : item.entry.id;
+
+                  if (item.type === 'hero') {
+                      return <FeedHeroCard key={key} entry={item.entry} onLike={handleLike} onImageLike={handleImageLike} />;
+                  }
+                  if (item.type === 'compact') {
+                      return <FeedCompactCard key={key} entry={item.entry} onLike={handleLike} />;
+                  }
+                  if (item.type === 'cluster') {
+                      return <FeedClusterCard key={key} entries={item.entries} user={item.user} location={item.location} timestamp={item.timestamp} />;
+                  }
+                  return null;
+                })}
 
                 {hasNextPage && (
                   <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
