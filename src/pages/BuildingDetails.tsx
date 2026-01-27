@@ -759,9 +759,9 @@ export default function BuildingDetails() {
                         {showNoteEditor && (
                             <div className="pt-4 border-t border-dashed space-y-3 animate-in fade-in slide-in-from-top-2">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium uppercase text-muted-foreground">Private Note</label>
+                                    <label className="text-xs font-medium uppercase text-muted-foreground">Your Note</label>
                                     <Textarea
-                                        placeholder="Write a private note..."
+                                        placeholder="Write a note..."
                                         value={note}
                                         onChange={(e) => setNote(e.target.value)}
                                         className="resize-none"
@@ -968,7 +968,7 @@ export default function BuildingDetails() {
               <AlertDialogHeader>
                   <AlertDialogTitle>Remove from list?</AlertDialogTitle>
                   <AlertDialogDescription>
-                      This will delete your rating, status, and any private notes for this building. This action cannot be undone.
+                      This will delete your rating, status, and any notes for this building. This action cannot be undone.
                   </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
