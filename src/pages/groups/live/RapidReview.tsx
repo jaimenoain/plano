@@ -79,7 +79,7 @@ function SwipeCard({ question, freshBuildingData, onSwipe, isFront, groupId }: C
               </div>
             ) : (
               <img
-                src={getBuildingImageUrl(buildingData.main_image_url) || question.media_url || '/placeholder.png'}
+                src={getBuildingImageUrl(buildingData.main_image_url) || question.media_url || '/placeholder.svg'}
                 alt={question.question_text}
                 className="w-full h-full object-cover"
               />
@@ -143,7 +143,7 @@ function WinnerCard({ question, freshBuildingData }: { question: any, freshBuild
 
              <div className="w-full max-w-xs aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border-4 border-yellow-400 mb-8 relative">
                  <img
-                    src={getBuildingImageUrl(buildingData.main_image_url) || question.media_url || '/placeholder.png'}
+                    src={getBuildingImageUrl(buildingData.main_image_url) || question.media_url || '/placeholder.svg'}
                     alt={question.question_text}
                     className="w-full h-full object-cover"
                  />

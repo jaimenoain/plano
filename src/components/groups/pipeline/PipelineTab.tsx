@@ -218,7 +218,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
                           onClick={() => setSelectedBuilding(building)}
                         >
                           <img
-                            src={getBuildingImageUrl(building.main_image_url) || '/placeholder.png'}
+                            src={getBuildingImageUrl(building.main_image_url) || '/placeholder.svg'}
                             alt={building.name}
                             className="w-10 h-14 object-cover rounded bg-muted"
                           />
@@ -240,7 +240,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
               <div className="space-y-4 pt-4">
                 <div className="flex gap-3 bg-muted/30 p-3 rounded-lg border">
                   <img
-                    src={getBuildingImageUrl(selectedBuilding.main_image_url) || '/placeholder.png'}
+                    src={getBuildingImageUrl(selectedBuilding.main_image_url) || '/placeholder.svg'}
                     alt={selectedBuilding.name}
                     className="w-12 h-16 object-cover rounded"
                   />
