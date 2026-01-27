@@ -524,7 +524,7 @@ export default function Profile() {
     <AppLayout title={profile?.username || "Profile"} showLogo={false} showBack={!isOwnProfile}>
       <MetaHead
         title={`${profile?.username} (@${profile?.username})`}
-        description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Archiforum.`}
+        description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Plano.`}
         image={avatarUrl}
       />
       

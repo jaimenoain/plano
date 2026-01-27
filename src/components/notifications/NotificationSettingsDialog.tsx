@@ -20,7 +20,7 @@ const NOTIFICATION_GROUPS = [
     title: "Social & Contacts",
     types: [
       { id: "follow", label: "New followers" },
-      { id: "friend_joined", label: "Friend joined Archiforum" },
+      { id: "friend_joined", label: "Friend joined Plano" },
       { id: "suggest_follow", label: "Suggested follows" },
       { id: "recommendation", label: "Building recommendations & Invites" },
     ],
