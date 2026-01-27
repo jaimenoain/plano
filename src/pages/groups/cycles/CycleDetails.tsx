@@ -368,7 +368,7 @@ export default function CycleDetails() {
                               <div className="font-mono text-muted-foreground font-bold w-6 text-center shrink-0">
                                   #{idx + 1}
                               </div>
-                              <img src={getBuildingImageUrl(item.building.main_image_url) || '/placeholder.png'} className="w-10 h-14 object-cover rounded shrink-0" alt="" />
+                              <img src={getBuildingImageUrl(item.building.main_image_url) || '/placeholder.svg'} className="w-10 h-14 object-cover rounded shrink-0" alt="" />
                               <div className="flex-1 min-w-0">
                                   <div className="text-sm font-semibold truncate">{item.building.name}</div>
                                   <div className="text-xs text-muted-foreground flex items-center gap-2">
