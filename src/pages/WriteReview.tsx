@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resizeImage } from "@/lib/image-compression";
 import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
+import { uploadFile } from "@/utils/upload";
 
 interface ReviewImage {
   id: string;
@@ -323,14 +324,7 @@ export default function WriteReview() {
         const uploadPromises = newImages.map(async (img) => {
           if (!img.file) return;
 
-          const fileExt = "webp"; // We know we compressed to webp (mostly)
-          const fileName = `${user.id}/${buildingId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('review_images')
-            .upload(fileName, img.file);
-
-          if (uploadError) throw uploadError;
+          const storagePath = await uploadFile(img.file);
 
           // Insert Image Record
           const { error: insertError } = await supabase
@@ -338,7 +332,7 @@ export default function WriteReview() {
             .insert({
               review_id: reviewId,
               user_id: user.id,
-              storage_path: fileName
+              storage_path: storagePath
             });
 
           if (insertError) throw insertError;
