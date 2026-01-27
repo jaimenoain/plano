@@ -120,8 +120,8 @@ export default function MergeComparison() {
         setMerging(true);
         try {
             const { error } = await supabase.rpc('merge_buildings', {
-                master_id: targetPointer,
-                duplicate_id: sourcePointer
+                target_id: targetPointer,
+                source_id: sourcePointer
             });
 
             if (error) throw error;
