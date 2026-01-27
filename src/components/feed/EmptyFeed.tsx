@@ -9,7 +9,7 @@ export function EmptyFeed() {
         <MapPin className="h-8 w-8 text-primary" />
       </div>
       <h2 className="text-xl font-semibold text-foreground mb-2">
-        Welcome to Archiforum
+        Welcome to Plano
       </h2>
       <p className="text-muted-foreground mb-6 max-w-xs">
         Your feed is empty. Follow others to see their building logs and visits.

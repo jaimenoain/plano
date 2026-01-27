@@ -59,7 +59,7 @@ export default function UpdatePassword() {
       <div className="flex items-center gap-3 mb-10">
         <Building2 className="h-10 w-10 text-primary" />
         <span className="text-2xl font-bold tracking-tight text-foreground">
-          Archiforum
+          Plano
         </span>
       </div>
 

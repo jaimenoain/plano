@@ -242,7 +242,7 @@ export default function Notifications() {
         const reminderGroupName = n.session?.group?.name || n.group?.name || "your group";
         return <span>Reminder: You have a session today in <span className="font-semibold">{reminderGroupName}</span>!</span>;
       case 'friend_joined': 
-        return <span>Your friend <span className="font-semibold">{actorName}</span> just joined Archiforum!</span>;
+        return <span>Your friend <span className="font-semibold">{actorName}</span> just joined Plano!</span>;
       case 'suggest_follow': 
         return <span>Welcome! Follow <span className="font-semibold">{actorName}</span>, who invited you to join.</span>;
       case 'visit_request':

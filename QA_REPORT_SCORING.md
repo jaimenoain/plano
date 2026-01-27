@@ -32,7 +32,7 @@ This report documents the verification of the "Dual-Context Scoring System" migr
 
 ### 1.4 Ghost Code & Legacy Artifacts
 - **Findings**:
-    - `vite.config.ts`: Contains legacy PWA manifest configuration with `name: 'Cineforum'` and description 'Cineforum PWA'. **Recommendation: Update to Archiforum.**
+    - `vite.config.ts`: Contains legacy PWA manifest configuration with `name: 'Cineforum'` and description 'Cineforum PWA'. **Recommendation: Update to Plano.**
     - `src/add-building-e2e.spec.ts`: Contains checks for "Movie Database residue", confirming awareness of the migration.
     - No active functional code was found using "Watched", "Taste Match", or 1-10 scales in `src/`.
 
@@ -88,5 +88,5 @@ The "Dual-Context Scoring System" (Quality Mode) has been **verified** and meets
 - **Cleanliness**: No active legacy "Cineforum" logic interferes with this flow, although `vite.config.ts` requires cleanup.
 
 **Recommendation**:
-- Update `vite.config.ts` to reflect "Archiforum" branding.
+- Update `vite.config.ts` to reflect "Plano" branding.
 - Proceed with release.

@@ -496,7 +496,7 @@ export default function Settings() {
                     <div>
                       <h3 className="font-medium">Install App</h3>
                       <p className="text-sm text-muted-foreground">
-                        Add Archiforum to your home screen for easier access.
+                        Add Plano to your home screen for easier access.
                       </p>
                     </div>
                     <Button type="button" onClick={promptInstall}>
