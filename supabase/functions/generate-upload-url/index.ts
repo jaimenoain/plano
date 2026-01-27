@@ -25,14 +25,21 @@ Deno.serve(async (req) => {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { 
+        global: { headers: { Authorization: authHeader } },
+        // [Recommended] Disable session persistence for Edge Functions
+        auth: {
+          persistSession: false, 
+        }
+      }
     )
 
-    // Get the user from the token
+    // [FIX] Extract token and pass explicitly to getUser
+    const token = authHeader.replace(/^Bearer\s+/i, '')
     const {
       data: { user },
       error: userError,
-    } = await supabaseClient.auth.getUser()
+    } = await supabaseClient.auth.getUser(token)
 
     if (userError || !user) {
       return new Response(
