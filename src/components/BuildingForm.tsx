@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { resizeImage } from "@/lib/image-compression";
 import { useAuth } from "@/hooks/useAuth";
 import { getBuildingImageUrl } from "@/utils/image";
+import { uploadFile } from "@/utils/upload";
 
 export interface BuildingFormData {
   name: string;
@@ -72,17 +73,9 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
     try {
       setIsUploading(true);
       const compressedFile = await resizeImage(file);
+      const key = await uploadFile(compressedFile);
 
-      const fileExt = "jpg";
-      const filePath = `${user.id}/hero/${crypto.randomUUID()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('review_images')
-        .upload(filePath, compressedFile);
-
-      if (uploadError) throw uploadError;
-
-      setHeroImage(filePath);
+      setHeroImage(key);
       toast.success("Image uploaded successfully");
     } catch (error) {
       console.error("Upload error:", error);
