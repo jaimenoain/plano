@@ -51,7 +51,7 @@ export default function Groups() {
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
-  const [groupType, setGroupType] = useState<"club" | "casual">("club");
+  const [groupType, setGroupType] = useState<"club" | "casual">("casual");
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
@@ -146,7 +146,7 @@ export default function Groups() {
     try {
       const activeTabs = groupType === "club"
         ? ["sessions", "feed", "members"]
-        : ["watchlist", "feed", "members"];
+        : ["feed", "pipeline", "members"];
 
       const { data: group, error: groupError } = await supabase
         .from('groups')
@@ -277,7 +277,7 @@ export default function Groups() {
               setIsCreateOpen(open);
               if (open) {
                 setNewGroupName("");
-                setGroupType("club");
+                setGroupType("casual");
               }
             }}>
               <DialogTrigger asChild>
@@ -305,6 +305,21 @@ export default function Groups() {
                     <Label>Group Type</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div
+                        onClick={() => setGroupType("casual")}
+                        className={`cursor-pointer border rounded-lg p-3 hover:bg-accent/50 transition-all ${groupType === "casual" ? "border-primary ring-1 ring-primary bg-accent/20" : "border-border"}`}
+                      >
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className={`p-1.5 rounded-md ${groupType === "casual" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                             <Coffee className="w-4 h-4" />
+                          </div>
+                          <span className={`text-sm font-semibold ${groupType === "casual" ? "text-primary" : ""}`}>Casual Group</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          Plan a trip with friends.
+                        </p>
+                      </div>
+
+                      <div
                         onClick={() => setGroupType("club")}
                         className={`cursor-pointer border rounded-lg p-3 hover:bg-accent/50 transition-all ${groupType === "club" ? "border-primary ring-1 ring-primary bg-accent/20" : "border-border"}`}
                       >
@@ -316,21 +331,6 @@ export default function Groups() {
                         </div>
                         <p className="text-xs text-muted-foreground leading-snug">
                           Structured with scheduled sessions.
-                        </p>
-                      </div>
-
-                      <div
-                        onClick={() => setGroupType("casual")}
-                        className={`cursor-pointer border rounded-lg p-3 hover:bg-accent/50 transition-all ${groupType === "casual" ? "border-primary ring-1 ring-primary bg-accent/20" : "border-border"}`}
-                      >
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <div className={`p-1.5 rounded-md ${groupType === "casual" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                             <Coffee className="w-4 h-4" />
-                          </div>
-                          <span className={`text-sm font-semibold ${groupType === "casual" ? "text-primary" : ""}`}>Casual Group</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-snug">
-                          Friends sharing buildings & bucket list.
                         </p>
                       </div>
                     </div>
