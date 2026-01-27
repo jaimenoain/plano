@@ -5,87 +5,107 @@
  * @param file The original image file
  * @param maxWidth Maximum width in pixels (default: 1500)
  * @param maxHeight Maximum height in pixels (default: 1500)
- * @param quality Compression quality from 0 to 1 (default: 0.8)
- * @returns A Promise that resolves to the compressed File object
+ * @param quality Compression quality from 0 to 1 (default: 0.85)
+ * @returns A Promise that resolves to the compressed File object, or the original file on failure.
  */
 export async function resizeImage(
   file: File,
   maxWidth: number = 1500,
   maxHeight: number = 1500,
-  quality: number = 0.8
+  quality: number = 0.85
 ): Promise<File> {
-  return new Promise((resolve, reject) => {
-    // Fail fast if not an image
+  return new Promise((resolve) => {
+    // Fail gracefully if not an image
     if (!file.type.startsWith('image/')) {
-      reject(new Error('File is not an image'));
+      resolve(file);
       return;
     }
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
 
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
 
-      img.onload = () => {
-        let width = img.width;
-        let height = img.height;
+        img.onload = () => {
+          try {
+            let width = img.width;
+            let height = img.height;
 
-        // Calculate scaling factor to maintain aspect ratio within bounds
-        const scale = Math.min(
-          maxWidth / width,
-          maxHeight / height,
-          1 // Never scale up
-        );
+            // Calculate scaling factor to maintain aspect ratio within bounds
+            const scale = Math.min(
+              maxWidth / width,
+              maxHeight / height,
+              1 // Never scale up
+            );
 
-        width = Math.round(width * scale);
-        height = Math.round(height * scale);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Failed to get canvas context'));
-          return;
-        }
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(file); // Fallback
+              return;
+            }
 
-        // Use high quality image smoothing
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, width, height);
+            // Fill background with white to handle transparency (e.g. PNG to JPEG)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
 
-        const finalize = (blob: Blob, ext: string, type: string) => {
-          const nameParts = file.name.split('.');
-          if (nameParts.length > 1) nameParts.pop(); // Remove extension if present
-          const newName = `${nameParts.join('.')}.${ext}`;
+            // Use high quality image smoothing
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
 
-          const newFile = new File([blob], newName, {
-            type: type,
-            lastModified: Date.now(),
-          });
-          resolve(newFile);
+            const finalize = (blob: Blob, ext: string, type: string) => {
+              const nameParts = file.name.split('.');
+              if (nameParts.length > 1) nameParts.pop(); // Remove extension if present
+              const newName = `${nameParts.join('.')}.${ext}`;
+
+              const newFile = new File([blob], newName, {
+                type: type,
+                lastModified: Date.now(),
+              });
+              resolve(newFile);
+            };
+
+            // Enforce JPEG
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  finalize(blob, 'jpg', 'image/jpeg');
+                } else {
+                  resolve(file); // Fallback
+                }
+              },
+              'image/jpeg',
+              quality
+            );
+          } catch (e) {
+            console.error('Error processing image:', e);
+            resolve(file);
+          }
         };
 
-        // Enforce JPEG
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              finalize(blob, 'jpg', 'image/jpeg');
-            } else {
-              reject(new Error('Canvas to Blob failed'));
-            }
-          },
-          'image/jpeg',
-          quality
-        );
+        img.onerror = (error) => {
+          console.error('Failed to load image:', error);
+          resolve(file);
+        };
       };
 
-      img.onerror = (error) => reject(new Error('Failed to load image'));
-    };
-
-    reader.onerror = (error) => reject(new Error('Failed to read file'));
+      reader.onerror = (error) => {
+        console.error('Failed to read file:', error);
+        resolve(file);
+      };
+    } catch (e) {
+      console.error('Unexpected error in resizeImage:', e);
+      resolve(file);
+    }
   });
 }
