@@ -116,7 +116,7 @@ export default function GroupLayout() {
     if (activeTabs.includes("feed")) items.push({ path: "feed", label: "Feed", icon: Activity });
 
     if (activeTabs.includes("polls")) items.push({ path: "polls", label: "Polls", icon: ListChecks });
-    if (activeTabs.includes("watchlist")) items.push({ path: "watchlist", label: "Watchlist", icon: Tv });
+    if (activeTabs.includes("watchlist")) items.push({ path: "watchlist", label: "Bucket List", icon: Tv });
     if (activeTabs.includes("pipeline")) items.push({ path: "pipeline", label: "Pipeline", icon: Filter });
 
     if (activeTabs.includes("members")) items.push({ path: "members", label: "Members", icon: Users });
