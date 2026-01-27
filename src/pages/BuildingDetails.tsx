@@ -72,6 +72,7 @@ interface TopLink {
 
 interface FeedEntry {
   id: string;
+  user_id: string;
   content: string | null;
   rating: number | null;
   status: 'visited' | 'pending';
@@ -264,10 +265,23 @@ export default function BuildingDetails() {
       // 3. Fetch Social Feed (Direct Supabase call) - NOW GLOBAL
       console.log("Fetching social feed for building:", id);
 
+      // Fetch follows for prioritization
+      let followedIds = new Set<string>();
+      if (user) {
+        const { data: followsData } = await supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", user.id);
+
+        if (followsData) {
+          followedIds = new Set(followsData.map(f => f.following_id));
+        }
+      }
+
       const { data: entriesData, error: entriesError } = await supabase
         .from("user_buildings")
         .select(`
-          id, content, rating, status, tags, created_at,
+          id, user_id, content, rating, status, tags, created_at,
           user:profiles(username, avatar_url),
           images:review_images(id, storage_path, likes_count)
         `)
@@ -306,7 +320,7 @@ export default function BuildingDetails() {
           });
 
           // Sanitize entries
-          const sanitizedEntries = entriesData.map((e: any) => ({
+          let sanitizedEntries = entriesData.map((e: any) => ({
               ...e,
               user: {
                   ...e.user,
@@ -314,6 +328,19 @@ export default function BuildingDetails() {
               },
               images: e.images || []
           }));
+
+          // Sort entries: Followed users first, then by date (recency)
+          sanitizedEntries.sort((a, b) => {
+              const aIsFollowed = followedIds.has(a.user_id);
+              const bIsFollowed = followedIds.has(b.user_id);
+
+              if (aIsFollowed && !bIsFollowed) return -1;
+              if (!aIsFollowed && bIsFollowed) return 1;
+
+              // If both followed or both not followed, sort by date desc
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          });
+
           setEntries(sanitizedEntries);
       }
 
@@ -882,6 +909,8 @@ export default function BuildingDetails() {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <span className="font-bold text-sm">{entry.user.username}</span>
+                                        {entry.status === 'visited' && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">Visited</Badge>}
+                                        {entry.status === 'pending' && <Badge variant="outline" className="text-[10px] h-5 px-1.5">Saved</Badge>}
                                         <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(entry.created_at))} ago</span>
                                     </div>
 
