@@ -1,10 +1,11 @@
 import { supabase } from '../integrations/supabase/client';
 
-export async function uploadFile(file: File): Promise<string> {
+export async function uploadFile(file: File, folderName?: string): Promise<string> {
   const { data, error } = await supabase.functions.invoke('generate-upload-url', {
     body: {
       fileName: file.name,
       contentType: file.type,
+      folderName,
     },
   });
 

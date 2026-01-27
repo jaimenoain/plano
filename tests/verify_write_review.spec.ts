@@ -129,6 +129,11 @@ test('Verify Write Review Page', async ({ page }) => {
 
     // Mock generate-upload-url function
     if (url.includes('functions/v1/generate-upload-url')) {
+        const requestBody = route.request().postDataJSON();
+        if (requestBody.folderName !== 'review-uuid') {
+            console.error('Expected folderName to be "review-uuid", but got:', requestBody.folderName);
+        }
+
         await route.fulfill({
             status: 200,
             contentType: 'application/json',

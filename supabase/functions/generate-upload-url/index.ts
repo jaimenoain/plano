@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     console.log(`User authenticated: ${user.id}`)
 
     // 5. Parse Body & S3 Logic
-    const { fileName, contentType } = await req.json()
+    const { fileName, contentType, folderName } = await req.json()
 
     if (!fileName || !contentType) {
       return new Response(
@@ -86,7 +86,9 @@ Deno.serve(async (req) => {
       throw new Error('AWS_S3_BUCKET environment variable is not set')
     }
 
-    const fileKey = `${user.id}/${crypto.randomUUID()}-${fileName}`
+    const fileKey = folderName
+      ? `${user.id}/${folderName}/${crypto.randomUUID()}-${fileName}`
+      : `${user.id}/${crypto.randomUUID()}-${fileName}`
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: fileKey,

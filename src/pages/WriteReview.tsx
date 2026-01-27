@@ -324,7 +324,7 @@ export default function WriteReview() {
         const uploadPromises = newImages.map(async (img) => {
           if (!img.file) return;
 
-          const storagePath = await uploadFile(img.file);
+          const storagePath = await uploadFile(img.file, reviewId);
 
           // Insert Image Record
           const { error: insertError } = await supabase
