@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resizeImage } from "@/lib/image-compression";
 import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
-import { uploadFile } from "@/utils/upload";
+import { uploadFile, deleteFiles } from "@/utils/upload";
 
 interface ReviewImage {
   id: string;
@@ -310,11 +310,11 @@ export default function WriteReview() {
           .filter((path): path is string => !!path);
 
         if (pathsToDelete.length > 0) {
-          const { error: storageDeleteError } = await supabase.storage
-            .from('review_images')
-            .remove(pathsToDelete);
-
-          if (storageDeleteError) console.error("Error cleaning up storage:", storageDeleteError);
+          try {
+            await deleteFiles(pathsToDelete);
+          } catch (error) {
+            console.error("Error cleaning up storage:", error);
+          }
         }
       }
 

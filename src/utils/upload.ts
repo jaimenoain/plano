@@ -28,3 +28,17 @@ export async function uploadFile(file: File): Promise<string> {
 
   return key;
 }
+
+export async function deleteFiles(fileKeys: string[]): Promise<void> {
+  if (fileKeys.length === 0) return;
+
+  const { error } = await supabase.functions.invoke('delete-file', {
+    body: {
+      fileKeys,
+    },
+  });
+
+  if (error) {
+    throw new Error(`Failed to delete files: ${error.message}`);
+  }
+}
