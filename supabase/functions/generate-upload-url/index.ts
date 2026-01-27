@@ -1,4 +1,3 @@
-// Cambio para forzar el deploy
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { S3Client, PutObjectCommand } from 'https://esm.sh/@aws-sdk/client-s3@3'
 import { getSignedUrl } from 'https://esm.sh/@aws-sdk/s3-request-presigner@3'
@@ -15,40 +14,55 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Check for Authorization header
+    console.log("Request received")
+
+    // 1. Validate Environment Variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("CRITICAL: Missing SUPABASE_URL or SUPABASE_ANON_KEY")
+      throw new Error("Server misconfiguration: Missing Supabase Env Vars")
+    }
+
+    // 2. Validate Authorization Header
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
+      console.error("Error: Missing Authorization header")
       throw new Error('Missing Authorization header')
     }
 
-    // Initialize Supabase client
+    // 3. Initialize Client
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      supabaseUrl,
+      supabaseAnonKey,
       { 
         global: { headers: { Authorization: authHeader } },
-        // [Recommended] Disable session persistence for Edge Functions
-        auth: {
-          persistSession: false, 
-        }
+        auth: { persistSession: false }
       }
     )
 
-    // [FIX] Extract token and pass explicitly to getUser
+    // 4. Debug User Token Verification
     const token = authHeader.replace(/^Bearer\s+/i, '')
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser(token)
+    console.log(`Verifying token (length: ${token.length})`)
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
 
     if (userError || !user) {
+      console.error("Auth Failed:", JSON.stringify(userError))
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', details: userError }),
+        JSON.stringify({ 
+          error: 'Unauthorized', 
+          details: userError ? userError.message : 'No user found',
+          hint: 'Check Edge Function logs for details'
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Parse request body
+    console.log(`User authenticated: ${user.id}`)
+
+    // 5. Parse Body & S3 Logic
     const { fileName, contentType } = await req.json()
 
     if (!fileName || !contentType) {
@@ -58,7 +72,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // AWS Configuration
     const s3Client = new S3Client({
       region: Deno.env.get('AWS_REGION') ?? 'us-east-1',
       credentials: {
@@ -69,39 +82,29 @@ Deno.serve(async (req) => {
 
     const bucketName = Deno.env.get('AWS_S3_BUCKET')
     if (!bucketName) {
+      console.error("Error: AWS_S3_BUCKET not set")
       throw new Error('AWS_S3_BUCKET environment variable is not set')
     }
 
-    // Generate unique file path: userId/uuid-fileName
     const fileKey = `${user.id}/${crypto.randomUUID()}-${fileName}`
-
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: fileKey,
       ContentType: contentType,
     })
 
-    // Generate pre-signed URL (valid for 1 hour)
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
 
     return new Response(
-      JSON.stringify({
-        uploadUrl,
-        key: fileKey,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      JSON.stringify({ uploadUrl, key: fileKey }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
+
   } catch (error) {
-    console.error('Error generating upload URL:', error)
+    console.error('Unhandled Error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })
