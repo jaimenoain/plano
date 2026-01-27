@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
-import { Loader2, Plus, Sparkles, Search } from "lucide-react";
+import { Loader2, Plus, Sparkles, Search, List, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BacklogItemCard } from "./BacklogItemCard";
+import { PipelineMap } from "./PipelineMap";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -39,6 +40,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
   // Filters state
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [filterCycle, setFilterCycle] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
   const { data: backlogItems, isLoading } = useQuery({
     queryKey: ["group-backlog", groupId],
@@ -49,7 +51,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
           *,
           user:profiles(id, username, avatar_url),
           cycle:group_cycles(id, title),
-          building:buildings(id, name, main_image_url, year_completed)
+          building:buildings(id, name, main_image_url, year_completed, location_lat, location_lng)
         `)
         .eq("group_id", groupId)
         .order("created_at", { ascending: false });
@@ -296,58 +298,83 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
         </Dialog>
       </div>
 
-      <div className="flex gap-4">
-        <div className="w-[150px]">
-             <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Priorities</SelectItem>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
-                </SelectContent>
-             </Select>
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="flex gap-4">
+          <div className="w-[150px]">
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                  <SelectTrigger>
+                      <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">All Priorities</SelectItem>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                  </SelectContent>
+              </Select>
+          </div>
+          <div className="w-[200px]">
+              <Select value={filterCycle} onValueChange={setFilterCycle}>
+                  <SelectTrigger>
+                      <SelectValue placeholder="Cycle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">All Cycles</SelectItem>
+                      <SelectItem value="none">No Cycle</SelectItem>
+                      {cycles?.map((cycle: any) => (
+                          <SelectItem key={cycle.id} value={cycle.id}>{cycle.title}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+          </div>
         </div>
-        <div className="w-[200px]">
-             <Select value={filterCycle} onValueChange={setFilterCycle}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Cycle" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Cycles</SelectItem>
-                    <SelectItem value="none">No Cycle</SelectItem>
-                    {cycles?.map((cycle: any) => (
-                        <SelectItem key={cycle.id} value={cycle.id}>{cycle.title}</SelectItem>
-                    ))}
-                </SelectContent>
-             </Select>
+
+        <div className="bg-muted p-1 rounded-lg flex gap-1 self-start sm:self-auto">
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+            className="h-8 px-3"
+          >
+            <List className="w-4 h-4 mr-2" /> List
+          </Button>
+          <Button
+            variant={viewMode === 'map' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('map')}
+            className="h-8 px-3"
+          >
+            <MapIcon className="w-4 h-4 mr-2" /> Map
+          </Button>
         </div>
       </div>
 
-      <div className="grid gap-4">
-        {pendingItems.length === 0 ? (
-          backlogItems?.length === 0 ? (
-            <PipelineEmptyState />
+      {viewMode === 'list' ? (
+        <div className="grid gap-4">
+          {pendingItems.length === 0 ? (
+            backlogItems?.length === 0 ? (
+              <PipelineEmptyState />
+            ) : (
+              <div className="text-center py-12 border border-dashed rounded-lg bg-muted/10">
+                <p className="text-muted-foreground">
+                  No items match your filters.
+                </p>
+              </div>
+            )
           ) : (
-            <div className="text-center py-12 border border-dashed rounded-lg bg-muted/10">
-              <p className="text-muted-foreground">
-                No items match your filters.
-              </p>
-            </div>
-          )
-        ) : (
-          pendingItems.map((item) => (
-            <BacklogItemCard
-              key={item.id}
-              item={item}
-              cycles={cycles || []}
-              onUpdate={() => queryClient.invalidateQueries({ queryKey: ["group-backlog", groupId] })}
-            />
-          ))
-        )}
-      </div>
+            pendingItems.map((item) => (
+              <BacklogItemCard
+                key={item.id}
+                item={item}
+                cycles={cycles || []}
+                onUpdate={() => queryClient.invalidateQueries({ queryKey: ["group-backlog", groupId] })}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        <PipelineMap items={pendingItems} />
+      )}
     </div>
   );
 }
