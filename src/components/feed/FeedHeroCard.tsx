@@ -1,6 +1,5 @@
-import { Heart, MessageCircle, Circle, Image as ImageIcon, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Circle, Bookmark } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,14 +19,14 @@ interface FeedHeroCardProps {
 export function FeedHeroCard({
   entry,
   onLike,
-  onImageLike,
+  onImageLike, // kept for prop compatibility
   onComment
 }: FeedHeroCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   if (!entry.building) return null;
 
@@ -86,14 +85,18 @@ export function FeedHeroCard({
   const city = entry.building.city || entry.building.address?.split(',').pop()?.trim() || "";
 
   // "Active" actions use bolder typography.
-  // Rule A: Gold Dust (UGC) -> Hero Card.
-  // We can say "reviewed" or "added photos of".
   const actionText = "added photos of";
 
+  const handleImageError = (imageId: string) => {
+    setFailedImages(prev => {
+      const next = new Set(prev);
+      next.add(imageId);
+      return next;
+    });
+  };
+
   // Image Grid Logic
-  const images = entry.images || [];
-  const displayImages = images.slice(0, 5); // Show up to 5
-  const remainingCount = images.length - 5;
+  const images = (entry.images || []).filter(img => !failedImages.has(img.id));
 
   return (
     <article
@@ -101,71 +104,88 @@ export function FeedHeroCard({
       className="group relative flex flex-col w-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer mb-6"
     >
       {/* Header */}
-      <div className="p-4 flex items-center gap-3 border-b border-border/40">
-        <Avatar className="h-10 w-10 border border-border/50">
+      <div className="p-4 flex items-start gap-3 border-b border-border/40">
+        <Avatar className="h-10 w-10 border border-border/50 mt-0.5">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback>{userInitial}</AvatarFallback>
         </Avatar>
-        <div className="text-sm md:text-base text-foreground leading-snug">
-          <span className="font-bold text-foreground">{username}</span> {/* Anchor */}
-          <span className="font-semibold text-foreground/80"> {actionText} </span> {/* Active Action */}
-          <span className="font-bold text-foreground">{mainTitle}</span>
-          {city && <span className="text-muted-foreground font-normal"> in {city}</span>}
-          {entry.rating && entry.rating > 0 && (
-             <span className="inline-flex items-center ml-2 gap-0.5 align-middle">
-                 {Array.from({ length: 5 }).map((_, i) => (
-                    <Circle
-                       key={i}
-                       className={`w-3.5 h-3.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
-                    />
-                 ))}
-             </span>
-          )}
-          <span className="text-muted-foreground text-xs ml-2">
-            {!(entry.rating && entry.rating > 0) && "• "}
-            {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-          </span>
+        <div className="flex flex-col gap-0.5 w-full">
+          {/* Line 1: User Action Building */}
+          <div className="text-sm md:text-base text-foreground leading-snug">
+            <span className="font-bold text-foreground">{username}</span>
+            <span className="font-semibold text-foreground/80"> {actionText} </span>
+            <span className="font-bold text-foreground">{mainTitle}</span>
+          </div>
+
+          {/* Line 2: Metadata */}
+          <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+             {city && <span>{city}</span>}
+             {city && <span>•</span>}
+
+             {/* Rating */}
+             {entry.rating && entry.rating > 0 && (
+                 <>
+                   <span className="inline-flex items-center gap-0.5">
+                       {Array.from({ length: 5 }).map((_, i) => (
+                          <Circle
+                             key={i}
+                             className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
+                          />
+                       ))}
+                   </span>
+                   <span>•</span>
+                 </>
+             )}
+
+             <span>{formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago</span>
+          </div>
         </div>
       </div>
 
       {/* Content Body (Review Text) */}
       {entry.content && (
-        <div className="px-4 py-3 flex flex-col gap-2">
+        <div className="px-4 pt-3 pb-2 flex flex-col gap-2">
            <p className="text-sm text-foreground leading-relaxed">
              {entry.content}
            </p>
         </div>
       )}
 
-      {/* Hero Images (UGC) */}
-      {/* Requirement: Max aspect ratio 4:5. Taller center-cropped. */}
-      {/* Layout: If 1 image -> Full width. If more -> Grid/Collage. */}
+      {/* Hero Images (UGC) - Full Bleed */}
       <div className="w-full bg-secondary overflow-hidden">
           {images.length === 1 ? (
               <div className="relative w-full aspect-[4/5] max-h-[500px]">
-                  <img src={images[0].url} className="w-full h-full object-cover object-center" alt="Building" />
+                  <img
+                    src={images[0].url}
+                    onError={() => handleImageError(images[0].id)}
+                    className="w-full h-full object-cover object-center"
+                    alt="Building"
+                  />
               </div>
-          ) : (
-              // Simple grid for multiple images
+          ) : images.length > 0 ? (
               <div className="grid grid-cols-2 gap-0.5 aspect-[4/3]">
-                  {/* First image large */}
                   <div className="row-span-2 relative h-full">
-                      <img src={images[0].url} className="w-full h-full object-cover" alt="Building" />
+                      <img
+                        src={images[0].url}
+                        onError={() => handleImageError(images[0].id)}
+                        className="w-full h-full object-cover"
+                        alt="Building"
+                      />
                   </div>
                   <div className="grid grid-rows-2 gap-0.5 h-full">
                       {images.slice(1, 3).map((img) => (
                           <div key={img.id} className="relative w-full h-full">
-                              <img src={img.url} className="w-full h-full object-cover" alt="Building" />
+                              <img
+                                src={img.url}
+                                onError={() => handleImageError(img.id)}
+                                className="w-full h-full object-cover"
+                                alt="Building"
+                              />
                           </div>
                       ))}
-                      {/* If more than 3, show count overlay on 3rd slot (which is 2nd in right col) ?? No, let's just do a 1+2 grid for now or 1+grid.
-                          Let's follow: "maybe we can present a few (maybe one larger and other smaller ones?) with a mention to '+7'"
-                       */}
                   </div>
               </div>
-              // Actually, to robustly handle +7, we need a better grid.
-              // Let's stick to a simple collage: Main Left, 2 Right.
-          )}
+          ) : null}
       </div>
 
       {/* Footer */}
