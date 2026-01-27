@@ -47,6 +47,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           // @ts-ignore
           hero_image_url: data.hero_image_url,
           year_completed: data.year_completed,
+          status: data.status as any,
+          access: data.access as any,
 
           // Location Data (Merged from Main & Feature branches)
           address: locationData.address,
@@ -181,6 +183,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     name: locationData.name || "",
     hero_image_url: null,
     year_completed: null,
+    status: null,
+    access: null,
     architects: [],
     styles: [],
     functional_category_id: "",
