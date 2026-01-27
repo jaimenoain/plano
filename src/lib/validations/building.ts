@@ -13,6 +13,8 @@ export const buildingSchema = z.object({
     .min(0, "Year must be positive")
     .max(new Date().getFullYear() + 10, "Year cannot be in the far future")
     .nullable()),
+  status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary']).nullable().optional(),
+  access: z.enum(['Open Access', 'Admission Fee', 'Customers Only', 'Appointment Only', 'Exterior View Only', 'No Access']).nullable().optional(),
   // Updated to accept Architect objects
   architects: z.array(
     z.object({
@@ -53,6 +55,8 @@ export const editBuildingSchema = z.object({
     .min(0, "Year must be positive")
     .max(new Date().getFullYear() + 10, "Year cannot be in the far future")
     .nullable()),
+  status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary']).nullable().optional(),
+  access: z.enum(['Open Access', 'Admission Fee', 'Customers Only', 'Appointment Only', 'Exterior View Only', 'No Access']).nullable().optional(),
   architects: z.array(
     z.object({
       id: z.string(),

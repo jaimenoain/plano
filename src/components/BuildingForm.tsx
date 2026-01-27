@@ -25,10 +25,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { getBuildingImageUrl } from "@/utils/image";
 import { uploadFile } from "@/utils/upload";
 
+const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary'];
+const ACCESS_OPTIONS = ['Open Access', 'Admission Fee', 'Customers Only', 'Appointment Only', 'Exterior View Only', 'No Access'];
+
 export interface BuildingFormData {
   name: string;
   hero_image_url?: string | null;
   year_completed: number | null;
+  status?: string | null;
+  access?: string | null;
   architects: Architect[];
   styles: StyleSummary[];
   functional_category_id: string | null;
@@ -49,6 +54,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [name, setName] = useState(initialValues.name);
   const [heroImage, setHeroImage] = useState<string | null>(initialValues.hero_image_url || null);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
+  const [status, setStatus] = useState<string>(initialValues.status || "");
+  const [access, setAccess] = useState<string>(initialValues.access || "");
   const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
   const [styles, setStyles] = useState<StyleSummary[]>(initialValues.styles || []);
   const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id || "");
@@ -213,6 +220,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         name,
         hero_image_url: heroImage,
         year_completed,
+        status: status || null,
+        access: access || null,
         architects,
         styles,
         functional_category_id,
@@ -335,6 +344,35 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             <Plus className="h-3 w-3 mr-1" /> Add Year
           </Button>
         )}
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Access</Label>
+             <Select value={access} onValueChange={setAccess}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select access" />
+              </SelectTrigger>
+              <SelectContent>
+                {ACCESS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         {/* Architects */}
         {showArchitects ? (

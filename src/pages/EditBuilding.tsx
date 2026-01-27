@@ -130,6 +130,8 @@ export default function EditBuilding() {
         // @ts-ignore
         hero_image_url: data.hero_image_url,
         year_completed: data.year_completed,
+        status: (data as any).status || "",
+        access: (data as any).access || "",
         architects: finalArchitects,
         styles: styles,
         functional_category_id: (data as any).functional_category_id || "",
@@ -209,6 +211,8 @@ export default function EditBuilding() {
           // @ts-ignore
           hero_image_url: formData.hero_image_url,
           year_completed: formData.year_completed,
+          status: formData.status as any,
+          access: formData.access as any,
           // @ts-ignore
           functional_category_id: formData.functional_category_id,
           // Removed legacy column updates for typologies/attributes
