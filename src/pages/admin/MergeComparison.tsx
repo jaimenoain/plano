@@ -141,6 +141,40 @@ export default function MergeComparison() {
                 }
             });
 
+            // Notify other admins (via Recommendation proxy to appear in notifications)
+            const { data: admins } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('role', 'admin')
+                .neq('id', user.id);
+
+            if (admins && admins.length > 0) {
+                // Create recommendations
+                const recommendations = admins.map(admin => ({
+                    recommender_id: user.id,
+                    recipient_id: admin.id,
+                    building_id: targetPointer,
+                    status: 'pending' as const
+                }));
+
+                const { data: insertedRecs, error: recError } = await supabase
+                    .from('recommendations')
+                    .insert(recommendations)
+                    .select();
+
+                if (!recError && insertedRecs) {
+                    // Create notifications
+                    const notifications = insertedRecs.map(rec => ({
+                        type: 'recommendation' as const,
+                        actor_id: user.id,
+                        user_id: rec.recipient_id,
+                        recommendation_id: rec.id
+                    }));
+
+                    await supabase.from('notifications').insert(notifications);
+                }
+            }
+
             toast.success("Buildings merged successfully. Redirecting...");
 
             // Redirect to survivor
