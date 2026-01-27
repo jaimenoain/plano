@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Users, Calendar, Activity, BarChart3, Lock, Send, UserPlus, Repeat, ListChecks, Filter, MapPin, Link as LinkIcon, Video, Globe, Tv } from "lucide-react";
+import { Settings, Users, Calendar, Activity, BarChart3, Lock, Send, UserPlus, Repeat, ListChecks, Filter, MapPin, Link as LinkIcon, Video, Globe, Bookmark } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMemo, useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -116,7 +116,7 @@ export default function GroupLayout() {
     if (activeTabs.includes("feed")) items.push({ path: "feed", label: "Feed", icon: Activity });
 
     if (activeTabs.includes("polls")) items.push({ path: "polls", label: "Polls", icon: ListChecks });
-    if (activeTabs.includes("watchlist")) items.push({ path: "watchlist", label: "Bucket List", icon: Tv });
+    if (activeTabs.includes("watchlist")) items.push({ path: "watchlist", label: "Bucket List", icon: Bookmark });
     if (activeTabs.includes("pipeline")) items.push({ path: "pipeline", label: "Pipeline", icon: Filter });
 
     if (activeTabs.includes("members")) items.push({ path: "members", label: "Members", icon: Users });

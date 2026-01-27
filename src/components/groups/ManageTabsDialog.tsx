@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Repeat, ListChecks, Filter, BarChart3, Tv, Calendar, Activity, Users } from "lucide-react";
+import { Repeat, ListChecks, Filter, BarChart3, Bookmark, Calendar, Activity, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
@@ -28,7 +28,7 @@ const ALL_TABS = [
   { id: "members", label: "Members", icon: Users, description: "See who is in the group." },
   { id: "cycles", label: "Cycles", icon: Repeat, description: "Organize sessions into thematic cycles." },
   { id: "polls", label: "Polls", icon: ListChecks, description: "Test members, vote on decisions, gauge opinions" },
-  { id: "watchlist", label: "Bucket List", icon: Tv, description: "Decide together what to visit" },
+  { id: "watchlist", label: "Bucket List", icon: Bookmark, description: "Decide together what to visit" },
   { id: "pipeline", label: "Pipeline", icon: Filter, description: "Create a backlog of buildings to visit" },
   { id: "stats", label: "Stats", icon: BarChart3, description: "Analyze group viewing habits." },
 ];
