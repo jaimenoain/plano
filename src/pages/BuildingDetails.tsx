@@ -209,12 +209,13 @@ export default function BuildingDetails() {
     try {
       // 1. Fetch Building (with fallback logic in utility)
       const data = await fetchBuildingDetails(id);
+      const resolvedBuildingId = data.id;
 
       // 1.5 Fetch Relational Architects
       const { data: relationalArchitectsData } = await supabase
         .from("building_architects")
         .select("architect:architects(id, name)")
-        .eq("building_id", id);
+        .eq("building_id", resolvedBuildingId);
 
       const relationalArchitects = relationalArchitectsData
         ?.map((item: any) => item.architect)
@@ -232,7 +233,7 @@ export default function BuildingDetails() {
       }
 
       // 1.8 Fetch Top Links (RPC) - non-blocking
-      fetchTopLinks(id);
+      fetchTopLinks(resolvedBuildingId);
 
       if (user) {
         // 2. Fetch User Entry (Direct Supabase call)
@@ -240,7 +241,7 @@ export default function BuildingDetails() {
             .from("user_buildings")
             .select("*, images:review_images(id, storage_path)")
             .eq("user_id", user.id)
-            .eq("building_id", id)
+            .eq("building_id", resolvedBuildingId)
             .maybeSingle();
 
         if (userEntry) {
@@ -263,7 +264,7 @@ export default function BuildingDetails() {
       }
 
       // 3. Fetch Social Feed (Direct Supabase call) - NOW GLOBAL
-      console.log("Fetching social feed for building:", id);
+      console.log("Fetching social feed for building:", resolvedBuildingId);
 
       // Fetch follows for prioritization
       let followedIds = new Set<string>();
@@ -285,7 +286,7 @@ export default function BuildingDetails() {
           user:profiles(username, avatar_url),
           images:review_images(id, storage_path, likes_count)
         `)
-        .eq("building_id", id)
+        .eq("building_id", resolvedBuildingId)
         .order("created_at", { ascending: false });
 
       const communityImages: {id: string, url: string, likes_count: number, created_at: string}[] = [];
