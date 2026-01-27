@@ -55,6 +55,7 @@ import { logDiagnosticError } from "./api/diagnostics";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Buildings from "./pages/admin/Buildings";
 import MergeBuildings from "./pages/admin/MergeBuildings";
+import MergeComparison from "./pages/admin/MergeComparison";
 import Users from "./pages/admin/Users";
 import Moderation from "./pages/admin/Moderation";
 import ImageWall from "./pages/admin/ImageWall";
@@ -107,6 +108,7 @@ const router = createBrowserRouter(
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/buildings" element={<Buildings />} />
         <Route path="/admin/merge" element={<MergeBuildings />} />
+        <Route path="/admin/merge/:targetId/:sourceId" element={<MergeComparison />} />
         <Route path="/admin/users" element={<Users />} />
         <Route path="/admin/moderation" element={<Moderation />} />
         <Route path="/admin/images" element={<ImageWall />} />
