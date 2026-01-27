@@ -8,5 +8,6 @@ export type BuildingRow = Database['public']['Tables']['buildings']['Row'];
 export interface AdminBuilding extends Omit<BuildingRow, 'architects'> {
   is_deleted: boolean;
   is_verified: boolean;
+  hero_image_url?: string | null;
   architects: Architect[] | null;
 }
