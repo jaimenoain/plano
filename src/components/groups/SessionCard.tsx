@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Circle, Edit, Trash2, Heart, MessageSquare, Send, Pencil, CalendarPlus, Notebook, ExternalLink } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { SessionRatingChart } from "@/components/groups/SessionRatingChart";
@@ -114,6 +114,8 @@ export function SessionCard({
   const isAfterToday = sessionDate > today;
 
   const hasHistory = globalRankingData?.length > 0;
+
+  const hasTime = sDate.getHours() !== 0 || sDate.getMinutes() !== 0;
 
   const getVisibleBuildingStats = (buildingId: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -278,7 +280,10 @@ export function SessionCard({
             <span className="text-3xl font-black">{sDate.getDate()}</span>
             <div className="flex flex-col text-xs uppercase tracking-widest opacity-70">
                 <span>{sDate.toLocaleString('default', { month: 'short' })}</span>
-                <span className="font-normal normal-case">{sDate.toLocaleString('default', { weekday: 'short' })}</span>
+                <span className="font-normal normal-case">
+                    {sDate.toLocaleString('default', { weekday: 'short' })}
+                    {hasTime && <span className="ml-1 font-bold">{format(sDate, "HH:mm")}</span>}
+                </span>
             </div>
         </div>
 
@@ -290,8 +295,9 @@ export function SessionCard({
             <span className="text-3xl sm:text-4xl font-black">
                 {sDate.getDate()}
             </span>
-            <span className="text-xs opacity-70 sm:mt-1">
-                {sDate.toLocaleString('default', { weekday: 'short' })}
+            <span className="text-xs opacity-70 sm:mt-1 flex flex-col items-center">
+                <span>{sDate.toLocaleString('default', { weekday: 'short' })}</span>
+                {hasTime && <span className="font-bold mt-1 text-foreground/80">{format(sDate, "HH:mm")}</span>}
             </span>
         </div>
       </div>
