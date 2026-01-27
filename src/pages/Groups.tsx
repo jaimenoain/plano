@@ -269,7 +269,7 @@ export default function Groups() {
             <div>
               <h2 className="text-2xl font-bold tracking-tight">Groups</h2>
               <p className="text-muted-foreground mt-1">
-                Create clubs with scheduled sessions or casual groups to share buildings with friends.
+                Plan trips and create clubs to share your passion for architecture
               </p>
             </div>
 
