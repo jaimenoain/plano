@@ -1,3 +1,4 @@
+import { Building2 } from "lucide-react";
 import { SmartBuilding, SmartBuildingCard } from "./SmartBuildingCard";
 
 interface SmartBuildingGridProps {
@@ -20,7 +21,7 @@ export function SmartBuildingGrid({ buildings, isLoading }: SmartBuildingGridPro
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="rounded-full bg-muted p-4 mb-4">
-           <span className="text-4xl">🏛️</span>
+           <Building2 className="h-10 w-10 text-muted-foreground" />
         </div>
         <h3 className="text-xl font-semibold">No matches found</h3>
         <p className="text-muted-foreground mt-2 max-w-sm">
