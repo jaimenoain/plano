@@ -488,20 +488,6 @@ export default function WriteReview() {
         <div>
           <h1 className="text-2xl font-bold">{buildingName}</h1>
           <p className="text-muted-foreground">Share your experience</p>
-          <div className="mt-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground transition-colors w-fit">
-                  <span className="text-sm">Visibility: {visibility.charAt(0).toUpperCase() + visibility.slice(1)}</span>
-                  <Pencil className="w-3 h-3" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => setVisibility("public")}>Public</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setVisibility("private")}>Private</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </div>
 
         {/* Rating */}
@@ -696,6 +682,24 @@ export default function WriteReview() {
             )}
           </div>
         )}
+
+        {/* Visibility */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium uppercase text-muted-foreground">Visibility</label>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground transition-colors w-fit">
+                <span className="text-sm">{visibility.charAt(0).toUpperCase() + visibility.slice(1)}</span>
+                <Pencil className="w-3 h-3" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => setVisibility("public")}>Public</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setVisibility("contacts")}>Contacts</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setVisibility("private")}>Private</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Submit Actions */}
         <div className="pt-4 flex justify-end gap-4">
