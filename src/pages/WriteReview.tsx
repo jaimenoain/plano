@@ -19,6 +19,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -64,6 +75,7 @@ export default function WriteReview() {
   const [images, setImages] = useState<ReviewImage[]>([]);
   const [deletedImages, setDeletedImages] = useState<ReviewImage[]>([]);
   const [existingStatus, setExistingStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
+  const [reviewId, setReviewId] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<string>("public");
 
   const [links, setLinks] = useState<{ id: string, url: string, title: string }[]>([]);
@@ -128,6 +140,7 @@ export default function WriteReview() {
           if (ubError) throw ubError;
 
           if (userBuilding) {
+            setReviewId(userBuilding.id);
             if (userBuilding.rating) setRating(userBuilding.rating);
             if (userBuilding.content) setContent(userBuilding.content);
             
@@ -287,6 +300,42 @@ export default function WriteReview() {
 
   const removeLink = (id: string) => {
     setLinks(prev => prev.filter(l => l.id !== id));
+  };
+
+  const handleDelete = async () => {
+    if (!reviewId) return;
+    setSubmitting(true);
+    try {
+      // 1. Delete images from storage
+      const imagesToDelete = images
+        .map(img => img.storage_path)
+        .filter((path): path is string => !!path);
+
+      if (imagesToDelete.length > 0) {
+        await deleteFiles(imagesToDelete);
+      }
+
+      // 2. Delete the record
+      const { error } = await supabase
+        .from('user_buildings')
+        .delete()
+        .eq('id', reviewId);
+
+      if (error) throw error;
+
+      toast({ title: "Review deleted" });
+      navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
+
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to delete review",
+        description: error instanceof Error ? error.message : "An error occurred"
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -650,6 +699,29 @@ export default function WriteReview() {
 
         {/* Submit Actions */}
         <div className="pt-4 flex justify-end gap-4">
+          {reviewId && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" className="text-destructive hover:text-destructive mr-auto" disabled={submitting}>
+                  Delete Review
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your review and photos.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <Button variant="ghost" onClick={() => navigate(-1)} disabled={submitting}>
             Cancel
           </Button>
