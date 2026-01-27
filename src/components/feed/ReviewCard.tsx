@@ -118,12 +118,15 @@ export function ReviewCard({
   const architects = entry.building.architects;
   const year_completed = entry.building.year_completed;
 
+  // Helper to extract names from potentially mixed type
+  const architectNames = architects ? architects.map((a: any) => typeof a === 'string' ? a : a.name) : [];
+
   let subTitle = entry.building.address;
 
   if (variant === 'compact') {
       const parts = [];
-      if (architects && architects.length > 0) {
-          parts.push(architects.slice(0, 2).join(", "));
+      if (architectNames.length > 0) {
+          parts.push(architectNames.slice(0, 2).join(", "));
       }
       if (year_completed) {
           parts.push(year_completed);
@@ -135,7 +138,7 @@ export function ReviewCard({
           subTitle = entry.building.address;
       }
   } else {
-      const architectsList = (architects || []).slice(0, 2).join(", ");
+      const architectsList = architectNames.slice(0, 2).join(", ");
 
       if (architectsList) {
           subTitle = architectsList;

@@ -33,8 +33,8 @@ interface FeedReview {
     id: string;
     name: string;
     year_completed: number | null;
-    architects: string[] | null;
     address: string | null;
+    architects: { id: string; name: string }[] | null;
   };
   likes_count: number;
   comments_count: number;
@@ -114,7 +114,7 @@ export default function ReviewDetails() {
                 .select(`
                     id, content, rating, tags, created_at, user_id, building_id, status,
                     user:profiles(username, avatar_url),
-                    building:buildings(id, name, year_completed, architects, address)
+                    building:buildings(id, name, year_completed, address, architects:building_architects(architect:architects(name, id)))
                 `)
                 .eq("id", paramId)
                 .single();
@@ -142,6 +142,12 @@ export default function ReviewDetails() {
                 supabase.from("likes").select("user_id, user:profiles(username, avatar_url)").eq("interaction_id", reviewData.id).order("created_at", { ascending: false }).limit(50)
             ]);
 
+            const rawBuilding = Array.isArray(reviewData.building) ? reviewData.building[0] : reviewData.building;
+            const formattedBuilding = {
+                ...rawBuilding,
+                architects: rawBuilding.architects?.map((a: any) => a.architect) || []
+            };
+
             setReview({
                 id: reviewData.id,
                 content: reviewData.content,
@@ -152,7 +158,7 @@ export default function ReviewDetails() {
                 building_id: reviewData.building_id,
                 status: reviewData.status,
                 user: Array.isArray(reviewData.user) ? reviewData.user[0] : reviewData.user,
-                building: Array.isArray(reviewData.building) ? reviewData.building[0] : reviewData.building,
+                building: formattedBuilding,
                 likes_count: likesCount.count || 0,
                 comments_count: commentsCount.count || 0,
                 is_liked: !!userLike.data,

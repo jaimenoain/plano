@@ -309,7 +309,7 @@ export default function Profile() {
             .from("user_buildings")
             .select(`
             id, content, rating, created_at, edited_at, user_id, building_id, tags, status,
-            building:buildings ( id, name, address, year_completed, architects )
+            building:buildings ( id, name, address, year_completed, architects:building_architects(architect:architects(name, id)) )
             `)
             .eq("user_id", targetUserId)
             .eq("status", status)
@@ -378,7 +378,7 @@ export default function Profile() {
                 name: item.building?.name || "Unknown Building",
                 address: item.building?.address || null,
                 year_completed: item.building?.year_completed || null,
-                architects: item.building?.architects || null,
+                architects: item.building?.architects?.map((a: any) => a.architect).filter(Boolean) || [],
             },
             tags: item.tags || [],
             likes_count: likesCount.get(item.id) || 0,
