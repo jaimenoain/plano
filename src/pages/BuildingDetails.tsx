@@ -42,6 +42,7 @@ import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { UserPicker } from "@/components/common/UserPicker";
 import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
+import { getBuildingImageUrl } from "@/utils/image";
 import { ImageDetailsDialog } from "@/components/ImageDetailsDialog";
 import { Architect } from "@/types/architect";
 import { getBuildingUrl } from "@/utils/url";
@@ -301,15 +302,15 @@ export default function BuildingDetails() {
           entriesData.forEach((entry: any) => {
               if (entry.images && entry.images.length > 0) {
                   entry.images.forEach((img: any) => {
-                        const { data: { publicUrl } } = supabase.storage
-                              .from("review_images")
-                              .getPublicUrl(img.storage_path);
-                      communityImages.push({
-                          id: img.id,
-                          url: publicUrl,
-                          likes_count: img.likes_count || 0,
-                          created_at: entry.created_at
-                      });
+                        const publicUrl = getBuildingImageUrl(img.storage_path);
+                        if (publicUrl) {
+                            communityImages.push({
+                                id: img.id,
+                                url: publicUrl,
+                                likes_count: img.likes_count || 0,
+                                created_at: entry.created_at
+                            });
+                        }
                   });
               }
           });
@@ -688,9 +689,8 @@ export default function BuildingDetails() {
                         {userImages && userImages.length > 0 && (
                             <div className="flex gap-2 overflow-x-auto pb-2">
                                 {userImages.map((img) => {
-                                    const { data: { publicUrl } } = supabase.storage
-                                        .from("review_images")
-                                        .getPublicUrl(img.storage_path);
+                                    const publicUrl = getBuildingImageUrl(img.storage_path);
+                                    if (!publicUrl) return null;
                                     return (
                                         <img
                                             key={img.id}
@@ -934,9 +934,8 @@ export default function BuildingDetails() {
                                     {entry.images && entry.images.length > 0 && (
                                         <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
                                             {entry.images.map((img) => {
-                                                const { data: { publicUrl } } = supabase.storage
-                                                    .from("review_images")
-                                                    .getPublicUrl(img.storage_path);
+                                                const publicUrl = getBuildingImageUrl(img.storage_path);
+                                                if (!publicUrl) return null;
                                                 return (
                                                     <img
                                                         key={img.id}

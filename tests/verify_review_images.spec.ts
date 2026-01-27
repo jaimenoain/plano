@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test('Verify Review Images in Community Notes', async ({ page }) => {
+  page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+  page.on('pageerror', exception => console.log(`PAGE ERROR: "${exception}"`));
+
   // 1. Mock Session
   await page.addInitScript(() => {
     window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
@@ -53,18 +56,18 @@ test('Verify Review Images in Community Notes', async ({ page }) => {
   // 3. Mock Network
   await page.route('**/rest/v1/buildings*', async route => {
       const url = route.request().url();
-      if (url.includes('id=eq.b1')) {
+      if (url.includes('id=eq.123e4567-e89b-12d3-a456-426614174000')) {
           await route.fulfill({
               status: 200,
               contentType: 'application/json',
               body: JSON.stringify({
-                  id: 'b1',
+                  id: '123e4567-e89b-12d3-a456-426614174000',
                   name: 'Test Building',
                   location: { type: 'Point', coordinates: [-0.1278, 51.5074] },
                   address: '123 Test St, London',
                   architects: ['Test Architect'],
                   year_completed: 2020,
-                  styles: ['Modern'],
+                  styles: [{ style: { id: 's1', name: 'Modern' } }],
                   main_image_url: 'https://example.com/image.jpg',
                   description: 'A test building',
                   created_by: 'user-other'
@@ -73,6 +76,22 @@ test('Verify Review Images in Community Notes', async ({ page }) => {
       } else {
           await route.continue();
       }
+  });
+
+  await page.route('**/rest/v1/building_architects*', async route => {
+       await route.fulfill({
+           status: 200,
+           contentType: 'application/json',
+           body: JSON.stringify([])
+       });
+  });
+
+  await page.route('**/rest/v1/rpc/get_building_top_links', async route => {
+       await route.fulfill({
+           status: 200,
+           contentType: 'application/json',
+           body: JSON.stringify([])
+       });
   });
 
   await page.route('**/rest/v1/user_buildings*', async route => {
@@ -126,7 +145,7 @@ test('Verify Review Images in Community Notes', async ({ page }) => {
 
   // 4. Navigate
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('http://localhost:8080/building/b1');
+  await page.goto('http://localhost:8080/building/123e4567-e89b-12d3-a456-426614174000');
 
   // 5. Verification
   await expect(page.getByRole('heading', { name: 'Test Building' })).toBeVisible();
@@ -135,10 +154,13 @@ test('Verify Review Images in Community Notes', async ({ page }) => {
   await expect(page.getByText('Photographer')).toBeVisible();
 
   // Check for the content
-  await expect(page.getByText('Great building with photo!')).toBeVisible();
+  await expect(page.getByText('Great building with photo!').first()).toBeVisible();
 
   // Check for images
-  const images = page.getByRole('img', { name: 'Review photo' });
+  // Scope to Community Notes section to avoid counting "Your Activity" images
+  // "Community Notes" header is an h3, and the list is in the following div
+  const communitySection = page.locator('h3:has-text("Community Notes") + div');
+  const images = communitySection.getByRole('img', { name: 'Review photo' });
   await expect(images).toHaveCount(2);
 
   const firstSrc = await images.first().getAttribute('src');
