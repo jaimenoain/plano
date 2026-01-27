@@ -76,6 +76,7 @@ export default function SearchPage() {
   const [flyToBounds, setFlyToBounds] = useState<Bounds | null>(null);
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
   const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
+  const [mapInteractionResetTrigger, setMapInteractionResetTrigger] = useState(0);
 
   // Main: Filter controls
   const [sortBy, setSortBy] = useState<string>("distance");
@@ -85,6 +86,7 @@ export default function SearchPage() {
   useEffect(() => {
       if (searchQuery || filterVisited || filterBucketList || filterContacts || selectedContacts.length > 0) {
           setIgnoreMapBounds(true);
+          setMapInteractionResetTrigger(prev => prev + 1);
       } else {
           setIgnoreMapBounds(false);
           setSearchScope('content');
@@ -300,6 +302,7 @@ export default function SearchPage() {
                       isFetching={isFetching}
                       autoZoomOnLowCount={isDefaultState || ignoreMapBounds}
                       forcedBounds={flyToBounds}
+                      resetInteractionTrigger={mapInteractionResetTrigger}
                     />
                   </div>
                 )}
@@ -324,6 +327,7 @@ export default function SearchPage() {
                     isFetching={isFetching}
                     autoZoomOnLowCount={isDefaultState || ignoreMapBounds}
                     forcedBounds={flyToBounds}
+                    resetInteractionTrigger={mapInteractionResetTrigger}
                   />
                 </div>
               </div>
