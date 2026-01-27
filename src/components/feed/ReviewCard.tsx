@@ -398,13 +398,6 @@ export function ReviewCard({
         )}
 
         {/* Status Badges & Rating */}
-        {entry.status === 'pending' && (
-          <div className="mb-2 mt-1">
-            <Badge variant="secondary" className="font-semibold text-[10px] px-2 h-5 bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200">
-              WANT TO VISIT
-            </Badge>
-          </div>
-        )}
 
 
         {/* Review Text: Only show if exists */}
