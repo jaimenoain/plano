@@ -1,18 +1,24 @@
 -- Enable the pg_net extension to allow HTTP requests from the database
-CREATE EXTENSION IF NOT EXISTS "pg_net";
--- Enable Supabase Vault for secure secret management
-CREATE EXTENSION IF NOT EXISTS "supabase_vault";
+-- NOTE: If the migration fails with "permission denied for schema pg_catalog",
+-- please enable these extensions manually in the Supabase Dashboard under Database -> Extensions.
+-- CREATE EXTENSION IF NOT EXISTS "pg_net";
+-- CREATE EXTENSION IF NOT EXISTS "supabase_vault";
 
 -- Function to trigger the delete-storage-recursive Edge Function
 -- This function retrieves the Project URL and Service Role Key from the Vault
 -- to securely invoke the Edge Function without hardcoding credentials.
 CREATE OR REPLACE FUNCTION trigger_delete_storage_recursive()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public, vault, net, extensions
+AS $$
 DECLARE
   project_url TEXT;
   service_key TEXT;
 BEGIN
   -- Retrieve secrets from Supabase Vault
+  -- We use dynamic SQL or direct reference. Direct reference requires the schema to exist at create time.
+  -- If 'vault' schema is missing, this creation will fail, prompting the user to enable the extension.
   SELECT decrypted_secret INTO project_url FROM vault.decrypted_secrets WHERE name = 'project_url';
   SELECT decrypted_secret INTO service_key FROM vault.decrypted_secrets WHERE name = 'service_role_key';
 
