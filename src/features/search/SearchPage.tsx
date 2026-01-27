@@ -80,16 +80,16 @@ export default function SearchPage() {
   // Main: Filter controls
   const [sortBy, setSortBy] = useState<string>("distance");
 
-  // If a user types a query, we want to search the full database (ignore map bounds)
+  // If a user types a query or uses personal filters, we want to search the full database (ignore map bounds)
   // until they interact with the map again to filter.
   useEffect(() => {
-      if (searchQuery) {
+      if (searchQuery || filterVisited || filterBucketList || filterContacts || selectedContacts.length > 0) {
           setIgnoreMapBounds(true);
       } else {
           setIgnoreMapBounds(false);
           setSearchScope('content');
       }
-  }, [searchQuery]);
+  }, [searchQuery, filterVisited, filterBucketList, filterContacts, selectedContacts.length]);
 
   // 3. Derive Available Options from Data (Required for the new FilterBar)
   const availableArchitects = useMemo(() => {
@@ -298,7 +298,7 @@ export default function SearchPage() {
                       onMapInteraction={() => setIgnoreMapBounds(false)}
                       forcedCenter={flyToCenter}
                       isFetching={isFetching}
-                      autoZoomOnLowCount={isDefaultState}
+                      autoZoomOnLowCount={isDefaultState || ignoreMapBounds}
                       forcedBounds={flyToBounds}
                     />
                   </div>
@@ -322,7 +322,7 @@ export default function SearchPage() {
                     onMapInteraction={() => setIgnoreMapBounds(false)}
                     forcedCenter={flyToCenter}
                     isFetching={isFetching}
-                    autoZoomOnLowCount={isDefaultState}
+                    autoZoomOnLowCount={isDefaultState || ignoreMapBounds}
                     forcedBounds={flyToBounds}
                   />
                 </div>
