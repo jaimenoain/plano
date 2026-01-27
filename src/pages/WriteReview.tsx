@@ -60,6 +60,7 @@ export default function WriteReview() {
   const [links, setLinks] = useState<{ id: string, url: string, title: string }[]>([]);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newLinkTitle, setNewLinkTitle] = useState("");
+  const [reviewId, setReviewId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,6 +117,7 @@ export default function WriteReview() {
           if (ubError) throw ubError;
 
           if (userBuilding) {
+            setReviewId(userBuilding.id);
             if (userBuilding.rating) setRating(userBuilding.rating);
             if (userBuilding.content) setContent(userBuilding.content);
             if (userBuilding.tags) setTags(userBuilding.tags);
@@ -266,6 +268,45 @@ export default function WriteReview() {
 
   const removeLink = (id: string) => {
     setLinks(prev => prev.filter(l => l.id !== id));
+  };
+
+  const handleDelete = async () => {
+    if (!reviewId || !buildingId) return;
+
+    if (!window.confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Delete images from storage first
+      const pathsToDelete = images
+        .map(img => img.storage_path)
+        .filter((path): path is string => !!path);
+
+      if (pathsToDelete.length > 0) {
+        await deleteFiles(pathsToDelete);
+      }
+
+      // Delete the review record
+      const { error } = await supabase
+        .from("user_buildings")
+        .delete()
+        .eq("id", reviewId);
+
+      if (error) throw error;
+
+      toast({ title: "Review deleted" });
+      navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to delete review",
+        description: error instanceof Error ? error.message : "An error occurred"
+      });
+      setSubmitting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -601,6 +642,16 @@ export default function WriteReview() {
 
         {/* Submit Actions */}
         <div className="pt-4 flex justify-end gap-4">
+          {reviewId && (
+            <Button
+              variant="link"
+              onClick={handleDelete}
+              disabled={submitting}
+              className="text-destructive mr-auto px-0"
+            >
+              Delete Review
+            </Button>
+          )}
           <Button variant="ghost" onClick={() => navigate(-1)} disabled={submitting}>
             Cancel
           </Button>
