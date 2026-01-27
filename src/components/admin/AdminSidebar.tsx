@@ -8,6 +8,7 @@ import {
   ShieldAlert,
   Image,
   History,
+  Trash2,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -60,6 +61,11 @@ const items = [
     title: "Audit Logs",
     url: "/admin/audit",
     icon: History,
+  },
+  {
+    title: "Storage Jobs",
+    url: "/admin/storage-jobs",
+    icon: Trash2,
   },
   {
     title: "System",
