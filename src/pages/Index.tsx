@@ -192,6 +192,7 @@ export default function Index() {
         likes_count: review.likes_count || 0,
         comments_count: review.comments_count || 0,
         is_liked: review.is_liked,
+        viewer_status: review.viewer_status,
         images: (review.review_images || []).map((img: any) => {
             const { data: { publicUrl } } = supabase.storage.from('review_images').getPublicUrl(img.storage_path);
             return {

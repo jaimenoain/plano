@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, MessageCircle, Circle, Image as ImageIcon, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Circle, Image as ImageIcon, Bookmark, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -489,14 +489,26 @@ export function ReviewCard({
           </button>
 
           {!isCompact && (
-             <button
-               onClick={handleSave}
-               className={`flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors ml-auto ${isSaving ? 'opacity-50' : ''}`}
-               disabled={isSaving}
-             >
-               <Bookmark className="h-4 w-4" />
-               <span className="text-xs font-medium">Save</span>
-             </button>
+             entry.viewer_status === 'pending' ? (
+                <div className="flex items-center gap-1.5 text-muted-foreground/50 ml-auto cursor-default select-none">
+                  <Bookmark className="h-4 w-4 fill-current" />
+                  <span className="text-xs font-medium">Saved</span>
+                </div>
+             ) : entry.viewer_status === 'visited' ? (
+                <div className="flex items-center gap-1.5 text-muted-foreground/50 ml-auto cursor-default select-none">
+                  <Check className="h-4 w-4" />
+                  <span className="text-xs font-medium">Visited</span>
+                </div>
+             ) : (
+                <button
+                  onClick={handleSave}
+                  className={`flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors ml-auto ${isSaving ? 'opacity-50' : ''}`}
+                  disabled={isSaving}
+                >
+                  <Bookmark className="h-4 w-4" />
+                  <span className="text-xs font-medium">Save</span>
+                </button>
+             )
           )}
         </div>
   );
