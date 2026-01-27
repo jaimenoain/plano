@@ -14,11 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { resizeImage } from "@/lib/image-compression";
 import { getBuildingUrl } from "@/utils/url";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface ReviewImage {
   id: string;
-  file: File;
+  file?: File;
   preview: string;
+  storage_path?: string;
 }
 
 export default function WriteReview() {
@@ -40,6 +42,7 @@ export default function WriteReview() {
   const [hoverRating, setHoverRating] = useState<number | null>(null);
 
   const [images, setImages] = useState<ReviewImage[]>([]);
+  const [deletedImages, setDeletedImages] = useState<ReviewImage[]>([]);
   const [existingStatus, setExistingStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
 
   const [links, setLinks] = useState<{ id: string, url: string, title: string }[]>([]);
@@ -94,6 +97,21 @@ export default function WriteReview() {
 
             if (existingLinks) {
               setLinks(existingLinks);
+            }
+
+            // Fetch Images
+            const { data: remoteImages } = await supabase
+              .from('review_images')
+              .select('id, storage_path')
+              .eq('review_id', userBuilding.id);
+
+            if (remoteImages) {
+              const loadedImages: ReviewImage[] = remoteImages.map(img => ({
+                id: img.id,
+                preview: getBuildingImageUrl(img.storage_path) || "",
+                storage_path: img.storage_path
+              }));
+              setImages(loadedImages);
             }
           }
         }
@@ -151,9 +169,19 @@ export default function WriteReview() {
   const removeImage = (imageId: string) => {
     setImages(prev => {
       const newImages = prev.filter(img => img.id !== imageId);
-      // Revoke object URL to avoid memory leaks
       const removed = prev.find(img => img.id === imageId);
-      if (removed) URL.revokeObjectURL(removed.preview);
+
+      if (removed) {
+        if (removed.storage_path) {
+          // Track for deletion if it's an existing image
+          setDeletedImages(prevDeleted => [...prevDeleted, removed]);
+        } else {
+          // Only revoke object URL for new uploads
+          if (removed.preview.startsWith('blob:')) {
+            URL.revokeObjectURL(removed.preview);
+          }
+        }
+      }
       return newImages;
     });
   };
@@ -266,9 +294,35 @@ export default function WriteReview() {
         if (insertLinksError) throw insertLinksError;
       }
 
-      // 3. Upload Images
-      if (images.length > 0) {
-        const uploadPromises = images.map(async (img) => {
+      // 3. Handle Image Deletions
+      if (deletedImages.length > 0) {
+        const idsToDelete = deletedImages.map(img => img.id);
+        const { error: dbDeleteError } = await supabase
+          .from('review_images')
+          .delete()
+          .in('id', idsToDelete);
+
+        if (dbDeleteError) throw dbDeleteError;
+
+        const pathsToDelete = deletedImages
+          .map(img => img.storage_path)
+          .filter((path): path is string => !!path);
+
+        if (pathsToDelete.length > 0) {
+          const { error: storageDeleteError } = await supabase.storage
+            .from('review_images')
+            .remove(pathsToDelete);
+
+          if (storageDeleteError) console.error("Error cleaning up storage:", storageDeleteError);
+        }
+      }
+
+      // 4. Handle New Image Uploads
+      const newImages = images.filter(img => img.file);
+      if (newImages.length > 0) {
+        const uploadPromises = newImages.map(async (img) => {
+          if (!img.file) return;
+
           const fileExt = "webp"; // We know we compressed to webp (mostly)
           const fileName = `${user.id}/${buildingId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
@@ -278,7 +332,7 @@ export default function WriteReview() {
 
           if (uploadError) throw uploadError;
 
-          // 4. Insert Image Record
+          // Insert Image Record
           const { error: insertError } = await supabase
             .from('review_images')
             .insert({
