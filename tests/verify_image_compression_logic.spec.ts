@@ -11,8 +11,8 @@ test('verify client-side image compression logic', async ({ page }) => {
     // ----------------------------------------------------------------
     async function resizeImage(
       file: File,
-      maxWidth: number = 1920,
-      maxHeight: number = 1920,
+      maxWidth: number = 1500,
+      maxHeight: number = 1500,
       quality: number = 0.8
     ): Promise<{ width: number; height: number; size: number; type: string }> {
       return new Promise((resolve, reject) => {
@@ -65,29 +65,16 @@ test('verify client-side image compression logic', async ({ page }) => {
                 });
             };
 
+            // Enforce JPEG
             canvas.toBlob(
               (blob) => {
                 if (blob) {
-                  if (blob.type === 'image/webp') {
-                    finalize(blob, 'webp', 'image/webp');
-                  } else {
-                    canvas.toBlob(
-                      (jpegBlob) => {
-                        if (jpegBlob) {
-                          finalize(jpegBlob, 'jpg', 'image/jpeg');
-                        } else {
-                          reject(new Error('Canvas to Blob (JPEG fallback) failed'));
-                        }
-                      },
-                      'image/jpeg',
-                      quality
-                    );
-                  }
+                  finalize(blob, 'jpg', 'image/jpeg');
                 } else {
                   reject(new Error('Canvas to Blob failed'));
                 }
               },
-              'image/webp',
+              'image/jpeg',
               quality
             );
           };
@@ -126,7 +113,7 @@ test('verify client-side image compression logic', async ({ page }) => {
     const largeFile = await createLargeImageFile(originalWidth, originalHeight);
 
     // Test 1: Resize to default
-    const result1 = await resizeImage(largeFile, 1920, 1920, 0.8);
+    const result1 = await resizeImage(largeFile, 1500, 1500, 0.8);
 
     // Test 2: Resize to custom small size
     const result2 = await resizeImage(largeFile, 100, 100, 0.5);
@@ -140,12 +127,12 @@ test('verify client-side image compression logic', async ({ page }) => {
 
   console.log('Test Result:', result);
 
-  expect(result.result1.width).toBe(1920);
-  expect(result.result1.height).toBe(1280);
-  // Headless Chrome supports WebP, so we expect WebP
-  expect(result.result1.type).toBe('image/webp');
-  expect(result.result1.size).toBeLessThan(result.originalSize);
+  expect(result.result1.width).toBe(1500);
+  expect(result.result1.height).toBe(1000);
+  expect(result.result1.type).toBe('image/jpeg');
+  expect(result.result1.size).toBeLessThan(200 * 1024); // < 200kb
 
   expect(result.result2.width).toBe(100);
   expect(result.result2.height).toBe(67);
+  expect(result.result2.type).toBe('image/jpeg');
 });

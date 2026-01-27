@@ -1,17 +1,17 @@
 /**
  * Resizes an image file to a maximum dimension while maintaining aspect ratio,
- * and compresses it to WebP format (falling back to JPEG if WebP is unsupported).
+ * and compresses it to JPEG format.
  *
  * @param file The original image file
- * @param maxWidth Maximum width in pixels (default: 1920)
- * @param maxHeight Maximum height in pixels (default: 1920)
+ * @param maxWidth Maximum width in pixels (default: 1500)
+ * @param maxHeight Maximum height in pixels (default: 1500)
  * @param quality Compression quality from 0 to 1 (default: 0.8)
  * @returns A Promise that resolves to the compressed File object
  */
 export async function resizeImage(
   file: File,
-  maxWidth: number = 1920,
-  maxHeight: number = 1920,
+  maxWidth: number = 1500,
+  maxHeight: number = 1500,
   quality: number = 0.8
 ): Promise<File> {
   return new Promise((resolve, reject) => {
@@ -69,32 +69,16 @@ export async function resizeImage(
           resolve(newFile);
         };
 
-        // Try WebP first
+        // Enforce JPEG
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              // Check if browser actually supported WebP
-              if (blob.type === 'image/webp') {
-                finalize(blob, 'webp', 'image/webp');
-              } else {
-                // Fallback to JPEG if WebP is not supported (browser returned PNG or other)
-                canvas.toBlob(
-                  (jpegBlob) => {
-                    if (jpegBlob) {
-                      finalize(jpegBlob, 'jpg', 'image/jpeg');
-                    } else {
-                      reject(new Error('Canvas to Blob (JPEG fallback) failed'));
-                    }
-                  },
-                  'image/jpeg',
-                  quality
-                );
-              }
+              finalize(blob, 'jpg', 'image/jpeg');
             } else {
               reject(new Error('Canvas to Blob failed'));
             }
           },
-          'image/webp',
+          'image/jpeg',
           quality
         );
       };

@@ -73,7 +73,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
       setIsUploading(true);
       const compressedFile = await resizeImage(file);
 
-      const fileExt = "webp";
+      const fileExt = "jpg";
       const filePath = `${user.id}/hero/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
