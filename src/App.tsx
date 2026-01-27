@@ -59,6 +59,7 @@ import Users from "./pages/admin/Users";
 import Moderation from "./pages/admin/Moderation";
 import ImageWall from "./pages/admin/ImageWall";
 import BuildingAudit from "./pages/admin/BuildingAudit";
+import StorageJobs from "./pages/admin/StorageJobs";
 import { AdminGuard } from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import Unauthorized from "./pages/admin/Unauthorized";
@@ -110,6 +111,7 @@ const router = createBrowserRouter(
         <Route path="/admin/moderation" element={<Moderation />} />
         <Route path="/admin/images" element={<ImageWall />} />
         <Route path="/admin/audit" element={<BuildingAudit />} />
+        <Route path="/admin/storage-jobs" element={<StorageJobs />} />
         <Route path="/admin/system" element={<div>System (Coming Soon)</div>} />
       </Route>
 
