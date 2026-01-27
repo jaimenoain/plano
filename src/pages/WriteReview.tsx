@@ -2,8 +2,23 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Circle, Upload, X, Loader2, ImagePlus, Link as LinkIcon, Trash2, Plus
+  ArrowLeft,
+  Circle,
+  Upload,
+  X,
+  Loader2,
+  ImagePlus,
+  Link as LinkIcon,
+  Trash2,
+  Plus,
+  Pencil
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -49,6 +64,7 @@ export default function WriteReview() {
   const [images, setImages] = useState<ReviewImage[]>([]);
   const [deletedImages, setDeletedImages] = useState<ReviewImage[]>([]);
   const [existingStatus, setExistingStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
+  const [visibility, setVisibility] = useState<string>("public");
 
   const [links, setLinks] = useState<{ id: string, url: string, title: string }[]>([]);
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -104,7 +120,7 @@ export default function WriteReview() {
 
           const { data: userBuilding, error: ubError } = await supabase
             .from("user_buildings")
-            .select("id, rating, content, status, tags")
+            .select("id, rating, content, status, tags, visibility")
             .eq("user_id", user.id)
             .eq("building_id", building.id)
             .maybeSingle();
@@ -114,10 +130,16 @@ export default function WriteReview() {
           if (userBuilding) {
             if (userBuilding.rating) setRating(userBuilding.rating);
             if (userBuilding.content) setContent(userBuilding.content);
+            
+            // Merged Logic: Set tags and handle UI visibility for lists
             if (userBuilding.tags) {
               setTags(userBuilding.tags);
               if (userBuilding.tags.length > 0) setShowLists(true);
             }
+            
+            // Merged Logic: Set visibility setting
+            if (userBuilding.visibility) setVisibility(userBuilding.visibility);
+            
             setExistingStatus(userBuilding.status);
 
             // Fetch Links
@@ -292,6 +314,7 @@ export default function WriteReview() {
           content: content,
           tags: tags,
           status: statusToUse,
+          visibility: visibility,
           edited_at: new Date().toISOString()
         }, { onConflict: 'user_id, building_id' })
         .select()
@@ -416,6 +439,20 @@ export default function WriteReview() {
         <div>
           <h1 className="text-2xl font-bold">{buildingName}</h1>
           <p className="text-muted-foreground">Share your experience</p>
+          <div className="mt-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground transition-colors w-fit">
+                  <span className="text-sm">Visibility: {visibility.charAt(0).toUpperCase() + visibility.slice(1)}</span>
+                  <Pencil className="w-3 h-3" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => setVisibility("public")}>Public</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setVisibility("private")}>Private</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Rating */}
