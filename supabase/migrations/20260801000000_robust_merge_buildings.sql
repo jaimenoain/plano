@@ -35,6 +35,10 @@ END $$;
 
 
 -- 2. The Robust Merge Function
+
+-- Drop legacy function to allow parameter renaming (master_id -> source_id)
+DROP FUNCTION IF EXISTS merge_buildings(uuid, uuid);
+
 CREATE OR REPLACE FUNCTION merge_buildings(
   source_id UUID,
   target_id UUID
