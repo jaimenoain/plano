@@ -184,7 +184,6 @@ export default function CreateSession() {
               .single();
           if (buildingData) {
               addBuilding(buildingData);
-              setMainBuildingId(buildId);
               setShowBuildings(true);
           }
       } catch (e) {
@@ -328,7 +327,6 @@ export default function CreateSession() {
   const addBuilding = async (building: any) => {
       if (selectedBuildings.find(b => b.id === building.id)) return;
       setSelectedBuildings([...selectedBuildings, building]);
-      if (!mainBuildingId) setMainBuildingId(building.id);
       setQuery("");
       setResults([]);
   };
@@ -713,7 +711,6 @@ export default function CreateSession() {
                         onSelect={(item) => {
                              if (item.building) {
                                  addBuilding(item.building);
-                                 setMainBuildingId(item.building.id);
                                  // Pre-fill note if present
                                  if (item.admin_note) {
                                      setDescription(prev => prev ? prev + "\n\n" + item.admin_note : item.admin_note);
