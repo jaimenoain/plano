@@ -7,6 +7,8 @@ import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getBuildingImageUrl } from "@/utils/image";
+import { filterLocalBuildings } from "../utils/searchFilters";
+import { UserSearchResult } from "./useUserSearch";
 
 // Helper to calculate Haversine distance in meters
 function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -96,9 +98,17 @@ export function useBuildingSearch() {
   const [filterVisited, setFilterVisited] = useState(false);
   const [filterBucketList, setFilterBucketList] = useState(false);
   const [filterContacts, setFilterContacts] = useState(false);
-  const [minRating, setMinRating] = useState<number>(0);
+  const [personalMinRating, setPersonalMinRating] = useState<number>(0);
+  const [contactMinRating, setContactMinRating] = useState<number>(0);
+
   const [selectedArchitects, setSelectedArchitects] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
+
+  // New Filters
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
+  const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>([]);
 
   // Default to London
   const [userLocation, setUserLocation] = useState({
@@ -130,75 +140,106 @@ export function useBuildingSearch() {
 
   // Search query
   const { data: buildings, isLoading, isFetching } = useQuery({
-    queryKey: ["search-buildings", debouncedQuery, filterVisited, filterBucketList, filterContacts, minRating, selectedArchitects, userLocation, user?.id],
+    queryKey: [
+        "search-buildings",
+        debouncedQuery,
+        filterVisited,
+        filterBucketList,
+        filterContacts,
+        personalMinRating,
+        contactMinRating,
+        selectedArchitects,
+        selectedCategory,
+        selectedTypologies,
+        selectedAttributes,
+        selectedContacts,
+        userLocation,
+        user?.id
+    ],
     queryFn: async () => {
         // Local filtering mode (My Buildings or Contacts)
-        if (filterVisited || filterBucketList || filterContacts) {
+        const hasSpecificContacts = selectedContacts.length > 0;
+        if (filterVisited || filterBucketList || filterContacts || hasSpecificContacts) {
             if (!user) return [];
-
-            const statuses: string[] = [];
-            if (filterVisited) statuses.push('visited');
-            if (filterBucketList) statuses.push('pending');
-
-            // If contacts is checked but no status, default to both (implied "All from contacts")
-            if (statuses.length === 0 && filterContacts) {
-                statuses.push('visited', 'pending');
-            }
 
             let buildingIds: string[] = [];
 
-            if (filterContacts) {
-                // 1. Fetch contacts
-                const { data: follows } = await supabase
-                    .from('follows')
-                    .select('following_id')
-                    .eq('follower_id', user.id);
+            // 1. Contact Buildings (Any or Specific)
+            if (filterContacts || hasSpecificContacts) {
+                let contactIds: string[] = [];
 
-                const contactIds = follows?.map(f => f.following_id) || [];
+                if (hasSpecificContacts) {
+                    contactIds = selectedContacts.map(c => c.id);
+                } else {
+                    // Fetch all follows
+                    const { data: follows } = await supabase
+                        .from('follows')
+                        .select('following_id')
+                        .eq('follower_id', user.id);
+                    contactIds = follows?.map(f => f.following_id) || [];
+                }
+
+                // For contacts, we show all visited/pending buildings
+                const contactStatuses = ['visited', 'pending'];
 
                 if (contactIds.length > 0) {
-                    // 2. Fetch contact buildings
                     let query = supabase
                         .from('user_buildings')
                         .select('building_id')
                         .in('user_id', contactIds)
-                        .in('status', statuses);
+                        .in('status', contactStatuses);
 
-                    if (minRating > 0) {
-                        query = query.gte('rating', minRating);
+                    if (contactMinRating > 0) {
+                        query = query.gte('rating', contactMinRating);
                     }
 
                     const { data: contactBuildings, error: cbError } = await query;
                     if (cbError) throw cbError;
 
-                    // Deduplicate IDs since multiple contacts might have visited the same building
-                    buildingIds = Array.from(new Set(contactBuildings?.map(cb => cb.building_id) || []));
+                    const ids = contactBuildings?.map(cb => cb.building_id) || [];
+                    buildingIds = [...buildingIds, ...ids];
                 }
-            } else {
-                // 1. Fetch user buildings IDs
+            }
+
+            // 2. Personal Buildings
+            if (filterVisited || filterBucketList) {
+                const personalStatuses: string[] = [];
+                if (filterVisited) personalStatuses.push('visited');
+                if (filterBucketList) personalStatuses.push('pending');
+
                 let query = supabase
                     .from('user_buildings')
                     .select('building_id')
                     .eq('user_id', user.id)
-                    .in('status', statuses);
+                    .in('status', personalStatuses);
 
-                if (minRating > 0) {
-                    query = query.gte('rating', minRating);
+                if (personalMinRating > 0) {
+                    query = query.gte('rating', personalMinRating);
                 }
 
                 const { data: userBuildings, error: ubError } = await query;
-
                 if (ubError) throw ubError;
-                buildingIds = userBuildings?.map(ub => ub.building_id) || [];
+
+                const ids = userBuildings?.map(ub => ub.building_id) || [];
+                buildingIds = [...buildingIds, ...ids];
             }
+
+            // Deduplicate
+            buildingIds = Array.from(new Set(buildingIds));
 
             if (buildingIds.length === 0) return [];
 
-            // 3. Fetch building details
-            // Explicitly select main_image_url (computed column)
+            // 3. Fetch building details + Metadata for filtering
             let query = supabase
                 .from('buildings')
-                .select('*, main_image_url, architects:building_architects(architect:architects(name, id))')
+                .select(`
+                    *,
+                    main_image_url,
+                    architects:building_architects(architect:architects(name, id)),
+                    functional_category_id,
+                    typologies:building_functional_typologies(typology_id),
+                    attributes:building_attributes(attribute_id)
+                `)
                 .in('id', buildingIds);
 
             if (debouncedQuery) {
@@ -208,8 +249,16 @@ export function useBuildingSearch() {
             const { data: buildingsData, error: bError } = await query;
             if (bError) throw bError;
 
-            // 3. Map to DiscoveryBuilding and calculate distance
-            const mappedBuildings = (buildingsData || []).map((b: any) => {
+            // 4. Apply Characteristics / Architect Filters in Memory
+            const filteredData = filterLocalBuildings(buildingsData || [], {
+                categoryId: selectedCategory,
+                typologyIds: selectedTypologies,
+                attributeIds: selectedAttributes,
+                selectedArchitects: selectedArchitects
+            });
+
+            // 5. Map to DiscoveryBuilding and calculate distance
+            const mappedBuildings = filteredData.map((b: any) => {
                 const distance = getDistanceFromLatLonInM(
                     userLocation.lat,
                     userLocation.lng,
@@ -220,7 +269,7 @@ export function useBuildingSearch() {
                 return {
                     id: b.id,
                     name: b.name,
-                    main_image_url: b.main_image_url, // Pass path, enriched later
+                    main_image_url: b.main_image_url,
                     architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || [],
                     year_completed: b.year_completed,
                     city: b.city,
@@ -228,35 +277,32 @@ export function useBuildingSearch() {
                     location_lat: b.location_lat,
                     location_lng: b.location_lng,
                     distance: distance,
+                    // Pass through metadata if needed downstream, but DiscoveryBuilding interface might not have it
                 } as DiscoveryBuilding;
             }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
-            // Local Architect Filter
-            const filteredMappedBuildings = selectedArchitects.length > 0
-                ? mappedBuildings.filter((b: any) =>
-                    b.architects?.some((a: any) => selectedArchitects.includes(a.name))
-                  )
-                : mappedBuildings;
-
-            return await enrichBuildings(filteredMappedBuildings, user?.id);
+            return await enrichBuildings(mappedBuildings, user?.id);
         }
 
         // Global search mode (RPC)
-        const radius = 20000000; // Large radius for general search
+        const radius = 20000000;
         const rpcResults = await searchBuildingsRpc({
             query_text: debouncedQuery || null,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
             radius_meters: radius,
-            filters: { architects: selectedArchitects.length > 0 ? selectedArchitects : undefined },
+            filters: {
+                architects: selectedArchitects.length > 0 ? selectedArchitects : undefined,
+                category_id: selectedCategory || undefined,
+                typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
+                attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined
+            },
             sort_by: undefined,
             p_limit: 500
         });
 
-        // RPC returns main_image_url as path now (from computed column)
-        // enrichBuildings will transform it to URL
         return await enrichBuildings(rpcResults, user?.id);
     },
-    staleTime: 1000 * 60, // 1 min
+    staleTime: 1000 * 60,
     placeholderData: keepPreviousData,
   });
 
@@ -273,10 +319,20 @@ export function useBuildingSearch() {
       setFilterBucketList,
       filterContacts,
       setFilterContacts,
-      minRating,
-      setMinRating,
+      personalMinRating,
+      setPersonalMinRating,
+      contactMinRating,
+      setContactMinRating,
       selectedArchitects,
       setSelectedArchitects,
+      selectedCategory,
+      setSelectedCategory,
+      selectedTypologies,
+      setSelectedTypologies,
+      selectedAttributes,
+      setSelectedAttributes,
+      selectedContacts,
+      setSelectedContacts,
       viewMode,
       setViewMode,
       userLocation,

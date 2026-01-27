@@ -26,8 +26,13 @@ export default function SearchPage() {
     filterVisited, setFilterVisited,
     filterBucketList, setFilterBucketList,
     filterContacts, setFilterContacts,
-    minRating, setMinRating,
+    personalMinRating, setPersonalMinRating,
+    contactMinRating, setContactMinRating,
     selectedArchitects, setSelectedArchitects,
+    selectedCategory, setSelectedCategory,
+    selectedTypologies, setSelectedTypologies,
+    selectedAttributes, setSelectedAttributes,
+    selectedContacts, setSelectedContacts,
     viewMode, setViewMode,
     userLocation, updateLocation,
     buildings, isLoading, isFetching,
@@ -185,8 +190,13 @@ export default function SearchPage() {
                          !filterVisited &&
                          !filterBucketList &&
                          !filterContacts &&
-                         minRating === 0 &&
-                         selectedArchitects.length === 0;
+                         personalMinRating === 0 &&
+                         contactMinRating === 0 &&
+                         selectedArchitects.length === 0 &&
+                         !selectedCategory &&
+                         selectedTypologies.length === 0 &&
+                         selectedAttributes.length === 0 &&
+                         selectedContacts.length === 0;
 
   return (
     <AppLayout title="Discovery" showLogo={false}>
@@ -210,8 +220,21 @@ export default function SearchPage() {
             onBucketListChange={setFilterBucketList}
             filterContacts={filterContacts}
             onFilterContactsChange={setFilterContacts}
-            minRating={minRating}
-            onMinRatingChange={setMinRating}
+
+            personalMinRating={personalMinRating}
+            onPersonalMinRatingChange={setPersonalMinRating}
+            contactMinRating={contactMinRating}
+            onContactMinRatingChange={setContactMinRating}
+
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            selectedTypologies={selectedTypologies}
+            onTypologiesChange={setSelectedTypologies}
+            selectedAttributes={selectedAttributes}
+            onAttributesChange={setSelectedAttributes}
+            selectedContacts={selectedContacts}
+            onSelectedContactsChange={setSelectedContacts}
+
             // --- Shared Props ---
             onShowLeaderboard={() => setShowLeaderboard(true)}
             onUseLocation={handleUseLocation}
