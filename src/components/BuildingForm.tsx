@@ -206,57 +206,59 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-4">
-        {/* Main Image Upload */}
-        <div className="space-y-2">
-          <Label>Main Image</Label>
-          <div className="flex flex-col gap-4">
-            {heroImage ? (
-              <div className="relative aspect-video w-full max-w-sm rounded-lg overflow-hidden border bg-muted">
-                <img
-                  src={getBuildingImageUrl(heroImage)}
-                  alt="Building hero"
-                  className="w-full h-full object-cover"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2 h-8 w-8 rounded-full"
-                  onClick={removeImage}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div
-                className="flex items-center justify-center w-full max-w-sm aspect-video border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                      <span className="text-sm">Uploading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon className="h-8 w-8" />
-                      <span className="text-sm">Click to upload image</span>
-                    </>
-                  )}
+        {/* Main Image Upload - Only in create mode */}
+        {mode === 'create' && (
+          <div className="space-y-2">
+            <Label>Main Image</Label>
+            <div className="flex flex-col gap-4">
+              {heroImage ? (
+                <div className="relative aspect-video w-full max-w-sm rounded-lg overflow-hidden border bg-muted">
+                  <img
+                    src={getBuildingImageUrl(heroImage)}
+                    alt="Building hero"
+                    className="w-full h-full object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 rounded-full"
+                    onClick={removeImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-              </div>
-            )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={isUploading}
-            />
+              ) : (
+                <div
+                  className="flex items-center justify-center w-full max-w-sm aspect-video border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <span className="text-sm">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="h-8 w-8" />
+                        <span className="text-sm">Click to upload image</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={isUploading}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="name">Name {mode === 'create' && "*"}</Label>
