@@ -5,7 +5,14 @@ export const searchBuildingsRpc = async (params: {
   query_text: string | null;
   location_coordinates?: { lat: number; lng: number };
   radius_meters?: number;
-  filters?: { cities?: string[]; styles?: string[]; architects?: string[] };
+  filters?: {
+    cities?: string[];
+    styles?: string[];
+    architects?: string[];
+    category_id?: string;
+    typology_ids?: string[];
+    attribute_ids?: string[];
+  };
   sort_by?: 'distance' | 'relevance';
   p_limit?: number;
 }): Promise<DiscoveryBuilding[]> => {
