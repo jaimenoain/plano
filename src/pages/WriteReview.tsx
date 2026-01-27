@@ -16,6 +16,7 @@ import { resizeImage } from "@/lib/image-compression";
 import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
 import { uploadFile, deleteFiles } from "@/utils/upload";
+import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
 
 interface ReviewImage {
   id: string;
@@ -41,6 +42,9 @@ export default function WriteReview() {
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
   const [hoverRating, setHoverRating] = useState<number | null>(null);
+
+  const [tags, setTags] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const [images, setImages] = useState<ReviewImage[]>([]);
   const [deletedImages, setDeletedImages] = useState<ReviewImage[]>([]);
@@ -76,9 +80,28 @@ export default function WriteReview() {
 
         // 2. Fetch Existing Review/Status
         if (user) {
+          // Fetch Smart Suggestions (Recent Tags)
+          // We limit to 50 recent interactions to find the most recently used tags
+          const { data: recentLogs } = await supabase
+            .from("user_buildings")
+            .select("tags, edited_at")
+            .eq("user_id", user.id)
+            .not("tags", "is", null)
+            .order("edited_at", { ascending: false })
+            .limit(50);
+
+          if (recentLogs) {
+            const uniqueTags = new Set<string>();
+            // Flatten and dedup preserving order (recency)
+            recentLogs.forEach(log => {
+              log.tags?.forEach(tag => uniqueTags.add(tag));
+            });
+            setSuggestions(Array.from(uniqueTags).slice(0, 20));
+          }
+
           const { data: userBuilding, error: ubError } = await supabase
             .from("user_buildings")
-            .select("id, rating, content, status")
+            .select("id, rating, content, status, tags")
             .eq("user_id", user.id)
             .eq("building_id", building.id)
             .maybeSingle();
@@ -88,6 +111,7 @@ export default function WriteReview() {
           if (userBuilding) {
             if (userBuilding.rating) setRating(userBuilding.rating);
             if (userBuilding.content) setContent(userBuilding.content);
+            if (userBuilding.tags) setTags(userBuilding.tags);
             setExistingStatus(userBuilding.status);
 
             // Fetch Links
@@ -259,6 +283,7 @@ export default function WriteReview() {
           building_id: buildingId,
           rating: rating,
           content: content,
+          tags: tags,
           status: statusToUse,
           edited_at: new Date().toISOString()
         }, { onConflict: 'user_id, building_id' })
@@ -424,6 +449,18 @@ export default function WriteReview() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="min-h-[150px] resize-none"
+          />
+        </div>
+
+        {/* Lists (Tags) */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium uppercase text-muted-foreground">Lists</label>
+          <AutocompleteTagInput
+            tags={tags}
+            setTags={setTags}
+            suggestions={suggestions}
+            placeholder="Add to list..."
+            normalize={(v) => v.trim()}
           />
         </div>
 
