@@ -299,7 +299,7 @@ export function ReviewCard({
                      {Array.from({ length: 5 }).map((_, i) => (
                         <Circle
                            key={i}
-                           className={`w-2 h-2 ${i < entry.rating! ? "fill-foreground text-foreground" : "fill-transparent text-muted-foreground/30"}`}
+                           className={`w-3.5 h-3.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
                         />
                      ))}
                  </span>
@@ -406,20 +406,6 @@ export function ReviewCard({
           </div>
         )}
 
-        {entry.rating && (
-          <div className="flex items-center gap-0.5 mb-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                  <Circle
-                    key={i}
-                    className={`w-4 h-4 ${
-                      i < entry.rating!
-                        ? "fill-[#595959] text-[#595959]"
-                        : "fill-transparent text-muted-foreground/20"
-                    }`}
-                  />
-              ))}
-          </div>
-        )}
 
         {/* Review Text: Only show if exists */}
         {entry.content && (
