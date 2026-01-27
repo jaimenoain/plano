@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
   Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle
+  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare
 } from "lucide-react";
 import {
   AlertDialog,
@@ -911,10 +911,14 @@ export default function BuildingDetails() {
                                 </Avatar>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-bold text-sm">{entry.user.username}</span>
+                                        <Link to={`/profile/${entry.user.username || entry.user_id}`} className="font-bold text-sm hover:underline">
+                                            {entry.user.username}
+                                        </Link>
                                         {entry.status === 'visited' && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">Visited</Badge>}
                                         {entry.status === 'pending' && <Badge variant="outline" className="text-[10px] h-5 px-1.5">Saved</Badge>}
-                                        <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(entry.created_at))} ago</span>
+                                        <Link to={`/review/${entry.id}`} className="text-xs text-muted-foreground hover:underline">
+                                            {formatDistanceToNow(new Date(entry.created_at))} ago
+                                        </Link>
                                     </div>
 
                                     <Link to={`/review/${entry.id}`} className="block group">
@@ -949,6 +953,13 @@ export default function BuildingDetails() {
                                             })}
                                         </div>
                                     )}
+
+                                    <div className="mt-2">
+                                        <Link to={`/review/${entry.id}`} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                                            <MessageSquare className="w-3 h-3" />
+                                            <span>View Review</span>
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         ))
