@@ -111,6 +111,7 @@ const router = createBrowserRouter(
         <Route path="/admin/moderation" element={<Moderation />} />
         <Route path="/admin/images" element={<ImageWall />} />
         <Route path="/admin/audit" element={<BuildingAudit />} />
+        {/* Storage management tool */}
         <Route path="/admin/storage-jobs" element={<StorageJobs />} />
         <Route path="/admin/system" element={<div>System (Coming Soon)</div>} />
       </Route>

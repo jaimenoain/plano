@@ -58,14 +58,14 @@ const items = [
     icon: Image,
   },
   {
-    title: "Audit Logs",
-    url: "/admin/audit",
-    icon: History,
-  },
-  {
     title: "Storage Jobs",
     url: "/admin/storage-jobs",
     icon: Trash2,
+  },
+  {
+    title: "Audit Logs",
+    url: "/admin/audit",
+    icon: History,
   },
   {
     title: "System",
