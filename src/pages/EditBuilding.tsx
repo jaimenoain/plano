@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { BuildingForm, BuildingFormData } from "@/components/BuildingForm";
 import { BuildingLocationPicker } from "@/components/BuildingLocationPicker";
 import { useAuth } from "@/hooks/useAuth";
@@ -332,14 +333,23 @@ export default function EditBuilding() {
                         </div>
                         <div className="text-sm opacity-90">
                             Changing the location here puts it very close to these existing buildings:
-                            <ul className="list-disc pl-5 mt-2 text-sm">
+                            <ul className="mt-2 space-y-2">
                                 {duplicates.slice(0, 3).map(d => (
-                                    <li key={d.id}>
-                                        {d.name} ({d.dist_meters.toFixed(0)}m away)
+                                    <li key={d.id} className="flex items-center justify-between gap-2 bg-white/50 p-2 rounded text-sm">
+                                        <span>{d.name} ({d.dist_meters.toFixed(0)}m away)</span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs border-destructive/50 text-destructive hover:bg-destructive hover:text-white"
+                                            onClick={() => navigate(`/admin/merge/${buildingId}/${d.id}`)}
+                                            type="button"
+                                        >
+                                            Review Duplicate
+                                        </Button>
                                     </li>
                                 ))}
                             </ul>
-                            Please verify you aren't creating a duplicate.
+                            <div className="mt-2">Please verify you aren't creating a duplicate.</div>
                         </div>
                     </div>
                 )}
