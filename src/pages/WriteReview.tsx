@@ -11,7 +11,9 @@ import {
   Link as LinkIcon,
   Trash2,
   Plus,
-  Pencil
+  Pencil,
+  Check,
+  Bookmark
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -74,7 +76,7 @@ export default function WriteReview() {
 
   const [images, setImages] = useState<ReviewImage[]>([]);
   const [deletedImages, setDeletedImages] = useState<ReviewImage[]>([]);
-  const [existingStatus, setExistingStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
+  const [status, setStatus] = useState<'visited' | 'pending'>('visited');
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<string>("public");
 
@@ -156,7 +158,11 @@ export default function WriteReview() {
             // Merged Logic: Set visibility setting
             if (userBuilding.visibility) setVisibility(userBuilding.visibility);
             
-            setExistingStatus(userBuilding.status);
+            if (userBuilding.status === 'pending') {
+              setStatus('pending');
+            } else {
+              setStatus('visited');
+            }
 
             // Fetch Links
             const { data: existingLinks } = await supabase
@@ -420,8 +426,6 @@ export default function WriteReview() {
     setSubmitting(true);
     try {
       // 1. Upsert User Building (Review)
-      const statusToUse = existingStatus || 'visited';
-
       const { data: userBuilding, error: upsertError } = await supabase
         .from("user_buildings")
         .upsert({
@@ -430,7 +434,7 @@ export default function WriteReview() {
           rating: rating,
           content: content,
           tags: tags,
-          status: statusToUse,
+          status: status,
           visibility: visibility,
           edited_at: new Date().toISOString()
         }, { onConflict: 'user_id, building_id' })
@@ -556,6 +560,26 @@ export default function WriteReview() {
         <div>
           <h1 className="text-2xl font-bold">{buildingName}</h1>
           <p className="text-muted-foreground">Share your experience</p>
+        </div>
+
+        {/* Status */}
+        <div className="flex bg-muted/50 p-1 rounded-lg w-fit">
+          <button
+            type="button"
+            onClick={() => setStatus('visited')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${status === 'visited' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <Check className="w-4 h-4" />
+            Visited
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatus('pending')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${status === 'pending' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <Bookmark className="w-4 h-4" />
+            Bucket List
+          </button>
         </div>
 
         {/* Rating */}
