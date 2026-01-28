@@ -596,23 +596,21 @@ export default function ReviewDetails() {
 
                             {/* Text Content */}
                             {review.content && (
-                                <div className="text-base text-foreground leading-relaxed">
+                                <div className="text-lg md:text-xl text-foreground/90 leading-relaxed font-normal">
                                     <p className="whitespace-pre-line">{review.content}</p>
                                 </div>
                             )}
 
                             {/* Review Images */}
                             {review.images.length > 0 && (
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     {review.images.map((img) => (
-                                        <div key={img.id} className="rounded-lg overflow-hidden border border-border bg-black/5">
-                                            <div className="aspect-[4/3] relative">
-                                                <img
-                                                    src={img.url}
-                                                    alt="Review attachment"
-                                                    className="absolute inset-0 w-full h-full object-contain"
-                                                />
-                                            </div>
+                                        <div key={img.id} className="rounded-lg overflow-hidden">
+                                            <img
+                                                src={img.url}
+                                                alt="Review attachment"
+                                                className="w-full h-auto block"
+                                            />
                                         </div>
                                     ))}
                                 </div>
