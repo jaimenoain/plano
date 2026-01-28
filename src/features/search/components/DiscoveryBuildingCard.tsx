@@ -73,9 +73,9 @@ export function DiscoveryBuildingCard({
                   ))}
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  {building.contact_visitors.length === 1 && building.contact_visitors[0].first_name
-                    ? `Visited by ${building.contact_visitors[0].first_name}`
-                    : `Visited by ${building.contact_visitors.length} friends`}
+                  {building.contact_visitors.length === 1
+                    ? (building.contact_visitors[0].first_name || 'Friend')
+                    : `${building.contact_visitors[0].first_name || 'Friend'} + ${building.contact_visitors.length - 1}`}
                 </span>
               </div>
             )}
