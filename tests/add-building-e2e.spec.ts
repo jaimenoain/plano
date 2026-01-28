@@ -224,6 +224,19 @@ test('End-to-End Add Building Verification', async ({ page }) => {
   // Wait for duplicate check to fire
   await page.waitForTimeout(1000);
 
+  // Verify Sidebar Duplicates do NOT have actions
+  // The 'Nearby Buildings' card should appear
+  await expect(page.getByText('Nearby Buildings')).toBeVisible();
+
+  // We check that within the sidebar card, there are NO "Bucket List" or "Visited" buttons.
+  // The card has the text "Nearby Buildings".
+  const duplicateCard = page.locator('.space-y-6 .rounded-xl', { hasText: 'Nearby Buildings' }).first();
+  // Or simpler locator if structure varies
+
+  // Check global absence for now as these specific buttons shouldn't be on this page in this state
+  await expect(page.getByRole('button', { name: 'Bucket List' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Visited' })).toHaveCount(0);
+
   // 5. Attempt to proceed
   await page.getByRole('button', { name: 'Continue' }).click();
 
