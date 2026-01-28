@@ -146,7 +146,11 @@ export default function Auth() {
         // Auto-generate the username here
         const autoUsername = generateUsername(email);
 
-        const { error } = await signUp(email, password, autoUsername, invitedBy || undefined);
+        // Use the resolved inviter ID (UUID) if available, to prevent sending a username string
+        // which would cause a database error if the column is of type UUID.
+        const inviterId = inviterProfile?.id;
+
+        const { error } = await signUp(email, password, autoUsername, inviterId);
         if (error) {
           if (error.message.includes("already registered")) {
             toast({
