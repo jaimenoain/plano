@@ -5,7 +5,7 @@ import { LocationInput } from "@/components/ui/LocationInput";
 import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { importLibrary } from "@googlemaps/js-api-loader";
-import { Loader2, MapPin, Navigation, Plus, ArrowRight, Bookmark, Check, Building2 } from "lucide-react";
+import { Loader2, MapPin, Navigation, Plus, ArrowRight, Building2 } from "lucide-react";
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { RecommendDialog } from "@/components/common/RecommendDialog";
 import { useQuery } from "@tanstack/react-query";
 import { getBuildingImageUrl } from "@/utils/image";
 
@@ -82,8 +81,6 @@ export default function AddBuilding() {
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [extractedLocation, setExtractedLocation] = useState<{ city: string | null; country: string | null }>({ city: null, country: null });
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
-  const [showVisitDialog, setShowVisitDialog] = useState(false);
-  const [selectedBuildingForVisit, setSelectedBuildingForVisit] = useState<{ id: string; name: string } | null>(null);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -372,50 +369,6 @@ export default function AddBuilding() {
     }
   };
 
-  const handleAddToMyList = async (buildingId: string, status: 'pending' | 'visited') => {
-    if (!user) {
-      toast.error("You must be logged in to add buildings.");
-      return;
-    }
-
-    try {
-      // Map status
-      const dbStatus = status === 'pending' ? 'pending' : 'visited';
-
-      const { error } = await supabase
-        .from("user_buildings")
-        .upsert({
-          user_id: user.id,
-          building_id: buildingId,
-          status: dbStatus,
-          created_at: new Date().toISOString() // upsert needs all required fields if insert happens
-        }, { onConflict: 'user_id, building_id' });
-
-      if (error) throw error;
-
-      const action = status === 'pending' ? "Bucket List" : "Visited list";
-
-      if (status === 'pending') {
-          const building = duplicates.find(d => d.id === buildingId);
-          if (building) {
-              setSelectedBuildingForVisit({ id: buildingId, name: building.name });
-              setShowVisitDialog(true);
-              toast.success(`Building added to your ${action}!`);
-          } else {
-              toast.success(`Building added to your ${action}!`);
-              navigate(`/building/${buildingId}`);
-          }
-      } else {
-          toast.success(`Building added to your ${action}!`);
-          navigate(`/building/${buildingId}`);
-      }
-
-    } catch (error) {
-      console.error("Error adding building to list:", error);
-      toast.error("Failed to add building to your list.");
-    }
-  };
-
   if (step === 2 && finalLocationData) {
     return <div className="container max-w-2xl py-8"><AddBuildingDetails locationData={finalLocationData} onBack={() => setStep(1)} /></div>;
   }
@@ -547,26 +500,6 @@ export default function AddBuilding() {
                                   </div>
                                 </div>
 
-                                <div className="flex gap-2 w-full">
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="flex-1 h-8 text-xs gap-1 bg-white hover:bg-white/80"
-                                        onClick={() => handleAddToMyList(building.id, 'pending')}
-                                    >
-                                        <Bookmark className="h-3 w-3" />
-                                        Bucket List
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="flex-1 h-8 text-xs gap-1 bg-white hover:bg-white/80"
-                                        onClick={() => handleAddToMyList(building.id, 'visited')}
-                                    >
-                                        <Check className="h-3 w-3" />
-                                        Visited
-                                    </Button>
-                                </div>
                               </div>
                         ))}
                     </div>
@@ -604,26 +537,6 @@ export default function AddBuilding() {
                                       <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
                                     )}
                                   </div>
-                                </div>
-                                 <div className="flex gap-2 w-full">
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="flex-1 h-8 text-xs gap-1"
-                                        onClick={() => handleAddToMyList(building.id, 'pending')}
-                                    >
-                                        <Bookmark className="h-3 w-3" />
-                                        Bucket List
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="flex-1 h-8 text-xs gap-1"
-                                        onClick={() => handleAddToMyList(building.id, 'visited')}
-                                    >
-                                        <Check className="h-3 w-3" />
-                                        Visited
-                                    </Button>
                                 </div>
                               </div>
                         ))}
@@ -825,19 +738,6 @@ export default function AddBuilding() {
         </DialogContent>
       </Dialog>
 
-      {selectedBuildingForVisit && (
-        <RecommendDialog
-            open={showVisitDialog}
-            onOpenChange={(open) => {
-                setShowVisitDialog(open);
-                if (!open && selectedBuildingForVisit) {
-                    navigate(`/building/${selectedBuildingForVisit.id}`);
-                }
-            }}
-            building={selectedBuildingForVisit}
-            mode="visit_with"
-        />
-      )}
     </div>
   );
 }
