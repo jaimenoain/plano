@@ -221,21 +221,18 @@ export function FeedHeroCard({
           {/* Line 2: Metadata */}
           <div className="text-xs text-muted-foreground flex items-center gap-1.5">
              {city && <span>{city}</span>}
-             {city && <span>•</span>}
+             {city && (!entry.rating || entry.rating <= 0) && <span>•</span>}
 
              {/* Rating */}
              {entry.rating && entry.rating > 0 && (
-                 <>
-                   <span className="inline-flex items-center gap-0.5">
-                       {Array.from({ length: 5 }).map((_, i) => (
-                          <Circle
-                             key={i}
-                             className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
-                          />
-                       ))}
-                   </span>
-                   <span>•</span>
-                 </>
+                <span className="inline-flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <Circle
+                            key={i}
+                            className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
+                        />
+                    ))}
+                </span>
              )}
 
              <span>{formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago</span>
