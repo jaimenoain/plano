@@ -49,6 +49,7 @@ interface Stats {
   pending: number;
   followers: number;
   following: number;
+  photos: number;
 }
 
 interface UserListItem {
@@ -68,7 +69,7 @@ export default function Profile() {
   
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0 });
+  const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0, photos: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
 
   // URL-derived state
@@ -286,11 +287,12 @@ export default function Profile() {
 
   const fetchStats = async () => {
     if (!targetUserId) return;
-    const [reviewsResult, pendingResult, followersResult, followingResult] = await Promise.all([
+    const [reviewsResult, pendingResult, followersResult, followingResult, photosResult] = await Promise.all([
       supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "visited"),
       supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "pending"),
       supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", targetUserId),
       supabase.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", targetUserId),
+      supabase.from("review_images").select("id", { count: "exact", head: true }).eq("user_id", targetUserId),
     ]);
 
     setStats({
@@ -298,6 +300,7 @@ export default function Profile() {
       pending: pendingResult.count || 0,
       followers: followersResult.count || 0,
       following: followingResult.count || 0,
+      photos: photosResult.count || 0,
     });
   };
 
