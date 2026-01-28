@@ -128,8 +128,6 @@ export default function EditBuilding() {
 
       setInitialValues({
         name: data.name,
-        // @ts-ignore
-        hero_image_url: data.hero_image_url,
         year_completed: data.year_completed,
         status: (data as any).status || "",
         access: (data as any).access || "",
@@ -209,8 +207,6 @@ export default function EditBuilding() {
         .from('buildings')
         .update({
           name: formData.name,
-          // @ts-ignore
-          hero_image_url: formData.hero_image_url,
           year_completed: formData.year_completed,
           status: formData.status as any,
           access: formData.access as any,
