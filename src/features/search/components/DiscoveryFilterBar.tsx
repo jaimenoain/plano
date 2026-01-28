@@ -33,7 +33,7 @@ export interface DiscoveryFilterBarProps {
   // Architect Props
   selectedArchitects?: string[];
   onArchitectsChange?: (architects: string[]) => void;
-  availableArchitects?: string[];
+  availableArchitects?: { id: string; name: string }[];
 
   // Tags Props (My Lists)
   selectedTags?: string[];
@@ -326,18 +326,21 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                                 {/* Selected Architects (Badges) */}
                                 {props.selectedArchitects && props.selectedArchitects.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mb-2">
-                                        {props.selectedArchitects.map(arch => (
-                                            <Badge key={arch} variant="secondary" className="flex items-center gap-1">
-                                                {arch}
-                                                <X
-                                                    className="h-3 w-3 cursor-pointer"
-                                                    onClick={() => {
-                                                        const newArchitects = props.selectedArchitects!.filter(a => a !== arch);
-                                                        props.onArchitectsChange?.(newArchitects);
-                                                    }}
-                                                />
-                                            </Badge>
-                                        ))}
+                                        {props.selectedArchitects.map(archId => {
+                                            const archName = props.availableArchitects?.find(a => a.id === archId)?.name || archId;
+                                            return (
+                                                <Badge key={archId} variant="secondary" className="flex items-center gap-1">
+                                                    {archName}
+                                                    <X
+                                                        className="h-3 w-3 cursor-pointer"
+                                                        onClick={() => {
+                                                            const newArchitects = props.selectedArchitects!.filter(a => a !== archId);
+                                                            props.onArchitectsChange?.(newArchitects);
+                                                        }}
+                                                    />
+                                                </Badge>
+                                            );
+                                        })}
                                     </div>
                                 )}
 
@@ -361,13 +364,13 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                                                 <CommandGroup>
                                                     {props.availableArchitects.map((arch) => (
                                                         <CommandItem
-                                                            key={arch}
-                                                            value={arch}
-                                                            onSelect={(currentValue) => {
+                                                            key={arch.id}
+                                                            value={arch.name}
+                                                            onSelect={() => {
                                                                 const current = props.selectedArchitects || [];
                                                                 // Prevent duplicates
-                                                                if (!current.includes(arch)) {
-                                                                    props.onArchitectsChange?.([...current, arch]);
+                                                                if (!current.includes(arch.id)) {
+                                                                    props.onArchitectsChange?.([...current, arch.id]);
                                                                 }
                                                                 setArchitectOpen(false);
                                                             }}
@@ -375,10 +378,10 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                                                             <Check
                                                                 className={cn(
                                                                     "mr-2 h-4 w-4",
-                                                                    props.selectedArchitects?.includes(arch) ? "opacity-100" : "opacity-0"
+                                                                    props.selectedArchitects?.includes(arch.id) ? "opacity-100" : "opacity-0"
                                                                 )}
                                                             />
-                                                            {arch}
+                                                            {arch.name}
                                                         </CommandItem>
                                                     ))}
                                                 </CommandGroup>

@@ -97,8 +97,17 @@ export default function SearchPage() {
 
   // 3. Derive Available Options from Data (Required for the new FilterBar)
   const availableArchitects = useMemo(() => {
-    const architects = new Set(buildings.flatMap(b => b.architects?.map(a => a.name) || []));
-    return Array.from(architects).sort();
+    const architectsMap = new Map<string, string>();
+    buildings.forEach(b => {
+      b.architects?.forEach(a => {
+        if (a.id && a.name) {
+          architectsMap.set(a.id, a.name);
+        }
+      });
+    });
+    return Array.from(architectsMap.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [buildings]);
 
   // 4. Merged Filtering Logic
