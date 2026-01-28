@@ -16,13 +16,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -607,36 +600,28 @@ export default function BuildingDetails() {
                 </div>
             </div>
 
-            <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
-                {displayImages.length > 0 ? (
-                    <Carousel className="w-full h-full">
-                        <CarouselContent className="h-full ml-0">
-                            {displayImages.map((img) => (
-                                <CarouselItem key={img.id} className="pl-0 h-full">
-                                    <img
-                                      src={img.url}
-                                      className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                      alt={building.name}
-                                      onClick={() => setSelectedImage({ id: img.id, url: img.url })}
-                                    />
-                                </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                        {displayImages.length > 1 && (
-                            <>
-                                <CarouselPrevious className="left-2 bg-black/50 border-transparent text-white hover:bg-black/70 hover:text-white" />
-                                <CarouselNext className="right-2 bg-black/50 border-transparent text-white hover:bg-black/70 hover:text-white" />
-                            </>
-                        )}
-                    </Carousel>
-                ) : (
+            {displayImages.length > 0 ? (
+                <div className="space-y-6">
+                    {displayImages.map((img) => (
+                        <div key={img.id} className="aspect-[4/3] w-full rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
+                            <img
+                              src={img.url}
+                              className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                              alt={building.name}
+                              onClick={() => setSelectedImage({ id: img.id, url: img.url })}
+                            />
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
                     <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground text-center p-6">
                         <ImageIcon className="w-12 h-12 text-muted-foreground/20 mb-3" />
                         <h3 className="font-medium text-muted-foreground mb-1">No image yet</h3>
                         <p className="text-xs text-muted-foreground/50 max-w-[200px]">Be the first to add a photo of this building</p>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
 
         {/* RIGHT: Data & Actions */}
