@@ -55,14 +55,13 @@ describe("uploadFile", () => {
 
             expect(mockInvoke).toHaveBeenCalled();
             expect(mockInvoke.mock.calls[0][0]).toBe("generate-upload-url");
+            // We now expect NO headers in the arguments, because supabase-js adds them internally
+            // and we are mocking invoke, so we only see what our code passes.
             expect(mockInvoke.mock.calls[0][1]).toEqual({
                 body: {
                     fileName: "test.txt",
                     contentType: expectedType,
                     folderName: undefined
-                },
-                headers: {
-                    Authorization: "Bearer mock-token"
                 }
             });
 
