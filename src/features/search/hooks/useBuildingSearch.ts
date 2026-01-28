@@ -52,37 +52,52 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string) 
     const contactIds = follows?.map(f => f.following_id) || [];
 
     if (contactIds.length > 0) {
-        const { data: contactRatings } = await supabase
+        const { data: contactInteractions } = await supabase
             .from('user_buildings')
             .select(`
                 building_id,
+                status,
+                rating,
                 user:profiles!inner(id, first_name, last_name, avatar_url)
             `)
             .in('building_id', buildingIds)
             .in('user_id', contactIds)
-            .not('rating', 'is', null);
+            .or('status.eq.visited,rating.not.is.null');
 
-        if (contactRatings && contactRatings.length > 0) {
+        if (contactInteractions && contactInteractions.length > 0) {
             const ratingsMap = new Map<string, ContactRater[]>();
+            const visitorsMap = new Map<string, ContactRater[]>();
 
-            contactRatings.forEach((item: any) => {
+            contactInteractions.forEach((item: any) => {
                 const user = Array.isArray(item.user) ? item.user[0] : item.user;
-                const rater: ContactRater = {
+                const person: ContactRater = {
                     id: user.id,
                     avatar_url: user.avatar_url,
                     first_name: user.first_name,
                     last_name: user.last_name
                 };
 
-                if (!ratingsMap.has(item.building_id)) {
-                    ratingsMap.set(item.building_id, []);
+                // Populate Raters
+                if (item.rating !== null) {
+                    if (!ratingsMap.has(item.building_id)) {
+                        ratingsMap.set(item.building_id, []);
+                    }
+                    ratingsMap.get(item.building_id)?.push(person);
                 }
-                ratingsMap.get(item.building_id)?.push(rater);
+
+                // Populate Visitors
+                if (item.status === 'visited') {
+                    if (!visitorsMap.has(item.building_id)) {
+                        visitorsMap.set(item.building_id, []);
+                    }
+                    visitorsMap.get(item.building_id)?.push(person);
+                }
             });
 
             enrichedBuildings = enrichedBuildings.map(b => ({
                 ...b,
-                contact_raters: ratingsMap.get(b.id) || []
+                contact_raters: ratingsMap.get(b.id) || [],
+                contact_visitors: visitorsMap.get(b.id) || []
             }));
         }
     }
