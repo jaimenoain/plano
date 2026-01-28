@@ -44,6 +44,12 @@ export async function uploadFile(file: File, folderName?: string): Promise<strin
 export async function deleteFiles(fileKeys: string[]): Promise<void> {
   if (fileKeys.length === 0) return;
 
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    throw new Error('User not authenticated. Please log in to delete files.');
+  }
+
   const { error } = await supabase.functions.invoke('delete-file', {
     body: {
       fileKeys,
