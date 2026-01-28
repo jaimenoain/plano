@@ -414,14 +414,6 @@ export default function WriteReview() {
 
   const handleSubmit = async () => {
     if (!user || !buildingId) return;
-    if (rating === 0) {
-      toast({
-        variant: "destructive",
-        title: "Rating required",
-        description: "Please select a star rating."
-      });
-      return;
-    }
 
     setSubmitting(true);
     try {
@@ -431,7 +423,7 @@ export default function WriteReview() {
         .upsert({
           user_id: user.id,
           building_id: buildingId,
-          rating: rating,
+          rating: rating === 0 ? null : rating,
           content: content,
           tags: tags,
           status: status,
@@ -584,7 +576,7 @@ export default function WriteReview() {
 
         {/* Rating */}
         <div className="space-y-2">
-          <label className="text-sm font-medium uppercase text-muted-foreground">Rating</label>
+          <label className="text-sm font-medium uppercase text-muted-foreground">Rating (Optional)</label>
           <div
             className="flex items-center gap-2"
             onMouseLeave={() => setHoverRating(null)}
@@ -821,7 +813,7 @@ export default function WriteReview() {
           <Button variant="ghost" onClick={() => navigate(-1)} disabled={submitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting || rating === 0}>
+          <Button onClick={handleSubmit} disabled={submitting}>
             {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {submitting ? "Publishing..." : "Publish Review"}
           </Button>
