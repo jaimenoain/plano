@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
   Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare
+  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search
 } from "lucide-react";
 import {
   AlertDialog,
@@ -520,6 +520,19 @@ export default function BuildingDetails() {
     }
   };
 
+  const googleSearchUrl = useMemo(() => {
+    if (!building) return "";
+    const query = [
+      building.name,
+      building.city,
+      building.architects?.map(a => a.name).join(" ")
+    ].filter(Boolean).join(" ");
+    const params = new URLSearchParams();
+    params.set('q', query);
+    params.set('udm', '2');
+    return `https://www.google.com/search?${params.toString()}`;
+  }, [building]);
+
   if (loading || !building) return <AppLayout title="Loading..."><div className="p-8"><Loader2 className="animate-spin" /></div></AppLayout>;
 
   return (
@@ -921,6 +934,30 @@ export default function BuildingDetails() {
                     </div>
                 </div>
             )}
+
+            {/* Find on Web */}
+            <div className="pt-4 border-t border-dashed">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
+                    Find on Web
+                </h3>
+                 <a
+                    href={googleSearchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border group"
+                >
+                    <div className="flex items-center gap-3">
+                         <div className="p-2 bg-background rounded-full border border-border">
+                            <Search className="w-4 h-4 text-muted-foreground" />
+                         </div>
+                         <div className="flex flex-col gap-0.5">
+                            <span className="font-medium text-sm group-hover:text-primary transition-colors">Google Images</span>
+                            <span className="text-xs text-muted-foreground">Search for photos of {building.name}</span>
+                         </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground" />
+                </a>
+            </div>
 
             {/* Community Activity */}
             <div className="pt-4 border-t border-dashed">
