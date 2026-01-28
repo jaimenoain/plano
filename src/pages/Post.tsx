@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { X, Star, Loader2, Pencil } from "lucide-react";
+import { X, Circle, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -280,11 +280,11 @@ export default function Post() {
                           onMouseEnter={() => setHoverRating(starValue)}
                           className="p-0.5"
                         >
-                          <Star className={cn(
+                          <Circle className={cn(
                             "h-6 w-6 md:h-7 md:w-7 transition-colors",
                             isHighlighted 
-                              ? "fill-yellow-500 text-yellow-500" // Active: Plain yellow (border & fill)
-                              : "fill-transparent text-muted-foreground/30" // Inactive: Transparent fill, lighter outline
+                              ? "fill-[#595959] text-[#595959]" // Active: Signature gray
+                              : "text-muted-foreground/20" // Inactive: Transparent fill, lighter outline
                           )} />
                         </button>
                       );
