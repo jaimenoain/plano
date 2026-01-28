@@ -8,11 +8,8 @@ export async function uploadFile(file: File, folderName?: string): Promise<strin
     throw new Error('User not authenticated. Please log in to upload files.');
   }
 
-  // 2. Pass the token explicitly in the headers
+  // 2. Invoke the function (Auth header is automatically added by supabase-js)
   const { data, error } = await supabase.functions.invoke('generate-upload-url', {
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-    },
     body: {
       fileName: file.name,
       contentType: file.type,
@@ -47,13 +44,7 @@ export async function uploadFile(file: File, folderName?: string): Promise<strin
 export async function deleteFiles(fileKeys: string[]): Promise<void> {
   if (fileKeys.length === 0) return;
 
-  // Ideally, apply the same fix here for deleteFiles if it requires auth
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  const headers = session ? { Authorization: `Bearer ${session.access_token}` } : undefined;
-
   const { error } = await supabase.functions.invoke('delete-file', {
-    headers,
     body: {
       fileKeys,
     },
