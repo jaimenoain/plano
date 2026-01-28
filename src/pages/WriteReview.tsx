@@ -245,7 +245,12 @@ export default function WriteReview() {
       dragCounter.current += 1;
 
       if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
-        setIsDragging(true);
+        const hasFiles = Array.from(e.dataTransfer.items).some(
+          (item) => item.kind === "file"
+        );
+        if (hasFiles) {
+          setIsDragging(true);
+        }
       }
     };
 
@@ -802,11 +807,7 @@ export default function WriteReview() {
 
       {isDragging && (
         <div
-            className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-primary m-4 rounded-xl animate-in fade-in duration-200"
-            onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            onDrop={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-primary m-4 rounded-xl animate-in fade-in duration-200 pointer-events-none"
         >
           <div className="bg-background p-8 rounded-full mb-4 shadow-lg">
              <Upload className="w-12 h-12 text-primary" />
