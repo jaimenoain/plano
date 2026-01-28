@@ -167,3 +167,63 @@ test('Feed Compact Card Rating Display', async ({ page }) => {
   const circles = page.locator('div').filter({ hasText: 'Single Building' }).locator('svg.lucide-circle');
   await expect(circles).toHaveCount(5);
 });
+
+test('Feed Includes Own Entries', async ({ page }) => {
+  // Mock Auth
+  await page.addInitScript(() => {
+    window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
+        access_token: "fake.token.part",
+        refresh_token: "fake-refresh",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        expires_in: 3600,
+        token_type: "bearer",
+        user: {
+            id: "user-uuid",
+            email: "test@example.com",
+            aud: "authenticated",
+            role: "authenticated",
+            user_metadata: {
+                onboarding_completed: true
+            }
+        }
+    }));
+  });
+
+  // Mock RPC get_feed to return user's own entry
+  await page.route('**/rest/v1/rpc/get_feed', async route => {
+    const json = [
+        {
+            id: 'review-own',
+            content: 'My own review',
+            rating: 5,
+            created_at: new Date().toISOString(),
+            user_id: 'user-uuid', // Matches current user
+            user_data: { username: 'MySelf', avatar_url: null },
+            building_data: { id: 'b-own', name: 'My Building', city: 'My City' },
+            review_images: []
+        }
+    ];
+    await route.fulfill({ json });
+  });
+
+  // Mock User
+  await page.route('**/auth/v1/user', async route => {
+    await route.fulfill({
+        json: {
+            id: "user-uuid",
+            aud: "authenticated",
+            role: "authenticated",
+            email: "test@example.com",
+             user_metadata: {
+                onboarding_completed: true
+            }
+        }
+    });
+  });
+
+  await page.goto('http://localhost:8080/');
+
+  // Verify the own entry is visible
+  await expect(page.getByText('MySelf')).toBeVisible();
+  await expect(page.getByText('My Building')).toBeVisible();
+});
