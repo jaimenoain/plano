@@ -567,7 +567,7 @@ export default function WriteReview() {
           <button
             type="button"
             onClick={() => setStatus('visited')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${status === 'visited' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${status === 'visited' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <Check className="w-4 h-4" />
             Visited
@@ -575,7 +575,7 @@ export default function WriteReview() {
           <button
             type="button"
             onClick={() => setStatus('pending')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${status === 'pending' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${status === 'pending' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <Bookmark className="w-4 h-4" />
             Bucket List
