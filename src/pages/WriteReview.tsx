@@ -1,5 +1,5 @@
 // Implements "Write Review" page with rating, text, and image upload
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -84,6 +84,9 @@ export default function WriteReview() {
 
   const [showLists, setShowLists] = useState(false);
   const [showLinks, setShowLinks] = useState(false);
+
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -201,30 +204,32 @@ export default function WriteReview() {
     }
   }, [id, user, authLoading, navigate]);
 
+  const processFiles = useCallback(async (files: File[]) => {
+    for (const file of files) {
+      try {
+        const compressedFile = await resizeImage(file);
+        const previewUrl = URL.createObjectURL(compressedFile);
+
+        setImages(prev => [...prev, {
+          id: crypto.randomUUID(),
+          file: compressedFile,
+          preview: previewUrl
+        }]);
+      } catch (error) {
+        console.error("Error compressing image:", error);
+        toast({
+          variant: "destructive",
+          title: "Error processing image",
+          description: file.name
+        });
+      }
+    }
+  }, [toast]);
+
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-
-      // Process each file
-      for (const file of files) {
-        try {
-          const compressedFile = await resizeImage(file);
-          const previewUrl = URL.createObjectURL(compressedFile);
-
-          setImages(prev => [...prev, {
-            id: crypto.randomUUID(),
-            file: compressedFile,
-            preview: previewUrl
-          }]);
-        } catch (error) {
-          console.error("Error compressing image:", error);
-          toast({
-            variant: "destructive",
-            title: "Error processing image",
-            description: file.name
-          });
-        }
-      }
+      await processFiles(files);
 
       // Reset input
       if (fileInputRef.current) {
@@ -232,6 +237,64 @@ export default function WriteReview() {
       }
     }
   };
+
+  useEffect(() => {
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter.current += 1;
+
+      if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
+        setIsDragging(true);
+      }
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter.current -= 1;
+      if (dragCounter.current === 0) {
+        setIsDragging(false);
+      }
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = async (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      dragCounter.current = 0;
+
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+        const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+        if (files.length > 0) {
+          await processFiles(files);
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Invalid file type",
+            description: "Please upload images only."
+          });
+        }
+      }
+    };
+
+    window.addEventListener('dragenter', handleDragEnter);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, [processFiles, toast]);
 
   const removeImage = (imageId: string) => {
     setImages(prev => {
@@ -736,6 +799,21 @@ export default function WriteReview() {
         </div>
 
       </div>
+
+      {isDragging && (
+        <div
+            className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-primary m-4 rounded-xl animate-in fade-in duration-200"
+            onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onDrop={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
+          <div className="bg-background p-8 rounded-full mb-4 shadow-lg">
+             <Upload className="w-12 h-12 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Drop images here</h2>
+        </div>
+      )}
     </AppLayout>
   );
 }
