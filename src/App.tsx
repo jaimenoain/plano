@@ -20,6 +20,7 @@ import GroupSettings from "./pages/GroupSettings";
 import NotFound from "./pages/NotFound";
 import BuildingDetails from "./pages/BuildingDetails";
 import ArchitectDetails from "./pages/ArchitectDetails";
+import EditArchitect from "./pages/EditArchitect";
 import ReviewDetails from "./pages/ReviewDetails";
 import Notifications from "./pages/Notifications";
 import Groups from "./pages/Groups";
@@ -158,6 +159,7 @@ const router = createBrowserRouter(
       <Route path="/building/:id/edit" element={<EditBuilding />} />
 
       <Route path="/architect/:id" element={<ArchitectDetails />} />
+      <Route path="/architect/:id/edit" element={<EditArchitect />} />
       {/* Review Flow */}
       <Route path="/building/:id/:slug/review" element={<WriteReview />} />
       <Route path="/building/:id/review" element={<WriteReview />} />

@@ -5,6 +5,9 @@ export interface Architect {
   id: string;
   name: string;
   type: "individual" | "studio";
+  headquarters?: string | null;
+  website_url?: string | null;
+  bio?: string | null;
 }
 
 export interface ArchitectBuilding {
