@@ -300,7 +300,7 @@ export default function SearchPage() {
                       onMapInteraction={() => setIgnoreMapBounds(false)}
                       forcedCenter={flyToCenter}
                       isFetching={isFetching}
-                      autoZoomOnLowCount={isDefaultState || ignoreMapBounds}
+                      autoZoomOnLowCount={isDefaultState}
                       forcedBounds={flyToBounds}
                       resetInteractionTrigger={mapInteractionResetTrigger}
                     />
@@ -325,7 +325,7 @@ export default function SearchPage() {
                     onMapInteraction={() => setIgnoreMapBounds(false)}
                     forcedCenter={flyToCenter}
                     isFetching={isFetching}
-                    autoZoomOnLowCount={isDefaultState || ignoreMapBounds}
+                    autoZoomOnLowCount={isDefaultState}
                     forcedBounds={flyToBounds}
                     resetInteractionTrigger={mapInteractionResetTrigger}
                   />
