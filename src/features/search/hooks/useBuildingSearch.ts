@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DiscoveryBuilding, ContactRater } from "../components/types";
@@ -92,7 +93,8 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string) 
 
 export function useBuildingSearch() {
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const debouncedQuery = useDebounce(searchQuery, 300);
 
   const [filterVisited, setFilterVisited] = useState(false);
@@ -110,17 +112,19 @@ export function useBuildingSearch() {
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
   const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>([]);
 
-  // Default to London
+  // Default to London or URL params
   const [userLocation, setUserLocation] = useState({
-    lat: 51.5074,
-    lng: -0.1278
+    lat: parseFloat(searchParams.get("lat") || "51.5074"),
+    lng: parseFloat(searchParams.get("lng") || "-0.1278")
   });
 
   const { location: gpsLocation, requestLocation: requestLocationInternal } = useUserLocation();
 
   useEffect(() => {
-    // Attempt to get user location on mount (silently)
-    requestLocationInternal({ silent: true });
+    // Only attempt to get GPS location if no location params provided in URL
+    if (!searchParams.get("lat") || !searchParams.get("lng")) {
+      requestLocationInternal({ silent: true });
+    }
   }, []);
 
   useEffect(() => {

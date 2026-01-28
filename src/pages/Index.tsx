@@ -18,95 +18,68 @@ import { FeedHeroCard } from "@/components/feed/FeedHeroCard";
 import { FeedClusterCard } from "@/components/feed/FeedClusterCard";
 import { FeedCompactCard } from "@/components/feed/FeedCompactCard";
 import { getBuildingImageUrl } from "@/utils/image";
+import { LandingHero } from "@/components/landing/LandingHero";
+import { LandingMarquee } from "@/components/landing/LandingMarquee";
+import { LandingFeatureGrid } from "@/components/landing/LandingFeatureGrid";
 
 // --- New Landing Page Component ---
 function Landing() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const invitedBy = searchParams.get("invited_by");
-  
-  const [inviter, setInviter] = useState<{ username: string; avatar_url: string | null } | null>(null);
-  const [facebundle, setFacebundle] = useState<any[]>([]);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    async function loadInviterInfo() {
-      if (!invitedBy) return;
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-      const { data: inviterProfile } = await supabase
-        .from("profiles")
-        .select("id, username, avatar_url")
-        .eq("username", invitedBy)
-        .single();
-
-      if (inviterProfile) {
-        setInviter(inviterProfile);
-
-        const { data: profiles } = await supabase
-          .rpc("get_inviter_facepile", {
-            inviter_id: inviterProfile.id
-          });
-
-        if (profiles) setFacebundle(profiles);
-      }
-    }
-
-    loadInviterInfo();
-  }, [invitedBy]);
-
-  const handleGetStarted = () => {
-    const search = invitedBy ? `?invited_by=${invitedBy}` : "";
-    navigate(`/auth${search}`);
-  };
-  
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-      <div className="w-full max-w-md space-y-12">
-        
-        {/* Hero Section */}
-        <div className="flex flex-col items-center gap-6">
-          <PlanoLogo className="h-20 md:h-32 w-auto mb-6" />
-          
-          <div className="space-y-4">
-            {inviter ? (
-              <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-4">
-                <div className="flex items-center justify-center pl-3">
-                  {facebundle.map((person, i) => (
-                    <Avatar key={i} className="h-10 w-10 border-2 border-background -ml-3 ring-2 ring-background">
-                      <AvatarImage src={person.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs bg-muted">{person.username?.[0]}</AvatarFallback>
-                    </Avatar>
-                  ))}
-                  <Avatar className="h-14 w-14 border-2 border-background -ml-3 z-10 shadow-lg ring-2 ring-background">
-                    <AvatarImage src={inviter.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary/20 text-primary text-lg">{inviter.username?.[0]}</AvatarFallback>
-                  </Avatar>
-                </div>
-                <p className="text-muted-foreground text-lg leading-relaxed max-w-[300px] mx-auto">
-                  Join <span className="font-semibold text-foreground">{inviter.username}</span> and others to explore architecture.
-                </p>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-lg leading-relaxed max-w-[300px] mx-auto">
-                Discover buildings, share reviews, and connect with architecture enthusiasts.
-              </p>
-            )}
-          </div>
-        </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Scroll-Aware Header */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-background/80 backdrop-blur-md border-b shadow-sm h-16"
+            : "bg-transparent h-20"
+        }`}
+      >
+        <div className="container h-full mx-auto px-4 flex items-center justify-between">
+            <div className="w-32">
+                <PlanoLogo
+                  className={`h-8 w-auto transition-all ${
+                    isScrolled
+                      ? "text-foreground"
+                      : "[&_path]:fill-white"
+                  }`}
+                />
+            </div>
 
-        {/* Action Button - Large touch target for all ages */}
-        <div className="space-y-6">
-          <Button 
-            size="lg" 
-            className="w-full h-16 text-xl font-semibold rounded-2xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform" 
-            onClick={handleGetStarted}
-          >
-            {inviter ? "Accept Invitation" : "Get Started"}
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            Join the community today
-          </p>
+            <Button
+                variant={isScrolled ? "default" : "secondary"}
+                onClick={() => navigate("/auth")}
+                className="font-semibold"
+            >
+                Log in
+            </Button>
         </div>
-      </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1">
+        <LandingHero />
+        <LandingMarquee />
+        <div className="container mx-auto py-24 px-4">
+             <div className="text-center mb-16 space-y-4">
+                <h2 className="text-3xl md:text-5xl font-bold tracking-tight">Everything you need</h2>
+                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                    Built for architecture enthusiasts, by architecture enthusiasts.
+                </p>
+             </div>
+             <LandingFeatureGrid />
+        </div>
+      </main>
     </div>
   );
 }

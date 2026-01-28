@@ -21,6 +21,7 @@ interface DiscoverySearchInputProps {
   onLocationSelect: (location: { lat: number; lng: number }) => void;
   placeholder?: string;
   className?: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export function DiscoverySearchInput({
@@ -29,6 +30,7 @@ export function DiscoverySearchInput({
   onLocationSelect,
   placeholder = "Search...",
   className,
+  onKeyDown,
 }: DiscoverySearchInputProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
@@ -131,6 +133,7 @@ export function DiscoverySearchInput({
                 placeholder={placeholder}
                 className="w-full"
                 autoComplete="off"
+                onKeyDown={onKeyDown}
             />
         </div>
 
