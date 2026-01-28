@@ -43,7 +43,7 @@ BEGIN
     jsonb_build_object(
       'id', b.id,
       'name', b.name,
-      'main_image_url', b.main_image_url,
+      'main_image_url', NULL,
       'address', b.address,
       'architects', (
           SELECT COALESCE(jsonb_agg(jsonb_build_object('name', a.name, 'id', a.id)), '[]'::jsonb)

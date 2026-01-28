@@ -157,12 +157,6 @@ BEGIN
     -- FINAL CLEANUP
     -- ==============================================================================
 
-    -- Fill Main Image if missing in Target
-    UPDATE buildings
-    SET main_image_url = (building_snapshot->>'main_image_url')
-    WHERE id = target_id
-    AND (main_image_url IS NULL OR main_image_url = '');
-
     -- Soft Delete Source Building
     UPDATE buildings
     SET is_deleted = true,
