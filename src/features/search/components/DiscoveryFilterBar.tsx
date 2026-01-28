@@ -34,6 +34,11 @@ export interface DiscoveryFilterBarProps {
   selectedArchitects?: string[];
   onArchitectsChange?: (architects: string[]) => void;
   availableArchitects?: string[];
+
+  // Tags Props (My Lists)
+  selectedTags?: string[];
+  onTagsChange?: (tags: string[]) => void;
+  availableTags?: string[];
   
   // Personal Props
   showVisited: boolean;
@@ -70,6 +75,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
   const [architectOpen, setArchitectOpen] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
 
   const { categories, typologies, attributeGroups, attributes, isLoading: isMetadataLoading } = useBuildingMetadata();
 
@@ -79,6 +85,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
     props.filterContacts ||
     (props.selectedContacts && props.selectedContacts.length > 0) ||
     (props.selectedArchitects && props.selectedArchitects.length > 0) ||
+    (props.selectedTags && props.selectedTags.length > 0) ||
     props.personalMinRating > 0 ||
     props.contactMinRating > 0 ||
     !!props.selectedCategory ||
@@ -179,6 +186,77 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                              <Button variant={props.showBucketList ? "secondary" : "outline"} onClick={() => props.onBucketListChange(!props.showBucketList)} className="justify-start h-9 text-sm">
                                  {props.showBucketList && <Check className="mr-2 h-4 w-4" />} Bucket List
                              </Button>
+
+                             {/* My Lists (Tags) */}
+                             {props.onTagsChange && props.availableTags && (
+                                <div className="space-y-2 pt-1">
+                                    <Label className="text-sm font-medium">My Lists (Tags)</Label>
+
+                                    {/* Selected Tags (Badges) */}
+                                    {props.selectedTags && props.selectedTags.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {props.selectedTags.map(tag => (
+                                                <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                                                    {tag}
+                                                    <X
+                                                        className="h-3 w-3 cursor-pointer"
+                                                        onClick={() => {
+                                                            const newTags = props.selectedTags!.filter(t => t !== tag);
+                                                            props.onTagsChange?.(newTags);
+                                                        }}
+                                                    />
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={tagsOpen}
+                                                className="w-full justify-between h-9 text-sm"
+                                            >
+                                                Select lists...
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[300px] p-0" align="start">
+                                            <Command>
+                                                <CommandInput placeholder="Search lists..." />
+                                                <CommandList>
+                                                    <CommandEmpty>No lists found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {props.availableTags.map((tag) => (
+                                                            <CommandItem
+                                                                key={tag}
+                                                                value={tag}
+                                                                onSelect={(currentValue) => {
+                                                                    const current = props.selectedTags || [];
+                                                                    // Prevent duplicates
+                                                                    if (!current.includes(tag)) {
+                                                                        props.onTagsChange?.([...current, tag]);
+                                                                    }
+                                                                    setTagsOpen(false);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        props.selectedTags?.includes(tag) ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {tag}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                             )}
 
                              <div className="space-y-3 pt-2">
                                 <div className="flex justify-between items-center">

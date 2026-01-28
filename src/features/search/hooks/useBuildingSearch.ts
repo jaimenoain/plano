@@ -119,6 +119,7 @@ export function useBuildingSearch() {
   const [contactMinRating, setContactMinRating] = useState<number>(0);
 
   const [selectedArchitects, setSelectedArchitects] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
 
   // New Filters
@@ -157,6 +158,25 @@ export function useBuildingSearch() {
     return null;
   };
 
+  // Fetch available tags for the user
+  const { data: availableTags } = useQuery({
+    queryKey: ['user-tags', user?.id],
+    queryFn: async () => {
+        if (!user) return [];
+        const { data } = await supabase
+            .from('user_buildings')
+            .select('tags')
+            .eq('user_id', user.id)
+            .not('tags', 'is', null);
+
+        // Flatten and unique
+        const allTags = data?.flatMap((d: any) => d.tags || []) || [];
+        return Array.from(new Set(allTags)).sort() as string[];
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5,
+  });
+
   // Search query
   const { data: buildings, isLoading, isFetching } = useQuery({
     queryKey: [
@@ -168,6 +188,7 @@ export function useBuildingSearch() {
         personalMinRating,
         contactMinRating,
         selectedArchitects,
+        selectedTags,
         selectedCategory,
         selectedTypologies,
         selectedAttributes,
@@ -178,7 +199,9 @@ export function useBuildingSearch() {
     queryFn: async () => {
         // Local filtering mode (My Buildings or Contacts)
         const hasSpecificContacts = selectedContacts.length > 0;
-        if (filterVisited || filterBucketList || filterContacts || hasSpecificContacts) {
+        const hasTags = selectedTags.length > 0;
+
+        if (filterVisited || filterBucketList || filterContacts || hasSpecificContacts || hasTags) {
             if (!user) return [];
 
             let buildingIds: string[] = [];
@@ -221,19 +244,26 @@ export function useBuildingSearch() {
             }
 
             // 2. Personal Buildings
-            if (filterVisited || filterBucketList) {
+            if (filterVisited || filterBucketList || hasTags) {
+                let query = supabase
+                    .from('user_buildings')
+                    .select('building_id')
+                    .eq('user_id', user.id);
+
                 const personalStatuses: string[] = [];
                 if (filterVisited) personalStatuses.push('visited');
                 if (filterBucketList) personalStatuses.push('pending');
 
-                let query = supabase
-                    .from('user_buildings')
-                    .select('building_id')
-                    .eq('user_id', user.id)
-                    .in('status', personalStatuses);
+                if (personalStatuses.length > 0) {
+                    query = query.in('status', personalStatuses);
+                }
 
                 if (personalMinRating > 0) {
                     query = query.gte('rating', personalMinRating);
+                }
+
+                if (hasTags) {
+                    query = query.overlaps('tags', selectedTags);
                 }
 
                 const { data: userBuildings, error: ubError } = await query;
@@ -344,6 +374,9 @@ export function useBuildingSearch() {
       setContactMinRating,
       selectedArchitects,
       setSelectedArchitects,
+      selectedTags,
+      setSelectedTags,
+      availableTags,
       selectedCategory,
       setSelectedCategory,
       selectedTypologies,
