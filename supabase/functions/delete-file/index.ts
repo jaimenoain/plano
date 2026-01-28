@@ -44,7 +44,22 @@ Deno.serve(async (req) => {
 
     // Security: Ensure all keys belong to the user
     // We check if the key starts with the user ID followed by a slash.
-    const invalidKeys = fileKeys.filter((key: string) => !key.startsWith(`${user.id}/`))
+    // Note: If new keys start with review-images/, this check needs to be smarter?
+    // User ID is in the path. e.g. review-images/USER_ID/file
+    // The original check was: !key.startsWith(`${user.id}/`)
+    // If key is review-images/USER_ID/file, this check will FAIL.
+
+    // So I MUST update the security check to handle the new prefix OR valid legacy prefix.
+
+    // Let's analyze the check.
+    const invalidKeys = fileKeys.filter((key: string) => {
+        // Allow if starts with user.id/ (legacy)
+        if (key.startsWith(`${user.id}/`)) return false;
+        // Allow if starts with review-images/user.id/ (new)
+        if (key.startsWith(`review-images/${user.id}/`)) return false;
+
+        return true;
+    })
 
     if (invalidKeys.length > 0) {
         return new Response(
