@@ -250,10 +250,16 @@ export default function AddBuilding() {
 
         // Filter name results to ensure relevance
         // search_buildings handles relevance sorting, so we assume top results are relevant if they match query
-        // We filter client-side: keep if dist < 50 (covered by location check anyway) OR if we have a name query (implicit relevance)
-        const validNameMatches = nameData.filter(d =>
-            d.dist_meters <= 50 || queryName.length >= 3
-        );
+        // We filter client-side:
+        // 1. If very close (<= 50m), keep it.
+        // 2. If far (> 50m), enforce stricter similarity threshold (e.g., > 0.6) to avoid showing irrelevant results.
+        const validNameMatches = nameData.filter(d => {
+            if (d.dist_meters <= 50) return true;
+
+            // For far buildings, require higher similarity
+            const similarity = d.similarity_score || 0;
+            return similarity >= 0.6;
+        });
 
         // Filter location results: keep if <= 50m OR if approximate (within 2km)
         const relevantLocationMatches = locationData.filter(d =>
