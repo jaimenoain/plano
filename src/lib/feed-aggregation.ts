@@ -6,6 +6,10 @@ export type AggregatedFeedItem =
   | { type: 'compact'; entry: FeedReview }
   | { type: 'cluster'; entries: FeedReview[]; user: FeedReview['user']; location?: string; timestamp: string };
 
+const getReviewDate = (review: FeedReview) => {
+  return review.edited_at ? new Date(review.edited_at) : new Date(review.created_at);
+};
+
 export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
   const aggregated: AggregatedFeedItem[] = [];
   let pendingCluster: FeedReview[] = [];
@@ -45,7 +49,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
         entries: [...pendingCluster],
         user: pendingCluster[0].user,
         location,
-        timestamp: pendingCluster[0].created_at // Use the most recent timestamp (assuming sort desc)
+        timestamp: pendingCluster[0].edited_at || pendingCluster[0].created_at // Use the most recent timestamp (assuming sort desc)
       });
     }
     pendingCluster = [];
@@ -80,7 +84,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
       // differenceInHours(dateLeft, dateRight) -> number of hours
       // We want absolute difference.
 
-      const timeDiff = Math.abs(differenceInHours(new Date(review.created_at), new Date(lastInCluster.created_at)));
+      const timeDiff = Math.abs(differenceInHours(getReviewDate(review), getReviewDate(lastInCluster)));
       const withinTime = timeDiff < 4;
 
       if (sameUser && withinTime) {
