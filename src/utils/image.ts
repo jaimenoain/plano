@@ -50,7 +50,7 @@ export const getBuildingImageUrl = (path: string | null | undefined): string | u
     baseUrl = customUrl;
   } else {
     // Default to S3 bucket
-    baseUrl = "https://s3.eu-west-2.amazonaws.com/plano.app/review-images";
+    baseUrl = "https://s3.eu-west-2.amazonaws.com/plano.app";
   }
 
   // Normalize slashes

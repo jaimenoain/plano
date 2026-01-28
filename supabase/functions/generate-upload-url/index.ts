@@ -86,8 +86,8 @@ Deno.serve(async (req) => {
     }
 
     const fileKey = folderName
-      ? `${user.id}/${folderName}/${crypto.randomUUID()}-${fileName}`
-      : `${user.id}/${crypto.randomUUID()}-${fileName}`
+      ? `review-images/${user.id}/${folderName}/${crypto.randomUUID()}-${fileName}`
+      : `review-images/${user.id}/${crypto.randomUUID()}-${fileName}`
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: fileKey,
