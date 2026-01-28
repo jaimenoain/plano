@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Loader2, Trash2, Heart, Star, MessageCircle, Pencil, MapPin, Send, ExternalLink, Calendar, Building2 } from "lucide-react";
+import { Loader2, Trash2, Heart, Circle, MessageCircle, Pencil, MapPin, Send, ExternalLink, Calendar, Building2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -577,13 +577,13 @@ export default function ReviewDetails() {
                                 {!isBucketList && review.rating && (
                                      <div className="flex gap-0.5">
                                         {Array.from({ length: 5 }).map((_, i) => (
-                                            <Star
+                                            <Circle
                                                 key={i}
                                                 className={cn(
                                                     "h-4 w-4",
                                                     i < review.rating!
-                                                        ? "fill-yellow-500 text-yellow-500"
-                                                        : "fill-transparent text-muted-foreground/20"
+                                                        ? "fill-[#595959] text-[#595959]"
+                                                        : "text-muted-foreground/20"
                                                 )}
                                             />
                                         ))}
