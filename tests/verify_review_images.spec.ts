@@ -151,7 +151,8 @@ test('Verify Review Images in Community Notes', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Test Building' })).toBeVisible();
 
   // Check for the reviewer name
-  await expect(page.getByText('Photographer')).toBeVisible();
+  // Now "Photographer" appears in the image overlays as well, so we look for the link in the community note
+  await expect(page.getByRole('link', { name: 'Photographer' })).toBeVisible();
 
   // Check for the content
   await expect(page.getByText('Great building with photo!').first()).toBeVisible();

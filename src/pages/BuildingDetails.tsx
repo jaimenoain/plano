@@ -28,7 +28,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
 import { BuildingMap } from "@/components/common/BuildingMap";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
@@ -81,7 +81,19 @@ interface FeedEntry {
   images: {
     id: string;
     storage_path: string;
+    created_at?: string;
   }[];
+}
+
+interface DisplayImage {
+    id: string;
+    url: string;
+    likes_count: number;
+    created_at: string;
+    user: {
+        username: string | null;
+        avatar_url: string | null;
+    } | null;
 }
 
 // --- Reusable Header Component ---
@@ -154,9 +166,9 @@ export default function BuildingDetails() {
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
   const [entries, setEntries] = useState<FeedEntry[]>([]);
-  const [displayImages, setDisplayImages] = useState<{id: string, url: string}[]>([]);
+  const [displayImages, setDisplayImages] = useState<DisplayImage[]>([]);
   const [userImages, setUserImages] = useState<{id: string, storage_path: string}[]>([]);
-  const [selectedImage, setSelectedImage] = useState<{id: string, url: string} | null>(null);
+  const [selectedImage, setSelectedImage] = useState<DisplayImage | null>(null);
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
   const [linksLoading, setLinksLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -280,12 +292,12 @@ export default function BuildingDetails() {
         .select(`
           id, user_id, content, rating, status, tags, created_at,
           user:profiles(username, avatar_url),
-          images:review_images(id, storage_path, likes_count)
+          images:review_images(id, storage_path, likes_count, created_at)
         `)
         .eq("building_id", resolvedBuildingId)
         .order("created_at", { ascending: false });
 
-      const communityImages: {id: string, url: string, likes_count: number, created_at: string}[] = [];
+      const communityImages: DisplayImage[] = [];
 
       if (entriesError) {
             console.warn("Error fetching feed:", entriesError);
@@ -303,7 +315,8 @@ export default function BuildingDetails() {
                                 id: img.id,
                                 url: publicUrl,
                                 likes_count: img.likes_count || 0,
-                                created_at: entry.created_at
+                                created_at: img.created_at || entry.created_at,
+                                user: entry.user
                             });
                         }
                   });
@@ -342,10 +355,7 @@ export default function BuildingDetails() {
       }
 
       // Combine with main image
-      const images = [];
-      // We just push simple objects
-      images.push(...communityImages.map(img => ({ id: img.id, url: img.url })));
-      setDisplayImages(images);
+      setDisplayImages(communityImages);
     } catch (error: any) {
       console.error("Error:", error);
       toast({ variant: "destructive", title: "Error", description: "Building not found" });
@@ -608,8 +618,21 @@ export default function BuildingDetails() {
                               src={img.url}
                               className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                               alt={building.name}
-                              onClick={() => setSelectedImage({ id: img.id, url: img.url })}
+                              onClick={() => setSelectedImage(img)}
                             />
+                            {/* Attribution Overlay */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex items-end justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-2">
+                                    <Avatar className="w-6 h-6 border border-white/20">
+                                        <AvatarImage src={img.user?.avatar_url || undefined} />
+                                        <AvatarFallback className="text-[10px] bg-background/20 text-white border-white/20">{img.user?.username?.[0]?.toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-semibold text-white drop-shadow-sm">{img.user?.username}</span>
+                                        <span className="text-[10px] text-white/80 drop-shadow-sm">{format(new Date(img.created_at), 'MMM yyyy')}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -682,13 +705,25 @@ export default function BuildingDetails() {
                                 {userImages.map((img) => {
                                     const publicUrl = getBuildingImageUrl(img.storage_path);
                                     if (!publicUrl) return null;
+                                    // Construct partial display image for local user images
+                                    const displayImg: DisplayImage = {
+                                        id: img.id,
+                                        url: publicUrl,
+                                        likes_count: 0,
+                                        created_at: new Date().toISOString(), // Fallback
+                                        user: {
+                                            username: profile?.username || user?.email || "Me",
+                                            avatar_url: profile?.avatar_url || null
+                                        }
+                                    };
+
                                     return (
                                         <img
                                             key={img.id}
                                             src={publicUrl}
                                             className="h-24 w-24 object-cover rounded-md border bg-muted cursor-pointer hover:opacity-90 transition-opacity"
                                             alt="Review photo"
-                                            onClick={() => setSelectedImage({ id: img.id, url: publicUrl })}
+                                            onClick={() => setSelectedImage(displayImg)}
                                         />
                                     );
                                 })}
@@ -931,13 +966,22 @@ export default function BuildingDetails() {
                                             {entry.images.map((img) => {
                                                 const publicUrl = getBuildingImageUrl(img.storage_path);
                                                 if (!publicUrl) return null;
+
+                                                const displayImg: DisplayImage = {
+                                                    id: img.id,
+                                                    url: publicUrl,
+                                                    likes_count: 0, // Not available in this view
+                                                    created_at: img.created_at || entry.created_at,
+                                                    user: entry.user
+                                                };
+
                                                 return (
                                                     <img
                                                         key={img.id}
                                                         src={publicUrl}
                                                         className="h-24 w-24 object-cover rounded-md border bg-muted cursor-pointer hover:opacity-90 transition-opacity"
                                                         alt="Review photo"
-                                                        onClick={() => setSelectedImage({ id: img.id, url: publicUrl })}
+                                                        onClick={() => setSelectedImage(displayImg)}
                                                     />
                                                 );
                                             })}
@@ -963,6 +1007,8 @@ export default function BuildingDetails() {
       <ImageDetailsDialog
         imageId={selectedImage?.id || null}
         initialUrl={selectedImage?.url || null}
+        uploadedBy={selectedImage?.user || null}
+        uploadDate={selectedImage?.created_at}
         isOpen={!!selectedImage}
         onClose={() => setSelectedImage(null)}
       />
