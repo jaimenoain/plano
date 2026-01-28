@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -595,37 +594,27 @@ export default function ReviewDetails() {
 
                         <CardContent className="p-4 space-y-4">
 
-                            {/* Review Images Carousel */}
-                            {review.images.length > 0 && (
-                                <div className="rounded-lg overflow-hidden border border-border bg-black/5">
-                                    <Carousel className="w-full">
-                                        <CarouselContent>
-                                            {review.images.map((img) => (
-                                                <CarouselItem key={img.id} className="basis-full">
-                                                    <div className="aspect-[4/3] relative">
-                                                        <img
-                                                            src={img.url}
-                                                            alt="Review attachment"
-                                                            className="absolute inset-0 w-full h-full object-contain"
-                                                        />
-                                                    </div>
-                                                </CarouselItem>
-                                            ))}
-                                        </CarouselContent>
-                                        {review.images.length > 1 && (
-                                            <>
-                                                <CarouselPrevious className="left-2" />
-                                                <CarouselNext className="right-2" />
-                                            </>
-                                        )}
-                                    </Carousel>
-                                </div>
-                            )}
-
                             {/* Text Content */}
                             {review.content && (
                                 <div className="text-base text-foreground leading-relaxed">
                                     <p className="whitespace-pre-line">{review.content}</p>
+                                </div>
+                            )}
+
+                            {/* Review Images */}
+                            {review.images.length > 0 && (
+                                <div className="space-y-4">
+                                    {review.images.map((img) => (
+                                        <div key={img.id} className="rounded-lg overflow-hidden border border-border bg-black/5">
+                                            <div className="aspect-[4/3] relative">
+                                                <img
+                                                    src={img.url}
+                                                    alt="Review attachment"
+                                                    className="absolute inset-0 w-full h-full object-contain"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
 
