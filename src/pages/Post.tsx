@@ -309,12 +309,12 @@ export default function Post() {
             </div>
 
             <div className="py-4 hairline space-y-3">
-              <p className="text-sm text-muted-foreground">Tags</p>
+              <p className="text-sm text-muted-foreground">My Maps</p>
               <div className="flex flex-wrap gap-2">{selectedTags.map((tag) => (
                 <Badge key={tag} variant="secondary" className="px-3 py-1 gap-1">{tag}<X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))} /></Badge>
               ))}</div>
               <div className="relative">
-                <Input placeholder="Add a tag..." value={tagInput} onChange={(e) => { setTagInput(e.target.value); setShowTagSuggestions(true); }} onFocus={() => setShowTagSuggestions(true)} onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)} onKeyDown={(e) => e.key === "Enter" && handleAddTag(tagInput)} className="bg-secondary/50 border-none" />
+                <Input placeholder="Add to my maps..." value={tagInput} onChange={(e) => { setTagInput(e.target.value); setShowTagSuggestions(true); }} onFocus={() => setShowTagSuggestions(true)} onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)} onKeyDown={(e) => e.key === "Enter" && handleAddTag(tagInput)} className="bg-secondary/50 border-none" />
                 {showTagSuggestions && tagInput && tagSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-10">
                     {tagSuggestions.map((tag) => <button key={tag} className="w-full text-left px-3 py-2 text-sm hover:bg-secondary" onClick={() => handleAddTag(tag)}>{tag}</button>)}
