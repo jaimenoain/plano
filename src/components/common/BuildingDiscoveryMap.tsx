@@ -8,6 +8,7 @@ import { Loader2, MapPin, Layers } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
+import { getBuildingImageUrl } from "@/utils/image";
 import Supercluster from "supercluster";
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -42,6 +43,7 @@ interface Building {
   location_lng: number;
   social_context?: string | null;
   location_precision?: 'exact' | 'approximate';
+  main_image_url?: string | null;
 }
 
 export interface Bounds {
@@ -297,6 +299,7 @@ export function BuildingDiscoveryMap({
     const building = cluster.properties as (Building & { buildingId: string });
     const status = userBuildingsMap?.get(building.buildingId);
     const isApproximate = building.location_precision === 'approximate';
+    const imageUrl = getBuildingImageUrl(building.main_image_url);
 
     // Pin Protocol:
     // Charcoal: Visited
@@ -339,9 +342,16 @@ export function BuildingDiscoveryMap({
             >
             {/* Tooltip */}
             <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap z-50">
-                <div className="bg-[#333333] text-[#EEFF41] text-xs px-2 py-1 rounded shadow-lg flex items-center gap-1 border border-[#EEFF41]">
-                    <span className="font-medium text-white">{building.name}</span>
-                    {pinTooltip}
+                <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
+                    {imageUrl && (
+                        <div className="w-[100px] h-[100px]">
+                            <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                        </div>
+                    )}
+                    <div className="text-[#EEFF41] text-xs px-2 py-1 flex items-center gap-1 w-full justify-center bg-[#333333]">
+                        <span className="font-medium text-white">{building.name}</span>
+                        {pinTooltip}
+                    </div>
                 </div>
                 <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
             </div>
