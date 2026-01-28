@@ -57,13 +57,20 @@ export const getBuildingImageUrl = (path: string | null | undefined): string | u
   const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
 
+  // Ensure the path includes the 'review-images' folder if missing
+  // This handles legacy paths that were stored without the folder prefix
+  let finalPath = cleanPath;
+  if (!cleanPath.startsWith('review-images/')) {
+    finalPath = `review-images/${cleanPath}`;
+  }
+
   // If base is empty, we just return path (maybe leading slash removed)
   // This handles case where no config is present
-  if (!cleanBase) return cleanPath;
+  if (!cleanBase) return finalPath;
 
   // Encode the path to ensure spaces and special characters are handled correctly
   // We use encodeURI to preserve slashes in the path
-  const encodedPath = encodeURI(cleanPath);
+  const encodedPath = encodeURI(finalPath);
 
   return `${cleanBase}/${encodedPath}`;
 };
