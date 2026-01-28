@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Loader2, ArrowLeft, ArrowRight, Trash2, Heart, Star, MessageCircle, Clock, Pencil, MapPin, Send, ExternalLink } from "lucide-react";
+import { Loader2, Trash2, Heart, Star, MessageCircle, Pencil, MapPin, Send, ExternalLink, Calendar, Building2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +17,7 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { MetaHead } from "@/components/common/MetaHead";
 import NotFound from "@/pages/NotFound";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface FeedReview {
   id: string;
@@ -34,8 +37,10 @@ interface FeedReview {
     name: string;
     year_completed: number | null;
     address: string | null;
+    main_image_url: string | null;
     architects: { id: string; name: string }[] | null;
   };
+  images: { id: string; url: string }[];
   likes_count: number;
   comments_count: number;
   is_liked: boolean;
@@ -114,7 +119,8 @@ export default function ReviewDetails() {
                 .select(`
                     id, content, rating, tags, created_at, user_id, building_id, status,
                     user:profiles(username, avatar_url),
-                    building:buildings(id, name, year_completed, address, architects:building_architects(architect:architects(name, id)))
+                    building:buildings(id, name, year_completed, address, main_image_url, architects:building_architects(architect:architects(name, id))),
+                    images:review_images(id, storage_path)
                 `)
                 .eq("id", paramId)
                 .single();
@@ -148,6 +154,11 @@ export default function ReviewDetails() {
                 architects: rawBuilding.architects?.map((a: any) => a.architect) || []
             };
 
+            const images = (reviewData.images || []).map((img: any) => ({
+                id: img.id,
+                url: getBuildingImageUrl(img.storage_path)
+            })).filter((img: any) => img.url);
+
             setReview({
                 id: reviewData.id,
                 content: reviewData.content,
@@ -159,6 +170,7 @@ export default function ReviewDetails() {
                 status: reviewData.status,
                 user: Array.isArray(reviewData.user) ? reviewData.user[0] : reviewData.user,
                 building: formattedBuilding,
+                images,
                 likes_count: likesCount.count || 0,
                 comments_count: commentsCount.count || 0,
                 is_liked: !!userLike.data,
@@ -499,51 +511,8 @@ export default function ReviewDetails() {
     }
   };
 
-  const renderFacepileText = () => {
-    if (relatedReviews.length === 0) return null;
-    const firstUser = relatedReviews[0].user.username;
-    if (relatedReviews.length === 1) {
-        return <span>Also visited by <span className="font-semibold">{firstUser}</span></span>;
-    }
-    return (
-        <span>
-            Also visited by <span className="font-semibold">{firstUser}</span> and <span className="font-semibold">{relatedReviews.length - 1} other{relatedReviews.length > 2 ? 's' : ''}</span>
-        </span>
-    );
-  };
-
   const isBucketList = review?.status === 'pending';
   const isReviewOwner = user?.id === review?.user_id;
-
-  const renderSidebarActions = () => (
-    <div className="space-y-4 pt-2">
-        {relatedReviews.length > 0 && (
-            <Link
-                to={`/building/${review!.building_id}`}
-                className="block w-full group cursor-pointer animate-in fade-in slide-in-from-top-1"
-            >
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center -space-x-2">
-                        {relatedReviews.slice(0, 7).map((r) => (
-                            <div
-                                key={r.id}
-                                className="relative transition-transform group-hover:scale-110"
-                            >
-                                <Avatar className="h-9 w-9 border border-white/10">
-                                    <AvatarImage src={r.user.avatar_url || undefined} />
-                                    <AvatarFallback className="text-[10px] bg-secondary">{r.user.username?.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                            </div>
-                        ))}
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-tight group-hover:text-primary transition-colors">
-                        {renderFacepileText()}
-                    </p>
-                </div>
-            </Link>
-        )}
-    </div>
-  );
 
   if (loading) {
     return (
@@ -557,432 +526,391 @@ export default function ReviewDetails() {
 
   if (notFound || !review || !review.building) return <NotFound />;
 
-  // Building images are typically 4:3
-  const imageUrl = null;
-
-  const mainTitle = review.building.name;
-  const completionYear = review.building.year_completed;
-
-  const pageTitle = isBucketList
-    ? `${review.user.username} wants to visit ${mainTitle}`
-    : `${review.user.username}'s visit to ${mainTitle}`;
-
-  const pageDescription = review.content
-    ? review.content.replace(/[*_~`#]/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\n/g, ' ').slice(0, 160)
-    : isBucketList
-      ? `${review.user.username} added ${mainTitle} to their bucket list.`
-      : `${review.user.username} visited ${mainTitle} ${review.rating ? `and rated it ${review.rating}/5` : ''}.`;
-  
   const formatDate = (date: string) => formatDistanceToNow(new Date(date), { addSuffix: true }).replace(/^about /, "");
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative selection:bg-primary/30 pb-32">
+    <AppLayout title="Visit Log" showBack>
         <MetaHead
-            title={pageTitle}
-            description={pageDescription}
-            image={imageUrl || undefined}
+            title={`${review.user.username} - ${review.building.name}`}
+            description={review.content || `Check out ${review.user.username}'s visit to ${review.building.name}`}
+            image={review.images.length > 0 ? review.images[0].url : undefined}
         />
 
-        {imageUrl && (
-            <div className="fixed inset-0 z-0">
-                <img 
-                    src={imageUrl}
-                    alt="Background" 
-                    className="w-full h-full object-cover blur-[80px] opacity-20 scale-105" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/50" />
-            </div>
-        )}
-
-        <header className="sticky top-0 left-0 right-0 z-50 transition-all duration-200 bg-background/50 backdrop-blur-xl border-b border-white/5">
-            <div className="flex items-center h-16 px-4 max-w-4xl mx-auto w-full">
-                <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hover:bg-white/10 rounded-full">
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <span className="font-semibold ml-4 text-sm opacity-70 truncate">
-                    Visit Log
-                </span>
-            </div>
-        </header>
-
-        <main className="relative z-10 container max-w-4xl mx-auto px-4 pt-8 md:pt-12">
-            <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start">
+        <div className="container max-w-5xl mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
                 
-                {/* Left Column: Image & Facepile */}
-                <div className="hidden md:block w-[160px] md:w-[240px] shrink-0 mx-auto md:mx-0 space-y-4">
-                    <Link 
-                        to={`/building/${review.building_id}`}
-                        className="shadow-2xl rounded-lg overflow-hidden ring-1 ring-white/10 bg-secondary/50 block hover:ring-primary/50 hover:scale-[1.02] transition-all aspect-[4/3]"
-                    >
-                        {imageUrl ? (
-                                <img 
-                                src={imageUrl}
-                                alt={review.building.name}
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary">
-                                No Image
-                            </div>
-                        )}
-                    </Link>
-
-                    <div className="hidden md:block">
-                        {renderSidebarActions()}
-                    </div>
-                </div>
-                
-                {/* Right Column: Review Details */}
-                <div className="flex-1 min-w-0 w-full space-y-6 text-left">
+                {/* --- Left/Center Column: Review Content --- */}
+                <div className="md:col-span-2 space-y-6">
                     
-                    {/* Header: Title Sentence & Avatar */}
-                    <div className="space-y-4">
-                        <div className="flex items-start gap-4">
-                             <Link to={`/profile/${review.user.username || review.user_id}`}>
-                                <Avatar className="h-12 w-12 ring-2 ring-white/10 hover:ring-primary/50 transition-all">
-                                    <AvatarImage src={review.user.avatar_url || undefined} />
-                                    <AvatarFallback>{review.user.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                             </Link>
-
-                             <div className="flex-1 pr-2">
-                                <h1 className="text-2xl md:text-3xl font-bold leading-tight text-white break-words">
-                                   <Link to={`/profile/${review.user.username || review.user_id}`} className="hover:underline decoration-primary/50 underline-offset-4 decoration-2">
-                                       {isReviewOwner ? "You" : review.user.username}
-                                   </Link>
-                                   {" "}
-                                   <span className="text-muted-foreground font-normal text-xl md:text-2xl">
-                                      {isBucketList ? (isReviewOwner ? "want to visit" : "wants to visit") : "visited"}
-                                   </span>
-                                   {" "}
-                                   <Link to={`/building/${review.building_id}`} className="hover:text-primary transition-colors">{mainTitle}</Link>
-                                </h1>
-
-                                <div className="text-sm text-muted-foreground mt-1">
-                                   {formatDate(review.created_at)}
+                    {/* Header Card */}
+                    <Card className="border-border/50 shadow-sm bg-card/50 backdrop-blur-sm">
+                        <CardHeader className="p-4 pb-0">
+                             <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Link to={`/profile/${review.user.username || review.user_id}`}>
+                                        <Avatar className="h-10 w-10 border border-border">
+                                            <AvatarImage src={review.user.avatar_url || undefined} />
+                                            <AvatarFallback>{review.user.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                    </Link>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <Link to={`/profile/${review.user.username || review.user_id}`} className="font-semibold text-foreground hover:underline">
+                                                {review.user.username}
+                                            </Link>
+                                            {isBucketList ? (
+                                                <Badge variant="outline" className="text-xs font-normal text-muted-foreground border-blue-500/30 text-blue-500">
+                                                    Wants to visit
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
+                                                    Visited
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                            {formatDate(review.created_at)}
+                                        </div>
+                                    </div>
                                 </div>
+
+                                {/* Rating */}
+                                {!isBucketList && review.rating && (
+                                     <div className="flex gap-0.5">
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                            <Star
+                                                key={i}
+                                                className={cn(
+                                                    "h-4 w-4",
+                                                    i < review.rating!
+                                                        ? "fill-yellow-500 text-yellow-500"
+                                                        : "fill-transparent text-muted-foreground/20"
+                                                )}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                              </div>
-                        </div>
+                        </CardHeader>
 
-                        {/* Rating or Watchlist Status */}
-                        <div className="pl-16">
-                            {isBucketList ? (
-                                <div className="flex items-center gap-2 text-blue-400">
-                                    <Clock className="w-5 h-5" />
-                                    <span className="font-medium">Added to Bucket List</span>
+                        <CardContent className="p-4 space-y-4">
+
+                            {/* Review Images Carousel */}
+                            {review.images.length > 0 && (
+                                <div className="rounded-lg overflow-hidden border border-border bg-black/5">
+                                    <Carousel className="w-full">
+                                        <CarouselContent>
+                                            {review.images.map((img) => (
+                                                <CarouselItem key={img.id} className="basis-full">
+                                                    <div className="aspect-[4/3] relative">
+                                                        <img
+                                                            src={img.url}
+                                                            alt="Review attachment"
+                                                            className="absolute inset-0 w-full h-full object-contain"
+                                                        />
+                                                    </div>
+                                                </CarouselItem>
+                                            ))}
+                                        </CarouselContent>
+                                        {review.images.length > 1 && (
+                                            <>
+                                                <CarouselPrevious className="left-2" />
+                                                <CarouselNext className="right-2" />
+                                            </>
+                                        )}
+                                    </Carousel>
                                 </div>
-                            ) : (
-                                review.rating && (
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex gap-0.5 md:gap-1.5">
-                                            {Array.from({ length: 5 }).map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    className={cn(
-                                                        "h-5 w-5 md:h-6 md:w-6 transition-all",
-                                                        i < review.rating!
-                                                            ? "fill-yellow-500 text-yellow-500"
-                                                            : "fill-transparent text-white/20"
-                                                    )}
-                                                />
+                            )}
+
+                            {/* Text Content */}
+                            {review.content && (
+                                <div className="text-base text-foreground leading-relaxed">
+                                    <p className="whitespace-pre-line">{review.content}</p>
+                                </div>
+                            )}
+
+                            {/* Tags */}
+                            {review.tags && review.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {review.tags.map(tag => (
+                                        <Badge key={tag} variant="secondary" className="font-normal text-xs">
+                                            {tag}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Interaction Bar */}
+                            <div className="flex items-center gap-4 pt-2 border-t border-border/50">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn(
+                                        "gap-2 px-2 h-8 text-muted-foreground hover:text-foreground",
+                                        review.is_liked && "text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                                    )}
+                                    onClick={handleLikeReview}
+                                >
+                                    <Heart className={cn("h-4 w-4", review.is_liked && "fill-current")} />
+                                    <span className="text-xs">{review.likes_count > 0 ? review.likes_count : "Like"}</span>
+                                </Button>
+
+                                <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                                    <MessageCircle className="h-4 w-4" />
+                                    <span>{comments.length} Comments</span>
+                                </div>
+
+                                <div className="flex-1" />
+
+                                {isReviewOwner && (
+                                    <div className="flex gap-1">
+                                         <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                            onClick={() => navigate(`/post?id=${review.building_id}&title=${encodeURIComponent(review.building.name)}`)}
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </Button>
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            onClick={handleDeleteReview}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+
+                             {/* Likes Facepile */}
+                            {likers.length > 0 && (
+                                <div className="pt-1">
+                                    <button
+                                        onClick={() => setShowLikesDialog(true)}
+                                        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group text-left"
+                                    >
+                                        <div className="flex -space-x-1.5">
+                                            {likers.slice(0, 3).map((liker) => (
+                                                <Avatar key={liker.user_id} className="h-5 w-5 border border-background ring-1 ring-background">
+                                                    <AvatarImage src={liker.user.avatar_url || undefined} />
+                                                    <AvatarFallback className="text-[6px]">{liker.user.username?.charAt(0)}</AvatarFallback>
+                                                </Avatar>
                                             ))}
                                         </div>
-                                        <span className="text-xl md:text-2xl font-bold text-white font-mono leading-none tracking-tighter">
-                                            {review.rating}
+                                        <span>
+                                            Liked by <span className="font-medium text-foreground">{likers[0].user.username}</span>
+                                            {likers.length > 1 && (
+                                                <> and <span className="font-medium text-foreground">{likers.length - 1} other{likers.length > 2 ? 's' : ''}</span></>
+                                            )}
                                         </span>
-                                    </div>
-                                )
+                                    </button>
+                                </div>
                             )}
+
+                        </CardContent>
+                    </Card>
+
+                    {/* Comments Section */}
+                    <div className="space-y-4 pl-0 md:pl-2">
+                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Comments</h3>
+                         {comments.map((comment) => (
+                             <div key={comment.id} className="flex gap-3 group">
+                                <Link to={`/profile/${comment.user_id}`}>
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={comment.user.avatar_url || undefined} />
+                                        <AvatarFallback>{comment.user.username?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                </Link>
+                                <div className="flex-1 space-y-1">
+                                    <div className="bg-card/50 border border-border/50 rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <Link to={`/profile/${comment.user_id}`} className="text-sm font-semibold hover:underline">
+                                                {comment.user.username}
+                                            </Link>
+                                            <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(comment.created_at))} ago</span>
+                                        </div>
+                                        <p className="text-sm">{comment.content}</p>
+                                    </div>
+
+                                    <div className="flex items-center gap-4 pl-1">
+                                        <button
+                                            onClick={() => handleLikeComment(comment.id)}
+                                            className={cn(
+                                                "text-xs flex items-center gap-1.5 transition-colors hover:text-foreground",
+                                                comment.is_liked ? "text-red-500" : "text-muted-foreground"
+                                            )}
+                                        >
+                                            <Heart className={cn("h-3 w-3", comment.is_liked && "fill-current")} />
+                                            {comment.likes_count > 0 && comment.likes_count}
+                                        </button>
+
+                                        {(isReviewOwner || user?.id === comment.user_id) && (
+                                            <button
+                                                onClick={() => handleDeleteComment(comment.id)}
+                                                className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1.5 transition-colors opacity-0 group-hover:opacity-100"
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                             </div>
+                         ))}
+                    </div>
+
+                    {/* Comment Input */}
+                    <div className="flex gap-3 items-start pt-4 border-t border-border/50 sticky bottom-0 bg-background/95 backdrop-blur-sm p-4 -mx-4 md:static md:bg-transparent md:p-0">
+                         <Avatar className="h-8 w-8">
+                            <AvatarImage src={user?.user_metadata?.avatar_url || undefined} />
+                            <AvatarFallback>{user?.email?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 flex gap-2">
+                             <Textarea
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="Write a comment..."
+                                className="min-h-[40px] h-[40px] py-2 resize-none"
+                            />
+                            <Button
+                                size="icon"
+                                onClick={handlePostComment}
+                                disabled={submitting || !newComment.trim()}
+                                className="h-10 w-10 shrink-0"
+                            >
+                                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            </Button>
                         </div>
                     </div>
 
-                    {/* Review Content */}
-                    {review.content && (
-                        <div className="relative group pt-2 pl-16">
-                            <div className="prose prose-invert max-w-none">
-                                <p className="text-lg text-slate-200 leading-relaxed whitespace-pre-line">
-                                    {review.content}
-                                </p>
+                </div>
+
+                {/* --- Right Column: Sidebar --- */}
+                <div className="md:col-span-1 space-y-6">
+
+                    {/* Building Card */}
+                    <Card className="overflow-hidden border-border/50 shadow-sm">
+                        <div className="aspect-[4/3] bg-muted relative group cursor-pointer" onClick={() => navigate(`/building/${review.building_id}`)}>
+                             {review.building.main_image_url ? (
+                                <img
+                                    src={getBuildingImageUrl(review.building.main_image_url)}
+                                    alt={review.building.name}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                             ) : (
+                                <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
+                                    <Building2 className="h-10 w-10 opacity-20" />
+                                </div>
+                             )}
+                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                             <div className="absolute bottom-3 left-3 right-3 text-white">
+                                 <h3 className="font-bold text-lg leading-tight shadow-sm">{review.building.name}</h3>
+                             </div>
+                        </div>
+                        <CardContent className="p-4 space-y-4">
+                            <div className="space-y-2 text-sm">
+                                {review.building.address && (
+                                    <div className="flex items-start gap-2 text-muted-foreground">
+                                        <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+                                        <span>{review.building.address}</span>
+                                    </div>
+                                )}
+                                {review.building.year_completed && (
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Calendar className="h-4 w-4 shrink-0" />
+                                        <span>{review.building.year_completed}</span>
+                                    </div>
+                                )}
+                                {review.building.architects && review.building.architects.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 pt-1">
+                                        {review.building.architects.map(arch => (
+                                             <Badge key={arch.id} variant="secondary" className="text-xs bg-secondary/50 hover:bg-secondary">
+                                                 {arch.name}
+                                             </Badge>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
+                            <Button className="w-full" variant="outline" onClick={() => navigate(`/building/${review.building_id}`)}>
+                                View Building Details
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Also Visited By */}
+                    {relatedReviews.length > 0 && (
+                        <div className="bg-card/30 rounded-lg p-4 border border-border/50">
+                            <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wider">Also visited by</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {relatedReviews.map(r => (
+                                    <Link key={r.id} to={`/profile/${r.user.username}`}>
+                                         <Avatar className="h-8 w-8 ring-2 ring-background hover:ring-primary transition-all cursor-pointer">
+                                            <AvatarImage src={r.user.avatar_url || undefined} />
+                                            <AvatarFallback>{r.user.username?.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                    </Link>
+                                ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                + {relatedReviews.length} others from the community
+                            </p>
                         </div>
                     )}
 
-                    {/* Tags */}
-                    {review.tags && review.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-4 pl-16">
-                            {review.tags.map(tag => (
-                                <Link
-                                    key={tag}
-                                    to={`/profile/${review.user.username || review.user_id}?tag=${encodeURIComponent(tag)}`}
-                                >
-                                    <Badge variant="secondary" className="text-base font-normal px-3 py-1 rounded-full text-slate-200 bg-white/10 hover:bg-white/20 transition-colors cursor-pointer">
-                                        {tag}
-                                    </Badge>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Resources Section */}
+                    {/* Resources/Links */}
                     {links.length > 0 && (
-                        <div className="pl-16 mt-6">
-                            <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wider">Resources</h3>
+                         <div className="space-y-3">
+                            <h4 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Linked Resources</h4>
                             <div className="grid gap-2">
                                 {links.map(link => {
                                     let domain = "";
-                                    try {
-                                        domain = new URL(link.url).hostname;
-                                    } catch { }
-
-                                    const displayDomain = domain || link.url;
-                                    const hasTitle = !!link.title;
-
+                                    try { domain = new URL(link.url).hostname; } catch {}
                                     return (
-                                        <div key={link.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-white/5 group hover:bg-secondary/50 transition-colors">
-                                            <a
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-3 min-w-0 flex-1"
-                                            >
-                                                <div className="p-2 rounded bg-background/50 text-muted-foreground group-hover:text-primary transition-colors">
-                                                    <ExternalLink className="w-4 h-4" />
+                                        <div key={link.id} className="flex items-center justify-between p-2 rounded-md bg-card border border-border/50 hover:border-border transition-colors group">
+                                            <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 min-w-0 flex-1">
+                                                <div className="h-8 w-8 rounded bg-secondary/50 flex items-center justify-center shrink-0">
+                                                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="font-medium text-sm text-slate-200 truncate pr-2">
-                                                        {hasTitle ? link.title : displayDomain}
-                                                    </p>
-                                                    {hasTitle && (
-                                                        <p className="text-xs text-muted-foreground truncate">
-                                                            {displayDomain}
-                                                        </p>
-                                                    )}
+                                                    <p className="text-sm font-medium truncate">{link.title || domain}</p>
+                                                    <p className="text-xs text-muted-foreground truncate">{domain}</p>
                                                 </div>
                                             </a>
-
                                             <Button
                                                 variant="ghost"
-                                                size="sm"
+                                                size="icon"
+                                                className={cn("h-8 w-8 text-muted-foreground", link.is_liked && "text-red-500")}
                                                 onClick={() => handleLikeLink(link.id)}
-                                                className={cn(
-                                                    "ml-2 h-11 min-w-[44px] px-3 gap-1.5 hover:bg-background/50 rounded-full",
-                                                    link.is_liked ? "text-red-500 hover:text-red-400" : "text-muted-foreground"
-                                                )}
                                             >
-                                                <Heart className={cn("w-4 h-4", link.is_liked && "fill-current")} />
-                                                {link.likes_count > 0 && <span className="text-xs">{link.likes_count}</span>}
+                                                <Heart className={cn("h-4 w-4", link.is_liked && "fill-current")} />
                                             </Button>
                                         </div>
-                                    );
+                                    )
                                 })}
                             </div>
-                        </div>
-                    )}
-
-                    {/* Action Buttons (Edit, Delete) - Only for Owner */}
-                    {isReviewOwner && (
-                        <div className="pl-0 md:pl-16 mt-6 flex flex-wrap gap-3">
-                            <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => navigate(`/post?id=${review.building_id}&title=${encodeURIComponent(review.building.name)}`)}
-                            >
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Edit
-                            </Button>
-
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                onClick={handleDeleteReview}
-                                aria-label="Delete log"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    )}
-
-                    {/* Context Card (Mobile Only) */}
-                    <div className="md:hidden mt-2">
-                        <Link
-                            to={`/building/${review.building_id}`}
-                            className="block bg-secondary/30 border border-white/5 rounded-xl overflow-hidden active:scale-[0.98] transition-transform"
-                        >
-                            <div className="flex gap-4 p-3">
-                                <div className="shrink-0 w-24 aspect-[4/3] bg-secondary rounded-md overflow-hidden relative">
-                                     {imageUrl && <img src={imageUrl} className="w-full h-full object-cover" />}
-                                </div>
-                                <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
-                                     <div className="flex items-center justify-between gap-2">
-                                         <span className="font-semibold text-base text-white truncate">{mainTitle}</span>
-                                         <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                                     </div>
-                                     <div className="text-sm text-muted-foreground flex items-center gap-1">
-                                        {review.building.address && <MapPin className="w-3 h-3" />}
-                                        <span className="truncate">{review.building.address || completionYear}</span>
-                                     </div>
-                                </div>
-                            </div>
-                        </Link>
-
-                        {/* Facepile below Card */}
-                        {relatedReviews.length > 0 && (
-                            <div className="flex items-center gap-2 mt-3 px-1">
-                                <div className="flex -space-x-2">
-                                    {relatedReviews.slice(0, 3).map(r => (
-                                        <Avatar key={r.id} className="w-7 h-7 border border-background ring-1 ring-white/10">
-                                            <AvatarImage src={r.user.avatar_url || undefined} />
-                                            <AvatarFallback className="text-[9px]">{r.user.username?.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                    ))}
-                                </div>
-                                <span className="text-sm text-muted-foreground ml-1">
-                                    Also visited by {relatedReviews[0].user.username} {relatedReviews.length > 1 ? `+${relatedReviews.length - 1}` : ''}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Interaction Bar */}
-                    <div className="flex items-center gap-6 pt-2 border-t border-white/5 mt-6">
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className={cn(
-                                "gap-2 h-9 px-0 hover:bg-transparent hover:text-white transition-colors", 
-                                review.is_liked ? "text-red-500 hover:text-red-400" : "text-muted-foreground"
-                            )}
-                            onClick={handleLikeReview}
-                        >
-                            <Heart className={cn("h-5 w-5", review.is_liked && "fill-current")} />
-                            <span className="text-sm font-medium">{review.likes_count > 0 ? review.likes_count : "Like"}</span>
-                        </Button>
-                        
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
-                            <MessageCircle className="h-5 w-5" />
-                            <span>{comments.length} Comments</span>
-                        </div>
-                    </div>
-
-                    {/* Likes Facepile Section */}
-                    {likers.length > 0 && (
-                        <div className="pt-2 animate-in fade-in slide-in-from-top-1">
-                            <button 
-                                onClick={() => setShowLikesDialog(true)}
-                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors group text-left"
-                            >
-                                <div className="flex -space-x-2">
-                                    {likers.slice(0, 3).map((liker) => (
-                                        <Avatar key={liker.user_id} className="h-5 w-5 border border-background ring-1 ring-white/10">
-                                            <AvatarImage src={liker.user.avatar_url || undefined} />
-                                            <AvatarFallback className="text-[8px] bg-secondary">{liker.user.username?.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                    ))}
-                                </div>
-                                <span>
-                                    Liked by <span className="font-semibold text-white/90 group-hover:text-primary transition-colors">{likers[0].user.username}</span>
-                                    {likers.length > 1 && (
-                                        <> and <span className="font-semibold text-white/90 group-hover:text-primary transition-colors">{likers.length - 1} other{likers.length > 2 ? 's' : ''}</span></>
-                                    )}
-                                </span>
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Comments Section */}
-                    {comments.length > 0 && (
-                        <div className="pt-8 mt-4 space-y-6">
-                            {comments.map((comment) => {
-                                const isCommentOwner = user?.id === comment.user_id;
-                                const canDelete = isReviewOwner || isCommentOwner;
-
-                                return (
-                                    <div key={comment.id} className="flex gap-3 group animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                        <Link to={`/profile/${comment.user_id}`}>
-                                            <Avatar className="h-8 w-8 mt-1 ring-1 ring-white/10 shrink-0 hover:ring-primary/50 transition-all">
-                                                <AvatarImage src={comment.user.avatar_url || undefined} />
-                                                <AvatarFallback>{comment.user.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                        </Link>
-                                        <div className="flex-1 min-w-0 space-y-1">
-                                            <div className="flex items-baseline gap-2">
-                                                <Link to={`/profile/${comment.user_id}`} className="text-sm font-semibold text-white/90 hover:text-primary transition-colors">
-                                                    {comment.user.username}
-                                                </Link>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {formatDate(comment.created_at)}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-slate-300 leading-relaxed">{comment.content}</p>
-
-                                            <div className="flex items-center gap-4 mt-1">
-                                                <button
-                                                    onClick={() => handleLikeComment(comment.id)}
-                                                    className={cn(
-                                                        "text-xs flex items-center gap-1.5 transition-colors hover:text-white",
-                                                        comment.is_liked ? "text-red-500" : "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <Heart className={cn("h-3 w-3", comment.is_liked && "fill-current")} />
-                                                    {comment.likes_count > 0 && comment.likes_count}
-                                                </button>
-
-                                                {canDelete && (
-                                                    <button 
-                                                        onClick={() => handleDeleteComment(comment.id)}
-                                                        className="text-xs text-muted-foreground hover:text-red-400 flex items-center gap-1.5 transition-colors opacity-0 group-hover:opacity-100"
-                                                    >
-                                                        <Trash2 className="h-3 w-3" />
-                                                        <span>Delete</span>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                         </div>
                     )}
 
                 </div>
-            </div>
-        </main>
-
-        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-white/10 p-4 z-50">
-            <div className="max-w-4xl mx-auto flex gap-3 items-end">
-                <Textarea 
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Add to the discussion..."
-                    className="min-h-[44px] max-h-32 resize-none bg-secondary/50 border-white/5 focus:border-primary focus:ring-1 focus:ring-primary/50 rounded-2xl py-2.5 px-4 text-sm shadow-lg"
-                />
-                <Button 
-                    size="icon" 
-                    onClick={handlePostComment}
-                    disabled={submitting || !newComment.trim()}
-                    className="h-[44px] w-[44px] shrink-0 rounded-full shadow-xl bg-primary hover:bg-primary/90 transition-transform active:scale-95"
-                >
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
-                </Button>
             </div>
         </div>
 
         <Dialog open={showLikesDialog} onOpenChange={setShowLikesDialog}>
-            <DialogContent className="sm:max-w-md bg-background/95 backdrop-blur-xl border-white/10">
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Liked by</DialogTitle>
                 </DialogHeader>
-                <ScrollArea className="max-h-[60vh] overflow-y-auto -mx-1 pr-3">
+                <ScrollArea className="max-h-[60vh]">
                     <div className="space-y-4 py-2">
                         {likers.map((liker) => (
                             <Link 
                                 key={liker.user_id}
                                 to={`/profile/${liker.user.username}`}
                                 onClick={() => setShowLikesDialog(false)}
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
+                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors"
                             >
-                                <Avatar className="h-10 w-10 ring-1 ring-white/10">
+                                <Avatar className="h-10 w-10">
                                     <AvatarImage src={liker.user.avatar_url || undefined} />
                                     <AvatarFallback>{liker.user.username?.charAt(0)}</AvatarFallback>
                                 </Avatar>
@@ -995,6 +923,6 @@ export default function ReviewDetails() {
                 </ScrollArea>
             </DialogContent>
         </Dialog>
-    </div>
+    </AppLayout>
   );
 }
