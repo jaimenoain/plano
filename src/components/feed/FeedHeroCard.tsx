@@ -214,7 +214,7 @@ export function FeedHeroCard({
           {/* Line 1: User Action Building */}
           <div className="text-sm md:text-base text-foreground leading-snug">
             <span className="font-bold text-foreground">{username}</span>
-            <span className="font-semibold text-foreground/80"> {actionText} </span>
+            <span className="text-muted-foreground/60 font-normal"> {actionText} </span>
             <span className="font-bold text-foreground">{mainTitle}</span>
           </div>
 

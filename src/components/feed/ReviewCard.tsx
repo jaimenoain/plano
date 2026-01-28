@@ -294,7 +294,7 @@ export function ReviewCard({
           </Avatar>
           <div className="text-sm md:text-base text-foreground leading-snug">
             <span className="font-semibold">{username}</span>
-            <span className="text-muted-foreground"> {action} </span>
+            <span className="text-muted-foreground/60 font-normal"> {action} </span>
             <span className="font-semibold text-foreground">{mainTitle}</span>
             {city && <span className="text-muted-foreground"> in {city}</span>}
             {entry.rating && entry.rating > 0 && (

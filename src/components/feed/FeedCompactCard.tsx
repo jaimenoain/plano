@@ -51,7 +51,7 @@ export function FeedCompactCard({
 
       <div className="text-sm text-foreground/90 flex-1 truncate leading-none">
         <span className="font-semibold">{username}</span>
-        <span className="text-muted-foreground"> {actionText} </span>
+        <span className="text-muted-foreground/60 font-normal"> {actionText} </span>
         <span className="font-semibold">{mainTitle}</span>
 
         {entry.rating && entry.rating > 0 && (
