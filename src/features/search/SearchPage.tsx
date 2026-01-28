@@ -127,7 +127,12 @@ export default function SearchPage() {
     return result;
   }, [buildings, mapBounds, ignoreMapBounds, sortBy]);
 
-  // 5. Merged Handlers
+  // 5. Map Filtering (Hide Demolished/Unbuilt)
+  const mapBuildings = useMemo(() => {
+    return buildings.filter(b => b.status !== 'Demolished' && b.status !== 'Unbuilt');
+  }, [buildings]);
+
+  // 6. Merged Handlers
 
   const handleUseLocation = async () => {
     const loc = await requestLocation();
@@ -293,7 +298,7 @@ export default function SearchPage() {
                 ) : (
                   <div className="h-full w-full">
                     <BuildingDiscoveryMap
-                      externalBuildings={buildings}
+                      externalBuildings={mapBuildings}
                       onRegionChange={updateLocation}
                       onBoundsChange={setMapBounds}
                       onMapInteraction={() => setIgnoreMapBounds(false)}
@@ -318,7 +323,7 @@ export default function SearchPage() {
                 </div>
                 <div className="col-span-7 lg:col-span-8 h-full relative">
                   <BuildingDiscoveryMap
-                    externalBuildings={buildings}
+                    externalBuildings={mapBuildings}
                     onRegionChange={updateLocation}
                     onBoundsChange={setMapBounds}
                     onMapInteraction={() => setIgnoreMapBounds(false)}
