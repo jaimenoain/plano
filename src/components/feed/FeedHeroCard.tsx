@@ -97,6 +97,107 @@ export function FeedHeroCard({
 
   // Image Grid Logic
   const images = (entry.images || []).filter(img => !failedImages.has(img.id));
+  const count = images.length;
+
+  const renderImages = () => {
+    if (count === 0) return null;
+
+    if (count === 1) {
+      return (
+        <div className="relative w-full aspect-[4/5] max-h-[500px]">
+          <img
+            src={images[0].url}
+            onError={() => handleImageError(images[0].id)}
+            className="w-full h-full object-cover object-center"
+            alt="Building"
+          />
+        </div>
+      );
+    }
+
+    if (count === 2) {
+      return (
+        <div className="flex flex-col gap-0.5">
+          {images.map((img) => (
+            <div key={img.id} className="relative w-full aspect-[4/3]">
+              <img
+                src={img.url}
+                onError={() => handleImageError(img.id)}
+                className="w-full h-full object-cover"
+                alt="Building"
+              />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (count >= 3 && count <= 5) {
+      return (
+        <div className="flex flex-col gap-0.5">
+          {/* First Image - Full Width */}
+          <div className="relative w-full aspect-[4/3]">
+            <img
+              src={images[0].url}
+              onError={() => handleImageError(images[0].id)}
+              className="w-full h-full object-cover"
+              alt="Building"
+            />
+          </div>
+          {/* Remaining Images - Side by Side */}
+          <div
+            className="grid gap-0.5"
+            style={{ gridTemplateColumns: `repeat(${count - 1}, minmax(0, 1fr))` }}
+          >
+            {images.slice(1).map((img) => (
+              <div key={img.id} className="relative w-full aspect-square">
+                <img
+                  src={img.url}
+                  onError={() => handleImageError(img.id)}
+                  className="w-full h-full object-cover"
+                  alt="Building"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (count > 5) {
+      const remaining = count - 5;
+      return (
+        <div className="flex flex-col gap-0.5">
+          {/* First Image - Full Width */}
+          <div className="relative w-full aspect-[4/3]">
+            <img
+              src={images[0].url}
+              onError={() => handleImageError(images[0].id)}
+              className="w-full h-full object-cover"
+              alt="Building"
+            />
+          </div>
+          {/* Row 2: 4 images + box = 5 columns */}
+          <div className="grid grid-cols-5 gap-0.5">
+            {images.slice(1, 5).map((img) => (
+              <div key={img.id} className="relative w-full aspect-square">
+                <img
+                  src={img.url}
+                  onError={() => handleImageError(img.id)}
+                  className="w-full h-full object-cover"
+                  alt="Building"
+                />
+              </div>
+            ))}
+            {/* The "More" Box */}
+            <div className="relative w-full aspect-square bg-muted flex items-center justify-center text-muted-foreground font-medium text-sm border-l border-background">
+              +{remaining}
+            </div>
+          </div>
+        </div>
+      );
+    }
+  };
 
   return (
     <article
@@ -153,39 +254,7 @@ export function FeedHeroCard({
 
       {/* Hero Images (UGC) - Full Bleed */}
       <div className="w-full bg-secondary overflow-hidden">
-          {images.length === 1 ? (
-              <div className="relative w-full aspect-[4/5] max-h-[500px]">
-                  <img
-                    src={images[0].url}
-                    onError={() => handleImageError(images[0].id)}
-                    className="w-full h-full object-cover object-center"
-                    alt="Building"
-                  />
-              </div>
-          ) : images.length > 0 ? (
-              <div className="grid grid-cols-2 gap-0.5 aspect-[4/3]">
-                  <div className="row-span-2 relative h-full">
-                      <img
-                        src={images[0].url}
-                        onError={() => handleImageError(images[0].id)}
-                        className="w-full h-full object-cover"
-                        alt="Building"
-                      />
-                  </div>
-                  <div className="grid grid-rows-2 gap-0.5 h-full">
-                      {images.slice(1, 3).map((img) => (
-                          <div key={img.id} className="relative w-full h-full">
-                              <img
-                                src={img.url}
-                                onError={() => handleImageError(img.id)}
-                                className="w-full h-full object-cover"
-                                alt="Building"
-                              />
-                          </div>
-                      ))}
-                  </div>
-              </div>
-          ) : null}
+        {renderImages()}
       </div>
 
       {/* Footer */}
