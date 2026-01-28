@@ -658,6 +658,19 @@ export default function BuildingDetails() {
                     </div>
                 </div>
             )}
+
+            <div className="flex justify-center pt-2">
+                 <a
+                    href={googleSearchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary hover:underline transition-colors"
+                >
+                    <Search className="w-3 h-3" />
+                    Search for photos on Google
+                    <ExternalLink className="w-3 h-3 opacity-50" />
+                </a>
+            </div>
         </div>
 
         {/* RIGHT: Data & Actions */}
@@ -935,29 +948,6 @@ export default function BuildingDetails() {
                 </div>
             )}
 
-            {/* Find on Web */}
-            <div className="pt-4 border-t border-dashed">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
-                    Find on Web
-                </h3>
-                 <a
-                    href={googleSearchUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border group"
-                >
-                    <div className="flex items-center gap-3">
-                         <div className="p-2 bg-background rounded-full border border-border">
-                            <Search className="w-4 h-4 text-muted-foreground" />
-                         </div>
-                         <div className="flex flex-col gap-0.5">
-                            <span className="font-medium text-sm group-hover:text-primary transition-colors">Google Images</span>
-                            <span className="text-xs text-muted-foreground">Search for photos of {building.name}</span>
-                         </div>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground" />
-                </a>
-            </div>
 
             {/* Community Activity */}
             <div className="pt-4 border-t border-dashed">
