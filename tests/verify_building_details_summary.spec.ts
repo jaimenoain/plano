@@ -118,12 +118,13 @@ test('Verify Building Details Summary Card vs Edit Form', async ({ page }) => {
 
   // Verify Edit Button exists and Click it
   // Find the button inside the header which contains "Your Activity"
-  const editBtn = page.locator('h3', { hasText: 'Your Activity' }).locator('..').getByRole('button');
+  const editBtn = page.locator('h3', { hasText: 'Your Activity' }).locator('..').getByRole('link', { name: 'Edit' });
   await expect(editBtn).toBeVisible();
 
   await editBtn.click();
 
-  // Verify Inline Editor is now VISIBLE
-  await expect(page.getByPlaceholder('Write a note...')).toBeVisible();
+  // Verify Inline Editor (on Review page) is now VISIBLE
+  // The placeholders might differ on the dedicated review page
+  await expect(page.getByPlaceholder('What did you think about this building?')).toBeVisible();
 
 });
