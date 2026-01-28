@@ -121,7 +121,7 @@ export function useBuildingSearch() {
   // Pagination State
   const [page, setPage] = useState(0);
 
-  const [selectedArchitects, setSelectedArchitects] = useState<string[]>([]);
+  const [selectedArchitects, setSelectedArchitects] = useState<{ id: string; name: string }[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
 
@@ -332,7 +332,7 @@ export function useBuildingSearch() {
                 categoryId: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : null,
                 typologyIds: selectedTypologies,
                 attributeIds: selectedAttributes,
-                selectedArchitects: selectedArchitects
+                selectedArchitects: selectedArchitects.map(a => a.id)
             });
 
             // 5. Map to DiscoveryBuilding and calculate distance
@@ -369,7 +369,7 @@ export function useBuildingSearch() {
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
             radius_meters: radius,
             filters: {
-                architects: selectedArchitects.length > 0 ? selectedArchitects : undefined,
+                architects: selectedArchitects.length > 0 ? selectedArchitects.map(a => a.id) : undefined,
                 category_id: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : undefined,
                 typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
                 attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined

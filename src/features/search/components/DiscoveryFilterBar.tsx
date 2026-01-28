@@ -12,6 +12,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ContactPicker } from "./ContactPicker";
+import { ArchitectSelect } from "./ArchitectSelect";
 import { useBuildingMetadata } from "@/hooks/useBuildingMetadata";
 import { UserSearchResult } from "../hooks/useUserSearch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,9 +32,8 @@ export interface DiscoveryFilterBarProps {
   onUseLocation?: () => void;
   
   // Architect Props
-  selectedArchitects?: string[];
-  onArchitectsChange?: (architects: string[]) => void;
-  availableArchitects?: { id: string; name: string }[];
+  selectedArchitects?: { id: string; name: string }[];
+  onArchitectsChange?: (architects: { id: string; name: string }[]) => void;
 
   // Tags Props (My Lists)
   selectedTags?: string[];
@@ -74,7 +74,6 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
-  const [architectOpen, setArchitectOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
 
   const { categories, typologies, attributeGroups, attributes, isLoading: isMetadataLoading } = useBuildingMetadata();
@@ -106,6 +105,20 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
 
       // Combine other attributes with the new selection for this group
       props.onAttributesChange([...otherAttributes, ...newGroupSelection]);
+  };
+
+  const handleClearAll = () => {
+    props.onVisitedChange(false);
+    props.onBucketListChange(false);
+    props.onFilterContactsChange(false);
+    props.onPersonalMinRatingChange(0);
+    props.onContactMinRatingChange(0);
+    if (props.onTagsChange) props.onTagsChange([]);
+    if (props.onArchitectsChange) props.onArchitectsChange([]);
+    props.onCategoryChange(null);
+    props.onTypologiesChange([]);
+    props.onAttributesChange([]);
+    props.onSelectedContactsChange([]);
   };
 
   return (
@@ -169,8 +182,13 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
              </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 flex flex-col h-full">
-              <SheetHeader className="p-6 pb-2">
+              <SheetHeader className="p-6 pb-2 flex flex-row items-center justify-between space-y-0">
                  <SheetTitle>Filters</SheetTitle>
+                 {hasActiveFilters && (
+                    <Button variant="ghost" size="sm" onClick={handleClearAll} className="h-8 px-2 text-muted-foreground hover:text-foreground">
+                        Clear All
+                    </Button>
+                 )}
               </SheetHeader>
 
               <div className="flex-1 overflow-y-auto px-6 pb-6">
@@ -321,74 +339,13 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                      <div className="space-y-3">
                          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Architects</h3>
 
-                         {(!props.searchScope || props.searchScope === 'content') && props.onArchitectsChange && props.availableArchitects && (
+                         {(!props.searchScope || props.searchScope === 'content') && props.onArchitectsChange && (
                             <div className="space-y-2">
-                                {/* Selected Architects (Badges) */}
-                                {props.selectedArchitects && props.selectedArchitects.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mb-2">
-                                        {props.selectedArchitects.map(archId => {
-                                            const archName = props.availableArchitects?.find(a => a.id === archId)?.name || archId;
-                                            return (
-                                                <Badge key={archId} variant="secondary" className="flex items-center gap-1">
-                                                    {archName}
-                                                    <X
-                                                        className="h-3 w-3 cursor-pointer"
-                                                        onClick={() => {
-                                                            const newArchitects = props.selectedArchitects!.filter(a => a !== archId);
-                                                            props.onArchitectsChange?.(newArchitects);
-                                                        }}
-                                                    />
-                                                </Badge>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-
-                                <Popover open={architectOpen} onOpenChange={setArchitectOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            aria-expanded={architectOpen}
-                                            className="w-full justify-between h-9 text-sm"
-                                        >
-                                            Search architects...
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[300px] p-0" align="start">
-                                        <Command>
-                                            <CommandInput placeholder="Search architect..." />
-                                            <CommandList>
-                                                <CommandEmpty>No architect found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {props.availableArchitects.map((arch) => (
-                                                        <CommandItem
-                                                            key={arch.id}
-                                                            value={arch.name}
-                                                            onSelect={() => {
-                                                                const current = props.selectedArchitects || [];
-                                                                // Prevent duplicates
-                                                                if (!current.includes(arch.id)) {
-                                                                    props.onArchitectsChange?.([...current, arch.id]);
-                                                                }
-                                                                setArchitectOpen(false);
-                                                            }}
-                                                        >
-                                                            <Check
-                                                                className={cn(
-                                                                    "mr-2 h-4 w-4",
-                                                                    props.selectedArchitects?.includes(arch.id) ? "opacity-100" : "opacity-0"
-                                                                )}
-                                                            />
-                                                            {arch.name}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
+                                <ArchitectSelect
+                                    selectedArchitects={props.selectedArchitects || []}
+                                    setSelectedArchitects={props.onArchitectsChange}
+                                    placeholder="Search architects..."
+                                />
                             </div>
                          )}
                      </div>

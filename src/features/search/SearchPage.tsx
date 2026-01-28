@@ -95,21 +95,6 @@ export default function SearchPage() {
       }
   }, [searchQuery, filterVisited, filterBucketList, filterContacts, selectedContacts.length]);
 
-  // 3. Derive Available Options from Data (Required for the new FilterBar)
-  const availableArchitects = useMemo(() => {
-    const architectsMap = new Map<string, string>();
-    buildings.forEach(b => {
-      b.architects?.forEach(a => {
-        if (a.id && a.name) {
-          architectsMap.set(a.id, a.name);
-        }
-      });
-    });
-    return Array.from(architectsMap.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [buildings]);
-
   // 4. Merged Filtering Logic
   const filteredBuildings = useMemo(() => {
     let result = buildings;
@@ -224,7 +209,6 @@ export default function SearchPage() {
             onLocationSelect={handleLocationSearch}
             selectedArchitects={selectedArchitects}
             onArchitectsChange={setSelectedArchitects}
-            availableArchitects={availableArchitects}
             selectedTags={selectedTags}
             onTagsChange={setSelectedTags}
             availableTags={availableTags}
