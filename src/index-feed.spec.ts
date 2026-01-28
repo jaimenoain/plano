@@ -103,3 +103,67 @@ test('Feed Aggregation and Rendering', async ({ page }) => {
   await expect(page.getByText('in', { exact: true })).toBeVisible();
   await expect(page.getByText('Test City')).toBeVisible();
 });
+
+test('Feed Compact Card Rating Display', async ({ page }) => {
+  // Mock Auth
+  await page.addInitScript(() => {
+    window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
+        access_token: "fake.token.part",
+        refresh_token: "fake-refresh",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        expires_in: 3600,
+        token_type: "bearer",
+        user: {
+            id: "user-uuid",
+            email: "test@example.com",
+            aud: "authenticated",
+            role: "authenticated",
+            user_metadata: {
+                onboarding_completed: true
+            }
+        }
+    }));
+  });
+
+  // Mock RPC get_feed
+  await page.route('**/rest/v1/rpc/get_feed', async route => {
+    const json = [
+        {
+            id: 'review-single',
+            content: 'Nice',
+            rating: 4, // Rating present
+            created_at: new Date().toISOString(),
+            user_id: 'user-1',
+            user_data: { username: 'TestUser', avatar_url: null },
+            building_data: { id: 'b-1', name: 'Single Building', city: 'Test City' },
+            review_images: [] // No images -> Compact Card
+        }
+    ];
+    await route.fulfill({ json });
+  });
+
+  // Mock User
+  await page.route('**/auth/v1/user', async route => {
+    await route.fulfill({
+        json: {
+            id: "user-uuid",
+            aud: "authenticated",
+            role: "authenticated",
+            email: "test@example.com",
+             user_metadata: {
+                onboarding_completed: true
+            }
+        }
+    });
+  });
+
+  await page.goto('http://localhost:8080/');
+
+  // Verify the compact card is rendered
+  await expect(page.getByText('TestUser')).toBeVisible();
+  await expect(page.getByText('Single Building')).toBeVisible();
+
+  // Verify rating circles are visible
+  const circles = page.locator('div').filter({ hasText: 'Single Building' }).locator('svg.lucide-circle');
+  await expect(circles).toHaveCount(5);
+});
