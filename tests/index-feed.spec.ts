@@ -227,3 +227,72 @@ test('Feed Includes Own Entries', async ({ page }) => {
   await expect(page.getByText('MySelf')).toBeVisible();
   await expect(page.getByText('My Building')).toBeVisible();
 });
+
+test('Feed Hero Card Display', async ({ page }) => {
+  // Mock Auth
+  await page.addInitScript(() => {
+    window.localStorage.setItem('sb-lnqxtomyucnnrgeapnzt-auth-token', JSON.stringify({
+        access_token: "fake.token.part",
+        refresh_token: "fake-refresh",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        expires_in: 3600,
+        token_type: "bearer",
+        user: {
+            id: "user-uuid",
+            email: "test@example.com",
+            aud: "authenticated",
+            role: "authenticated",
+            user_metadata: {
+                onboarding_completed: true
+            }
+        }
+    }));
+  });
+
+  // Mock image request
+  await page.route('http://localhost/image.png', async route => {
+      const buffer = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+      await route.fulfill({ body: buffer, contentType: 'image/gif' });
+  });
+
+  // Mock RPC get_feed with images
+  await page.route('**/rest/v1/rpc/get_feed', async route => {
+    const json = [
+        {
+            id: 'review-hero',
+            content: 'Look at this photo',
+            rating: 5,
+            created_at: new Date().toISOString(),
+            user_id: 'user-1',
+            user_data: { username: 'PhotoUser', avatar_url: null },
+            building_data: { id: 'b-hero', name: 'Photo Building', city: 'Photo City' },
+            review_images: [
+                { id: 'img-1', storage_path: 'http://localhost/image.png', likes_count: 0, is_liked: false }
+            ]
+        }
+    ];
+    await route.fulfill({ json });
+  });
+
+  // Mock User
+  await page.route('**/auth/v1/user', async route => {
+    await route.fulfill({
+        json: {
+            id: "user-uuid",
+            aud: "authenticated",
+            role: "authenticated",
+            email: "test@example.com",
+             user_metadata: {
+                onboarding_completed: true
+            }
+        }
+    });
+  });
+
+  await page.goto('http://localhost:8080/');
+
+  // Verify "added photos of" text which is specific to FeedHeroCard
+  await expect(page.getByText('added photos of')).toBeVisible();
+  // Verify image is present
+  await expect(page.locator('img[alt="Building"]')).toBeVisible();
+});
