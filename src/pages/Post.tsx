@@ -177,7 +177,7 @@ export default function Post() {
         user_id: user!.id,
         building_id: buildingId,
         status: dbStatus,
-        rating: isReview ? rating : null,
+        rating: (isReview && rating > 0) ? rating : null,
         content: content.trim() || null,
         tags: selectedTags.length > 0 ? selectedTags : null,
         visibility,
@@ -265,7 +265,7 @@ export default function Post() {
 
             {postType === "review" && (
               <div className="py-4 hairline">
-                <p className="text-sm text-muted-foreground mb-3">Your Rating</p>
+                <p className="text-sm text-muted-foreground mb-3">Your Rating (Optional)</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-0.5 md:gap-1" onMouseLeave={() => setHoverRating(0)}>
                     {Array.from({ length: 5 }).map((_, i) => {
@@ -361,7 +361,7 @@ export default function Post() {
                 size="lg" 
                 className="w-full" 
                 onClick={handleSubmit} 
-                disabled={loading || checkingExisting || (postType === "review" && rating === 0)}
+                disabled={loading || checkingExisting}
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
               </Button>
