@@ -29,6 +29,7 @@ export interface DiscoveryBuilding {
   social_context?: string;
   social_score?: number;
   contact_raters?: ContactRater[];
+  contact_visitors?: ContactRater[];
   location_precision?: 'exact' | 'approximate';
 }
 

@@ -53,7 +53,7 @@ export function DiscoveryBuildingCard({
                     : `${distance.toFixed(1)}km away`}
                 </Badge>
               )}
-              {socialContext && (
+              {socialContext && (!building.contact_visitors || building.contact_visitors.length === 0) && (
                 <Badge variant="secondary" className="flex items-center gap-1 font-normal bg-primary/10 text-primary hover:bg-primary/20 text-xs px-2 py-0.5 h-auto">
                   <Users className="h-3 w-3" />
                   {socialContext}
@@ -61,7 +61,26 @@ export function DiscoveryBuildingCard({
               )}
             </div>
 
-            {/* Facepile */}
+            {/* Visitors Facepile */}
+            {building.contact_visitors && building.contact_visitors.length > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex -space-x-2">
+                  {building.contact_visitors.slice(0, 3).map((visitor) => (
+                    <Avatar key={visitor.id} className="w-5 h-5 border border-background">
+                      <AvatarImage src={visitor.avatar_url || undefined} />
+                      <AvatarFallback className="text-[8px]">{visitor.first_name?.[0] || "?"}</AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {building.contact_visitors.length === 1 && building.contact_visitors[0].first_name
+                    ? `Visited by ${building.contact_visitors[0].first_name}`
+                    : `Visited by ${building.contact_visitors.length} friends`}
+                </span>
+              </div>
+            )}
+
+            {/* Raters Facepile */}
             {building.contact_raters && building.contact_raters.length > 0 && (
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex -space-x-2">
