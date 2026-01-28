@@ -32,6 +32,15 @@ import { useQuery } from "@tanstack/react-query";
 import { getBuildingImageUrl } from "@/utils/image";
 
 // Helper to parse Geocoder results
+const STOP_WORDS = [
+  'building', 'tower', 'house', 'center', 'centre', 'plaza', 'court',
+  'hall', 'residence', 'residences', 'apartment', 'apartments', 'condo',
+  'condos', 'office', 'offices', 'station', 'park', 'garden', 'gardens',
+  'bridge', 'church', 'museum', 'hotel', 'school', 'college', 'university',
+  'library', 'hospital', 'terminal', 'airport', 'mall', 'market', 'store',
+  'shop', 'block', 'street', 'avenue', 'road'
+];
+
 const extractLocationDetails = (result: any) => {
   let city = null;
   let country = null;
@@ -197,6 +206,7 @@ export default function AddBuilding() {
       setCheckingDuplicates(true);
       try {
         const queryName = nameInput || potentialName || "";
+        const normalizedQuery = queryName.toLowerCase().trim();
 
         // Run two concurrent checks:
         // 1. Strict Location Check: 50m radius, ANY name (ensure collisions are caught)
@@ -214,8 +224,8 @@ export default function AddBuilding() {
                 name_query: ""
             });
 
-            // Only run name check if we have a name to check
-            const nameCheckPromise = (queryName.length >= 3)
+            // Only run name check if we have a name to check and it's not a generic stop word
+            const nameCheckPromise = (queryName.length >= 3 && !STOP_WORDS.includes(normalizedQuery))
                 ? supabase.rpc('find_nearby_buildings', {
                     lat: markerPosition.lat,
                     long: markerPosition.lng,
