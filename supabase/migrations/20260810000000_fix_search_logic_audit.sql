@@ -1,6 +1,9 @@
 -- Fix search_buildings RPC logic to support detailed filtering and correct boolean logic
 -- Migration ID: 20260810000000_fix_search_logic_audit.sql
 
+-- Drop previous version with strict signature to allow return type change
+DROP FUNCTION IF EXISTS search_buildings(text, jsonb, int, jsonb, text, int);
+
 CREATE OR REPLACE FUNCTION search_buildings(
   query_text text DEFAULT NULL,
   location_coordinates jsonb DEFAULT NULL, -- {lat: number, lng: number}
