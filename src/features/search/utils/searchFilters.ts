@@ -3,7 +3,7 @@ export interface BuildingFilterData {
   functional_category_id?: string | null;
   typologies?: { typology_id: string }[];
   attributes?: { attribute_id: string }[];
-  architects?: { architect: { name: string } }[];
+  architects?: { architect: { name: string; id: string } }[];
   // Other fields if needed
 }
 
@@ -11,7 +11,7 @@ export interface FilterCriteria {
   categoryId?: string | null;
   typologyIds: string[];
   attributeIds: string[];
-  selectedArchitects: string[]; // Names
+  selectedArchitects: string[]; // IDs
 }
 
 export function filterLocalBuildings(
@@ -42,12 +42,12 @@ export function filterLocalBuildings(
       if (!hasMatch) return false;
     }
 
-    // Architects (Any Match / OR) - Filtering by Name as per legacy logic
+    // Architects (Any Match / OR)
     if (filters.selectedArchitects.length > 0) {
-      const architectNames =
-        b.architects?.map((a) => a.architect.name) || [];
-      const hasMatch = filters.selectedArchitects.some((name) =>
-        architectNames.includes(name)
+      const architectIds =
+        b.architects?.map((a) => a.architect.id) || [];
+      const hasMatch = filters.selectedArchitects.some((id) =>
+        architectIds.includes(id)
       );
       if (!hasMatch) return false;
     }

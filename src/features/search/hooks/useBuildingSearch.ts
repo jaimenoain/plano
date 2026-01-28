@@ -118,6 +118,9 @@ export function useBuildingSearch() {
   const [personalMinRating, setPersonalMinRating] = useState<number>(0);
   const [contactMinRating, setContactMinRating] = useState<number>(0);
 
+  // Pagination State
+  const [page, setPage] = useState(0);
+
   const [selectedArchitects, setSelectedArchitects] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
@@ -148,6 +151,26 @@ export function useBuildingSearch() {
       setUserLocation(gpsLocation);
     }
   }, [gpsLocation]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [
+    debouncedQuery,
+    filterVisited,
+    filterBucketList,
+    filterContacts,
+    personalMinRating,
+    contactMinRating,
+    selectedArchitects,
+    selectedTags,
+    selectedCategory,
+    selectedTypologies,
+    selectedAttributes,
+    selectedContacts,
+    // Note: userLocation change might not strictly require page reset if just panning,
+    // but usually search resets on new query.
+  ]);
 
   const requestLocation = async () => {
     const loc = await requestLocationInternal();
@@ -194,12 +217,18 @@ export function useBuildingSearch() {
         selectedAttributes,
         selectedContacts,
         userLocation,
-        user?.id
+        user?.id,
+        // Include page in query key if pagination is server-side in future,
+        // currently it's not strictly used by RPC (p_limit=500 fixed), but good practice.
+        page
     ],
     queryFn: async () => {
         // Local filtering mode (My Buildings or Contacts)
         const hasSpecificContacts = selectedContacts.length > 0;
         const hasTags = selectedTags.length > 0;
+
+        // Input Sanitization
+        const cleanQuery = debouncedQuery.trim() || null;
 
         if (filterVisited || filterBucketList || filterContacts || hasSpecificContacts || hasTags) {
             if (!user) return [];
@@ -291,8 +320,8 @@ export function useBuildingSearch() {
                 `)
                 .in('id', buildingIds);
 
-            if (debouncedQuery) {
-                query = query.ilike('name', `%${debouncedQuery}%`);
+            if (cleanQuery) {
+                query = query.ilike('name', `%${cleanQuery}%`);
             }
 
             const { data: buildingsData, error: bError } = await query;
@@ -300,7 +329,7 @@ export function useBuildingSearch() {
 
             // 4. Apply Characteristics / Architect Filters in Memory
             const filteredData = filterLocalBuildings(buildingsData || [], {
-                categoryId: selectedCategory,
+                categoryId: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : null,
                 typologyIds: selectedTypologies,
                 attributeIds: selectedAttributes,
                 selectedArchitects: selectedArchitects
@@ -336,12 +365,12 @@ export function useBuildingSearch() {
         // Global search mode (RPC)
         const radius = 20000000;
         const rpcResults = await searchBuildingsRpc({
-            query_text: debouncedQuery || null,
+            query_text: cleanQuery,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
             radius_meters: radius,
             filters: {
                 architects: selectedArchitects.length > 0 ? selectedArchitects : undefined,
-                category_id: selectedCategory || undefined,
+                category_id: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : undefined,
                 typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
                 attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined
             },
@@ -394,5 +423,8 @@ export function useBuildingSearch() {
       buildings: buildings || [],
       isLoading,
       isFetching,
+      // Pagination
+      page,
+      setPage,
   };
 }
