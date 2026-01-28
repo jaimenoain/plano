@@ -38,10 +38,9 @@ test.describe('getBuildingImageUrl', () => {
     expect(getBuildingImageUrl(path)).toBe('https://my-s3.com/bucket/folder/image.jpg');
   });
 
-  test('fallback to VITE_SUPABASE_URL if storage url is missing', () => {
-    process.env.VITE_SUPABASE_URL = 'https://project.supabase.co';
+  test('defaults to S3 bucket with review-images path if no env var is set', () => {
     const path = 'folder/image.jpg';
-    const expected = 'https://project.supabase.co/storage/v1/object/public/review_images/folder/image.jpg';
+    const expected = 'https://s3.eu-west-2.amazonaws.com/plano.app/review-images/folder/image.jpg';
     expect(getBuildingImageUrl(path)).toBe(expected);
   });
 
