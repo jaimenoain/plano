@@ -988,12 +988,6 @@ export default function BuildingDetails() {
                                         </div>
                                     )}
 
-                                    <div className="mt-2">
-                                        <Link to={`/review/${entry.id}`} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                                            <MessageSquare className="w-3 h-3" />
-                                            <span>View Review</span>
-                                        </Link>
-                                    </div>
                                 </div>
                             </div>
                         ))
