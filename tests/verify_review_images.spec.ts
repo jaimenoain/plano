@@ -165,5 +165,5 @@ test('Verify Review Images in Community Notes', async ({ page }) => {
 
   const firstSrc = await images.first().getAttribute('src');
   console.log('First image src:', firstSrc);
-  expect(firstSrc).toContain('/storage/v1/object/public/review_images/user/building/img1.webp');
+  expect(firstSrc).toContain('https://s3.eu-west-2.amazonaws.com/plano.app/user/building/img1.webp');
 });
