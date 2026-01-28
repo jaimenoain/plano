@@ -29,6 +29,8 @@ export default function SearchPage() {
     personalMinRating, setPersonalMinRating,
     contactMinRating, setContactMinRating,
     selectedArchitects, setSelectedArchitects,
+    selectedTags, setSelectedTags,
+    availableTags,
     selectedCategory, setSelectedCategory,
     selectedTypologies, setSelectedTypologies,
     selectedAttributes, setSelectedAttributes,
@@ -195,6 +197,7 @@ export default function SearchPage() {
                          personalMinRating === 0 &&
                          contactMinRating === 0 &&
                          selectedArchitects.length === 0 &&
+                         selectedTags.length === 0 &&
                          !selectedCategory &&
                          selectedTypologies.length === 0 &&
                          selectedAttributes.length === 0 &&
@@ -213,6 +216,9 @@ export default function SearchPage() {
             selectedArchitects={selectedArchitects}
             onArchitectsChange={setSelectedArchitects}
             availableArchitects={availableArchitects}
+            selectedTags={selectedTags}
+            onTagsChange={setSelectedTags}
+            availableTags={availableTags}
             sortBy={sortBy}
             onSortChange={setSortBy}
             // --- Main Branch Props (Visited/Bucket Toggles) ---
