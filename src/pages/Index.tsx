@@ -17,6 +17,7 @@ import { aggregateFeed } from "@/lib/feed-aggregation";
 import { FeedHeroCard } from "@/components/feed/FeedHeroCard";
 import { FeedClusterCard } from "@/components/feed/FeedClusterCard";
 import { FeedCompactCard } from "@/components/feed/FeedCompactCard";
+import { getBuildingImageUrl } from "@/utils/image";
 
 // --- New Landing Page Component ---
 function Landing() {
@@ -193,10 +194,9 @@ export default function Index() {
         comments_count: review.comments_count || 0,
         is_liked: review.is_liked,
         images: (review.review_images || []).map((img: any) => {
-            const { data: { publicUrl } } = supabase.storage.from('review_images').getPublicUrl(img.storage_path);
             return {
                 id: img.id,
-                url: publicUrl,
+                url: getBuildingImageUrl(img.storage_path),
                 likes_count: img.likes_count || 0,
                 is_liked: img.is_liked
             };

@@ -32,6 +32,7 @@ import { CollectionsRow } from "@/components/profile/CollectionsRow";
 import { SocialContextSection } from "@/components/profile/SocialContextSection";
 import { FeedReview } from "@/types/feed";
 import { useProfileComparison } from "@/hooks/useProfileComparison";
+import { getBuildingImageUrl } from "@/utils/image";
 
 // --- Types ---
 interface Profile {
@@ -366,10 +367,9 @@ export default function Profile() {
         // Group images by review_id
         const imagesByReviewId = new Map();
         imagesData?.forEach(img => {
-            const { data: { publicUrl } } = supabase.storage.from("review_images").getPublicUrl(img.storage_path);
             const imageObj = {
                 id: img.id,
-                url: publicUrl,
+                url: getBuildingImageUrl(img.storage_path),
                 likes_count: img.likes_count || 0,
                 is_liked: userLikedImages.has(img.id)
             };

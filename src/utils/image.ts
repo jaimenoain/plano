@@ -49,10 +49,8 @@ export const getBuildingImageUrl = (path: string | null | undefined): string | u
   if (customUrl) {
     baseUrl = customUrl;
   } else {
-    const supabaseUrl = getEnv('VITE_SUPABASE_URL');
-    if (supabaseUrl) {
-      baseUrl = `${supabaseUrl}/storage/v1/object/public/review_images`;
-    }
+    // Default to S3 bucket
+    baseUrl = "https://s3.eu-west-2.amazonaws.com/plano.app";
   }
 
   // Normalize slashes
