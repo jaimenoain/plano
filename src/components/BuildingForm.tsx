@@ -1,9 +1,9 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
-import { Loader2, Plus, Image as ImageIcon, X, Check } from "lucide-react";
+import { Loader2, Plus, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
 import { StyleSelect, StyleSummary } from "@/components/ui/style-select";
@@ -20,10 +20,6 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { resizeImage } from "@/lib/image-compression";
-import { useAuth } from "@/hooks/useAuth";
-import { getBuildingImageUrl } from "@/utils/image";
-import { uploadFile } from "@/utils/upload";
 
 const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary'];
 const ACCESS_OPTIONS = ['Open Access', 'Admission Fee', 'Customers Only', 'Appointment Only', 'Exterior View Only', 'No Access'];
@@ -50,9 +46,7 @@ interface BuildingFormProps {
 }
 
 export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create' }: BuildingFormProps) {
-  const { user } = useAuth();
   const [name, setName] = useState(initialValues.name);
-  const [heroImage, setHeroImage] = useState<string | null>(initialValues.hero_image_url || null);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
   const [status, setStatus] = useState<string>(initialValues.status || "");
   const [access, setAccess] = useState<string>(initialValues.access || "");
@@ -70,38 +64,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
   const [showStyles, setShowStyles] = useState((initialValues.styles || []).length > 0);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!user) {
-      toast.error("You must be logged in to upload images");
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      const compressedFile = await resizeImage(file);
-      const key = await uploadFile(compressedFile);
-
-      setHeroImage(key);
-      toast.success("Image uploaded successfully");
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error("Failed to upload image");
-    } finally {
-      setIsUploading(false);
-      // Reset input so same file can be selected again if needed
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  const removeImage = () => {
-    setHeroImage(null);
-  };
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["functional_categories"],
@@ -218,7 +180,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
     try {
       const rawData = {
         name,
-        hero_image_url: heroImage,
+        // hero_image_url removed
         year_completed,
         status: status || null,
         access: access || null,
@@ -254,60 +216,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-4">
-        {/* Main Image Upload - Only in create mode */}
-        {mode === 'create' && (
-          <div className="space-y-2">
-            <Label>Main Image</Label>
-            <div className="flex flex-col gap-4">
-              {heroImage ? (
-                <div className="relative aspect-video w-full max-w-sm rounded-lg overflow-hidden border bg-muted">
-                  <img
-                    src={getBuildingImageUrl(heroImage)}
-                    alt="Building hero"
-                    className="w-full h-full object-cover"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-8 w-8 rounded-full"
-                    onClick={removeImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div
-                  className="flex items-center justify-center w-full max-w-sm aspect-video border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="h-8 w-8 animate-spin" />
-                        <span className="text-sm">Uploading...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ImageIcon className="h-8 w-8" />
-                        <span className="text-sm">Click to upload image</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={isUploading}
-              />
-            </div>
-          </div>
-        )}
-
         <div className="space-y-2">
           <Label htmlFor="name">Name {mode === 'create' && "*"}</Label>
           <Input
@@ -319,31 +227,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             autoComplete="off"
           />
         </div>
-
-        {/* Year Built */}
-        {showYear ? (
-          <div className="space-y-2">
-            <Label htmlFor="year_completed">Year Built</Label>
-            <Input
-              id="year_completed"
-              type="number"
-              value={year_completed}
-              onChange={(e) => setYear(e.target.value)}
-              placeholder="e.g. 1973"
-              autoComplete="off"
-            />
-          </div>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8"
-            onClick={() => setShowYear(true)}
-          >
-            <Plus className="h-3 w-3 mr-1" /> Add Year
-          </Button>
-        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -374,8 +257,23 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
           </div>
         </div>
 
+        {/* Year Built */}
+        {showYear && (
+          <div className="space-y-2">
+            <Label htmlFor="year_completed">Year Built</Label>
+            <Input
+              id="year_completed"
+              type="number"
+              value={year_completed}
+              onChange={(e) => setYear(e.target.value)}
+              placeholder="e.g. 1973"
+              autoComplete="off"
+            />
+          </div>
+        )}
+
         {/* Architects */}
-        {showArchitects ? (
+        {showArchitects && (
           <div className="space-y-2">
             <Label>Architects</Label>
             <ArchitectSelect
@@ -387,20 +285,10 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
               Add multiple architects if applicable. If not found, you can create a new one.
             </p>
           </div>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8"
-            onClick={() => setShowArchitects(true)}
-          >
-            <Plus className="h-3 w-3 mr-1" /> Add Architects
-          </Button>
         )}
 
         {/* Styles */}
-        {showStyles ? (
+        {showStyles && (
           <div className="space-y-2">
             <Label>Architectural Styles</Label>
             <StyleSelect
@@ -409,16 +297,45 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
               placeholder="Search styles or add new..."
             />
           </div>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8"
-            onClick={() => setShowStyles(true)}
-          >
-            <Plus className="h-3 w-3 mr-1" /> Add Styles
-          </Button>
+        )}
+
+        {/* Add Buttons Row */}
+        {(!showYear || !showArchitects || !showStyles) && (
+            <div className="flex gap-2 flex-wrap">
+                {!showYear && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full h-8"
+                        onClick={() => setShowYear(true)}
+                    >
+                        <Plus className="h-3 w-3 mr-1" /> Add Year
+                    </Button>
+                )}
+                {!showArchitects && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full h-8"
+                        onClick={() => setShowArchitects(true)}
+                    >
+                        <Plus className="h-3 w-3 mr-1" /> Add Architects
+                    </Button>
+                )}
+                {!showStyles && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full h-8"
+                        onClick={() => setShowStyles(true)}
+                    >
+                        <Plus className="h-3 w-3 mr-1" /> Add Styles
+                    </Button>
+                )}
+            </div>
         )}
       </div>
 
@@ -599,8 +516,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         )}
       </div>
 
-      <Button type="submit" className="w-full mt-6" disabled={isSubmitting || isUploading}>
-        {isSubmitting || isUploading ? (
+      <Button type="submit" className="w-full mt-6" disabled={isSubmitting}>
+        {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Saving...
