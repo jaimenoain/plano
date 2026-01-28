@@ -654,7 +654,7 @@ export default function WriteReview() {
         <div className="flex flex-wrap gap-3">
           {!showLists && (
             <Button variant="outline" size="sm" onClick={() => setShowLists(true)} className="gap-2">
-               <Plus className="w-4 h-4" /> Add to list
+               <Plus className="w-4 h-4" /> Add to my maps
             </Button>
           )}
           {!showLinks && (
@@ -667,12 +667,12 @@ export default function WriteReview() {
         {/* Lists (Tags) */}
         {showLists && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-            <label className="text-sm font-medium uppercase text-muted-foreground">Lists</label>
+            <label className="text-sm font-medium uppercase text-muted-foreground">My Maps</label>
             <AutocompleteTagInput
               tags={tags}
               setTags={setTags}
               suggestions={suggestions}
-              placeholder="Add to list..."
+              placeholder="Add to my maps..."
               normalize={(v) => v.trim()}
             />
           </div>
