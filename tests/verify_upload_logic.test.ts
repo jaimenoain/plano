@@ -16,6 +16,13 @@ mock.module("@supabase/supabase-js", () => {
         createClient: () => ({
             functions: {
                 invoke: mockInvoke
+            },
+            auth: {
+                getSession: () => Promise.resolve({
+                    data: {
+                        session: { access_token: "mock-token" }
+                    }
+                })
             }
         })
     };
@@ -51,7 +58,11 @@ describe("uploadFile", () => {
             expect(mockInvoke.mock.calls[0][1]).toEqual({
                 body: {
                     fileName: "test.txt",
-                    contentType: expectedType
+                    contentType: expectedType,
+                    folderName: undefined
+                },
+                headers: {
+                    Authorization: "Bearer mock-token"
                 }
             });
 
