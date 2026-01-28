@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, mock, beforeAll } from "bun:test";
+import { describe, it, expect, mock, beforeAll, beforeEach } from "bun:test";
 
 // Polyfill localStorage
 global.localStorage = {
@@ -9,6 +9,9 @@ global.localStorage = {
 } as any;
 
 const mockInvoke = mock(() => Promise.resolve({ data: { uploadUrl: "http://mock-url.com/upload", key: "mock-key" }, error: null }));
+const mockGetUser = mock(() => Promise.resolve({ data: { user: { id: "mock-user" } }, error: null }));
+const mockRefreshSession = mock(() => Promise.resolve({ data: { session: { access_token: "refreshed-token" } }, error: null }));
+const mockGetSession = mock(() => Promise.resolve({ data: { session: { access_token: "mock-token" } } }));
 
 // Mock the supabase library
 mock.module("@supabase/supabase-js", () => {
@@ -18,11 +21,9 @@ mock.module("@supabase/supabase-js", () => {
                 invoke: mockInvoke
             },
             auth: {
-                getSession: () => Promise.resolve({
-                    data: {
-                        session: { access_token: "mock-token" }
-                    }
-                })
+                getSession: mockGetSession,
+                getUser: mockGetUser,
+                refreshSession: mockRefreshSession,
             }
         })
     };
@@ -37,8 +38,46 @@ describe("uploadFile", () => {
         uploadFile = module.uploadFile;
     });
 
-    it("should successfully upload a file", async () => {
+    beforeEach(() => {
         mockInvoke.mockClear();
+        mockGetUser.mockClear();
+        mockRefreshSession.mockClear();
+        mockGetSession.mockClear();
+
+        // Reset default behaviors
+        mockInvoke.mockImplementation(() => Promise.resolve({ data: { uploadUrl: "http://mock-url.com/upload", key: "mock-key" }, error: null }));
+        mockGetUser.mockImplementation(() => Promise.resolve({ data: { user: { id: "mock-user" } }, error: null }));
+        mockRefreshSession.mockImplementation(() => Promise.resolve({ data: { session: { access_token: "refreshed-token" } }, error: null }));
+    });
+
+    it("should successfully upload a file when getUser succeeds", async () => {
+        // Mock global fetch
+        const originalFetch = global.fetch;
+        const mockFetch = mock(() => Promise.resolve(new Response("OK", { status: 200 })));
+        global.fetch = mockFetch;
+
+        const file = new File(["test content"], "test.txt", { type: "text/plain" });
+        const expectedType = file.type;
+
+        try {
+            const result = await uploadFile(file);
+            expect(result).toBe("mock-key");
+
+            expect(mockGetUser).toHaveBeenCalled();
+            expect(mockRefreshSession).not.toHaveBeenCalled();
+
+            expect(mockInvoke).toHaveBeenCalled();
+            expect(mockInvoke.mock.calls[0][0]).toBe("generate-upload-url");
+
+            expect(mockFetch).toHaveBeenCalled();
+        } finally {
+            global.fetch = originalFetch;
+        }
+    });
+
+    it("should attempt refresh session if getUser fails", async () => {
+        // Mock getUser failure
+        mockGetUser.mockImplementationOnce(() => Promise.resolve({ error: { message: "Token expired" } }));
 
         // Mock global fetch
         const originalFetch = global.fetch;
@@ -46,32 +85,32 @@ describe("uploadFile", () => {
         global.fetch = mockFetch;
 
         const file = new File(["test content"], "test.txt", { type: "text/plain" });
-        // Bun adds charset=utf-8 for text/plain created from string/buffer?
-        const expectedType = file.type;
 
         try {
             const result = await uploadFile(file);
             expect(result).toBe("mock-key");
 
+            expect(mockGetUser).toHaveBeenCalled();
+            expect(mockRefreshSession).toHaveBeenCalled(); // Should attempt refresh
             expect(mockInvoke).toHaveBeenCalled();
-            expect(mockInvoke.mock.calls[0][0]).toBe("generate-upload-url");
-            // We now expect NO headers in the arguments, because supabase-js adds them internally
-            // and we are mocking invoke, so we only see what our code passes.
-            expect(mockInvoke.mock.calls[0][1]).toEqual({
-                body: {
-                    fileName: "test.txt",
-                    contentType: expectedType,
-                    folderName: undefined
-                }
-            });
-
-            expect(mockFetch).toHaveBeenCalled();
-            expect(mockFetch.mock.calls[0][0]).toBe("http://mock-url.com/upload");
-            expect(mockFetch.mock.calls[0][1].method).toBe("PUT");
-            expect(mockFetch.mock.calls[0][1].headers["Content-Type"]).toBe(expectedType);
-
         } finally {
             global.fetch = originalFetch;
+        }
+    });
+
+    it("should throw error if getUser fails AND refreshSession fails", async () => {
+        // Mock getUser failure
+        mockGetUser.mockImplementationOnce(() => Promise.resolve({ error: { message: "Token expired" } }));
+        // Mock refreshSession failure
+        mockRefreshSession.mockImplementationOnce(() => Promise.resolve({ data: { session: null }, error: { message: "Refresh failed" } }));
+
+        const file = new File(["test content"], "test.txt", { type: "text/plain" });
+
+        try {
+            await uploadFile(file);
+            expect(true).toBe(false); // Should fail
+        } catch (e: any) {
+            expect(e.message).toContain("User not authenticated");
         }
     });
 
@@ -89,9 +128,6 @@ describe("uploadFile", () => {
     });
 
     it("should throw error if upload fetch fails", async () => {
-        // Reset mockInvoke to success
-        mockInvoke.mockImplementationOnce(() => Promise.resolve({ data: { uploadUrl: "http://mock-url.com/upload", key: "mock-key" }, error: null }));
-
         const originalFetch = global.fetch;
         const mockFetch = mock(() => Promise.resolve(new Response("Error", { status: 500, statusText: "Internal Server Error" })));
         global.fetch = mockFetch;

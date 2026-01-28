@@ -5,16 +5,18 @@ import { getSignedUrl } from 'https://esm.sh/@aws-sdk/s3-request-presigner@3'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 Deno.serve(async (req) => {
+  console.log("Request received", req.method, req.url)
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log("Request received")
 
     // 1. Validate Environment Variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL')

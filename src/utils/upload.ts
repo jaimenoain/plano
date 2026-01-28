@@ -1,11 +1,16 @@
 import { supabase } from '../integrations/supabase/client';
 
 export async function uploadFile(file: File, folderName?: string): Promise<string> {
-  // 1. Explicitly get the current session to ensure we have a valid token
-  const { data: { session } } = await supabase.auth.getSession();
+  // 1. Ensure we have a valid session. getUser() verifies the token with the server.
+  const { error: userError } = await supabase.auth.getUser();
 
-  if (!session) {
-    throw new Error('User not authenticated. Please log in to upload files.');
+  if (userError) {
+    // If getUser fails (e.g. token expired), try to refresh the session explicitly
+    const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+
+    if (refreshError || !session) {
+      throw new Error('User not authenticated. Please log in to upload files.');
+    }
   }
 
   // 2. Invoke the function (Auth header is automatically added by supabase-js)
