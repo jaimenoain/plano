@@ -4,15 +4,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   title?: string;
   showLogo?: boolean;
   showBack?: boolean;
   action?: ReactNode;
+  className?: string;
 }
 
-export function Header({ title, showLogo = true, action }: HeaderProps) {
+export function Header({ title, showLogo = true, action, className }: HeaderProps) {
   const location = useLocation();
   const { user } = useAuth();
   const [hasUnread, setHasUnread] = useState(false);
@@ -36,7 +38,7 @@ export function Header({ title, showLogo = true, action }: HeaderProps) {
   const showBadge = hasUnread && location.pathname !== "/notifications";
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass safe-area-pt transition-all duration-300">
+    <header className={cn("fixed top-0 left-0 right-0 z-50 glass safe-area-pt transition-all duration-300", className)}>
       <div className="relative flex items-center justify-between h-16 px-4 max-w-7xl mx-auto w-full">
         {/* Left Section: Title only if Logo is hidden */}
         <div className="flex-1 flex items-center justify-start">

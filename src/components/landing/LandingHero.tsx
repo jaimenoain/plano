@@ -2,13 +2,22 @@ import { useState } from "react";
 import { DiscoverySearchInput } from "@/features/search/components/DiscoverySearchInput";
 import { Badge } from "@/components/ui/badge";
 import { MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export const LandingHero = () => {
   const [searchValue, setSearchValue] = useState("");
+  const navigate = useNavigate();
 
   const handleLocationSelect = (location: { lat: number; lng: number }) => {
-    console.log("Location selected:", location);
-    // Future integration: update map view or filter results
+    navigate(`/search?lat=${location.lat}&lng=${location.lng}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchValue.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchValue)}`);
+    }
   };
 
   return (
@@ -24,7 +33,12 @@ export const LandingHero = () => {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 w-full max-w-4xl px-4 flex flex-col items-center text-center space-y-8 animate-fade-in">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative z-10 w-full max-w-4xl px-4 flex flex-col items-center text-center space-y-8"
+      >
 
         {/* Typography */}
         <div className="space-y-4">
@@ -38,8 +52,12 @@ export const LandingHero = () => {
         </div>
 
         {/* Search Integration */}
-        <div className="w-full max-w-2xl transform transition-all hover:scale-[1.01] duration-300">
-          <div className="relative rounded-xl overflow-hidden shadow-2xl bg-background/80 backdrop-blur-md border border-white/20 p-2">
+        <motion.div
+            className="w-full max-w-2xl"
+            whileHover={{ scale: 1.01 }}
+            transition={{ duration: 0.2 }}
+        >
+          <form onSubmit={handleSearchSubmit} className="relative rounded-xl overflow-hidden shadow-2xl bg-background/80 backdrop-blur-md border border-white/20 p-2">
             <DiscoverySearchInput
               value={searchValue}
               onSearchChange={setSearchValue}
@@ -47,22 +65,26 @@ export const LandingHero = () => {
               placeholder="Search for a city, building, or architect..."
               className="w-full [&_input]:bg-transparent [&_input]:border-none [&_input]:focus-visible:ring-0 [&_input]:text-lg [&_input]:h-12 [&_input]:placeholder:text-muted-foreground/70"
             />
-          </div>
-        </div>
+          </form>
+        </motion.div>
 
         {/* The Nudge */}
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+        >
           <Badge
             variant="secondary"
             className="px-4 py-2 h-auto text-sm md:text-base cursor-pointer hover:bg-secondary/80 transition-colors gap-2 bg-white/10 text-white backdrop-blur-sm border-white/20 hover:bg-white/20"
-            onClick={() => console.log("Nudge clicked")}
+            onClick={() => navigate('/search')}
           >
             <MapPin className="w-4 h-4" />
             <span>Trending near you</span>
           </Badge>
-        </div>
+        </motion.div>
 
-      </div>
+      </motion.div>
     </div>
   );
 };
