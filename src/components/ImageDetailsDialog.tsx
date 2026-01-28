@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Send, X, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
 interface Comment {
@@ -26,6 +26,11 @@ interface ImageDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   canInteract?: boolean;
+  uploadedBy?: {
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
+  uploadDate?: string;
 }
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,7 +40,9 @@ export function ImageDetailsDialog({
   initialUrl,
   isOpen,
   onClose,
-  canInteract = true
+  canInteract = true,
+  uploadedBy,
+  uploadDate
 }: ImageDetailsDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -250,9 +257,26 @@ export function ImageDetailsDialog({
         {isInteractive && (
           <div className="w-full md:w-[400px] flex flex-col bg-background border-l border-border h-[50vh] md:h-full">
 
-            {/* Header / Stats */}
+            {/* Header: User Info */}
             <div className="p-4 border-b flex items-center justify-between shrink-0">
-               <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-3">
+                    <Avatar className="w-8 h-8">
+                        <AvatarImage src={uploadedBy?.avatar_url || undefined} />
+                        <AvatarFallback>{uploadedBy?.username?.[0]?.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-semibold">{uploadedBy?.username || "Unknown"}</span>
+                        {uploadDate && <span className="text-xs text-muted-foreground">{format(new Date(uploadDate), 'MMMM d, yyyy')}</span>}
+                    </div>
+                 </div>
+
+                 <DialogClose className="hidden md:flex rounded-full hover:bg-muted p-2">
+                     <X className="h-5 w-5" />
+                 </DialogClose>
+            </div>
+
+            {/* Stats */}
+            <div className="px-4 py-2 border-b flex items-center justify-start gap-4 shrink-0 bg-muted/20">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -266,12 +290,6 @@ export function ImageDetailsDialog({
                     <MessageCircle className="w-5 h-5" />
                     <span className="font-semibold">{comments.length}</span>
                   </div>
-               </div>
-
-               {/* Close button for desktop */}
-               <DialogClose className="hidden md:flex rounded-full hover:bg-muted p-2">
-                 <X className="h-5 w-5" />
-               </DialogClose>
             </div>
 
             {/* Comments List - Scrollable */}
