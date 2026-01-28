@@ -530,79 +530,81 @@ export default function BuildingDetails() {
         
         {/* LEFT: Visuals & Map (Map-First Experience ) */}
         <div className="space-y-6">
-            {/* Map Integration */}
-            {building.location_precision === 'approximate' && (
-                <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-500 dark:text-amber-400">
-                    <AlertTriangle className="h-4 w-4 stroke-amber-500 dark:stroke-amber-400" />
-                    <AlertDescription className="ml-2">
-                        Exact location not verified. This marker indicates the general village/locality.
-                    </AlertDescription>
-                </Alert>
-            )}
-
-            {coordinates ? (
-              <BuildingMap
-                lat={coordinates.lat}
-                lng={coordinates.lng}
-                className={isMapExpanded ? "fixed inset-0 z-[100] h-screen w-screen rounded-none border-0" : "h-48 w-full transition-all duration-300"}
-                status={userStatus}
-                isExpanded={isMapExpanded}
-                onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
-                locationPrecision={building.location_precision}
-              />
-            ) : (
-              <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">
-                <MapPin className="w-6 h-6 opacity-50" />
-                <span className="text-xs uppercase tracking-widest">Location Unavailable</span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="w-4 h-4 shrink-0" />
-                    <span className="text-sm font-medium">
-                        {[building.city, building.country].filter(Boolean).join(", ") || building.address}
-                    </span>
-                </div>
-                {coordinates && (
-                    <>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0 h-8"
-                            onClick={() => {
-                                if (building.location_precision === 'approximate') {
-                                    setShowDirectionsAlert(true);
-                                } else {
-                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, '_blank');
-                                }
-                            }}
-                        >
-                            {building.location_precision === 'approximate' ? "Get Directions (Approximate)" : "Get Directions"}
-                        </Button>
-
-                        <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This building's location is approximate. The directions will guide you to the general vicinity (e.g. village center).
-                                        <br/><br/>
-                                        Please look around when you arrive.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => {
-                                         window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, '_blank');
-                                    }}>
-                                        Get Directions
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </>
+            <div className="space-y-2">
+                {/* Map Integration */}
+                {building.location_precision === 'approximate' && (
+                    <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-500 dark:text-amber-400">
+                        <AlertTriangle className="h-4 w-4 stroke-amber-500 dark:stroke-amber-400" />
+                        <AlertDescription className="ml-2">
+                            Exact location not verified. This marker indicates the general village/locality.
+                        </AlertDescription>
+                    </Alert>
                 )}
+
+                {coordinates ? (
+                <BuildingMap
+                    lat={coordinates.lat}
+                    lng={coordinates.lng}
+                    className={isMapExpanded ? "fixed inset-0 z-[100] h-screen w-screen rounded-none border-0" : "h-48 w-full transition-all duration-300"}
+                    status={userStatus}
+                    isExpanded={isMapExpanded}
+                    onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
+                    locationPrecision={building.location_precision}
+                />
+                ) : (
+                <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">
+                    <MapPin className="w-6 h-6 opacity-50" />
+                    <span className="text-xs uppercase tracking-widest">Location Unavailable</span>
+                </div>
+                )}
+
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="w-4 h-4 shrink-0" />
+                        <span className="text-sm font-medium">
+                            {[building.city, building.country].filter(Boolean).join(", ") || building.address}
+                        </span>
+                    </div>
+                    {coordinates && (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="shrink-0 h-8"
+                                onClick={() => {
+                                    if (building.location_precision === 'approximate') {
+                                        setShowDirectionsAlert(true);
+                                    } else {
+                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, '_blank');
+                                    }
+                                }}
+                            >
+                                {building.location_precision === 'approximate' ? "Get Directions (Approximate)" : "Get Directions"}
+                            </Button>
+
+                            <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This building's location is approximate. The directions will guide you to the general vicinity (e.g. village center).
+                                            <br/><br/>
+                                            Please look around when you arrive.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => {
+                                            window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, '_blank');
+                                        }}>
+                                            Get Directions
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </>
+                    )}
+                </div>
             </div>
 
             <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
