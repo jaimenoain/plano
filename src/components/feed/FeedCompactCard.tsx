@@ -66,7 +66,7 @@ export function FeedCompactCard({
         )}
 
         <span className="text-muted-foreground text-xs ml-2">
-          • {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
+          {!(entry.rating && entry.rating > 0) && "• "}{formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
         </span>
       </div>
     </div>
