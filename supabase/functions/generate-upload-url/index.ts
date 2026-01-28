@@ -33,22 +33,18 @@ Deno.serve(async (req) => {
     }
 
     // 3. Initialize Client
-    // We use persistSession: false because Edge Functions should be stateless.
-    // However, this means we must explicitly pass the token to getUser().
     const supabaseClient = createClient(
       supabaseUrl,
       supabaseAnonKey,
       { 
         global: { headers: { Authorization: authHeader } },
-        auth: { persistSession: false }
       }
     )
 
     // 4. Debug User Token Verification
     console.log("Verifying user token")
 
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
 
     if (userError || !user) {
       console.error("Auth Failed:", JSON.stringify(userError))
