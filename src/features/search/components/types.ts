@@ -31,6 +31,7 @@ export interface DiscoveryBuilding {
   contact_raters?: ContactRater[];
   contact_visitors?: ContactRater[];
   location_precision?: 'exact' | 'approximate';
+  status?: 'Built' | 'Under Construction' | 'Unbuilt' | 'Demolished' | 'Temporary' | null;
 }
 
 export interface ContactRater {

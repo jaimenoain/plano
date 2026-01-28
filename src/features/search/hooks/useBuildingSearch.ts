@@ -42,7 +42,31 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string) 
       main_image_url: getBuildingImageUrl(b.main_image_url) || null
   }));
 
-  // 2. Social Enrichment (Facepile)
+  // 2. Status Enrichment (for Demolished/Unbuilt)
+  // RPC doesn't return status, so we fetch it if missing.
+  const missingStatusIds = enrichedBuildings.filter(b => b.status === undefined).map(b => b.id);
+
+  if (missingStatusIds.length > 0) {
+      const { data: statusData } = await supabase
+          .from('buildings')
+          .select('id, status')
+          .in('id', missingStatusIds);
+
+      const statusMap = new Map<string, string | null>();
+      statusData?.forEach((item: any) => {
+          statusMap.set(item.id, item.status);
+      });
+
+      enrichedBuildings = enrichedBuildings.map(b => {
+          if (b.status !== undefined) return b;
+          return {
+              ...b,
+              status: statusMap.get(b.id) as any || null
+          };
+      });
+  }
+
+  // 3. Social Enrichment (Facepile)
   if (userId) {
     const { data: follows } = await supabase
         .from('follows')
@@ -355,6 +379,7 @@ export function useBuildingSearch() {
                     location_lat: b.location_lat,
                     location_lng: b.location_lng,
                     distance: distance,
+                    status: b.status,
                     // Pass through metadata if needed downstream, but DiscoveryBuilding interface might not have it
                 } as DiscoveryBuilding;
             }).sort((a, b) => (a.distance || 0) - (b.distance || 0));

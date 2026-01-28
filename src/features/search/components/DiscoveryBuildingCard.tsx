@@ -59,6 +59,11 @@ export function DiscoveryBuildingCard({
                   {socialContext}
                 </Badge>
               )}
+              {(building.status === 'Demolished' || building.status === 'Unbuilt') && (
+                <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-muted-foreground border-muted-foreground/30">
+                  {building.status}
+                </Badge>
+              )}
             </div>
 
             {/* Visitors Facepile */}
