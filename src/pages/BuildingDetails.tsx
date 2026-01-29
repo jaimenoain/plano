@@ -865,7 +865,7 @@ export default function BuildingDetails() {
                     // Edit View
                     <>
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 pt-5">
                                 <PersonalRatingButton
                                     buildingId={building.id}
                                     initialRating={myRating}
@@ -874,9 +874,6 @@ export default function BuildingDetails() {
                                     label={userStatus === 'pending' ? "Priority" : "Rating"}
                                     variant="inline"
                                 />
-                                {userStatus === 'pending' && (
-                                    <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
-                                )}
                             </div>
 
                             {/* Toggle Status */}
