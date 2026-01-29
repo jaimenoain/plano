@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow, format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { VideoPlayer } from "@/components/ui/VideoPlayer";
 
 interface Comment {
   id: string;
@@ -23,6 +24,7 @@ interface Comment {
 interface ImageDetailsDialogProps {
   imageId: string | null;
   initialUrl: string | null;
+  type?: 'image' | 'video';
   isOpen: boolean;
   onClose: () => void;
   canInteract?: boolean;
@@ -245,11 +247,20 @@ export function ImageDetailsDialog({
         {/* LEFT: Image Area */}
         <div className="flex-1 bg-black flex items-center justify-center relative min-h-[40vh]">
           <div className="absolute inset-0 flex items-center justify-center p-4">
-            <img
-              src={initialUrl || ""}
-              alt="Expanded view"
-              className="max-h-full max-w-full object-contain"
-            />
+            {type === 'video' ? (
+                <VideoPlayer
+                    src={initialUrl || ""}
+                    className="w-full h-full max-h-full"
+                    autoPlayOnVisible={true} // Autoplay when dialog opens
+                    muted={false} // Unmuted in full view
+                />
+            ) : (
+                <img
+                  src={initialUrl || ""}
+                  alt="Expanded view"
+                  className="max-h-full max-w-full object-contain"
+                />
+            )}
           </div>
         </div>
 

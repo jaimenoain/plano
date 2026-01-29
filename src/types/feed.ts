@@ -45,5 +45,6 @@ export interface FeedReview {
   comments_count: number;
   is_liked: boolean;
   images?: ReviewImage[];
+  video_url?: string | null;
   watch_with_users?: WatchWithUser[];
 }
