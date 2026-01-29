@@ -52,6 +52,16 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
 
       if (candidateBuildingIds.length === 0) return [];
 
+      // 3.5 Check Pipeline Status
+      const { data: pipelineItems, error: pipelineError } = await supabase
+        .from("group_backlog_items")
+        .select("building_id")
+        .eq("group_id", group.id);
+
+      if (pipelineError) throw pipelineError;
+
+      const pipelineSet = new Set(pipelineItems?.map(i => i.building_id));
+
       // 4. Fetch Building Details for candidates
       // @ts-ignore
       const { data: buildingDetails, error: buildingsError } = await supabase
@@ -84,6 +94,7 @@ export function useSmartBacklog(group: any, selectedMemberIds: string[], filters
             overlap_count: interestedUserIds.length,
             interested_users: interestedUsers,
             total_selected_members: selectedMemberIds.length,
+            is_in_pipeline: pipelineSet.has(building.id),
           };
         });
 

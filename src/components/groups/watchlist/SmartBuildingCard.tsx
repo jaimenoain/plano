@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Clock, Loader2 } from "lucide-react";
+import { Plus, Clock, Loader2, ListPlus, Check } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Architect } from "@/types/architect";
@@ -25,16 +25,19 @@ export interface SmartBuilding {
   overlap_count: number;
   interested_users: InterestedUser[];
   total_selected_members: number;
+  is_in_pipeline?: boolean;
 }
 
 interface SmartBuildingCardProps {
   building: SmartBuilding;
+  groupId: string;
 }
 
-export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
+export function SmartBuildingCard({ building, groupId }: SmartBuildingCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
+  const [isAddingToPipeline, setIsAddingToPipeline] = useState(false);
 
   const isInWatchlist = user && building.interested_users.some(u => u.id === user.id);
 
@@ -88,6 +91,47 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
       toast.error("Failed to update bucket list");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddToPipeline = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error("You must be logged in");
+      return;
+    }
+
+    if (isAddingToPipeline || building.is_in_pipeline) return;
+    setIsAddingToPipeline(true);
+
+    try {
+      const { error } = await supabase
+        .from("group_backlog_items")
+        .insert({
+          group_id: groupId,
+          user_id: user.id,
+          building_id: building.id,
+          priority: "Medium",
+          status: "Pending"
+        });
+
+      if (error) {
+         if (error.code === '42501') {
+             throw new Error("Only admins can add to pipeline");
+         }
+         throw error;
+      }
+
+      toast.success("Added to pipeline");
+      queryClient.invalidateQueries({ queryKey: ["group-smart-backlog"] });
+      queryClient.invalidateQueries({ queryKey: ["group-backlog", groupId] });
+    } catch (error: any) {
+      console.error("Pipeline add error:", error);
+      toast.error(error.message || "Failed to add to pipeline");
+    } finally {
+      setIsAddingToPipeline(false);
     }
   };
 
@@ -145,10 +189,10 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
         </div>
       </Link>
 
-      {/* Interested Users Avatars */}
-      {building.interested_users.length > 0 && (
-        <div className="flex items-center -space-x-2 px-1">
-          {building.interested_users.slice(0, 5).map((u) => (
+      <div className="flex items-center justify-between gap-2 px-1">
+        {/* Interested Users Avatars */}
+        <div className="flex items-center -space-x-2">
+          {building.interested_users.length > 0 && building.interested_users.slice(0, 5).map((u) => (
              <Avatar key={u.id} className="h-6 w-6 border-2 border-background ring-1 ring-border">
                 <AvatarImage src={u.avatar_url || undefined} />
                 <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
@@ -162,7 +206,30 @@ export function SmartBuildingCard({ building }: SmartBuildingCardProps) {
              </div>
           )}
         </div>
-      )}
+
+        {/* Pipeline Button */}
+        <Button
+           size="sm"
+           variant={building.is_in_pipeline ? "ghost" : "outline"}
+           className={`h-7 px-2 text-xs ${building.is_in_pipeline ? "text-muted-foreground" : "gap-1.5"}`}
+           onClick={handleAddToPipeline}
+           disabled={building.is_in_pipeline || isAddingToPipeline}
+        >
+           {isAddingToPipeline ? (
+               <Loader2 className="h-3.5 w-3.5 animate-spin" />
+           ) : building.is_in_pipeline ? (
+               <>
+                 <Check className="h-3.5 w-3.5" />
+                 In Pipeline
+               </>
+           ) : (
+               <>
+                 <ListPlus className="h-3.5 w-3.5" />
+                 Add
+               </>
+           )}
+        </Button>
+      </div>
     </div>
   );
 }

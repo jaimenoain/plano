@@ -205,7 +205,7 @@ export function SmartBacklog({ group }: SmartBacklogProps) {
           </AlertDescription>
         </Alert>
       )}
-      <SmartBuildingGrid buildings={buildings || []} isLoading={isLoading} />
+      <SmartBuildingGrid buildings={buildings || []} isLoading={isLoading} groupId={group.id} />
 
       {/* Floating Action Button */}
       <div className="fixed bottom-24 right-4 md:right-8 z-[60]">

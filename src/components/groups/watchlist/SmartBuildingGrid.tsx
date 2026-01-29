@@ -4,9 +4,10 @@ import { SmartBuilding, SmartBuildingCard } from "./SmartBuildingCard";
 interface SmartBuildingGridProps {
   buildings: SmartBuilding[];
   isLoading: boolean;
+  groupId: string;
 }
 
-export function SmartBuildingGrid({ buildings, isLoading }: SmartBuildingGridProps) {
+export function SmartBuildingGrid({ buildings, isLoading, groupId }: SmartBuildingGridProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -34,7 +35,7 @@ export function SmartBuildingGrid({ buildings, isLoading }: SmartBuildingGridPro
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 animate-in fade-in duration-500">
       {buildings.map((building) => (
-        <SmartBuildingCard key={building.id} building={building} />
+        <SmartBuildingCard key={building.id} building={building} groupId={groupId} />
       ))}
     </div>
   );
