@@ -24,6 +24,14 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
+import { SessionMap } from "@/components/groups/SessionMap";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface ComparisonBuilding extends Omit<AdminBuilding, 'architects'> {
     architects: { id: string; name: string; type?: 'individual' | 'studio' }[];
@@ -43,6 +51,9 @@ export default function MergeComparison() {
     // Pointers to IDs
     const [targetPointer, setTargetPointer] = useState<string | null>(targetId || null);
     const [sourcePointer, setSourcePointer] = useState<string | null>(sourceId || null);
+
+    // Review Images
+    const [reviewImages, setReviewImages] = useState<Record<string, string[]>>({});
 
     // Impact Stats
     const [impact, setImpact] = useState({ reviews: 0, photos: 0 });
@@ -88,6 +99,24 @@ export default function MergeComparison() {
             }
 
             setBuildings(transformed);
+
+            // Fetch review images
+            const { data: images } = await supabase
+                .from('review_images')
+                .select('building_id, storage_path')
+                .in('building_id', [id1, id2]);
+
+            if (images) {
+                const imgMap: Record<string, string[]> = {};
+                images.forEach((img) => {
+                    if (img.storage_path) {
+                        if (!imgMap[img.building_id]) imgMap[img.building_id] = [];
+                        const fullUrl = getBuildingImageUrl(img.storage_path);
+                        if (fullUrl) imgMap[img.building_id].push(fullUrl);
+                    }
+                });
+                setReviewImages(imgMap);
+            }
         } catch (error) {
             console.error("Error fetching buildings:", error);
             toast.error("Failed to load buildings");
@@ -320,6 +349,12 @@ export default function MergeComparison() {
                                 alt={targetBuilding.name}
                                 className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500"
                             />
+                        ) : targetBuilding.location ? (
+                            <SessionMap
+                                buildings={[{ ...targetBuilding, main_image_url: targetBuilding.hero_image }]}
+                                interactive={false}
+                                className="w-full h-full"
+                            />
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 bg-muted/50">
                                 <ImageIcon className="h-12 w-12 mb-2" />
@@ -403,6 +438,26 @@ export default function MergeComparison() {
                                 </div>
                             </>
                         )}
+
+                        {reviewImages[targetBuilding.id]?.length > 0 && (
+                            <div className="space-y-2 pt-2">
+                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Review Images</div>
+                                <Carousel className="w-full max-w-full relative group/carousel">
+                                    <CarouselContent className="-ml-2">
+                                        {reviewImages[targetBuilding.id].map((url, idx) => (
+                                            <CarouselItem key={idx} className="pl-2 basis-1/3 md:basis-1/4">
+                                                <div className="aspect-square relative overflow-hidden rounded-md border bg-muted">
+                                                    <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" />
+                                                </div>
+                                            </CarouselItem>
+                                        ))}
+                                    </CarouselContent>
+                                    <CarouselPrevious className="left-1 h-6 w-6 opacity-0 group-hover/carousel:opacity-100 transition-opacity" />
+                                    <CarouselNext className="right-1 h-6 w-6 opacity-0 group-hover/carousel:opacity-100 transition-opacity" />
+                                </Carousel>
+                            </div>
+                        )}
+
                         <div className="pt-4 border-t border-green-200">
                              <div className="text-xs font-mono text-green-700/70 truncate" title={targetBuilding.id}>{targetBuilding.id}</div>
                         </div>
@@ -435,6 +490,12 @@ export default function MergeComparison() {
                                 src={getBuildingImageUrl(sourceBuilding.hero_image)}
                                 alt={sourceBuilding.name}
                                 className="w-full h-full object-cover grayscale opacity-90 transition-transform group-hover:scale-105 duration-500"
+                            />
+                        ) : sourceBuilding.location ? (
+                            <SessionMap
+                                buildings={[{ ...sourceBuilding, main_image_url: sourceBuilding.hero_image }]}
+                                interactive={false}
+                                className="w-full h-full"
                             />
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 bg-muted/50">
@@ -469,6 +530,26 @@ export default function MergeComparison() {
                              <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Address</div>
                              <div className="text-sm text-red-900/80 break-words line-clamp-2" title={sourceBuilding.address || ""}>{sourceBuilding.address || "N/A"}</div>
                         </div>
+
+                        {reviewImages[sourceBuilding.id]?.length > 0 && (
+                            <div className="space-y-2 pt-2">
+                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Review Images</div>
+                                <Carousel className="w-full max-w-full relative group/carousel">
+                                    <CarouselContent className="-ml-2">
+                                        {reviewImages[sourceBuilding.id].map((url, idx) => (
+                                            <CarouselItem key={idx} className="pl-2 basis-1/3 md:basis-1/4">
+                                                <div className="aspect-square relative overflow-hidden rounded-md border bg-muted">
+                                                    <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" />
+                                                </div>
+                                            </CarouselItem>
+                                        ))}
+                                    </CarouselContent>
+                                    <CarouselPrevious className="left-1 h-6 w-6 opacity-0 group-hover/carousel:opacity-100 transition-opacity" />
+                                    <CarouselNext className="right-1 h-6 w-6 opacity-0 group-hover/carousel:opacity-100 transition-opacity" />
+                                </Carousel>
+                            </div>
+                        )}
+
                          <div className="pt-4 border-t border-red-200">
                              <div className="text-xs font-mono text-red-700/70 truncate" title={sourceBuilding.id}>{sourceBuilding.id}</div>
                         </div>
