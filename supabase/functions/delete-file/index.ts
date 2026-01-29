@@ -24,16 +24,28 @@ Deno.serve(async (req) => {
     )
 
     const token = authHeader.replace('Bearer ', '')
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser(token)
+    let user = null;
+    let isAdmin = false;
 
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized', details: userError }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // JULES-MAINTAIN: Service Role bypass for admin processes
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (serviceRoleKey && token === serviceRoleKey) {
+        console.log("Admin bypass: Service Role Key detected");
+        isAdmin = true;
+        user = { id: 'admin_delete' };
+    } else {
+        const {
+            data: { user: authUser },
+            error: userError,
+        } = await supabaseClient.auth.getUser(token)
+
+        if (userError || !authUser) {
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized', details: userError }),
+                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+        user = authUser;
     }
 
     const { fileKeys } = await req.json()
@@ -42,7 +54,7 @@ Deno.serve(async (req) => {
        return new Response(JSON.stringify({ message: 'No keys to delete' }), { status: 200, headers: corsHeaders })
     }
 
-    // Security: Ensure all keys belong to the user
+    // Security: Ensure all keys belong to the user (unless admin)
     // We check if the key starts with the user ID followed by a slash.
     // Note: If new keys start with review-images/, this check needs to be smarter?
     // User ID is in the path. e.g. review-images/USER_ID/file
@@ -52,14 +64,17 @@ Deno.serve(async (req) => {
     // So I MUST update the security check to handle the new prefix OR valid legacy prefix.
 
     // Let's analyze the check.
-    const invalidKeys = fileKeys.filter((key: string) => {
-        // Allow if starts with user.id/ (legacy)
-        if (key.startsWith(`${user.id}/`)) return false;
-        // Allow if starts with review-images/user.id/ (new)
-        if (key.startsWith(`review-images/${user.id}/`)) return false;
+    let invalidKeys: string[] = [];
+    if (!isAdmin) {
+        invalidKeys = fileKeys.filter((key: string) => {
+            // Allow if starts with user.id/ (legacy)
+            if (key.startsWith(`${user.id}/`)) return false;
+            // Allow if starts with review-images/user.id/ (new)
+            if (key.startsWith(`review-images/${user.id}/`)) return false;
 
-        return true;
-    })
+            return true;
+        })
+    }
 
     if (invalidKeys.length > 0) {
         return new Response(
