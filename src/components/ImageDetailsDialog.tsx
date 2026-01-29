@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } fr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Send, X, Trash2, Loader2 } from "lucide-react";
+import { Heart, MessageCircle, Send, X, Trash2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow, format } from "date-fns";
@@ -33,6 +33,10 @@ interface ImageDetailsDialogProps {
     avatar_url: string | null;
   } | null;
   uploadDate?: string;
+  onNext?: () => void;
+  onPrev?: () => void;
+  hasNext?: boolean;
+  hasPrev?: boolean;
 }
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -45,7 +49,11 @@ export function ImageDetailsDialog({
   onClose,
   canInteract = true,
   uploadedBy,
-  uploadDate
+  uploadDate,
+  onNext,
+  onPrev,
+  hasNext,
+  hasPrev
 }: ImageDetailsDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -59,6 +67,24 @@ export function ImageDetailsDialog({
 
   const isValidUuid = imageId && UUID_REGEX.test(imageId);
   const isInteractive = canInteract && isValidUuid;
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' && onNext && hasNext) {
+        e.preventDefault();
+        onNext();
+      } else if (e.key === 'ArrowLeft' && onPrev && hasPrev) {
+        e.preventDefault();
+        onPrev();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onNext, onPrev, hasNext, hasPrev]);
 
   // Reset state when dialog opens with a new image
   useEffect(() => {
@@ -246,7 +272,21 @@ export function ImageDetailsDialog({
         </DialogClose>
 
         {/* LEFT: Image Area */}
-        <div className="flex-1 bg-black flex items-center justify-center relative min-h-[40vh]">
+        <div className="flex-1 bg-black flex items-center justify-center relative min-h-[40vh] group/image">
+          {hasPrev && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 z-10 opacity-0 group-hover/image:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPrev?.();
+              }}
+            >
+              <ChevronLeft className="h-8 w-8" />
+            </Button>
+          )}
+
           <div className="absolute inset-0 flex items-center justify-center p-4">
             {type === 'video' ? (
                 <VideoPlayer
@@ -263,6 +303,20 @@ export function ImageDetailsDialog({
                 />
             )}
           </div>
+
+          {hasNext && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 z-10 opacity-0 group-hover/image:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNext?.();
+              }}
+            >
+              <ChevronRight className="h-8 w-8" />
+            </Button>
+          )}
         </div>
 
         {/* RIGHT: Sidebar (Comments & Actions) */}
