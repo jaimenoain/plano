@@ -560,7 +560,7 @@ export default function Profile() {
       {/* 1. Header & User Card */}
       <UserCard
         profile={profile}
-        stats={stats}
+        stats={{ ...stats, maps: allTags.length }}
         isOwnProfile={isOwnProfile}
         isFollowing={isFollowing}
         onFollowToggle={handleFollowToggle}
