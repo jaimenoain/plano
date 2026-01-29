@@ -269,9 +269,11 @@ export default function Groups() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold tracking-tight">Groups</h2>
-              <p className="text-muted-foreground mt-1">
-                Plan trips and create clubs to share your passion for architecture
-              </p>
+              {myGroups.length > 0 && (
+                <p className="text-muted-foreground mt-1">
+                  Plan trips and create clubs to share your passion for architecture
+                </p>
+              )}
             </div>
 
             <Dialog open={isCreateOpen} onOpenChange={(open) => {
@@ -362,7 +364,7 @@ export default function Groups() {
               </div>
               <h3 className="font-semibold text-lg">No groups yet</h3>
               <p className="text-muted-foreground mb-4 max-w-sm text-center">
-                You haven't joined any clubs. Create one or browse public groups to get started.
+                Plan trips and create clubs to share your passion for architecture
               </p>
               <div className="flex flex-col items-center gap-2">
                 <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
@@ -391,7 +393,7 @@ export default function Groups() {
                     </div>
                     <h3 className="font-semibold text-lg">No groups yet</h3>
                     <p className="text-muted-foreground mb-4 max-w-sm text-center">
-                      You haven't joined any clubs. Create one or browse public groups to get started.
+                      Plan trips and create clubs to share your passion for architecture
                     </p>
                     <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
                       Create First Group
