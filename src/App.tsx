@@ -29,6 +29,7 @@ import CreateSession from "./pages/CreateSession";
 import AddBuilding from "./pages/AddBuilding";
 import EditBuilding from "./pages/EditBuilding";
 import WriteReview from "./pages/WriteReview";
+import CollectionMap from "./pages/CollectionMap";
 
 import GroupLayout from "./pages/groups/GroupLayout";
 import GroupSessions from "./pages/groups/GroupSessions";
@@ -94,6 +95,7 @@ const router = createBrowserRouter(
       <Route path="/terms" element={<Terms />} />
       <Route path="/explore" element={<Explore />} />
       <Route path="/search" element={<Search />} />
+      <Route path="/map/:username/:slug" element={<CollectionMap />} />
       <Route path="/post" element={<Post />} />
       <Route path="/notifications" element={<Notifications />} />
 
