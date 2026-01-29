@@ -8,6 +8,7 @@ import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getBuildingImageUrl } from "@/utils/image";
+import { parseLocation } from "@/utils/location";
 import { filterLocalBuildings } from "../utils/searchFilters";
 import { UserSearchResult } from "./useUserSearch";
 
@@ -377,11 +378,15 @@ export function useBuildingSearch() {
 
             // 5. Map to DiscoveryBuilding and calculate distance
             const mappedBuildings = filteredData.map((b: any) => {
+                const coords = parseLocation(b.location);
+                const location_lat = coords?.lat || 0;
+                const location_lng = coords?.lng || 0;
+
                 const distance = getDistanceFromLatLonInM(
                     userLocation.lat,
                     userLocation.lng,
-                    b.location_lat,
-                    b.location_lng
+                    location_lat,
+                    location_lng
                 );
 
                 return {
@@ -392,8 +397,8 @@ export function useBuildingSearch() {
                     year_completed: b.year_completed,
                     city: b.city,
                     country: b.country,
-                    location_lat: b.location_lat,
-                    location_lng: b.location_lng,
+                    location_lat: location_lat,
+                    location_lng: location_lng,
                     distance: distance,
                     status: b.status,
                     // Pass through metadata if needed downstream, but DiscoveryBuilding interface might not have it
