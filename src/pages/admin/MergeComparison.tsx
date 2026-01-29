@@ -228,16 +228,20 @@ export default function MergeComparison() {
             await supabase.from('buildings').update({ is_deleted: true }).eq('id', sourcePointer);
 
             // Audit Log
-            await supabase.from('admin_audit_logs').insert({
-                admin_id: user.id,
-                action_type: 'merge_buildings',
-                target_type: 'buildings',
-                target_id: targetPointer,
-                details: {
-                    merged_source_id: sourcePointer,
-                    source_name: buildings.find(b => b.id === sourcePointer)?.name
-                }
-            });
+            try {
+                await supabase.from('admin_audit_logs').insert({
+                    admin_id: user.id,
+                    action_type: 'merge_buildings',
+                    target_type: 'buildings',
+                    target_id: targetPointer,
+                    details: {
+                        merged_source_id: sourcePointer,
+                        source_name: buildings.find(b => b.id === sourcePointer)?.name
+                    }
+                });
+            } catch (auditError) {
+                console.warn("Failed to create audit log entry:", auditError);
+            }
 
             // Notify other admins (via Recommendation proxy to appear in notifications)
             const { data: admins } = await supabase
