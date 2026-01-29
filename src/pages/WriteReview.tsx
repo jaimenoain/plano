@@ -13,7 +13,8 @@ import {
   Plus,
   Pencil,
   Check,
-  Bookmark
+  Bookmark,
+  Video
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -43,8 +44,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { resizeImage } from "@/lib/image-compression";
 import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
-import { uploadFile, deleteFiles } from "@/utils/upload";
+import { uploadFile, deleteFiles, uploadFileWithProgress } from "@/utils/upload";
 import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
+import { VideoCompressionService } from "@/utils/video-compression";
 
 interface ReviewImage {
   id: string;
@@ -53,12 +55,21 @@ interface ReviewImage {
   storage_path?: string;
 }
 
+interface VideoState {
+  file: File | null;
+  preview: string | null;
+  storage_path: string | null;
+  status: 'idle' | 'compressing' | 'uploading' | 'ready' | 'error';
+  progress: number;
+}
+
 export default function WriteReview() {
   const { id } = useParams(); // buildingId
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -76,6 +87,16 @@ export default function WriteReview() {
 
   const [images, setImages] = useState<ReviewImage[]>([]);
   const [deletedImages, setDeletedImages] = useState<ReviewImage[]>([]);
+
+  const [video, setVideo] = useState<VideoState>({
+    file: null,
+    preview: null,
+    storage_path: null,
+    status: 'idle',
+    progress: 0
+  });
+  const [deletedVideoPath, setDeletedVideoPath] = useState<string | null>(null);
+
   const [status, setStatus] = useState<'visited' | 'pending'>('visited');
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<string>("public");
@@ -137,7 +158,7 @@ export default function WriteReview() {
 
           const { data: userBuilding, error: ubError } = await supabase
             .from("user_buildings")
-            .select("id, rating, content, status, tags, visibility")
+            .select("id, rating, content, status, tags, visibility, video_url")
             .eq("user_id", user.id)
             .eq("building_id", building.id)
             .maybeSingle();
@@ -162,6 +183,16 @@ export default function WriteReview() {
               setStatus('pending');
             } else {
               setStatus('visited');
+            }
+
+            if (userBuilding.video_url) {
+              setVideo({
+                file: null,
+                preview: getBuildingImageUrl(userBuilding.video_url) || null,
+                storage_path: userBuilding.video_url,
+                status: 'ready',
+                progress: 100
+              });
             }
 
             // Fetch Links
@@ -232,6 +263,80 @@ export default function WriteReview() {
     }
   }, [toast]);
 
+  const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      try {
+        // 1. Set Compressing State
+        setVideo(prev => ({
+          ...prev,
+          file,
+          status: 'compressing',
+          progress: 0
+        }));
+
+        // 2. Compress Video
+        const compressedFile = await VideoCompressionService.compressVideo(file);
+
+        // 3. Set Uploading State
+        setVideo(prev => ({
+          ...prev,
+          file: compressedFile,
+          status: 'uploading',
+          progress: 0
+        }));
+
+        // 4. Upload Video
+        const key = await uploadFileWithProgress(compressedFile, (progress) => {
+          setVideo(prev => ({ ...prev, progress }));
+        });
+
+        // 5. Set Ready State
+        setVideo({
+          file: compressedFile,
+          preview: URL.createObjectURL(compressedFile),
+          storage_path: key,
+          status: 'ready',
+          progress: 100
+        });
+
+        if (videoInputRef.current) {
+          videoInputRef.current.value = "";
+        }
+
+      } catch (error) {
+        console.error("Video processing error:", error);
+        toast({
+          variant: "destructive",
+          title: "Video upload failed",
+          description: error instanceof Error ? error.message : "Unknown error"
+        });
+        setVideo(prev => ({
+          ...prev,
+          status: 'error',
+          progress: 0
+        }));
+      }
+    }
+  };
+
+  const removeVideo = () => {
+    if (video.storage_path) {
+      setDeletedVideoPath(video.storage_path);
+    }
+    if (video.preview && video.preview.startsWith('blob:')) {
+      URL.revokeObjectURL(video.preview);
+    }
+    setVideo({
+      file: null,
+      preview: null,
+      storage_path: null,
+      status: 'idle',
+      progress: 0
+    });
+  };
+
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
@@ -281,15 +386,28 @@ export default function WriteReview() {
       dragCounter.current = 0;
 
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-        if (files.length > 0) {
-          await processFiles(files);
+        const items = Array.from(e.dataTransfer.files);
+        const imageFiles = items.filter(file => file.type.startsWith('image/'));
+        // Currently drag and drop only supports images as per existing logic, could be extended.
+
+        if (imageFiles.length > 0) {
+          await processFiles(imageFiles);
         } else {
-          toast({
-            variant: "destructive",
-            title: "Invalid file type",
-            description: "Please upload images only."
-          });
+          // If no images, check for video?
+          // For now, keeping existing image behavior as primary drag target to avoid conflicts or complex logic
+          // unless user specifically requested drag-drop for video too.
+          // The request says "El usuario elige un vídeo", implies selection.
+          // I will leave Drag & Drop for images for now to match previous behavior,
+          // but if user drags only video, I could handle it.
+          // Let's keep it simple and focus on the file input for video.
+
+          if (items.some(f => !f.type.startsWith('image/'))) {
+             toast({
+              variant: "destructive",
+              title: "Invalid file type",
+              description: "Please upload images via drag & drop, or use the video button."
+            });
+          }
         }
       }
     };
@@ -389,6 +507,11 @@ export default function WriteReview() {
         await deleteFiles(imagesToDelete);
       }
 
+      // Delete video if exists
+      if (video.storage_path) {
+        await deleteFiles([video.storage_path]);
+      }
+
       // 2. Delete the record
       const { error } = await supabase
         .from('user_buildings')
@@ -428,6 +551,7 @@ export default function WriteReview() {
           tags: tags,
           status: status,
           visibility: visibility,
+          video_url: video.storage_path, // Save video path
           edited_at: new Date().toISOString()
         }, { onConflict: 'user_id, building_id' })
         .select()
@@ -486,6 +610,15 @@ export default function WriteReview() {
         }
       }
 
+      // Handle Video Deletion (orphaned video file from previous save)
+      if (deletedVideoPath) {
+        try {
+          await deleteFiles([deletedVideoPath]);
+        } catch (error) {
+          console.error("Error deleting old video:", error);
+        }
+      }
+
       // 4. Handle New Image Uploads
       const newImages = images.filter(img => img.file);
       if (newImages.length > 0) {
@@ -528,8 +661,11 @@ export default function WriteReview() {
   useEffect(() => {
     return () => {
       images.forEach(img => URL.revokeObjectURL(img.preview));
+      if (video.preview && video.preview.startsWith('blob:')) {
+        URL.revokeObjectURL(video.preview);
+      }
     };
-  }, [images]);
+  }, [images, video.preview]);
 
   if (loading) {
     return (
@@ -613,6 +749,80 @@ export default function WriteReview() {
             onChange={(e) => setContent(e.target.value)}
             className="min-h-[150px] resize-none"
           />
+        </div>
+
+        {/* Video Upload */}
+        <div className="space-y-4">
+          <label className="text-sm font-medium uppercase text-muted-foreground">Video</label>
+          <input
+            type="file"
+            ref={videoInputRef}
+            className="hidden"
+            accept="video/mp4,video/webm,video/quicktime"
+            onChange={handleVideoSelect}
+            disabled={video.status === 'compressing' || video.status === 'uploading' || submitting}
+          />
+
+          {!video.preview && !video.status.match(/compressing|uploading/) ? (
+            <div
+              onClick={() => videoInputRef.current?.click()}
+              className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-muted-foreground/50 cursor-pointer transition-all gap-3"
+            >
+              <div className="p-4 bg-muted rounded-full">
+                <Video className="w-8 h-8" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium text-lg">Add Video</p>
+                <p className="text-sm text-muted-foreground">Share a clip of the experience</p>
+              </div>
+            </div>
+          ) : (
+            <div className="relative rounded-lg overflow-hidden border bg-muted">
+               {video.status === 'compressing' && (
+                 <div className="p-10 flex flex-col items-center justify-center gap-3">
+                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                   <p className="text-sm font-medium">Optimizando vídeo...</p>
+                 </div>
+               )}
+
+               {video.status === 'uploading' && (
+                 <div className="p-10 flex flex-col items-center justify-center gap-3 w-full">
+                   <div className="w-full max-w-xs bg-secondary h-2 rounded-full overflow-hidden">
+                     <div
+                       className="bg-primary h-full transition-all duration-300 ease-out"
+                       style={{ width: `${video.progress}%` }}
+                     />
+                   </div>
+                   <p className="text-sm font-medium">Uploading... {Math.round(video.progress)}%</p>
+                 </div>
+               )}
+
+               {video.status === 'ready' && video.preview && (
+                 <div className="relative aspect-video bg-black">
+                   <video
+                     src={video.preview}
+                     controls
+                     className="w-full h-full"
+                   />
+                   <button
+                     onClick={removeVideo}
+                     className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors"
+                   >
+                     <X className="w-4 h-4" />
+                   </button>
+                 </div>
+               )}
+
+               {video.status === 'error' && (
+                 <div className="p-10 flex flex-col items-center justify-center gap-3 text-destructive">
+                   <p className="font-medium">Upload failed</p>
+                   <Button variant="outline" size="sm" onClick={() => setVideo(prev => ({ ...prev, status: 'idle', progress: 0 }))}>
+                     Try Again
+                   </Button>
+                 </div>
+               )}
+            </div>
+          )}
         </div>
 
         {/* Image Upload - Prominent */}
