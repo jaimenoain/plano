@@ -4,7 +4,7 @@ test('verify add building ui', async ({ page }) => {
   // 1. Go to the add building page directly.
   // Note: If authentication is required, this might redirect to login.
   // However, we are verifying the UI components presence.
-  await page.goto('http://localhost:3000/add-building');
+  await page.goto('http://localhost:8080/add-building');
 
   // Check if we are redirected to login or if we can see the page.
   // If we are redirected, we might need to mock auth or use a test user if available.
@@ -28,7 +28,7 @@ test('verify add building ui', async ({ page }) => {
       await expect(nameInput).toBeVisible();
 
       // Verify Location Input exists
-      const locationLabel = page.getByText('Location', { exact: true });
+      const locationLabel = page.getByText('Location Search', { exact: false });
       await expect(locationLabel).toBeVisible();
 
       // Type something in name
