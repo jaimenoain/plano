@@ -597,13 +597,13 @@ export default function AddBuilding() {
                 }}
               >
                 <div className="flex flex-col items-center">
-                    <MapPin
-                        className={`h-8 w-8 drop-shadow-md transition-colors ${
-                            locationPrecision === 'approximate'
-                                ? "text-amber-500 fill-amber-500"
-                                : "text-red-600 fill-red-600"
-                        }`}
-                    />
+                    {locationPrecision === 'approximate' ? (
+                        <div className="w-6 h-6 rounded-full bg-[#EEFF41] border-2 border-background drop-shadow-md transition-transform" />
+                    ) : (
+                        <MapPin
+                            className="h-8 w-8 text-[#EEFF41] fill-[#EEFF41] drop-shadow-md transition-colors"
+                        />
+                    )}
                     <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
                 </div>
               </Marker>
@@ -647,7 +647,11 @@ export default function AddBuilding() {
           {/* Overlay Legend or Status */}
           <div className="absolute top-4 left-4 bg-background/95 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-xs space-y-1">
              <div className="flex items-center gap-2">
-                 <MapPin className={`h-3 w-3 ${locationPrecision === 'approximate' ? "text-amber-500" : "text-red-600"}`} />
+                 {locationPrecision === 'approximate' ? (
+                     <div className="w-3 h-3 rounded-full bg-[#EEFF41] border border-background" />
+                 ) : (
+                     <MapPin className="h-3 w-3 text-[#EEFF41] fill-[#EEFF41]" />
+                 )}
                  <span>Selected Location</span>
              </div>
              <div className="flex items-center gap-2">
