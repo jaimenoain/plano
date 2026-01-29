@@ -28,8 +28,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { UserCard } from "@/components/profile/UserCard";
 import { ProfileHighlights } from "@/components/profile/ProfileHighlights";
 import { SocialContextSection } from "@/components/profile/SocialContextSection";
-import { CollectionsList } from "@/components/profile/CollectionsList";
-import { ManageCollectionDialog } from "@/components/profile/ManageCollectionDialog";
+import { CollectionsGrid } from "@/components/profile/CollectionsGrid";
+import { CreateCollectionDialog } from "@/components/profile/CreateCollectionDialog";
 import { FeedReview } from "@/types/feed";
 import { useProfileComparison } from "@/hooks/useProfileComparison";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -78,7 +78,6 @@ export default function Profile() {
   const activeFilter = tabParam === 'reviews' ? 'visited' : (tabParam === 'bucket_list' ? 'pending' : 'all');
 
   const searchQuery = searchParams.get("search") || "";
-  const selectedCollection = searchParams.get("collection");
 
   const [loading, setLoading] = useState(true);
   
@@ -89,9 +88,8 @@ export default function Profile() {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
   // Collections State
-  const [showManageCollections, setShowManageCollections] = useState(false);
+  const [showCreateCollection, setShowCreateCollection] = useState(false);
   const [collectionsRefreshKey, setCollectionsRefreshKey] = useState(0);
-  const [collectionBuildingIds, setCollectionBuildingIds] = useState<Set<string> | null>(null);
 
   // New Profile Features
   const [squad, setSquad] = useState<Profile[]>([]);
@@ -144,23 +142,6 @@ export default function Profile() {
       newParams.delete("search");
     }
     setSearchParams(newParams, { replace: true });
-  };
-
-  const handleCollectionChange = (slug: string | null) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (slug) {
-      newParams.set("collection", slug);
-    } else {
-      newParams.delete("collection");
-    }
-    setSearchParams(newParams, { replace: true, preventScrollReset: true });
-
-    requestAnimationFrame(() => {
-        const element = document.getElementById('collections-section');
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    });
   };
 
   const handleShare = () => {
@@ -252,39 +233,6 @@ export default function Profile() {
     }
   }, [targetUserId, currentUser]);
 
-  // Fetch items for selected collection
-  useEffect(() => {
-    const fetchCollectionItems = async () => {
-        if (!selectedCollection || !targetUserId) {
-            setCollectionBuildingIds(null);
-            return;
-        }
-
-        try {
-            const { data, error } = await supabase
-                .from("collections")
-                .select("id, collection_items(building_id)")
-                .eq("owner_id", targetUserId)
-                .eq("slug", selectedCollection)
-                .single();
-
-            if (error) throw error;
-
-            if (data && data.collection_items) {
-                const ids = new Set(data.collection_items.map((i: any) => i.building_id));
-                setCollectionBuildingIds(ids);
-            } else {
-                setCollectionBuildingIds(new Set()); // Empty collection
-            }
-        } catch (error) {
-            console.error("Error fetching collection items:", error);
-            setCollectionBuildingIds(new Set());
-        }
-    };
-
-    fetchCollectionItems();
-  }, [selectedCollection, targetUserId]);
-
   // --- Logic ---
 
   // Computed: Filtered Content
@@ -294,13 +242,11 @@ export default function Profile() {
         item.building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.content && item.content.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesCollection = selectedCollection === null || (collectionBuildingIds?.has(item.building.id));
-
       const matchesFilter = activeFilter === 'all' || item.status === activeFilter;
 
-      return matchesSearch && matchesCollection && matchesFilter;
+      return matchesSearch && matchesFilter;
     });
-  }, [content, searchQuery, selectedCollection, collectionBuildingIds, activeFilter]);
+  }, [content, searchQuery, activeFilter]);
 
   const checkIfFollowing = async () => {
     if (!currentUser || !targetUserId || currentUser.id === targetUserId) return;
@@ -619,16 +565,14 @@ export default function Profile() {
         />
       )}
 
-      {/* 4. Collections Row (Replaces Tags) */}
+      {/* 4. Collections Grid */}
       {targetUserId && (
           <div id="collections-section" className="scroll-mt-24">
-              <CollectionsList
+              <CollectionsGrid
                 userId={targetUserId}
-                selectedSlug={selectedCollection}
-                onSelectCollection={handleCollectionChange}
-                onShare={handleShare}
-                onManage={isOwnProfile ? () => setShowManageCollections(true) : undefined}
+                username={profile?.username || null}
                 isOwnProfile={isOwnProfile}
+                onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
                 refreshKey={collectionsRefreshKey}
               />
           </div>
@@ -694,7 +638,7 @@ export default function Profile() {
                 </div>
              ) : (
                 // Empty States
-                (searchQuery || selectedCollection) ? (
+                (searchQuery) ? (
                    <EmptyState icon={Search} label="No results found" />
                 ) : activeFilter === 'visited' ? (
                    <EmptyState icon={Building2} label="No visited buildings yet" />
@@ -756,13 +700,16 @@ export default function Profile() {
         </DialogContent>
       </Dialog>
 
-      {/* Manage Collections Dialog */}
+      {/* Create Collection Dialog */}
       {currentUser && (
-        <ManageCollectionDialog
-          open={showManageCollections}
-          onOpenChange={setShowManageCollections}
+        <CreateCollectionDialog
+          open={showCreateCollection}
+          onOpenChange={setShowCreateCollection}
           userId={currentUser.id}
-          onUpdate={() => setCollectionsRefreshKey(prev => prev + 1)}
+          onSuccess={() => {
+             setCollectionsRefreshKey(prev => prev + 1);
+             setShowCreateCollection(false);
+          }}
         />
       )}
     </AppLayout>
