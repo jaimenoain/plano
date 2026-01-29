@@ -7,6 +7,7 @@ import { DiscoveryList } from "./components/DiscoveryList";
 import { SearchModeToggle } from "./components/SearchModeToggle";
 import { useBuildingSearch } from "./hooks/useBuildingSearch";
 import { LeaderboardDialog } from "./components/LeaderboardDialog";
+import { DiscoveryBuilding } from "./components/types";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { useUserSearch } from "./hooks/useUserSearch";
 import { UserSearchNudge } from "./components/UserSearchNudge";
@@ -14,6 +15,24 @@ import { UserResultsList } from "./components/UserResultsList";
 import { useArchitectSearch } from "./hooks/useArchitectSearch";
 import { ArchitectSearchNudge } from "./components/ArchitectSearchNudge";
 import { ArchitectResultsList } from "./components/ArchitectResultsList";
+
+function getBoundsFromBuildings(buildings: DiscoveryBuilding[]) {
+  if (!buildings || buildings.length === 0) return null;
+
+  let north = -90;
+  let south = 90;
+  let east = -180;
+  let west = 180;
+
+  buildings.forEach((b) => {
+    if (b.location_lat > north) north = b.location_lat;
+    if (b.location_lat < south) south = b.location_lat;
+    if (b.location_lng > east) east = b.location_lng;
+    if (b.location_lng < west) west = b.location_lng;
+  });
+
+  return { north, south, east, west };
+}
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -86,14 +105,62 @@ export default function SearchPage() {
   // If a user types a query or uses personal filters, we want to search the full database (ignore map bounds)
   // until they interact with the map again to filter.
   useEffect(() => {
-      if (searchQuery || filterVisited || filterBucketList || filterContacts || selectedContacts.length > 0) {
+      if (
+        searchQuery ||
+        filterVisited ||
+        filterBucketList ||
+        filterContacts ||
+        selectedContacts.length > 0 ||
+        selectedArchitects.length > 0 ||
+        selectedTags.length > 0 ||
+        selectedCategory ||
+        selectedTypologies.length > 0 ||
+        selectedAttributes.length > 0 ||
+        personalMinRating > 0 ||
+        contactMinRating > 0
+      ) {
           setIgnoreMapBounds(true);
           setMapInteractionResetTrigger(prev => prev + 1);
       } else {
           setIgnoreMapBounds(false);
           setSearchScope('content');
       }
-  }, [searchQuery, filterVisited, filterBucketList, filterContacts, selectedContacts.length]);
+  }, [
+    searchQuery,
+    filterVisited,
+    filterBucketList,
+    filterContacts,
+    selectedContacts.length,
+    selectedArchitects.length,
+    selectedTags.length,
+    selectedCategory,
+    selectedTypologies.length,
+    selectedAttributes.length,
+    personalMinRating,
+    contactMinRating
+  ]);
+
+  // Automatically fly to bounds of results when in global search mode
+  useEffect(() => {
+    if (ignoreMapBounds && buildings.length > 0) {
+      const bounds = getBoundsFromBuildings(buildings);
+      if (bounds) {
+        setFlyToBounds((prev) => {
+          if (
+            prev &&
+            prev.north === bounds.north &&
+            prev.south === bounds.south &&
+            prev.east === bounds.east &&
+            prev.west === bounds.west
+          ) {
+            return prev;
+          }
+          return bounds;
+        });
+        setFlyToCenter(null);
+      }
+    }
+  }, [buildings, ignoreMapBounds]);
 
   // 4. Merged Filtering Logic
   const filteredBuildings = useMemo(() => {
