@@ -51,7 +51,7 @@ export function PipelineTab({ groupId }: PipelineTabProps) {
           *,
           user:profiles(id, username, avatar_url),
           cycle:group_cycles(id, title),
-          building:buildings(id, name, hero_image_url, year_completed, location_lat, location_lng)
+          building:buildings(id, name, main_image_url, year_completed, location_lat, location_lng)
         `)
         .eq("group_id", groupId)
         .order("created_at", { ascending: false });

@@ -30,7 +30,7 @@ export function BacklogItemCard({ item, cycles, onUpdate }: BacklogItemCardProps
   // item.building is populated by the join in PipelineTab query
   const building = item.building;
   const mainTitle = building?.name || "Unknown Building";
-  const imageUrl = getBuildingImageUrl(building?.hero_image_url) || null;
+  const imageUrl = getBuildingImageUrl(building?.main_image_url) || null;
   const year = building?.year_completed;
 
   const handleSave = async () => {
