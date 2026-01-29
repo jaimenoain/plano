@@ -59,6 +59,11 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [newTypologyName, setNewTypologyName] = useState("");
   const [isAddingTypologyLoading, setIsAddingTypologyLoading] = useState(false);
 
+  // Attribute creation state
+  const [addingAttributeGroupId, setAddingAttributeGroupId] = useState<string | null>(null);
+  const [newAttributeName, setNewAttributeName] = useState("");
+  const [isAddingAttributeLoading, setIsAddingAttributeLoading] = useState(false);
+
   const queryClient = useQueryClient();
 
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
@@ -143,7 +148,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
     try {
       setIsAddingTypologyLoading(true);
-      const slug = newTypologyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const slug = newTypologyName.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
       const { data, error } = await supabase
         .from("functional_typologies")
@@ -171,6 +176,42 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
       toast.error("Failed to add typology");
     } finally {
       setIsAddingTypologyLoading(false);
+    }
+  };
+
+  const handleAddAttribute = async () => {
+    if (!newAttributeName.trim() || !addingAttributeGroupId) return;
+
+    try {
+      setIsAddingAttributeLoading(true);
+      const slug = newAttributeName.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+      const { data, error } = await supabase
+        .from("attributes")
+        .insert({
+          name: newAttributeName,
+          group_id: addingAttributeGroupId,
+          slug: slug
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ["attributes"] });
+
+      // Add to selection
+      setAttributeIds(prev => [...prev, data.id]);
+
+      setNewAttributeName("");
+      setAddingAttributeGroupId(null);
+      toast.success("Attribute added successfully");
+
+    } catch (error) {
+      console.error("Error adding attribute:", error);
+      toast.error("Failed to add attribute");
+    } finally {
+      setIsAddingAttributeLoading(false);
     }
   };
 
@@ -508,6 +549,57 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
                         {attr.name}
                       </ToggleGroupItem>
                     ))}
+
+                    {addingAttributeGroupId === group.id ? (
+                      <div className="flex items-center gap-1 ml-2">
+                        <Input
+                          value={newAttributeName}
+                          onChange={(e) => setNewAttributeName(e.target.value)}
+                          className="h-8 w-40 text-sm"
+                          placeholder="New attribute"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddAttribute();
+                            }
+                          }}
+                          disabled={isAddingAttributeLoading}
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                          onClick={handleAddAttribute}
+                          disabled={isAddingAttributeLoading}
+                        >
+                          {isAddingAttributeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            setAddingAttributeGroupId(null);
+                            setNewAttributeName("");
+                          }}
+                          disabled={isAddingAttributeLoading}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-8 text-sm px-2 text-muted-foreground hover:text-foreground ml-1"
+                        onClick={() => setAddingAttributeGroupId(group.id)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Add another
+                      </Button>
+                    )}
                   </ToggleGroup>
                 </div>
               );
