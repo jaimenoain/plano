@@ -63,6 +63,8 @@ interface BuildingDiscoveryMapProps {
   isFetching?: boolean;
   autoZoomOnLowCount?: boolean;
   resetInteractionTrigger?: number;
+  highlightedId?: string | null;
+  onMarkerClick?: (buildingId: string) => void;
 }
 
 export function BuildingDiscoveryMap({
@@ -74,7 +76,9 @@ export function BuildingDiscoveryMap({
   forcedBounds,
   isFetching,
   autoZoomOnLowCount,
-  resetInteractionTrigger
+  resetInteractionTrigger,
+  highlightedId,
+  onMarkerClick
 }: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -319,6 +323,7 @@ export function BuildingDiscoveryMap({
     const status = userBuildingsMap?.get(building.buildingId);
     const isApproximate = building.location_precision === 'approximate';
     const imageUrl = getBuildingImageUrl(building.main_image_url);
+    const isHighlighted = highlightedId === building.buildingId;
 
     // Pin Protocol:
     // Charcoal: Visited
@@ -343,6 +348,9 @@ export function BuildingDiscoveryMap({
         pinTooltip = <span className="ml-1 opacity-90">({building.social_context})</span>;
     }
 
+    const scaleClass = isHighlighted ? "scale-125 z-50" : "hover:scale-110";
+    const markerClass = `cursor-pointer ${isHighlighted ? 'z-50' : 'hover:z-10'}`;
+
     return (
         <Marker
         key={building.buildingId}
@@ -351,16 +359,20 @@ export function BuildingDiscoveryMap({
         anchor={isApproximate ? "center" : "bottom"}
         onClick={(e) => {
             e.originalEvent.stopPropagation();
-            navigate(`/building/${building.buildingId}`);
+            if (onMarkerClick) {
+                onMarkerClick(building.buildingId);
+            } else {
+                navigate(`/building/${building.buildingId}`);
+            }
         }}
-        className="cursor-pointer hover:z-10"
+        className={markerClass}
         >
             <div
                 data-testid={isApproximate ? "approximate-dot" : "exact-pin"}
                 className="group relative flex flex-col items-center"
             >
             {/* Tooltip */}
-            <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap z-50">
+            <div className={`absolute bottom-full mb-2 ${isHighlighted ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
                 <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
                     {imageUrl && (
                         <div className="w-[100px] h-[100px]">
@@ -376,14 +388,14 @@ export function BuildingDiscoveryMap({
             </div>
 
             {isApproximate ? (
-                <div className={`w-6 h-6 rounded-full border-2 border-background ${dotBgClass} drop-shadow-md transition-transform hover:scale-110`} />
+                <div className={`w-6 h-6 rounded-full border-2 border-background ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`} />
             ) : (
-                <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform hover:scale-110`} />
+                <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform ${scaleClass}`} />
             )}
             </div>
         </Marker>
     );
-  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom]);
+  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick]);
 
   if (isLoading) {
     return (
