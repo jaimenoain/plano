@@ -94,13 +94,20 @@ export default function Onboarding() {
         }
 
         // 3. Check for Inviter in Metadata
-        const invitedByUsername = user.user_metadata?.invited_by;
-        if (invitedByUsername) {
-          const { data: inviterProfile } = await supabase
-            .from("profiles")
-            .select("id, username, avatar_url")
-            .eq("username", invitedByUsername)
-            .single();
+        const invitedBy = user.user_metadata?.invited_by;
+        if (invitedBy) {
+          let query = supabase.from("profiles").select("id, username, avatar_url");
+
+          // Check if invitedBy is a UUID
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(invitedBy);
+
+          if (isUuid) {
+            query = query.eq("id", invitedBy);
+          } else {
+            query = query.eq("username", invitedBy);
+          }
+
+          const { data: inviterProfile } = await query.single();
 
           if (inviterProfile) {
             setInviter(inviterProfile);
