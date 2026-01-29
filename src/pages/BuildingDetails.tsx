@@ -39,6 +39,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { ImageDetailsDialog } from "@/components/ImageDetailsDialog";
 import { Architect } from "@/types/architect";
 import { getBuildingUrl } from "@/utils/url";
+import { CollectionSelector } from "@/components/profile/CollectionSelector";
 
 // --- Types ---
 interface BuildingDetails {
@@ -177,7 +178,9 @@ export default function BuildingDetails() {
 
   // Note & Tags
   const [note, setNote] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  // const [tags, setTags] = useState<string[]>([]); // Deprecated
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
+  const [initialCollectionIds, setInitialCollectionIds] = useState<string[]>([]);
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -254,15 +257,29 @@ export default function BuildingDetails() {
             .eq("building_id", resolvedBuildingId)
             .maybeSingle();
 
+        // 2.5 Fetch Collection Items
+        const { data: collectionItems } = await supabase
+            .from("collection_items")
+            .select("collection_id, collections(owner_id)")
+            .eq("building_id", resolvedBuildingId);
+
+        const myCollectionIds = collectionItems
+            // @ts-ignore
+            ?.filter(item => item.collections?.owner_id === user.id)
+            .map(item => item.collection_id) || [];
+
+        setSelectedCollectionIds(myCollectionIds);
+        setInitialCollectionIds(myCollectionIds);
+
         if (userEntry) {
             setUserStatus(userEntry.status);
             setMyRating(userEntry.rating || 0);
             setNote(userEntry.content || "");
-            setTags(userEntry.tags || []);
+            // setTags(userEntry.tags || []); // Deprecated
             // @ts-ignore - Supabase types join inference can be tricky
             setUserImages(userEntry.images || []);
             setIsEditing(false);
-            if (userEntry.content || (userEntry.tags && userEntry.tags.length > 0)) {
+            if (userEntry.content || (myCollectionIds.length > 0)) {
                 setShowNoteEditor(true);
             }
         } else {
@@ -474,12 +491,38 @@ export default function BuildingDetails() {
               status: statusToUse,
               rating: myRating > 0 ? myRating : null,
               content: note,
-              tags: tags,
+              // tags: tags, // Deprecated
               edited_at: new Date().toISOString()
           }, { onConflict: 'user_id, building_id' });
 
           if (error) throw error;
-          toast({ title: "Note saved" });
+
+          // Sync Collections
+          const addedIds = selectedCollectionIds.filter(id => !initialCollectionIds.includes(id));
+          const removedIds = initialCollectionIds.filter(id => !selectedCollectionIds.includes(id));
+
+          if (addedIds.length > 0) {
+              const { error: addError } = await supabase
+                  .from("collection_items")
+                  .insert(addedIds.map(cId => ({
+                      collection_id: cId,
+                      building_id: building.id
+                  })));
+              if (addError) console.error("Error adding to collections", addError);
+          }
+
+          if (removedIds.length > 0) {
+              const { error: removeError } = await supabase
+                  .from("collection_items")
+                  .delete()
+                  .in("collection_id", removedIds)
+                  .eq("building_id", building.id);
+              if (removeError) console.error("Error removing from collections", removeError);
+          }
+
+          setInitialCollectionIds(selectedCollectionIds);
+
+          toast({ title: "Note and collections saved" });
           setIsEditing(false);
       } catch (error: any) {
           console.error("Save note failed", error);
@@ -501,10 +544,21 @@ export default function BuildingDetails() {
 
           if (error) throw error;
 
+          // Remove from collections
+          if (initialCollectionIds.length > 0) {
+              await supabase
+                  .from("collection_items")
+                  .delete()
+                  .in("collection_id", initialCollectionIds)
+                  .eq("building_id", building.id);
+          }
+
           setUserStatus(null);
           setMyRating(0);
           setNote("");
-          setTags([]);
+          // setTags([]);
+          setSelectedCollectionIds([]);
+          setInitialCollectionIds([]);
           setIsEditing(false);
 
           toast({ title: "Removed from list" });
@@ -749,13 +803,11 @@ export default function BuildingDetails() {
 
                         {note && <p className="text-sm text-foreground/90">{note}</p>}
 
-                        {tags && tags.length > 0 && (
+                        {selectedCollectionIds.length > 0 && (
                              <div className="flex flex-wrap gap-2">
-                                {tags.map(tag => (
-                                    <Badge key={tag} variant="outline" className="text-xs">
-                                        {tag}
-                                    </Badge>
-                                ))}
+                                <Badge variant="outline" className="text-xs border-dashed">
+                                    In {selectedCollectionIds.length} Collection{selectedCollectionIds.length > 1 ? 's' : ''}
+                                </Badge>
                              </div>
                         )}
 
@@ -841,11 +893,10 @@ export default function BuildingDetails() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium uppercase text-muted-foreground">Tags</label>
-                                    <TagInput
-                                        tags={tags}
-                                        setTags={setTags}
-                                        placeholder="Add tags..."
+                                    <CollectionSelector
+                                        userId={user.id}
+                                        selectedCollectionIds={selectedCollectionIds}
+                                        onChange={setSelectedCollectionIds}
                                     />
                                 </div>
                                 <div className="flex justify-end">
