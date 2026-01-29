@@ -56,7 +56,7 @@ BEGIN
     b.id
   ORDER BY
     save_count DESC,
-    random() -- Slight randomness for similar popularity
+    b.id -- Deterministic tie-breaker for stability
   LIMIT
     p_limit
   OFFSET
