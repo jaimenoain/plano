@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import UpdatePassword from "./pages/UpdatePassword";
 import Onboarding from "./pages/Onboarding";
 import Terms from "./pages/Terms";
+import Explore from "./pages/Explore";
 import Search from "@/features/search/SearchPage";
 import Post from "./pages/Post";
 import Profile from "./pages/Profile";
@@ -91,6 +92,7 @@ const router = createBrowserRouter(
       <Route path="/update-password" element={<UpdatePassword />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/explore" element={<Explore />} />
       <Route path="/search" element={<Search />} />
       <Route path="/post" element={<Post />} />
       <Route path="/notifications" element={<Notifications />} />
