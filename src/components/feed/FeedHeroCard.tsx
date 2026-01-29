@@ -27,14 +27,17 @@ export function FeedHeroCard({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { statuses } = useUserBuildingStatuses();
+  const { statuses, ratings } = useUserBuildingStatuses();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [showRatingInput, setShowRatingInput] = useState(false);
 
   if (!entry.building) return null;
 
   const viewerStatus = entry.building ? statuses[entry.building.id] : undefined;
+  const viewerRating = entry.building ? ratings[entry.building.id] : undefined;
+
   const isSaved = viewerStatus === 'pending';
   const isVisited = viewerStatus === 'visited';
 
@@ -43,18 +46,13 @@ export function FeedHeroCard({
     if (!user) return;
     if (!entry.building?.id) return;
 
+    if (isSaved) {
+        setShowRatingInput(true);
+        return;
+    }
+
     setIsSaving(true);
     try {
-      if (isSaved) {
-        // Unsave (Remove)
-        const { error } = await supabase
-            .from("user_buildings")
-            .delete()
-            .eq("user_id", user.id)
-            .eq("building_id", entry.building.id);
-        if (error) throw error;
-        toast({ title: "Removed from saved" });
-      } else {
         // Save (upsert pending)
         const { error } = await supabase.from("user_buildings").upsert({
             user_id: user.id,
@@ -62,15 +60,16 @@ export function FeedHeroCard({
             status: 'pending',
             edited_at: new Date().toISOString()
         }, { onConflict: 'user_id, building_id' });
+
         if (error) throw error;
         toast({ title: "Saved to your list" });
-      }
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+        queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+        setShowRatingInput(true);
     } catch (error) {
-      console.error("Save action failed", error);
-      toast({ variant: "destructive", title: "Failed to update status" });
+        console.error("Save action failed", error);
+        toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
   };
 
@@ -79,34 +78,49 @@ export function FeedHeroCard({
     if (!user) return;
     if (!entry.building?.id) return;
 
+    if (isVisited) {
+        setShowRatingInput(true);
+        return;
+    }
+
     setIsSaving(true);
     try {
-        if (isVisited) {
-            // Unvisit (Remove)
-            const { error } = await supabase
-                .from("user_buildings")
-                .delete()
-                .eq("user_id", user.id)
-                .eq("building_id", entry.building.id);
-            if (error) throw error;
-            toast({ title: "Removed from visited" });
-        } else {
-            // Mark Visited (upsert visited)
-            const { error } = await supabase.from("user_buildings").upsert({
-                user_id: user.id,
-                building_id: entry.building.id,
-                status: 'visited',
-                edited_at: new Date().toISOString()
-            }, { onConflict: 'user_id, building_id' });
-            if (error) throw error;
-            toast({ title: "Marked as visited" });
-        }
+        // Mark Visited (upsert visited)
+        const { error } = await supabase.from("user_buildings").upsert({
+            user_id: user.id,
+            building_id: entry.building.id,
+            status: 'visited',
+            edited_at: new Date().toISOString()
+        }, { onConflict: 'user_id, building_id' });
+
+        if (error) throw error;
+        toast({ title: "Marked as visited" });
         queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+        setShowRatingInput(true);
     } catch (error) {
         console.error("Visit action failed", error);
         toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
         setIsSaving(false);
+    }
+  };
+
+  const handleRate = async (newRating: number) => {
+    if (!user || !entry.building?.id) return;
+
+    try {
+        const { error } = await supabase.from("user_buildings").upsert({
+            user_id: user.id,
+            building_id: entry.building.id,
+            rating: newRating,
+            edited_at: new Date().toISOString()
+        }, { onConflict: 'user_id, building_id' });
+
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+    } catch (err) {
+        console.error("Rate failed", err);
+        toast({ variant: "destructive", title: "Failed to update rating" });
     }
   };
 
@@ -255,6 +269,33 @@ export function FeedHeroCard({
     }
   };
 
+  const renderRatingControl = () => {
+     // 4 circles (values 1-4)
+     const options = [1, 2, 3, 4];
+     return (
+         <div className="flex items-center gap-1 mr-2 bg-secondary/80 backdrop-blur-sm px-2.5 py-1.5 rounded-full animate-in fade-in slide-in-from-right-5 duration-200 border border-border/50 shadow-sm" onClick={(e) => e.stopPropagation()}>
+             {options.map((val) => {
+                 const isFilled = (viewerRating || 0) >= val;
+                 return (
+                     <button
+                        key={val}
+                        onClick={() => handleRate(val)}
+                        className="focus:outline-none transition-transform active:scale-90 hover:scale-110"
+                     >
+                         <Circle
+                            className={`w-3.5 h-3.5 transition-colors ${
+                                isFilled
+                                ? "fill-primary text-primary"
+                                : "text-muted-foreground/40 hover:text-primary/70"
+                            }`}
+                         />
+                     </button>
+                 );
+             })}
+         </div>
+     );
+  };
+
   return (
     <article
       onClick={handleCardClick}
@@ -335,31 +376,34 @@ export function FeedHeroCard({
             <span className="text-xs font-medium">{entry.comments_count}</span>
           </button>
 
-           <div className="flex items-center gap-3 ml-auto">
+           <div className="flex items-center gap-2 ml-auto">
+
+             {showRatingInput && renderRatingControl()}
+
              <button
                onClick={handleVisit}
-               className={`flex items-center gap-1.5 transition-colors ${
+               className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
                   isVisited
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'text-primary bg-primary/10 font-bold ring-1 ring-primary/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                } ${isSaving ? 'opacity-50' : ''}`}
                disabled={isSaving}
              >
                <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3px]' : ''}`} />
-               <span className={`text-xs font-medium ${isVisited ? 'font-bold' : ''}`}>Visited</span>
+               <span className={`text-xs ${isVisited ? '' : 'font-medium'}`}>Visited</span>
              </button>
 
              <button
                onClick={handleSave}
-               className={`flex items-center gap-1.5 transition-colors ${
+               className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
                   isSaved
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'text-primary bg-primary/10 font-bold ring-1 ring-primary/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                } ${isSaving ? 'opacity-50' : ''}`}
                disabled={isSaving}
              >
                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-primary' : ''}`} />
-               <span className={`text-xs font-medium ${isSaved ? 'font-bold' : ''}`}>Save</span>
+               <span className={`text-xs ${isSaved ? '' : 'font-medium'}`}>Save</span>
              </button>
            </div>
       </div>
