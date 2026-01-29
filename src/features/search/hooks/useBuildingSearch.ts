@@ -29,7 +29,7 @@ function deg2rad(deg: number) {
   return deg * (Math.PI / 180);
 }
 
-async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string) {
+async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string, specificContactIds?: string[]) {
   if (!buildings.length) return [];
 
   let enrichedBuildings = [...buildings];
@@ -86,7 +86,10 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string) 
         .select('following_id')
         .eq('follower_id', userId);
 
-    const contactIds = follows?.map(f => f.following_id) || [];
+    const followedIds = follows?.map(f => f.following_id) || [];
+
+    // Combine followed contacts with specifically selected contacts (if any)
+    const contactIds = Array.from(new Set([...followedIds, ...(specificContactIds || [])]));
 
     if (contactIds.length > 0) {
         const { data: contactInteractions } = await supabase
@@ -397,7 +400,7 @@ export function useBuildingSearch() {
                 } as DiscoveryBuilding;
             }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
-            return await enrichBuildings(mappedBuildings, user?.id);
+            return await enrichBuildings(mappedBuildings, user?.id, selectedContacts.map(c => c.id));
         }
 
         // Global search mode (RPC)
@@ -416,7 +419,7 @@ export function useBuildingSearch() {
             p_limit: 500
         });
 
-        return await enrichBuildings(rpcResults, user?.id);
+        return await enrichBuildings(rpcResults, user?.id, selectedContacts.map(c => c.id));
     },
     staleTime: 1000 * 60,
     placeholderData: keepPreviousData,
