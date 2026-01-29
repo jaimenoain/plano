@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
   Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search
+  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play
 } from "lucide-react";
 import {
   AlertDialog,
@@ -88,6 +88,8 @@ interface FeedEntry {
 interface DisplayImage {
     id: string;
     url: string;
+    poster?: string;
+    type?: 'image' | 'video';
     likes_count: number;
     created_at: string;
     user: {
@@ -290,7 +292,7 @@ export default function BuildingDetails() {
       const { data: entriesData, error: entriesError } = await supabase
         .from("user_buildings")
         .select(`
-          id, user_id, content, rating, status, tags, created_at,
+          id, user_id, content, rating, status, tags, created_at, video_url,
           user:profiles(username, avatar_url),
           images:review_images(id, storage_path, likes_count, created_at)
         `)
@@ -305,8 +307,28 @@ export default function BuildingDetails() {
       } else if (entriesData) {
           console.log("Fetched feed entries:", entriesData);
           
-          // Extract images
+          // Extract images & video
           entriesData.forEach((entry: any) => {
+              // Video
+              if (entry.video_url) {
+                  // Attempt to find a poster from images or main building
+                  let posterUrl: string | undefined = undefined;
+                  if (entry.images && entry.images.length > 0) {
+                      posterUrl = getBuildingImageUrl(entry.images[0].storage_path) || undefined;
+                  }
+
+                  communityImages.push({
+                      id: `video-${entry.id}`,
+                      url: entry.video_url,
+                      poster: posterUrl,
+                      type: 'video',
+                      likes_count: 0, // Videos typically share likes with the review, which isn't separately tracked per image currently in this view
+                      created_at: entry.created_at,
+                      user: entry.user
+                  });
+              }
+
+              // Images
               if (entry.images && entry.images.length > 0) {
                   entry.images.forEach((img: any) => {
                         const publicUrl = getBuildingImageUrl(img.storage_path);
@@ -314,6 +336,7 @@ export default function BuildingDetails() {
                             communityImages.push({
                                 id: img.id,
                                 url: publicUrl,
+                                type: 'image',
                                 likes_count: img.likes_count || 0,
                                 created_at: img.created_at || entry.created_at,
                                 user: entry.user
@@ -626,13 +649,23 @@ export default function BuildingDetails() {
             {displayImages.length > 0 ? (
                 <div className="space-y-6">
                     {displayImages.map((img) => (
-                        <div key={img.id} className="aspect-[4/3] w-full rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
+                        <div key={img.id} className="aspect-[4/3] w-full rounded-xl overflow-hidden shadow-lg border border-white/10 relative group bg-black/5">
                             <img
-                              src={img.url}
-                              className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                              src={img.type === 'video' && img.poster ? img.poster : img.url}
+                              className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${!img.poster && img.type === 'video' ? 'opacity-50' : ''}`}
                               alt={building.name}
                               onClick={() => setSelectedImage(img)}
                             />
+
+                            {/* Video Indicator */}
+                            {img.type === 'video' && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="bg-black/40 rounded-full p-3 backdrop-blur-sm">
+                                        <Play className="w-6 h-6 text-white fill-white" />
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Attribution Overlay */}
                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex items-end justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                                 <div className="flex items-center gap-2">
@@ -1028,6 +1061,7 @@ export default function BuildingDetails() {
       <ImageDetailsDialog
         imageId={selectedImage?.id || null}
         initialUrl={selectedImage?.url || null}
+        type={selectedImage?.type || 'image'}
         uploadedBy={selectedImage?.user || null}
         uploadDate={selectedImage?.created_at}
         isOpen={!!selectedImage}

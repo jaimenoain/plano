@@ -12,6 +12,7 @@ import { slugify } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
+import { VideoPlayer } from "@/components/ui/VideoPlayer";
 
 function getCityFromAddress(address: string | null | undefined): string {
   if (!address) return "";
@@ -84,7 +85,7 @@ export function ReviewCard({
   const handleCardClick = (e: React.MouseEvent) => {
     if (isDetailView) return;
     const target = e.target as HTMLElement;
-    if (target.closest('button')) return;
+    if (target.closest('button') || target.closest('.video-container')) return;
 
     if (entry.building.id) {
         navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
@@ -153,11 +154,38 @@ export function ReviewCard({
       }
   }
 
-  const isWatchlist = entry.status === 'pending';
-  const watchWithUsers = entry.watch_with_users || [];
+  // Construct Mixed Media List
+  interface MediaItem {
+    id: string;
+    type: 'video' | 'image';
+    url: string;
+    poster?: string;
+  }
+
+  const mediaItems: MediaItem[] = [];
   
-  // MERGE FIX: Determine if we have any media to show for layout calculations
-  const hasMedia = !hideBuildingInfo && ((entry.images && entry.images.length > 0) || posterUrl);
+  // 1. Video (First priority)
+  if (entry.video_url) {
+      mediaItems.push({
+          id: `video-${entry.id}`,
+          type: 'video',
+          url: entry.video_url,
+          poster: (entry.images && entry.images.length > 0) ? entry.images[0].url : posterUrl || undefined
+      });
+  }
+
+  // 2. Images
+  if (entry.images && entry.images.length > 0) {
+      entry.images.forEach(img => {
+          mediaItems.push({
+              id: img.id,
+              type: 'image',
+              url: img.url
+          });
+      });
+  }
+
+  const hasMedia = !hideBuildingInfo && (mediaItems.length > 0 || !!posterUrl);
   const isCompact = variant === 'compact';
 
   const flexDirection = imagePosition === 'right' ? 'md:flex-row' : 'md:flex-row-reverse';
@@ -193,7 +221,23 @@ export function ReviewCard({
 
         <div className="flex gap-3">
           {!hideBuildingInfo && (
-            posterUrl ? (
+            mediaItems.length > 0 && mediaItems[0].type === 'video' ? (
+                <div className="w-32 h-24 bg-black rounded-sm flex-shrink-0 video-container">
+                    <VideoPlayer
+                        src={mediaItems[0].url}
+                        poster={mediaItems[0].poster}
+                        className="w-full h-full"
+                        autoPlayOnVisible={false}
+                        muted={true}
+                    />
+                </div>
+            ) : mediaItems.length > 0 ? (
+                <img
+                    src={mediaItems[0].url}
+                    alt={entry.building.name}
+                    className="w-32 h-24 object-cover rounded-sm flex-shrink-0"
+                />
+            ) : posterUrl ? (
               <img
                 src={posterUrl}
                 alt={entry.building.name}
@@ -316,59 +360,83 @@ export function ReviewCard({
   );
 
   const Media = !hideBuildingInfo && (
-        entry.images && entry.images.length > 0 ? (
-          isCompact && entry.images.length > 1 ? (
-             // COMPACT GRID LAYOUT for IMAGES
+        mediaItems.length > 0 ? (
+          isCompact && mediaItems.length > 1 ? (
+             // COMPACT GRID LAYOUT for MEDIA
              <div className={`relative w-full aspect-[4/3] bg-secondary overflow-hidden grid grid-cols-2 gap-0.5`}>
-                {entry.images.slice(0, 4).map((image, index) => (
-                    <div key={image.id} className="relative w-full h-full">
-                       {!failedImages.has(image.id) ? (
-                           <img
-                             src={image.url}
-                             alt="Review photo"
-                             className="w-full h-full object-cover"
-                             onError={() => setFailedImages(prev => new Set(prev).add(image.id))}
-                           />
+                {mediaItems.slice(0, 4).map((item, index) => (
+                    <div key={item.id} className="relative w-full h-full">
+                       {item.type === 'video' ? (
+                          <div className="w-full h-full video-container">
+                             <VideoPlayer
+                                src={item.url}
+                                poster={item.poster}
+                                className="w-full h-full"
+                                autoPlayOnVisible={true}
+                                muted={true}
+                             />
+                          </div>
                        ) : (
-                           <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
-                             <ImageIcon className="w-4 h-4 opacity-50" />
-                           </div>
+                           !failedImages.has(item.id) ? (
+                               <img
+                                 src={item.url}
+                                 alt="Review photo"
+                                 className="w-full h-full object-cover"
+                                 onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
+                               />
+                           ) : (
+                               <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
+                                 <ImageIcon className="w-4 h-4 opacity-50" />
+                               </div>
+                           )
                        )}
 
-                       {/* Overlay for 4th image if more */}
-                       {index === 3 && entry.images!.length > 4 && (
-                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                               <span className="text-white font-bold text-sm">+{entry.images!.length - 3}</span>
+                       {/* Overlay for 4th item if more */}
+                       {index === 3 && mediaItems.length > 4 && (
+                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
+                               <span className="text-white font-bold text-sm">+{mediaItems.length - 3}</span>
                            </div>
                        )}
                     </div>
                 ))}
              </div>
           ) : (
-            // OPTION A: User Images Gallery (Standard Carousel)
+            // OPTION A: Media Gallery (Carousel)
             <div className={`relative w-full overflow-hidden bg-secondary ${!isCompact ? 'md:w-[280px] md:shrink-0' : 'aspect-[4/3]'}`}>
                <div className={`flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full ${!isCompact ? 'md:absolute md:inset-0' : ''}`}>
-                  {entry.images.map((image) => (
-                    <div key={image.id} className={`relative flex-none w-full aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} snap-center bg-secondary`}>
-                       {!failedImages.has(image.id) ? (
-                         <img
-                           src={image.url}
-                           alt="Review photo"
-                           className="w-full h-full object-cover"
-                           onError={() => setFailedImages(prev => new Set(prev).add(image.id))}
-                         />
+                  {mediaItems.map((item) => (
+                    <div key={item.id} className={`relative flex-none w-full aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} snap-center bg-secondary`}>
+                       {item.type === 'video' ? (
+                           <div className="w-full h-full video-container">
+                               <VideoPlayer
+                                   src={item.url}
+                                   poster={item.poster}
+                                   className="w-full h-full"
+                                   autoPlayOnVisible={true}
+                                   muted={true}
+                               />
+                           </div>
                        ) : (
-                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                           <ImageIcon className="w-8 h-8 opacity-50" />
-                         </div>
+                           !failedImages.has(item.id) ? (
+                             <img
+                               src={item.url}
+                               alt="Review photo"
+                               className="w-full h-full object-cover"
+                               onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
+                             />
+                           ) : (
+                             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                               <ImageIcon className="w-8 h-8 opacity-50" />
+                             </div>
+                           )
                        )}
                     </div>
                   ))}
                </div>
                {/* Pagination Dots (if multiple) */}
-               {entry.images.length > 1 && (
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-                     {entry.images.map((_, i) => (
+               {mediaItems.length > 1 && (
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10 pointer-events-none">
+                     {mediaItems.map((_, i) => (
                         <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/50" />
                      ))}
                   </div>
@@ -402,9 +470,6 @@ export function ReviewCard({
             )}
           </div>
         )}
-
-        {/* Status Badges & Rating */}
-
 
         {/* Review Text: Only show if exists */}
         {entry.content && (
