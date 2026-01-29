@@ -68,6 +68,7 @@ export interface DiscoveryFilterBarProps {
   sortBy: 'distance' | 'relevance';
   onSortChange: (sort: 'distance' | 'relevance') => void;
   onShowLeaderboard?: () => void;
+  onSearchFocus?: () => void;
 }
 
 export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
@@ -135,6 +136,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
               className="pl-8"
               value={props.searchQuery}
               onChange={(e) => props.onSearchChange(e.target.value)}
+              onFocus={props.onSearchFocus}
           />
        </div>
 
