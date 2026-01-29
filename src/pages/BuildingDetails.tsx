@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
   Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play
+  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
+  MessageCircle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -731,6 +732,13 @@ export default function BuildingDetails() {
                                         <span className="text-xs font-semibold text-white drop-shadow-sm">{img.user?.username}</span>
                                         <span className="text-[10px] text-white/80 drop-shadow-sm">{format(new Date(img.created_at), 'MMM yyyy')}</span>
                                     </div>
+                                </div>
+                                <div className="flex items-center gap-3 mb-0.5">
+                                    <div className="flex items-center gap-1">
+                                         <Heart className="w-4 h-4 text-white" />
+                                         <span className="text-xs text-white font-medium drop-shadow-sm">{img.likes_count}</span>
+                                    </div>
+                                    <MessageCircle className="w-4 h-4 text-white" />
                                 </div>
                             </div>
                         </div>
