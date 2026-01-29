@@ -41,28 +41,39 @@ Deno.serve(async (req) => {
       }
     )
 
-    // 4. Debug User Token Verification
+    // Parse Body First (needed for userId in admin bypass)
+    const { fileName, contentType, folderName, userId } = await req.json()
+
+    // 4. User Token Verification
     console.log("Verifying user token")
-
     const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
+    let user = null;
 
-    if (userError || !user) {
-      console.error("Auth Failed:", JSON.stringify(userError))
-      return new Response(
-        JSON.stringify({ 
-          error: 'Unauthorized', 
-          details: userError ? userError.message : 'No user found',
-          hint: 'Check Edge Function logs for details'
-        }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // JULES-MAINTAIN: Service Role bypass for admin processes
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (serviceRoleKey && token === serviceRoleKey) {
+        console.log("Admin bypass: Service Role Key detected");
+        user = { id: userId || 'admin_upload' };
+    } else {
+        const { data: { user: authUser }, error: userError } = await supabaseClient.auth.getUser(token)
+
+        if (userError || !authUser) {
+        console.error("Auth Failed:", JSON.stringify(userError))
+        return new Response(
+            JSON.stringify({
+            error: 'Unauthorized',
+            details: userError ? userError.message : 'No user found',
+            hint: 'Check Edge Function logs for details'
+            }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+        }
+        user = authUser;
     }
 
     console.log(`User authenticated: ${user.id}`)
 
-    // 5. Parse Body & S3 Logic
-    const { fileName, contentType, folderName } = await req.json()
+    // 5. S3 Logic
 
     if (!fileName || !contentType) {
       return new Response(
