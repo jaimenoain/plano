@@ -48,7 +48,7 @@ export default function Moderation() {
       // Fetch reports
       const { data: rawReports, error } = await supabase
         .from("reports")
-        .select(`*, reporter:profiles(username)`)
+        .select(`*, reporter:profiles!reporter_id(username)`)
         .neq('status', 'resolved')
         .neq('status', 'dismissed')
         .order("created_at", { ascending: false });
