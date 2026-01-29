@@ -4,7 +4,7 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Layers } from "lucide-react";
+import { Loader2, MapPin, Layers, Maximize2, Minimize2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
@@ -80,6 +80,7 @@ export function BuildingDiscoveryMap({
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const [isSatellite, setIsSatellite] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // State to track user interaction to disable auto-zoom
   const [userHasInteracted, setUserHasInteracted] = useState(false);
@@ -215,6 +216,24 @@ export function BuildingDiscoveryMap({
       setUserHasInteracted(false);
     }
   }, [resetInteractionTrigger]);
+
+  // Handle Escape key to exit fullscreen
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullScreen) {
+        setIsFullScreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullScreen]);
+
+  // Handle Map Resize when fullscreen toggles
+  useEffect(() => {
+    setTimeout(() => {
+        mapRef.current?.resize();
+    }, 100);
+  }, [isFullScreen]);
 
   // Auto-zoom logic
   useEffect(() => {
@@ -386,7 +405,11 @@ export function BuildingDiscoveryMap({
 
   return (
     <div
-        className="h-full w-full rounded-xl overflow-hidden border border-white/10 relative"
+        className={`w-full overflow-hidden border border-white/10 relative transition-all duration-300 ${
+          isFullScreen
+            ? 'fixed inset-0 z-[100] h-screen rounded-none'
+            : 'h-full rounded-xl'
+        }`}
         data-zoom={viewState.zoom}
         data-testid="map-container"
     >
@@ -439,6 +462,19 @@ export function BuildingDiscoveryMap({
       >
           <Layers className="w-4 h-4" />
           <span className="text-xs font-medium">{isSatellite ? "Map" : "Satellite"}</span>
+      </button>
+
+      <button
+          onClick={(e) => {
+              e.stopPropagation();
+              setUserHasInteracted(true);
+              onMapInteraction?.();
+              setIsFullScreen(!isFullScreen);
+          }}
+          className="absolute top-2 right-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10"
+          title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+      >
+          {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
       </button>
     </div>
   );
