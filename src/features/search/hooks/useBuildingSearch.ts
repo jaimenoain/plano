@@ -35,36 +35,49 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string) 
   let enrichedBuildings = [...buildings];
   const buildingIds = buildings.map(b => b.id);
 
-  // 1. Image URL Transformation (using helper)
+  // 1. Fetch Missing Data (Status & Main Image)
+  // RPC might not return status or main_image_url, so we fetch if missing.
+  const missingStatusIds = enrichedBuildings.filter(b => b.status === undefined).map(b => b.id);
+  const missingImageIds = enrichedBuildings.filter(b => b.main_image_url === undefined).map(b => b.id);
+
+  const idsToFetch = Array.from(new Set([...missingStatusIds, ...missingImageIds]));
+
+  if (idsToFetch.length > 0) {
+      const { data: fetchedData } = await supabase
+          .from('buildings')
+          .select('id, status, main_image_url')
+          .in('id', idsToFetch);
+
+      const statusMap = new Map<string, string | null>();
+      const imageMap = new Map<string, string | null>();
+
+      fetchedData?.forEach((item: any) => {
+          statusMap.set(item.id, item.status);
+          imageMap.set(item.id, item.main_image_url);
+      });
+
+      enrichedBuildings = enrichedBuildings.map(b => {
+          const updates: any = {};
+          if (b.status === undefined) {
+              updates.status = statusMap.get(b.id) as any || null;
+          }
+          if (b.main_image_url === undefined) {
+              updates.main_image_url = imageMap.get(b.id) || null;
+          }
+
+          if (Object.keys(updates).length > 0) {
+              return { ...b, ...updates };
+          }
+          return b;
+      });
+  }
+
+  // 2. Image URL Transformation (using helper)
   // RPC returns the path in main_image_url. We need to convert it to a full URL.
   enrichedBuildings = enrichedBuildings.map(b => ({
       ...b,
       main_image_url: getBuildingImageUrl(b.main_image_url) || null
   }));
-
-  // 2. Status Enrichment (for Demolished/Unbuilt)
-  // RPC doesn't return status, so we fetch it if missing.
-  const missingStatusIds = enrichedBuildings.filter(b => b.status === undefined).map(b => b.id);
-
-  if (missingStatusIds.length > 0) {
-      const { data: statusData } = await supabase
-          .from('buildings')
-          .select('id, status')
-          .in('id', missingStatusIds);
-
-      const statusMap = new Map<string, string | null>();
-      statusData?.forEach((item: any) => {
-          statusMap.set(item.id, item.status);
-      });
-
-      enrichedBuildings = enrichedBuildings.map(b => {
-          if (b.status !== undefined) return b;
-          return {
-              ...b,
-              status: statusMap.get(b.id) as any || null
-          };
-      });
-  }
 
   // 3. Social Enrichment (Facepile)
   if (userId) {
