@@ -86,7 +86,8 @@ function Landing() {
 
 // --- Main Index Component ---
 
-const PAGE_SIZE = 36;
+const INITIAL_PAGE_SIZE = 10;
+const SUBSEQUENT_PAGE_SIZE = 36;
 
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
@@ -124,12 +125,14 @@ export default function Index() {
     queryFn: async ({ pageParam = 0 }) => {
       if (!user) return [];
 
-      const from = pageParam * PAGE_SIZE;
+      const isFirstPage = pageParam === 0;
+      const limit = isFirstPage ? INITIAL_PAGE_SIZE : SUBSEQUENT_PAGE_SIZE;
+      const from = isFirstPage ? 0 : INITIAL_PAGE_SIZE + (pageParam - 1) * SUBSEQUENT_PAGE_SIZE;
 
       // Use optimized RPC to fetch feed with all necessary data in one request
       const { data, error } = await supabase
         .rpc("get_feed", {
-          p_limit: PAGE_SIZE,
+          p_limit: limit,
           p_offset: from
         });
 
@@ -178,7 +181,9 @@ export default function Index() {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length === PAGE_SIZE ? allPages.length : undefined;
+      const isFirstPage = allPages.length === 1;
+      const expectedSize = isFirstPage ? INITIAL_PAGE_SIZE : SUBSEQUENT_PAGE_SIZE;
+      return lastPage.length === expectedSize ? allPages.length : undefined;
     },
     enabled: !!user,
   });
