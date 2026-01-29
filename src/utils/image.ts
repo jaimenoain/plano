@@ -38,8 +38,8 @@ const getEnv = (key: string): string | undefined => {
 export const getBuildingImageUrl = (path: string | null | undefined): string | undefined => {
   if (!path) return undefined;
 
-  // If it's already a full URL (legacy or external), return as is
-  if (path.startsWith("http") || path.startsWith("blob:")) {
+  // If it's already a full URL (legacy or external) or data URI, return as is
+  if (path.startsWith("http") || path.startsWith("blob:") || path.startsWith("data:")) {
     return path;
   }
 
