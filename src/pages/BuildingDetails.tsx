@@ -57,6 +57,7 @@ interface BuildingDetails {
   year_completed: number;
   styles: { id: string, name: string }[];
   created_by: string;
+  status?: string | null;
 }
 
 interface TopLink {
@@ -699,6 +700,17 @@ export default function BuildingDetails() {
                         </>
                     )}
                 </div>
+
+                {(building.status === 'Demolished' || building.status === 'Unbuilt') && (
+                    <Alert className="mt-4 border-destructive/50 bg-destructive/10 text-destructive dark:text-red-400">
+                        <AlertTriangle className="h-4 w-4 stroke-destructive dark:stroke-red-400" />
+                        <AlertDescription className="ml-2 font-medium">
+                            {building.status === 'Demolished'
+                                ? "This building has been demolished."
+                                : "This project was never built."}
+                        </AlertDescription>
+                    </Alert>
+                )}
             </div>
 
             {displayImages.length > 0 ? (
