@@ -269,6 +269,20 @@ export default function SearchPage() {
                          selectedAttributes.length === 0 &&
                          selectedContacts.length === 0;
 
+  const handleSearchFocus = () => {
+    setViewMode('list');
+  };
+
+  const handleViewModeChange = (mode: 'map' | 'list') => {
+    setViewMode(mode);
+    if (mode === 'map') {
+      // Hide keyboard by blurring the active element
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }
+  };
+
   return (
     <AppLayout title="Discovery" showLogo={false}>
       {/* Container to fit available height within AppLayout */}
@@ -276,7 +290,11 @@ export default function SearchPage() {
         <div className="w-full bg-background z-20 border-b">
           <DiscoveryFilterBar
             searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+            onSearchChange={(val) => {
+              setSearchQuery(val);
+              if (val) setViewMode('list');
+            }}
+            onSearchFocus={handleSearchFocus}
             // --- Feature Branch Props (Location Search & New Filters) ---
             onLocationSelect={handleLocationSearch}
             selectedArchitects={selectedArchitects}
@@ -350,7 +368,7 @@ export default function SearchPage() {
               <div className="md:hidden h-full w-full relative">
                 <SearchModeToggle
                   mode={viewMode}
-                  onModeChange={setViewMode}
+                  onModeChange={handleViewModeChange}
                   className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50"
                 />
 
