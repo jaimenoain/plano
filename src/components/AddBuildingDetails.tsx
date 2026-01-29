@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BuildingForm, BuildingFormData } from "./BuildingForm";
 import { useAuth } from "@/hooks/useAuth";
-import { RecommendDialog } from "@/components/common/RecommendDialog";
 
 interface AddBuildingDetailsProps {
   locationData: {
@@ -24,8 +23,6 @@ interface AddBuildingDetailsProps {
 
 export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showVisitDialog, setShowVisitDialog] = useState(false);
-  const [newBuilding, setNewBuilding] = useState<{ id: string; name: string } | null>(null);
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -166,8 +163,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
       // 7. Success State
       toast.success("Building added successfully!");
-      setNewBuilding({ id: insertedData.id, name: insertedData.name });
-      setShowVisitDialog(true);
+      navigate(`/building/${insertedData.id}`);
 
     } catch (error: any) {
       console.error("Error adding building:", error);
@@ -215,20 +211,6 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           />
         </CardContent>
       </Card>
-
-      {newBuilding && (
-        <RecommendDialog
-            open={showVisitDialog}
-            onOpenChange={(open) => {
-                setShowVisitDialog(open);
-                if (!open && newBuilding) {
-                    navigate(`/building/${newBuilding.id}`);
-                }
-            }}
-            building={newBuilding}
-            mode="visit_with"
-        />
-      )}
     </div>
   );
 }
