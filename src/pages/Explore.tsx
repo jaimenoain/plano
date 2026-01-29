@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { useDiscoveryFeed, DiscoveryFilters } from "@/hooks/useDiscoveryFeed";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { DiscoveryCard } from "@/components/feed/DiscoveryCard";
@@ -10,6 +12,7 @@ import { FilterDrawerContent } from "@/components/common/FilterDrawerContent";
 import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
 
 export default function Explore() {
+  const { user, loading: authLoading } = useAuth();
   const { profile } = useUserProfile();
 
   // Filter States
@@ -79,6 +82,10 @@ export default function Explore() {
 
   // Extract flattened list
   const buildings = data?.pages.flat() || [];
+
+  if (!authLoading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
     <div className="relative h-screen w-full bg-black text-white">

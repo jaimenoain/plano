@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
   Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play
+  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
+  MessageCircle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -56,6 +57,7 @@ interface BuildingDetails {
   year_completed: number;
   styles: { id: string, name: string }[];
   created_by: string;
+  status?: string | null;
 }
 
 interface TopLink {
@@ -192,6 +194,24 @@ export default function BuildingDetails() {
   // Map state
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
+
+  // Navigation Logic
+  const selectedIndex = useMemo(() => {
+    if (!selectedImage) return -1;
+    return displayImages.findIndex(img => img.id === selectedImage.id);
+  }, [selectedImage, displayImages]);
+
+  const handleNextImage = () => {
+    if (selectedIndex < displayImages.length - 1) {
+      setSelectedImage(displayImages[selectedIndex + 1]);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (selectedIndex > 0) {
+      setSelectedImage(displayImages[selectedIndex - 1]);
+    }
+  };
 
   // Parse location
   const coordinates = useMemo(() => {
@@ -698,6 +718,17 @@ export default function BuildingDetails() {
                         </>
                     )}
                 </div>
+
+                {(building.status === 'Demolished' || building.status === 'Unbuilt') && (
+                    <Alert className="mt-4 border-destructive/50 bg-destructive/10 text-destructive dark:text-red-400">
+                        <AlertTriangle className="h-4 w-4 stroke-destructive dark:stroke-red-400" />
+                        <AlertDescription className="ml-2 font-medium">
+                            {building.status === 'Demolished'
+                                ? "This building has been demolished."
+                                : "This project was never built."}
+                        </AlertDescription>
+                    </Alert>
+                )}
             </div>
 
             {displayImages.length > 0 ? (
@@ -731,6 +762,13 @@ export default function BuildingDetails() {
                                         <span className="text-xs font-semibold text-white drop-shadow-sm">{img.user?.username}</span>
                                         <span className="text-[10px] text-white/80 drop-shadow-sm">{format(new Date(img.created_at), 'MMM yyyy')}</span>
                                     </div>
+                                </div>
+                                <div className="flex items-center gap-3 mb-0.5">
+                                    <div className="flex items-center gap-1">
+                                         <Heart className="w-4 h-4 text-white" />
+                                         <span className="text-xs text-white font-medium drop-shadow-sm">{img.likes_count}</span>
+                                    </div>
+                                    <MessageCircle className="w-4 h-4 text-white" />
                                 </div>
                             </div>
                         </div>
@@ -845,7 +883,7 @@ export default function BuildingDetails() {
                     // Edit View
                     <>
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 pt-5">
                                 <PersonalRatingButton
                                     buildingId={building.id}
                                     initialRating={myRating}
@@ -854,9 +892,6 @@ export default function BuildingDetails() {
                                     label={userStatus === 'pending' ? "Priority" : "Rating"}
                                     variant="inline"
                                 />
-                                {userStatus === 'pending' && (
-                                    <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
-                                )}
                             </div>
 
                             {/* Toggle Status */}
@@ -1102,6 +1137,10 @@ export default function BuildingDetails() {
         uploadDate={selectedImage?.created_at}
         isOpen={!!selectedImage}
         onClose={() => setSelectedImage(null)}
+        onNext={handleNextImage}
+        onPrev={handlePrevImage}
+        hasNext={selectedIndex < displayImages.length - 1}
+        hasPrev={selectedIndex > 0}
       />
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
