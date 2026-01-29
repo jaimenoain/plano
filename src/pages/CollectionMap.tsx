@@ -8,6 +8,7 @@ import { Loader2, ArrowLeft, Map as MapIcon, List, Save, Settings } from "lucide
 import { toast } from "sonner";
 import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { parseLocation } from "@/utils/location";
+import { getBoundsFromBuildings } from "@/utils/map";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -196,6 +197,10 @@ export default function CollectionMap() {
     }));
   }, [items]);
 
+  const mapBounds = useMemo(() => {
+    return getBoundsFromBuildings(mapBuildings);
+  }, [mapBuildings]);
+
   const handleMarkerClick = (buildingId: string) => {
     setHighlightedId(buildingId);
     setActiveTab("list"); // Switch to list on mobile
@@ -325,6 +330,7 @@ export default function CollectionMap() {
                 highlightedId={highlightedId}
                 onMarkerClick={handleMarkerClick}
                 autoZoomOnLowCount={true}
+                forcedBounds={mapBounds}
             />
 
             {/* Mobile Toggle Controls */}
