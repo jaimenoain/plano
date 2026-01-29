@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Plus, Check, Search, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface AddBuildingsToCollectionDialogProps {
   collectionId: string;
@@ -50,8 +51,40 @@ export function AddBuildingsToCollectionDialog({
 
       if (error) throw error;
 
-      // Deduplicate by building_id if necessary (though user_buildings should be unique per user-building pair)
-      return data.map(item => item.building);
+      const buildings = data.map(item => ({
+        ...item.building,
+        hero_image_url: item.building.hero_image_url ? getBuildingImageUrl(item.building.hero_image_url) : null
+      }));
+
+      // Identify buildings without images
+      const buildingsWithoutImages = buildings.filter((b: any) => !b.hero_image_url);
+      const buildingIdsWithoutImages = buildingsWithoutImages.map((b: any) => b.id);
+
+      if (buildingIdsWithoutImages.length > 0) {
+        const { data: imagesData } = await supabase
+          .from('review_images')
+          .select('storage_path, user_buildings!inner(building_id)')
+          .in('user_buildings.building_id', buildingIdsWithoutImages)
+          .limit(50);
+
+        if (imagesData) {
+          const imageMap = new Map();
+          imagesData.forEach((img: any) => {
+            const bId = img.user_buildings.building_id;
+            if (!imageMap.has(bId)) {
+              imageMap.set(bId, img.storage_path);
+            }
+          });
+
+          buildings.forEach((b: any) => {
+            if (!b.hero_image_url && imageMap.has(b.id)) {
+              b.hero_image_url = getBuildingImageUrl(imageMap.get(b.id));
+            }
+          });
+        }
+      }
+
+      return buildings;
     },
     enabled: !!user && open,
   });
