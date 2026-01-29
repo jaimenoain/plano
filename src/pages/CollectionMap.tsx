@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ArrowLeft, Map as MapIcon, List, Save } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
+import { parseLocation } from "@/utils/location";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -102,8 +103,7 @@ export default function CollectionMap() {
           building:buildings (
             id,
             name,
-            location_lat,
-            location_lng,
+            location,
             city,
             country,
             year_completed,
@@ -116,10 +116,17 @@ export default function CollectionMap() {
 
       if (error) throw error;
 
-      return (data as any[]).map(item => ({
-        ...item,
-        building: item.building
-      })) as CollectionItemWithBuilding[];
+      return (data as any[]).map(item => {
+        const coords = parseLocation(item.building.location);
+        return {
+          ...item,
+          building: {
+            ...item.building,
+            location_lat: coords?.lat || 0,
+            location_lng: coords?.lng || 0
+          }
+        };
+      }) as CollectionItemWithBuilding[];
     },
     enabled: !!collection?.id
   });
