@@ -50,6 +50,7 @@ interface Stats {
   followers: number;
   following: number;
   photos: number;
+  maps: number;
 }
 
 interface UserListItem {
@@ -69,7 +70,7 @@ export default function Profile() {
   
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0, photos: 0 });
+  const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0, photos: 0, maps: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
 
   // URL-derived state
@@ -240,6 +241,11 @@ export default function Profile() {
   useEffect(() => {
     if (targetUserId) {
       fetchStats();
+    }
+  }, [targetUserId, collectionsRefreshKey]);
+
+  useEffect(() => {
+    if (targetUserId) {
       checkIfFollowing();
       fetchUserContent();
       fetchSquad();
@@ -326,25 +332,9 @@ export default function Profile() {
       followers: followersResult.count || 0,
       following: followingResult.count || 0,
       photos: photosResult.count || 0,
+      maps: collectionsResult.count || 0,
     });
-
-    // We will inject collections count into UserCard via props, as in original code
-    // But wait, UserCard prop 'maps' was allTags.length.
-    // We can store collection count in a state or ref.
-    // Let's create a separate state for collectionCount if we want it to update accurately
-    // Or just fetch it here and pass it down.
-    // I'll update UserCard prop below.
   };
-
-  // Separate state for collection count to keep it simple with UserCard interface
-  const [collectionCount, setCollectionCount] = useState(0);
-
-  useEffect(() => {
-      if (targetUserId) {
-          supabase.from("collections").select("id", { count: "exact", head: true }).eq("owner_id", targetUserId)
-            .then(({ count }) => setCollectionCount(count || 0));
-      }
-  }, [targetUserId, collectionsRefreshKey]);
 
 
   const fetchSquad = async () => {
@@ -595,7 +585,7 @@ export default function Profile() {
       {/* 1. Header & User Card */}
       <UserCard
         profile={profile}
-        stats={{ ...stats, maps: collectionCount }}
+        stats={stats}
         isOwnProfile={isOwnProfile}
         isFollowing={isFollowing}
         onFollowToggle={handleFollowToggle}
