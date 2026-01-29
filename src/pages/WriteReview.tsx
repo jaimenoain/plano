@@ -105,6 +105,8 @@ export default function WriteReview() {
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newLinkTitle, setNewLinkTitle] = useState("");
 
+  const isProcessingVideo = video.status === 'compressing' || video.status === 'uploading';
+
   const [showLists, setShowLists] = useState(false);
   const [showLinks, setShowLinks] = useState(false);
 
@@ -1000,7 +1002,7 @@ export default function WriteReview() {
           {reviewId && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" className="text-destructive hover:text-destructive mr-auto" disabled={submitting}>
+                <Button variant="ghost" className="text-destructive hover:text-destructive mr-auto" disabled={submitting || isProcessingVideo}>
                   Delete Review
                 </Button>
               </AlertDialogTrigger>
@@ -1023,9 +1025,9 @@ export default function WriteReview() {
           <Button variant="ghost" onClick={() => navigate(-1)} disabled={submitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button onClick={handleSubmit} disabled={submitting || isProcessingVideo}>
             {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {submitting ? "Publishing..." : "Publish Review"}
+            {submitting ? "Publishing..." : (isProcessingVideo ? "Processing Video..." : "Publish Review")}
           </Button>
         </div>
 

@@ -71,6 +71,35 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Validate extension against contentType
+    const mimeToExt: Record<string, string[]> = {
+      'video/mp4': ['.mp4'],
+      'video/webm': ['.webm'],
+      'video/quicktime': ['.mov', '.qt'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp'],
+      'image/gif': ['.gif'],
+      'image/heic': ['.heic']
+    }
+
+    const allowedExts = mimeToExt[contentType]
+    if (allowedExts) {
+      const hasValidExt = allowedExts.some(ext => fileName.toLowerCase().endsWith(ext))
+      if (!hasValidExt) {
+        return new Response(
+          JSON.stringify({ error: `Invalid file extension for content type ${contentType}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    } else if (contentType.startsWith('video/') || contentType.startsWith('image/')) {
+      // Reject unknown video/image types to prevent abuse
+       return new Response(
+          JSON.stringify({ error: `Unsupported content type: ${contentType}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+    }
+
     const s3Client = new S3Client({
       region: Deno.env.get('AWS_REGION') ?? 'us-east-1',
       credentials: {

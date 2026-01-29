@@ -132,28 +132,31 @@ export function VideoPlayer({
       >
         <button
           onClick={togglePlay}
-          className="text-white hover:bg-white/20 rounded-full p-1.5 transition-colors"
+          className="text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+          aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? (
-            <Pause className="w-5 h-5 fill-white" />
+            <Pause className="w-6 h-6 fill-white" />
           ) : (
-            <Play className="w-5 h-5 fill-white" />
+            <Play className="w-6 h-6 fill-white" />
           )}
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
             <button
                 onClick={toggleMute}
-                className="text-white hover:bg-white/20 rounded-full p-1.5 transition-colors"
+                className="text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+                aria-label={isMuted ? "Unmute" : "Mute"}
             >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
             </button>
 
             <button
                 onClick={toggleFullscreen}
-                className="text-white hover:bg-white/20 rounded-full p-1.5 transition-colors"
+                className="text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+                aria-label="Toggle Fullscreen"
             >
-                <Maximize2 className="w-5 h-5" />
+                <Maximize2 className="w-6 h-6" />
             </button>
         </div>
       </div>
