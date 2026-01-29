@@ -85,9 +85,18 @@ Deno.serve(async (req) => {
       throw new Error('AWS_S3_BUCKET environment variable is not set')
     }
 
+    // Determine folder prefix based on content type
+    const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime']
+    let folderPrefix = 'review-images'
+
+    if (allowedVideoTypes.includes(contentType)) {
+      folderPrefix = 'review-videos'
+    }
+
     const fileKey = folderName
-      ? `review-images/${user.id}/${folderName}/${crypto.randomUUID()}-${fileName}`
-      : `review-images/${user.id}/${crypto.randomUUID()}-${fileName}`
+      ? `${folderPrefix}/${user.id}/${folderName}/${crypto.randomUUID()}-${fileName}`
+      : `${folderPrefix}/${user.id}/${crypto.randomUUID()}-${fileName}`
+
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: fileKey,
