@@ -371,7 +371,7 @@ export default function Profile() {
             .from("user_buildings")
             .select(`
             id, content, rating, created_at, edited_at, user_id, building_id, tags, status,
-            building:buildings ( id, name, address, year_completed, architects:building_architects(architect:architects(name, id)) )
+            building:buildings ( id, name, address, year_completed, main_image_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )
             `)
             .eq("user_id", targetUserId)
             .in("status", ["visited", "pending"]) // Fetch both
@@ -439,6 +439,9 @@ export default function Profile() {
                 name: item.building?.name || "Unknown Building",
                 address: item.building?.address || null,
                 year_completed: item.building?.year_completed || null,
+                main_image_url: item.building?.main_image_url || null,
+                slug: item.building?.slug || null,
+                short_id: item.building?.short_id || null,
                 architects: item.building?.architects?.map((a: any) => a.architect).filter(Boolean) || [],
             },
             tags: item.tags || [],
