@@ -171,11 +171,21 @@ function StatItem({ label, value, onClick }: { label: string, value: number, onC
     return (
         <button onClick={onClick} className="flex flex-col md:flex-row items-center gap-1 group">
             <span className="font-bold text-base md:text-md text-foreground group-hover:text-primary transition-colors">
-                {value}
+                {formatStatValue(value)}
             </span>
             <span className="text-xs md:text-sm text-muted-foreground capitalize">
                 {label}
             </span>
         </button>
     )
+}
+
+function formatStatValue(value: number): string {
+    if (value >= 1000000) {
+        return (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
+    }
+    if (value >= 1000) {
+        return (value / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return value.toString();
 }
