@@ -18,7 +18,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { FollowButton } from "@/components/FollowButton";
 import { useToast } from "@/hooks/use-toast";
 import { FavoritesSection } from "@/components/profile/FavoritesSection";
-import { ManageTagsDialog } from "@/components/profile/ManageTagsDialog";
 import { FavoriteItem } from "@/components/profile/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -28,8 +27,9 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 // New Components
 import { UserCard } from "@/components/profile/UserCard";
 import { ProfileHighlights } from "@/components/profile/ProfileHighlights";
-import { CollectionsRow } from "@/components/profile/CollectionsRow";
 import { SocialContextSection } from "@/components/profile/SocialContextSection";
+import { CollectionsList } from "@/components/profile/CollectionsList";
+import { ManageCollectionDialog } from "@/components/profile/ManageCollectionDialog";
 import { FeedReview } from "@/types/feed";
 import { useProfileComparison } from "@/hooks/useProfileComparison";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -77,7 +77,7 @@ export default function Profile() {
   const activeFilter = tabParam === 'reviews' ? 'visited' : (tabParam === 'bucket_list' ? 'pending' : 'all');
 
   const searchQuery = searchParams.get("search") || "";
-  const selectedTag = searchParams.get("tag");
+  const selectedCollection = searchParams.get("collection");
 
   const [loading, setLoading] = useState(true);
   
@@ -86,8 +86,11 @@ export default function Profile() {
 
   // Favorites
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const [showManageTags, setShowManageTags] = useState(false);
-  const [allTags, setAllTags] = useState<string[]>([]);
+
+  // Collections State
+  const [showManageCollections, setShowManageCollections] = useState(false);
+  const [collectionsRefreshKey, setCollectionsRefreshKey] = useState(0);
+  const [collectionBuildingIds, setCollectionBuildingIds] = useState<Set<string> | null>(null);
 
   // New Profile Features
   const [squad, setSquad] = useState<Profile[]>([]);
@@ -118,7 +121,7 @@ export default function Profile() {
         newParams.delete("tab"); // Default to all
     }
 
-    // Maintain search and tag
+    // Maintain search and collection
     setSearchParams(newParams, { replace: true, preventScrollReset: true });
 
     requestAnimationFrame(() => {
@@ -142,17 +145,17 @@ export default function Profile() {
     setSearchParams(newParams, { replace: true });
   };
 
-  const handleTagChange = (tag: string | null) => {
+  const handleCollectionChange = (slug: string | null) => {
     const newParams = new URLSearchParams(searchParams);
-    if (tag) {
-      newParams.set("tag", tag);
+    if (slug) {
+      newParams.set("collection", slug);
     } else {
-      newParams.delete("tag");
+      newParams.delete("collection");
     }
     setSearchParams(newParams, { replace: true, preventScrollReset: true });
 
     requestAnimationFrame(() => {
-        const element = document.getElementById('tags-section');
+        const element = document.getElementById('collections-section');
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -238,42 +241,45 @@ export default function Profile() {
     if (targetUserId) {
       fetchStats();
       checkIfFollowing();
-      fetchUserContent(); // Changed from fetchTabContent
+      fetchUserContent();
       fetchSquad();
-      fetchAllTags();
     }
-  }, [targetUserId, currentUser]); // Removed activeTab dependency
+  }, [targetUserId, currentUser]);
+
+  // Fetch items for selected collection
+  useEffect(() => {
+    const fetchCollectionItems = async () => {
+        if (!selectedCollection || !targetUserId) {
+            setCollectionBuildingIds(null);
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from("collections")
+                .select("id, collection_items(building_id)")
+                .eq("owner_id", targetUserId)
+                .eq("slug", selectedCollection)
+                .single();
+
+            if (error) throw error;
+
+            if (data && data.collection_items) {
+                const ids = new Set(data.collection_items.map((i: any) => i.building_id));
+                setCollectionBuildingIds(ids);
+            } else {
+                setCollectionBuildingIds(new Set()); // Empty collection
+            }
+        } catch (error) {
+            console.error("Error fetching collection items:", error);
+            setCollectionBuildingIds(new Set());
+        }
+    };
+
+    fetchCollectionItems();
+  }, [selectedCollection, targetUserId]);
 
   // --- Logic ---
-
-  const fetchAllTags = async () => {
-    if (!targetUserId) return;
-    try {
-      const { data, error } = await supabase
-        .from("user_buildings")
-        .select("tags")
-        .eq("user_id", targetUserId);
-
-      if (error) throw error;
-
-      if (data) {
-        const tagMap = new Map<string, number>();
-        data.forEach((item) => {
-          item.tags?.forEach((tag) => {
-            tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-          });
-        });
-
-        const sortedByFreq = Array.from(tagMap.entries())
-          .sort((a, b) => b[1] - a[1])
-          .map(([tag]) => tag);
-
-        setAllTags(sortedByFreq);
-      }
-    } catch (error) {
-      console.error("Error fetching tags:", error);
-    }
-  };
 
   // Computed: Filtered Content
   const filteredContent = useMemo(() => {
@@ -282,13 +288,13 @@ export default function Profile() {
         item.building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.content && item.content.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesTag = selectedTag === null || item.tags?.includes(selectedTag);
+      const matchesCollection = selectedCollection === null || (collectionBuildingIds?.has(item.building.id));
 
       const matchesFilter = activeFilter === 'all' || item.status === activeFilter;
 
-      return matchesSearch && matchesTag && matchesFilter;
+      return matchesSearch && matchesCollection && matchesFilter;
     });
-  }, [content, searchQuery, selectedTag, activeFilter]);
+  }, [content, searchQuery, selectedCollection, collectionBuildingIds, activeFilter]);
 
   const checkIfFollowing = async () => {
     if (!currentUser || !targetUserId || currentUser.id === targetUserId) return;
@@ -298,12 +304,20 @@ export default function Profile() {
 
   const fetchStats = async () => {
     if (!targetUserId) return;
-    const [reviewsResult, pendingResult, followersResult, followingResult, photosResult] = await Promise.all([
+
+    // We can also fetch the number of collections if needed for stats
+    // But currently stats.maps uses something else.
+    // For now, let's keep stats as is, but maybe 'maps' count needs to be updated.
+    // In original code: `stats={{ ...stats, maps: allTags.length }}`
+    // We should probably fetch collection count for 'maps' stat.
+
+    const [reviewsResult, pendingResult, followersResult, followingResult, photosResult, collectionsResult] = await Promise.all([
       supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "visited"),
       supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "pending"),
       supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", targetUserId),
       supabase.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", targetUserId),
       supabase.from("review_images").select("id", { count: "exact", head: true }).eq("user_id", targetUserId),
+      supabase.from("collections").select("id", { count: "exact", head: true }).eq("owner_id", targetUserId)
     ]);
 
     setStats({
@@ -313,7 +327,25 @@ export default function Profile() {
       following: followingResult.count || 0,
       photos: photosResult.count || 0,
     });
+
+    // We will inject collections count into UserCard via props, as in original code
+    // But wait, UserCard prop 'maps' was allTags.length.
+    // We can store collection count in a state or ref.
+    // Let's create a separate state for collectionCount if we want it to update accurately
+    // Or just fetch it here and pass it down.
+    // I'll update UserCard prop below.
   };
+
+  // Separate state for collection count to keep it simple with UserCard interface
+  const [collectionCount, setCollectionCount] = useState(0);
+
+  useEffect(() => {
+      if (targetUserId) {
+          supabase.from("collections").select("id", { count: "exact", head: true }).eq("owner_id", targetUserId)
+            .then(({ count }) => setCollectionCount(count || 0));
+      }
+  }, [targetUserId, collectionsRefreshKey]);
+
 
   const fetchSquad = async () => {
       if (!targetUserId || !isOwnProfile) return;
@@ -560,7 +592,7 @@ export default function Profile() {
       {/* 1. Header & User Card */}
       <UserCard
         profile={profile}
-        stats={{ ...stats, maps: allTags.length }}
+        stats={{ ...stats, maps: collectionCount }}
         isOwnProfile={isOwnProfile}
         isFollowing={isFollowing}
         onFollowToggle={handleFollowToggle}
@@ -594,16 +626,17 @@ export default function Profile() {
         />
       )}
 
-      {/* 4. Collections Row (Tags) */}
-      {allTags.length > 0 && (
-          <div id="tags-section" className="scroll-mt-24">
-              <CollectionsRow
-                tags={allTags}
-                selectedTag={selectedTag}
-                onTagSelect={handleTagChange}
+      {/* 4. Collections Row (Replaces Tags) */}
+      {targetUserId && (
+          <div id="collections-section" className="scroll-mt-24">
+              <CollectionsList
+                userId={targetUserId}
+                selectedSlug={selectedCollection}
+                onSelectCollection={handleCollectionChange}
                 onShare={handleShare}
-                onManageTags={isOwnProfile ? () => setShowManageTags(true) : undefined}
+                onManage={isOwnProfile ? () => setShowManageCollections(true) : undefined}
                 isOwnProfile={isOwnProfile}
+                refreshKey={collectionsRefreshKey}
               />
           </div>
       )}
@@ -668,7 +701,7 @@ export default function Profile() {
                 </div>
              ) : (
                 // Empty States
-                (searchQuery || selectedTag) ? (
+                (searchQuery || selectedCollection) ? (
                    <EmptyState icon={Search} label="No results found" />
                 ) : activeFilter === 'visited' ? (
                    <EmptyState icon={Building2} label="No visited buildings yet" />
@@ -730,16 +763,13 @@ export default function Profile() {
         </DialogContent>
       </Dialog>
 
-      {/* Manage Tags Dialog */}
+      {/* Manage Collections Dialog */}
       {currentUser && (
-        <ManageTagsDialog
-          open={showManageTags}
-          onOpenChange={setShowManageTags}
+        <ManageCollectionDialog
+          open={showManageCollections}
+          onOpenChange={setShowManageCollections}
           userId={currentUser.id}
-          onTagsUpdate={() => {
-            fetchUserContent();
-            fetchAllTags();
-          }}
+          onUpdate={() => setCollectionsRefreshKey(prev => prev + 1)}
         />
       )}
     </AppLayout>
