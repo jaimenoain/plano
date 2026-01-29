@@ -53,6 +53,7 @@ export default function Groups() {
   const [newGroupName, setNewGroupName] = useState("");
   const [groupType, setGroupType] = useState<"club" | "casual">("casual");
   const [isCreating, setIsCreating] = useState(false);
+  const [hasBrowsedPublic, setHasBrowsedPublic] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -354,8 +355,29 @@ export default function Groups() {
                  <div key={i} className="h-64 rounded-xl bg-muted/20 animate-pulse" />
                ))}
              </div>
+          ) : !hasBrowsedPublic && myGroups.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 border border-dashed rounded-xl bg-muted/5 animate-in fade-in zoom-in-95 duration-500">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Users className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="font-semibold text-lg">No groups yet</h3>
+              <p className="text-muted-foreground mb-4 max-w-sm text-center">
+                You haven't joined any clubs. Create one or browse public groups to get started.
+              </p>
+              <div className="flex flex-col items-center gap-2">
+                <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
+                  Create First Group
+                </Button>
+                <button
+                  onClick={() => setHasBrowsedPublic(true)}
+                  className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline transition-colors"
+                >
+                  or browse public
+                </button>
+              </div>
+            </div>
           ) : (
-            <Tabs defaultValue="my-groups" className="w-full">
+            <Tabs defaultValue={hasBrowsedPublic && myGroups.length === 0 ? "browse" : "my-groups"} className="w-full">
               <TabsList className="w-full max-w-[400px] bg-muted/50 p-1 border border-border/50">
                 <TabsTrigger value="my-groups" className="flex-1">My Groups</TabsTrigger>
                 <TabsTrigger value="browse" className="flex-1">Browse Public</TabsTrigger>
