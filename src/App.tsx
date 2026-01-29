@@ -103,6 +103,11 @@ const router = createBrowserRouter(
       
       {/* Admin Route */}
       <Route path="/admin/unauthorized" element={<Unauthorized />} />
+
+      {/* Accessible Merge Tools */}
+      <Route path="/admin/merge" element={<MergeBuildings />} />
+      <Route path="/admin/merge/:targetId/:sourceId" element={<MergeComparison />} />
+
       <Route element={
         <AdminGuard>
           <AdminLayout />
@@ -110,8 +115,6 @@ const router = createBrowserRouter(
       }>
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/buildings" element={<Buildings />} />
-        <Route path="/admin/merge" element={<MergeBuildings />} />
-        <Route path="/admin/merge/:targetId/:sourceId" element={<MergeComparison />} />
         <Route path="/admin/users" element={<Users />} />
         <Route path="/admin/moderation" element={<Moderation />} />
         <Route path="/admin/images" element={<ImageWall />} />
