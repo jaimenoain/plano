@@ -793,9 +793,19 @@ export default function BuildingDetails() {
                     // Edit View
                     <>
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                                {userStatus === 'visited' ? 'Your Rating' : 'Your Interest'}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                                <PersonalRatingButton
+                                    buildingId={building.id}
+                                    initialRating={myRating}
+                                    onRate={handleRate}
+                                    status={userStatus || 'visited'}
+                                    label={userStatus === 'pending' ? "Priority" : "Rating"}
+                                    variant="inline"
+                                />
+                                {userStatus === 'pending' && (
+                                    <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
+                                )}
+                            </div>
 
                             {/* Toggle Status */}
                             <div className="flex gap-2">
@@ -816,31 +826,6 @@ export default function BuildingDetails() {
                                     Visited
                                 </Button>
                             </div>
-                        </div>
-
-                        {/* PersonalRatingButton Integration */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <PersonalRatingButton
-                                    buildingId={building.id}
-                                    initialRating={myRating}
-                                    onRate={handleRate}
-                                    status={userStatus || 'visited'}
-                                    label={userStatus === 'pending' ? "Priority" : "Rating"}
-                                    variant="inline"
-                                />
-                                {userStatus === 'pending' && (
-                                    <span className="text-xs text-muted-foreground ml-2">(Priority)</span>
-                                )}
-                            </div>
-
-                            <Button variant="outline" size="sm" asChild>
-                                {/* Navigation to Write Review */}
-                                <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}>
-                                    <MessageSquarePlus className="w-4 h-4 mr-2" />
-                                    {myRating > 0 ? "Edit Review" : "Write Review"}
-                                </Link>
-                            </Button>
                         </div>
 
                         {/* Note & Tags Editor */}
