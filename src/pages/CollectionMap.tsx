@@ -4,9 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, ArrowLeft, Map as MapIcon, List, Save } from "lucide-react";
+import { Loader2, ArrowLeft, Map as MapIcon, List, Save, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
+import { AddBuildingsToCollectionDialog } from "@/components/collections/AddBuildingsToCollectionDialog";
 import { parseLocation } from "@/utils/location";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export default function CollectionMap() {
   const queryClient = useQueryClient();
 
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Mobile view state
@@ -216,10 +218,25 @@ export default function CollectionMap() {
                 <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-2 -ml-2 text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="mr-1 h-4 w-4" /> Back
                 </Button>
-                <h1 className="text-xl font-bold truncate pr-2">{collection?.name}</h1>
-                {collection?.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{collection.description}</p>
-                )}
+                <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                        <h1 className="text-xl font-bold truncate pr-2">{collection?.name}</h1>
+                        {collection?.description && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{collection.description}</p>
+                        )}
+                    </div>
+                    {isOwner && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="shrink-0 gap-1"
+                            onClick={() => setIsAddDialogOpen(true)}
+                        >
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden sm:inline">Add</span>
+                        </Button>
+                    )}
+                </div>
             </div>
 
             <ScrollArea className="flex-1">
@@ -317,6 +334,15 @@ export default function CollectionMap() {
                 </Button>
             </div>
         </div>
+
+        {collection && (
+            <AddBuildingsToCollectionDialog
+                collectionId={collection.id}
+                existingBuildingIds={new Set(items?.map(i => i.building.id) ?? [])}
+                open={isAddDialogOpen}
+                onOpenChange={setIsAddDialogOpen}
+            />
+        )}
     </div>
   );
 }
