@@ -41,6 +41,62 @@ export async function uploadFile(file: File, folderName?: string): Promise<strin
   return key;
 }
 
+export async function uploadFileWithProgress(
+  file: File,
+  onProgress?: (progress: number) => void,
+  folderName?: string
+): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    throw new Error('User not authenticated. Please log in to upload files.');
+  }
+
+  const { data, error } = await supabase.functions.invoke('generate-upload-url', {
+    body: {
+      fileName: file.name,
+      contentType: file.type,
+      folderName,
+    },
+  });
+
+  if (error) {
+    console.error('Upload URL generation failed:', error);
+    throw new Error(`Failed to generate upload URL: ${error.message || 'Unknown error'}`);
+  }
+
+  const { uploadUrl, key } = data;
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type);
+
+    if (onProgress) {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          onProgress(percentComplete);
+        }
+      };
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(key);
+      } else {
+        reject(new Error(`Failed to upload file: ${xhr.statusText}`));
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error('Network error during file upload'));
+    };
+
+    xhr.send(file);
+  });
+}
+
 export async function deleteFiles(fileKeys: string[]): Promise<void> {
   if (fileKeys.length === 0) return;
 
