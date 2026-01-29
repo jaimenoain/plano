@@ -23,7 +23,7 @@ import { FavoriteItem } from "@/components/profile/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { MetaHead } from "@/components/common/MetaHead";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // New Components
 import { UserCard } from "@/components/profile/UserCard";
@@ -73,7 +73,9 @@ export default function Profile() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   // URL-derived state
-  const activeTab = (searchParams.get("tab") as "reviews" | "bucket_list") || "reviews";
+  const tabParam = searchParams.get("tab");
+  const activeFilter = tabParam === 'reviews' ? 'visited' : (tabParam === 'bucket_list' ? 'pending' : 'all');
+
   const searchQuery = searchParams.get("search") || "";
   const selectedTag = searchParams.get("tag");
 
@@ -103,21 +105,28 @@ export default function Profile() {
 
   // --- Handlers for URL State ---
 
-  const handleTabChange = (tab: string, shouldScroll = false) => {
+  const handleFilterChange = (value: string) => {
+    if (!value) return; // Prevent unselecting
+
     const newParams = new URLSearchParams(searchParams);
-    newParams.set("tab", tab);
-    newParams.delete("search");
-    // Tag filter persists across tabs now
+
+    if (value === 'visited') {
+        newParams.set("tab", "reviews");
+    } else if (value === 'pending') {
+        newParams.set("tab", "bucket_list");
+    } else {
+        newParams.delete("tab"); // Default to all
+    }
+
+    // Maintain search and tag
     setSearchParams(newParams, { replace: true, preventScrollReset: true });
 
     requestAnimationFrame(() => {
-      const tabsSection = document.getElementById('profile-content-tabs');
-      if (tabsSection) {
-        const rect = tabsSection.getBoundingClientRect();
-        // 64px (header height)
-        if (shouldScroll || rect.top < 64) {
-          const behavior = shouldScroll ? 'smooth' : 'auto';
-          tabsSection.scrollIntoView({ behavior, block: 'start' });
+      const contentSection = document.getElementById('profile-content-start');
+      if (contentSection) {
+        const rect = contentSection.getBoundingClientRect();
+        if (rect.top < 64) {
+          contentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
     });
@@ -229,11 +238,11 @@ export default function Profile() {
     if (targetUserId) {
       fetchStats();
       checkIfFollowing();
-      fetchTabContent();
+      fetchUserContent(); // Changed from fetchTabContent
       fetchSquad();
       fetchAllTags();
     }
-  }, [targetUserId, activeTab, currentUser]);
+  }, [targetUserId, currentUser]); // Removed activeTab dependency
 
   // --- Logic ---
 
@@ -275,9 +284,11 @@ export default function Profile() {
 
       const matchesTag = selectedTag === null || item.tags?.includes(selectedTag);
 
-      return matchesSearch && matchesTag;
+      const matchesFilter = activeFilter === 'all' || item.status === activeFilter;
+
+      return matchesSearch && matchesTag && matchesFilter;
     });
-  }, [content, searchQuery, selectedTag]);
+  }, [content, searchQuery, selectedTag, activeFilter]);
 
   const checkIfFollowing = async () => {
     if (!currentUser || !targetUserId || currentUser.id === targetUserId) return;
@@ -318,12 +329,12 @@ export default function Profile() {
       }
   }
 
-  const fetchTabContent = async () => {
+  const fetchUserContent = async () => {
     if (!targetUserId) return;
     setContentLoading(true);
 
     try {
-        const status = activeTab === "reviews" ? "visited" : "pending";
+        // Fetch BOTH visited and pending items
         const { data: entriesData, error: entriesError } = await supabase
             .from("user_buildings")
             .select(`
@@ -331,7 +342,7 @@ export default function Profile() {
             building:buildings ( id, name, address, year_completed, architects:building_architects(architect:architects(name, id)) )
             `)
             .eq("user_id", targetUserId)
-            .eq("status", status)
+            .in("status", ["visited", "pending"]) // Fetch both
             .order("edited_at", { ascending: false });
 
         if (entriesError) throw entriesError;
@@ -555,7 +566,8 @@ export default function Profile() {
         onFollowToggle={handleFollowToggle}
         onSignOut={handleSignOut}
         onOpenUserList={openUserList}
-        onTabChange={(tab) => handleTabChange(tab, true)}
+        // Map tab values to filters for UserCard stats
+        onTabChange={(tab) => handleFilterChange(tab === 'reviews' ? 'visited' : 'pending')}
         squad={squad}
       />
 
@@ -564,8 +576,7 @@ export default function Profile() {
         <SocialContextSection mutualAffinityUsers={profileComparison.mutualAffinityUsers} />
       )}
 
-      {/* 2. Favorite Buildings (Moved to body as requested implicitly by "Add a section") */}
-      {/* Only show if not empty (hidden for own profile) */}
+      {/* 2. Favorite Buildings */}
       {!isOwnProfile && buildingFavorites.length > 0 && (
          <FavoritesSection
             favorites={buildingFavorites}
@@ -597,15 +608,24 @@ export default function Profile() {
           </div>
       )}
 
-      {/* 5. Content Tabs */}
-      <div className="px-4 mt-2 scroll-mt-20 min-h-screen" id="profile-content-tabs">
-        <Tabs value={activeTab} onValueChange={(v: string) => handleTabChange(v)} className="w-full">
+      {/* 5. Filter & Content Section */}
+      <div className="px-4 mt-2 scroll-mt-20 min-h-screen" id="profile-content-start">
           <div className="sticky top-14 bg-background z-10 pt-2 pb-4 space-y-3 shadow-sm border-b border-border/40 -mx-4 px-4 mb-4">
             <div className="flex items-center justify-between">
-              <TabsList className="grid w-full max-w-[200px] grid-cols-2">
-                <TabsTrigger value="reviews">Reviews</TabsTrigger>
-                <TabsTrigger value="bucket_list">Bucket List</TabsTrigger>
-              </TabsList>
+
+              {/* Filter Toggle */}
+              <ToggleGroup type="single" value={activeFilter} onValueChange={handleFilterChange} className="justify-start">
+                  <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      All
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="visited" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      Reviews
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="pending" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      Bucket List
+                  </ToggleGroupItem>
+              </ToggleGroup>
+
             </div>
 
             {/* Search Input */}
@@ -636,7 +656,8 @@ export default function Profile() {
             </div>
           </div>
 
-          <TabsContent value="reviews" className="mt-0">
+          {/* Grid Content */}
+          <div className="mt-0">
              {contentLoading ? (
                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
              ) : filteredContent.length > 0 ? (
@@ -646,37 +667,23 @@ export default function Profile() {
                    ))}
                 </div>
              ) : (
-                content.length > 0 ? (
-                  <EmptyState icon={Search} label="No results found" />
+                // Empty States
+                (searchQuery || selectedTag) ? (
+                   <EmptyState icon={Search} label="No results found" />
+                ) : activeFilter === 'visited' ? (
+                   <EmptyState icon={Building2} label="No visited buildings yet" />
+                ) : activeFilter === 'pending' ? (
+                   <EmptyState
+                      icon={Bookmark}
+                      label="Bucket List is empty"
+                      description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
+                      action={isOwnProfile ? <Button onClick={() => navigate("/search")}>Search Buildings</Button> : undefined}
+                   />
                 ) : (
-                  <EmptyState icon={Building2} label="No visited buildings yet" />
+                   <EmptyState icon={Building2} label="No activity yet" />
                 )
              )}
-          </TabsContent>
-
-          <TabsContent value="bucket_list" className="mt-0">
-             {contentLoading ? (
-               <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-             ) : filteredContent.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
-                  {filteredContent.map((item) => (
-                    <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser variant="compact" />
-                  ))}
-                </div>
-             ) : (
-                content.length > 0 ? (
-                  <EmptyState icon={Search} label="No results found" />
-                ) : (
-                  <EmptyState
-                    icon={Bookmark}
-                    label="Bucket List is empty"
-                    description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
-                    action={isOwnProfile ? <Button onClick={() => navigate("/search")}>Search Buildings</Button> : undefined}
-                  />
-                )
-             )}
-          </TabsContent>
-        </Tabs>
+          </div>
       </div>
 
       {/* User List Modal */}
@@ -730,7 +737,7 @@ export default function Profile() {
           onOpenChange={setShowManageTags}
           userId={currentUser.id}
           onTagsUpdate={() => {
-            fetchTabContent();
+            fetchUserContent();
             fetchAllTags();
           }}
         />
