@@ -79,8 +79,10 @@ export function DiscoveryBuildingCard({
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {building.contact_visitors.length === 1
-                    ? (building.contact_visitors[0].first_name || 'Friend')
-                    : `${building.contact_visitors[0].first_name || 'Friend'} + ${building.contact_visitors.length - 1}`}
+                    ? `Visited by ${building.contact_visitors[0].first_name || 'Friend'}`
+                    : building.contact_visitors.length === 2
+                    ? `Visited by ${building.contact_visitors[0].first_name || 'Friend'} and ${building.contact_visitors[1].first_name || 'Friend'}`
+                    : `Visited by ${building.contact_visitors[0].first_name || 'Friend'} +${building.contact_visitors.length - 1}`}
                 </span>
               </div>
             )}
