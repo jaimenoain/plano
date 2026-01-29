@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { useDiscoveryFeed } from "@/hooks/useDiscoveryFeed";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { DiscoveryCard } from "@/components/feed/DiscoveryCard";
@@ -7,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 export default function Explore() {
+  const { user, loading: authLoading } = useAuth();
   const { profile } = useUserProfile();
   const [filter, setFilter] = useState<'global' | 'local'>('global');
 
@@ -35,6 +38,10 @@ export default function Explore() {
 
   // Extract flattened list
   const buildings = data?.pages.flat() || [];
+
+  if (!authLoading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
     <div className="relative h-screen w-full bg-black text-white">
