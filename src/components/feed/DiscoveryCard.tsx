@@ -123,7 +123,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave }: DiscoveryCar
       </div>
 
       {/* Gradient Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-gradient-to-t from-black via-black/60 to-transparent z-20 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none" />
 
       {/* Info Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-6 z-30 text-white pb-24 md:pb-6 pointer-events-none">
