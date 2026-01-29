@@ -360,7 +360,7 @@ export default function Profile() {
         const { data: entriesData, error: entriesError } = await supabase
             .from("user_buildings")
             .select(`
-            id, content, rating, created_at, edited_at, user_id, building_id, tags, status,
+            id, content, rating, created_at, edited_at, user_id, building_id, status,
             building:buildings ( id, name, address, year_completed, main_image_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )
             `)
             .eq("user_id", targetUserId)
@@ -434,7 +434,7 @@ export default function Profile() {
                 short_id: item.building?.short_id || null,
                 architects: item.building?.architects?.map((a: any) => a.architect).filter(Boolean) || [],
             },
-            tags: item.tags || [],
+            tags: [],
             likes_count: likesCount.get(item.id) || 0,
             comments_count: commentsCount.get(item.id) || 0,
             is_liked: userLikes.has(item.id),

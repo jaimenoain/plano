@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BuildingForm, BuildingFormData } from "./BuildingForm";
 import { useAuth } from "@/hooks/useAuth";
+import { CollectionSelector } from "@/components/profile/CollectionSelector";
 
 interface AddBuildingDetailsProps {
   locationData: {
@@ -23,6 +24,7 @@ interface AddBuildingDetailsProps {
 
 export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -81,6 +83,20 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         }
       } catch (err) {
         console.warn("Exception auto-adding to user list", err);
+      }
+
+      // Insert Collection Items
+      if (selectedCollectionIds.length > 0) {
+          const collectionItems = selectedCollectionIds.map(cid => ({
+              collection_id: cid,
+              building_id: buildingId
+          }));
+
+          const { error: collError } = await supabase
+              .from('collection_items')
+              .insert(collectionItems);
+
+          if (collError) console.warn("Failed to add to collections", collError);
       }
 
       // 4. Insert Architect Links (Junction Table Logic)
@@ -209,6 +225,16 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
             submitLabel="Save Building"
             mode="create"
           />
+
+          {user && (
+             <div className="mt-6 border-t pt-6">
+                <CollectionSelector
+                    userId={user.id}
+                    selectedCollectionIds={selectedCollectionIds}
+                    onChange={setSelectedCollectionIds}
+                />
+             </div>
+          )}
         </CardContent>
       </Card>
     </div>
