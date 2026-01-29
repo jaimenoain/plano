@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
+import { Bounds } from "@/utils/map";
 import Supercluster from "supercluster";
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -44,13 +45,6 @@ interface Building {
   social_context?: string | null;
   location_precision?: 'exact' | 'approximate';
   main_image_url?: string | null;
-}
-
-export interface Bounds {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
 }
 
 interface BuildingDiscoveryMapProps {
@@ -447,7 +441,18 @@ export function BuildingDiscoveryMap({
                 onMapInteraction?.();
             }
         }}
-        onLoad={evt => handleMapUpdate(evt.target)}
+        onLoad={evt => {
+            handleMapUpdate(evt.target);
+            if (forcedBounds) {
+                evt.target.fitBounds(
+                    [
+                        [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
+                        [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
+                    ],
+                    { padding: 20, duration: 1500 }
+                );
+            }
+        }}
         onMoveEnd={evt => {
             setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;

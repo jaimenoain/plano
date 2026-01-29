@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { BuildingDiscoveryMap, Bounds } from "@/components/common/BuildingDiscoveryMap";
+import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { DiscoveryFilterBar, SearchScope } from "./components/DiscoveryFilterBar";
 import { DiscoveryList } from "./components/DiscoveryList";
 import { SearchModeToggle } from "./components/SearchModeToggle";
@@ -15,24 +15,7 @@ import { UserResultsList } from "./components/UserResultsList";
 import { useArchitectSearch } from "./hooks/useArchitectSearch";
 import { ArchitectSearchNudge } from "./components/ArchitectSearchNudge";
 import { ArchitectResultsList } from "./components/ArchitectResultsList";
-
-function getBoundsFromBuildings(buildings: DiscoveryBuilding[]) {
-  if (!buildings || buildings.length === 0) return null;
-
-  let north = -90;
-  let south = 90;
-  let east = -180;
-  let west = 180;
-
-  buildings.forEach((b) => {
-    if (b.location_lat > north) north = b.location_lat;
-    if (b.location_lat < south) south = b.location_lat;
-    if (b.location_lng > east) east = b.location_lng;
-    if (b.location_lng < west) west = b.location_lng;
-  });
-
-  return { north, south, east, west };
-}
+import { getBoundsFromBuildings, Bounds } from "@/utils/map";
 
 export default function SearchPage() {
   const navigate = useNavigate();

@@ -37,14 +37,34 @@ export function CollectionSelector({ userId, selectedCollectionIds, onChange, cl
   const fetchCollections = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("collections")
-        .select("id, name, slug")
-        .eq("owner_id", userId)
-        .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setCollections(data || []);
+      // Fetch owned collections and collections where user is a contributor
+      const [owned, shared] = await Promise.all([
+        supabase
+          .from("collections")
+          .select("id, name, slug")
+          .eq("owner_id", userId)
+          .order("created_at", { ascending: false }),
+
+        supabase
+          .from("collection_contributors")
+          .select("collection:collections(id, name, slug)")
+          .eq("user_id", userId)
+      ]);
+
+      if (owned.error) throw owned.error;
+      if (shared.error) throw shared.error;
+
+      const ownedCollections = (owned.data || []) as Collection[];
+      const sharedCollections = (shared.data || [])
+        .map((item: any) => item.collection)
+        .filter(Boolean) as Collection[];
+
+      // Merge and remove duplicates by ID
+      const allCollections = [...ownedCollections, ...sharedCollections];
+      const uniqueCollections = Array.from(new Map(allCollections.map(c => [c.id, c])).values());
+
+      setCollections(uniqueCollections);
     } catch (error) {
       console.error("Error fetching collections:", error);
     } finally {

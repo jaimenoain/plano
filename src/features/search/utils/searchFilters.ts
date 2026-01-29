@@ -4,7 +4,7 @@ export interface BuildingFilterData {
   typologies?: { typology_id: string }[];
   attributes?: { attribute_id: string }[];
   architects?: { architect: { name: string; id: string } }[];
-  // Other fields if needed
+  [key: string]: any; // Allow passing through other fields like id, location, etc.
 }
 
 export interface FilterCriteria {

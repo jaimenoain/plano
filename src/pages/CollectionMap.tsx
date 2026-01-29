@@ -4,11 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, ArrowLeft, Map as MapIcon, List, Save, Plus } from "lucide-react";
+import { Loader2, ArrowLeft, Map as MapIcon, List, Save, Plus, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { AddBuildingsToCollectionDialog } from "@/components/collections/AddBuildingsToCollectionDialog";
+import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
 import { parseLocation } from "@/utils/location";
+import { getBoundsFromBuildings } from "@/utils/map";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -47,8 +49,11 @@ export default function CollectionMap() {
   const queryClient = useQueryClient();
 
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Dialog states
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Mobile view state
   const [activeTab, setActiveTab] = useState<"list" | "map">("map");
@@ -90,6 +95,25 @@ export default function CollectionMap() {
     },
     enabled: !!ownerId && !!slug
   });
+
+  // Check if user is a collaborator
+  const { data: isCollaborator } = useQuery({
+    queryKey: ["is-collaborator", collection?.id, user?.id],
+    queryFn: async () => {
+      if (!collection?.id || !user?.id) return false;
+      const { data, error } = await supabase
+        .from("collection_contributors")
+        .select("user_id")
+        .eq("collection_id", collection.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      return !!data;
+    },
+    enabled: !!collection?.id && !!user?.id && !isOwner
+  });
+
+  const canEdit = isOwner || !!isCollaborator;
 
   // 3. Fetch Collection Items with Buildings
   const { data: items, isLoading: loadingItems } = useQuery({
@@ -175,6 +199,10 @@ export default function CollectionMap() {
     }));
   }, [items]);
 
+  const mapBounds = useMemo(() => {
+    return getBoundsFromBuildings(mapBuildings);
+  }, [mapBuildings]);
+
   const handleMarkerClick = (buildingId: string) => {
     setHighlightedId(buildingId);
     setActiveTab("list"); // Switch to list on mobile
@@ -214,29 +242,36 @@ export default function CollectionMap() {
             "w-full md:w-[400px] lg:w-[450px] border-r flex flex-col h-full bg-background transition-transform duration-300 md:translate-x-0 absolute md:relative z-20",
             activeTab === "list" ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}>
-            <div className="p-4 border-b bg-background/95 backdrop-blur z-10">
-                <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-2 -ml-2 text-muted-foreground hover:text-foreground">
-                    <ArrowLeft className="mr-1 h-4 w-4" /> Back
-                </Button>
-                <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                        <h1 className="text-xl font-bold truncate pr-2">{collection?.name}</h1>
-                        {collection?.description && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{collection.description}</p>
-                        )}
-                    </div>
-                    {isOwner && (
+            <div className="p-4 border-b bg-background/95 backdrop-blur z-10 flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-2 -ml-2 text-muted-foreground hover:text-foreground">
+                        <ArrowLeft className="mr-1 h-4 w-4" /> Back
+                    </Button>
+                    <h1 className="text-xl font-bold truncate pr-2">{collection?.name}</h1>
+                    {collection?.description && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{collection.description}</p>
+                    )}
+                </div>
+                {isOwner && (
+                    <div className="flex gap-2 shrink-0">
                         <Button
                             size="sm"
                             variant="outline"
-                            className="shrink-0 gap-1"
+                            className="gap-1"
                             onClick={() => setIsAddDialogOpen(true)}
                         >
                             <Plus className="h-4 w-4" />
                             <span className="hidden sm:inline">Add</span>
                         </Button>
-                    )}
-                </div>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => setShowSettings(true)}
+                        >
+                            <Settings className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                    </div>
+                )}
             </div>
 
             <ScrollArea className="flex-1">
@@ -281,7 +316,7 @@ export default function CollectionMap() {
                             </div>
 
                             <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                                {isOwner ? (
+                                {canEdit ? (
                                     <div className="relative">
                                         <Textarea
                                             placeholder="Add a note..."
@@ -312,6 +347,7 @@ export default function CollectionMap() {
                 highlightedId={highlightedId}
                 onMarkerClick={handleMarkerClick}
                 autoZoomOnLowCount={true}
+                forcedBounds={mapBounds}
             />
 
             {/* Mobile Toggle Controls */}
@@ -336,12 +372,20 @@ export default function CollectionMap() {
         </div>
 
         {collection && (
-            <AddBuildingsToCollectionDialog
-                collectionId={collection.id}
-                existingBuildingIds={new Set(items?.map(i => i.building.id) ?? [])}
-                open={isAddDialogOpen}
-                onOpenChange={setIsAddDialogOpen}
-            />
+            <>
+                <AddBuildingsToCollectionDialog
+                    collectionId={collection.id}
+                    existingBuildingIds={new Set(items?.map(i => i.building.id) ?? [])}
+                    open={isAddDialogOpen}
+                    onOpenChange={setIsAddDialogOpen}
+                />
+                <CollectionSettingsDialog
+                    collection={collection}
+                    open={showSettings}
+                    onOpenChange={setShowSettings}
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["collection-details", ownerId, slug] })}
+                />
+            </>
         )}
     </div>
   );
