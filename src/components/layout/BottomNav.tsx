@@ -1,10 +1,11 @@
-import { Activity, Building2, Users, User } from "lucide-react";
+import { Activity, Building2, Users, User, Compass } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 // Core navigation items
 const navItems = [
   { icon: Activity, label: "Feed", path: "/" },
+  { icon: Compass, label: "Explore", path: "/explore" },
   { icon: Building2, label: "Buildings", path: "/search" },
   { icon: Users, label: "Connect", path: "/groups" },
   { icon: User, label: "You", path: "/profile" },
