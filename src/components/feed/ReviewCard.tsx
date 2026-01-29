@@ -282,19 +282,6 @@ export function ReviewCard({
                 {entry.content}
               </p>
             )}
-
-            {entry.tags && entry.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {entry.tags.slice(0, 3).map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-xs px-2 h-6 font-normal text-muted-foreground">
-                    {tag}
-                  </Badge>
-                ))}
-                {entry.tags.length > 3 && (
-                   <span className="text-xs text-muted-foreground self-center">+{entry.tags.length - 3}</span>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
@@ -477,20 +464,6 @@ export function ReviewCard({
              "{entry.content}"
            </p>
         )}
-
-        {/* Tags Section */}
-        {entry.tags && entry.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {entry.tags.slice(0, 3).map(tag => (
-              <Badge key={tag} variant="secondary" className="text-xs px-2 h-6 font-normal text-muted-foreground/80">
-                {tag}
-              </Badge>
-            ))}
-            {entry.tags.length > 3 && (
-              <span className="text-xs text-muted-foreground self-center">+{entry.tags.length - 3}</span>
-            )}
-          </div>
-        )}
       </>
   ) : (
       <>
@@ -498,15 +471,6 @@ export function ReviewCard({
            <p className="text-sm text-foreground mb-2 leading-relaxed">
              {entry.content}
            </p>
-        )}
-        {entry.tags && entry.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {entry.tags.map(tag => (
-              <Badge key={tag} variant="secondary" className="text-xs px-2 h-6 font-normal text-muted-foreground/80">
-                {tag}
-              </Badge>
-            ))}
-          </div>
         )}
       </>
   );

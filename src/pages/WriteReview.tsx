@@ -45,7 +45,7 @@ import { resizeImage } from "@/lib/image-compression";
 import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
 import { uploadFile, deleteFiles, uploadFileWithProgress } from "@/utils/upload";
-import { AutocompleteTagInput } from "@/components/ui/autocomplete-tag-input";
+import { CollectionSelector } from "@/components/profile/CollectionSelector";
 import { VideoCompressionService } from "@/utils/video-compression";
 
 interface ReviewImage {
@@ -82,8 +82,7 @@ export default function WriteReview() {
   const [content, setContent] = useState("");
   const [hoverRating, setHoverRating] = useState<number | null>(null);
 
-  const [tags, setTags] = useState<string[]>([]);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
 
   const [images, setImages] = useState<ReviewImage[]>([]);
   const [deletedImages, setDeletedImages] = useState<ReviewImage[]>([]);
@@ -139,28 +138,22 @@ export default function WriteReview() {
 
         // 2. Fetch Existing Review/Status
         if (user) {
-          // Fetch Smart Suggestions (Recent Tags)
-          // We limit to 50 recent interactions to find the most recently used tags
-          const { data: recentLogs } = await supabase
-            .from("user_buildings")
-            .select("tags, edited_at")
-            .eq("user_id", user.id)
-            .not("tags", "is", null)
-            .order("edited_at", { ascending: false })
-            .limit(50);
+          // Fetch collections for this building
+          const { data: collectionItems } = await supabase
+              .from("collection_items")
+              .select("collection_id, collections!inner(owner_id)")
+              .eq("building_id", building.id)
+              .eq("collections.owner_id", user.id);
 
-          if (recentLogs) {
-            const uniqueTags = new Set<string>();
-            // Flatten and dedup preserving order (recency)
-            recentLogs.forEach(log => {
-              log.tags?.forEach(tag => uniqueTags.add(tag));
-            });
-            setSuggestions(Array.from(uniqueTags).slice(0, 20));
+          if (collectionItems) {
+              const ids = collectionItems.map(c => c.collection_id);
+              setSelectedCollectionIds(ids);
+              if (ids.length > 0) setShowLists(true);
           }
 
           const { data: userBuilding, error: ubError } = await supabase
             .from("user_buildings")
-            .select("id, rating, content, status, tags, visibility, video_url")
+            .select("id, rating, content, status, visibility, video_url")
             .eq("user_id", user.id)
             .eq("building_id", building.id)
             .maybeSingle();
@@ -171,12 +164,6 @@ export default function WriteReview() {
             setReviewId(userBuilding.id);
             if (userBuilding.rating) setRating(userBuilding.rating);
             if (userBuilding.content) setContent(userBuilding.content);
-            
-            // Merged Logic: Set tags and handle UI visibility for lists
-            if (userBuilding.tags) {
-              setTags(userBuilding.tags);
-              if (userBuilding.tags.length > 0) setShowLists(true);
-            }
             
             // Merged Logic: Set visibility setting
             if (userBuilding.visibility) setVisibility(userBuilding.visibility);
@@ -550,7 +537,6 @@ export default function WriteReview() {
           building_id: buildingId,
           rating: rating === 0 ? null : rating,
           content: content,
-          tags: tags,
           status: status,
           visibility: visibility,
           video_url: video.storage_path, // Save video path
@@ -563,6 +549,28 @@ export default function WriteReview() {
       if (!userBuilding) throw new Error("Failed to save review");
 
       const reviewId = userBuilding.id;
+
+      // Update Collections
+      const { data: currentItems } = await supabase
+        .from("collection_items")
+        .select("id, collection_id, collections!inner(owner_id)")
+        .eq("building_id", buildingId)
+        .eq("collections.owner_id", user.id);
+
+      const currentCollectionIds = new Set(currentItems?.map(c => c.collection_id) || []);
+      const newCollectionIds = new Set(selectedCollectionIds);
+
+      const toAdd = selectedCollectionIds.filter(id => !currentCollectionIds.has(id));
+      if (toAdd.length > 0) {
+          await supabase.from("collection_items").insert(
+              toAdd.map(cid => ({ collection_id: cid, building_id: buildingId }))
+          );
+      }
+
+      const itemsToRemove = currentItems?.filter(item => !newCollectionIds.has(item.collection_id)).map(item => item.id) || [];
+      if (itemsToRemove.length > 0) {
+          await supabase.from("collection_items").delete().in("id", itemsToRemove);
+      }
 
       // 2. Handle Links
       // Delete existing links (simplest update strategy)
@@ -897,17 +905,14 @@ export default function WriteReview() {
           )}
         </div>
 
-        {/* Lists (Tags) */}
-        {showLists && (
+        {/* Collections */}
+        {showLists && user && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-            <label className="text-sm font-medium uppercase text-muted-foreground">My Maps</label>
-            <AutocompleteTagInput
-              tags={tags}
-              setTags={setTags}
-              suggestions={suggestions}
-              placeholder="Add to my maps..."
-              normalize={(v) => v.trim()}
-            />
+             <CollectionSelector
+                userId={user.id}
+                selectedCollectionIds={selectedCollectionIds}
+                onChange={setSelectedCollectionIds}
+             />
           </div>
         )}
 

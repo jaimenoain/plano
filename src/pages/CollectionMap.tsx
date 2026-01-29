@@ -199,7 +199,7 @@ export default function CollectionMap() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-background">
+    <div className="flex flex-col md:flex-row h-screen supports-[height:100dvh]:h-[100dvh] w-full overflow-hidden bg-background">
         {/* Left Panel - List */}
         <div className={cn(
             "w-full md:w-[400px] lg:w-[450px] border-r flex flex-col h-full bg-background transition-transform duration-300 md:translate-x-0 absolute md:relative z-20",

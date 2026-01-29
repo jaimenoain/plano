@@ -53,13 +53,6 @@ export default function Post() {
   const [buildingDetails, setBuildingDetails] = useState<any>(null);
   const [existingEntryId, setExistingEntryId] = useState<string | null>(null);
 
-  // Tag states
-  const [popularTags, setPopularTags] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [userPastTags, setUserPastTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
-  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
-
   // Recommendation state
   const [recommendTo, setRecommendTo] = useState<string[]>([]);
 
@@ -76,9 +69,7 @@ export default function Post() {
     }
     if (user) {
       checkExistingReview();
-      fetchUserTags();
       fetchBuildingDetails();
-      fetchPopularTags();
     }
   }, [buildingId, user, navigate]);
 
@@ -110,7 +101,6 @@ export default function Post() {
         setPostType(mappedStatus === "bucket_list" ? "bucket_list" : "review");
         if (entry.rating) setRating(entry.rating);
         if (entry.content) setContent(entry.content);
-        if (entry.tags) setSelectedTags(entry.tags);
         if (entry.visibility) setVisibility(entry.visibility as Visibility);
       }
     } catch (error) {
@@ -118,51 +108,6 @@ export default function Post() {
     } finally {
       setCheckingExisting(false);
     }
-  };
-
-  const fetchUserTags = async () => {
-    if (!user) return;
-    // @ts-ignore
-    const { data } = await supabase
-      .from("user_buildings")
-      .select("tags")
-      .eq("user_id", user.id)
-      .not("tags", "is", null);
-
-    if (data) {
-      const tags = new Set<string>();
-      data.forEach((row) => row.tags?.forEach((tag: string) => tags.add(tag)));
-      setUserPastTags(Array.from(tags).sort());
-    }
-  };
-
-  const fetchPopularTags = async () => {
-    if (!buildingId) return;
-
-    // @ts-ignore
-    const { data } = await supabase
-      .from("user_buildings")
-      .select("tags")
-      .eq("building_id", buildingId)
-      .eq("status", "visited")
-      .not("tags", "is", null);
-
-    if (data) {
-      const tagCounts = new Map<string, number>();
-      data.forEach((review) => {
-        (review.tags || []).forEach((tag: string) => {
-          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-        });
-      });
-      setPopularTags([...tagCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([tag]) => tag));
-    }
-  };
-
-  const handleAddTag = (tag: string) => {
-    const trimmed = tag.trim();
-    if (trimmed && !selectedTags.includes(trimmed)) setSelectedTags([...selectedTags, trimmed]);
-    setTagInput("");
-    setShowTagSuggestions(false);
   };
 
   const handleSubmit = async () => {
@@ -179,7 +124,7 @@ export default function Post() {
         status: dbStatus,
         rating: (isReview && rating > 0) ? rating : null,
         content: content.trim() || null,
-        tags: selectedTags.length > 0 ? selectedTags : null,
+        tags: null,
         visibility,
         edited_at: new Date().toISOString()
       });
@@ -219,8 +164,6 @@ export default function Post() {
   // Determine Titles
   const mainTitle = buildingDetails?.name || decodeURIComponent(paramTitle);
   const subTitle = buildingDetails?.address || "";
-
-  const tagSuggestions = userPastTags.filter(t => t.toLowerCase().includes(tagInput.toLowerCase()) && !selectedTags.includes(t));
 
   if (!buildingId) return null;
 
@@ -306,21 +249,6 @@ export default function Post() {
                 onChange={(e) => setContent(e.target.value)}
                 className="min-h-[120px] bg-secondary/20 border border-input rounded-md p-3 resize-none focus-visible:ring-1 focus-visible:ring-primary text-base"
               />
-            </div>
-
-            <div className="py-4 hairline space-y-3">
-              <p className="text-sm text-muted-foreground">My Maps</p>
-              <div className="flex flex-wrap gap-2">{selectedTags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="px-3 py-1 gap-1">{tag}<X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))} /></Badge>
-              ))}</div>
-              <div className="relative">
-                <Input placeholder="Add to my maps..." value={tagInput} onChange={(e) => { setTagInput(e.target.value); setShowTagSuggestions(true); }} onFocus={() => setShowTagSuggestions(true)} onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)} onKeyDown={(e) => e.key === "Enter" && handleAddTag(tagInput)} className="bg-secondary/50 border-none" />
-                {showTagSuggestions && tagInput && tagSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-10">
-                    {tagSuggestions.map((tag) => <button key={tag} className="w-full text-left px-3 py-2 text-sm hover:bg-secondary" onClick={() => handleAddTag(tag)}>{tag}</button>)}
-                  </div>
-                )}
-              </div>
             </div>
 
             <div className="py-4 hairline space-y-3">
