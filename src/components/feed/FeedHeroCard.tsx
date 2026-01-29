@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Circle, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Circle, Bookmark, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { FeedReview } from "@/types/feed";
 import { getBuildingUrl } from "@/utils/url";
 import { useState } from "react";
+import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface FeedHeroCardProps {
   entry: FeedReview;
@@ -25,10 +27,16 @@ export function FeedHeroCard({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { statuses } = useUserBuildingStatuses();
+  const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   if (!entry.building) return null;
+
+  const viewerStatus = entry.building ? statuses[entry.building.id] : undefined;
+  const isSaved = viewerStatus === 'pending';
+  const isVisited = viewerStatus === 'visited';
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -37,20 +45,68 @@ export function FeedHeroCard({
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from("user_buildings").upsert({
-          user_id: user.id,
-          building_id: entry.building.id,
-          status: 'pending',
-          edited_at: new Date().toISOString()
-      }, { onConflict: 'user_id, building_id' });
-
-      if (error) throw error;
-      toast({ title: "Saved to your list" });
+      if (isSaved) {
+        // Unsave (Remove)
+        const { error } = await supabase
+            .from("user_buildings")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("building_id", entry.building.id);
+        if (error) throw error;
+        toast({ title: "Removed from saved" });
+      } else {
+        // Save (upsert pending)
+        const { error } = await supabase.from("user_buildings").upsert({
+            user_id: user.id,
+            building_id: entry.building.id,
+            status: 'pending',
+            edited_at: new Date().toISOString()
+        }, { onConflict: 'user_id, building_id' });
+        if (error) throw error;
+        toast({ title: "Saved to your list" });
+      }
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
     } catch (error) {
-      console.error("Save failed", error);
-      toast({ variant: "destructive", title: "Failed to save" });
+      console.error("Save action failed", error);
+      toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleVisit = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    if (!entry.building?.id) return;
+
+    setIsSaving(true);
+    try {
+        if (isVisited) {
+            // Unvisit (Remove)
+            const { error } = await supabase
+                .from("user_buildings")
+                .delete()
+                .eq("user_id", user.id)
+                .eq("building_id", entry.building.id);
+            if (error) throw error;
+            toast({ title: "Removed from visited" });
+        } else {
+            // Mark Visited (upsert visited)
+            const { error } = await supabase.from("user_buildings").upsert({
+                user_id: user.id,
+                building_id: entry.building.id,
+                status: 'visited',
+                edited_at: new Date().toISOString()
+            }, { onConflict: 'user_id, building_id' });
+            if (error) throw error;
+            toast({ title: "Marked as visited" });
+        }
+        queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+    } catch (error) {
+        console.error("Visit action failed", error);
+        toast({ variant: "destructive", title: "Failed to update status" });
+    } finally {
+        setIsSaving(false);
     }
   };
 
@@ -279,14 +335,33 @@ export function FeedHeroCard({
             <span className="text-xs font-medium">{entry.comments_count}</span>
           </button>
 
-           <button
-             onClick={handleSave}
-             className={`flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors ml-auto ${isSaving ? 'opacity-50' : ''}`}
-             disabled={isSaving}
-           >
-             <Bookmark className="h-4 w-4" />
-             <span className="text-xs font-medium">Save</span>
-           </button>
+           <div className="flex items-center gap-3 ml-auto">
+             <button
+               onClick={handleVisit}
+               className={`flex items-center gap-1.5 transition-colors ${
+                  isVisited
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+               } ${isSaving ? 'opacity-50' : ''}`}
+               disabled={isSaving}
+             >
+               <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3px]' : ''}`} />
+               <span className={`text-xs font-medium ${isVisited ? 'font-bold' : ''}`}>Visited</span>
+             </button>
+
+             <button
+               onClick={handleSave}
+               className={`flex items-center gap-1.5 transition-colors ${
+                  isSaved
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+               } ${isSaving ? 'opacity-50' : ''}`}
+               disabled={isSaving}
+             >
+               <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-primary' : ''}`} />
+               <span className={`text-xs font-medium ${isSaved ? 'font-bold' : ''}`}>Save</span>
+             </button>
+           </div>
       </div>
     </article>
   );
