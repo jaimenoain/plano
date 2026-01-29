@@ -28,7 +28,7 @@ test('verify add building ui', async ({ page }) => {
       await expect(nameInput).toBeVisible();
 
       // Verify Location Input exists
-      const locationLabel = page.getByText('Location', { exact: true });
+      const locationLabel = page.getByText('Location Search', { exact: false });
       await expect(locationLabel).toBeVisible();
 
       // Type something in name
