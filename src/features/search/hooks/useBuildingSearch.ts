@@ -267,14 +267,15 @@ export function useBuildingSearch() {
         // Local filtering mode (My Buildings or Contacts)
         const hasSpecificContacts = selectedContacts.length > 0;
         const hasTags = selectedTags.length > 0;
+        const hasPersonalRating = personalMinRating > 0;
 
         // Input Sanitization
         const cleanQuery = debouncedQuery.trim() || null;
 
-        if (filterVisited || filterBucketList || filterContacts || hasSpecificContacts || hasTags) {
+        if (filterVisited || filterBucketList || filterContacts || hasSpecificContacts || hasTags || hasPersonalRating) {
             if (!user) return [];
 
-            let buildingIds: string[] = [];
+            const buildingIds = new Set<string>();
 
             // 1. Contact Buildings (Any or Specific)
             if (filterContacts || hasSpecificContacts) {
@@ -308,13 +309,12 @@ export function useBuildingSearch() {
                     const { data: contactBuildings, error: cbError } = await query;
                     if (cbError) throw cbError;
 
-                    const ids = contactBuildings?.map(cb => cb.building_id) || [];
-                    buildingIds = [...buildingIds, ...ids];
+                    contactBuildings?.forEach(cb => buildingIds.add(cb.building_id));
                 }
             }
 
             // 2. Personal Buildings
-            if (filterVisited || filterBucketList || hasTags) {
+            if (filterVisited || filterBucketList || hasTags || hasPersonalRating) {
                 let query = supabase
                     .from('user_buildings')
                     .select('building_id')
@@ -339,14 +339,10 @@ export function useBuildingSearch() {
                 const { data: userBuildings, error: ubError } = await query;
                 if (ubError) throw ubError;
 
-                const ids = userBuildings?.map(ub => ub.building_id) || [];
-                buildingIds = [...buildingIds, ...ids];
+                userBuildings?.forEach(ub => buildingIds.add(ub.building_id));
             }
 
-            // Deduplicate
-            buildingIds = Array.from(new Set(buildingIds));
-
-            if (buildingIds.length === 0) return [];
+            if (buildingIds.size === 0) return [];
 
             // 3. Fetch building details + Metadata for filtering
             let query = supabase
@@ -359,7 +355,7 @@ export function useBuildingSearch() {
                     typologies:building_functional_typologies(typology_id),
                     attributes:building_attributes(attribute_id)
                 `)
-                .in('id', buildingIds);
+                .in('id', Array.from(buildingIds));
 
             if (cleanQuery) {
                 query = query.ilike('name', `%${cleanQuery}%`);
