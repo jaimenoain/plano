@@ -61,8 +61,8 @@ export function BuildingMap({
     pinColor = "text-[#333333] fill-[#333333]"; // Charcoal
     dotBgClass = "bg-[#333333]";
   } else if (status === 'pending') {
-    pinColor = "text-yellow-500 fill-yellow-500/20";
-    dotBgClass = "bg-yellow-500";
+    pinColor = "text-[#EEFF41] fill-[#EEFF41]";
+    dotBgClass = "bg-[#EEFF41]";
   }
 
   // When expanded, we remove the default containment styling (relative, rounded, border)
