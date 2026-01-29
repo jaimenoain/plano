@@ -129,7 +129,7 @@ const BuildingHeader = ({ building, showEditLink, className }: BuildingHeaderPro
                     </div>
                 )}
                 {(building.architects && building.architects.length > 0) && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                         {building.architects.map((arch, i) => (
                             <span key={arch.id}>
                                 <Link to={`/architect/${arch.id}`} className="hover:underline text-primary">
