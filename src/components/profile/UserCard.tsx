@@ -139,7 +139,7 @@ export function UserCard({
                         <StatItem label="reviews" value={stats.reviews} onClick={() => onTabChange("reviews")} />
                         <StatItem label="photos" value={stats.photos} onClick={() => onTabChange("reviews")} />
                         <StatItem label="bucket list" value={stats.pending} onClick={() => onTabChange("bucket_list")} />
-                        <StatItem label="maps" value={stats.maps} onClick={() => document.getElementById('tags-section')?.scrollIntoView({ behavior: 'smooth' })} />
+                        <StatItem label="maps" value={stats.maps} onClick={() => document.getElementById('collections-section')?.scrollIntoView({ behavior: 'smooth' })} />
                         <StatItem label="followers" value={stats.followers} onClick={() => onOpenUserList("followers")} />
                         <StatItem label="following" value={stats.following} onClick={() => onOpenUserList("following")} />
                     </div>
