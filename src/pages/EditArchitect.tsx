@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import {
   Form,
   FormControl,
@@ -26,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useArchitect } from "@/hooks/useArchitect";
@@ -46,6 +48,11 @@ export default function EditArchitect() {
   const { user, isLoading: authLoading } = useAuth();
   const { architect, loading: architectLoading, error } = useArchitect(id);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Affiliations State
+  const [affiliations, setAffiliations] = useState<SelectArchitect[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isLoadingAffiliations, setIsLoadingAffiliations] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -77,6 +84,43 @@ export default function EditArchitect() {
     }
   }, [architect, form]);
 
+  useEffect(() => {
+    if (!id || !architect) return;
+
+    const fetchAffiliations = async () => {
+        setIsLoadingAffiliations(true);
+        try {
+            if (architect.type === 'individual') {
+                // Fetch studios this individual belongs to
+                const { data, error } = await supabase
+                    .from('architect_affiliations')
+                    .select('studio:architects!architect_affiliations_studio_id_fkey(id, name, type)')
+                    .eq('individual_id', id);
+
+                if (error) throw error;
+                // @ts-ignore
+                setAffiliations(data.map(d => d.studio).filter(Boolean));
+            } else {
+                // Fetch individuals that belong to this studio
+                const { data, error } = await supabase
+                    .from('architect_affiliations')
+                    .select('individual:architects!architect_affiliations_individual_id_fkey(id, name, type)')
+                    .eq('studio_id', id);
+
+                if (error) throw error;
+                // @ts-ignore
+                setAffiliations(data.map(d => d.individual).filter(Boolean));
+            }
+        } catch (e) {
+            console.error("Error fetching affiliations", e);
+        } finally {
+            setIsLoadingAffiliations(false);
+        }
+    };
+
+    fetchAffiliations();
+  }, [id, architect]);
+
   const onSubmit = async (values: FormValues) => {
     if (!id) return;
     setIsSubmitting(true);
@@ -102,6 +146,51 @@ export default function EditArchitect() {
       toast.error("Failed to update architect");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleAffiliationsChange = async (newAffiliations: SelectArchitect[]) => {
+    if (!id || !architect) return;
+
+    // Determine added and removed
+    const added = newAffiliations.filter(n => !affiliations.some(e => e.id === n.id));
+    const removed = affiliations.filter(e => !newAffiliations.some(n => n.id === e.id));
+
+    // Update State Optimistically
+    setAffiliations(newAffiliations);
+
+    try {
+        if (added.length > 0) {
+            const records = added.map(a => ({
+                studio_id: architect.type === 'individual' ? a.id : id,
+                individual_id: architect.type === 'individual' ? id : a.id
+            }));
+            const { error } = await supabase.from('architect_affiliations').insert(records);
+            if (error) throw error;
+        }
+
+        if (removed.length > 0) {
+            const removedIds = removed.map(r => r.id);
+            // If individual, we are removing studios where individual_id = id AND studio_id IN removedIds
+            // If studio, we are removing individuals where studio_id = id AND individual_id IN removedIds
+
+            let query = supabase.from('architect_affiliations').delete();
+
+            if (architect.type === 'individual') {
+                query = query.eq('individual_id', id).in('studio_id', removedIds);
+            } else {
+                query = query.eq('studio_id', id).in('individual_id', removedIds);
+            }
+
+            const { error } = await query;
+
+            if (error) throw error;
+        }
+    } catch (e) {
+        console.error("Error updating affiliations", e);
+        toast.error("Failed to update affiliations");
+        // Revert state?
+        // We'll leave it for now as a simple implementation
     }
   };
 
@@ -226,6 +315,27 @@ export default function EditArchitect() {
                     </FormItem>
                   )}
                 />
+
+                <Separator className="my-6" />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">
+                    {architect.type === 'individual' ? 'Member of Studios' : 'Team Members'}
+                  </h3>
+                  <ArchitectSelect
+                     selectedArchitects={affiliations}
+                     setSelectedArchitects={handleAffiliationsChange}
+                     filterType={architect.type === 'individual' ? 'studio' : 'individual'}
+                     placeholder={architect.type === 'individual' ? 'Search studios...' : 'Search architects...'}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {architect.type === 'individual'
+                       ? "Search for studios this architect is associated with."
+                       : "Search for individual architects that are part of this studio."}
+                  </p>
+                </div>
+
+                <Separator className="my-6" />
 
                 <div className="flex justify-end gap-4">
                   <Button

@@ -30,6 +30,7 @@ interface ArchitectSelectProps {
   setSelectedArchitects: (architects: Architect[]) => void
   placeholder?: string
   className?: string
+  filterType?: 'individual' | 'studio'
 }
 
 export function ArchitectSelect({
@@ -37,6 +38,7 @@ export function ArchitectSelect({
   setSelectedArchitects,
   placeholder,
   className,
+  filterType
 }: ArchitectSelectProps) {
   const [open, setOpen] = React.useState(false)
   const [inputValue, setInputValue] = React.useState("")
@@ -50,10 +52,14 @@ export function ArchitectSelect({
 
   // Fetch architects
   const { data: suggestions = [], isLoading } = useQuery({
-    queryKey: ['architects', inputValue],
+    queryKey: ['architects', inputValue, filterType],
     queryFn: async () => {
        // @ts-ignore - architects table created in migration
        let query = supabase.from('architects').select('*').limit(20);
+
+       if (filterType) {
+           query = query.eq('type', filterType);
+       }
 
        if (inputValue.length > 0) {
            query = query.ilike('name', `%${inputValue}%`);
@@ -98,7 +104,7 @@ export function ArchitectSelect({
 
   const initiateCreate = () => {
       setNewArchitectName(inputValue.trim());
-      setNewArchitectType('individual'); // default
+      setNewArchitectType(filterType || 'individual'); // default or match filter
       setShowCreateDialog(true);
       setOpen(false); // Close dropdown
   }
