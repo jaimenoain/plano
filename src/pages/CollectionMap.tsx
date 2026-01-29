@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, ArrowLeft, Map as MapIcon, List, Save } from "lucide-react";
+import { Loader2, ArrowLeft, Map as MapIcon, List, Save, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { parseLocation } from "@/utils/location";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
 
 interface Collection {
   id: string;
@@ -51,6 +52,9 @@ export default function CollectionMap() {
   // Mobile view state
   const [activeTab, setActiveTab] = useState<"list" | "map">("map");
 
+  // Settings dialog state
+  const [showSettings, setShowSettings] = useState(false);
+
   // 1. Resolve Username to User ID
   const { data: profileData, isLoading: loadingProfile, error: profileError } = useQuery({
     queryKey: ["profile-by-username", username],
@@ -88,6 +92,25 @@ export default function CollectionMap() {
     },
     enabled: !!ownerId && !!slug
   });
+
+  // Check if user is a collaborator
+  const { data: isCollaborator } = useQuery({
+    queryKey: ["is-collaborator", collection?.id, user?.id],
+    queryFn: async () => {
+      if (!collection?.id || !user?.id) return false;
+      const { data, error } = await supabase
+        .from("collection_contributors")
+        .select("user_id")
+        .eq("collection_id", collection.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      return !!data;
+    },
+    enabled: !!collection?.id && !!user?.id && !isOwner
+  });
+
+  const canEdit = isOwner || !!isCollaborator;
 
   // 3. Fetch Collection Items with Buildings
   const { data: items, isLoading: loadingItems } = useQuery({
@@ -212,13 +235,20 @@ export default function CollectionMap() {
             "w-full md:w-[400px] lg:w-[450px] border-r flex flex-col h-full bg-background transition-transform duration-300 md:translate-x-0 absolute md:relative z-20",
             activeTab === "list" ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}>
-            <div className="p-4 border-b bg-background/95 backdrop-blur z-10">
-                <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-2 -ml-2 text-muted-foreground hover:text-foreground">
-                    <ArrowLeft className="mr-1 h-4 w-4" /> Back
-                </Button>
-                <h1 className="text-xl font-bold truncate pr-2">{collection?.name}</h1>
-                {collection?.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{collection.description}</p>
+            <div className="p-4 border-b bg-background/95 backdrop-blur z-10 flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-2 -ml-2 text-muted-foreground hover:text-foreground">
+                        <ArrowLeft className="mr-1 h-4 w-4" /> Back
+                    </Button>
+                    <h1 className="text-xl font-bold truncate pr-2">{collection?.name}</h1>
+                    {collection?.description && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{collection.description}</p>
+                    )}
+                </div>
+                {isOwner && (
+                    <Button variant="ghost" size="icon" className="shrink-0 ml-2" onClick={() => setShowSettings(true)}>
+                        <Settings className="h-5 w-5 text-muted-foreground" />
+                    </Button>
                 )}
             </div>
 
@@ -264,7 +294,7 @@ export default function CollectionMap() {
                             </div>
 
                             <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                                {isOwner ? (
+                                {canEdit ? (
                                     <div className="relative">
                                         <Textarea
                                             placeholder="Add a note..."
@@ -317,6 +347,15 @@ export default function CollectionMap() {
                 </Button>
             </div>
         </div>
+
+        {collection && (
+            <CollectionSettingsDialog
+                collection={collection}
+                open={showSettings}
+                onOpenChange={setShowSettings}
+                onUpdate={() => queryClient.invalidateQueries({ queryKey: ["collection-details", ownerId, slug] })}
+            />
+        )}
     </div>
   );
 }
