@@ -195,6 +195,24 @@ export default function BuildingDetails() {
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
 
+  // Navigation Logic
+  const selectedIndex = useMemo(() => {
+    if (!selectedImage) return -1;
+    return displayImages.findIndex(img => img.id === selectedImage.id);
+  }, [selectedImage, displayImages]);
+
+  const handleNextImage = () => {
+    if (selectedIndex < displayImages.length - 1) {
+      setSelectedImage(displayImages[selectedIndex + 1]);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (selectedIndex > 0) {
+      setSelectedImage(displayImages[selectedIndex - 1]);
+    }
+  };
+
   // Parse location
   const coordinates = useMemo(() => {
     return parseLocation(building?.location);
@@ -1119,6 +1137,10 @@ export default function BuildingDetails() {
         uploadDate={selectedImage?.created_at}
         isOpen={!!selectedImage}
         onClose={() => setSelectedImage(null)}
+        onNext={handleNextImage}
+        onPrev={handlePrevImage}
+        hasNext={selectedIndex < displayImages.length - 1}
+        hasPrev={selectedIndex > 0}
       />
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
