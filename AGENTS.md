@@ -1,34 +1,22 @@
-# Agent Instructions
+# Agent Instructions (Plano)
 
-This file contains critical instructions and context for AI agents working on this codebase. Please read this carefully before making changes.
+## Project Context
+This is an architecture and mapping application ("Plano").
+* **Domain**: Buildings, Architects, Maps, and Urban Planning.
+* **Entities**: We deal with `Buildings` (not Movies), `Architects` (not Directors), and `Collections`.
 
-## General Preferences
+## Supabase Edge Functions & Security
 
-### Titles
-*   **Film Titles**: Use `original_title` (for movies) or `original_name` (for TV) as the main title whenever possible. The localized `title` or `name` should be displayed as a secondary, smaller subtitle only if it differs from the original.
+### Security Policy: The "Manual Gatekeeper" Pattern
+Due to CORS preflight limitations in browsers, we **cannot** use Supabase's automatic `verify_jwt: true` for functions called directly from the frontend that handle file uploads/deletions.
 
-## Database Logic & Statistics
+**Policy for Storage Functions (`delete-file`, `delete-storage-recursive`, `generate-upload-url`):**
+1.  **Configuration:** Must be set to `verify_jwt = false` in `config.toml` (or deployment config).
+2.  **Implementation:** The code **MUST** manually verify authentication.
+    * Step 1: Handle `OPTIONS` requests immediately (return 200 OK + CORS headers).
+    * Step 2: Initialize Supabase client using the request's `Authorization` header.
+    * Step 3: **MANDATORY:** Call `await supabase.auth.getUser()`. If this fails or returns no user, throw a 401 Unauthorized error immediately.
+    * *Reasoning:* This allows CORS preflight to succeed while preventing unauthenticated access to sensitive data.
 
-### Group Statistics (`update_group_stats`)
-*   **Ranking Context Sparkline (`ranking_data`)**:
-    *   **CRITICAL**: The `ranking_data` array used for the sparkline must **ONLY** include films that have been part of a session in the specific group (`group_sessions`).
-    *   **DO NOT** modify the query to include all films rated by group members. The purpose of this sparkline is to show the "Session History" context.
-    *   The SQL query must always filter by `film_id = ANY(v_session_film_ids)` (or equivalent logic ensuring restriction to session films).
-
-
-## Testing & QA Standards
-
-### 🚫 User Creation Policy (CRITICAL)
-* **DO NOT create new user accounts** for reproduction, verification, or testing.
-* **DO NOT sign up** via the UI to test flows.
-* **ALWAYS** use the pre-defined credentials in `TEST_USERS.md`.
-    * *Reasoning:* Creating users clutters the database and bypasses the specific state configurations (e.g., specific group memberships) needed for accurate testing.
-
-### Authentication
-* Refer to `TEST_USERS.md` for:
-    * **Credentials**: Valid email/password combinations.
-    * **Selectors**: The correct CSS selectors for the login form.
-    * **Session**: How to handle session persistence (e.g., mocking LocalStorage vs. cookies).
-
-### Test Data
-* If a test requires specific data (e.g., a movie rating), check if a user in `TEST_USERS.md` already has this data state before creating it.
+### Code Style
+* When generating SQL or TypeScript for buildings, ensure geolocation handling (PostGIS) is accurate.
