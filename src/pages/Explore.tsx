@@ -187,7 +187,7 @@ export default function Explore() {
             </div>
         ) : (
             buildings.map((building) => (
-                <div key={building.id} className="h-full w-full snap-start">
+                <div key={building.id} className="h-full w-full snap-start snap-always">
                     <DiscoveryCard building={building} />
                 </div>
             ))
