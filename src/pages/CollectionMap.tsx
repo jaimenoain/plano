@@ -4,36 +4,24 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, ArrowLeft, Map as MapIcon, List, Save, Plus, Settings } from "lucide-react";
+import { Loader2, ArrowLeft, Map as MapIcon, List, Plus, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { AddBuildingsToCollectionDialog } from "@/components/collections/AddBuildingsToCollectionDialog";
 import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
+import { CollectionBuildingCard } from "@/components/collections/CollectionBuildingCard";
+import { Collection, CollectionItemWithBuilding } from "@/types/collection";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings } from "@/utils/map";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 
-interface Collection {
-  id: string;
-  name: string;
-  description: string | null;
-  owner_id: string;
-  is_public: boolean;
-  slug: string;
-}
-
-export interface CollectionItemWithBuilding {
+interface RawCollectionItem {
   id: string;
   building_id: string;
   note: string | null;
   building: {
     id: string;
     name: string;
-    location_lat: number;
-    location_lng: number;
+    location: any;
     city: string | null;
     country: string | null;
     year_completed: number | null;
@@ -41,6 +29,9 @@ export interface CollectionItemWithBuilding {
     location_precision: "exact" | "approximate";
   };
 }
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 export default function CollectionMap() {
   const { username, slug } = useParams();
@@ -142,7 +133,7 @@ export default function CollectionMap() {
 
       if (error) throw error;
 
-      return (data as any[]).map(item => {
+      return (data as unknown as RawCollectionItem[]).map(item => {
         const coords = parseLocation(item.building.location);
         return {
           ...item,
@@ -280,61 +271,19 @@ export default function CollectionMap() {
                         <p className="text-center text-muted-foreground py-8">No buildings in this collection.</p>
                     )}
                     {items?.map(item => (
-                        <div
+                        <CollectionBuildingCard
                             key={item.id}
                             ref={(el) => {
                                 if (el) itemRefs.current.set(item.building.id, el);
                                 else itemRefs.current.delete(item.building.id);
                             }}
-                            className={cn(
-                                "p-4 border rounded-lg shadow-sm transition-all duration-200 cursor-pointer bg-card hover:shadow-md",
-                                highlightedId === item.building.id ? "border-primary ring-1 ring-primary bg-secondary/10" : "hover:border-primary/50"
-                            )}
-                            onMouseEnter={() => setHighlightedId(item.building.id)}
-                            onClick={() => {
-                                setHighlightedId(item.building.id);
-                                navigate(`/building/${item.building.id}`);
-                            }}
-                        >
-                            <div className="flex gap-3">
-                                {item.building.hero_image_url ? (
-                                    <div className="w-20 h-20 rounded-md overflow-hidden shrink-0 bg-secondary">
-                                        <img src={item.building.hero_image_url} alt="" className="w-full h-full object-cover" />
-                                    </div>
-                                ) : (
-                                    <div className="w-20 h-20 rounded-md bg-secondary shrink-0 flex items-center justify-center text-muted-foreground text-xs p-1 text-center">
-                                        No Image
-                                    </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-sm truncate">{item.building.name}</h3>
-                                    <p className="text-xs text-muted-foreground truncate">{item.building.city}, {item.building.country}</p>
-                                    {item.building.year_completed && (
-                                        <p className="text-xs text-muted-foreground mt-0.5">{item.building.year_completed}</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                                {canEdit ? (
-                                    <div className="relative">
-                                        <Textarea
-                                            placeholder="Add a note..."
-                                            defaultValue={item.note || ""}
-                                            onBlur={(e) => handleNoteBlur(item.id, e.target.value, item.note)}
-                                            className="resize-none text-sm bg-background min-h-[60px]"
-                                        />
-                                        <div className="absolute bottom-2 right-2 opacity-50 pointer-events-none">
-                                            <Save className="h-3 w-3" />
-                                        </div>
-                                    </div>
-                                ) : item.note ? (
-                                    <div className="bg-secondary/30 p-2 rounded-md text-sm italic text-muted-foreground border">
-                                        "{item.note}"
-                                    </div>
-                                ) : null}
-                            </div>
-                        </div>
+                            item={item}
+                            isHighlighted={highlightedId === item.building.id}
+                            setHighlightedId={setHighlightedId}
+                            canEdit={canEdit}
+                            onUpdateNote={(newNote) => handleNoteBlur(item.id, newNote, item.note)}
+                            onNavigate={() => navigate(`/building/${item.building.id}`)}
+                        />
                     ))}
                 </div>
             </ScrollArea>
