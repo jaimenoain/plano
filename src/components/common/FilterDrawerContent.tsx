@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Check, X, ChevronsUpDown, Star, Loader2, Trophy } from "lucide-react";
+import { Check, X, ChevronsUpDown, Circle, Loader2, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
@@ -193,15 +193,15 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                              <div className="space-y-3 pt-2">
                                 <div className="flex justify-between items-center">
                                     <label className="text-sm font-medium flex items-center gap-2">
-                                        <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" /> Min Rating
+                                        <Circle className="h-3.5 w-3.5 fill-[#595959] text-[#595959]" /> Min Rating
                                     </label>
-                                    <span className="text-xs font-medium text-muted-foreground">{props.personalMinRating > 0 ? `${props.personalMinRating} Stars` : "Any"}</span>
+                                    <span className="text-xs font-medium text-muted-foreground">{props.personalMinRating > 0 ? `${props.personalMinRating} Circles` : "Any"}</span>
                                 </div>
                                 <Slider
                                     value={[props.personalMinRating]}
                                     onValueChange={(val) => props.onPersonalMinRatingChange(val[0])}
                                     min={0}
-                                    max={5}
+                                    max={3}
                                     step={1}
                                     className="w-full"
                                 />
@@ -234,15 +234,15 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                              <div className="space-y-3 pt-2">
                                 <div className="flex justify-between items-center">
                                     <label className="text-sm font-medium flex items-center gap-2">
-                                        <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" /> Min Rating
+                                        <Circle className="h-3.5 w-3.5 fill-[#595959] text-[#595959]" /> Min Rating
                                     </label>
-                                    <span className="text-xs font-medium text-muted-foreground">{props.contactMinRating > 0 ? `${props.contactMinRating} Stars` : "Any"}</span>
+                                    <span className="text-xs font-medium text-muted-foreground">{props.contactMinRating > 0 ? `${props.contactMinRating} Circles` : "Any"}</span>
                                 </div>
                                 <Slider
                                     value={[props.contactMinRating]}
                                     onValueChange={(val) => props.onContactMinRatingChange(val[0])}
                                     min={0}
-                                    max={5}
+                                    max={3}
                                     step={1}
                                     className="w-full"
                                 />
