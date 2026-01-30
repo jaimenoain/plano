@@ -47,6 +47,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { uploadFile, deleteFiles, uploadFileWithProgress } from "@/utils/upload";
 import { CollectionSelector } from "@/components/profile/CollectionSelector";
 import { VideoCompressionService } from "@/utils/video-compression";
+import { getRatingLabel } from "@/components/PersonalRatingButton";
 
 interface ReviewImage {
   id: string;
@@ -745,7 +746,7 @@ export default function WriteReview() {
               </button>
             ))}
             <span className="ml-2 text-sm font-medium text-muted-foreground">
-              {hoverRating ? `${hoverRating}/3` : (rating ? `${rating}/3` : "Select a rating")}
+              {hoverRating ? getRatingLabel(hoverRating) : (rating ? getRatingLabel(rating) : "Select a rating")}
             </span>
           </div>
         </div>
