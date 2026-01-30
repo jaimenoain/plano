@@ -183,10 +183,10 @@ export default function CollectionMap() {
 
   return (
     <AppLayout title={collection.name} showBack isFullScreen>
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden">
+      <div className="flex flex-col lg:flex-row h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] overflow-hidden">
 
         {/* Sidebar List */}
-        <div className="w-full lg:w-[450px] bg-background border-r flex flex-col shrink-0 lg:h-full h-[40vh] order-2 lg:order-1">
+        <div className="w-full lg:w-[450px] bg-background border-r flex flex-col shrink-0 lg:h-full h-[40%] order-2 lg:order-1">
             <div className="p-4 border-b flex items-center justify-between">
                 <div>
                     <h1 className="font-bold text-xl truncate">{collection.name}</h1>
@@ -228,7 +228,7 @@ export default function CollectionMap() {
         </div>
 
         {/* Map */}
-        <div className="flex-1 relative lg:h-full h-[60vh] order-1 lg:order-2">
+        <div className="flex-1 relative lg:h-full h-[60%] order-1 lg:order-2">
             <BuildingDiscoveryMap
                 externalBuildings={mapBuildings}
                 highlightedId={highlightedId}
