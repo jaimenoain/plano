@@ -7,85 +7,84 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
+  // 1. CORS Handling
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    // 2. Manual Auth Verification
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      throw new Error('Missing Authorization header')
+      return new Response(
+        JSON.stringify({ error: 'Missing Authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
+    const token = authHeader.replace('Bearer ', '')
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { auth: { persistSession: false } }
     )
 
-    const token = authHeader.replace('Bearer ', '')
-    let user = null;
-    let isAdmin = false;
+    let user = null
+    let isAdmin = false
 
     // JULES-MAINTAIN: Service Role bypass for admin processes
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     if (serviceRoleKey && token === serviceRoleKey) {
-        console.log("Admin bypass: Service Role Key detected");
-        isAdmin = true;
-        user = { id: 'admin_delete' };
+      console.log('Admin bypass: Service Role Key detected')
+      isAdmin = true
+      user = { id: 'admin_delete' }
     } else {
-        // Manual verification for verify_jwt: false
-        const {
-            data: { user: authUser },
-            error: userError,
-        } = await supabaseClient.auth.getUser(token)
+      const {
+        data: { user: authUser },
+        error: userError,
+      } = await supabaseClient.auth.getUser(token)
 
-        if (userError || !authUser) {
-            return new Response(
-                JSON.stringify({ error: 'Unauthorized', details: userError }),
-                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            )
-        }
-        user = authUser;
+      if (userError || !authUser) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized', details: userError }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      user = authUser
     }
 
+    // 3. Business Logic
     const { fileKeys } = await req.json()
 
     if (!fileKeys || !Array.isArray(fileKeys) || fileKeys.length === 0) {
-       return new Response(JSON.stringify({ message: 'No keys to delete' }), { status: 200, headers: corsHeaders })
+      return new Response(JSON.stringify({ message: 'No keys to delete' }), {
+        status: 200,
+        headers: corsHeaders,
+      })
     }
 
     // Security: Ensure all keys belong to the user (unless admin)
-    // We check if the key starts with the user ID followed by a slash.
-    // Note: If new keys start with review-images/, this check needs to be smarter?
-    // User ID is in the path. e.g. review-images/USER_ID/file
-    // The original check was: !key.startsWith(`${user.id}/`)
-    // If key is review-images/USER_ID/file, this check will FAIL.
-
-    // So I MUST update the security check to handle the new prefix OR valid legacy prefix.
-
-    // Let's analyze the check.
-    let invalidKeys: string[] = [];
+    let invalidKeys: string[] = []
     if (!isAdmin) {
-        invalidKeys = fileKeys.filter((key: string) => {
-            // Allow if starts with user.id/ (legacy)
-            if (key.startsWith(`${user.id}/`)) return false;
-            // Allow if starts with review-images/user.id/ (new)
-            if (key.startsWith(`review-images/${user.id}/`)) return false;
+      invalidKeys = fileKeys.filter((key: string) => {
+        // Allow if starts with user.id/ (legacy)
+        if (key.startsWith(`${user.id}/`)) return false
+        // Allow if starts with review-images/user.id/ (new)
+        if (key.startsWith(`review-images/${user.id}/`)) return false
 
-            return true;
-        })
+        return true
+      })
     }
 
     if (invalidKeys.length > 0) {
-        return new Response(
-            JSON.stringify({
-                error: 'Unauthorized access',
-                message: 'You can only delete files that belong to your user account.',
-                invalidKeys
-            }),
-            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+      return new Response(
+        JSON.stringify({
+          error: 'Unauthorized access',
+          message: 'You can only delete files that belong to your user account.',
+          invalidKeys,
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const s3Client = new S3Client({
@@ -105,7 +104,7 @@ Deno.serve(async (req) => {
       Bucket: bucketName,
       Delete: {
         Objects: fileKeys.map((key: string) => ({ Key: key })),
-        Quiet: true
+        Quiet: true,
       },
     })
 
