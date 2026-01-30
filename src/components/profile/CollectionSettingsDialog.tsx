@@ -19,6 +19,7 @@ interface CollectionSettingsDialogProps {
     name: string;
     description: string | null;
     is_public: boolean;
+    show_community_images: boolean;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,7 +39,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
   const [formData, setFormData] = useState({
     name: collection.name,
     description: collection.description || "",
-    is_public: collection.is_public
+    is_public: collection.is_public,
+    show_community_images: collection.show_community_images
   });
   const [saving, setSaving] = useState(false);
   const [contributors, setContributors] = useState<Contributor[]>([]);
@@ -49,7 +51,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
       setFormData({
         name: collection.name,
         description: collection.description || "",
-        is_public: collection.is_public
+        is_public: collection.is_public,
+        show_community_images: collection.show_community_images
       });
       fetchContributors();
     }
@@ -77,7 +80,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
       .update({
         name: formData.name,
         description: formData.description || null,
-        is_public: formData.is_public
+        is_public: formData.is_public,
+        show_community_images: formData.show_community_images
       })
       .eq("id", collection.id);
 
@@ -169,6 +173,17 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                 id="public-mode"
                 checked={formData.is_public}
                 onCheckedChange={(c) => setFormData({...formData, is_public: c})}
+              />
+            </div>
+            <div className="flex items-center justify-between space-x-2">
+              <Label htmlFor="community-images" className="flex flex-col space-y-1">
+                <span>Show Community Images</span>
+                <span className="font-normal text-xs text-muted-foreground">Display images in map and list</span>
+              </Label>
+              <Switch
+                id="community-images"
+                checked={formData.show_community_images}
+                onCheckedChange={(c) => setFormData({...formData, show_community_images: c})}
               />
             </div>
             <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">

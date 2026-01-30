@@ -60,6 +60,7 @@ interface BuildingDiscoveryMapProps {
   resetInteractionTrigger?: number;
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
+  showImages?: boolean;
 }
 
 export function BuildingDiscoveryMap({
@@ -73,7 +74,8 @@ export function BuildingDiscoveryMap({
   autoZoomOnLowCount,
   resetInteractionTrigger,
   highlightedId,
-  onMarkerClick
+  onMarkerClick,
+  showImages = true
 }: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -380,7 +382,7 @@ export function BuildingDiscoveryMap({
             {/* Tooltip */}
             <div className={`absolute bottom-full mb-2 ${isHighlighted ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
                 <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
-                    {imageUrl && (
+                    {showImages && imageUrl && (
                         <div className="w-[100px] h-[100px]">
                             <img src={imageUrl} alt="" className="w-full h-full object-cover" />
                         </div>
