@@ -216,6 +216,7 @@ export default function CollectionMap() {
                                 categorizationMethod={collection.categorization_method}
                                 customCategories={collection.custom_categories}
                                 onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
+                                showImages={collection.show_community_images ?? true}
                             />
                         ))
                     ) : (
@@ -234,7 +235,7 @@ export default function CollectionMap() {
                 highlightedId={highlightedId}
                 onMarkerClick={(id) => setHighlightedId(id)}
                 forcedBounds={bounds}
-                showImages={collection.show_community_images}
+                showImages={collection.show_community_images ?? true}
             />
         </div>
       </div>
