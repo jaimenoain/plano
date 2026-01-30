@@ -104,7 +104,7 @@ export function BuildingDiscoveryMap({
                 [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
                 [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
             ],
-            { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500 }
+            { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
         );
     } else if (forcedCenter && mapRef.current) {
         mapRef.current.flyTo({
@@ -493,7 +493,7 @@ export function BuildingDiscoveryMap({
                         [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
                         [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
                     ],
-                    { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500 }
+                    { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
                 );
             }
         }}
