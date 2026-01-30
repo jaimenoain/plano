@@ -186,6 +186,7 @@ export default function BuildingDetails() {
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [deleteWarningMessage, setDeleteWarningMessage] = useState("");
 
   // Visit With state
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -441,6 +442,27 @@ export default function BuildingDetails() {
 
   const handleStatusChange = async (newStatus: 'visited' | 'pending' | 'ignored') => {
       if (!user || !building) return;
+
+      // Check if user is toggling off the current status
+      if (userStatus === newStatus) {
+          const parts = [];
+          if (note) parts.push("your review");
+          if (selectedCollectionIds.length > 0) parts.push(`associations with ${selectedCollectionIds.length} collections`);
+          if (userImages.length > 0) parts.push(`your ${userImages.length} saved photos/videos`);
+
+          let msg = "You are about to remove this building from your profile.";
+          if (parts.length > 0) {
+              const last = parts.pop();
+              const list = parts.length > 0 ? parts.join(", ") + " and " + last : last;
+              msg += ` This will permanently delete ${list}.`;
+          } else {
+              msg += " This action cannot be undone.";
+          }
+
+          setDeleteWarningMessage(msg);
+          setShowDeleteAlert(true);
+          return;
+      }
 
       if (newStatus !== 'ignored') {
         setShowNoteEditor(true);
@@ -1164,7 +1186,7 @@ export default function BuildingDetails() {
               <AlertDialogHeader>
                   <AlertDialogTitle>Remove from list?</AlertDialogTitle>
                   <AlertDialogDescription>
-                      This will delete your rating, status, and any notes for this building. This action cannot be undone.
+                      {deleteWarningMessage || "This will delete your rating, status, and any notes for this building. This action cannot be undone."}
                   </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
