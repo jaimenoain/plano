@@ -40,7 +40,7 @@ interface UserCardProps {
     onFollowToggle: () => void;
     onSignOut: () => void;
     onOpenUserList: (type: "followers" | "following") => void;
-    onTabChange: (tab: "reviews" | "bucket_list") => void;
+    onTabChange: (tab: string) => void;
     squad?: Profile[];
 }
 
@@ -58,6 +58,8 @@ export function UserCard({
     const navigate = useNavigate();
     const { toast } = useToast();
     const [showBlockDialog, setShowBlockDialog] = useState(false);
+
+    const totalBuildings = stats.reviews + stats.pending;
 
     return (
         <div className="px-4 py-6 md:py-10 max-w-4xl mx-auto">
@@ -136,9 +138,8 @@ export function UserCard({
 
                     {/* Stats Row */}
                     <div className="flex items-center justify-between md:justify-start md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border/40">
-                        <StatItem label="reviews" value={stats.reviews} onClick={() => onTabChange("reviews")} />
-                        <StatItem label="photos" value={stats.photos} onClick={() => onTabChange("reviews")} />
-                        <StatItem label="bucket list" value={stats.pending} onClick={() => onTabChange("bucket_list")} />
+                        <StatItem label="edificios" value={totalBuildings} onClick={() => onTabChange("all")} />
+                        <StatItem label="photos" value={stats.photos} onClick={() => onTabChange("visited")} />
                         <StatItem label="maps" value={stats.maps} onClick={() => document.getElementById('collections-section')?.scrollIntoView({ behavior: 'smooth' })} />
                         <StatItem label="followers" value={stats.followers} onClick={() => onOpenUserList("followers")} />
                         <StatItem label="following" value={stats.following} onClick={() => onOpenUserList("following")} />

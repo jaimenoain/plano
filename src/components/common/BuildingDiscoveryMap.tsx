@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
@@ -59,6 +60,7 @@ interface BuildingDiscoveryMapProps {
   resetInteractionTrigger?: number;
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
+  showImages?: boolean;
 }
 
 export function BuildingDiscoveryMap({
@@ -72,7 +74,8 @@ export function BuildingDiscoveryMap({
   autoZoomOnLowCount,
   resetInteractionTrigger,
   highlightedId,
-  onMarkerClick
+  onMarkerClick,
+  showImages = true
 }: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -324,23 +327,34 @@ export function BuildingDiscoveryMap({
     // Neon (#EEFF41): Pending (Wishlist) & Social
     // Grey/Default: Discovery
 
-    let pinColorClass = "text-gray-500 fill-background";
+    let strokeClass = "text-gray-500";
+    let fillClass = "fill-background";
     let dotBgClass = "bg-gray-500";
     let pinTooltip = null;
 
     if (status === 'visited') {
-        pinColorClass = "text-[#333333] fill-[#333333]"; // Charcoal
+        strokeClass = "text-[#333333]";
+        fillClass = "fill-[#333333]"; // Charcoal
         dotBgClass = "bg-[#333333]";
         pinTooltip = <span className="ml-1 opacity-75 capitalize">(Visited)</span>;
     } else if (status === 'pending') {
-        pinColorClass = "text-[#EEFF41] fill-[#EEFF41]"; // Neon
+        strokeClass = "text-[#EEFF41]";
+        fillClass = "fill-[#EEFF41]"; // Neon
         dotBgClass = "bg-[#EEFF41]";
         pinTooltip = <span className="ml-1 opacity-75 capitalize">(Pending)</span>;
     } else if (building.social_context) {
-        pinColorClass = "text-[#EEFF41] fill-[#EEFF41]"; // Neon
+        strokeClass = "text-[#EEFF41]";
+        fillClass = "fill-[#EEFF41]"; // Neon
         dotBgClass = "bg-[#EEFF41]";
         pinTooltip = <span className="ml-1 opacity-90">({building.social_context})</span>;
     }
+
+    if (isSatellite) {
+        strokeClass = "text-white";
+    }
+
+    const pinColorClass = `${strokeClass} ${fillClass}`;
+    const dotBorderClass = isSatellite ? "border-white" : "border-background";
 
     const scaleClass = isHighlighted ? "scale-125 z-50" : "hover:scale-110";
     const markerClass = `cursor-pointer ${isHighlighted ? 'z-50' : 'hover:z-10'}`;
@@ -368,7 +382,7 @@ export function BuildingDiscoveryMap({
             {/* Tooltip */}
             <div className={`absolute bottom-full mb-2 ${isHighlighted ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
                 <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
-                    {imageUrl && (
+                    {showImages && imageUrl && (
                         <div className="w-[100px] h-[100px]">
                             <img src={imageUrl} alt="" className="w-full h-full object-cover" />
                         </div>
@@ -382,14 +396,14 @@ export function BuildingDiscoveryMap({
             </div>
 
             {isApproximate ? (
-                <div className={`w-6 h-6 rounded-full border-2 border-background ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`} />
+                <div className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`} />
             ) : (
                 <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform ${scaleClass}`} />
             )}
             </div>
         </Marker>
     );
-  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick]);
+  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite]);
 
   if (isLoading) {
     return (
@@ -409,12 +423,12 @@ export function BuildingDiscoveryMap({
       });
   };
 
-  return (
+  const mapContent = (
     <div
-        className={`w-full overflow-hidden border border-white/10 relative transition-all duration-300 ${
+        className={`w-full overflow-hidden border border-white/10 transition-all duration-300 bg-background ${
           isFullScreen
-            ? 'fixed inset-0 z-[100] h-screen rounded-none'
-            : 'h-full rounded-xl'
+            ? 'fixed inset-0 z-[5000] h-[100dvh] rounded-none m-0 p-0'
+            : 'relative h-full rounded-xl'
         }`}
         data-zoom={viewState.zoom}
         data-testid="map-container"
@@ -495,4 +509,10 @@ export function BuildingDiscoveryMap({
       </button>
     </div>
   );
+
+  if (isFullScreen) {
+      return createPortal(mapContent, document.body);
+  }
+
+  return mapContent;
 }
