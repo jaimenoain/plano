@@ -12,6 +12,7 @@ export interface DiscoveryFeedItem {
   slug: string | null;
   main_image_url: string | null;
   save_count: number;
+  architects: { id: string; name: string }[] | null;
 }
 
 export interface DiscoveryFilters {
@@ -46,7 +47,36 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
       });
 
       if (error) throw error;
-      return data as DiscoveryFeedItem[];
+
+      const buildings = data as DiscoveryFeedItem[];
+
+      if (buildings.length > 0) {
+        const buildingIds = buildings.map(b => b.id);
+
+        const { data: architectsData } = await supabase
+          .from('building_architects')
+          .select('building_id, architects(id, name)')
+          .in('building_id', buildingIds);
+
+        if (architectsData) {
+          const architectsMap: Record<string, { id: string; name: string }[]> = {};
+
+          architectsData.forEach((item: any) => {
+            if (item.architects) {
+              if (!architectsMap[item.building_id]) {
+                architectsMap[item.building_id] = [];
+              }
+              architectsMap[item.building_id].push(item.architects);
+            }
+          });
+
+          buildings.forEach(building => {
+            building.architects = architectsMap[building.id] || [];
+          });
+        }
+      }
+
+      return buildings;
     },
     getNextPageParam: (lastPage, allPages) => {
       // If we got fewer results than limit, there are no more pages

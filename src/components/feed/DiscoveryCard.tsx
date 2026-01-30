@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { DiscoveryFeedItem } from "@/hooks/useDiscoveryFeed";
+import { Link } from "react-router-dom";
 
 interface DiscoveryCardProps {
   building: DiscoveryBuilding | DiscoveryFeedItem;
@@ -39,7 +40,6 @@ export function DiscoveryCard({ building, onSave: externalOnSave }: DiscoveryCar
   const uniqueImages = Array.from(new Set(galleryImages));
 
   // Format architect names (handle if architects is undefined, e.g. from FeedItem)
-  // @ts-ignore - access potential architects property safely
   const architectNames = building.architects?.map((a: any) => a.name).join(", ");
 
   const handleSave = async (e: React.MouseEvent) => {
@@ -127,7 +127,12 @@ export function DiscoveryCard({ building, onSave: externalOnSave }: DiscoveryCar
 
       {/* Info Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-6 z-30 text-white pb-24 md:pb-6 pointer-events-none">
-        <h2 className="text-3xl font-bold mb-1 leading-tight drop-shadow-md">{building.name}</h2>
+        <Link
+          to={`/building/${building.id}/${building.slug || 'details'}`}
+          className="pointer-events-auto hover:underline block w-fit"
+        >
+          <h2 className="text-3xl font-bold mb-1 leading-tight drop-shadow-md">{building.name}</h2>
+        </Link>
 
         <div className="text-lg text-gray-200 font-medium mb-1 drop-shadow-md">
           {building.city && building.country
