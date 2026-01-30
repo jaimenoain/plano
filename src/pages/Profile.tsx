@@ -538,7 +538,7 @@ export default function Profile() {
         onSignOut={handleSignOut}
         onOpenUserList={openUserList}
         // Map tab values to filters for UserCard stats
-        onTabChange={(tab) => handleFilterChange(tab === 'reviews' ? 'visited' : 'pending')}
+        onTabChange={handleFilterChange}
         squad={squad}
       />
 
