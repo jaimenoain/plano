@@ -17,7 +17,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
   const flushCluster = () => {
     if (pendingCluster.length === 0) return;
 
-    if (pendingCluster.length < 4) {
+    if (pendingCluster.length < 2) {
       pendingCluster.forEach(entry => {
         aggregated.push({ type: 'compact', entry });
       });
@@ -86,8 +86,9 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
 
       const timeDiff = Math.abs(differenceInHours(getReviewDate(review), getReviewDate(lastInCluster)));
       const withinTime = timeDiff < 4;
+      const sameStatus = review.status === lastInCluster.status;
 
-      if (sameUser && withinTime) {
+      if (sameUser && withinTime && sameStatus) {
         pendingCluster.push(review);
       } else {
         flushCluster();

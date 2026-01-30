@@ -146,6 +146,13 @@ const BuildingHeader = ({ building, showEditLink, className }: BuildingHeaderPro
                 )}
             </div>
 
+            <div className="text-sm text-muted-foreground mt-2">
+                {[
+                    building.typology?.join(", "),
+                    building.materials?.join(", ")
+                ].filter(Boolean).join(" • ")}
+            </div>
+
             {/* Styles Tags */}
             {building.styles && building.styles.length > 0 && (
                 <div className="flex gap-2 mt-4">
@@ -673,9 +680,6 @@ export default function BuildingDetails() {
 
       <BuildingAttributes
         accessType={building.access_type}
-        typologies={building.typology}
-        materials={building.materials}
-        status={building.status}
         className="lg:hidden px-4 mt-4 mb-2"
       />
 
@@ -759,13 +763,15 @@ export default function BuildingDetails() {
                     )}
                 </div>
 
-                {(building.status === 'Demolished' || building.status === 'Unbuilt') && (
+                {(building.status === 'Demolished' || building.status === 'Unbuilt' || building.status === 'Under Construction') && (
                     <Alert className="mt-4 border-destructive/50 bg-destructive/10 text-destructive dark:text-red-400">
                         <AlertTriangle className="h-4 w-4 stroke-destructive dark:stroke-red-400" />
                         <AlertDescription className="ml-2 font-medium">
                             {building.status === 'Demolished'
                                 ? "This building has been demolished."
-                                : "This project was never built."}
+                                : building.status === 'Unbuilt'
+                                ? "This project was never built."
+                                : "This building is under construction."}
                         </AlertDescription>
                     </Alert>
                 )}
@@ -846,9 +852,6 @@ export default function BuildingDetails() {
 
             <BuildingAttributes
                 accessType={building.access_type}
-                typologies={building.typology}
-                materials={building.materials}
-                status={building.status}
                 className="hidden lg:grid mt-6"
             />
 

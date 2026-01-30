@@ -27,7 +27,10 @@ export function AddBuildingsToCollectionDialog({
 }: AddBuildingsToCollectionDialogProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // State merged from both branches
   const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
   const { data: savedBuildings, isLoading } = useQuery({
@@ -46,8 +49,9 @@ export function AddBuildingsToCollectionDialog({
             name,
             city,
             country,
-            hero_image_url,
-            slug
+            address,
+            slug,
+            hero_image_url
           )
         `)
         .eq("user_id", user.id)
@@ -97,18 +101,34 @@ export function AddBuildingsToCollectionDialog({
     enabled: !!user && open,
   });
 
+  // Filtering logic merged from main (supports both search and location)
   const filteredBuildings = useMemo(() => {
     if (!savedBuildings) return [];
-    if (!searchQuery) return savedBuildings;
 
-    const query = searchQuery.toLowerCase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return savedBuildings.filter((building: any) =>
-      building.name.toLowerCase().includes(query) ||
-      building.city?.toLowerCase().includes(query) ||
-      building.country?.toLowerCase().includes(query)
-    );
-  }, [savedBuildings, searchQuery]);
+    let result = savedBuildings;
+
+    if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        result = result.filter((building: any) =>
+          building.name.toLowerCase().includes(query) ||
+          building.city?.toLowerCase().includes(query) ||
+          building.country?.toLowerCase().includes(query)
+        );
+    }
+
+    if (locationQuery) {
+        const query = locationQuery.toLowerCase();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        result = result.filter((building: any) =>
+          building.city?.toLowerCase().includes(query) ||
+          building.country?.toLowerCase().includes(query) ||
+          building.address?.toLowerCase().includes(query)
+        );
+    }
+
+    return result;
+  }, [savedBuildings, searchQuery, locationQuery]);
 
   const addMutation = useMutation({
     mutationFn: async (buildingId: string) => {
@@ -147,6 +167,7 @@ export function AddBuildingsToCollectionDialog({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const selectedBuilding = useMemo(() => {
     if (!selectedBuildingId || !savedBuildings) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return savedBuildings.find((b: any) => b.id === selectedBuildingId);
   }, [selectedBuildingId, savedBuildings]);
 
@@ -160,13 +181,22 @@ export function AddBuildingsToCollectionDialog({
         <div className="flex flex-1 h-full min-h-0">
           {/* Left Column: List */}
           <div className="flex-1 flex flex-col min-w-0 border-r">
-            <div className="p-4 pb-2 border-b">
+            <div className="p-4 pb-2 border-b space-y-2">
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search saved buildings..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                    />
+                </div>
+                <div className="relative">
+                    <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="City, Country or Region"
+                        value={locationQuery}
+                        onChange={(e) => setLocationQuery(e.target.value)}
                         className="pl-9"
                     />
                 </div>
@@ -180,7 +210,7 @@ export function AddBuildingsToCollectionDialog({
                         </div>
                     ) : filteredBuildings.length === 0 ? (
                         <p className="text-center text-muted-foreground py-8">
-                            {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
+                            {(searchQuery || locationQuery) ? "No buildings found matching your search." : "No saved buildings found."}
                         </p>
                     ) : (
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
