@@ -406,47 +406,53 @@ export function FeedHeroCard({
 
            <div className="flex items-center gap-2 ml-auto">
 
-             {showRatingInput && renderRatingControl()}
+             {(isSaved || isVisited || showRatingInput) && renderRatingControl()}
 
-             <button
-               onClick={handleVisit}
-               className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
-                  isVisited
-                    ? 'text-primary bg-primary/10 font-bold ring-1 ring-primary/20'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-               } ${isSaving ? 'opacity-50' : ''}`}
-               disabled={isSaving}
-             >
-               <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3px]' : ''}`} />
-               <span className={`text-xs ${isVisited ? '' : 'font-medium'}`}>Visited</span>
-             </button>
+             {(!viewerStatus || isVisited) && (
+               <button
+                 onClick={handleVisit}
+                 className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
+                    isVisited
+                      ? 'text-primary bg-primary/10 font-bold ring-1 ring-primary/20'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                 } ${isSaving ? 'opacity-50' : ''}`}
+                 disabled={isSaving}
+               >
+                 <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3px]' : ''}`} />
+                 <span className={`text-xs ${isVisited ? '' : 'font-medium'}`}>Visited</span>
+               </button>
+             )}
 
-             <button
-               onClick={handleSave}
-               className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
-                  isSaved
-                    ? 'text-primary bg-primary/10 font-bold ring-1 ring-primary/20'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-               } ${isSaving ? 'opacity-50' : ''}`}
-               disabled={isSaving}
-             >
-               <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-primary' : ''}`} />
-               <span className={`text-xs ${isSaved ? '' : 'font-medium'}`}>Save</span>
-             </button>
+             {(!viewerStatus || isSaved) && (
+               <button
+                 onClick={handleSave}
+                 className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
+                    isSaved
+                      ? 'text-primary bg-primary/10 font-bold ring-1 ring-primary/20'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                 } ${isSaving ? 'opacity-50' : ''}`}
+                 disabled={isSaving}
+               >
+                 <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-primary' : ''}`} />
+                 <span className={`text-xs ${isSaved ? '' : 'font-medium'}`}>Save</span>
+               </button>
+             )}
 
-             <button
-               onClick={handleHide}
-               className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
-                  isIgnored
-                    ? 'text-muted-foreground bg-muted font-medium ring-1 ring-border'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-               } ${isSaving ? 'opacity-50' : ''}`}
-               disabled={isSaving}
-               title="Hide from map"
-             >
-               <EyeOff className="h-4 w-4" />
-               <span className={`text-xs ${isIgnored ? '' : 'font-medium'}`}>Hide</span>
-             </button>
+             {(!viewerStatus || isIgnored) && (
+               <button
+                 onClick={handleHide}
+                 className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
+                    isIgnored
+                      ? 'text-muted-foreground bg-muted font-medium ring-1 ring-border'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                 } ${isSaving ? 'opacity-50' : ''}`}
+                 disabled={isSaving}
+                 title="Hide from map"
+               >
+                 <EyeOff className="h-4 w-4" />
+                 <span className={`text-xs ${isIgnored ? '' : 'font-medium'}`}>Hide</span>
+               </button>
+             )}
            </div>
       </div>
     </article>
