@@ -20,6 +20,15 @@ interface PersonalRatingButtonProps {
   onOpenChange?: (open: boolean) => void;
 }
 
+export const getRatingLabel = (rating: number) => {
+  switch (rating) {
+    case 1: return "Impressive";
+    case 2: return "Essential";
+    case 3: return "Masterpiece";
+    default: return `${rating} Circles`;
+  }
+};
+
 export function PersonalRatingButton({
   buildingId,
   initialRating,
@@ -39,15 +48,6 @@ export function PersonalRatingButton({
 
   // If initialRating is provided, display it.
   const hasRated = initialRating !== null && initialRating > 0;
-
-  const getRatingLabel = (rating: number) => {
-    switch (rating) {
-      case 1: return "Impressive";
-      case 2: return "Essential";
-      case 3: return "Masterpiece";
-      default: return `${rating} Circles`;
-    }
-  };
 
   const currentLabel = hoverRating
     ? getRatingLabel(hoverRating)
