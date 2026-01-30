@@ -119,7 +119,7 @@ export function SessionMap({ buildings, className, interactive = true }: Session
                         navigate(`/building/${building.id}`);
                     }
                 }}
-                className={`cursor-pointer ${interactive ? 'hover:z-10' : ''}`}
+                className={interactive ? "cursor-pointer hover:z-10" : "cursor-pointer"}
             >
                 <div
                     className="group relative flex flex-col items-center"

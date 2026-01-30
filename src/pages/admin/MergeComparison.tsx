@@ -353,12 +353,6 @@ export default function MergeComparison() {
                                 alt={targetBuilding.name}
                                 className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500"
                             />
-                        ) : targetBuilding.location ? (
-                            <SessionMap
-                                buildings={[{ ...targetBuilding, main_image_url: targetBuilding.hero_image }]}
-                                interactive={false}
-                                className="w-full h-full"
-                            />
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 bg-muted/50">
                                 <ImageIcon className="h-12 w-12 mb-2" />
@@ -443,6 +437,17 @@ export default function MergeComparison() {
                             </>
                         )}
 
+                        {targetBuilding.location && (
+                            <div className="space-y-1 pt-2">
+                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Location</div>
+                                <SessionMap
+                                    buildings={[{ ...targetBuilding, main_image_url: targetBuilding.hero_image }]}
+                                    interactive={false}
+                                    className="w-full h-48 rounded-md border border-border"
+                                />
+                            </div>
+                        )}
+
                         {reviewImages[targetBuilding.id]?.length > 0 && (
                             <div className="space-y-2 pt-2">
                                 <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Review Images</div>
@@ -495,12 +500,6 @@ export default function MergeComparison() {
                                 alt={sourceBuilding.name}
                                 className="w-full h-full object-cover grayscale opacity-90 transition-transform group-hover:scale-105 duration-500"
                             />
-                        ) : sourceBuilding.location ? (
-                            <SessionMap
-                                buildings={[{ ...sourceBuilding, main_image_url: sourceBuilding.hero_image }]}
-                                interactive={false}
-                                className="w-full h-full"
-                            />
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 bg-muted/50">
                                 <ImageIcon className="h-12 w-12 mb-2" />
@@ -534,6 +533,17 @@ export default function MergeComparison() {
                              <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Address</div>
                              <div className="text-sm text-red-900/80 break-words line-clamp-2" title={sourceBuilding.address || ""}>{sourceBuilding.address || "N/A"}</div>
                         </div>
+
+                        {sourceBuilding.location && (
+                            <div className="space-y-1 pt-2">
+                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Location</div>
+                                <SessionMap
+                                    buildings={[{ ...sourceBuilding, main_image_url: sourceBuilding.hero_image }]}
+                                    interactive={false}
+                                    className="w-full h-48 rounded-md border border-red-200"
+                                />
+                            </div>
+                        )}
 
                         {reviewImages[sourceBuilding.id]?.length > 0 && (
                             <div className="space-y-2 pt-2">
