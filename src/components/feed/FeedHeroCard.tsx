@@ -298,8 +298,8 @@ export function FeedHeroCard({
   };
 
   const renderRatingControl = () => {
-     // 4 circles (values 1-4)
-     const options = [1, 2, 3, 4];
+     // 3 circles (values 1-3)
+     const options = [1, 2, 3];
      return (
          <div className="flex items-center gap-1 mr-2 bg-secondary/80 backdrop-blur-sm px-2.5 py-1.5 rounded-full animate-in fade-in slide-in-from-right-5 duration-200 border border-border/50 shadow-sm" onClick={(e) => e.stopPropagation()}>
              {options.map((val) => {

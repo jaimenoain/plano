@@ -727,7 +727,7 @@ export default function WriteReview() {
             className="flex items-center gap-2"
             onMouseLeave={() => setHoverRating(null)}
           >
-            {[1, 2, 3, 4, 5].map((star) => (
+            {[1, 2, 3].map((star) => (
               <button
                 key={star}
                 type="button"
@@ -745,7 +745,7 @@ export default function WriteReview() {
               </button>
             ))}
             <span className="ml-2 text-sm font-medium text-muted-foreground">
-              {hoverRating ? `${hoverRating}/5` : (rating ? `${rating}/5` : "Select a rating")}
+              {hoverRating ? `${hoverRating}/3` : (rating ? `${rating}/3` : "Select a rating")}
             </span>
           </div>
         </div>
