@@ -104,24 +104,135 @@ export default function CollectionMap() {
   const isLoading = loadingProfile || loadingCollection || loadingItems;
   const canEdit = user?.id === collection?.owner_id;
 
+  // 4. Fetch Aggregated Stats
+  const shouldFetchStats = ['status', 'rating_member', 'rating_admin'].includes(collection?.categorization_method || '');
+
+  const { data: aggregatedStats } = useQuery({
+      queryKey: ["collection_aggregated_stats", collection?.id, collection?.categorization_method, items?.length],
+      queryFn: async () => {
+          if (!collection || !items || items.length === 0) return null;
+          const buildingIds = items.map(i => i.building.id);
+
+          // Fetch contributors
+          const { data: contributors } = await supabase
+             .from("collection_contributors")
+             .select("user_id")
+             .eq("collection_id", collection.id);
+
+          let contributorIds = contributors ? contributors.map((c: any) => c.user_id) : [];
+          if (!contributorIds.includes(collection.owner_id)) {
+              contributorIds.push(collection.owner_id);
+          }
+
+          let targetUserIds = contributorIds;
+
+          if (collection.categorization_method === 'rating_admin') {
+              const { data: profiles } = await supabase
+                  .from("profiles")
+                  .select("id, role")
+                  .in("id", contributorIds);
+
+              targetUserIds = profiles?.filter((p: any) => p.role === 'admin' || p.role === 'curator').map((p: any) => p.id) || [];
+
+              if (targetUserIds.length === 0) return { map: new Map(), contributorsCount: 0 };
+          }
+
+          // Use maybeSingle if just one building, but here likely multiple.
+          // Note: .in() works well for IDs.
+          const { data: userBuildings } = await supabase
+              .from("user_buildings")
+              .select("building_id, status, rating, user_id")
+              .in("building_id", buildingIds)
+              .in("user_id", targetUserIds);
+
+          if (!userBuildings) return { map: new Map(), contributorsCount: targetUserIds.length };
+
+          const buildingStats = new Map<string, { visitedCount: number, maxRating: number, savedCount: number }>();
+
+          userBuildings.forEach((ub: any) => {
+              const stats = buildingStats.get(ub.building_id) || { visitedCount: 0, maxRating: 0, savedCount: 0 };
+
+              if (ub.status === 'visited') {
+                  stats.visitedCount++;
+              }
+              if (ub.status === 'pending') {
+                  stats.savedCount++;
+              }
+
+              if (ub.rating) {
+                  stats.maxRating = Math.max(stats.maxRating, ub.rating);
+              }
+
+              buildingStats.set(ub.building_id, stats);
+          });
+
+          return { map: buildingStats, contributorsCount: targetUserIds.length };
+      },
+      enabled: shouldFetchStats && !!items && items.length > 0
+  });
+
   // Prepare map buildings
   const mapBuildings = useMemo<DiscoveryBuilding[]>(() => {
     if (!items) return [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return items.map(item => ({
-      id: item.building.id,
-      name: item.building.name,
-      main_image_url: item.building.hero_image_url,
-      location_lat: item.building.location_lat,
-      location_lng: item.building.location_lng,
-      city: item.building.city,
-      country: item.building.country,
-      year_completed: item.building.year_completed,
-      location_precision: item.building.location_precision,
-      architects: item.building.building_architects?.map((ba: any) => ba.architects) || [],
-      styles: [],
-    }));
-  }, [items]);
+    return items.map(item => {
+        const base = {
+            id: item.building.id,
+            name: item.building.name,
+            main_image_url: item.building.hero_image_url,
+            location_lat: item.building.location_lat,
+            location_lng: item.building.location_lng,
+            city: item.building.city,
+            country: item.building.country,
+            year_completed: item.building.year_completed,
+            location_precision: item.building.location_precision,
+            architects: item.building.building_architects?.map((ba: any) => ba.architects) || [],
+            styles: [],
+        };
+
+        let displayProperties = undefined;
+
+        if (collection?.categorization_method === 'custom' && item.custom_category_id) {
+            const cat = collection.custom_categories?.find(c => c.id === item.custom_category_id);
+            if (cat) {
+                displayProperties = {
+                    strokeColor: cat.color,
+                    fillColor: cat.color,
+                    tooltipText: cat.label
+                };
+            }
+        } else if (aggregatedStats && ['status', 'rating_member', 'rating_admin'].includes(collection?.categorization_method || '')) {
+             const stats = aggregatedStats.map.get(item.building.id);
+             const totalUsers = aggregatedStats.contributorsCount;
+
+             if (collection?.categorization_method === 'status') {
+                 if (stats && stats.visitedCount >= totalUsers && totalUsers > 0) {
+                     displayProperties = { strokeColor: '#4CAF50', fillColor: '#4CAF50', tooltipText: 'Visited by All' };
+                 } else if (stats && stats.visitedCount > 0) {
+                     displayProperties = { strokeColor: '#FF9800', fillColor: '#FF9800', tooltipText: 'Visited by Some' };
+                 } else {
+                     displayProperties = { strokeColor: '#F44336', fillColor: '#F44336', tooltipText: 'Not Visited' };
+                 }
+             } else if (collection?.categorization_method?.startsWith('rating')) {
+                 const rating = stats?.maxRating || 0;
+                 if (rating === 3) {
+                     displayProperties = { strokeColor: '#FFD700', fillColor: '#FFD700', tooltipText: 'Masterpiece (3 Circles)' };
+                 } else if (rating === 2) {
+                     displayProperties = { strokeColor: '#C0C0C0', fillColor: '#C0C0C0', tooltipText: 'Essential (2 Circles)' };
+                 } else if (rating === 1) {
+                     displayProperties = { strokeColor: '#CD7F32', fillColor: '#CD7F32', tooltipText: 'Impressive (1 Circle)' };
+                 } else if (stats?.savedCount > 0 || stats?.visitedCount > 0) {
+                      displayProperties = { strokeColor: '#2196F3', fillColor: '#2196F3', tooltipText: 'Saved' };
+                 }
+             }
+        }
+
+        return {
+            ...base,
+            displayProperties
+        };
+    });
+  }, [items, collection, aggregatedStats]);
 
   const bounds = useMemo(() => {
     if (mapBuildings.length === 0) return null;

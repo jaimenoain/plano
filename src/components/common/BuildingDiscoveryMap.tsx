@@ -46,6 +46,11 @@ interface Building {
   social_context?: string | null;
   location_precision?: 'exact' | 'approximate';
   main_image_url?: string | null;
+  displayProperties?: {
+    strokeColor?: string;
+    fillColor?: string;
+    tooltipText?: string;
+  };
 }
 
 interface BuildingDiscoveryMapProps {
@@ -333,8 +338,35 @@ export function BuildingDiscoveryMap({
     let fillClass = "fill-background";
     let dotBgClass = "bg-gray-500";
     let pinTooltip = null;
+    let customStyle: React.CSSProperties | undefined;
+    let customDotStyle: React.CSSProperties | undefined;
 
-    if (status === 'visited') {
+    if (building.displayProperties) {
+        // Custom override from collection settings
+        const { strokeColor, fillColor, tooltipText } = building.displayProperties;
+
+        // We use styles for arbitrary colors to avoid Tailwind JIT issues
+        if (strokeColor) {
+            strokeClass = ""; // Clear class to rely on style
+            dotBgClass = "";
+        }
+        if (fillColor) {
+            fillClass = "";
+        }
+
+        customStyle = {
+            color: strokeColor,
+            fill: fillColor
+        };
+
+        customDotStyle = {
+            backgroundColor: strokeColor,
+            borderColor: isSatellite ? "white" : "hsl(var(--background))"
+        };
+
+        if (tooltipText) pinTooltip = <span className="ml-1 opacity-75 capitalize">({tooltipText})</span>;
+
+    } else if (status === 'visited') {
         strokeClass = "text-[#333333]";
         fillClass = "fill-[#333333]"; // Charcoal
         dotBgClass = "bg-[#333333]";
@@ -351,7 +383,7 @@ export function BuildingDiscoveryMap({
         pinTooltip = <span className="ml-1 opacity-90">({building.social_context})</span>;
     }
 
-    if (isSatellite) {
+    if (isSatellite && !building.displayProperties) {
         strokeClass = "text-white";
     }
 
@@ -411,9 +443,15 @@ export function BuildingDiscoveryMap({
             </div>
 
             {isApproximate ? (
-                <div className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`} />
+                <div
+                    className={`w-6 h-6 rounded-full border-2 ${!customDotStyle ? dotBorderClass : ''} ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`}
+                    style={customDotStyle}
+                />
             ) : (
-                <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform ${scaleClass}`} />
+                <MapPin
+                    className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform ${scaleClass}`}
+                    style={customStyle}
+                />
             )}
             </div>
         </Marker>

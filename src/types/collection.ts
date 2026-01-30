@@ -6,7 +6,7 @@ export interface Collection {
   is_public: boolean;
   slug: string;
   show_community_images: boolean;
-  categorization_method: 'default' | 'custom';
+  categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'rating_admin';
   custom_categories: { id: string; label: string; color: string }[] | null;
 }
 

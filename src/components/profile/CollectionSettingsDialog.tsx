@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -375,20 +376,38 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
           </TabsContent>
 
           <TabsContent value="markers" className="space-y-4 py-4 overflow-y-auto flex-1">
-            <div className="flex items-center justify-between space-x-2 border-b pb-4">
-               <Label htmlFor="cat-method" className="flex flex-col space-y-1">
-                  <span>Use Custom Categories</span>
-                  <span className="font-normal text-xs text-muted-foreground">Categorize buildings with custom labels and colors</span>
-               </Label>
-               <Switch
-                  id="cat-method"
-                  checked={formData.categorization_method === 'custom'}
-                  onCheckedChange={(c) => setFormData({...formData, categorization_method: c ? 'custom' : 'default'})}
-               />
+            <div className="space-y-4 mb-6">
+                <Label>Marker Style</Label>
+                <RadioGroup
+                    value={formData.categorization_method}
+                    onValueChange={(val: any) => setFormData({...formData, categorization_method: val})}
+                    className="flex flex-col space-y-3"
+                >
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="default" id="m-default" />
+                        <Label htmlFor="m-default" className="font-normal">Default (My Status)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="custom" id="m-custom" />
+                        <Label htmlFor="m-custom" className="font-normal">Custom Categories</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="status" id="m-status" />
+                        <Label htmlFor="m-status" className="font-normal">By Status (Visited by All/Some/None)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="rating_member" id="m-rating_member" />
+                        <Label htmlFor="m-rating_member" className="font-normal">By Max Member Rating</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="rating_admin" id="m-rating_admin" />
+                        <Label htmlFor="m-rating_admin" className="font-normal">By Max Admin Rating</Label>
+                    </div>
+                </RadioGroup>
             </div>
 
             {formData.categorization_method === 'custom' && (
-                <div className="space-y-4">
+                <div className="space-y-4 border-t pt-4">
                     <div className="flex gap-2 items-end">
                         <div className="flex-1 space-y-2">
                             <Label className="text-xs">Category Name</Label>
@@ -449,8 +468,15 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
             )}
 
             {formData.categorization_method !== 'custom' && (
-                 <div className="text-center py-8 text-muted-foreground text-sm">
-                     Buildings are categorized by their default status (Pending, Visited, etc.)
+                 <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/10 rounded-md p-4">
+                     <p>Selected mode: <strong>{formData.categorization_method === 'default' ? 'Personal Status' : formData.categorization_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong></p>
+                     <p className="mt-1 opacity-75">Markers will be colored based on the selected criteria.</p>
+                     {formData.categorization_method !== 'default' && (
+                       <Button onClick={handleSaveGeneral} disabled={saving} className="w-full mt-4">
+                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                         Save Changes
+                       </Button>
+                     )}
                  </div>
             )}
 

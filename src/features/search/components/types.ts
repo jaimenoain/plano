@@ -34,6 +34,11 @@ export interface DiscoveryBuilding {
   visitors?: ContactRater[]; // From RPC
   location_precision?: 'exact' | 'approximate';
   status?: 'Built' | 'Under Construction' | 'Unbuilt' | 'Demolished' | 'Temporary' | null;
+  displayProperties?: {
+    strokeColor?: string;
+    fillColor?: string;
+    tooltipText?: string;
+  };
 }
 
 export interface ContactRater {
