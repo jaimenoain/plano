@@ -284,7 +284,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] h-[80vh] sm:h-auto flex flex-col">
+      <DialogContent className="sm:max-w-[500px] h-[80vh] sm:h-auto sm:max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Collection Settings</DialogTitle>
           <DialogDescription>Manage your collection preferences and collaborators.</DialogDescription>
