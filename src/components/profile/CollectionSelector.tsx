@@ -50,6 +50,7 @@ export function CollectionSelector({ userId, selectedCollectionIds, onChange, cl
           .from("collection_contributors")
           .select("collection:collections(id, name, slug)")
           .eq("user_id", userId)
+          .neq("role", "viewer")
       ]);
 
       if (owned.error) throw owned.error;
