@@ -26,5 +26,11 @@ export interface CollectionItemWithBuilding {
     year_completed: number | null;
     hero_image_url: string | null;
     location_precision: "exact" | "approximate";
+    building_architects?: {
+      architects: {
+        id: string;
+        name: string;
+      } | null;
+    }[];
   };
 }

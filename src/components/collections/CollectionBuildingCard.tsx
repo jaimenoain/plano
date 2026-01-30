@@ -49,6 +49,11 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
     const currentCategory = customCategories?.find(c => c.id === item.custom_category_id);
     const imageUrl = getBuildingImageUrl(item.building.hero_image_url);
 
+    const architectNames = item.building.building_architects
+      ?.map((ba) => ba.architects?.name)
+      .filter(Boolean)
+      .join(", ");
+
     return (
         <Card
             ref={ref}
@@ -74,7 +79,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                         </div>
 
                         <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                             <span>{item.building.city}, {item.building.country}</span>
+                             <span>{architectNames || "Unknown Architect"}</span>
                              {item.building.year_completed && (
                                 <>
                                   <span className="mx-1">•</span>
