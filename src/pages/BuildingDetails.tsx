@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Loader2, MapPin, Calendar, Send,
-  Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
+  Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
   MessageCircle, EyeOff
 } from "lucide-react";
@@ -114,16 +114,9 @@ interface BuildingHeaderProps {
 
 const BuildingHeader = ({ building, showEditLink, className }: BuildingHeaderProps) => {
     return (
-        <div className={className}>
+        <div className={`${className || ""} group`}>
             <div className="flex justify-between items-start">
                 <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
-                {showEditLink && (
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}>
-                            <Edit2 className="w-5 h-5" />
-                        </Link>
-                    </Button>
-                )}
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 {building.year_completed && (
@@ -159,6 +152,17 @@ const BuildingHeader = ({ building, showEditLink, className }: BuildingHeaderPro
                     {building.styles.map(style => (
                         <Badge key={style.id} variant="outline" className="border-white/20">{style.name}</Badge>
                     ))}
+                </div>
+            )}
+
+            {showEditLink && (
+                <div className="mt-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
+                    <Link
+                        to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}
+                        className="text-xs text-muted-foreground hover:underline"
+                    >
+                        Edit building information
+                    </Link>
                 </div>
             )}
         </div>
@@ -848,7 +852,7 @@ export default function BuildingDetails() {
         <div className="space-y-8 mt-6 lg:mt-0">
             
             {/* Header Info - Desktop Only */}
-            <BuildingHeader building={building} showEditLink={!!user} className="hidden lg:block" />
+      <BuildingHeader building={building} showEditLink={!!user} className="hidden lg:block" />
 
             <BuildingAttributes
                 accessType={building.access_type}
@@ -1050,13 +1054,6 @@ export default function BuildingDetails() {
                 )}
             </div>
 
-            {user && (
-                <div className="flex justify-end mt-2 mb-2">
-                    <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"} className="text-xs text-muted-foreground hover:underline">
-                        Edit building information
-                    </Link>
-                </div>
-            )}
 
             {/* Top Community Resources */}
             {(linksLoading || topLinks.length > 0) && (
