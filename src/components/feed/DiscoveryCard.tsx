@@ -22,6 +22,8 @@ interface DiscoveryCardProps {
 export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, onSwipeHide }: DiscoveryCardProps) {
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+  const [rating, setRating] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Lazy loading setup
@@ -46,6 +48,27 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   // Format architect names (handle if architects is undefined, e.g. from FeedItem)
   const architectNames = building.architects?.map((a: any) => a.name).join(", ");
 
+  const saveToSupabase = async (status: 'pending' | 'ignored', ratingValue?: number) => {
+      if (!user) return;
+      try {
+        const updateData: any = {
+            user_id: user.id,
+            building_id: building.id,
+            status: status,
+            edited_at: new Date().toISOString()
+        };
+        if (ratingValue !== undefined) {
+            updateData.rating = ratingValue;
+        }
+
+        const { error } = await supabase.from("user_buildings").upsert(updateData, { onConflict: 'user_id, building_id' });
+        if (error) throw error;
+      } catch (error) {
+          console.error("Save failed", error);
+          toast.error("Failed to save");
+      }
+  };
+
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -60,22 +83,23 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
 
     // Optimistic UI
     setIsSaved(true);
+    setShowRating(true);
     toast.success("Saved to your list");
 
-    try {
-      const { error } = await supabase.from("user_buildings").upsert({
-          user_id: user.id,
-          building_id: building.id,
-          status: 'pending',
-          edited_at: new Date().toISOString()
-      }, { onConflict: 'user_id, building_id' });
+    saveToSupabase('pending');
+  };
 
-      if (error) throw error;
-    } catch (error) {
-        console.error("Save failed", error);
-        setIsSaved(false);
-        toast.error("Failed to save");
-    }
+  const handleRate = async (value: number, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setRating(value);
+
+      // Save rating
+      await saveToSupabase('pending', value);
+
+      // Short delay to show selection feedback (neon yellow)
+      setTimeout(() => {
+          if (onSwipeSave) onSwipeSave();
+      }, 500);
   };
 
   // Framer Motion
@@ -88,8 +112,18 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     const threshold = 100;
-    if (info.offset.x > threshold && onSwipeSave) {
-        onSwipeSave();
+    if (info.offset.x > threshold) {
+        // Swipe Right (Save) logic
+        if (showRating) {
+            // If already showing rating and swiped again, treat as skip/confirm
+            if (onSwipeSave) onSwipeSave();
+        } else {
+            // First swipe: Enter saved mode, show rating, do NOT dismiss card yet
+            setIsSaved(true);
+            setShowRating(true);
+            saveToSupabase('pending');
+            // Card snaps back to center automatically since we didn't unmount it
+        }
     } else if (info.offset.x < -threshold && onSwipeHide) {
         onSwipeHide();
     }
@@ -156,6 +190,43 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
       <motion.div style={{ opacity: nopeOpacity }} className="absolute top-20 right-10 z-50 border-4 border-red-500 rounded-lg p-2 transform rotate-12 pointer-events-none">
         <span className="text-red-500 font-bold text-4xl uppercase tracking-widest">HIDE</span>
       </motion.div>
+
+      {/* Rating Overlay */}
+      {showRating && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+              <h3 className="text-white text-2xl font-bold mb-8">Rate this building</h3>
+              <div className="flex gap-6">
+                  {[1, 2, 3].map((val) => (
+                      <button
+                        key={val}
+                        onClick={(e) => handleRate(val, e)}
+                        className={`w-16 h-16 rounded-full border-2 border-white flex items-center justify-center text-2xl font-bold transition-all duration-300 ${
+                            rating === val
+                                ? "bg-primary-foreground text-primary border-primary-foreground scale-110 shadow-[0_0_20px_hsl(var(--primary-foreground))]"
+                                : "text-white hover:bg-white/20 hover:scale-105"
+                        }`}
+                      >
+                          {val}
+                      </button>
+                  ))}
+              </div>
+              <Button
+                variant="ghost"
+                className="mt-12 text-white/50 hover:text-white"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (onSwipeSave) onSwipeSave();
+                }}
+              >
+                  Skip
+              </Button>
+          </motion.div>
+      )}
 
       {/* Pagination Dots (Top) */}
       {uniqueImages.length > 1 && (
