@@ -24,7 +24,6 @@ export function PersonalRatingButton({
   buildingId,
   initialRating,
   onRate,
-  status = 'visited', // Default to visited context if not provided
   isLoading = false,
   label = "Rate",
   variant = 'popover',
@@ -41,27 +40,12 @@ export function PersonalRatingButton({
   // If initialRating is provided, display it.
   const hasRated = initialRating !== null && initialRating > 0;
 
-  // Determine context for tooltips
-  // "pending" -> Priority context
-  // "visited" (or others) -> Quality context
-  const isPriorityContext = status === 'pending';
-
   const getRatingLabel = (rating: number) => {
-    if (isPriorityContext) {
-      switch (rating) {
-        case 1: return "Interested";
-        case 2: return "High priority";
-        case 3: return "Must go"; // Critical
-        default: return `${rating} Stars`;
-      }
-    } else {
-      // Quality context (Visited)
-      switch (rating) {
-        case 1: return "Good";
-        case 2: return "Great";
-        case 3: return "Masterpiece";
-        default: return `${rating} Stars`;
-      }
+    switch (rating) {
+      case 1: return "Impressive";
+      case 2: return "Essential";
+      case 3: return "Masterpiece";
+      default: return `${rating} Circles`;
     }
   };
 
