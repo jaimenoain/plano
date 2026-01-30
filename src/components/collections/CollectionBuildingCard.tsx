@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface CollectionBuildingCardProps {
   item: CollectionItemWithBuilding;
@@ -22,10 +23,11 @@ interface CollectionBuildingCardProps {
   categorizationMethod?: 'default' | 'custom';
   customCategories?: { id: string; label: string; color: string }[] | null;
   onUpdateCategory?: (categoryId: string) => void;
+  showImages?: boolean;
 }
 
 export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuildingCardProps>(
-  ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory }, ref) => {
+  ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory, showImages = true }, ref) => {
     const [isEditing, setIsEditing] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -48,6 +50,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
 
     // Helper to find category color
     const currentCategory = customCategories?.find(c => c.id === item.custom_category_id);
+    const imageUrl = getBuildingImageUrl(item.building.hero_image_url);
 
     return (
         <div
@@ -64,15 +67,15 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
             }}
         >
             <div className="flex gap-3">
-                {item.building.hero_image_url ? (
+                {showImages && (imageUrl ? (
                     <div className="w-20 h-20 rounded-md overflow-hidden shrink-0 bg-secondary">
-                        <img src={item.building.hero_image_url} alt="" className="w-full h-full object-cover" />
+                        <img src={imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                 ) : (
                     <div className="w-20 h-20 rounded-md bg-secondary shrink-0 flex items-center justify-center text-muted-foreground text-xs p-1 text-center">
                         No Image
                     </div>
-                )}
+                ))}
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
                          <h3 className="font-semibold text-sm truncate pr-2">{item.building.name}</h3>
