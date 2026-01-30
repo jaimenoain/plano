@@ -54,16 +54,26 @@ export function BuildingMap({
 
   const isApproximate = locationPrecision === 'approximate';
 
-  let pinColor = "text-gray-500 fill-background";
+  let strokeClass = "text-gray-500";
+  let fillClass = "fill-background";
   let dotBgClass = "bg-gray-500";
 
   if (status === 'visited') {
-    pinColor = "text-[#333333] fill-[#333333]"; // Charcoal
+    strokeClass = "text-[#333333]";
+    fillClass = "fill-[#333333]"; // Charcoal
     dotBgClass = "bg-[#333333]";
   } else if (status === 'pending') {
-    pinColor = "text-[#EEFF41] fill-[#EEFF41]";
+    strokeClass = "text-[#EEFF41]";
+    fillClass = "fill-[#EEFF41]";
     dotBgClass = "bg-[#EEFF41]";
   }
+
+  if (isSatellite) {
+    strokeClass = "text-white";
+  }
+
+  const pinColor = `${strokeClass} ${fillClass}`;
+  const dotBorderClass = isSatellite ? "border-white" : "border-background";
 
   // When expanded, we remove the default containment styling (relative, rounded, border)
   // to allow full screen behavior controlled by the parent's className.
@@ -91,7 +101,7 @@ export function BuildingMap({
           anchor={isApproximate ? "center" : "bottom"}
         >
             {isApproximate ? (
-               <div className={`w-6 h-6 rounded-full border-2 border-background ${dotBgClass} drop-shadow-lg`} />
+               <div className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-lg`} />
             ) : (
                <MapPin className={`w-8 h-8 drop-shadow-lg ${pinColor}`} />
             )}
