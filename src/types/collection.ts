@@ -5,12 +5,16 @@ export interface Collection {
   owner_id: string;
   is_public: boolean;
   slug: string;
+  show_community_images: boolean;
+  categorization_method: 'default' | 'custom';
+  custom_categories: { id: string; label: string; color: string }[] | null;
 }
 
 export interface CollectionItemWithBuilding {
   id: string;
   building_id: string;
   note: string | null;
+  custom_category_id: string | null;
   building: {
     id: string;
     name: string;
