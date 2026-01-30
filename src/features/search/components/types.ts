@@ -28,6 +28,7 @@ export interface DiscoveryBuilding {
   distance?: number;
   social_context?: string;
   social_score?: number;
+  contact_interactions?: ContactInteraction[];
   contact_raters?: ContactRater[];
   contact_visitors?: ContactRater[];
   visitors?: ContactRater[]; // From RPC
@@ -41,6 +42,12 @@ export interface ContactRater {
   username?: string | null;
   first_name?: string | null;
   last_name?: string | null;
+}
+
+export interface ContactInteraction {
+  user: ContactRater;
+  status: 'visited' | 'pending' | null;
+  rating: number | null;
 }
 
 export interface LeaderboardBuilding {
