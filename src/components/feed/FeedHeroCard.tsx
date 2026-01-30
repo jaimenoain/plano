@@ -351,7 +351,7 @@ export function FeedHeroCard({
              {/* Rating */}
              {entry.rating && entry.rating > 0 && (
                 <span className="inline-flex items-center gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
+                    {Array.from({ length: 3 }).map((_, i) => (
                         <Circle
                             key={i}
                             className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}

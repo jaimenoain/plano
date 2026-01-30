@@ -49,21 +49,17 @@ export function PersonalRatingButton({
   const getRatingLabel = (rating: number) => {
     if (isPriorityContext) {
       switch (rating) {
-        case 1: return "Might go someday";
-        case 2: return "Backup";
-        case 3: return "Interested";
-        case 4: return "High priority";
-        case 5: return "Must go"; // Critical
+        case 1: return "Interested";
+        case 2: return "High priority";
+        case 3: return "Must go"; // Critical
         default: return `${rating} Stars`;
       }
     } else {
       // Quality context (Visited)
       switch (rating) {
-        case 1: return "Disappointing";
-        case 2: return "Below Average";
-        case 3: return "Good";
-        case 4: return "Great";
-        case 5: return "Masterpiece";
+        case 1: return "Good";
+        case 2: return "Great";
+        case 3: return "Masterpiece";
         default: return `${rating} Stars`;
       }
     }
@@ -79,7 +75,7 @@ export function PersonalRatingButton({
         className="flex items-center gap-1"
         onMouseLeave={() => setHoverRating(null)}
       >
-        {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
+        {Array.from({ length: 3 }, (_, i) => i + 1).map((star) => {
           // Fill logic: if hovering, fill up to hoverRating. If not hovering, fill up to initialRating.
           const isFilled = (hoverRating !== null ? star <= hoverRating : (initialRating || 0) >= star);
 
@@ -135,7 +131,7 @@ export function PersonalRatingButton({
           {hasRated ? (
             <>
               <Circle className="w-3.5 h-3.5 fill-[#595959]" />
-              <span className="font-bold">{initialRating}/5</span>
+              <span className="font-bold">{initialRating}/3</span>
             </>
           ) : (
             <span className="text-xs">{label}</span>
