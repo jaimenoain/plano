@@ -16,7 +16,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 interface CollectionBuildingCardProps {
   item: CollectionItemWithBuilding;
   isHighlighted: boolean;
-  setHighlightedId: (id: string) => void;
+  setHighlightedId: (id: string | null) => void;
   canEdit: boolean;
   onUpdateNote: (newNote: string) => void;
   onNavigate: () => void;
@@ -57,6 +57,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                 isHighlighted ? "border-primary ring-1 ring-primary bg-secondary/5" : "hover:border-primary/50"
             )}
             onMouseEnter={() => setHighlightedId(item.building.id)}
+            onMouseLeave={() => setHighlightedId(null)}
             onClick={() => {
                 setHighlightedId(item.building.id);
                 onNavigate();
@@ -154,7 +155,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                             ) : (
                                <button
                                    onClick={() => setIsEditingNote(true)}
-                                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-1 py-0.5 rounded hover:bg-secondary/50 transition-colors"
+                                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-1 py-0.5 rounded hover:bg-secondary/50 transition-colors opacity-0 group-hover:opacity-100"
                                >
                                    <MessageSquarePlus className="h-3 w-3" />
                                    Add note
