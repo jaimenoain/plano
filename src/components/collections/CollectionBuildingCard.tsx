@@ -3,6 +3,13 @@ import { CollectionItemWithBuilding } from "@/types/collection";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, MessageSquarePlus } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CollectionBuildingCardProps {
   item: CollectionItemWithBuilding;
@@ -11,16 +18,17 @@ interface CollectionBuildingCardProps {
   canEdit: boolean;
   onUpdateNote: (newNote: string) => void;
   onNavigate: () => void;
+  // New props
+  categorizationMethod?: 'default' | 'custom';
+  customCategories?: { id: string; label: string; color: string }[] | null;
+  onUpdateCategory?: (categoryId: string) => void;
 }
 
 export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuildingCardProps>(
-  ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate }, ref) => {
+  ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory }, ref) => {
     const [isEditing, setIsEditing] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // If there is a note, we show it (either as textarea or static text depending on design,
-    // but typically if we have a note we want to see it).
-    // The requirement is "hide empty input by default".
     const hasNote = !!item.note;
     const showInput = hasNote || isEditing;
 
@@ -38,6 +46,9 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
         }
     };
 
+    // Helper to find category color
+    const currentCategory = customCategories?.find(c => c.id === item.custom_category_id);
+
     return (
         <div
             ref={ref}
@@ -45,6 +56,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                 "group p-4 border rounded-lg shadow-sm transition-all duration-200 cursor-pointer bg-card hover:shadow-md",
                 isHighlighted ? "border-primary ring-1 ring-primary bg-secondary/10" : "hover:border-primary/50"
             )}
+            style={categorizationMethod === 'custom' && currentCategory ? { borderLeftColor: currentCategory.color, borderLeftWidth: '4px' } : {}}
             onMouseEnter={() => setHighlightedId(item.building.id)}
             onClick={() => {
                 setHighlightedId(item.building.id);
@@ -62,13 +74,49 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     </div>
                 )}
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{item.building.name}</h3>
+                    <div className="flex justify-between items-start">
+                         <h3 className="font-semibold text-sm truncate pr-2">{item.building.name}</h3>
+                         {/* Optional: Show category badge if not editing and valid category */}
+                         {categorizationMethod === 'custom' && currentCategory && (
+                             <div
+                                className="w-2 h-2 rounded-full shrink-0 mt-1"
+                                style={{ backgroundColor: currentCategory.color }}
+                                title={currentCategory.label}
+                             />
+                         )}
+                    </div>
+
                     <p className="text-xs text-muted-foreground truncate">{item.building.city}, {item.building.country}</p>
                     {item.building.year_completed && (
                         <p className="text-xs text-muted-foreground mt-0.5">{item.building.year_completed}</p>
                     )}
                 </div>
             </div>
+
+            {/* Custom Category Selector */}
+            {canEdit && categorizationMethod === 'custom' && customCategories && customCategories.length > 0 && (
+                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                    <Select
+                        value={item.custom_category_id || "unassigned"}
+                        onValueChange={(val) => onUpdateCategory?.(val === "unassigned" ? "" : val)}
+                    >
+                        <SelectTrigger className="h-7 text-xs bg-secondary/30 border-none w-full">
+                            <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="unassigned" className="text-muted-foreground italic">Uncategorized</SelectItem>
+                            {customCategories.map(cat => (
+                                <SelectItem key={cat.id} value={cat.id}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                                        <span>{cat.label}</span>
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
 
             <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                 {canEdit ? (
