@@ -45,6 +45,13 @@ interface Contributor {
   };
 }
 
+const METHOD_DESCRIPTIONS = {
+  default: "Pins are colored based on your personal status (Visited, Pending, or Unvisited).",
+  status: "Pins show if locations have been visited by all selected members (Green), some (Orange), or none (Grey).",
+  rating_member: "Pins highlight the highest rating among members: Masterpiece (Gold), Essential (Silver), Impressive (Bronze), or Saved (Blue).",
+  custom: "Create custom categories with your own colors to organize locations."
+};
+
 export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate }: CollectionSettingsDialogProps) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<{
@@ -421,6 +428,10 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                         <Label htmlFor="cat-custom" className="font-normal cursor-pointer">Custom Categories</Label>
                     </div>
                 </RadioGroup>
+
+                <div className="text-sm text-muted-foreground bg-secondary/10 p-2 rounded-md border mt-2">
+                    {METHOD_DESCRIPTIONS[formData.categorization_method]}
+                </div>
 
                 {/* Sub-options for Status/Rating */}
                 {(formData.categorization_method === 'status' || formData.categorization_method === 'rating_member') && (
