@@ -759,13 +759,15 @@ export default function BuildingDetails() {
                     )}
                 </div>
 
-                {(building.status === 'Demolished' || building.status === 'Unbuilt') && (
+                {(building.status === 'Demolished' || building.status === 'Unbuilt' || building.status === 'Under Construction') && (
                     <Alert className="mt-4 border-destructive/50 bg-destructive/10 text-destructive dark:text-red-400">
                         <AlertTriangle className="h-4 w-4 stroke-destructive dark:stroke-red-400" />
                         <AlertDescription className="ml-2 font-medium">
                             {building.status === 'Demolished'
                                 ? "This building has been demolished."
-                                : "This project was never built."}
+                                : building.status === 'Unbuilt'
+                                ? "This project was never built."
+                                : "This building is under construction."}
                         </AlertDescription>
                     </Alert>
                 )}
