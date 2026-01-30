@@ -101,20 +101,116 @@ export default function CollectionMap() {
     enabled: !!collection?.id
   });
 
+  // 4. Fetch Contributors (Only if needed for status/rating)
+  const shouldFetchStats = collection && ['status', 'rating_member'].includes(collection.categorization_method);
+
+  const { data: memberIds } = useQuery({
+    queryKey: ["collection_members", collection?.id],
+    queryFn: async () => {
+      if (!collection) return [];
+      // Owner
+      const members = [collection.owner_id];
+      // Contributors
+      const { data } = await supabase
+        .from("collection_contributors")
+        .select("user_id")
+        .eq("collection_id", collection.id);
+
+      if (data) {
+        members.push(...data.map(d => d.user_id));
+      }
+      return members;
+    },
+    enabled: !!collection && !!shouldFetchStats
+  });
+
+  // 5. Fetch User Buildings for Stats
+  const { data: statsData } = useQuery({
+    queryKey: ["collection_stats", collection?.id, collection?.categorization_method, collection?.categorization_selected_members, memberIds],
+    queryFn: async () => {
+       if (!items || items.length === 0 || !memberIds) return [];
+
+       const targetUserIds = collection?.categorization_selected_members && collection.categorization_selected_members.length > 0
+          ? collection.categorization_selected_members
+          : memberIds;
+
+       const buildingIds = items.map(i => i.building.id);
+       if (buildingIds.length === 0) return [];
+
+       const { data, error } = await supabase
+          .from("user_buildings")
+          .select("building_id, user_id, status, rating")
+          .in("building_id", buildingIds)
+          .in("user_id", targetUserIds);
+
+       if (error) throw error;
+       return data;
+    },
+    enabled: !!items && items.length > 0 && !!memberIds && !!shouldFetchStats
+  });
+
   const isLoading = loadingProfile || loadingCollection || loadingItems;
   const canEdit = user?.id === collection?.owner_id;
 
   // Prepare map buildings
   const mapBuildings = useMemo<DiscoveryBuilding[]>(() => {
     if (!items) return [];
+
+    // Pre-calculate stats map
+    const statsMap = new Map<string, { visitedCount: number, maxRating: number, hasSaved: boolean }>();
+
+    if (statsData) {
+        // Group by building
+        statsData.forEach(row => {
+            if (!statsMap.has(row.building_id)) {
+                statsMap.set(row.building_id, { visitedCount: 0, maxRating: 0, hasSaved: false });
+            }
+            const stat = statsMap.get(row.building_id)!;
+            if (row.status === 'visited') stat.visitedCount++;
+            if (row.rating && row.rating > stat.maxRating) stat.maxRating = row.rating;
+            stat.hasSaved = true; // Present in user_buildings implies saved/interested
+        });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return items.map(item => {
       let color = null;
+
       if (collection?.categorization_method === 'custom' && item.custom_category_id) {
         const category = collection.custom_categories?.find(c => c.id === item.custom_category_id);
         if (category) {
           color = category.color;
         }
+      } else if (shouldFetchStats && statsData && memberIds) {
+          const stat = statsMap.get(item.building.id);
+          const targetUserIds = collection?.categorization_selected_members && collection.categorization_selected_members.length > 0
+            ? collection.categorization_selected_members
+            : memberIds;
+          const targetCount = targetUserIds.length;
+
+          if (collection.categorization_method === 'status') {
+              if (!stat || stat.visitedCount === 0) {
+                  color = "#9E9E9E"; // Not visited (Grey)
+              } else {
+                  if (stat.visitedCount >= targetCount && targetCount > 0) {
+                      color = "#4CAF50"; // Visited by All (Green)
+                  } else if (stat.visitedCount > 0) {
+                      color = "#FF9800"; // Visited by Some (Orange)
+                  }
+              }
+          } else if (collection.categorization_method === 'rating_member') {
+              if (!stat || !stat.hasSaved) {
+                   // No color (default) or grey?
+                   // If we want to highlight rated ones, unrated/unsaved can be default or grey.
+                   // Let's make them grey to indicate "no data/rating".
+                   color = "#9E9E9E";
+              } else {
+                  if (stat.maxRating === 3) color = "#FFD700"; // Gold
+                  else if (stat.maxRating === 2) color = "#C0C0C0"; // Silver
+                  else if (stat.maxRating === 1) color = "#CD7F32"; // Bronze
+                  else color = "#2196F3"; // Saved (Blue)
+              }
+          }
       }
 
       return {
@@ -132,7 +228,7 @@ export default function CollectionMap() {
         color: color,
       };
     });
-  }, [items, collection]);
+  }, [items, collection, statsData, memberIds, shouldFetchStats]);
 
   const bounds = useMemo(() => {
     if (mapBuildings.length === 0) return null;

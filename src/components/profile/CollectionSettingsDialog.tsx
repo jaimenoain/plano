@@ -16,6 +16,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collection } from "@/types/collection";
 import { parseLocation } from "@/utils/location";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,13 +47,22 @@ interface Contributor {
 
 export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate }: CollectionSettingsDialogProps) {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    is_public: boolean;
+    show_community_images: boolean;
+    categorization_method: 'default' | 'custom' | 'status' | 'rating_member';
+    custom_categories: { id: string; label: string; color: string }[];
+    categorization_selected_members: string[] | null;
+  }>({
     name: collection.name,
     description: collection.description || "",
     is_public: collection.is_public,
     show_community_images: collection.show_community_images,
     categorization_method: collection.categorization_method || 'default',
-    custom_categories: collection.custom_categories || []
+    custom_categories: collection.custom_categories || [],
+    categorization_selected_members: collection.categorization_selected_members || null
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -71,7 +82,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
         is_public: collection.is_public,
         show_community_images: collection.show_community_images,
         categorization_method: collection.categorization_method || 'default',
-        custom_categories: collection.custom_categories || []
+        custom_categories: collection.custom_categories || [],
+        categorization_selected_members: collection.categorization_selected_members || null
       });
       fetchContributors();
     }
@@ -102,7 +114,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
         is_public: formData.is_public,
         show_community_images: formData.show_community_images,
         categorization_method: formData.categorization_method,
-        custom_categories: formData.custom_categories
+        custom_categories: formData.custom_categories,
+        categorization_selected_members: formData.categorization_selected_members
       })
       .eq("id", collection.id);
 
@@ -174,6 +187,15 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
         ...prev,
         custom_categories: (prev.custom_categories || []).filter(c => c.id !== id)
     }));
+  };
+
+  const toggleMemberSelection = (userId: string) => {
+      const current = formData.categorization_selected_members || [];
+      if (current.includes(userId)) {
+          setFormData({ ...formData, categorization_selected_members: current.filter(id => id !== userId) });
+      } else {
+          setFormData({ ...formData, categorization_selected_members: [...current, userId] });
+      }
   };
 
   const handleDeleteCollection = async () => {
@@ -375,85 +397,145 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
           </TabsContent>
 
           <TabsContent value="markers" className="space-y-4 py-4 overflow-y-auto flex-1">
-            <div className="flex items-center justify-between space-x-2 border-b pb-4">
-               <Label htmlFor="cat-method" className="flex flex-col space-y-1">
-                  <span>Use Custom Categories</span>
-                  <span className="font-normal text-xs text-muted-foreground">Categorize buildings with custom labels and colors</span>
-               </Label>
-               <Switch
-                  id="cat-method"
-                  checked={formData.categorization_method === 'custom'}
-                  onCheckedChange={(c) => setFormData({...formData, categorization_method: c ? 'custom' : 'default'})}
-               />
-            </div>
+            <div className="space-y-4">
+                <Label>Categorization Method</Label>
+                <RadioGroup
+                    value={formData.categorization_method}
+                    onValueChange={(val: any) => setFormData({...formData, categorization_method: val})}
+                    className="space-y-2"
+                >
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="default" id="cat-default" />
+                        <Label htmlFor="cat-default" className="font-normal cursor-pointer">Default (Personal Status)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="status" id="cat-status" />
+                        <Label htmlFor="cat-status" className="font-normal cursor-pointer">Member Status</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="rating_member" id="cat-rating" />
+                        <Label htmlFor="cat-rating" className="font-normal cursor-pointer">Member Ratings</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="custom" id="cat-custom" />
+                        <Label htmlFor="cat-custom" className="font-normal cursor-pointer">Custom Categories</Label>
+                    </div>
+                </RadioGroup>
 
-            {formData.categorization_method === 'custom' && (
-                <div className="space-y-4">
-                    <div className="flex gap-2 items-end">
-                        <div className="flex-1 space-y-2">
-                            <Label className="text-xs">Category Name</Label>
-                            <Input
-                                value={newCategory.label}
-                                onChange={(e) => setNewCategory({...newCategory, label: e.target.value})}
-                                placeholder="e.g. Must Visit"
-                                className="h-9"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-xs">Color</Label>
-                            <div className="flex items-center gap-2">
+                {/* Sub-options for Status/Rating */}
+                {(formData.categorization_method === 'status' || formData.categorization_method === 'rating_member') && (
+                    <div className="pl-6 space-y-3 border-l-2 ml-1 mt-2">
+                         <div className="space-y-1">
+                             <Label className="text-xs font-semibold">Member Filter</Label>
+                             <div className="flex items-center space-x-2 mt-1">
+                                 <Checkbox
+                                    id="specific-members"
+                                    checked={formData.categorization_selected_members !== null}
+                                    onCheckedChange={(checked) => {
+                                        if (checked) {
+                                            setFormData({...formData, categorization_selected_members: []});
+                                        } else {
+                                            setFormData({...formData, categorization_selected_members: null});
+                                        }
+                                    }}
+                                 />
+                                 <Label htmlFor="specific-members" className="text-sm font-normal cursor-pointer">Apply to specific members only</Label>
+                             </div>
+                         </div>
+
+                         {formData.categorization_selected_members !== null && (
+                             <ScrollArea className="h-[150px] border rounded-md p-2 bg-secondary/5">
+                                 {contributors.length > 0 ? (
+                                     <div className="space-y-2">
+                                         {contributors.map(c => {
+                                             if (!c.user) return null;
+                                             return (
+                                                 <div key={c.user.id} className="flex items-center space-x-2">
+                                                     <Checkbox
+                                                         id={`member-${c.user.id}`}
+                                                         checked={formData.categorization_selected_members?.includes(c.user.id)}
+                                                         onCheckedChange={() => toggleMemberSelection(c.user.id)}
+                                                     />
+                                                     <Label htmlFor={`member-${c.user.id}`} className="font-normal cursor-pointer text-sm">
+                                                         {c.user.username}
+                                                     </Label>
+                                                 </div>
+                                             );
+                                         })}
+                                     </div>
+                                 ) : (
+                                     <div className="text-xs text-muted-foreground py-4 text-center">No collaborators found.</div>
+                                 )}
+                             </ScrollArea>
+                         )}
+                    </div>
+                )}
+
+                {/* Custom Categories Editor */}
+                {formData.categorization_method === 'custom' && (
+                    <div className="space-y-4 pt-2">
+                        <Separator />
+                        <div className="flex gap-2 items-end">
+                            <div className="flex-1 space-y-2">
+                                <Label className="text-xs">Category Name</Label>
                                 <Input
-                                    type="color"
-                                    value={newCategory.color}
-                                    onChange={(e) => setNewCategory({...newCategory, color: e.target.value})}
-                                    className="h-9 w-12 p-1 cursor-pointer"
+                                    value={newCategory.label}
+                                    onChange={(e) => setNewCategory({...newCategory, label: e.target.value})}
+                                    placeholder="e.g. Must Visit"
+                                    className="h-9"
                                 />
                             </div>
-                        </div>
-                        <Button size="sm" onClick={addCustomCategory} disabled={!newCategory.label}>
-                            <Plus className="h-4 w-4" />
-                        </Button>
-                    </div>
-
-                    <ScrollArea className="h-[200px] border rounded-md bg-secondary/10 p-2">
-                        {formData.custom_categories && formData.custom_categories.length > 0 ? (
                             <div className="space-y-2">
-                                {formData.custom_categories.map((cat) => (
-                                    <div key={cat.id} className="flex items-center justify-between bg-card p-2 rounded-md shadow-sm border">
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className="w-4 h-4 rounded-full border shadow-sm"
-                                                style={{ backgroundColor: cat.color }}
-                                            />
-                                            <span className="text-sm font-medium">{cat.label}</span>
+                                <Label className="text-xs">Color</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        type="color"
+                                        value={newCategory.color}
+                                        onChange={(e) => setNewCategory({...newCategory, color: e.target.value})}
+                                        className="h-9 w-12 p-1 cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+                            <Button size="sm" onClick={addCustomCategory} disabled={!newCategory.label}>
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
+
+                        <ScrollArea className="h-[200px] border rounded-md bg-secondary/10 p-2">
+                            {formData.custom_categories && formData.custom_categories.length > 0 ? (
+                                <div className="space-y-2">
+                                    {formData.custom_categories.map((cat) => (
+                                        <div key={cat.id} className="flex items-center justify-between bg-card p-2 rounded-md shadow-sm border">
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="w-4 h-4 rounded-full border shadow-sm"
+                                                    style={{ backgroundColor: cat.color }}
+                                                />
+                                                <span className="text-sm font-medium">{cat.label}</span>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeCustomCategory(cat.id)}>
+                                                <X className="h-3 w-3" />
+                                            </Button>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeCustomCategory(cat.id)}>
-                                            <X className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-xs gap-2 opacity-50">
-                                <MapPin className="h-6 w-6" />
-                                <p>No custom categories yet</p>
-                            </div>
-                        )}
-                    </ScrollArea>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-xs gap-2 opacity-50">
+                                    <MapPin className="h-6 w-6" />
+                                    <p>No custom categories yet</p>
+                                </div>
+                            )}
+                        </ScrollArea>
+                    </div>
+                )}
 
-                    <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
-                      {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Save Changes
-                    </Button>
+                <div className="pt-4">
+                     <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
+                          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Save Changes
+                     </Button>
                 </div>
-            )}
-
-            {formData.categorization_method !== 'custom' && (
-                 <div className="text-center py-8 text-muted-foreground text-sm">
-                     Buildings are categorized by their default status (Pending, Visited, etc.)
-                 </div>
-            )}
-
+            </div>
           </TabsContent>
 
           <TabsContent value="collaborators" className="space-y-4 py-4 overflow-y-auto flex-1">
@@ -461,7 +543,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                 <Label>Add Collaborator</Label>
                 <UserSearch
                     onSelect={(id) => handleAddContributor(id)}
-                    excludeIds={contributors.map(c => c.user.id)}
+                    excludeIds={contributors.map(c => c.user?.id).filter(Boolean) as string[]}
                 />
              </div>
 
@@ -478,7 +560,9 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                 ) : (
                     <ScrollArea className="h-[200px] border rounded-md">
                         <div className="divide-y">
-                            {contributors.map(contributor => (
+                            {contributors.map(contributor => {
+                                if (!contributor.user) return null;
+                                return (
                                 <div key={contributor.user.id} className="flex items-center justify-between p-3">
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-8 w-8">
@@ -496,7 +580,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
-                            ))}
+                            );
+                            })}
                         </div>
                     </ScrollArea>
                 )}
