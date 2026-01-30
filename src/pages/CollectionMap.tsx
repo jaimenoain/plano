@@ -23,6 +23,7 @@ interface Collection {
   owner_id: string;
   is_public: boolean;
   slug: string;
+  show_community_images: boolean;
 }
 
 export interface CollectionItemWithBuilding {
@@ -297,7 +298,7 @@ export default function CollectionMap() {
                             }}
                         >
                             <div className="flex gap-3">
-                                {item.building.hero_image_url ? (
+                                {collection?.show_community_images && (item.building.hero_image_url ? (
                                     <div className="w-20 h-20 rounded-md overflow-hidden shrink-0 bg-secondary">
                                         <img src={item.building.hero_image_url} alt="" className="w-full h-full object-cover" />
                                     </div>
@@ -305,7 +306,7 @@ export default function CollectionMap() {
                                     <div className="w-20 h-20 rounded-md bg-secondary shrink-0 flex items-center justify-center text-muted-foreground text-xs p-1 text-center">
                                         No Image
                                     </div>
-                                )}
+                                ))}
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-semibold text-sm truncate">{item.building.name}</h3>
                                     <p className="text-xs text-muted-foreground truncate">{item.building.city}, {item.building.country}</p>
@@ -348,6 +349,7 @@ export default function CollectionMap() {
                 onMarkerClick={handleMarkerClick}
                 autoZoomOnLowCount={true}
                 forcedBounds={mapBounds}
+                showImages={collection?.show_community_images ?? true}
             />
 
             {/* Mobile Toggle Controls */}
