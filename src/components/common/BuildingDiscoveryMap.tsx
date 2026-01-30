@@ -339,17 +339,17 @@ export function BuildingDiscoveryMap({
         strokeClass = "text-[#333333]";
         fillClass = "fill-[#333333]"; // Charcoal
         dotBgClass = "bg-[#333333]";
-        pinTooltip = <span className="ml-1 opacity-75 capitalize">(Visited)</span>;
+        pinTooltip = <span className="opacity-75 capitalize text-center">(Visited)</span>;
     } else if (status === 'pending') {
         strokeClass = "text-[#EEFF41]";
         fillClass = "fill-[#EEFF41]"; // Neon
         dotBgClass = "bg-[#EEFF41]";
-        pinTooltip = <span className="ml-1 opacity-75 capitalize">(Pending)</span>;
+        pinTooltip = <span className="opacity-75 capitalize text-center">(Pending)</span>;
     } else if (building.social_context) {
         strokeClass = "text-[#EEFF41]";
         fillClass = "fill-[#EEFF41]"; // Neon
         dotBgClass = "bg-[#EEFF41]";
-        pinTooltip = <span className="ml-1 opacity-90">({building.social_context})</span>;
+        pinTooltip = <span className="opacity-90 text-center">({building.social_context})</span>;
     }
 
     if (isSatellite) {
@@ -406,8 +406,8 @@ export function BuildingDiscoveryMap({
                             <img src={imageUrl} alt="" className="w-full h-full object-cover" />
                         </div>
                     )}
-                    <div className="text-[#EEFF41] text-xs px-2 py-1 flex items-center gap-1 w-full justify-center bg-[#333333]">
-                        <span className="font-medium text-white">{building.name}</span>
+                    <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
+                        <span className="font-medium text-white text-center">{building.name}</span>
                         {pinTooltip}
                     </div>
                 </div>
