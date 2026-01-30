@@ -82,6 +82,7 @@ export function BuildingDiscoveryMap({
   const mapRef = useRef<MapRef>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
 
   // State to track user interaction to disable auto-zoom
   const [userHasInteracted, setUserHasInteracted] = useState(false);
@@ -321,6 +322,7 @@ export function BuildingDiscoveryMap({
     const isApproximate = building.location_precision === 'approximate';
     const imageUrl = getBuildingImageUrl(building.main_image_url);
     const isHighlighted = highlightedId === building.buildingId;
+    const isSelected = selectedPinId === building.buildingId;
 
     // Pin Protocol:
     // Charcoal: Visited
@@ -367,6 +369,19 @@ export function BuildingDiscoveryMap({
         anchor={isApproximate ? "center" : "bottom"}
         onClick={(e) => {
             e.originalEvent.stopPropagation();
+
+            const isTouch = window.matchMedia('(pointer: coarse)').matches;
+            const isPinSelected = isSelected || isHighlighted;
+
+            if (isTouch && !isPinSelected) {
+                // First tap on mobile: Select pin
+                setSelectedPinId(building.buildingId);
+                setUserHasInteracted(true);
+                onMapInteraction?.();
+                return;
+            }
+
+            // Otherwise (Desktop click OR Mobile second tap): Navigate
             if (onMarkerClick) {
                 onMarkerClick(building.buildingId);
             } else {
@@ -380,7 +395,7 @@ export function BuildingDiscoveryMap({
                 className="group relative flex flex-col items-center"
             >
             {/* Tooltip */}
-            <div className={`absolute bottom-full mb-2 ${isHighlighted ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
+            <div className={`absolute bottom-full mb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
                 <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
                     {showImages && imageUrl && (
                         <div className="w-[100px] h-[100px]">
@@ -403,7 +418,7 @@ export function BuildingDiscoveryMap({
             </div>
         </Marker>
     );
-  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite]);
+  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId]);
 
   if (isLoading) {
     return (
@@ -437,6 +452,11 @@ export function BuildingDiscoveryMap({
         ref={mapRef}
         {...viewState}
         attributionControl={false}
+        onClick={() => {
+           if (selectedPinId) {
+               setSelectedPinId(null);
+           }
+        }}
         onMove={evt => {
             setViewState(evt.viewState);
             if (evt.originalEvent) {
