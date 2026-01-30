@@ -38,8 +38,9 @@ export interface DiscoveryBuilding {
 export interface ContactRater {
   id: string;
   avatar_url: string | null;
-  first_name: string | null;
-  last_name: string | null;
+  username?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
 }
 
 export interface LeaderboardBuilding {

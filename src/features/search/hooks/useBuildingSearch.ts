@@ -99,7 +99,7 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string, 
                 building_id,
                 status,
                 rating,
-                user:profiles!inner(id, first_name, last_name, avatar_url)
+                user:profiles!inner(id, username, avatar_url)
             `)
             .in('building_id', buildingIds)
             .in('user_id', contactIds)
@@ -114,8 +114,9 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string, 
                 const person: ContactRater = {
                     id: user.id,
                     avatar_url: user.avatar_url,
-                    first_name: user.first_name,
-                    last_name: user.last_name
+                    username: user.username,
+                    first_name: null,
+                    last_name: null
                 };
 
                 // Populate Raters

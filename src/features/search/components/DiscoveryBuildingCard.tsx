@@ -73,16 +73,16 @@ export function DiscoveryBuildingCard({
                   {building.contact_visitors.slice(0, 3).map((visitor) => (
                     <Avatar key={visitor.id} className="w-5 h-5 border border-background">
                       <AvatarImage src={visitor.avatar_url || undefined} />
-                      <AvatarFallback className="text-[8px]">{visitor.first_name?.[0] || "?"}</AvatarFallback>
+                      <AvatarFallback className="text-[8px]">{visitor.username?.[0] || visitor.first_name?.[0] || "?"}</AvatarFallback>
                     </Avatar>
                   ))}
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {building.contact_visitors.length === 1
-                    ? `Visited by ${building.contact_visitors[0].first_name || 'Friend'}`
+                    ? `Visited by ${building.contact_visitors[0].username || building.contact_visitors[0].first_name || 'Friend'}`
                     : building.contact_visitors.length === 2
-                    ? `Visited by ${building.contact_visitors[0].first_name || 'Friend'} and ${building.contact_visitors[1].first_name || 'Friend'}`
-                    : `Visited by ${building.contact_visitors[0].first_name || 'Friend'} +${building.contact_visitors.length - 1}`}
+                    ? `Visited by ${building.contact_visitors[0].username || building.contact_visitors[0].first_name || 'Friend'} and ${building.contact_visitors[1].username || building.contact_visitors[1].first_name || 'Friend'}`
+                    : `Visited by ${building.contact_visitors[0].username || building.contact_visitors[0].first_name || 'Friend'} +${building.contact_visitors.length - 1}`}
                 </span>
               </div>
             )}
@@ -94,13 +94,13 @@ export function DiscoveryBuildingCard({
                   {building.contact_raters.slice(0, 3).map((rater) => (
                     <Avatar key={rater.id} className="w-5 h-5 border border-background">
                       <AvatarImage src={rater.avatar_url || undefined} />
-                      <AvatarFallback className="text-[8px]">{rater.first_name?.[0] || "?"}</AvatarFallback>
+                      <AvatarFallback className="text-[8px]">{rater.username?.[0] || rater.first_name?.[0] || "?"}</AvatarFallback>
                     </Avatar>
                   ))}
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  {building.contact_raters.length === 1 && building.contact_raters[0].first_name
-                    ? `Rated by ${building.contact_raters[0].first_name}`
+                  {building.contact_raters.length === 1 && (building.contact_raters[0].username || building.contact_raters[0].first_name)
+                    ? `Rated by ${building.contact_raters[0].username || building.contact_raters[0].first_name}`
                     : `${building.contact_raters.length} contacts rated this`}
                 </span>
               </div>
