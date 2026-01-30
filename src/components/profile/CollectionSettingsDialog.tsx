@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,13 +7,24 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, MapPin } from "lucide-react";
+import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/components/groups/UserSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collection } from "@/types/collection";
+import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CollectionSettingsDialogProps {
   collection: Collection;
@@ -31,6 +43,7 @@ interface Contributor {
 }
 
 export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate }: CollectionSettingsDialogProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: collection.name,
     description: collection.description || "",
@@ -40,6 +53,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     custom_categories: collection.custom_categories || []
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [loadingContributors, setLoadingContributors] = useState(false);
 
@@ -159,6 +174,23 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     }));
   };
 
+  const handleDeleteCollection = async () => {
+    setDeleting(true);
+    const { error } = await supabase
+      .from("collections")
+      .delete()
+      .eq("id", collection.id);
+
+    if (error) {
+      toast.error("Failed to delete collection");
+      setDeleting(false);
+    } else {
+      toast.success("Collection deleted");
+      onOpenChange(false);
+      navigate("/profile");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] h-[80vh] sm:h-auto flex flex-col">
@@ -218,6 +250,24 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
+
+            <Separator className="my-6" />
+
+            <div className="border border-destructive/50 rounded-md p-4 bg-destructive/5 space-y-4">
+              <h3 className="text-destructive font-medium flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" /> Danger Zone
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Deleting this collection will permanently remove it and all its associations. This action cannot be undone.
+              </p>
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteAlert(true)}
+                className="w-full sm:w-auto"
+              >
+                Delete Collection
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="markers" className="space-y-4 py-4 overflow-y-auto flex-1">
@@ -350,6 +400,27 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your collection and remove all buildings associated with it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCollection}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+            >
+              {deleting ? "Deleting..." : "Delete Collection"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
