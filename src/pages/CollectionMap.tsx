@@ -8,10 +8,11 @@ import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { CollectionBuildingCard } from "@/components/collections/CollectionBuildingCard";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings } from "@/utils/map";
-import { Loader2, Settings } from "lucide-react";
+import { Loader2, Settings, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
+import { AddBuildingsToCollectionDialog } from "@/components/collections/AddBuildingsToCollectionDialog";
 import { Collection, CollectionItemWithBuilding } from "@/types/collection";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 
@@ -21,6 +22,7 @@ export default function CollectionMap() {
   const navigate = useNavigate();
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAddBuildings, setShowAddBuildings] = useState(false);
 
   // 1. Resolve User (Owner)
   const { data: profile, isLoading: loadingProfile } = useQuery({
@@ -139,6 +141,10 @@ export default function CollectionMap() {
     return getBoundsFromBuildings(mapBuildings);
   }, [mapBuildings]);
 
+  const existingBuildingIds = useMemo(() => {
+    return new Set(items?.map(item => item.building.id) || []);
+  }, [items]);
+
   const handleUpdateNote = async (itemId: string, newNote: string) => {
       const { error } = await supabase
           .from("collection_items")
@@ -193,9 +199,14 @@ export default function CollectionMap() {
                     {collection.description && <p className="text-sm text-muted-foreground line-clamp-2">{collection.description}</p>}
                 </div>
                 {canEdit && (
-                    <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-                        <Settings className="h-5 w-5 text-muted-foreground" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => setShowAddBuildings(true)}>
+                            <Plus className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
+                            <Settings className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -240,15 +251,23 @@ export default function CollectionMap() {
       </div>
 
       {canEdit && (
-        <CollectionSettingsDialog
-            open={showSettings}
-            onOpenChange={setShowSettings}
-            collection={collection}
-            onUpdate={() => {
-                refetchItems();
-                window.location.reload();
-            }}
-        />
+        <>
+            <CollectionSettingsDialog
+                open={showSettings}
+                onOpenChange={setShowSettings}
+                collection={collection}
+                onUpdate={() => {
+                    refetchItems();
+                    window.location.reload();
+                }}
+            />
+            <AddBuildingsToCollectionDialog
+                collectionId={collection.id}
+                existingBuildingIds={existingBuildingIds}
+                open={showAddBuildings}
+                onOpenChange={setShowAddBuildings}
+            />
+        </>
       )}
     </AppLayout>
   );

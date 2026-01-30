@@ -126,7 +126,7 @@ export function AddBuildingsToCollectionDialog({
     },
     onSuccess: () => {
         toast.success("Building added to collection");
-        queryClient.invalidateQueries({ queryKey: ["collection-items", collectionId] });
+        queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
     },
     onError: (error) => {
         console.error("Failed to add building:", error);
