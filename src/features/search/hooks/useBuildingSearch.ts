@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
-import { DiscoveryBuilding, ContactRater } from "../components/types";
+import { DiscoveryBuilding, ContactRater, ContactInteraction } from "../components/types";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,11 +103,12 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string, 
             `)
             .in('building_id', buildingIds)
             .in('user_id', contactIds)
-            .or('status.eq.visited,rating.not.is.null');
+            .or('status.eq.visited,status.eq.pending,rating.not.is.null');
 
         if (contactInteractions && contactInteractions.length > 0) {
             const ratingsMap = new Map<string, ContactRater[]>();
             const visitorsMap = new Map<string, ContactRater[]>();
+            const interactionsMap = new Map<string, ContactInteraction[]>();
 
             contactInteractions.forEach((item: any) => {
                 const user = Array.isArray(item.user) ? item.user[0] : item.user;
@@ -118,6 +119,17 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string, 
                     first_name: null,
                     last_name: null
                 };
+
+                const interaction: ContactInteraction = {
+                    user: person,
+                    status: item.status,
+                    rating: item.rating
+                };
+
+                if (!interactionsMap.has(item.building_id)) {
+                    interactionsMap.set(item.building_id, []);
+                }
+                interactionsMap.get(item.building_id)?.push(interaction);
 
                 // Populate Raters
                 if (item.rating !== null) {
@@ -145,26 +157,58 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string, 
                     i === self.findIndex((t) => (t.id === v.id))
                 );
 
+                // Merge interactions (DB + RPC Visitors)
+                const dbInteractions = interactionsMap.get(b.id) || [];
+                const existingUserIds = new Set(dbInteractions.map(i => i.user.id));
+                const rpcInteractions = rpcVisitors
+                    .filter(v => !existingUserIds.has(v.id))
+                    .map(v => ({
+                        user: v,
+                        status: 'visited' as const,
+                        rating: null
+                    }));
+
+                const mergedInteractions = [...dbInteractions, ...rpcInteractions];
+
                 return {
                     ...b,
                     contact_raters: ratingsMap.get(b.id) || [],
-                    contact_visitors: mergedVisitors
+                    contact_visitors: mergedVisitors,
+                    contact_interactions: mergedInteractions
                 };
             });
         }
     } else {
         // If no contactIds to fetch (or no user), still ensure RPC visitors are mapped to contact_visitors
-        enrichedBuildings = enrichedBuildings.map(b => ({
-            ...b,
-            contact_visitors: b.visitors || b.contact_visitors || []
-        }));
+        enrichedBuildings = enrichedBuildings.map(b => {
+            const rpcVisitors = b.visitors || b.contact_visitors || [];
+            const rpcInteractions = rpcVisitors.map(v => ({
+                user: v,
+                status: 'visited' as const,
+                rating: null
+            }));
+            return {
+                ...b,
+                contact_visitors: rpcVisitors,
+                contact_interactions: rpcInteractions
+            };
+        });
     }
   } else {
       // If no userId, ensure RPC visitors are mapped
-      enrichedBuildings = enrichedBuildings.map(b => ({
-          ...b,
-          contact_visitors: b.visitors || b.contact_visitors || []
-      }));
+      enrichedBuildings = enrichedBuildings.map(b => {
+          const rpcVisitors = b.visitors || b.contact_visitors || [];
+          const rpcInteractions = rpcVisitors.map(v => ({
+              user: v,
+              status: 'visited' as const,
+              rating: null
+          }));
+          return {
+              ...b,
+              contact_visitors: rpcVisitors,
+              contact_interactions: rpcInteractions
+          };
+      });
   }
 
   return enrichedBuildings;

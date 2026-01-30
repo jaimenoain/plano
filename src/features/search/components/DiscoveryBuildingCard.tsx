@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Users, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
-import { DiscoveryBuilding } from "./types";
+import { DiscoveryBuilding, ContactInteraction } from "./types";
 import { cn } from "@/lib/utils";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
@@ -75,42 +75,19 @@ export function DiscoveryBuildingCard({
               )}
             </div>
 
-            {/* Visitors Facepile */}
-            {building.contact_visitors && building.contact_visitors.length > 0 && (
+            {/* Unified Interactions Facepile */}
+            {building.contact_interactions && building.contact_interactions.length > 0 && (
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex -space-x-2">
-                  {building.contact_visitors.slice(0, 3).map((visitor) => (
-                    <Avatar key={visitor.id} className="w-5 h-5 border border-background">
-                      <AvatarImage src={visitor.avatar_url || undefined} />
-                      <AvatarFallback className="text-[8px]">{visitor.username?.[0] || visitor.first_name?.[0] || "?"}</AvatarFallback>
+                  {building.contact_interactions.slice(0, 3).map((interaction) => (
+                    <Avatar key={interaction.user.id} className="w-5 h-5 border border-background">
+                      <AvatarImage src={interaction.user.avatar_url || undefined} />
+                      <AvatarFallback className="text-[8px]">{interaction.user.username?.[0] || interaction.user.first_name?.[0] || "?"}</AvatarFallback>
                     </Avatar>
                   ))}
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  {building.contact_visitors.length === 1
-                    ? `Visited by ${building.contact_visitors[0].username || building.contact_visitors[0].first_name || 'Friend'}`
-                    : building.contact_visitors.length === 2
-                    ? `Visited by ${building.contact_visitors[0].username || building.contact_visitors[0].first_name || 'Friend'} and ${building.contact_visitors[1].username || building.contact_visitors[1].first_name || 'Friend'}`
-                    : `Visited by ${building.contact_visitors[0].username || building.contact_visitors[0].first_name || 'Friend'} +${building.contact_visitors.length - 1}`}
-                </span>
-              </div>
-            )}
-
-            {/* Raters Facepile */}
-            {building.contact_raters && building.contact_raters.length > 0 && (
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex -space-x-2">
-                  {building.contact_raters.slice(0, 3).map((rater) => (
-                    <Avatar key={rater.id} className="w-5 h-5 border border-background">
-                      <AvatarImage src={rater.avatar_url || undefined} />
-                      <AvatarFallback className="text-[8px]">{rater.username?.[0] || rater.first_name?.[0] || "?"}</AvatarFallback>
-                    </Avatar>
-                  ))}
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {building.contact_raters.length === 1 && (building.contact_raters[0].username || building.contact_raters[0].first_name)
-                    ? `Rated by ${building.contact_raters[0].username || building.contact_raters[0].first_name}`
-                    : `${building.contact_raters.length} contacts rated this`}
+                  {getInteractionText(building.contact_interactions)}
                 </span>
               </div>
             )}
@@ -131,4 +108,48 @@ export function DiscoveryBuildingCard({
       </Card>
     </Link>
   );
+}
+
+function getInteractionText(interactions: ContactInteraction[]) {
+  if (interactions.length === 0) return "";
+
+  const getAction = (i: ContactInteraction) => {
+    const hasRating = i.rating !== null && i.rating > 0;
+    const isSaved = i.status === 'pending';
+    const isVisited = i.status === 'visited';
+
+    if (hasRating && isSaved) return "Prioritised";
+    if (hasRating) return "Recommended";
+    if (isSaved) return "Saved";
+    if (isVisited) return "Visited";
+    return "Interacted";
+  };
+
+  if (interactions.length === 1) {
+    const i = interactions[0];
+    const name = i.user.username || i.user.first_name || "Friend";
+    const action = getAction(i);
+    return `${action} by ${name}`;
+  }
+
+  const actions = interactions.map(getAction);
+  const uniqueActions = Array.from(new Set(actions));
+
+  if (uniqueActions.length === 1) {
+    const action = uniqueActions[0];
+    const firstUser = interactions[0].user.username || interactions[0].user.first_name || "Friend";
+    return `${action} by ${firstUser} +${interactions.length - 1}`;
+  }
+
+  // Priority: Prioritised > Recommended > Saved > Visited
+  const priority: Record<string, number> = {
+    "Prioritised": 4,
+    "Recommended": 3,
+    "Saved": 2,
+    "Visited": 1,
+    "Interacted": 0
+  };
+
+  const sortedActions = uniqueActions.sort((a, b) => (priority[b] || 0) - (priority[a] || 0));
+  return sortedActions.slice(0, 2).join(" and ");
 }
