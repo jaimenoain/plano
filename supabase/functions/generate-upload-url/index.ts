@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
         console.log("Admin bypass: Service Role Key detected");
         user = { id: userId || 'admin_upload' };
     } else {
+        // Manual verification for verify_jwt: false
         const { data: { user: authUser }, error: userError } = await supabaseClient.auth.getUser(token)
 
         if (userError || !authUser) {
