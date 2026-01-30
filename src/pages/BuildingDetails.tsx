@@ -41,6 +41,7 @@ import { ImageDetailsDialog } from "@/components/ImageDetailsDialog";
 import { Architect } from "@/types/architect";
 import { getBuildingUrl } from "@/utils/url";
 import { CollectionSelector } from "@/components/profile/CollectionSelector";
+import { BuildingAttributes } from "@/components/BuildingAttributes";
 
 // --- Types ---
 interface BuildingDetails {
@@ -58,6 +59,9 @@ interface BuildingDetails {
   styles: { id: string, name: string }[];
   created_by: string;
   status?: string | null;
+  access_type?: string | null;
+  typology?: string[] | null;
+  materials?: string[] | null;
 }
 
 interface TopLink {
@@ -667,6 +671,14 @@ export default function BuildingDetails() {
       {/* Building Header - Mobile Only */}
       <BuildingHeader building={building} showEditLink={!!user} className="lg:hidden p-4 pb-0" />
 
+      <BuildingAttributes
+        accessType={building.access_type}
+        typologies={building.typology}
+        materials={building.materials}
+        status={building.status}
+        className="lg:hidden px-4 mt-4 mb-2"
+      />
+
       <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto p-4 lg:p-8 pt-4">
         
         {/* LEFT: Visuals & Map (Map-First Experience ) */}
@@ -831,6 +843,14 @@ export default function BuildingDetails() {
             
             {/* Header Info - Desktop Only */}
             <BuildingHeader building={building} showEditLink={!!user} className="hidden lg:block" />
+
+            <BuildingAttributes
+                accessType={building.access_type}
+                typologies={building.typology}
+                materials={building.materials}
+                status={building.status}
+                className="hidden lg:grid mt-6"
+            />
 
             {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
             <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4">
