@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Users, EyeOff } from "lucide-react";
+import { MapPin, Users, EyeOff, Circle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DiscoveryBuilding, ContactInteraction } from "./types";
 import { cn } from "@/lib/utils";
@@ -21,8 +21,10 @@ export function DiscoveryBuildingCard({
   distance,
 }: DiscoveryBuildingCardProps) {
   const imageUrl = getBuildingImageUrl(building.main_image_url);
-  const { statuses } = useUserBuildingStatuses();
-  const isHidden = statuses[building.id] === 'ignored';
+  const { statuses, ratings } = useUserBuildingStatuses();
+  const userStatus = statuses[building.id];
+  const userRating = ratings[building.id];
+  const isHidden = userStatus === 'ignored';
 
   return (
     <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="block">
@@ -54,6 +56,18 @@ export function DiscoveryBuildingCard({
                   {distance < 1
                     ? `${(distance * 1000).toFixed(0)}m away`
                     : `${distance.toFixed(1)}km away`}
+                </Badge>
+              )}
+              {(userStatus === 'visited' || userStatus === 'pending') && (
+                <Badge variant="secondary" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 border">
+                  {userStatus === 'visited' ? "Visited" : "Saved"}
+                  {userRating && userRating > 0 && (
+                     <div className="flex gap-0.5 ml-1">
+                        {Array.from({ length: userRating }).map((_, i) => (
+                           <Circle key={i} className="w-2 h-2 fill-current" />
+                        ))}
+                     </div>
+                  )}
                 </Badge>
               )}
               {socialContext && (!building.contact_visitors || building.contact_visitors.length === 0) && (
