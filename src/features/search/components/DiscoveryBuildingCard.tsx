@@ -1,12 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Users } from "lucide-react";
+import { MapPin, Users, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DiscoveryBuilding } from "./types";
 import { cn } from "@/lib/utils";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
+import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
 
 interface DiscoveryBuildingCardProps {
   building: DiscoveryBuilding;
@@ -20,6 +21,8 @@ export function DiscoveryBuildingCard({
   distance,
 }: DiscoveryBuildingCardProps) {
   const imageUrl = getBuildingImageUrl(building.main_image_url);
+  const { statuses } = useUserBuildingStatuses();
+  const isHidden = statuses[building.id] === 'ignored';
 
   return (
     <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="block">
@@ -62,6 +65,12 @@ export function DiscoveryBuildingCard({
               {(building.status === 'Demolished' || building.status === 'Unbuilt') && (
                 <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-muted-foreground border-muted-foreground/30">
                   {building.status}
+                </Badge>
+              )}
+              {isHidden && (
+                <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-muted-foreground border-dashed">
+                  <EyeOff className="h-3 w-3" />
+                  Hidden
                 </Badge>
               )}
             </div>

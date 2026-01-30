@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Circle, Bookmark, Check } from "lucide-react";
+import { Heart, MessageCircle, Circle, Bookmark, Check, EyeOff } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +40,34 @@ export function FeedHeroCard({
 
   const isSaved = viewerStatus === 'pending';
   const isVisited = viewerStatus === 'visited';
+  const isIgnored = viewerStatus === 'ignored';
+
+  const handleHide = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    if (!entry.building?.id) return;
+
+    if (isIgnored) return;
+
+    setIsSaving(true);
+    try {
+        const { error } = await supabase.from("user_buildings").upsert({
+            user_id: user.id,
+            building_id: entry.building.id,
+            status: 'ignored',
+            edited_at: new Date().toISOString()
+        }, { onConflict: 'user_id, building_id' });
+
+        if (error) throw error;
+        toast({ title: "Building hidden" });
+        queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+    } catch (error) {
+        console.error("Hide action failed", error);
+        toast({ variant: "destructive", title: "Failed to update status" });
+    } finally {
+        setIsSaving(false);
+    }
+  };
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -404,6 +432,20 @@ export function FeedHeroCard({
              >
                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-primary' : ''}`} />
                <span className={`text-xs ${isSaved ? '' : 'font-medium'}`}>Save</span>
+             </button>
+
+             <button
+               onClick={handleHide}
+               className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
+                  isIgnored
+                    ? 'text-muted-foreground bg-muted font-medium ring-1 ring-border'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+               } ${isSaving ? 'opacity-50' : ''}`}
+               disabled={isSaving}
+               title="Hide from map"
+             >
+               <EyeOff className="h-4 w-4" />
+               <span className={`text-xs ${isIgnored ? '' : 'font-medium'}`}>Hide</span>
              </button>
            </div>
       </div>

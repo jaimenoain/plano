@@ -4,7 +4,7 @@ import {
   Loader2, MapPin, Calendar, Send,
   Edit2, Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
-  MessageCircle
+  MessageCircle, EyeOff
 } from "lucide-react";
 import {
   AlertDialog,
@@ -168,7 +168,7 @@ export default function BuildingDetails() {
   const canEdit = isCreator || profile?.role === 'admin';
 
   // User Interaction State
-  const [userStatus, setUserStatus] = useState<'visited' | 'pending' | null>(null);
+  const [userStatus, setUserStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [displayImages, setDisplayImages] = useState<DisplayImage[]>([]);
@@ -439,10 +439,12 @@ export default function BuildingDetails() {
       setLinksLoading(false);
   };
 
-  const handleStatusChange = async (newStatus: 'visited' | 'pending') => {
+  const handleStatusChange = async (newStatus: 'visited' | 'pending' | 'ignored') => {
       if (!user || !building) return;
 
-      setShowNoteEditor(true);
+      if (newStatus !== 'ignored') {
+        setShowNoteEditor(true);
+      }
       // Optimistic Update
       setUserStatus(newStatus);
       // Rating persists (myRating state is not changed to 0)
@@ -458,7 +460,11 @@ export default function BuildingDetails() {
 
           if (error) throw error;
 
-          toast({ title: newStatus === 'visited' ? "Marked as Visited" : "Added to Pending" });
+          const title = newStatus === 'visited' ? "Marked as Visited"
+            : newStatus === 'ignored' ? "Building Hidden"
+            : "Added to Pending";
+
+          toast({ title });
       } catch (error) {
           console.error("Status update failed", error);
           toast({ variant: "destructive", title: "Failed to save status" });
@@ -823,6 +829,8 @@ export default function BuildingDetails() {
                         <div className="flex flex-wrap gap-4 items-center">
                             {userStatus === 'visited' ? (
                                 <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">Visited</Badge>
+                            ) : userStatus === 'ignored' ? (
+                                <Badge variant="outline" className="text-muted-foreground border-dashed">Hidden</Badge>
                             ) : (
                                 <Badge variant="secondary">Saved</Badge>
                             )}
@@ -911,6 +919,14 @@ export default function BuildingDetails() {
                                 >
                                     <Check className="w-4 h-4 mr-2" />
                                     Visited
+                                </Button>
+                                <Button
+                                    variant={userStatus === 'ignored' ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handleStatusChange('ignored')}
+                                >
+                                    <EyeOff className="w-4 h-4 mr-2" />
+                                    Hide
                                 </Button>
                             </div>
                         </div>
