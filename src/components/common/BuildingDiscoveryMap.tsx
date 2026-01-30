@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
@@ -409,12 +410,12 @@ export function BuildingDiscoveryMap({
       });
   };
 
-  return (
+  const mapContent = (
     <div
-        className={`w-full overflow-hidden border border-white/10 relative transition-all duration-300 ${
+        className={`w-full overflow-hidden border border-white/10 transition-all duration-300 bg-background ${
           isFullScreen
-            ? 'fixed inset-0 z-[100] h-screen rounded-none'
-            : 'h-full rounded-xl'
+            ? 'fixed inset-0 z-[5000] h-[100dvh] rounded-none m-0 p-0'
+            : 'relative h-full rounded-xl'
         }`}
         data-zoom={viewState.zoom}
         data-testid="map-container"
@@ -495,4 +496,10 @@ export function BuildingDiscoveryMap({
       </button>
     </div>
   );
+
+  if (isFullScreen) {
+      return createPortal(mapContent, document.body);
+  }
+
+  return mapContent;
 }
