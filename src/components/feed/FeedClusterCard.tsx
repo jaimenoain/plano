@@ -36,8 +36,9 @@ export function FeedClusterCard({
   const avatarUrl = user.avatar_url || undefined;
 
   // We rely on the input entries for the count, but we could deduplicate building ids.
-  const uniqueBuildingIds = new Set(entries.map(e => e.building.id));
-  const uniqueCount = uniqueBuildingIds.size;
+  const uniqueBuildings = Array.from(new Map(entries.map(e => [e.building.id, e.building.name])).values());
+  const uniqueCount = uniqueBuildings.length;
+  const action = entries[0].status || 'saved';
 
   return (
     <div
@@ -51,13 +52,23 @@ export function FeedClusterCard({
 
       <div className="text-sm text-foreground/90 flex-1 truncate leading-none">
         <span className="font-semibold">{username}</span>
-        <span className="text-muted-foreground"> saved </span>
-        <span className="font-semibold">{uniqueCount} buildings</span>
-        {location && (
-            <>
-                <span className="text-muted-foreground"> in </span>
-                <span className="font-semibold">{location}</span>
-            </>
+        <span className="text-muted-foreground"> {action} </span>
+        {uniqueCount > 2 ? (
+          <>
+            <span className="font-semibold">{uniqueBuildings[0]}</span>
+            <span className="text-muted-foreground">, </span>
+            <span className="font-semibold">{uniqueBuildings[1]}</span>
+            <span className="text-muted-foreground"> and </span>
+            <span className="font-semibold">{uniqueCount - 2} more</span>
+          </>
+        ) : uniqueCount === 2 ? (
+          <>
+            <span className="font-semibold">{uniqueBuildings[0]}</span>
+            <span className="text-muted-foreground"> and </span>
+            <span className="font-semibold">{uniqueBuildings[1]}</span>
+          </>
+        ) : (
+          <span className="font-semibold">{uniqueBuildings[0]}</span>
         )}
         <span className="text-muted-foreground text-xs ml-2">
           • {formatDistanceToNow(new Date(timestamp)).replace("about ", "")} ago
