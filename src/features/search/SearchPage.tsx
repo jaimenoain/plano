@@ -16,11 +16,13 @@ import { useArchitectSearch } from "./hooks/useArchitectSearch";
 import { ArchitectSearchNudge } from "./components/ArchitectSearchNudge";
 import { ArchitectResultsList } from "./components/ArchitectResultsList";
 import { getBoundsFromBuildings, Bounds } from "@/utils/map";
+import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
 
 export default function SearchPage() {
   const navigate = useNavigate();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [searchScope, setSearchScope] = useState<SearchScope>('content');
+  const { statuses } = useUserBuildingStatuses();
    
   // 1. Existing hooks
   const {
@@ -177,10 +179,14 @@ export default function SearchPage() {
     return result;
   }, [buildings, mapBounds, ignoreMapBounds, sortBy]);
 
-  // 5. Map Filtering (Hide Demolished/Unbuilt)
+  // 5. Map Filtering (Hide Demolished/Unbuilt AND Hidden by User)
   const mapBuildings = useMemo(() => {
-    return buildings.filter(b => b.status !== 'Demolished' && b.status !== 'Unbuilt');
-  }, [buildings]);
+    return buildings.filter(b =>
+      b.status !== 'Demolished' &&
+      b.status !== 'Unbuilt' &&
+      statuses[b.id] !== 'ignored'
+    );
+  }, [buildings, statuses]);
 
   // 6. Merged Handlers
 

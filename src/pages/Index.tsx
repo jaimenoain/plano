@@ -140,7 +140,7 @@ export default function Index() {
 
       const feedData = data || [];
 
-      return feedData.map((review: any) => ({
+      return feedData.filter((r: any) => r.status !== 'ignored').map((review: any) => ({
         id: review.id,
         content: review.content,
         rating: review.rating,

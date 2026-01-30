@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export type BuildingStatus = 'pending' | 'visited';
+export type BuildingStatus = 'pending' | 'visited' | 'ignored';
 
 export function useUserBuildingStatuses() {
   const { user } = useAuth();
