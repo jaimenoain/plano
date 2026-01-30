@@ -30,7 +30,6 @@ export function AddBuildingsToCollectionDialog({
   
   // State merged from both branches
   const [searchQuery, setSearchQuery] = useState("");
-  const [locationQuery, setLocationQuery] = useState("");
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
   const { data: savedBuildings, isLoading } = useQuery({
@@ -113,22 +112,13 @@ export function AddBuildingsToCollectionDialog({
         result = result.filter((building: any) =>
           building.name.toLowerCase().includes(query) ||
           building.city?.toLowerCase().includes(query) ||
-          building.country?.toLowerCase().includes(query)
-        );
-    }
-
-    if (locationQuery) {
-        const query = locationQuery.toLowerCase();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        result = result.filter((building: any) =>
-          building.city?.toLowerCase().includes(query) ||
           building.country?.toLowerCase().includes(query) ||
           building.address?.toLowerCase().includes(query)
         );
     }
 
     return result;
-  }, [savedBuildings, searchQuery, locationQuery]);
+  }, [savedBuildings, searchQuery]);
 
   const addMutation = useMutation({
     mutationFn: async (buildingId: string) => {
@@ -185,18 +175,9 @@ export function AddBuildingsToCollectionDialog({
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search saved buildings..."
+                        placeholder="Search by name, city, country, or address..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9"
-                    />
-                </div>
-                <div className="relative">
-                    <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="City, Country or Region"
-                        value={locationQuery}
-                        onChange={(e) => setLocationQuery(e.target.value)}
                         className="pl-9"
                     />
                 </div>
@@ -210,7 +191,7 @@ export function AddBuildingsToCollectionDialog({
                         </div>
                     ) : filteredBuildings.length === 0 ? (
                         <p className="text-center text-muted-foreground py-8">
-                            {(searchQuery || locationQuery) ? "No buildings found matching your search." : "No saved buildings found."}
+                            {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
                         </p>
                     ) : (
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
