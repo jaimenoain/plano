@@ -1,6 +1,9 @@
 -- Update search_buildings RPC to return visitor details for facepile
 -- Migration ID: 20261101000000_update_search_buildings_social.sql
 
+-- Drop existing function first because we are changing the return type
+DROP FUNCTION IF EXISTS search_buildings(text, jsonb, int, jsonb, text, int);
+
 CREATE OR REPLACE FUNCTION search_buildings(
   query_text text DEFAULT NULL,
   location_coordinates jsonb DEFAULT NULL, -- {lat: number, lng: number}
