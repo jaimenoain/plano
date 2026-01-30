@@ -33,6 +33,7 @@ interface ReviewCardProps {
   hideBuildingInfo?: boolean;
   imagePosition?: 'left' | 'right';
   variant?: 'default' | 'compact';
+  showCommunityImages?: boolean;
 }
 
 export function ReviewCard({ 
@@ -44,7 +45,8 @@ export function ReviewCard({
   hideUser = false,
   hideBuildingInfo = false,
   imagePosition = 'left',
-  variant = 'default'
+  variant = 'default',
+  showCommunityImages = true
 }: ReviewCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -430,7 +432,7 @@ export function ReviewCard({
                )}
             </div>
           )
-        ) : posterUrl ? (
+        ) : (posterUrl && showCommunityImages) ? (
           // OPTION B: Building Poster (Fallback)
           <div className={`relative bg-secondary overflow-hidden aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:w-[280px] md:shrink-0' : ''}`}>
             <img

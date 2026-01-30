@@ -21,6 +21,7 @@ import { FavoritesSection } from "@/components/profile/FavoritesSection";
 import { FavoriteItem } from "@/components/profile/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { MetaHead } from "@/components/common/MetaHead";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -86,6 +87,7 @@ export default function Profile() {
 
   // Favorites
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const [showCommunityImages, setShowCommunityImages] = useState(false);
 
   // Collections State
   const [showCreateCollection, setShowCreateCollection] = useState(false);
@@ -596,6 +598,16 @@ export default function Profile() {
                   </ToggleGroupItem>
               </ToggleGroup>
 
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="show-community"
+                  checked={showCommunityImages}
+                  onCheckedChange={setShowCommunityImages}
+                />
+                <Label htmlFor="show-community" className="text-xs text-muted-foreground hidden sm:block">
+                  Community Photos
+                </Label>
+              </div>
             </div>
 
             {/* Search Input */}
@@ -633,7 +645,14 @@ export default function Profile() {
              ) : filteredContent.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
                    {filteredContent.map((item) => (
-                     <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser variant="compact" />
+                     <ReviewCard
+                       key={item.id}
+                       entry={item}
+                       onLike={handleLike}
+                       hideUser
+                       variant="compact"
+                       showCommunityImages={showCommunityImages}
+                     />
                    ))}
                 </div>
              ) : (
