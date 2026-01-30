@@ -108,20 +108,31 @@ export default function CollectionMap() {
   const mapBuildings = useMemo<DiscoveryBuilding[]>(() => {
     if (!items) return [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return items.map(item => ({
-      id: item.building.id,
-      name: item.building.name,
-      main_image_url: item.building.hero_image_url,
-      location_lat: item.building.location_lat,
-      location_lng: item.building.location_lng,
-      city: item.building.city,
-      country: item.building.country,
-      year_completed: item.building.year_completed,
-      location_precision: item.building.location_precision,
-      architects: item.building.building_architects?.map((ba: any) => ba.architects) || [],
-      styles: [],
-    }));
-  }, [items]);
+    return items.map(item => {
+      let color = null;
+      if (collection?.categorization_method === 'custom' && item.custom_category_id) {
+        const category = collection.custom_categories?.find(c => c.id === item.custom_category_id);
+        if (category) {
+          color = category.color;
+        }
+      }
+
+      return {
+        id: item.building.id,
+        name: item.building.name,
+        main_image_url: item.building.hero_image_url,
+        location_lat: item.building.location_lat,
+        location_lng: item.building.location_lng,
+        city: item.building.city,
+        country: item.building.country,
+        year_completed: item.building.year_completed,
+        location_precision: item.building.location_precision,
+        architects: item.building.building_architects?.map((ba: any) => ba.architects) || [],
+        styles: [],
+        color: color,
+      };
+    });
+  }, [items, collection]);
 
   const bounds = useMemo(() => {
     if (mapBuildings.length === 0) return null;

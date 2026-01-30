@@ -46,6 +46,7 @@ interface Building {
   social_context?: string | null;
   location_precision?: 'exact' | 'approximate';
   main_image_url?: string | null;
+  color?: string | null;
 }
 
 interface BuildingDiscoveryMapProps {
@@ -361,6 +362,9 @@ export function BuildingDiscoveryMap({
     const scaleClass = isHighlighted ? "scale-125 z-50" : "hover:scale-110";
     const markerClass = `cursor-pointer ${isHighlighted ? 'z-50' : 'hover:z-10'}`;
 
+    const pinStyle: React.CSSProperties = building.color ? { color: building.color, fill: building.color } : {};
+    const dotStyle: React.CSSProperties = building.color ? { backgroundColor: building.color } : {};
+
     return (
         <Marker
         key={building.buildingId}
@@ -411,9 +415,15 @@ export function BuildingDiscoveryMap({
             </div>
 
             {isApproximate ? (
-                <div className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`} />
+                <div
+                    className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`}
+                    style={dotStyle}
+                />
             ) : (
-                <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform ${scaleClass}`} />
+                <MapPin
+                    className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform ${scaleClass}`}
+                    style={pinStyle}
+                />
             )}
             </div>
         </Marker>
