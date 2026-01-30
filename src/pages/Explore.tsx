@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useDiscoveryFeed, DiscoveryFilters } from "@/hooks/useDiscoveryFeed";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -12,6 +12,7 @@ import { FilterDrawerContent } from "@/components/common/FilterDrawerContent";
 import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
 
 export default function Explore() {
+  const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { profile } = useUserProfile();
 
@@ -77,6 +78,17 @@ export default function Explore() {
         fetchNextPage();
     }
   }, [isVisible, hasNextPage, isFetchingNextPage]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isFilterOpen) {
+        navigate("/");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [navigate, isFilterOpen]);
 
   // Extract flattened list
   const buildings = data?.pages.flat() || [];
