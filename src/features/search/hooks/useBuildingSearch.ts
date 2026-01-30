@@ -163,7 +163,7 @@ export function useBuildingSearch() {
   const [page, setPage] = useState(0);
 
   const [selectedArchitects, setSelectedArchitects] = useState<{ id: string; name: string }[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedCollections, setSelectedCollections] = useState<{ id: string; name: string }[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
 
   // New Filters
@@ -204,7 +204,7 @@ export function useBuildingSearch() {
     personalMinRating,
     contactMinRating,
     selectedArchitects,
-    selectedTags,
+    selectedCollections,
     selectedCategory,
     selectedTypologies,
     selectedAttributes,
@@ -222,20 +222,18 @@ export function useBuildingSearch() {
     return null;
   };
 
-  // Fetch available tags for the user
-  const { data: availableTags } = useQuery({
-    queryKey: ['user-tags', user?.id],
+  // Fetch available collections for the user
+  const { data: availableCollections } = useQuery({
+    queryKey: ['user-collections', user?.id],
     queryFn: async () => {
         if (!user) return [];
         const { data } = await supabase
-            .from('user_buildings')
-            .select('tags')
-            .eq('user_id', user.id)
-            .not('tags', 'is', null);
+            .from('collections')
+            .select('id, name')
+            .eq('owner_id', user.id)
+            .order('name');
 
-        // Flatten and unique
-        const allTags = data?.flatMap((d: any) => d.tags || []) || [];
-        return Array.from(new Set(allTags)).sort() as string[];
+        return data || [];
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 5,
@@ -252,7 +250,7 @@ export function useBuildingSearch() {
         personalMinRating,
         contactMinRating,
         selectedArchitects,
-        selectedTags,
+        selectedCollections,
         selectedCategory,
         selectedTypologies,
         selectedAttributes,
@@ -266,13 +264,13 @@ export function useBuildingSearch() {
     queryFn: async () => {
         // Local filtering mode (My Buildings or Contacts)
         const hasSpecificContacts = selectedContacts.length > 0;
-        const hasTags = selectedTags.length > 0;
+        const hasCollections = selectedCollections.length > 0;
         const hasPersonalRating = personalMinRating > 0;
 
         // Input Sanitization
         const cleanQuery = debouncedQuery.trim() || null;
 
-        if (filterVisited || filterBucketList || filterContacts || hasSpecificContacts || hasTags || hasPersonalRating) {
+        if (filterVisited || filterBucketList || filterContacts || hasSpecificContacts || hasCollections || hasPersonalRating) {
             if (!user) return [];
 
             const buildingIds = new Set<string>();
@@ -313,8 +311,8 @@ export function useBuildingSearch() {
                 }
             }
 
-            // 2. Personal Buildings
-            if (filterVisited || filterBucketList || hasTags || hasPersonalRating) {
+            // 2. Personal Buildings (Visited/Bucket/Rating)
+            if (filterVisited || filterBucketList || hasPersonalRating) {
                 let query = supabase
                     .from('user_buildings')
                     .select('building_id')
@@ -332,14 +330,22 @@ export function useBuildingSearch() {
                     query = query.gte('rating', personalMinRating);
                 }
 
-                if (hasTags) {
-                    query = query.overlaps('tags', selectedTags);
-                }
-
                 const { data: userBuildings, error: ubError } = await query;
                 if (ubError) throw ubError;
 
                 userBuildings?.forEach(ub => buildingIds.add(ub.building_id));
+            }
+
+            // 3. Collections (Mapas del usuario)
+            if (hasCollections) {
+                 const { data: collectionItems, error: cError } = await supabase
+                     .from('collection_items')
+                     .select('building_id')
+                     .in('collection_id', selectedCollections.map(c => c.id));
+
+                 if (cError) throw cError;
+
+                 collectionItems?.forEach(item => buildingIds.add(item.building_id));
             }
 
             if (buildingIds.size === 0) return [];
@@ -445,9 +451,9 @@ export function useBuildingSearch() {
       setContactMinRating,
       selectedArchitects,
       setSelectedArchitects,
-      selectedTags,
-      setSelectedTags,
-      availableTags,
+      selectedCollections,
+      setSelectedCollections,
+      availableCollections,
       selectedCategory,
       setSelectedCategory,
       selectedTypologies,

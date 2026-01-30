@@ -29,7 +29,6 @@ export default function Explore() {
   const [filterContacts, setFilterContacts] = useState(false);
   const [contactMinRating, setContactMinRating] = useState(0);
   const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -61,7 +60,6 @@ export default function Explore() {
     setFilterContacts(false);
     setContactMinRating(0);
     setSelectedContacts([]);
-    setSelectedTags([]);
   };
 
   const {
@@ -149,8 +147,10 @@ export default function Explore() {
                         onContactMinRatingChange={setContactMinRating}
                         selectedContacts={selectedContacts}
                         onSelectedContactsChange={setSelectedContacts}
-                        selectedTags={selectedTags}
-                        onTagsChange={setSelectedTags}
+
+                        selectedCollections={[]}
+                        onCollectionsChange={() => {}}
+                        availableCollections={[]}
 
                         selectedArchitects={selectedArchitects}
                         onArchitectsChange={setSelectedArchitects}

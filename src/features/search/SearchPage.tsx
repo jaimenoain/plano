@@ -31,8 +31,8 @@ export default function SearchPage() {
     personalMinRating, setPersonalMinRating,
     contactMinRating, setContactMinRating,
     selectedArchitects, setSelectedArchitects,
-    selectedTags, setSelectedTags,
-    availableTags,
+    selectedCollections, setSelectedCollections,
+    availableCollections,
     selectedCategory, setSelectedCategory,
     selectedTypologies, setSelectedTypologies,
     selectedAttributes, setSelectedAttributes,
@@ -95,7 +95,7 @@ export default function SearchPage() {
         filterContacts ||
         selectedContacts.length > 0 ||
         selectedArchitects.length > 0 ||
-        selectedTags.length > 0 ||
+        selectedCollections.length > 0 ||
         selectedCategory ||
         selectedTypologies.length > 0 ||
         selectedAttributes.length > 0 ||
@@ -115,7 +115,7 @@ export default function SearchPage() {
     filterContacts,
     selectedContacts.length,
     selectedArchitects.length,
-    selectedTags.length,
+    selectedCollections.length,
     selectedCategory,
     selectedTypologies.length,
     selectedAttributes.length,
@@ -246,7 +246,7 @@ export default function SearchPage() {
                          personalMinRating === 0 &&
                          contactMinRating === 0 &&
                          selectedArchitects.length === 0 &&
-                         selectedTags.length === 0 &&
+                         selectedCollections.length === 0 &&
                          !selectedCategory &&
                          selectedTypologies.length === 0 &&
                          selectedAttributes.length === 0 &&
@@ -282,9 +282,9 @@ export default function SearchPage() {
             onLocationSelect={handleLocationSearch}
             selectedArchitects={selectedArchitects}
             onArchitectsChange={setSelectedArchitects}
-            selectedTags={selectedTags}
-            onTagsChange={setSelectedTags}
-            availableTags={availableTags}
+            selectedCollections={selectedCollections}
+            onCollectionsChange={setSelectedCollections}
+            availableCollections={availableCollections}
             sortBy={sortBy}
             onSortChange={setSortBy}
             // --- Main Branch Props (Visited/Bucket Toggles) ---

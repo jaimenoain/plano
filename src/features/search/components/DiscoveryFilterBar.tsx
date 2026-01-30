@@ -24,10 +24,10 @@ export interface DiscoveryFilterBarProps {
   selectedArchitects?: { id: string; name: string }[];
   onArchitectsChange?: (architects: { id: string; name: string }[]) => void;
 
-  // Tags Props (My Lists)
-  selectedTags?: string[];
-  onTagsChange?: (tags: string[]) => void;
-  availableTags?: string[];
+  // Collections Props (My Lists)
+  selectedCollections?: { id: string; name: string }[];
+  onCollectionsChange?: (collections: { id: string; name: string }[]) => void;
+  availableCollections?: { id: string; name: string }[];
   
   // Personal Props
   showVisited: boolean;
@@ -71,7 +71,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
     props.filterContacts ||
     (props.selectedContacts && props.selectedContacts.length > 0) ||
     (props.selectedArchitects && props.selectedArchitects.length > 0) ||
-    (props.selectedTags && props.selectedTags.length > 0) ||
+    (props.selectedCollections && props.selectedCollections.length > 0) ||
     props.personalMinRating > 0 ||
     props.contactMinRating > 0 ||
     !!props.selectedCategory ||
@@ -84,7 +84,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
     props.onFilterContactsChange(false);
     props.onPersonalMinRatingChange(0);
     props.onContactMinRatingChange(0);
-    if (props.onTagsChange) props.onTagsChange([]);
+    if (props.onCollectionsChange) props.onCollectionsChange([]);
     if (props.onArchitectsChange) props.onArchitectsChange([]);
     props.onCategoryChange(null);
     props.onTypologiesChange([]);
@@ -170,9 +170,9 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                 onBucketListChange={props.onBucketListChange}
                 personalMinRating={props.personalMinRating}
                 onPersonalMinRatingChange={props.onPersonalMinRatingChange}
-                selectedTags={props.selectedTags}
-                onTagsChange={props.onTagsChange}
-                availableTags={props.availableTags}
+                selectedCollections={props.selectedCollections}
+                onCollectionsChange={props.onCollectionsChange}
+                availableCollections={props.availableCollections}
                 filterContacts={props.filterContacts}
                 onFilterContactsChange={props.onFilterContactsChange}
                 contactMinRating={props.contactMinRating}
