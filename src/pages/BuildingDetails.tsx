@@ -146,6 +146,13 @@ const BuildingHeader = ({ building, showEditLink, className }: BuildingHeaderPro
                 )}
             </div>
 
+            <div className="text-sm text-muted-foreground mt-2">
+                {[
+                    building.typology?.join(", "),
+                    building.materials?.join(", ")
+                ].filter(Boolean).join(" • ")}
+            </div>
+
             {/* Styles Tags */}
             {building.styles && building.styles.length > 0 && (
                 <div className="flex gap-2 mt-4">
@@ -673,9 +680,6 @@ export default function BuildingDetails() {
 
       <BuildingAttributes
         accessType={building.access_type}
-        typologies={building.typology}
-        materials={building.materials}
-        status={building.status}
         className="lg:hidden px-4 mt-4 mb-2"
       />
 
@@ -846,9 +850,6 @@ export default function BuildingDetails() {
 
             <BuildingAttributes
                 accessType={building.access_type}
-                typologies={building.typology}
-                materials={building.materials}
-                status={building.status}
                 className="hidden lg:grid mt-6"
             />
 
