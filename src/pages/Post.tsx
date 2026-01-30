@@ -211,7 +211,7 @@ export default function Post() {
                 <p className="text-sm text-muted-foreground mb-3">Your Rating (Optional)</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-0.5 md:gap-1" onMouseLeave={() => setHoverRating(0)}>
-                    {Array.from({ length: 5 }).map((_, i) => {
+                    {Array.from({ length: 3 }).map((_, i) => {
                       const starValue = i + 1;
                       // Highlight stars if they are <= the selected rating OR <= the current hover index
                       const isHighlighted = starValue <= (hoverRating || rating);

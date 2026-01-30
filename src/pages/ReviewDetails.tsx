@@ -576,7 +576,7 @@ export default function ReviewDetails() {
                                 {/* Rating */}
                                 {!isBucketList && review.rating && (
                                      <div className="flex gap-0.5">
-                                        {Array.from({ length: 5 }).map((_, i) => (
+                                        {Array.from({ length: 3 }).map((_, i) => (
                                             <Circle
                                                 key={i}
                                                 className={cn(

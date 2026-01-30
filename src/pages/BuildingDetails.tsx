@@ -169,7 +169,7 @@ export default function BuildingDetails() {
 
   // User Interaction State
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
-  const [myRating, setMyRating] = useState<number>(0); // Scale 1-5 
+  const [myRating, setMyRating] = useState<number>(0); // Scale 1-3
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [displayImages, setDisplayImages] = useState<DisplayImage[]>([]);
   const [userImages, setUserImages] = useState<{id: string, storage_path: string}[]>([]);
@@ -837,7 +837,7 @@ export default function BuildingDetails() {
 
                             {myRating > 0 && (
                                 <div className="flex items-center gap-0.5">
-                                    {[...Array(5)].map((_, i) => (
+                                    {[...Array(3)].map((_, i) => (
                                         <Circle
                                           key={i}
                                           className={`w-4 h-4 ${i < myRating ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
@@ -1097,7 +1097,7 @@ export default function BuildingDetails() {
                                     <Link to={`/review/${entry.id}`} className="block group">
                                         {entry.rating && (
                                             <div className="flex items-center gap-0.5 my-1 group-hover:opacity-80 transition-opacity">
-                                                {[...Array(5)].map((_, i) => (
+                                                {[...Array(3)].map((_, i) => (
                                                     <Circle
                                                       key={i}
                                                       className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}

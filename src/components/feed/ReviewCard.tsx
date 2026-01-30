@@ -266,7 +266,7 @@ export function ReviewCard({
              
             {entry.rating && (
               <div className="flex items-center gap-1 mb-2">
-                {Array.from({ length: 5 }).map((_, i) => (
+                {Array.from({ length: 3 }).map((_, i) => (
                   <Circle
                     key={i}
                     className={`w-3 h-3 ${
@@ -332,7 +332,7 @@ export function ReviewCard({
             {city && <span className="text-muted-foreground"> in {city}</span>}
             {entry.rating && entry.rating > 0 && (
                  <span className="inline-flex items-center ml-2 gap-0.5 align-middle">
-                     {Array.from({ length: 5 }).map((_, i) => (
+                     {Array.from({ length: 3 }).map((_, i) => (
                         <Circle
                            key={i}
                            className={`w-3.5 h-3.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
