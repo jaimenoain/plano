@@ -82,6 +82,7 @@ export function BuildingDiscoveryMap({
   const mapRef = useRef<MapRef>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
 
   // State to track user interaction to disable auto-zoom
   const [userHasInteracted, setUserHasInteracted] = useState(false);
@@ -180,6 +181,7 @@ export function BuildingDiscoveryMap({
     };
   }) || [], [buildings]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [clusters, setClusters] = useState<any[]>([]);
   const viewStateRef = useRef(viewState);
   viewStateRef.current = viewState;
@@ -327,6 +329,8 @@ export function BuildingDiscoveryMap({
     // Neon (#EEFF41): Pending (Wishlist) & Social
     // Grey/Default: Discovery
 
+    const isSelected = selectedMarkerId === building.buildingId;
+
     let strokeClass = "text-gray-500";
     let fillClass = "fill-background";
     let dotBgClass = "bg-gray-500";
@@ -365,22 +369,29 @@ export function BuildingDiscoveryMap({
         longitude={longitude}
         latitude={latitude}
         anchor={isApproximate ? "center" : "bottom"}
-        onClick={(e) => {
-            e.originalEvent.stopPropagation();
-            if (onMarkerClick) {
-                onMarkerClick(building.buildingId);
-            } else {
-                navigate(`/building/${building.buildingId}`);
-            }
-        }}
         className={markerClass}
         >
             <div
                 data-testid={isApproximate ? "approximate-dot" : "exact-pin"}
                 className="group relative flex flex-col items-center"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+                    if (isTouch && selectedMarkerId !== building.buildingId) {
+                        setSelectedMarkerId(building.buildingId);
+                        return;
+                    }
+
+                    if (onMarkerClick) {
+                        onMarkerClick(building.buildingId);
+                    } else {
+                        navigate(`/building/${building.buildingId}`);
+                    }
+                }}
             >
             {/* Tooltip */}
-            <div className={`absolute bottom-full mb-2 ${isHighlighted ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
+            <div className={`absolute bottom-full mb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
                 <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
                     {showImages && imageUrl && (
                         <div className="w-[100px] h-[100px]">
@@ -403,7 +414,7 @@ export function BuildingDiscoveryMap({
             </div>
         </Marker>
     );
-  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite]);
+  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedMarkerId, showImages]);
 
   if (isLoading) {
     return (
@@ -437,6 +448,7 @@ export function BuildingDiscoveryMap({
         ref={mapRef}
         {...viewState}
         attributionControl={false}
+        onClick={() => setSelectedMarkerId(null)}
         onMove={evt => {
             setViewState(evt.viewState);
             if (evt.originalEvent) {
