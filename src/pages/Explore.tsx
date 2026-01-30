@@ -7,6 +7,8 @@ import { DiscoveryCard } from "@/components/feed/DiscoveryCard";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Button } from "@/components/ui/button";
 import { Loader2, ListFilter } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { FilterDrawerContent } from "@/components/common/FilterDrawerContent";
 import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
@@ -91,7 +93,60 @@ export default function Explore() {
   }, [navigate, isFilterOpen]);
 
   // Extract flattened list
-  const buildings = data?.pages.flat() || [];
+  const allBuildings = data?.pages.flat() || [];
+
+  // Manage hidden buildings (swiped away)
+  const [hiddenBuildingIds, setHiddenBuildingIds] = useState<Set<string>>(new Set());
+
+  const buildings = useMemo(() =>
+    allBuildings.filter(b => !hiddenBuildingIds.has(b.id)),
+  [allBuildings, hiddenBuildingIds]);
+
+  const handleSwipeSave = async (buildingId: string) => {
+      setHiddenBuildingIds(prev => {
+          const next = new Set(prev);
+          next.add(buildingId);
+          return next;
+      });
+      toast.success("Saved to your list");
+
+      try {
+          if (!user) return;
+          const { error } = await supabase.from("user_buildings").upsert({
+              user_id: user.id,
+              building_id: buildingId,
+              status: 'pending',
+              edited_at: new Date().toISOString()
+          }, { onConflict: 'user_id, building_id' });
+
+          if (error) throw error;
+      } catch (error) {
+          console.error("Save failed", error);
+          toast.error("Failed to save");
+      }
+  };
+
+  const handleSwipeHide = async (buildingId: string) => {
+      setHiddenBuildingIds(prev => {
+          const next = new Set(prev);
+          next.add(buildingId);
+          return next;
+      });
+
+      try {
+          if (!user) return;
+          const { error } = await supabase.from("user_buildings").upsert({
+              user_id: user.id,
+              building_id: buildingId,
+              status: 'ignored',
+              edited_at: new Date().toISOString()
+          }, { onConflict: 'user_id, building_id' });
+
+          if (error) throw error;
+      } catch (error) {
+          console.error("Hide failed", error);
+      }
+  };
 
   if (!authLoading && !user) {
     return <Navigate to="/auth" replace />;
@@ -200,7 +255,11 @@ export default function Explore() {
         ) : (
             buildings.map((building) => (
                 <div key={building.id} className="h-full w-full snap-start snap-always">
-                    <DiscoveryCard building={building} />
+                    <DiscoveryCard
+                        building={building}
+                        onSwipeSave={() => handleSwipeSave(building.id)}
+                        onSwipeHide={() => handleSwipeHide(building.id)}
+                    />
                 </div>
             ))
         )}

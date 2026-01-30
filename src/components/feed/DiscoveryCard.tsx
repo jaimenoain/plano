@@ -10,15 +10,19 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { DiscoveryFeedItem } from "@/hooks/useDiscoveryFeed";
 import { Link } from "react-router-dom";
+import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 
 interface DiscoveryCardProps {
   building: DiscoveryBuilding | DiscoveryFeedItem;
   onSave?: (e: React.MouseEvent) => void;
+  onSwipeSave?: () => void;
+  onSwipeHide?: () => void;
 }
 
-export function DiscoveryCard({ building, onSave: externalOnSave }: DiscoveryCardProps) {
+export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, onSwipeHide }: DiscoveryCardProps) {
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Lazy loading setup
   const { containerRef, isVisible } = useIntersectionObserver({
@@ -74,53 +78,96 @@ export function DiscoveryCard({ building, onSave: externalOnSave }: DiscoveryCar
     }
   };
 
+  // Framer Motion
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-10, 10]);
+  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+
+  const likeOpacity = useTransform(x, [20, 100], [0, 1]);
+  const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    const threshold = 100;
+    if (info.offset.x > threshold && onSwipeSave) {
+        onSwipeSave();
+    } else if (info.offset.x < -threshold && onSwipeHide) {
+        onSwipeHide();
+    }
+  };
+
+  const nextImage = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (currentImageIndex < uniqueImages.length - 1) {
+          setCurrentImageIndex(prev => prev + 1);
+      }
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (currentImageIndex > 0) {
+          setCurrentImageIndex(prev => prev - 1);
+      }
+  };
+
   return (
-    <div
+    <motion.div
       ref={containerRef as any}
-      className="relative w-full h-full overflow-hidden bg-black snap-start"
+      className="relative w-full h-full overflow-hidden bg-black snap-start touch-pan-y"
+      style={{ x, rotate, opacity }}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.7}
+      onDragEnd={handleDragEnd}
     >
-      {/* Background Layer - Blurred (using first image) */}
-      {uniqueImages[0] && (
+      {/* Background Layer - Blurred */}
+      {uniqueImages[currentImageIndex] && (
         <div
-          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-50 scale-110 transition-opacity duration-1000"
-          style={{ backgroundImage: `url("${uniqueImages[0]}")` }}
+          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-50 scale-110"
+          style={{ backgroundImage: `url("${uniqueImages[currentImageIndex]}")` }}
           aria-hidden="true"
         />
       )}
 
-      {/* Gallery Layer - Horizontal Scroll */}
-      <div className="absolute inset-0 z-10 flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
+      {/* Main Image Layer */}
+      <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20">
         {uniqueImages.length > 0 ? (
-          uniqueImages.map((img, idx) => (
-            <div
-              key={idx}
-              className="flex-shrink-0 w-full h-full snap-center flex items-center justify-center relative"
-            >
-              <img
-                src={img}
-                alt={`${building.name} - view ${idx + 1}`}
-                className="w-full h-full object-contain"
-                loading={idx === 0 ? "eager" : "lazy"}
-              />
-              {/* Pagination Dots Overlay for this image */}
-              {uniqueImages.length > 1 && (
-                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-30 pb-16 md:pb-0">
-                    {uniqueImages.map((_, dotIdx) => (
-                        <div
-                            key={dotIdx}
-                            className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${dotIdx === idx ? 'bg-white scale-110' : 'bg-white/40'}`}
-                        />
-                    ))}
-                 </div>
-              )}
-            </div>
-          ))
+           <img
+             src={uniqueImages[currentImageIndex]}
+             alt={`${building.name} - view ${currentImageIndex + 1}`}
+             className="w-full h-full object-contain"
+           />
         ) : (
-           <div className="w-full h-full flex items-center justify-center text-gray-500 z-10">
+           <div className="w-full h-full flex items-center justify-center text-gray-500">
              No image available
            </div>
         )}
       </div>
+
+      {/* Tap Zones for Image Navigation */}
+      <div className="absolute inset-0 z-20 flex">
+          <div className="w-1/2 h-full" onClick={prevImage} />
+          <div className="w-1/2 h-full" onClick={nextImage} />
+      </div>
+
+      {/* Swipe Feedback Overlays */}
+      <motion.div style={{ opacity: likeOpacity }} className="absolute top-20 left-10 z-50 border-4 border-green-500 rounded-lg p-2 transform -rotate-12 pointer-events-none">
+        <span className="text-green-500 font-bold text-4xl uppercase tracking-widest">SAVED</span>
+      </motion.div>
+      <motion.div style={{ opacity: nopeOpacity }} className="absolute top-20 right-10 z-50 border-4 border-red-500 rounded-lg p-2 transform rotate-12 pointer-events-none">
+        <span className="text-red-500 font-bold text-4xl uppercase tracking-widest">HIDE</span>
+      </motion.div>
+
+      {/* Pagination Dots (Top) */}
+      {uniqueImages.length > 1 && (
+        <div className="absolute top-4 left-0 right-0 flex justify-center gap-1 z-30 px-4 pt-12 md:pt-4">
+            {uniqueImages.map((_, idx) => (
+                <div
+                    key={idx}
+                    className={`h-1 rounded-full transition-all duration-300 shadow-sm ${idx === currentImageIndex ? 'w-8 bg-white' : 'w-1.5 bg-white/40'}`}
+                />
+            ))}
+        </div>
+      )}
 
       {/* Gradient Overlay */}
       <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none" />
@@ -147,8 +194,8 @@ export function DiscoveryCard({ building, onSave: externalOnSave }: DiscoveryCar
         )}
       </div>
 
-      {/* Save Button */}
-      <div className="absolute bottom-8 right-6 z-40">
+      {/* Save Button (kept for manual click) */}
+      <div className="absolute bottom-8 right-6 z-40 pointer-events-auto">
         <Button
           variant={isSaved ? "default" : "secondary"}
           size="icon"
@@ -160,6 +207,6 @@ export function DiscoveryCard({ building, onSave: externalOnSave }: DiscoveryCar
           {isSaved ? <Check className="h-6 w-6" /> : <Bookmark className="h-6 w-6" />}
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }
