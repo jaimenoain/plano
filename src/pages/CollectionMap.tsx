@@ -96,24 +96,27 @@ export default function CollectionMap() {
     enabled: !!ownerId && !!slug
   });
 
-  // Check if user is a collaborator
-  const { data: isCollaborator } = useQuery({
+  // Check if user is a collaborator and get role
+  const { data: contributorData } = useQuery({
     queryKey: ["is-collaborator", collection?.id, user?.id],
     queryFn: async () => {
-      if (!collection?.id || !user?.id) return false;
+      if (!collection?.id || !user?.id) return null;
       const { data, error } = await supabase
         .from("collection_contributors")
-        .select("user_id")
+        .select("role")
         .eq("collection_id", collection.id)
         .eq("user_id", user.id)
         .maybeSingle();
 
-      return !!data;
+      return data;
     },
     enabled: !!collection?.id && !!user?.id && !isOwner
   });
 
-  const canEdit = isOwner || !!isCollaborator;
+  const role = contributorData?.role;
+  const isAdmin = isOwner || role === "admin";
+  const canEditContent = isAdmin || role === "editor" || role === "contributor";
+  const canEdit = canEditContent;
 
   // 3. Fetch Collection Items with Buildings
   const { data: items, isLoading: loadingItems } = useQuery({
@@ -252,24 +255,28 @@ export default function CollectionMap() {
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{collection.description}</p>
                     )}
                 </div>
-                {isOwner && (
+                {(canEditContent || isAdmin) && (
                     <div className="flex gap-2 shrink-0">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1"
-                            onClick={() => setIsAddDialogOpen(true)}
-                        >
-                            <Plus className="h-4 w-4" />
-                            <span className="hidden sm:inline">Add</span>
-                        </Button>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => setShowSettings(true)}
-                        >
-                            <Settings className="h-5 w-5 text-muted-foreground" />
-                        </Button>
+                        {canEditContent && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1"
+                                onClick={() => setIsAddDialogOpen(true)}
+                            >
+                                <Plus className="h-4 w-4" />
+                                <span className="hidden sm:inline">Add</span>
+                            </Button>
+                        )}
+                        {isAdmin && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setShowSettings(true)}
+                            >
+                                <Settings className="h-5 w-5 text-muted-foreground" />
+                            </Button>
+                        )}
                     </div>
                 )}
             </div>

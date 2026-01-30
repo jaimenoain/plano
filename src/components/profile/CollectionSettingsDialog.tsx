@@ -12,6 +12,13 @@ import { toast } from "sonner";
 import { UserSearch } from "@/components/groups/UserSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CollectionSettingsDialogProps {
   collection: {
@@ -27,6 +34,7 @@ interface CollectionSettingsDialogProps {
 
 interface Contributor {
   user_id: string;
+  role: string;
   user: {
     id: string;
     username: string;
@@ -59,7 +67,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     setLoadingContributors(true);
     const { data, error } = await supabase
       .from("collection_contributors")
-      .select("user_id, user:profiles(id, username, avatar_url)")
+      .select("user_id, role, user:profiles(id, username, avatar_url)")
       .eq("collection_id", collection.id);
 
     if (error) {
@@ -101,7 +109,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
       .from("collection_contributors")
       .insert({
         collection_id: collection.id,
-        user_id: userId
+        user_id: userId,
+        role: 'contributor'
       });
 
     if (error) {
@@ -110,6 +119,21 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     } else {
       toast.success("Contributor added");
       fetchContributors();
+    }
+  };
+
+  const handleUpdateRole = async (userId: string, newRole: string) => {
+    const { error } = await supabase
+      .from("collection_contributors")
+      .update({ role: newRole })
+      .eq("collection_id", collection.id)
+      .eq("user_id", userId);
+
+    if (error) {
+        toast.error("Failed to update role");
+    } else {
+        toast.success("Role updated");
+        fetchContributors();
     }
   };
 
@@ -206,16 +230,33 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                                             <AvatarImage src={contributor.user.avatar_url || undefined} />
                                             <AvatarFallback>{contributor.user.username?.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <span className="text-sm font-medium">{contributor.user.username}</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium">{contributor.user.username}</span>
+                                        </div>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                        onClick={() => handleRemoveContributor(contributor.user.id)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Select
+                                            defaultValue={contributor.role}
+                                            onValueChange={(val) => handleUpdateRole(contributor.user.id, val)}
+                                        >
+                                            <SelectTrigger className="w-[110px] h-8 text-xs">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="admin">Admin</SelectItem>
+                                                <SelectItem value="contributor">Contributor</SelectItem>
+                                                <SelectItem value="viewer">Viewer</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                            onClick={() => handleRemoveContributor(contributor.user.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
