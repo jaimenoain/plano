@@ -61,6 +61,7 @@ interface BuildingDiscoveryMapProps {
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
   showImages?: boolean;
+  overrideUserBuildingsMap?: Map<string, string>;
 }
 
 export function BuildingDiscoveryMap({
@@ -75,7 +76,8 @@ export function BuildingDiscoveryMap({
   resetInteractionTrigger,
   highlightedId,
   onMarkerClick,
-  showImages = true
+  showImages = true,
+  overrideUserBuildingsMap
 }: BuildingDiscoveryMapProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -131,14 +133,16 @@ export function BuildingDiscoveryMap({
   const isLoading = externalBuildings ? false : internalLoading;
 
   // Fetch user relationships
-  const { data: userBuildingsMap } = useQuery({
+  const { data: fetchedUserBuildingsMap } = useQuery({
     queryKey: ["user-buildings-map", user?.id],
-    enabled: !!user,
+    enabled: !!user && !overrideUserBuildingsMap,
     queryFn: async () => {
         if (!user) return new Map();
         return await fetchUserBuildingsMap(user.id);
     }
   });
+
+  const userBuildingsMap = overrideUserBuildingsMap || fetchedUserBuildingsMap;
 
   // Clustering logic
   const supercluster = useMemo(() => {

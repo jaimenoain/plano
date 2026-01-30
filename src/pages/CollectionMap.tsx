@@ -24,6 +24,8 @@ interface Collection {
   is_public: boolean;
   slug: string;
   show_community_images: boolean;
+  rating_mode: string | null;
+  rating_source_user_id: string | null;
 }
 
 export interface CollectionItemWithBuilding {
@@ -156,6 +158,66 @@ export default function CollectionMap() {
       }) as CollectionItemWithBuilding[];
     },
     enabled: !!collection?.id
+  });
+
+  // 4. Fetch Map Categorization Data
+  const { data: overrideUserBuildingsMap } = useQuery({
+    queryKey: ["collection-map-ratings", collection?.id, collection?.rating_mode, collection?.rating_source_user_id, items?.length],
+    enabled: !!collection && !!items && collection.rating_mode !== 'viewer' && collection.rating_mode !== null,
+    queryFn: async () => {
+      if (!collection) return undefined;
+      const buildingIds = items?.map(i => i.building.id) || [];
+      if (buildingIds.length === 0) return new Map();
+
+      let userIds: string[] = [];
+
+      if (collection.rating_mode === 'contributors_max') {
+        // Fetch contributors
+        const { data: contribs } = await supabase
+          .from("collection_contributors")
+          .select("user_id")
+          .eq("collection_id", collection.id);
+
+        userIds = [collection.owner_id, ...(contribs?.map(c => c.user_id) || [])];
+      } else if (collection.rating_mode === 'admins_max') {
+        userIds = [collection.owner_id];
+      } else if (collection.rating_mode === 'member' && collection.rating_source_user_id) {
+        userIds = [collection.rating_source_user_id];
+      } else {
+        return undefined; // Handled by enabled, but fallback
+      }
+
+      if (userIds.length === 0) return new Map();
+
+      // Fetch user_buildings for these users and buildings
+      const { data: userBuildings } = await supabase
+        .from("user_buildings")
+        .select("building_id, status")
+        .in("building_id", buildingIds)
+        .in("user_id", userIds);
+
+      if (!userBuildings) return new Map();
+
+      // Aggregate
+      const resultMap = new Map<string, string>();
+
+      // Group by building
+      const buildingsMap = new Map<string, string[]>();
+      userBuildings.forEach(ub => {
+         if (!buildingsMap.has(ub.building_id)) {
+             buildingsMap.set(ub.building_id, []);
+         }
+         if (ub.status) buildingsMap.get(ub.building_id)?.push(ub.status);
+      });
+
+      // Calculate max priority
+      buildingsMap.forEach((statuses, bId) => {
+          if (statuses.includes('visited')) resultMap.set(bId, 'visited');
+          else if (statuses.includes('pending')) resultMap.set(bId, 'pending');
+      });
+
+      return resultMap;
+    }
   });
 
   // Mutation for updating notes
@@ -350,6 +412,7 @@ export default function CollectionMap() {
                 autoZoomOnLowCount={true}
                 forcedBounds={mapBounds}
                 showImages={collection?.show_community_images ?? true}
+                overrideUserBuildingsMap={overrideUserBuildingsMap}
             />
 
             {/* Mobile Toggle Controls */}
