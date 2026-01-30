@@ -30,6 +30,7 @@ export interface DiscoveryBuilding {
   social_score?: number;
   contact_raters?: ContactRater[];
   contact_visitors?: ContactRater[];
+  visitors?: ContactRater[]; // From RPC
   location_precision?: 'exact' | 'approximate';
   status?: 'Built' | 'Under Construction' | 'Unbuilt' | 'Demolished' | 'Temporary' | null;
 }

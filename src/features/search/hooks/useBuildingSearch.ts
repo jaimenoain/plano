@@ -135,13 +135,35 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string, 
                 }
             });
 
-            enrichedBuildings = enrichedBuildings.map(b => ({
-                ...b,
-                contact_raters: ratingsMap.get(b.id) || [],
-                contact_visitors: visitorsMap.get(b.id) || []
-            }));
+            enrichedBuildings = enrichedBuildings.map(b => {
+                const rpcVisitors = b.visitors || b.contact_visitors || [];
+                const clientVisitors = visitorsMap.get(b.id) || [];
+
+                // Merge and dedupe visitors (RPC + Client)
+                const mergedVisitors = [...rpcVisitors, ...clientVisitors].filter((v, i, self) =>
+                    i === self.findIndex((t) => (t.id === v.id))
+                );
+
+                return {
+                    ...b,
+                    contact_raters: ratingsMap.get(b.id) || [],
+                    contact_visitors: mergedVisitors
+                };
+            });
         }
+    } else {
+        // If no contactIds to fetch (or no user), still ensure RPC visitors are mapped to contact_visitors
+        enrichedBuildings = enrichedBuildings.map(b => ({
+            ...b,
+            contact_visitors: b.visitors || b.contact_visitors || []
+        }));
     }
+  } else {
+      // If no userId, ensure RPC visitors are mapped
+      enrichedBuildings = enrichedBuildings.map(b => ({
+          ...b,
+          contact_visitors: b.visitors || b.contact_visitors || []
+      }));
   }
 
   return enrichedBuildings;
