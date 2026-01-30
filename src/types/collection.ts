@@ -25,6 +25,7 @@ export interface CollectionItemWithBuilding {
     country: string | null;
     year_completed: number | null;
     hero_image_url: string | null;
+    community_preview_url: string | null;
     location_precision: "exact" | "approximate";
     building_architects?: {
       architects: {

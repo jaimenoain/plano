@@ -47,7 +47,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
     };
 
     const currentCategory = customCategories?.find(c => c.id === item.custom_category_id);
-    const imageUrl = getBuildingImageUrl(item.building.hero_image_url);
+    const imageUrl = getBuildingImageUrl(item.building.hero_image_url || item.building.community_preview_url);
 
     const architectNames = item.building.building_architects
       ?.map((ba) => ba.architects?.name)

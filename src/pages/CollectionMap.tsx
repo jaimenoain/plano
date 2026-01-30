@@ -78,6 +78,7 @@ export default function CollectionMap() {
             country,
             year_completed,
             hero_image_url,
+            community_preview_url,
             location_precision,
             building_architects(architects(id, name))
           )
@@ -224,7 +225,7 @@ export default function CollectionMap() {
       return {
         id: item.building.id,
         name: item.building.name,
-        main_image_url: item.building.hero_image_url,
+        main_image_url: item.building.hero_image_url || item.building.community_preview_url,
         location_lat: item.building.location_lat,
         location_lng: item.building.location_lng,
         city: item.building.city,
