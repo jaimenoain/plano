@@ -16,6 +16,7 @@ export interface ArchitectBuilding {
   city: string | null;
   country: string | null;
   year_completed: number | null;
+  hero_image_url: string | null;
 }
 
 interface UseArchitectResult {
@@ -70,7 +71,8 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
               name,
               city,
               country,
-              year_completed
+              year_completed,
+              hero_image_url
             )
           `)
           .eq("architect_id", architectId);

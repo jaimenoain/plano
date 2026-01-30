@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { MetaHead } from "@/components/common/MetaHead";
 import { MapPin, Globe, Edit } from "lucide-react";
+import { getBuildingImageUrl } from "@/utils/image";
 
 export default function ArchitectDetails() {
   const { id } = useParams<{ id: string }>();
@@ -130,9 +131,17 @@ export default function ArchitectDetails() {
               >
                 <CardContent className="p-0">
                   <AspectRatio ratio={4 / 3}>
+                    {getBuildingImageUrl(building.hero_image_url) ? (
+                      <img
+                        src={getBuildingImageUrl(building.hero_image_url)}
+                        alt={building.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
                       <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
                         No Image
                       </div>
+                    )}
                   </AspectRatio>
                   <div className="p-4 space-y-1">
                     <h3 className="font-semibold text-lg line-clamp-1">{building.name}</h3>
