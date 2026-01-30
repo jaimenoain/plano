@@ -178,10 +178,16 @@ export default function CollectionMap() {
     return items.map(item => {
       let color = null;
 
-      if (collection?.categorization_method === 'custom' && item.custom_category_id) {
-        const category = collection.custom_categories?.find(c => c.id === item.custom_category_id);
-        if (category) {
-          color = category.color;
+      if (collection?.categorization_method === 'custom') {
+        if (item.custom_category_id) {
+          const category = collection.custom_categories?.find(c => c.id === item.custom_category_id);
+          if (category) {
+            color = category.color;
+          } else {
+            color = "#9CA3AF";
+          }
+        } else {
+          color = "#9CA3AF";
         }
       } else if (shouldFetchStats && statsData && memberIds) {
           const stat = statsMap.get(item.building.id);
