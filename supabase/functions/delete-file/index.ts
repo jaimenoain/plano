@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
         isAdmin = true;
         user = { id: 'admin_delete' };
     } else {
+        // Manual verification for verify_jwt: false
         const {
             data: { user: authUser },
             error: userError,

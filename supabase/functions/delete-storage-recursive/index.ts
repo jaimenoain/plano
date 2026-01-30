@@ -23,6 +23,33 @@ Deno.serve(async (req) => {
       throw new Error('Invalid payload: Missing record or user_id')
     }
 
+    // Auth Verification
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('Missing Authorization header')
+    }
+    const token = authHeader.replace('Bearer ', '')
+
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    if (serviceRoleKey && token === serviceRoleKey) {
+      console.log('Admin bypass: Service Role Key detected')
+    } else {
+      const authClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { auth: { persistSession: false } }
+      )
+      const { data: { user }, error: userError } = await authClient.auth.getUser(token)
+
+      if (userError || !user) {
+        throw new Error('Unauthorized: Invalid token')
+      }
+
+      if (user.id !== record.user_id) {
+        throw new Error('Unauthorized: User ID mismatch')
+      }
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
