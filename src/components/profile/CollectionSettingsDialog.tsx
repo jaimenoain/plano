@@ -7,13 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle } from "lucide-react";
+import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/components/groups/UserSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collection } from "@/types/collection";
+import { parseLocation } from "@/utils/location";
 import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
@@ -57,6 +58,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [loadingContributors, setLoadingContributors] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   // New Category Input State
   const [newCategory, setNewCategory] = useState({ label: "", color: "#EEFF41" });
@@ -191,6 +193,95 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     }
   };
 
+  const handleExportData = async () => {
+    try {
+      setDownloading(true);
+      const { data, error } = await supabase
+        .from('collection_items')
+        .select(`
+          note,
+          custom_category_id,
+          buildings (
+            name,
+            address,
+            city,
+            country,
+            year_completed,
+            location,
+            building_architects (
+              architects (
+                name
+              )
+            )
+          )
+        `)
+        .eq('collection_id', collection.id);
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        toast.info("No items to export");
+        return;
+      }
+
+      // Generate CSV
+      const headers = ['Name', 'Address', 'City', 'Country', 'Year', 'Latitude', 'Longitude', 'Architects', 'Note', 'Category'];
+      const rows = data.map((item: any) => {
+        const building = item.buildings;
+        const location = parseLocation(building?.location);
+
+        // Handle architects
+        const architects = building?.building_architects
+          ?.map((ba: any) => ba.architects?.name)
+          .filter(Boolean)
+          .join('; ');
+
+        // Find category label if needed
+        const category = collection.custom_categories?.find(c => c.id === item.custom_category_id)?.label || '';
+
+        // Escape CSV fields
+        const escape = (val: any) => {
+          if (val === null || val === undefined) return '';
+          const str = String(val);
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        };
+
+        return [
+          escape(building?.name),
+          escape(building?.address),
+          escape(building?.city),
+          escape(building?.country),
+          escape(building?.year_completed),
+          escape(location?.lat),
+          escape(location?.lng),
+          escape(architects),
+          escape(item.note),
+          escape(category)
+        ].join(',');
+      });
+
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${collection.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-export.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Export successful");
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export data");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] h-[80vh] sm:h-auto flex flex-col">
@@ -250,6 +341,19 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
+
+            <Separator className="my-6" />
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Export Data</h3>
+              <p className="text-sm text-muted-foreground">
+                Download a CSV file containing all buildings in this collection, including coordinates and notes.
+              </p>
+              <Button onClick={handleExportData} disabled={downloading} variant="outline" className="w-full sm:w-auto">
+                {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                Download CSV
+              </Button>
+            </div>
 
             <Separator className="my-6" />
 
