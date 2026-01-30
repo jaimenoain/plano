@@ -161,6 +161,17 @@ export default function CollectionMap() {
     }
   };
 
+  const handleRemoveItem = async (itemId: string) => {
+    const { error } = await supabase
+        .from("collection_items")
+        .delete()
+        .eq("id", itemId);
+
+    if (!error) {
+        refetchItems();
+    }
+  };
+
   if (isLoading) {
     return (
       <AppLayout title="Collection" showBack>
@@ -216,6 +227,7 @@ export default function CollectionMap() {
                                 categorizationMethod={collection.categorization_method}
                                 customCategories={collection.custom_categories}
                                 onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
+                                onRemove={() => handleRemoveItem(item.id)}
                             />
                         ))
                     ) : (
