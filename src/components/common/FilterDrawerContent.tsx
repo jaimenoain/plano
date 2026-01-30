@@ -31,10 +31,10 @@ export interface FilterDrawerContentProps {
   onBucketListChange: (value: boolean) => void;
   hidePersonalFilters?: boolean;
 
-  // Tags
-  selectedTags?: string[];
-  onTagsChange?: (tags: string[]) => void;
-  availableTags?: string[];
+  // Collections
+  selectedCollections?: { id: string; name: string }[];
+  onCollectionsChange?: (collections: { id: string; name: string }[]) => void;
+  availableCollections?: { id: string; name: string }[];
 
   // Personal Rating
   personalMinRating: number;
@@ -65,7 +65,7 @@ export interface FilterDrawerContentProps {
 }
 
 export function FilterDrawerContent(props: FilterDrawerContentProps) {
-  const [tagsOpen, setTagsOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
   const { categories, typologies, attributeGroups, attributes, isLoading: isMetadataLoading } = useBuildingMetadata();
 
   // Helper for Attribute Group filtering
@@ -120,22 +120,22 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                                  {props.showBucketList && <Check className="mr-2 h-4 w-4" />} Bucket List
                              </Button>
 
-                             {/* My Lists (Tags) */}
-                             {props.onTagsChange && props.availableTags && (
+                             {/* My Collections */}
+                             {props.onCollectionsChange && props.availableCollections && (
                                 <div className="space-y-2 pt-1">
-                                    <Label className="text-sm font-medium">My Lists (Tags)</Label>
+                                    <Label className="text-sm font-medium">My Collections</Label>
 
-                                    {/* Selected Tags (Badges) */}
-                                    {props.selectedTags && props.selectedTags.length > 0 && (
+                                    {/* Selected Collections (Badges) */}
+                                    {props.selectedCollections && props.selectedCollections.length > 0 && (
                                         <div className="flex flex-wrap gap-2 mb-2">
-                                            {props.selectedTags.map(tag => (
-                                                <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                                                    {tag}
+                                            {props.selectedCollections.map(collection => (
+                                                <Badge key={collection.id} variant="secondary" className="flex items-center gap-1">
+                                                    {collection.name}
                                                     <X
                                                         className="h-3 w-3 cursor-pointer"
                                                         onClick={() => {
-                                                            const newTags = props.selectedTags!.filter(t => t !== tag);
-                                                            props.onTagsChange?.(newTags);
+                                                            const newCollections = props.selectedCollections!.filter(c => c.id !== collection.id);
+                                                            props.onCollectionsChange?.(newCollections);
                                                         }}
                                                     />
                                                 </Badge>
@@ -143,43 +143,43 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                                         </div>
                                     )}
 
-                                    <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
+                                    <Popover open={collectionsOpen} onOpenChange={setCollectionsOpen}>
                                         <PopoverTrigger asChild>
                                             <Button
                                                 variant="outline"
                                                 role="combobox"
-                                                aria-expanded={tagsOpen}
+                                                aria-expanded={collectionsOpen}
                                                 className="w-full justify-between h-9 text-sm"
                                             >
-                                                Select lists...
+                                                Select collections...
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-[300px] p-0" align="start">
                                             <Command>
-                                                <CommandInput placeholder="Search lists..." />
+                                                <CommandInput placeholder="Search collections..." />
                                                 <CommandList>
-                                                    <CommandEmpty>No lists found.</CommandEmpty>
+                                                    <CommandEmpty>No collections found.</CommandEmpty>
                                                     <CommandGroup>
-                                                        {props.availableTags.map((tag) => (
+                                                        {props.availableCollections.map((collection) => (
                                                             <CommandItem
-                                                                key={tag}
-                                                                value={tag}
-                                                                onSelect={(currentValue) => {
-                                                                    const current = props.selectedTags || [];
-                                                                    if (!current.includes(tag)) {
-                                                                        props.onTagsChange?.([...current, tag]);
+                                                                key={collection.id}
+                                                                value={collection.name}
+                                                                onSelect={() => {
+                                                                    const current = props.selectedCollections || [];
+                                                                    if (!current.some(c => c.id === collection.id)) {
+                                                                        props.onCollectionsChange?.([...current, collection]);
                                                                     }
-                                                                    setTagsOpen(false);
+                                                                    setCollectionsOpen(false);
                                                                 }}
                                                             >
                                                                 <Check
                                                                     className={cn(
                                                                         "mr-2 h-4 w-4",
-                                                                        props.selectedTags?.includes(tag) ? "opacity-100" : "opacity-0"
+                                                                        props.selectedCollections?.some(c => c.id === collection.id) ? "opacity-100" : "opacity-0"
                                                                     )}
                                                                 />
-                                                                {tag}
+                                                                {collection.name}
                                                             </CommandItem>
                                                         ))}
                                                     </CommandGroup>
