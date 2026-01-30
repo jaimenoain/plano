@@ -914,14 +914,16 @@ export default function BuildingDetails() {
                     <>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 pt-5">
-                                <PersonalRatingButton
-                                    buildingId={building.id}
-                                    initialRating={myRating}
-                                    onRate={handleRate}
-                                    status={userStatus || 'visited'}
-                                    label={userStatus === 'pending' ? "Priority" : "Rating"}
-                                    variant="inline"
-                                />
+                                {(userStatus === 'visited' || userStatus === 'pending') && (
+                                    <PersonalRatingButton
+                                        buildingId={building.id}
+                                        initialRating={myRating}
+                                        onRate={handleRate}
+                                        status={userStatus || 'visited'}
+                                        label={userStatus === 'pending' ? "Priority" : "Rating"}
+                                        variant="inline"
+                                    />
+                                )}
                             </div>
 
                             {/* Toggle Status */}
@@ -954,7 +956,7 @@ export default function BuildingDetails() {
                         </div>
 
                         {/* Note & Tags Editor */}
-                        {showNoteEditor && (
+                        {showNoteEditor && (userStatus === 'visited' || userStatus === 'pending') && (
                             <div className="pt-4 border-t border-dashed space-y-3 animate-in fade-in slide-in-from-top-2">
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium uppercase text-muted-foreground">Your Note</label>
