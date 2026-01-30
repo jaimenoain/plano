@@ -171,11 +171,11 @@ export default function CollectionMap() {
   }
 
   return (
-    <AppLayout title={collection.name} showBack>
+    <AppLayout title={collection.name} showBack isFullScreen>
       <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden">
 
         {/* Sidebar List */}
-        <div className="w-full lg:w-[400px] bg-background border-r flex flex-col shrink-0 lg:h-full h-[40vh] order-2 lg:order-1">
+        <div className="w-full lg:w-[450px] bg-background border-r flex flex-col shrink-0 lg:h-full h-[40vh] order-2 lg:order-1">
             <div className="p-4 border-b flex items-center justify-between">
                 <div>
                     <h1 className="font-bold text-xl truncate">{collection.name}</h1>
@@ -189,7 +189,7 @@ export default function CollectionMap() {
             </div>
 
             <ScrollArea className="flex-1">
-                <div className="p-4 space-y-3">
+                <div className="p-4 space-y-3 pb-24">
                     {items && items.length > 0 ? (
                         items.map(item => (
                             <CollectionBuildingCard
