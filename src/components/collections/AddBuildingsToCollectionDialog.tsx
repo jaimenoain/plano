@@ -26,6 +26,7 @@ export function AddBuildingsToCollectionDialog({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
 
   const { data: savedBuildings, isLoading } = useQuery({
     queryKey: ["user-saved-buildings", user?.id],
@@ -43,6 +44,7 @@ export function AddBuildingsToCollectionDialog({
             name,
             city,
             country,
+            address,
             hero_image_url
           )
         `)
@@ -91,15 +93,29 @@ export function AddBuildingsToCollectionDialog({
 
   const filteredBuildings = useMemo(() => {
     if (!savedBuildings) return [];
-    if (!searchQuery) return savedBuildings;
 
-    const query = searchQuery.toLowerCase();
-    return savedBuildings.filter((building: any) =>
-      building.name.toLowerCase().includes(query) ||
-      building.city?.toLowerCase().includes(query) ||
-      building.country?.toLowerCase().includes(query)
-    );
-  }, [savedBuildings, searchQuery]);
+    let result = savedBuildings;
+
+    if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        result = result.filter((building: any) =>
+          building.name.toLowerCase().includes(query) ||
+          building.city?.toLowerCase().includes(query) ||
+          building.country?.toLowerCase().includes(query)
+        );
+    }
+
+    if (locationQuery) {
+        const query = locationQuery.toLowerCase();
+        result = result.filter((building: any) =>
+          building.city?.toLowerCase().includes(query) ||
+          building.country?.toLowerCase().includes(query) ||
+          building.address?.toLowerCase().includes(query)
+        );
+    }
+
+    return result;
+  }, [savedBuildings, searchQuery, locationQuery]);
 
   const addMutation = useMutation({
     mutationFn: async (buildingId: string) => {
@@ -141,13 +157,22 @@ export function AddBuildingsToCollectionDialog({
           <DialogTitle>Add to Collection</DialogTitle>
         </DialogHeader>
 
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4 space-y-2">
             <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     placeholder="Search saved buildings..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                />
+            </div>
+            <div className="relative">
+                <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="City, Country or Region"
+                    value={locationQuery}
+                    onChange={(e) => setLocationQuery(e.target.value)}
                     className="pl-9"
                 />
             </div>
@@ -161,7 +186,7 @@ export function AddBuildingsToCollectionDialog({
                     </div>
                 ) : filteredBuildings.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
-                        {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
+                        {(searchQuery || locationQuery) ? "No buildings found matching your search." : "No saved buildings found."}
                     </p>
                 ) : (
                     filteredBuildings.map((building: any) => {
