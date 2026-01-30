@@ -3,12 +3,13 @@ import { CollectionItemWithBuilding } from "@/types/collection";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, MessageSquarePlus } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { getBuildingImageUrl } from "@/utils/image";
 
@@ -19,8 +20,7 @@ interface CollectionBuildingCardProps {
   canEdit: boolean;
   onUpdateNote: (newNote: string) => void;
   onNavigate: () => void;
-  // New props
-  categorizationMethod?: 'default' | 'custom';
+  categorizationMethod?: 'default' | 'custom' | 'status' | 'rating_member';
   customCategories?: { id: string; label: string; color: string }[] | null;
   onUpdateCategory?: (categoryId: string) => void;
   showImages?: boolean;
@@ -28,130 +28,165 @@ interface CollectionBuildingCardProps {
 
 export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuildingCardProps>(
   ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory, showImages = true }, ref) => {
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditingNote, setIsEditingNote] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const hasNote = !!item.note;
-    const showInput = hasNote || isEditing;
-
+    // Auto-focus textarea when editing starts
     useEffect(() => {
-        if (isEditing && textareaRef.current) {
+        if (isEditingNote && textareaRef.current) {
             textareaRef.current.focus();
         }
-    }, [isEditing]);
+    }, [isEditingNote]);
 
-    const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    const handleNoteBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
         onUpdateNote(value);
         if (!value) {
-            setIsEditing(false);
+            setIsEditingNote(false);
         }
     };
 
-    // Helper to find category color
     const currentCategory = customCategories?.find(c => c.id === item.custom_category_id);
     const imageUrl = getBuildingImageUrl(item.building.hero_image_url);
 
     return (
-        <div
+        <Card
             ref={ref}
             className={cn(
-                "group p-4 border rounded-lg shadow-sm transition-all duration-200 cursor-pointer bg-card hover:shadow-md",
-                isHighlighted ? "border-primary ring-1 ring-primary bg-secondary/10" : "hover:border-primary/50"
+                "group relative overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-md",
+                isHighlighted ? "border-primary ring-1 ring-primary bg-secondary/5" : "hover:border-primary/50"
             )}
-            style={categorizationMethod === 'custom' && currentCategory ? { borderLeftColor: currentCategory.color, borderLeftWidth: '4px' } : {}}
             onMouseEnter={() => setHighlightedId(item.building.id)}
             onClick={() => {
                 setHighlightedId(item.building.id);
                 onNavigate();
             }}
         >
-            <div className="flex gap-3">
-                {showImages && (imageUrl ? (
-                    <div className="w-20 h-20 rounded-md overflow-hidden shrink-0 bg-secondary">
-                        <img src={imageUrl} alt="" className="w-full h-full object-cover" />
-                    </div>
-                ) : (
-                    <div className="w-20 h-20 rounded-md bg-secondary shrink-0 flex items-center justify-center text-muted-foreground text-xs p-1 text-center">
-                        No Image
-                    </div>
-                ))}
-                <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                         <h3 className="font-semibold text-sm truncate pr-2">{item.building.name}</h3>
-                         {/* Optional: Show category badge if not editing and valid category */}
-                         {categorizationMethod === 'custom' && currentCategory && (
-                             <div
-                                className="w-2 h-2 rounded-full shrink-0 mt-1"
-                                style={{ backgroundColor: currentCategory.color }}
-                                title={currentCategory.label}
-                             />
-                         )}
-                    </div>
-
-                    <p className="text-xs text-muted-foreground truncate">{item.building.city}, {item.building.country}</p>
-                    {item.building.year_completed && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{item.building.year_completed}</p>
-                    )}
-                </div>
-            </div>
-
-            {/* Custom Category Selector */}
-            {canEdit && categorizationMethod === 'custom' && customCategories && customCategories.length > 0 && (
-                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                    <Select
-                        value={item.custom_category_id || "unassigned"}
-                        onValueChange={(val) => onUpdateCategory?.(val === "unassigned" ? "" : val)}
-                    >
-                        <SelectTrigger className="h-7 text-xs bg-secondary/30 border-none w-full">
-                            <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="unassigned" className="text-muted-foreground italic">Uncategorized</SelectItem>
-                            {customCategories.map(cat => (
-                                <SelectItem key={cat.id} value={cat.id}>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                                        <span>{cat.label}</span>
-                                    </div>
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            )}
-
-            <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                {canEdit ? (
-                    showInput ? (
-                        <div className="relative">
-                            <Textarea
-                                ref={textareaRef}
-                                placeholder="Add a note..."
-                                defaultValue={item.note || ""}
-                                onBlur={handleBlur}
-                                className="resize-none text-sm bg-background min-h-[60px]"
-                            />
-                            <div className="absolute bottom-2 right-2 opacity-50 pointer-events-none">
-                                <Save className="h-3 w-3" />
-                            </div>
+            <div className="flex flex-row min-h-[7rem]">
+                {/* Content Section */}
+                <div className="flex flex-col flex-1 p-3 min-w-0 justify-between">
+                    <div>
+                        <div className="flex justify-between items-start gap-2">
+                             <h3 className="font-semibold text-sm leading-tight line-clamp-2">
+                                {item.building.name}
+                             </h3>
                         </div>
-                    ) : (
-                       <button
-                           onClick={() => setIsEditing(true)}
-                           className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                       >
-                           <MessageSquarePlus className="h-3 w-3" />
-                           Add a note
-                       </button>
-                    )
-                ) : item.note ? (
-                    <div className="bg-secondary/30 p-2 rounded-md text-sm italic text-muted-foreground border">
-                        "{item.note}"
+
+                        <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                             <span>{item.building.city}, {item.building.country}</span>
+                             {item.building.year_completed && (
+                                <>
+                                  <span className="mx-1">•</span>
+                                  <span>{item.building.year_completed}</span>
+                                </>
+                             )}
+                        </div>
+
+                        {/* Category Badge (only for custom method) */}
+                        {categorizationMethod === 'custom' && (
+                            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                                {canEdit ? (
+                                    <Select
+                                        value={item.custom_category_id || "unassigned"}
+                                        onValueChange={(val) => onUpdateCategory?.(val === "unassigned" ? "" : val)}
+                                    >
+                                        <SelectTrigger className="h-auto p-0 border-none bg-transparent hover:bg-transparent shadow-none w-auto ring-0 focus:ring-0">
+                                             <Badge variant="outline" className="flex items-center gap-1.5 pl-1.5 pr-2 py-0.5 font-normal hover:bg-secondary cursor-pointer bg-background">
+                                                 <div
+                                                    className="w-2 h-2 rounded-full"
+                                                    style={{ backgroundColor: currentCategory?.color || "#9CA3AF" }}
+                                                 />
+                                                 <span className="truncate max-w-[120px]">
+                                                    {currentCategory?.label || "Uncategorized"}
+                                                 </span>
+                                             </Badge>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="unassigned" className="text-muted-foreground italic">Uncategorized</SelectItem>
+                                            {customCategories?.map(cat => (
+                                                <SelectItem key={cat.id} value={cat.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                                                        <span>{cat.label}</span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    currentCategory && (
+                                        <Badge variant="outline" className="flex items-center gap-1.5 pl-1.5 pr-2 py-0.5 font-normal bg-background">
+                                            <div
+                                                className="w-2 h-2 rounded-full"
+                                                style={{ backgroundColor: currentCategory.color }}
+                                            />
+                                            <span>{currentCategory.label}</span>
+                                        </Badge>
+                                    )
+                                )}
+                            </div>
+                        )}
                     </div>
-                ) : null}
+
+                    {/* Note Section */}
+                    <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                        {canEdit ? (
+                            isEditingNote || item.note ? (
+                                <div className="relative group/note">
+                                    <Textarea
+                                        ref={textareaRef}
+                                        placeholder="Add a note..."
+                                        defaultValue={item.note || ""}
+                                        onBlur={handleNoteBlur}
+                                        onFocus={() => setIsEditingNote(true)}
+                                        className={cn(
+                                            "resize-none text-xs min-h-[40px] bg-secondary/30 border-transparent focus:border-input focus:bg-background transition-colors p-2",
+                                            !isEditingNote && "hover:bg-secondary/50 cursor-text truncate"
+                                        )}
+                                        rows={isEditingNote ? 3 : 1}
+                                    />
+                                     {isEditingNote && (
+                                        <div className="absolute bottom-1 right-1 opacity-50 pointer-events-none">
+                                            <Save className="h-3 w-3" />
+                                        </div>
+                                     )}
+                                </div>
+                            ) : (
+                               <button
+                                   onClick={() => setIsEditingNote(true)}
+                                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-1 py-0.5 rounded hover:bg-secondary/50 transition-colors"
+                               >
+                                   <MessageSquarePlus className="h-3 w-3" />
+                                   Add note
+                               </button>
+                            )
+                        ) : item.note ? (
+                            <div className="text-xs text-muted-foreground italic bg-secondary/30 p-2 rounded line-clamp-3">
+                                "{item.note}"
+                            </div>
+                        ) : null}
+                    </div>
+                </div>
+
+                {/* Image Section */}
+                {showImages && (
+                    <div className="w-28 shrink-0 relative border-l bg-secondary">
+                         {imageUrl ? (
+                            <img
+                                src={imageUrl}
+                                alt={item.building.name}
+                                className="absolute inset-0 w-full h-full object-cover"
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                                <span className="text-xs">No Image</span>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
-        </div>
+        </Card>
     );
   }
 );
