@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { FilterDrawerContent } from "@/components/common/FilterDrawerContent";
 import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
+import { ExploreTutorial } from "@/features/search/components/ExploreTutorial";
 
 export default function Explore() {
   const navigate = useNavigate();
@@ -32,6 +33,14 @@ export default function Explore() {
   const [filterContacts, setFilterContacts] = useState(false);
   const [contactMinRating, setContactMinRating] = useState(0);
   const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>([]);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem("explore-tutorial-seen");
+    if (!hasSeenTutorial) {
+      setShowTutorial(true);
+    }
+  }, []);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -154,6 +163,8 @@ export default function Explore() {
 
   return (
     <div className="relative h-screen w-full bg-black text-white">
+      {showTutorial && <ExploreTutorial onComplete={() => setShowTutorial(false)} />}
+
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-50 p-6 flex justify-center gap-4 pt-12 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
         <div className="pointer-events-auto flex gap-2">
