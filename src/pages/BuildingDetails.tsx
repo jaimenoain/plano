@@ -935,8 +935,39 @@ export default function BuildingDetails() {
                 ) : (
                     // Edit View
                     <>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 pt-5">
+                        <div className="flex flex-col gap-4">
+                            {/* Toggle Status */}
+                            <div className="grid grid-cols-3 gap-2 w-full">
+                                <Button
+                                    variant={userStatus === 'pending' ? "default" : "outline"}
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleStatusChange('pending')}
+                                >
+                                    <Bookmark className={`w-4 h-4 mr-2 ${userStatus === 'pending' ? "fill-current" : ""}`} />
+                                    {userStatus === 'pending' ? "Pending" : "Save"}
+                                </Button>
+                                <Button
+                                    variant={userStatus === 'visited' ? "default" : "outline"}
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleStatusChange('visited')}
+                                >
+                                    <Check className="w-4 h-4 mr-2" />
+                                    Visited
+                                </Button>
+                                <Button
+                                    variant={userStatus === 'ignored' ? "default" : "outline"}
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleStatusChange('ignored')}
+                                >
+                                    <EyeOff className="w-4 h-4 mr-2" />
+                                    Hide
+                                </Button>
+                            </div>
+
+                            <div className="flex justify-center pt-2">
                                 {(userStatus === 'visited' || userStatus === 'pending') && (
                                     <PersonalRatingButton
                                         buildingId={building.id}
@@ -947,34 +978,6 @@ export default function BuildingDetails() {
                                         variant="inline"
                                     />
                                 )}
-                            </div>
-
-                            {/* Toggle Status */}
-                            <div className="flex gap-2">
-                                <Button
-                                    variant={userStatus === 'pending' ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => handleStatusChange('pending')}
-                                >
-                                    <Bookmark className={`w-4 h-4 mr-2 ${userStatus === 'pending' ? "fill-current" : ""}`} />
-                                    {userStatus === 'pending' ? "Pending" : "Save"}
-                                </Button>
-                                <Button
-                                    variant={userStatus === 'visited' ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => handleStatusChange('visited')}
-                                >
-                                    <Check className="w-4 h-4 mr-2" />
-                                    Visited
-                                </Button>
-                                <Button
-                                    variant={userStatus === 'ignored' ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => handleStatusChange('ignored')}
-                                >
-                                    <EyeOff className="w-4 h-4 mr-2" />
-                                    Hide
-                                </Button>
                             </div>
                         </div>
 
