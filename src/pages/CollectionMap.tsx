@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,7 +25,7 @@ export default function CollectionMap() {
   const [showAddBuildings, setShowAddBuildings] = useState(false);
 
   // 1. Resolve User (Owner)
-  const { data: profile, isLoading: loadingProfile } = useQuery({
+  const { data: ownerProfile, isLoading: loadingProfile } = useQuery({
     queryKey: ["profile", username],
     queryFn: async () => {
       if (!username) return null;
@@ -42,20 +42,20 @@ export default function CollectionMap() {
 
   // 2. Fetch Collection
   const { data: collection, isLoading: loadingCollection } = useQuery({
-    queryKey: ["collection", slug, profile?.id],
+    queryKey: ["collection", slug, ownerProfile?.id],
     queryFn: async () => {
-      if (!profile?.id || !slug) return null;
+      if (!ownerProfile?.id || !slug) return null;
       const { data, error } = await supabase
         .from("collections")
         .select("*")
-        .eq("owner_id", profile.id)
+        .eq("owner_id", ownerProfile.id)
         .eq("slug", slug)
         .single();
 
       if (error) throw error;
       return data as Collection;
     },
-    enabled: !!profile?.id && !!slug
+    enabled: !!ownerProfile?.id && !!slug
   });
 
   // 3. Fetch Items
@@ -299,6 +299,9 @@ export default function CollectionMap() {
             <div className="p-4 border-b flex items-center justify-between">
                 <div>
                     <h1 className="font-bold text-xl truncate">{collection.name}</h1>
+                    <div className="text-sm text-muted-foreground mb-1">
+                      By: <Link to={`/profile/${ownerProfile?.username}`} className="hover:underline text-foreground">{ownerProfile?.username}</Link>
+                    </div>
                     {collection.description && <p className="text-sm text-muted-foreground line-clamp-2">{collection.description}</p>}
                 </div>
                 {canEdit && (
