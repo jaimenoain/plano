@@ -59,6 +59,7 @@ export function filterLocalBuildings(
 export interface ClientFilterContext {
   hideSaved: boolean;
   hideVisited: boolean;
+  hideHidden: boolean;
   userStatuses: Record<string, string>;
 }
 
@@ -69,7 +70,7 @@ export function applyClientFilters<T extends { id: string; status?: string | nul
   return buildings.filter((b) => {
     // 2. Filter out "Ignored" by user
     const userStatus = filters.userStatuses[b.id];
-    if (userStatus === 'ignored') {
+    if (filters.hideHidden && userStatus === 'ignored') {
       return false;
     }
 

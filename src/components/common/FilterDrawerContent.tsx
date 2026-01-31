@@ -32,6 +32,8 @@ export interface FilterDrawerContentProps {
   onHideVisitedChange: (value: boolean) => void;
   hideSaved: boolean;
   onHideSavedChange: (value: boolean) => void;
+  hideHidden: boolean;
+  onHideHiddenChange: (value: boolean) => void;
   hidePersonalFilters?: boolean;
 
   // Collections
@@ -230,6 +232,10 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="hide-saved" className="text-sm font-medium cursor-pointer">Hide Saved</Label>
                                 <Switch id="hide-saved" checked={props.hideSaved} onCheckedChange={props.onHideSavedChange} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="hide-hidden" className="text-sm font-medium cursor-pointer">Hide Hidden</Label>
+                                <Switch id="hide-hidden" checked={props.hideHidden} onCheckedChange={props.onHideHiddenChange} />
                             </div>
                          </div>
                      </div>

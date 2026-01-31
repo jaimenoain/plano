@@ -23,6 +23,7 @@ describe("applyClientFilters", () => {
     const context: ClientFilterContext = {
       hideSaved: false,
       hideVisited: false,
+      hideHidden: true,
       userStatuses: {},
     };
     const result = applyClientFilters(buildings, context);
@@ -31,20 +32,33 @@ describe("applyClientFilters", () => {
     expect(result.map(b => b.id)).toContain("1");
   });
 
-  it("should filter out ignored buildings", () => {
+  it("should filter out ignored buildings when hideHidden is true", () => {
     const context: ClientFilterContext = {
       hideSaved: false,
       hideVisited: false,
+      hideHidden: true,
       userStatuses,
     };
     const result = applyClientFilters(buildings, context);
     expect(result.map(b => b.id)).not.toContain("5");
   });
 
+  it("should SHOW ignored buildings when hideHidden is false", () => {
+    const context: ClientFilterContext = {
+      hideSaved: false,
+      hideVisited: false,
+      hideHidden: false,
+      userStatuses,
+    };
+    const result = applyClientFilters(buildings, context);
+    expect(result.map(b => b.id)).toContain("5");
+  });
+
   it("should hide Saved buildings when hideSaved is true", () => {
     const context: ClientFilterContext = {
       hideSaved: true,
       hideVisited: false,
+      hideHidden: true,
       userStatuses,
     };
     const result = applyClientFilters(buildings, context);
@@ -58,6 +72,7 @@ describe("applyClientFilters", () => {
     const context: ClientFilterContext = {
       hideSaved: false,
       hideVisited: true,
+      hideHidden: true,
       userStatuses,
     };
     const result = applyClientFilters(buildings, context);
@@ -71,6 +86,7 @@ describe("applyClientFilters", () => {
     const context: ClientFilterContext = {
       hideSaved: true,
       hideVisited: true,
+      hideHidden: true,
       userStatuses,
     };
     const result = applyClientFilters(buildings, context);
@@ -89,6 +105,7 @@ describe("applyClientFilters", () => {
     const context: ClientFilterContext = {
       hideSaved: false,
       hideVisited: true, // Exclusion active
+      hideHidden: true,
       userStatuses,
     };
 
@@ -101,6 +118,7 @@ describe("applyClientFilters", () => {
     const context: ClientFilterContext = {
       hideSaved: true,
       hideVisited: true,
+      hideHidden: true,
       userStatuses,
     };
     const result = applyClientFilters(buildings, context);
@@ -122,6 +140,7 @@ describe("applyClientFilters", () => {
     const context: ClientFilterContext = {
       hideSaved: false,
       hideVisited: true, // Exclusion active for Visited
+      hideHidden: true,
       userStatuses,
     };
 
