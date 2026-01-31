@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Layers, MapPin, Maximize2, Minimize2 } from "lucide-react";
+import { useUserLocation } from "../../hooks/useUserLocation";
 
 interface BuildingMapProps {
   lat: number;
@@ -53,6 +54,11 @@ export function BuildingMap({
   locationPrecision = 'exact'
 }: BuildingMapProps) {
   const [isSatellite, setIsSatellite] = useState(false);
+  const { location: userLocation, requestLocation } = useUserLocation();
+
+  useEffect(() => {
+    requestLocation({ silent: true });
+  }, []);
 
   const isApproximate = locationPrecision === 'approximate';
 
@@ -101,10 +107,24 @@ export function BuildingMap({
         attributionControl={false}
       >
         <NavigationControl position="bottom-right" />
+        {userLocation && (
+          <Marker
+            longitude={userLocation.lng}
+            latitude={userLocation.lat}
+            anchor="center"
+            style={{ zIndex: 1 }}
+          >
+            <div className="relative flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-500/20 absolute rounded-full animate-pulse" />
+              <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg relative z-10" />
+            </div>
+          </Marker>
+        )}
         <Marker
           longitude={lng}
           latitude={lat}
           anchor={isApproximate ? "center" : "bottom"}
+          style={{ zIndex: 10 }}
         >
             {isApproximate ? (
                <div className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-lg`} />
