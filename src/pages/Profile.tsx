@@ -523,7 +523,7 @@ export default function Profile() {
     : undefined;
 
   return (
-    <AppLayout title={profile?.username || "Profile"} showLogo={false} showBack={!isOwnProfile}>
+    <AppLayout title="Profile" showLogo={false} showBack={!isOwnProfile}>
       <MetaHead
         title={`${profile?.username} (@${profile?.username})`}
         description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Plano.`}

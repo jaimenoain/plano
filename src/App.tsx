@@ -25,6 +25,7 @@ import EditArchitect from "./pages/EditArchitect";
 import ReviewDetails from "./pages/ReviewDetails";
 import Notifications from "./pages/Notifications";
 import Groups from "./pages/Groups";
+import Connect from "./pages/Connect";
 import CreateSession from "./pages/CreateSession";
 import AddBuilding from "./pages/AddBuilding";
 import EditBuilding from "./pages/EditBuilding";
@@ -102,6 +103,7 @@ const router = createBrowserRouter(
       <Route path="/add-building" element={<AddBuilding />} />
 
       <Route path="/groups" element={<Groups />} />
+      <Route path="/connect" element={<Connect />} />
       
       {/* Admin Route */}
       <Route path="/admin/unauthorized" element={<Unauthorized />} />
