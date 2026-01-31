@@ -55,3 +55,40 @@ export function filterLocalBuildings(
     return true;
   });
 }
+
+export interface ClientFilterContext {
+  hideSaved: boolean;
+  hideVisited: boolean;
+  userStatuses: Record<string, string>;
+}
+
+export function applyClientFilters<T extends { id: string; status?: string | null }>(
+  buildings: T[],
+  filters: ClientFilterContext
+): T[] {
+  return buildings.filter((b) => {
+    // 1. Filter out Demolished / Unbuilt (Standard Map Logic)
+    if (b.status === 'Demolished' || b.status === 'Unbuilt') {
+      return false;
+    }
+
+    // 2. Filter out "Ignored" by user
+    const userStatus = filters.userStatuses[b.id];
+    if (userStatus === 'ignored') {
+      return false;
+    }
+
+    // 3. Apply Exclusion Logic
+    // If Hide Saved is ON, remove if userStatus is 'pending'
+    if (filters.hideSaved && userStatus === 'pending') {
+      return false;
+    }
+
+    // If Hide Visited is ON, remove if userStatus is 'visited'
+    if (filters.hideVisited && userStatus === 'visited') {
+      return false;
+    }
+
+    return true;
+  });
+}

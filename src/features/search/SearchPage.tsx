@@ -16,19 +16,18 @@ import { useArchitectSearch } from "./hooks/useArchitectSearch";
 import { ArchitectSearchNudge } from "./components/ArchitectSearchNudge";
 import { ArchitectResultsList } from "./components/ArchitectResultsList";
 import { getBoundsFromBuildings, Bounds } from "@/utils/map";
-import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
 
 export default function SearchPage() {
   const navigate = useNavigate();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [searchScope, setSearchScope] = useState<SearchScope>('content');
-  const { statuses } = useUserBuildingStatuses();
    
   // 1. Existing hooks
   const {
     searchQuery, setSearchQuery,
-    filterVisited, setFilterVisited,
-    filterBucketList, setFilterBucketList,
+    statusFilters, setStatusFilters,
+    hideVisited, setHideVisited,
+    hideSaved, setHideSaved,
     filterContacts, setFilterContacts,
     personalMinRating, setPersonalMinRating,
     contactMinRating, setContactMinRating,
@@ -92,8 +91,9 @@ export default function SearchPage() {
   useEffect(() => {
       if (
         searchQuery ||
-        filterVisited ||
-        filterBucketList ||
+        (statusFilters && statusFilters.length > 0) ||
+        hideVisited ||
+        hideSaved ||
         filterContacts ||
         selectedContacts.length > 0 ||
         selectedArchitects.length > 0 ||
@@ -112,8 +112,9 @@ export default function SearchPage() {
       }
   }, [
     searchQuery,
-    filterVisited,
-    filterBucketList,
+    statusFilters,
+    hideVisited,
+    hideSaved,
     filterContacts,
     selectedContacts.length,
     selectedArchitects.length,
@@ -179,14 +180,10 @@ export default function SearchPage() {
     return result;
   }, [buildings, mapBounds, ignoreMapBounds, sortBy]);
 
-  // 5. Map Filtering (Hide Demolished/Unbuilt AND Hidden by User)
-  const mapBuildings = useMemo(() => {
-    return buildings.filter(b =>
-      b.status !== 'Demolished' &&
-      b.status !== 'Unbuilt' &&
-      statuses[b.id] !== 'ignored'
-    );
-  }, [buildings, statuses]);
+  // 5. Map Filtering
+  // Since buildings from useBuildingSearch are now fully filtered (including status/exclusions),
+  // we can use them directly for the map pins.
+  const mapBuildings = buildings;
 
   // 6. Merged Handlers
 
@@ -246,8 +243,9 @@ export default function SearchPage() {
 
   // Check if we are in the default clean state (no search/filters) to enable auto-zoom
   const isDefaultState = !searchQuery &&
-                         !filterVisited &&
-                         !filterBucketList &&
+                         (!statusFilters || statusFilters.length === 0) &&
+                         !hideVisited &&
+                         !hideSaved &&
                          !filterContacts &&
                          personalMinRating === 0 &&
                          contactMinRating === 0 &&
@@ -293,11 +291,14 @@ export default function SearchPage() {
             availableCollections={availableCollections}
             sortBy={sortBy}
             onSortChange={setSortBy}
-            // --- Main Branch Props (Visited/Bucket Toggles) ---
-            showVisited={filterVisited}
-            onVisitedChange={setFilterVisited}
-            showBucketList={filterBucketList}
-            onBucketListChange={setFilterBucketList}
+            // --- Main Branch Props (Updated Toggles) ---
+            statusFilters={statusFilters}
+            onStatusFiltersChange={setStatusFilters}
+            hideVisited={hideVisited}
+            onHideVisitedChange={setHideVisited}
+            hideSaved={hideSaved}
+            onHideSavedChange={setHideSaved}
+
             filterContacts={filterContacts}
             onFilterContactsChange={setFilterContacts}
 

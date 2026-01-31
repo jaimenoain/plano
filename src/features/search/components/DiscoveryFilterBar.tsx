@@ -29,11 +29,14 @@ export interface DiscoveryFilterBarProps {
   onCollectionsChange?: (collections: { id: string; name: string }[]) => void;
   availableCollections?: { id: string; name: string }[];
   
-  // Personal Props
-  showVisited: boolean;
-  onVisitedChange: (value: boolean) => void;
-  showBucketList: boolean;
-  onBucketListChange: (value: boolean) => void;
+  // Personal Props (Updated)
+  statusFilters: string[];
+  onStatusFiltersChange: (value: string[]) => void;
+  hideVisited: boolean;
+  onHideVisitedChange: (value: boolean) => void;
+  hideSaved: boolean;
+  onHideSavedChange: (value: boolean) => void;
+
   personalMinRating: number;
   onPersonalMinRatingChange: (value: number) => void;
   
@@ -66,8 +69,9 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
   const [locationQuery, setLocationQuery] = useState("");
 
   const hasActiveFilters =
-    props.showVisited ||
-    props.showBucketList ||
+    (props.statusFilters && props.statusFilters.length > 0) ||
+    props.hideVisited ||
+    props.hideSaved ||
     props.filterContacts ||
     (props.selectedContacts && props.selectedContacts.length > 0) ||
     (props.selectedArchitects && props.selectedArchitects.length > 0) ||
@@ -79,8 +83,9 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
     props.selectedAttributes.length > 0;
 
   const handleClearAll = () => {
-    props.onVisitedChange(false);
-    props.onBucketListChange(false);
+    props.onStatusFiltersChange([]);
+    props.onHideVisitedChange(false);
+    props.onHideSavedChange(false);
     props.onFilterContactsChange(false);
     props.onPersonalMinRatingChange(0);
     props.onContactMinRatingChange(0);
@@ -164,10 +169,12 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
               </SheetHeader>
 
               <FilterDrawerContent
-                showVisited={props.showVisited}
-                onVisitedChange={props.onVisitedChange}
-                showBucketList={props.showBucketList}
-                onBucketListChange={props.onBucketListChange}
+                statusFilters={props.statusFilters}
+                onStatusFiltersChange={props.onStatusFiltersChange}
+                hideVisited={props.hideVisited}
+                onHideVisitedChange={props.onHideVisitedChange}
+                hideSaved={props.hideSaved}
+                onHideSavedChange={props.onHideSavedChange}
                 personalMinRating={props.personalMinRating}
                 onPersonalMinRatingChange={props.onPersonalMinRatingChange}
                 selectedCollections={props.selectedCollections}
