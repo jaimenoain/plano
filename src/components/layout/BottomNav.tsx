@@ -1,13 +1,13 @@
-import { Activity, Map, Users, UserPlus, User } from "lucide-react";
+import { Activity, Map, Users, Compass, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 // Core navigation items
 const navItems = [
   { icon: Activity, label: "Feed", path: "/" },
-  { icon: Map, label: "Map", path: "/explore" },
-  { icon: Users, label: "Groups", path: "/groups" },
-  { icon: UserPlus, label: "Connect", path: "/connect" },
+  { icon: Compass, label: "Explore", path: "/explore" },
+  { icon: Map, label: "Map", path: "/search" },
+  { icon: Users, label: "Connect", path: "/connect" },
   { icon: User, label: "You", path: "/profile" },
 ];
 
@@ -19,7 +19,8 @@ export function BottomNav() {
       {/* Increased height to h-20 to accommodate larger text/icons comfortably */}
       <div className="flex items-center justify-around h-20 max-w-lg mx-auto px-2 pb-2">
         {navItems.map(({ icon: Icon, label, path }) => {
-          const isActive = location.pathname === path || (path === "/groups" && location.pathname.startsWith("/groups"));
+          // specific check for Connect to highlight when viewing Groups sub-routes
+          const isActive = location.pathname === path || (path === "/connect" && location.pathname.startsWith("/groups"));
           
           return (
             <Link
