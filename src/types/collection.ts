@@ -23,6 +23,8 @@ export interface CollectionItemWithBuilding {
     location_lng: number;
     city: string | null;
     country: string | null;
+    slug?: string | null;
+    short_id?: number | null;
     year_completed: number | null;
     hero_image_url: string | null;
     community_preview_url: string | null;

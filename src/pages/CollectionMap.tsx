@@ -8,6 +8,7 @@ import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { CollectionBuildingCard } from "@/components/collections/CollectionBuildingCard";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings } from "@/utils/map";
+import { getBuildingUrl } from "@/utils/url";
 import { Loader2, Settings, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -76,6 +77,8 @@ export default function CollectionMap() {
             location,
             city,
             country,
+            slug,
+            short_id,
             year_completed,
             hero_image_url,
             community_preview_url,
@@ -230,6 +233,8 @@ export default function CollectionMap() {
         location_lng: item.building.location_lng,
         city: item.building.city,
         country: item.building.country,
+        slug: item.building.slug,
+        short_id: item.building.short_id,
         year_completed: item.building.year_completed,
         location_precision: item.building.location_precision,
         architects: item.building.building_architects?.map((ba: any) => ba.architects) || [],
@@ -328,7 +333,7 @@ export default function CollectionMap() {
                                 canEdit={canEdit}
                                 onUpdateNote={(note) => handleUpdateNote(item.id, note)}
                                 onNavigate={() => {
-                                    // Focus on map logic could be here, but highlightedId handles most of it
+                                    navigate(getBuildingUrl(item.building.id, item.building.slug, item.building.short_id));
                                 }}
                                 categorizationMethod={collection.categorization_method}
                                 customCategories={collection.custom_categories}
@@ -350,7 +355,15 @@ export default function CollectionMap() {
             <BuildingDiscoveryMap
                 externalBuildings={mapBuildings}
                 highlightedId={highlightedId}
-                onMarkerClick={(id) => setHighlightedId(id)}
+                onMarkerClick={(id) => {
+                  setHighlightedId(id);
+                  const building = mapBuildings.find(b => b.id === id);
+                  if (building) {
+                    navigate(getBuildingUrl(building.id, building.slug, building.short_id));
+                  } else {
+                    navigate(`/building/${id}`);
+                  }
+                }}
                 forcedBounds={bounds}
                 showImages={collection.show_community_images ?? true}
             />
