@@ -1,12 +1,12 @@
-import { Activity, Map, Users, Compass, User } from "lucide-react";
+import { Activity, Users, User, Play, Search } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 // Core navigation items
 const navItems = [
   { icon: Activity, label: "Feed", path: "/" },
-  { icon: Compass, label: "Explore", path: "/explore" },
-  { icon: Map, label: "Map", path: "/search" },
+  { icon: Play, label: "Explore", path: "/explore" },
+  { icon: Search, label: "Search", path: "/search" },
   { icon: Users, label: "Connect", path: "/connect" },
   { icon: User, label: "You", path: "/profile" },
 ];
