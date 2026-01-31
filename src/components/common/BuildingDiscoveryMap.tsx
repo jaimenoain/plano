@@ -336,9 +336,9 @@ export function BuildingDiscoveryMap({
     let pinTooltip = null;
 
     if (status === 'visited') {
-        strokeClass = "text-[#333333]";
-        fillClass = "fill-[#333333]"; // Charcoal
-        dotBgClass = "bg-[#333333]";
+        strokeClass = "text-gray-600";
+        fillClass = "fill-gray-600";
+        dotBgClass = "bg-gray-600";
         pinTooltip = <span className="opacity-75 capitalize text-center">(Visited)</span>;
     } else if (status === 'pending') {
         strokeClass = "text-gray-500";
