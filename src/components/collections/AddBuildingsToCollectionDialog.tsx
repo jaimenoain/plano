@@ -50,11 +50,7 @@ export function AddBuildingsToCollectionDialog({
             country,
             address,
             slug,
-            hero_image_url,
-            typology,
-            access_type,
-            materials,
-            status
+            hero_image_url
           )
         `)
         .eq("user_id", user.id)
