@@ -19,15 +19,15 @@ describe("applyClientFilters", () => {
     "6": "none",    // No status
   };
 
-  it("should filter out Demolished and Unbuilt buildings", () => {
+  it("should NOT filter out Demolished and Unbuilt buildings (filtered only on map)", () => {
     const context: ClientFilterContext = {
       hideSaved: false,
       hideVisited: false,
       userStatuses: {},
     };
     const result = applyClientFilters(buildings, context);
-    expect(result.map(b => b.id)).not.toContain("2");
-    expect(result.map(b => b.id)).not.toContain("3");
+    expect(result.map(b => b.id)).toContain("2");
+    expect(result.map(b => b.id)).toContain("3");
     expect(result.map(b => b.id)).toContain("1");
   });
 

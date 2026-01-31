@@ -183,7 +183,10 @@ export default function SearchPage() {
   // 5. Map Filtering
   // Since buildings from useBuildingSearch are now fully filtered (including status/exclusions),
   // we can use them directly for the map pins.
-  const mapBuildings = buildings;
+  // Exception: Hide Demolished/Unbuilt buildings from map, but keep in list.
+  const mapBuildings = useMemo(() => {
+    return buildings.filter(b => b.status !== 'Demolished' && b.status !== 'Unbuilt');
+  }, [buildings]);
 
   // 6. Merged Handlers
 
