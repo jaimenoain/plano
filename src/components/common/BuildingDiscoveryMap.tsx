@@ -341,14 +341,14 @@ export function BuildingDiscoveryMap({
         dotBgClass = "bg-[#333333]";
         pinTooltip = <span className="opacity-75 capitalize text-center">(Visited)</span>;
     } else if (status === 'pending') {
-        strokeClass = "text-[#A3A3A3]";
-        fillClass = "fill-[#A3A3A3]"; // Grey
-        dotBgClass = "bg-[#A3A3A3]";
+        strokeClass = "text-gray-500";
+        fillClass = "fill-[#EEFF41]"; // Corporate Yellow
+        dotBgClass = "bg-[#EEFF41]";
         pinTooltip = <span className="opacity-75 capitalize text-center">(Pending)</span>;
     } else if (building.social_context) {
-        strokeClass = "text-[#EEFF41]";
-        fillClass = "fill-[#EEFF41]"; // Neon
-        dotBgClass = "bg-[#EEFF41]";
+        strokeClass = "text-gray-500";
+        fillClass = "fill-gray-300"; // Light Grey
+        dotBgClass = "bg-gray-300";
         pinTooltip = <span className="opacity-90 text-center">({building.social_context})</span>;
     }
 

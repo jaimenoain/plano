@@ -67,8 +67,8 @@ test('Verify Discovery Map Full Screen Toggle', async ({ page }) => {
   // 5. Verification
 
   // Wait for map container to be visible.
-  // We target the map inside the desktop view container (.md:grid) since we are on 1280px viewport.
-  const mapContainer = page.locator('.md\\:grid').getByTestId('map-container');
+  // We target the visible map container (using global selector to handle Portal)
+  const mapContainer = page.locator('[data-testid="map-container"]:visible');
   await expect(mapContainer).toBeVisible();
 
   // Find the button with title "Enter Fullscreen" within this map
@@ -82,7 +82,7 @@ test('Verify Discovery Map Full Screen Toggle', async ({ page }) => {
   // Check for fixed inset-0 classes
   await expect(mapContainer).toHaveClass(/fixed/);
   await expect(mapContainer).toHaveClass(/inset-0/);
-  await expect(mapContainer).toHaveClass(/z-\[100\]/);
+  await expect(mapContainer).toHaveClass(/z-\[5000\]/);
 
   // Check that the button title changed to "Exit Fullscreen"
   const exitBtn = mapContainer.locator('button[title="Exit Fullscreen"]');
