@@ -231,16 +231,16 @@ export default function WriteReview() {
   }, [id, user, authLoading, navigate]);
 
   const processFiles = useCallback(async (files: File[]) => {
+    const newImages: ReviewImage[] = [];
     for (const file of files) {
       try {
         const compressedFile = await resizeImage(file);
         const previewUrl = URL.createObjectURL(compressedFile);
-
-        setImages(prev => [...prev, {
+        newImages.push({
           id: crypto.randomUUID(),
           file: compressedFile,
           preview: previewUrl
-        }]);
+        });
       } catch (error) {
         console.error("Error compressing image:", error);
         toast({
@@ -249,6 +249,9 @@ export default function WriteReview() {
           description: file.name
         });
       }
+    }
+    if (newImages.length > 0) {
+      setImages(prev => [...prev, ...newImages]);
     }
   }, [toast]);
 
@@ -306,6 +309,8 @@ export default function WriteReview() {
     const imageFiles = files.filter(f => f.type.startsWith('image/'));
     const videoFiles = files.filter(f => f.type.startsWith('video/'));
 
+    const tasks: Promise<void>[] = [];
+
     // Process Videos
     if (videoFiles.length > 0) {
       // Constraint: Only one video allowed per review
@@ -325,21 +330,24 @@ export default function WriteReview() {
              description: "You already have a video. Remove the existing one first."
            });
          } else {
-           await processVideo(videoFiles[0]);
+           tasks.push(processVideo(videoFiles[0]));
          }
       }
     }
 
     // Process Images
     if (imageFiles.length > 0) {
-      await processFiles(imageFiles);
+      tasks.push(processFiles(imageFiles));
     }
+
+    await Promise.all(tasks);
   }, [processFiles, processVideo, toast, video.status]);
 
   const handleMediaSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      await processMediaSelection(files);
+      // Do not await processMediaSelection to ensure input is cleared immediately
+      processMediaSelection(files).catch(console.error);
       // Cleanup input
       e.target.value = "";
     }
@@ -401,7 +409,8 @@ export default function WriteReview() {
 
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
         const items = Array.from(e.dataTransfer.files);
-        await processMediaSelection(items);
+        // Do not await processMediaSelection to ensure non-blocking UI
+        processMediaSelection(items).catch(console.error);
       }
     };
 
