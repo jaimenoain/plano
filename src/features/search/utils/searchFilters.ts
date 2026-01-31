@@ -60,14 +60,20 @@ export interface ClientFilterContext {
   hideSaved: boolean;
   hideVisited: boolean;
   hideHidden: boolean;
+  hideWithoutImages: boolean;
   userStatuses: Record<string, string>;
 }
 
-export function applyClientFilters<T extends { id: string; status?: string | null }>(
+export function applyClientFilters<T extends { id: string; status?: string | null; main_image_url?: string | null }>(
   buildings: T[],
   filters: ClientFilterContext
 ): T[] {
   return buildings.filter((b) => {
+    // 1. Filter out buildings without images if requested
+    if (filters.hideWithoutImages && !b.main_image_url) {
+      return false;
+    }
+
     // 2. Filter out "Ignored" by user
     const userStatus = filters.userStatuses[b.id];
     if (filters.hideHidden && userStatus === 'ignored') {

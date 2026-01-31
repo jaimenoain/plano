@@ -29,6 +29,7 @@ export default function SearchPage() {
     hideVisited, setHideVisited,
     hideSaved, setHideSaved,
     hideHidden, setHideHidden,
+    hideWithoutImages, setHideWithoutImages,
     filterContacts, setFilterContacts,
     personalMinRating, setPersonalMinRating,
     contactMinRating, setContactMinRating,
@@ -95,6 +96,7 @@ export default function SearchPage() {
         (statusFilters && statusFilters.length > 0) ||
         hideVisited ||
         hideSaved ||
+        hideWithoutImages ||
         filterContacts ||
         selectedContacts.length > 0 ||
         selectedArchitects.length > 0 ||
@@ -116,6 +118,7 @@ export default function SearchPage() {
     statusFilters,
     hideVisited,
     hideSaved,
+    hideWithoutImages,
     filterContacts,
     selectedContacts.length,
     selectedArchitects.length,
@@ -250,6 +253,7 @@ export default function SearchPage() {
                          (!statusFilters || statusFilters.length === 0) &&
                          !hideVisited &&
                          !hideSaved &&
+                         !hideWithoutImages &&
                          !filterContacts &&
                          personalMinRating === 0 &&
                          contactMinRating === 0 &&
@@ -304,6 +308,8 @@ export default function SearchPage() {
             onHideSavedChange={setHideSaved}
             hideHidden={hideHidden}
             onHideHiddenChange={setHideHidden}
+            hideWithoutImages={hideWithoutImages}
+            onHideWithoutImagesChange={setHideWithoutImages}
 
             filterContacts={filterContacts}
             onFilterContactsChange={setFilterContacts}

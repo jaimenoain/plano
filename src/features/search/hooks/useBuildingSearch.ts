@@ -226,6 +226,7 @@ export function useBuildingSearch() {
   const [hideVisited, setHideVisited] = useState(false);
   const [hideSaved, setHideSaved] = useState(false);
   const [hideHidden, setHideHidden] = useState(true);
+  const [hideWithoutImages, setHideWithoutImages] = useState(false);
 
   const [filterContacts, setFilterContacts] = useState(false);
   const [personalMinRating, setPersonalMinRating] = useState<number>(0);
@@ -275,6 +276,7 @@ export function useBuildingSearch() {
     hideVisited,
     hideSaved,
     hideHidden,
+    hideWithoutImages,
     filterContacts,
     personalMinRating,
     contactMinRating,
@@ -511,9 +513,10 @@ export function useBuildingSearch() {
       hideSaved,
       hideVisited,
       hideHidden,
+      hideWithoutImages,
       userStatuses
     });
-  }, [rawBuildings, hideSaved, hideVisited, hideHidden, userStatuses]);
+  }, [rawBuildings, hideSaved, hideVisited, hideHidden, hideWithoutImages, userStatuses]);
 
   const updateLocation = (center: { lat: number, lng: number }) => {
       setUserLocation(center);
@@ -531,6 +534,8 @@ export function useBuildingSearch() {
       setHideSaved,
       hideHidden,
       setHideHidden,
+      hideWithoutImages,
+      setHideWithoutImages,
       // ...
       filterContacts,
       setFilterContacts,

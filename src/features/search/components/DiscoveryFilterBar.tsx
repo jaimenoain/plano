@@ -38,6 +38,8 @@ export interface DiscoveryFilterBarProps {
   onHideSavedChange: (value: boolean) => void;
   hideHidden: boolean;
   onHideHiddenChange: (value: boolean) => void;
+  hideWithoutImages?: boolean;
+  onHideWithoutImagesChange?: (value: boolean) => void;
 
   personalMinRating: number;
   onPersonalMinRatingChange: (value: number) => void;
@@ -75,6 +77,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
     props.hideVisited ||
     props.hideSaved ||
     !props.hideHidden ||
+    props.hideWithoutImages ||
     props.filterContacts ||
     (props.selectedContacts && props.selectedContacts.length > 0) ||
     (props.selectedArchitects && props.selectedArchitects.length > 0) ||
@@ -90,6 +93,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
     props.onHideVisitedChange(false);
     props.onHideSavedChange(false);
     props.onHideHiddenChange(true);
+    if (props.onHideWithoutImagesChange) props.onHideWithoutImagesChange(false);
     props.onFilterContactsChange(false);
     props.onPersonalMinRatingChange(0);
     props.onContactMinRatingChange(0);
@@ -181,6 +185,8 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                 onHideSavedChange={props.onHideSavedChange}
                 hideHidden={props.hideHidden}
                 onHideHiddenChange={props.onHideHiddenChange}
+                hideWithoutImages={props.hideWithoutImages}
+                onHideWithoutImagesChange={props.onHideWithoutImagesChange}
                 personalMinRating={props.personalMinRating}
                 onPersonalMinRatingChange={props.onPersonalMinRatingChange}
                 selectedCollections={props.selectedCollections}
