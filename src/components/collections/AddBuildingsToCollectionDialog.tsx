@@ -242,7 +242,7 @@ export function AddBuildingsToCollectionDialog({
                                     <Button
                                         size="sm"
                                         variant={isAdded ? "secondary" : "default"}
-                                        className="h-8 w-8 p-0 shrink-0"
+                                        className="h-8 w-8 p-0 shrink-0 ml-auto relative z-10"
                                         disabled={isAdded || addMutation.isPending}
                                         onClick={(e) => {
                                             e.stopPropagation();
