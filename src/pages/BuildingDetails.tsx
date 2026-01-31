@@ -4,8 +4,12 @@ import {
   Loader2, MapPin, Calendar, Send,
   Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
-  MessageCircle, EyeOff
+  MessageCircle, EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { resizeImage } from "@/lib/image-compression";
+import { uploadFile } from "@/utils/upload";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -193,6 +197,14 @@ export default function BuildingDetails() {
   const [linksLoading, setLinksLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
+  // New State for Edit View Enhancement
+  const [userLinks, setUserLinks] = useState<{id: string, url: string, title: string}[]>([]);
+  const [pendingImages, setPendingImages] = useState<{id: string, file: File, preview: string}[]>([]);
+  const [showCollections, setShowCollections] = useState(false);
+  const [showLinkEditor, setShowLinkEditor] = useState(false);
+  const [newLinkUrl, setNewLinkUrl] = useState("");
+  const [newLinkTitle, setNewLinkTitle] = useState("");
+
   // Note & Tags
   const [note, setNote] = useState("");
   // const [tags, setTags] = useState<string[]>([]); // Deprecated
@@ -318,6 +330,17 @@ export default function BuildingDetails() {
             if (userEntry.content || (myCollectionIds.length > 0)) {
                 setShowNoteEditor(true);
             }
+
+            if (myCollectionIds.length > 0) {
+                setShowCollections(true);
+            }
+
+            // Fetch User Links
+            const { data: userLinksData } = await supabase
+              .from("review_links")
+              .select("id, url, title")
+              .eq("review_id", userEntry.id);
+            if (userLinksData) setUserLinks(userLinksData);
         } else {
             setIsEditing(true);
             if (userEntryError) {
@@ -540,6 +563,61 @@ export default function BuildingDetails() {
        }
   };
 
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      for (const file of files) {
+        try {
+          const compressedFile = await resizeImage(file);
+          const previewUrl = URL.createObjectURL(compressedFile);
+          setPendingImages(prev => [...prev, {
+            id: crypto.randomUUID(),
+            file: compressedFile,
+            preview: previewUrl
+          }]);
+        } catch (error) {
+          console.error("Error processing image", error);
+          toast({ variant: "destructive", title: "Error processing image" });
+        }
+      }
+      e.target.value = ""; // Reset input
+    }
+  };
+
+  const removePendingImage = (id: string) => {
+    setPendingImages(prev => {
+      const newImages = prev.filter(img => img.id !== id);
+      const removed = prev.find(img => img.id === id);
+      if (removed) URL.revokeObjectURL(removed.preview);
+      return newImages;
+    });
+  };
+
+  const handleAddLink = () => {
+    if (!newLinkUrl.trim()) return;
+    let url = newLinkUrl.trim();
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+
+    try {
+        new URL(url);
+    } catch {
+        toast({ variant: "destructive", title: "Invalid URL" });
+        return;
+    }
+
+    setUserLinks(prev => [...prev, {
+        id: crypto.randomUUID(),
+        url,
+        title: newLinkTitle
+    }]);
+    setNewLinkUrl("");
+    setNewLinkTitle("");
+  };
+
+  const handleRemoveLink = (id: string) => {
+      setUserLinks(prev => prev.filter(l => l.id !== id));
+  };
+
   const handleSaveNote = async () => {
       if (!user || !building) return;
       setIsSavingNote(true);
@@ -548,7 +626,7 @@ export default function BuildingDetails() {
       if (!userStatus) setUserStatus('visited');
 
       try {
-          const { error } = await supabase.from("user_buildings").upsert({
+          const { data: savedEntry, error } = await supabase.from("user_buildings").upsert({
               user_id: user.id,
               building_id: building.id,
               status: statusToUse,
@@ -556,9 +634,13 @@ export default function BuildingDetails() {
               content: note,
               // tags: tags, // Deprecated
               edited_at: new Date().toISOString()
-          }, { onConflict: 'user_id, building_id' });
+          }, { onConflict: 'user_id, building_id' })
+          .select()
+          .single();
 
           if (error) throw error;
+
+          const reviewId = savedEntry.id;
 
           // Sync Collections
           const addedIds = selectedCollectionIds.filter(id => !initialCollectionIds.includes(id));
@@ -585,8 +667,39 @@ export default function BuildingDetails() {
 
           setInitialCollectionIds(selectedCollectionIds);
 
-          toast({ title: "Note and collections saved" });
+          // Sync Links (Delete all and re-insert strategy)
+          if (reviewId) {
+             await supabase.from("review_links").delete().eq("review_id", reviewId);
+             if (userLinks.length > 0) {
+                 await supabase.from("review_links").insert(
+                     userLinks.map(l => ({
+                         review_id: reviewId,
+                         user_id: user.id,
+                         url: l.url,
+                         title: l.title
+                     }))
+                 );
+             }
+          }
+
+          // Sync Images (Upload pending)
+          if (pendingImages.length > 0 && reviewId) {
+              for (const img of pendingImages) {
+                  const storagePath = await uploadFile(img.file, reviewId);
+                  await supabase.from("review_images").insert({
+                      review_id: reviewId,
+                      user_id: user.id,
+                      storage_path: storagePath
+                  });
+              }
+              // Clear pending images
+              pendingImages.forEach(img => URL.revokeObjectURL(img.preview));
+              setPendingImages([]);
+          }
+
+          toast({ title: "Review saved" });
           setIsEditing(false);
+          fetchBuildingData();
       } catch (error: any) {
           console.error("Save note failed", error);
           toast({ variant: "destructive", title: "Failed to save note" });
@@ -987,7 +1100,7 @@ export default function BuildingDetails() {
 
                         {/* Note & Tags Editor */}
                         {showNoteEditor && (userStatus === 'visited' || userStatus === 'pending') && (
-                            <div className="pt-4 border-t border-dashed space-y-3 animate-in fade-in slide-in-from-top-2">
+                            <div className="pt-4 border-t border-dashed space-y-4 animate-in fade-in slide-in-from-top-2">
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium uppercase text-muted-foreground">Your Note</label>
                                     <Textarea
@@ -997,14 +1110,131 @@ export default function BuildingDetails() {
                                         className="resize-none"
                                     />
                                 </div>
-                                <div className="space-y-1">
-                                    <CollectionSelector
-                                        userId={user.id}
-                                        selectedCollectionIds={selectedCollectionIds}
-                                        onChange={setSelectedCollectionIds}
-                                    />
+
+                                {/* Action Buttons Row */}
+                                <div className="flex flex-wrap gap-2">
+                                     <Button
+                                        variant={pendingImages.length > 0 ? "secondary" : "outline"}
+                                        size="sm"
+                                        className="gap-2 text-xs h-8"
+                                        onClick={() => document.getElementById('hidden-file-input')?.click()}
+                                     >
+                                        <ImagePlus className="w-3 h-3" />
+                                        Add media
+                                     </Button>
+                                     <input
+                                        id="hidden-file-input"
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleImageSelect}
+                                     />
+
+                                     <Button
+                                        variant={showCollections || selectedCollectionIds.length > 0 ? "secondary" : "outline"}
+                                        size="sm"
+                                        className="gap-2 text-xs h-8"
+                                        onClick={() => setShowCollections(!showCollections)}
+                                     >
+                                        <Plus className="w-3 h-3" />
+                                        Add to my maps
+                                     </Button>
+
+                                     <Button
+                                        variant={showLinkEditor || userLinks.length > 0 ? "secondary" : "outline"}
+                                        size="sm"
+                                        className="gap-2 text-xs h-8"
+                                        onClick={() => setShowLinkEditor(!showLinkEditor)}
+                                     >
+                                        <LinkIcon className="w-3 h-3" />
+                                        Add link
+                                     </Button>
                                 </div>
-                                <div className="flex justify-end">
+
+                                {/* Media Section */}
+                                {pendingImages.length > 0 && (
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 animate-in fade-in slide-in-from-top-1">
+                                        {pendingImages.map((img) => (
+                                            <div key={img.id} className="relative aspect-square group rounded-md overflow-hidden border bg-muted">
+                                                <img src={img.preview} className="w-full h-full object-cover" alt="Preview" />
+                                                <button
+                                                    onClick={() => removePendingImage(img.id)}
+                                                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Collections Section */}
+                                {showCollections && (
+                                    <div className="pt-2 animate-in fade-in slide-in-from-top-1">
+                                         <CollectionSelector
+                                            userId={user.id}
+                                            selectedCollectionIds={selectedCollectionIds}
+                                            onChange={setSelectedCollectionIds}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Links Section */}
+                                {(showLinkEditor || userLinks.length > 0) && (
+                                    <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-1">
+                                         {userLinks.length > 0 && (
+                                             <div className="space-y-2">
+                                                 {userLinks.map(link => (
+                                                     <div key={link.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50 border text-sm">
+                                                         <div className="flex flex-col overflow-hidden">
+                                                             <span className="font-medium truncate">{link.title || link.url}</span>
+                                                             <span className="text-xs text-muted-foreground truncate opacity-70">{link.url}</span>
+                                                         </div>
+                                                         <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                                            onClick={() => handleRemoveLink(link.id)}
+                                                         >
+                                                            <Trash2 className="w-3 h-3" />
+                                                         </Button>
+                                                     </div>
+                                                 ))}
+                                             </div>
+                                         )}
+
+                                         {showLinkEditor && (
+                                             <div className="flex flex-col gap-2 p-3 bg-muted/20 rounded-md border border-dashed">
+                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                     <div className="space-y-1">
+                                                        <Label className="text-[10px] uppercase text-muted-foreground">URL</Label>
+                                                        <Input
+                                                            value={newLinkUrl}
+                                                            onChange={e => setNewLinkUrl(e.target.value)}
+                                                            placeholder="https://..."
+                                                            className="h-8 text-xs"
+                                                        />
+                                                     </div>
+                                                     <div className="space-y-1">
+                                                        <Label className="text-[10px] uppercase text-muted-foreground">Title</Label>
+                                                        <Input
+                                                            value={newLinkTitle}
+                                                            onChange={e => setNewLinkTitle(e.target.value)}
+                                                            placeholder="Optional title"
+                                                            className="h-8 text-xs"
+                                                        />
+                                                     </div>
+                                                 </div>
+                                                 <Button size="sm" variant="secondary" onClick={handleAddLink} className="self-end h-7 text-xs">
+                                                     Add Link
+                                                 </Button>
+                                             </div>
+                                         )}
+                                    </div>
+                                )}
+
+                                <div className="flex justify-end pt-2">
                                     <Button size="sm" onClick={handleSaveNote} disabled={isSavingNote}>
                                         {isSavingNote && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                                         Save
