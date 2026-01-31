@@ -40,9 +40,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
     const handleNoteBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
         onUpdateNote(value);
-        if (!value) {
-            setIsEditingNote(false);
-        }
+        setIsEditingNote(false);
     };
 
     const currentCategory = customCategories?.find(c => c.id === item.custom_category_id);
@@ -136,7 +134,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     {/* Note Section */}
                     <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                         {canEdit ? (
-                            isEditingNote || item.note ? (
+                            isEditingNote ? (
                                 <div className="relative group/note">
                                     <Textarea
                                         ref={textareaRef}
@@ -144,17 +142,19 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                         defaultValue={item.note || ""}
                                         onBlur={handleNoteBlur}
                                         onFocus={() => setIsEditingNote(true)}
-                                        className={cn(
-                                            "resize-none text-xs min-h-[40px] bg-secondary/30 border-transparent focus:border-input focus:bg-background transition-colors p-2",
-                                            !isEditingNote && "hover:bg-secondary/50 cursor-text truncate"
-                                        )}
-                                        rows={isEditingNote ? 3 : 1}
+                                        className="resize-none text-xs min-h-[60px] bg-secondary/30 border-transparent focus:border-input focus:bg-background transition-colors p-2"
+                                        rows={3}
                                     />
-                                     {isEditingNote && (
-                                        <div className="absolute bottom-1 right-1 opacity-50 pointer-events-none">
-                                            <Save className="h-3 w-3" />
-                                        </div>
-                                     )}
+                                     <div className="absolute bottom-1 right-1 opacity-50 pointer-events-none">
+                                         <Save className="h-3 w-3" />
+                                     </div>
+                                </div>
+                            ) : item.note ? (
+                                <div
+                                    onClick={() => setIsEditingNote(true)}
+                                    className="text-xs text-muted-foreground italic bg-secondary/30 p-2 rounded line-clamp-2 hover:bg-secondary/50 cursor-pointer transition-colors"
+                                >
+                                    "{item.note}"
                                 </div>
                             ) : (
                                <button
