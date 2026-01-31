@@ -6,6 +6,10 @@ import { cn } from "@/lib/utils";
 interface AppLayoutProps {
   children: ReactNode;
   title?: string;
+  variant?: 'default' | 'home' | 'map';
+  searchBar?: ReactNode;
+  leftAction?: ReactNode;
+  rightAction?: ReactNode;
   showLogo?: boolean;
   showNav?: boolean;
   showBack?: boolean;
@@ -16,6 +20,10 @@ interface AppLayoutProps {
 export function AppLayout({ 
   children, 
   title, 
+  variant,
+  searchBar,
+  leftAction,
+  rightAction,
   showLogo = true,
   showNav = true,
   showBack = false,
@@ -24,7 +32,16 @@ export function AppLayout({
 }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <Header title={title} showLogo={showLogo} showBack={showBack} action={headerAction} />
+      <Header
+        title={title}
+        variant={variant}
+        searchBar={searchBar}
+        leftAction={leftAction}
+        rightAction={rightAction}
+        showLogo={showLogo}
+        showBack={showBack}
+        action={headerAction}
+      />
       {/* CHANGED: Reduced max-w-7xl to max-w-5xl to constrain width and make cards shorter */}
       <main className={cn(
         "pt-16 w-full",
