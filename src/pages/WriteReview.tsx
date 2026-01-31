@@ -744,7 +744,7 @@ export default function WriteReview() {
 
         {/* Rating */}
         <div className="space-y-2">
-          <label className="text-sm font-medium uppercase text-muted-foreground">Rating (Optional)</label>
+          <label className="text-sm font-medium uppercase text-muted-foreground">Add points (Optional)</label>
           <div
             className="flex items-center gap-2"
             onMouseLeave={() => setHoverRating(null)}
