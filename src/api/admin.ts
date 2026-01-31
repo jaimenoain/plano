@@ -14,7 +14,9 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     { count: totalBuildings, error: buildingsError },
     { count: totalReviews, error: reviewsError },
     { count: totalPhotos, error: photosError },
-    { count: pendingReports, error: reportsError }
+    { count: pendingReports, error: reportsError },
+    // Heatmap Data
+    { data: heatmapData, error: heatmapError }
   ] = await Promise.all([
     supabase.rpc('get_admin_pulse'),
     supabase.rpc('get_admin_trends'),
@@ -25,7 +27,8 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     supabase.from('buildings').select('*', { count: 'exact', head: true }).eq('is_deleted', false),
     supabase.from('user_buildings').select('*', { count: 'exact', head: true }).not('content', 'is', null),
     supabase.from('buildings').select('*', { count: 'exact', head: true }).not('main_image_url', 'is', null).eq('is_deleted', false),
-    supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+    supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.rpc('get_photo_heatmap_data' as any)
   ]);
 
   if (pulseError) console.error("Pulse Error:", pulseError);
@@ -34,6 +37,7 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
   if (contentError) console.error("Content Error:", contentError);
   if (retentionError) console.error("Retention Error:", retentionError);
   if (notificationsError) console.error("Notifications Error:", notificationsError);
+  if (heatmapError) console.error("Heatmap Error:", heatmapError);
 
   if (buildingsError) console.error("Failed to count buildings", buildingsError);
   if (reviewsError) console.error("Failed to count reviews", reviewsError);
@@ -102,7 +106,8 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     content_intelligence: content.content_intelligence,
     user_leaderboard: leaderboards,
     retention_analysis: retention,
-    notification_intelligence: notifications
+    notification_intelligence: notifications,
+    heatmap_data: (heatmapData as any[]) || []
   };
 
   return stats;

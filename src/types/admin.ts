@@ -90,6 +90,11 @@ export type DashboardStats = {
       count: number;
     }[];
   };
+  heatmap_data: {
+    lat: number;
+    lng: number;
+    weight: number;
+  }[];
 };
 
 export type LeaderboardUser = {
@@ -236,4 +241,11 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
       { bucket: "20+", count: 85 },
     ],
   },
+  heatmap_data: [
+    { lat: 40.7128, lng: -74.0060, weight: 50 }, // NYC
+    { lat: 51.5074, lng: -0.1278, weight: 30 },  // London
+    { lat: 35.6762, lng: 139.6503, weight: 20 }, // Tokyo
+    { lat: 48.8566, lng: 2.3522, weight: 40 },   // Paris
+    { lat: -33.8688, lng: 151.2093, weight: 15 }, // Sydney
+  ],
 };
