@@ -67,11 +67,6 @@ export function applyClientFilters<T extends { id: string; status?: string | nul
   filters: ClientFilterContext
 ): T[] {
   return buildings.filter((b) => {
-    // 1. Filter out Demolished / Unbuilt (Standard Map Logic)
-    if (b.status === 'Demolished' || b.status === 'Unbuilt') {
-      return false;
-    }
-
     // 2. Filter out "Ignored" by user
     const userStatus = filters.userStatuses[b.id];
     if (userStatus === 'ignored') {
