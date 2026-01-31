@@ -28,6 +28,7 @@ export default function SearchPage() {
     statusFilters, setStatusFilters,
     hideVisited, setHideVisited,
     hideSaved, setHideSaved,
+    hideHidden, setHideHidden,
     filterContacts, setFilterContacts,
     personalMinRating, setPersonalMinRating,
     contactMinRating, setContactMinRating,
@@ -298,6 +299,8 @@ export default function SearchPage() {
             onHideVisitedChange={setHideVisited}
             hideSaved={hideSaved}
             onHideSavedChange={setHideSaved}
+            hideHidden={hideHidden}
+            onHideHiddenChange={setHideHidden}
 
             filterContacts={filterContacts}
             onFilterContactsChange={setFilterContacts}

@@ -36,6 +36,8 @@ export interface DiscoveryFilterBarProps {
   onHideVisitedChange: (value: boolean) => void;
   hideSaved: boolean;
   onHideSavedChange: (value: boolean) => void;
+  hideHidden: boolean;
+  onHideHiddenChange: (value: boolean) => void;
 
   personalMinRating: number;
   onPersonalMinRatingChange: (value: number) => void;
@@ -72,6 +74,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
     (props.statusFilters && props.statusFilters.length > 0) ||
     props.hideVisited ||
     props.hideSaved ||
+    !props.hideHidden ||
     props.filterContacts ||
     (props.selectedContacts && props.selectedContacts.length > 0) ||
     (props.selectedArchitects && props.selectedArchitects.length > 0) ||
@@ -86,6 +89,7 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
     props.onStatusFiltersChange([]);
     props.onHideVisitedChange(false);
     props.onHideSavedChange(false);
+    props.onHideHiddenChange(true);
     props.onFilterContactsChange(false);
     props.onPersonalMinRatingChange(0);
     props.onContactMinRatingChange(0);
@@ -175,6 +179,8 @@ export function DiscoveryFilterBar(props: DiscoveryFilterBarProps) {
                 onHideVisitedChange={props.onHideVisitedChange}
                 hideSaved={props.hideSaved}
                 onHideSavedChange={props.onHideSavedChange}
+                hideHidden={props.hideHidden}
+                onHideHiddenChange={props.onHideHiddenChange}
                 personalMinRating={props.personalMinRating}
                 onPersonalMinRatingChange={props.onPersonalMinRatingChange}
                 selectedCollections={props.selectedCollections}

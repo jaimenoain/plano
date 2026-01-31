@@ -213,10 +213,14 @@ export default function Explore() {
                         hidePersonalFilters={true} // Hide Visited/BucketList
 
                         // Pass all states
-                        showVisited={showVisited}
-                        onVisitedChange={setShowVisited}
-                        showBucketList={showBucketList}
-                        onBucketListChange={setShowBucketList}
+                        statusFilters={[]}
+                        onStatusFiltersChange={() => {}}
+                        hideVisited={!showVisited}
+                        onHideVisitedChange={(val) => setShowVisited(!val)}
+                        hideSaved={!showBucketList}
+                        onHideSavedChange={(val) => setShowBucketList(!val)}
+                        hideHidden={true}
+                        onHideHiddenChange={() => {}}
                         personalMinRating={personalMinRating}
                         onPersonalMinRatingChange={setPersonalMinRating}
                         filterContacts={filterContacts}
