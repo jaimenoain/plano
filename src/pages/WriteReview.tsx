@@ -69,8 +69,7 @@ export default function WriteReview() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -698,6 +697,8 @@ export default function WriteReview() {
     };
   }, [images, video.preview]);
 
+  const hasMedia = images.length > 0 || video.status !== 'idle' || !!video.preview;
+
   if (loading) {
     return (
       <AppLayout title="Loading...">
@@ -782,134 +783,115 @@ export default function WriteReview() {
           />
         </div>
 
-        {/* Video Upload */}
+        {/* Unified Media Upload */}
         <div className="space-y-4">
-          <label className="text-sm font-medium uppercase text-muted-foreground">Video</label>
-          <input
-            type="file"
-            ref={videoInputRef}
-            className="hidden"
-            accept="video/mp4,video/webm,video/quicktime"
-            onChange={handleMediaSelect}
-            disabled={video.status === 'compressing' || video.status === 'uploading' || submitting}
-          />
+            <input
+                type="file"
+                ref={mediaInputRef}
+                className="hidden"
+                accept="image/*,video/mp4,video/webm,video/quicktime"
+                multiple
+                onChange={handleMediaSelect}
+                disabled={submitting || video.status === 'compressing' || video.status === 'uploading'}
+            />
 
-          {!video.preview && !video.status.match(/compressing|uploading/) ? (
-            <div
-              onClick={() => videoInputRef.current?.click()}
-              className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-muted-foreground/50 cursor-pointer transition-all gap-3"
-            >
-              <div className="p-4 bg-muted rounded-full">
-                <Video className="w-8 h-8" />
-              </div>
-              <div className="text-center">
-                <p className="font-medium text-lg">Add Video</p>
-                <p className="text-sm text-muted-foreground">Share a clip of the experience</p>
-              </div>
-            </div>
-          ) : (
-            <div className="relative rounded-lg overflow-hidden border bg-muted">
-               {video.status === 'compressing' && (
-                 <div className="p-10 flex flex-col items-center justify-center gap-3">
-                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                   <p className="text-sm font-medium">Optimizando vídeo...</p>
-                 </div>
-               )}
-
-               {video.status === 'uploading' && (
-                 <div className="p-10 flex flex-col items-center justify-center gap-3 w-full">
-                   <div className="w-full max-w-xs bg-secondary h-2 rounded-full overflow-hidden">
-                     <div
-                       className="bg-primary h-full transition-all duration-300 ease-out"
-                       style={{ width: `${video.progress}%` }}
-                     />
-                   </div>
-                   <p className="text-sm font-medium">Uploading... {Math.round(video.progress)}%</p>
-                 </div>
-               )}
-
-               {video.status === 'ready' && video.preview && (
-                 <div className="relative aspect-video bg-black">
-                   <video
-                     src={video.preview}
-                     controls
-                     className="w-full h-full"
-                   />
-                   <button
-                     onClick={removeVideo}
-                     className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors"
-                   >
-                     <X className="w-4 h-4" />
-                   </button>
-                 </div>
-               )}
-
-               {video.status === 'error' && (
-                 <div className="p-10 flex flex-col items-center justify-center gap-3 text-destructive">
-                   <p className="font-medium">Upload failed</p>
-                   <Button variant="outline" size="sm" onClick={() => setVideo(prev => ({ ...prev, status: 'idle', progress: 0 }))}>
-                     Try Again
-                   </Button>
-                 </div>
-               )}
-            </div>
-          )}
-        </div>
-
-        {/* Image Upload - Prominent */}
-        <div className="space-y-4">
-          <label className="text-sm font-medium uppercase text-muted-foreground">Photos</label>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            multiple
-            onChange={handleMediaSelect}
-            disabled={submitting}
-          />
-
-          {images.length === 0 ? (
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-muted-foreground/50 cursor-pointer transition-all gap-3"
-            >
-              <div className="p-4 bg-muted rounded-full">
-                <ImagePlus className="w-8 h-8" />
-              </div>
-              <div className="text-center">
-                <p className="font-medium text-lg">Add Photos</p>
-                <p className="text-sm text-muted-foreground">Share what this place looks like</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-               <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-                  {images.map((img) => (
-                    <div key={img.id} className="relative aspect-square group rounded-lg overflow-hidden border bg-muted">
-                      <img
-                        src={img.preview}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={() => removeImage(img.id)}
-                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+            {!hasMedia ? (
+                // Empty State
+                <div
+                    onClick={() => mediaInputRef.current?.click()}
+                    className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-muted-foreground/50 cursor-pointer transition-all gap-3"
+                >
+                    <div className="p-4 bg-muted rounded-full">
+                         <div className="flex -space-x-2">
+                            <ImagePlus className="w-8 h-8 z-10" />
+                            <Video className="w-8 h-8 text-muted-foreground/50" />
+                         </div>
                     </div>
-                  ))}
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="aspect-square flex flex-col items-center justify-center border-2 border-dashed rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
-                  >
-                    <Plus className="w-6 h-6 mb-1" />
-                    <span className="text-xs font-medium">Add</span>
-                  </button>
-               </div>
-            </div>
-          )}
+                    <div className="text-center">
+                        <p className="font-medium text-lg">Add Photos or Video</p>
+                        <p className="text-sm text-muted-foreground">Share your experience</p>
+                    </div>
+                </div>
+            ) : (
+                // Populated State
+                <div className="space-y-4">
+                    {/* Video Component */}
+                    {(video.status !== 'idle' || video.preview) && (
+                        <div className="relative rounded-lg overflow-hidden border bg-muted">
+                             {video.status === 'compressing' && (
+                                 <div className="p-10 flex flex-col items-center justify-center gap-3">
+                                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                   <p className="text-sm font-medium">Optimizando vídeo...</p>
+                                 </div>
+                               )}
+
+                               {video.status === 'uploading' && (
+                                 <div className="p-10 flex flex-col items-center justify-center gap-3 w-full">
+                                   <div className="w-full max-w-xs bg-secondary h-2 rounded-full overflow-hidden">
+                                     <div
+                                       className="bg-primary h-full transition-all duration-300 ease-out"
+                                       style={{ width: `${video.progress}%` }}
+                                     />
+                                   </div>
+                                   <p className="text-sm font-medium">Uploading... {Math.round(video.progress)}%</p>
+                                 </div>
+                               )}
+
+                               {video.status === 'ready' && video.preview && (
+                                 <div className="relative aspect-video bg-black">
+                                   <video
+                                     src={video.preview}
+                                     controls
+                                     className="w-full h-full"
+                                   />
+                                   <button
+                                     onClick={removeVideo}
+                                     className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors"
+                                   >
+                                     <X className="w-4 h-4" />
+                                   </button>
+                                 </div>
+                               )}
+
+                               {video.status === 'error' && (
+                                 <div className="p-10 flex flex-col items-center justify-center gap-3 text-destructive">
+                                   <p className="font-medium">Upload failed</p>
+                                   <Button variant="outline" size="sm" onClick={() => setVideo(prev => ({ ...prev, status: 'idle', progress: 0 }))}>
+                                     Try Again
+                                   </Button>
+                                 </div>
+                               )}
+                        </div>
+                    )}
+
+                    {/* Image Grid */}
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                        {images.map((img) => (
+                             <div key={img.id} className="relative aspect-square group rounded-lg overflow-hidden border bg-muted">
+                               <img
+                                 src={img.preview}
+                                 alt="Preview"
+                                 className="w-full h-full object-cover"
+                               />
+                               <button
+                                 onClick={() => removeImage(img.id)}
+                                 className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                               >
+                                 <X className="w-4 h-4" />
+                               </button>
+                             </div>
+                        ))}
+                        {/* Add Button */}
+                        <button
+                            onClick={() => mediaInputRef.current?.click()}
+                            className="aspect-square flex flex-col items-center justify-center border-2 border-dashed rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                        >
+                            <Plus className="w-6 h-6 mb-1" />
+                            <span className="text-xs font-medium">Add</span>
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
 
         {/* Action Buttons */}
