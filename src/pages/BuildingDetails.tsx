@@ -196,6 +196,7 @@ export default function BuildingDetails() {
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
   const [linksLoading, setLinksLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [socialContext, setSocialContext] = useState<string | null>(null);
 
   // New State for Edit View Enhancement
   const [userLinks, setUserLinks] = useState<{id: string, url: string, title: string}[]>([]);
@@ -382,6 +383,15 @@ export default function BuildingDetails() {
             // toast({ variant: "destructive", title: "Could not load activity feed" });
       } else if (entriesData) {
           console.log("Fetched feed entries:", entriesData);
+
+          // Determine Social Context
+          if (followedIds.size > 0) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const friendEntry = entriesData.find((e: any) => followedIds.has(e.user_id));
+              if (friendEntry) {
+                   setSocialContext("Saved by contacts");
+              }
+          }
           
           // Extract images & video
           entriesData.forEach((entry: any) => {
@@ -821,6 +831,7 @@ export default function BuildingDetails() {
                     lng={coordinates.lng}
                     className={isMapExpanded ? "fixed inset-0 z-[100] h-screen w-screen rounded-none border-0" : "h-48 w-full transition-all duration-300"}
                     status={userStatus}
+                    socialContext={socialContext}
                     isExpanded={isMapExpanded}
                     onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
                     locationPrecision={building.location_precision}
