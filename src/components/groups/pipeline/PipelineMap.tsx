@@ -182,7 +182,10 @@ export function PipelineMap({ items }: PipelineMapProps) {
                     <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#333333]"></div>
                 </div>
 
-                <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform hover:scale-110`} />
+                <div className="relative transition-transform hover:scale-110">
+                    <MapPin className={`w-8 h-8 ${pinColorClass} drop-shadow-md`} />
+                    <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
+                </div>
              </div>
         </Marker>
     );
