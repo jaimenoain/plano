@@ -61,9 +61,9 @@ export function BuildingMap({
   let dotBgClass = "bg-gray-500";
 
   if (status === 'visited') {
-    strokeClass = "text-[#333333]";
-    fillClass = "fill-[#333333]"; // Charcoal
-    dotBgClass = "bg-[#333333]";
+    strokeClass = "text-gray-600";
+    fillClass = "fill-gray-600";
+    dotBgClass = "bg-gray-600";
   } else if (status === 'pending') {
     strokeClass = "text-gray-500";
     fillClass = "fill-[#EEFF41]";
