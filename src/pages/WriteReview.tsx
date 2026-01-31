@@ -253,61 +253,93 @@ export default function WriteReview() {
     }
   }, [toast]);
 
-  const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+  const processVideo = async (file: File) => {
+    try {
+      // 1. Set Compressing State
+      setVideo(prev => ({
+        ...prev,
+        file,
+        status: 'compressing',
+        progress: 0
+      }));
 
-      try {
-        // 1. Set Compressing State
-        setVideo(prev => ({
-          ...prev,
-          file,
-          status: 'compressing',
-          progress: 0
-        }));
+      // 2. Compress Video
+      const compressedFile = await VideoCompressionService.compressVideo(file);
 
-        // 2. Compress Video
-        const compressedFile = await VideoCompressionService.compressVideo(file);
+      // 3. Set Uploading State
+      setVideo(prev => ({
+        ...prev,
+        file: compressedFile,
+        status: 'uploading',
+        progress: 0
+      }));
 
-        // 3. Set Uploading State
-        setVideo(prev => ({
-          ...prev,
-          file: compressedFile,
-          status: 'uploading',
-          progress: 0
-        }));
+      // 4. Upload Video
+      const key = await uploadFileWithProgress(compressedFile, (progress) => {
+        setVideo(prev => ({ ...prev, progress }));
+      });
 
-        // 4. Upload Video
-        const key = await uploadFileWithProgress(compressedFile, (progress) => {
-          setVideo(prev => ({ ...prev, progress }));
-        });
+      // 5. Set Ready State
+      setVideo({
+        file: compressedFile,
+        preview: URL.createObjectURL(compressedFile),
+        storage_path: key,
+        status: 'ready',
+        progress: 100
+      });
 
-        // 5. Set Ready State
-        setVideo({
-          file: compressedFile,
-          preview: URL.createObjectURL(compressedFile),
-          storage_path: key,
-          status: 'ready',
-          progress: 100
-        });
+    } catch (error) {
+      console.error("Video processing error:", error);
+      toast({
+        variant: "destructive",
+        title: "Video upload failed",
+        description: error instanceof Error ? error.message : "Unknown error"
+      });
+      setVideo(prev => ({
+        ...prev,
+        status: 'error',
+        progress: 0
+      }));
+    }
+  };
 
-        if (videoInputRef.current) {
-          videoInputRef.current.value = "";
+  const handleMediaSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      const imageFiles = files.filter(f => f.type.startsWith('image/'));
+      const videoFiles = files.filter(f => f.type.startsWith('video/'));
+
+      // Process Videos
+      if (videoFiles.length > 0) {
+        // Constraint: Only one video allowed per review
+        if (videoFiles.length > 1) {
+          toast({
+            variant: "destructive",
+            title: "Limit exceeded",
+            description: "Only one video per review is allowed."
+          });
+        } else {
+           // Check if video already exists or is processing
+           const hasExistingVideo = video.status !== 'idle' && video.status !== 'error';
+           if (hasExistingVideo) {
+             toast({
+               variant: "destructive",
+               title: "Limit exceeded",
+               description: "You already have a video. Remove the existing one first."
+             });
+           } else {
+             await processVideo(videoFiles[0]);
+           }
         }
-
-      } catch (error) {
-        console.error("Video processing error:", error);
-        toast({
-          variant: "destructive",
-          title: "Video upload failed",
-          description: error instanceof Error ? error.message : "Unknown error"
-        });
-        setVideo(prev => ({
-          ...prev,
-          status: 'error',
-          progress: 0
-        }));
       }
+
+      // Process Images
+      if (imageFiles.length > 0) {
+        await processFiles(imageFiles);
+      }
+
+      // Cleanup input
+      e.target.value = "";
     }
   };
 
@@ -325,18 +357,6 @@ export default function WriteReview() {
       status: 'idle',
       progress: 0
     });
-  };
-
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      await processFiles(files);
-
-      // Reset input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
   };
 
   useEffect(() => {
@@ -770,7 +790,7 @@ export default function WriteReview() {
             ref={videoInputRef}
             className="hidden"
             accept="video/mp4,video/webm,video/quicktime"
-            onChange={handleVideoSelect}
+            onChange={handleMediaSelect}
             disabled={video.status === 'compressing' || video.status === 'uploading' || submitting}
           />
 
@@ -845,7 +865,7 @@ export default function WriteReview() {
             className="hidden"
             accept="image/*"
             multiple
-            onChange={handleImageSelect}
+            onChange={handleMediaSelect}
             disabled={submitting}
           />
 
