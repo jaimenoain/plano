@@ -118,18 +118,20 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                      <div className="space-y-3">
                          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mis Listas</h3>
                          <div className="flex flex-col gap-3">
-                             <ToggleGroup type="multiple" value={props.statusFilters} onValueChange={props.onStatusFiltersChange} className="justify-start gap-2">
-                                <ToggleGroupItem value="saved" variant="outline" className="h-8 text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                                  Saved
-                                </ToggleGroupItem>
-                                <ToggleGroupItem value="visited" variant="outline" className="h-8 text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                                  Visited
-                                </ToggleGroupItem>
-                             </ToggleGroup>
+                             <div className="pb-2">
+                                 <ToggleGroup type="multiple" value={props.statusFilters} onValueChange={props.onStatusFiltersChange} className="justify-start gap-2">
+                                    <ToggleGroupItem value="saved" variant="outline" className="h-8 text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                                      Saved
+                                    </ToggleGroupItem>
+                                    <ToggleGroupItem value="visited" variant="outline" className="h-8 text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                                      Visited
+                                    </ToggleGroupItem>
+                                 </ToggleGroup>
+                             </div>
 
                              {/* My Collections */}
                              {props.onCollectionsChange && props.availableCollections && (
-                                <div className="space-y-2 pt-1">
+                                <div className="space-y-2 pt-3">
                                     <Label className="text-sm font-medium">My Collections</Label>
 
                                     {/* Selected Collections (Badges) */}

@@ -78,4 +78,56 @@ describe("applyClientFilters", () => {
     expect(result.map(b => b.id)).not.toContain("4");
     expect(result.map(b => b.id)).toContain("6");
   });
+
+  // Specific QA Verification Cases
+
+  it("Case A: Exclusion Trumps Inclusion (Input Visited, Hide Visited -> Empty)", () => {
+    // Simulate "Show Visited" chip active (Input list contains only visited items)
+    const visitedOnlyBuildings = [
+      { id: "4", status: "Built" }, // User status: visited
+    ];
+    const context: ClientFilterContext = {
+      hideSaved: false,
+      hideVisited: true, // Exclusion active
+      userStatuses,
+    };
+
+    const result = applyClientFilters(visitedOnlyBuildings, context);
+    expect(result.length).toBe(0);
+  });
+
+  it("Case B: Pure Discovery (Hide Visited + Hide Saved -> Only 'null' status)", () => {
+    // Input list has mixed items
+    const context: ClientFilterContext = {
+      hideSaved: true,
+      hideVisited: true,
+      userStatuses,
+    };
+    const result = applyClientFilters(buildings, context);
+
+    // Should NOT contain Saved (1) or Visited (4) or Ignored (5)
+    expect(result.map(b => b.id)).not.toContain("1");
+    expect(result.map(b => b.id)).not.toContain("4");
+    expect(result.map(b => b.id)).not.toContain("5");
+
+    // Should contain None (6)
+    expect(result.map(b => b.id)).toContain("6");
+  });
+
+  it("Case C: Refined List (Input Saved, Hide Visited -> Show Saved)", () => {
+    // Simulate "Show Saved" chip active (Input list contains only saved items)
+    const savedOnlyBuildings = [
+      { id: "1", status: "Built" }, // User status: pending (saved)
+    ];
+    const context: ClientFilterContext = {
+      hideSaved: false,
+      hideVisited: true, // Exclusion active for Visited
+      userStatuses,
+    };
+
+    const result = applyClientFilters(savedOnlyBuildings, context);
+    // Saved items should remain because they are NOT visited
+    expect(result.length).toBe(1);
+    expect(result[0].id).toBe("1");
+  });
 });
