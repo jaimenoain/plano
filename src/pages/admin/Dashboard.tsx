@@ -11,6 +11,8 @@ import { UserLeaderboardZone } from "@/components/admin/UserLeaderboardZone";
 import { RetentionZone } from "@/components/admin/RetentionZone";
 import { SessionDiagnosticZone } from "@/components/admin/SessionDiagnosticZone";
 import { NotificationIntelligenceZone } from "@/components/admin/NotificationIntelligenceZone";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NoPhotosMapZone } from "@/components/admin/NoPhotosMapZone";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -54,60 +56,76 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         </div>
 
-        {/* Zone 1: The Pulse */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-tight">The Pulse</h2>
-          <PulseZone stats={stats.pulse} />
-        </section>
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="photos">Photos</TabsTrigger>
+          </TabsList>
 
-        {/* Zone 1.2: Global Photo Distribution */}
-        <section className="space-y-4">
-          <PhotoHeatmapZone data={stats.heatmap_data} />
-        </section>
+          <TabsContent value="overview" className="space-y-4">
+            {/* Zone 1: The Pulse */}
+            <section className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">The Pulse</h2>
+              <PulseZone stats={stats.pulse} />
+            </section>
 
-        {/* Zone 1.5: Retention Analysis */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-tight">User Retention</h2>
-          <RetentionZone data={stats.retention_analysis} />
-        </section>
+            {/* Zone 1.5: Retention Analysis */}
+            <section className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">User Retention</h2>
+              <RetentionZone data={stats.retention_analysis} />
+            </section>
 
-        {/* Zone 2: Activity Trends */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-tight">Activity Trends</h2>
-          <ActivityTrendsZone data={stats.activity_trends} />
-        </section>
+            {/* Zone 2: Activity Trends */}
+            <section className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">Activity Trends</h2>
+              <ActivityTrendsZone data={stats.activity_trends} />
+            </section>
 
-        {/* Zone 3: Group Dynamics */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-tight">Group Dynamics</h2>
-          <GroupDynamicsZone
-            hotGroups={stats.group_dynamics.hot_groups}
-            sessionReliability={stats.group_dynamics.session_reliability}
-          />
-        </section>
+            {/* Zone 3: Group Dynamics */}
+            <section className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">Group Dynamics</h2>
+              <GroupDynamicsZone
+                hotGroups={stats.group_dynamics.hot_groups}
+                sessionReliability={stats.group_dynamics.session_reliability}
+              />
+            </section>
 
-        {/* Zone 4: Content Intelligence */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-tight">Content Intelligence</h2>
-          <ContentIntelligenceZone trendingBuildings={stats.content_intelligence.trending_buildings} />
-        </section>
+            {/* Zone 4: Content Intelligence */}
+            <section className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">Content Intelligence</h2>
+              <ContentIntelligenceZone trendingBuildings={stats.content_intelligence.trending_buildings} />
+            </section>
 
-        {/* Zone 4.5: Notification Intelligence */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-tight">Notification Intelligence</h2>
-          <NotificationIntelligenceZone data={stats.notification_intelligence} />
-        </section>
+            {/* Zone 4.5: Notification Intelligence */}
+            <section className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">Notification Intelligence</h2>
+              <NotificationIntelligenceZone data={stats.notification_intelligence} />
+            </section>
 
-        {/* Zone 5: User Leaderboard */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-tight">User Leaderboard</h2>
-          <UserLeaderboardZone data={stats.user_leaderboard} />
-        </section>
+            {/* Zone 5: User Leaderboard */}
+            <section className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">User Leaderboard</h2>
+              <UserLeaderboardZone data={stats.user_leaderboard} />
+            </section>
 
-        {/* Zone 6: Session Diagnostics & Health */}
-        <section className="space-y-4">
-          <SessionDiagnosticZone />
-        </section>
+            {/* Zone 6: Session Diagnostics & Health */}
+            <section className="space-y-4">
+              <SessionDiagnosticZone />
+            </section>
+          </TabsContent>
+
+          <TabsContent value="photos" className="space-y-4">
+            {/* Zone 1.2: Global Photo Distribution - Moved here */}
+            <section className="space-y-4">
+              <PhotoHeatmapZone data={stats.heatmap_data} />
+            </section>
+
+            {/* New Zone: Buildings Missing Photos */}
+            <section className="space-y-4">
+              <NoPhotosMapZone />
+            </section>
+          </TabsContent>
+        </Tabs>
       </div>
       <BottomNav />
     </div>
