@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -9,8 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getBuildingImageUrl } from "@/utils/image";
 import { parseLocation } from "@/utils/location";
-import { filterLocalBuildings } from "../utils/searchFilters";
+import { filterLocalBuildings, applyClientFilters } from "../utils/searchFilters";
 import { UserSearchResult } from "./useUserSearch";
+import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
 
 // Helper to calculate Haversine distance in meters
 function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -220,8 +221,11 @@ export function useBuildingSearch() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const debouncedQuery = useDebounce(searchQuery, 300);
 
-  const [filterVisited, setFilterVisited] = useState(false);
-  const [filterBucketList, setFilterBucketList] = useState(false);
+  // New Filters State
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [hideVisited, setHideVisited] = useState(false);
+  const [hideSaved, setHideSaved] = useState(false);
+
   const [filterContacts, setFilterContacts] = useState(false);
   const [personalMinRating, setPersonalMinRating] = useState<number>(0);
   const [contactMinRating, setContactMinRating] = useState<number>(0);
@@ -246,6 +250,7 @@ export function useBuildingSearch() {
   });
 
   const { location: gpsLocation, requestLocation: requestLocationInternal } = useUserLocation();
+  const { statuses: userStatuses } = useUserBuildingStatuses();
 
   useEffect(() => {
     // Only attempt to get GPS location if no location params provided in URL
@@ -265,8 +270,9 @@ export function useBuildingSearch() {
     setPage(0);
   }, [
     debouncedQuery,
-    filterVisited,
-    filterBucketList,
+    statusFilters,
+    hideVisited,
+    hideSaved,
     filterContacts,
     personalMinRating,
     contactMinRating,
@@ -276,8 +282,6 @@ export function useBuildingSearch() {
     selectedTypologies,
     selectedAttributes,
     selectedContacts,
-    // Note: userLocation change might not strictly require page reset if just panning,
-    // but usually search resets on new query.
   ]);
 
   const requestLocation = async () => {
@@ -307,12 +311,11 @@ export function useBuildingSearch() {
   });
 
   // Search query
-  const { data: buildings, isLoading, isFetching } = useQuery({
+  const { data: rawBuildings, isLoading, isFetching } = useQuery({
     queryKey: [
         "search-buildings",
         debouncedQuery,
-        filterVisited,
-        filterBucketList,
+        statusFilters,
         filterContacts,
         personalMinRating,
         contactMinRating,
@@ -324,8 +327,6 @@ export function useBuildingSearch() {
         selectedContacts,
         userLocation,
         user?.id,
-        // Include page in query key if pagination is server-side in future,
-        // currently it's not strictly used by RPC (p_limit=500 fixed), but good practice.
         page
     ],
     queryFn: async () => {
@@ -333,11 +334,12 @@ export function useBuildingSearch() {
         const hasSpecificContacts = selectedContacts.length > 0;
         const hasCollections = selectedCollections.length > 0;
         const hasPersonalRating = personalMinRating > 0;
+        const hasStatusFilters = statusFilters.length > 0;
 
         // Input Sanitization
         const cleanQuery = debouncedQuery.trim() || null;
 
-        if (filterVisited || filterBucketList || filterContacts || hasSpecificContacts || hasCollections || hasPersonalRating) {
+        if (hasStatusFilters || filterContacts || hasSpecificContacts || hasCollections || hasPersonalRating) {
             if (!user) return [];
 
             const buildingIds = new Set<string>();
@@ -378,16 +380,16 @@ export function useBuildingSearch() {
                 }
             }
 
-            // 2. Personal Buildings (Visited/Bucket/Rating)
-            if (filterVisited || filterBucketList || hasPersonalRating) {
+            // 2. Personal Buildings (Visited/Saved/Rating)
+            if (hasStatusFilters || hasPersonalRating) {
                 let query = supabase
                     .from('user_buildings')
                     .select('building_id')
                     .eq('user_id', user.id);
 
                 const personalStatuses: string[] = [];
-                if (filterVisited) personalStatuses.push('visited');
-                if (filterBucketList) personalStatuses.push('pending');
+                if (statusFilters.includes('visited')) personalStatuses.push('visited');
+                if (statusFilters.includes('saved')) personalStatuses.push('pending');
 
                 if (personalStatuses.length > 0) {
                     query = query.in('status', personalStatuses);
@@ -470,7 +472,7 @@ export function useBuildingSearch() {
                     location_lng: location_lng,
                     distance: distance,
                     status: b.status,
-                    // Pass through metadata if needed downstream, but DiscoveryBuilding interface might not have it
+                    // Pass through metadata if needed downstream
                 } as DiscoveryBuilding;
             }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
@@ -499,6 +501,17 @@ export function useBuildingSearch() {
     placeholderData: keepPreviousData,
   });
 
+  // Apply exclusion logic and other client-side filters
+  const buildings = useMemo(() => {
+    if (!rawBuildings) return [];
+
+    return applyClientFilters(rawBuildings, {
+      hideSaved,
+      hideVisited,
+      userStatuses
+    });
+  }, [rawBuildings, hideSaved, hideVisited, userStatuses]);
+
   const updateLocation = (center: { lat: number, lng: number }) => {
       setUserLocation(center);
   };
@@ -506,10 +519,14 @@ export function useBuildingSearch() {
   return {
       searchQuery,
       setSearchQuery,
-      filterVisited,
-      setFilterVisited,
-      filterBucketList,
-      setFilterBucketList,
+      // New State
+      statusFilters,
+      setStatusFilters,
+      hideVisited,
+      setHideVisited,
+      hideSaved,
+      setHideSaved,
+      // ...
       filterContacts,
       setFilterContacts,
       personalMinRating,

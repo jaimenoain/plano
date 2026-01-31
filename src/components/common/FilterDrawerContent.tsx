@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Label } from "@/components/ui/label";
 import { LocationInput } from "@/components/ui/LocationInput";
+import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 
 // Define props based on what's used in the sheet content
@@ -24,11 +25,13 @@ export interface FilterDrawerContentProps {
   onUseLocation?: () => void;
   showLocationInput?: boolean;
 
-  // Personal
-  showVisited: boolean;
-  onVisitedChange: (value: boolean) => void;
-  showBucketList: boolean;
-  onBucketListChange: (value: boolean) => void;
+  // Personal (Refactored)
+  statusFilters: string[]; // ['saved', 'visited']
+  onStatusFiltersChange: (value: string[]) => void;
+  hideVisited: boolean;
+  onHideVisitedChange: (value: boolean) => void;
+  hideSaved: boolean;
+  onHideSavedChange: (value: boolean) => void;
   hidePersonalFilters?: boolean;
 
   // Collections
@@ -62,6 +65,7 @@ export interface FilterDrawerContentProps {
 
   // Tools
   onShowLeaderboard?: () => void;
+  onClearAll?: () => void; // Added missing prop definition
 }
 
 export function FilterDrawerContent(props: FilterDrawerContentProps) {
@@ -107,18 +111,21 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                  </div>
              )}
 
-             {/* PERSONAL SECTION */}
+             {/* PERSONAL SECTION: Mis Listas & Opciones de Mapa */}
              {!props.hidePersonalFilters && (
                  <>
+                     {/* MIS LISTAS (Inclusion) */}
                      <div className="space-y-3">
-                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Personal</h3>
-                         <div className="flex flex-col gap-2">
-                             <Button variant={props.showVisited ? "secondary" : "outline"} onClick={() => props.onVisitedChange(!props.showVisited)} className="justify-start h-9 text-sm">
-                                 {props.showVisited && <Check className="mr-2 h-4 w-4" />} Visited
-                             </Button>
-                             <Button variant={props.showBucketList ? "secondary" : "outline"} onClick={() => props.onBucketListChange(!props.showBucketList)} className="justify-start h-9 text-sm">
-                                 {props.showBucketList && <Check className="mr-2 h-4 w-4" />} Bucket List
-                             </Button>
+                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mis Listas</h3>
+                         <div className="flex flex-col gap-3">
+                             <ToggleGroup type="multiple" value={props.statusFilters} onValueChange={props.onStatusFiltersChange} className="justify-start gap-2">
+                                <ToggleGroupItem value="saved" variant="outline" className="h-8 text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                                  Saved
+                                </ToggleGroupItem>
+                                <ToggleGroupItem value="visited" variant="outline" className="h-8 text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                                  Visited
+                                </ToggleGroupItem>
+                             </ToggleGroup>
 
                              {/* My Collections */}
                              {props.onCollectionsChange && props.availableCollections && (
@@ -206,6 +213,22 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                                     className="w-full"
                                 />
                              </div>
+                         </div>
+                     </div>
+                     <Separator />
+
+                     {/* OPCIONES DE MAPA (Exclusion) */}
+                     <div className="space-y-3">
+                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Opciones de Mapa</h3>
+                         <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="hide-visited" className="text-sm font-medium cursor-pointer">Hide Visited</Label>
+                                <Switch id="hide-visited" checked={props.hideVisited} onCheckedChange={props.onHideVisitedChange} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="hide-saved" className="text-sm font-medium cursor-pointer">Hide Saved</Label>
+                                <Switch id="hide-saved" checked={props.hideSaved} onCheckedChange={props.onHideSavedChange} />
+                            </div>
                          </div>
                      </div>
                      <Separator />
