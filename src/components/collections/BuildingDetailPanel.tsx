@@ -3,6 +3,7 @@ import { useBuildingImages } from "@/hooks/useBuildingImages";
 import { getBuildingImageUrl } from "@/utils/image";
 import { ExternalLink, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import { BuildingAttributes } from "@/components/BuildingAttributes";
 
 interface BuildingDetailPanelProps {
   building: {
@@ -12,6 +13,10 @@ interface BuildingDetailPanelProps {
     country: string | null;
     slug: string;
     hero_image_url: string | null;
+    typology?: string[] | null;
+    access_type?: string | null;
+    materials?: string[] | null;
+    status?: string | null;
   };
 }
 
@@ -34,7 +39,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
   }
 
   return (
-    <div className="w-[400px] border-l h-full flex flex-col bg-background shrink-0">
+    <div className="flex-1 border-l h-full flex flex-col bg-background min-w-0">
       <div className="p-6 space-y-6 overflow-y-auto h-full">
         <div>
           <Link
@@ -82,6 +87,14 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
             No images available
           </div>
         )}
+
+        <BuildingAttributes
+            accessType={building.access_type}
+            typologies={building.typology}
+            materials={building.materials}
+            status={building.status}
+            className="grid-cols-2"
+        />
       </div>
     </div>
   );

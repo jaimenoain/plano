@@ -50,7 +50,11 @@ export function AddBuildingsToCollectionDialog({
             country,
             address,
             slug,
-            hero_image_url
+            hero_image_url,
+            typology,
+            access_type,
+            materials,
+            status
           )
         `)
         .eq("user_id", user.id)
@@ -170,7 +174,7 @@ export function AddBuildingsToCollectionDialog({
 
         <div className="flex flex-1 h-full min-h-0">
           {/* Left Column: List */}
-          <div className="flex-1 flex flex-col min-w-0 border-r">
+          <div className="w-[350px] shrink-0 flex flex-col border-r">
             <div className="p-4 pb-2 border-b space-y-2">
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -245,7 +249,7 @@ export function AddBuildingsToCollectionDialog({
           {selectedBuilding ? (
              <BuildingDetailPanel building={selectedBuilding} />
           ) : (
-             <div className="w-[400px] border-l hidden lg:flex items-center justify-center text-muted-foreground bg-muted/10">
+             <div className="flex-1 border-l hidden lg:flex items-center justify-center text-muted-foreground bg-muted/10">
                  Select a building to view details
              </div>
           )}
