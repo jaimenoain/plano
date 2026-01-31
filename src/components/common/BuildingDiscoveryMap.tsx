@@ -420,10 +420,14 @@ export function BuildingDiscoveryMap({
                     style={dotStyle}
                 />
             ) : (
-                <MapPin
-                    className={`w-8 h-8 ${pinColorClass} drop-shadow-md transition-transform ${scaleClass}`}
-                    style={pinStyle}
-                />
+                <div className={`relative transition-transform ${scaleClass}`}>
+                    <MapPin
+                        className={`w-8 h-8 ${pinColorClass} drop-shadow-md`}
+                        style={pinStyle}
+                    />
+                    {/* White dot overlay to keep inner circle white when pin is filled */}
+                    <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
+                </div>
             )}
             </div>
         </Marker>

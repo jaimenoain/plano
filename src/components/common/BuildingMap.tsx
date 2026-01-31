@@ -109,7 +109,10 @@ export function BuildingMap({
             {isApproximate ? (
                <div className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-lg`} />
             ) : (
-               <MapPin className={`w-8 h-8 drop-shadow-lg ${pinColor}`} />
+               <div className="relative">
+                   <MapPin className={`w-8 h-8 drop-shadow-lg ${pinColor}`} />
+                   <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
+               </div>
             )}
         </Marker>
       </Map>
