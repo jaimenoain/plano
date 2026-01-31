@@ -9,6 +9,7 @@ interface BuildingMapProps {
   lng: number;
   className?: string;
   status?: 'visited' | 'pending' | null;
+  socialContext?: string | null;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   mapStyle?: string | object;
@@ -45,6 +46,7 @@ export function BuildingMap({
   lng, 
   className, 
   status, 
+  socialContext,
   isExpanded, 
   onToggleExpand, 
   mapStyle,
@@ -63,9 +65,13 @@ export function BuildingMap({
     fillClass = "fill-[#333333]"; // Charcoal
     dotBgClass = "bg-[#333333]";
   } else if (status === 'pending') {
-    strokeClass = "text-[#EEFF41]";
+    strokeClass = "text-gray-500";
     fillClass = "fill-[#EEFF41]";
     dotBgClass = "bg-[#EEFF41]";
+  } else if (socialContext) {
+    strokeClass = "text-gray-500";
+    fillClass = "fill-gray-300"; // Light Grey
+    dotBgClass = "bg-gray-300";
   }
 
   if (isSatellite) {
