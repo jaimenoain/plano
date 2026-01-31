@@ -111,12 +111,12 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                  </div>
              )}
 
-             {/* PERSONAL SECTION: Mis Listas & Opciones de Mapa */}
+             {/* PERSONAL SECTION: My Lists & Map Options */}
              {!props.hidePersonalFilters && (
                  <>
-                     {/* MIS LISTAS (Inclusion) */}
+                     {/* MY LISTS (Inclusion) */}
                      <div className="space-y-3">
-                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mis Listas</h3>
+                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">My Lists</h3>
                          <div className="flex flex-col gap-3">
                              <div className="pb-2">
                                  <ToggleGroup type="multiple" value={props.statusFilters} onValueChange={props.onStatusFiltersChange} className="justify-start gap-2">
@@ -219,9 +219,9 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                      </div>
                      <Separator />
 
-                     {/* OPCIONES DE MAPA (Exclusion) */}
+                     {/* MAP OPTIONS (Exclusion) */}
                      <div className="space-y-3">
-                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Opciones de Mapa</h3>
+                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Map Options</h3>
                          <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="hide-visited" className="text-sm font-medium cursor-pointer">Hide Visited</Label>
