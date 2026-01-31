@@ -134,25 +134,18 @@ export default function CollectionMap() {
   const { data: statsData } = useQuery({
     queryKey: ["collection_stats", collection?.id, collection?.categorization_method, collection?.categorization_selected_members, memberIds],
     queryFn: async () => {
-       if (!items || items.length === 0 || !memberIds) return [];
+       if (!items || items.length === 0 || !memberIds || !collection?.id) return [];
 
-       const targetUserIds = collection?.categorization_selected_members && collection.categorization_selected_members.length > 0
-          ? collection.categorization_selected_members
-          : memberIds;
-
-       const buildingIds = items.map(i => i.building.id);
-       if (buildingIds.length === 0) return [];
-
+       // Use RPC to fetch stats securely, bypassing direct RLS on user_buildings
+       // This ensures visitors can see the categorization status (visited/rated)
+       // even if they can't access the raw user_buildings records.
        const { data, error } = await supabase
-          .from("user_buildings")
-          .select("building_id, user_id, status, rating")
-          .in("building_id", buildingIds)
-          .in("user_id", targetUserIds);
+          .rpc('get_collection_stats', { collection_uuid: collection.id });
 
        if (error) throw error;
        return data;
     },
-    enabled: !!items && items.length > 0 && !!memberIds && !!shouldFetchStats
+    enabled: !!items && items.length > 0 && !!memberIds && !!shouldFetchStats && !!collection?.id
   });
 
   const isLoading = loadingProfile || loadingCollection || loadingItems;
