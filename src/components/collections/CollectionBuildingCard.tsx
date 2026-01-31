@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, MessageSquarePlus } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -97,15 +96,15 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                         onValueChange={(val) => onUpdateCategory?.(val === "unassigned" ? "" : val)}
                                     >
                                         <SelectTrigger className="h-auto p-0 border-none bg-transparent hover:bg-transparent shadow-none w-auto ring-0 focus:ring-0">
-                                             <Badge variant="outline" className="flex items-center gap-1.5 pl-1.5 pr-2 py-0.5 font-normal hover:bg-secondary cursor-pointer bg-background">
+                                             <div className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-secondary/50 transition-colors cursor-pointer">
                                                  <div
-                                                    className="w-2 h-2 rounded-full"
+                                                    className="w-3 h-3 rounded-full"
                                                     style={{ backgroundColor: currentCategory?.color || "#9CA3AF" }}
                                                  />
-                                                 <span className="truncate max-w-[120px]">
+                                                 <span className="truncate max-w-[120px] text-sm text-foreground">
                                                     {currentCategory?.label || "Uncategorized"}
                                                  </span>
-                                             </Badge>
+                                             </div>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="unassigned" className="text-muted-foreground italic">Uncategorized</SelectItem>
@@ -121,13 +120,13 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                     </Select>
                                 ) : (
                                     currentCategory && (
-                                        <Badge variant="outline" className="flex items-center gap-1.5 pl-1.5 pr-2 py-0.5 font-normal bg-background">
+                                        <div className="flex items-center gap-2 px-1 py-0.5">
                                             <div
-                                                className="w-2 h-2 rounded-full"
+                                                className="w-3 h-3 rounded-full"
                                                 style={{ backgroundColor: currentCategory.color }}
                                             />
-                                            <span>{currentCategory.label}</span>
-                                        </Badge>
+                                            <span className="text-sm text-foreground">{currentCategory.label}</span>
+                                        </div>
                                     )
                                 )}
                             </div>
