@@ -340,7 +340,7 @@ export default function Index() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout variant="home">
       <MetaHead title="Home" />
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[60vh]">

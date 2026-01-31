@@ -25,8 +25,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { PeopleYouMayKnow } from "@/components/connect/PeopleYouMayKnow";
-import { YourContacts } from "@/components/connect/YourContacts";
 
 interface Group {
   id: string;
@@ -261,7 +259,7 @@ export default function Groups() {
   );
 
   return (
-    <AppLayout title="Connect">
+    <AppLayout title="Groups" showLogo={false}>
       <div className="px-4 py-6 max-w-6xl mx-auto space-y-10">
         
         {/* Groups Section */}
@@ -423,11 +421,6 @@ export default function Groups() {
               </TabsContent>
             </Tabs>
           )}
-        </div>
-
-        <div className="space-y-10 border-t pt-8">
-            <PeopleYouMayKnow />
-            <YourContacts />
         </div>
       </div>
     </AppLayout>
