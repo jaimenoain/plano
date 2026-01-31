@@ -252,7 +252,7 @@ export default function WriteReview() {
     }
   }, [toast]);
 
-  const processVideo = async (file: File) => {
+  const processVideo = useCallback(async (file: File) => {
     try {
       // 1. Set Compressing State
       setVideo(prev => ({
@@ -300,43 +300,46 @@ export default function WriteReview() {
         progress: 0
       }));
     }
-  };
+  }, [toast]);
+
+  const processMediaSelection = useCallback(async (files: File[]) => {
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    const videoFiles = files.filter(f => f.type.startsWith('video/'));
+
+    // Process Videos
+    if (videoFiles.length > 0) {
+      // Constraint: Only one video allowed per review
+      if (videoFiles.length > 1) {
+        toast({
+          variant: "destructive",
+          title: "Limit exceeded",
+          description: "Only one video per review is allowed."
+        });
+      } else {
+         // Check if video already exists or is processing
+         const hasExistingVideo = video.status !== 'idle' && video.status !== 'error';
+         if (hasExistingVideo) {
+           toast({
+             variant: "destructive",
+             title: "Limit exceeded",
+             description: "You already have a video. Remove the existing one first."
+           });
+         } else {
+           await processVideo(videoFiles[0]);
+         }
+      }
+    }
+
+    // Process Images
+    if (imageFiles.length > 0) {
+      await processFiles(imageFiles);
+    }
+  }, [processFiles, processVideo, toast, video.status]);
 
   const handleMediaSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      const imageFiles = files.filter(f => f.type.startsWith('image/'));
-      const videoFiles = files.filter(f => f.type.startsWith('video/'));
-
-      // Process Videos
-      if (videoFiles.length > 0) {
-        // Constraint: Only one video allowed per review
-        if (videoFiles.length > 1) {
-          toast({
-            variant: "destructive",
-            title: "Limit exceeded",
-            description: "Only one video per review is allowed."
-          });
-        } else {
-           // Check if video already exists or is processing
-           const hasExistingVideo = video.status !== 'idle' && video.status !== 'error';
-           if (hasExistingVideo) {
-             toast({
-               variant: "destructive",
-               title: "Limit exceeded",
-               description: "You already have a video. Remove the existing one first."
-             });
-           } else {
-             await processVideo(videoFiles[0]);
-           }
-        }
-      }
-
-      // Process Images
-      if (imageFiles.length > 0) {
-        await processFiles(imageFiles);
-      }
-
+      await processMediaSelection(files);
       // Cleanup input
       e.target.value = "";
     }
@@ -394,30 +397,11 @@ export default function WriteReview() {
       setIsDragging(false);
       dragCounter.current = 0;
 
+      if (submitting || isProcessingVideo) return;
+
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
         const items = Array.from(e.dataTransfer.files);
-        const imageFiles = items.filter(file => file.type.startsWith('image/'));
-        // Currently drag and drop only supports images as per existing logic, could be extended.
-
-        if (imageFiles.length > 0) {
-          await processFiles(imageFiles);
-        } else {
-          // If no images, check for video?
-          // For now, keeping existing image behavior as primary drag target to avoid conflicts or complex logic
-          // unless user specifically requested drag-drop for video too.
-          // The request says "El usuario elige un vídeo", implies selection.
-          // I will leave Drag & Drop for images for now to match previous behavior,
-          // but if user drags only video, I could handle it.
-          // Let's keep it simple and focus on the file input for video.
-
-          if (items.some(f => !f.type.startsWith('image/'))) {
-             toast({
-              variant: "destructive",
-              title: "Invalid file type",
-              description: "Please upload images via drag & drop, or use the video button."
-            });
-          }
-        }
+        await processMediaSelection(items);
       }
     };
 
@@ -432,7 +416,7 @@ export default function WriteReview() {
       window.removeEventListener('dragover', handleDragOver);
       window.removeEventListener('drop', handleDrop);
     };
-  }, [processFiles, toast]);
+  }, [processMediaSelection, submitting, isProcessingVideo]);
 
   const removeImage = (imageId: string) => {
     setImages(prev => {
@@ -1048,7 +1032,7 @@ export default function WriteReview() {
           <div className="bg-background p-8 rounded-full mb-4 shadow-lg">
              <Upload className="w-12 h-12 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold">Drop images here</h2>
+          <h2 className="text-2xl font-bold">Drop media here</h2>
         </div>
       )}
     </AppLayout>
