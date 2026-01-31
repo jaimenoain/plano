@@ -5,11 +5,11 @@ export function useBuildingImages(buildingId: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ["building_images", buildingId],
     queryFn: async () => {
-      // Based on MergeComparison.tsx, review_images has a building_id column
+      // review_images is linked via user_buildings
       const { data, error } = await supabase
         .from("review_images")
-        .select("id, storage_path")
-        .eq("building_id", buildingId)
+        .select("id, storage_path, user_buildings!inner(building_id)")
+        .eq("user_buildings.building_id", buildingId)
         .limit(5);
 
       if (error) throw error;
