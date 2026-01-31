@@ -28,7 +28,12 @@ interface CollectionBuildingCardProps {
 export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuildingCardProps>(
   ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory, showImages = true }, ref) => {
     const [isEditingNote, setIsEditingNote] = useState(false);
+    const [noteValue, setNoteValue] = useState(item.note || "");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        setNoteValue(item.note || "");
+    }, [item.note]);
 
     // Auto-focus textarea when editing starts
     useEffect(() => {
@@ -40,9 +45,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
     const handleNoteBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
         onUpdateNote(value);
-        if (!value) {
-            setIsEditingNote(false);
-        }
+        setIsEditingNote(false);
     };
 
     const currentCategory = customCategories?.find(c => c.id === item.custom_category_id);
@@ -136,12 +139,13 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     {/* Note Section */}
                     <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                         {canEdit ? (
-                            isEditingNote || item.note ? (
+                            isEditingNote || noteValue ? (
                                 <div className="relative group/note">
                                     <Textarea
                                         ref={textareaRef}
                                         placeholder="Add a note..."
-                                        defaultValue={item.note || ""}
+                                        value={noteValue}
+                                        onChange={(e) => setNoteValue(e.target.value)}
                                         onBlur={handleNoteBlur}
                                         onFocus={() => setIsEditingNote(true)}
                                         className={cn(
