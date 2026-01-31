@@ -2,8 +2,14 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
-import { DiscoveryFilterBar, SearchScope } from "./components/DiscoveryFilterBar";
 import { DiscoveryList } from "./components/DiscoveryList";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, MapPin, ListFilter, Locate } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { FilterDrawerContent } from "@/components/common/FilterDrawerContent";
+import { LocationInput } from "@/components/ui/LocationInput";
 import { SearchModeToggle } from "./components/SearchModeToggle";
 import { useBuildingSearch } from "./hooks/useBuildingSearch";
 import { LeaderboardDialog } from "./components/LeaderboardDialog";
@@ -17,10 +23,17 @@ import { ArchitectSearchNudge } from "./components/ArchitectSearchNudge";
 import { ArchitectResultsList } from "./components/ArchitectResultsList";
 import { getBoundsFromBuildings, Bounds } from "@/utils/map";
 
+export type SearchScope = 'content' | 'users' | 'architects';
+
 export default function SearchPage() {
   const navigate = useNavigate();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [searchScope, setSearchScope] = useState<SearchScope>('content');
+
+  // Filter UI State
+  const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [locationQuery, setLocationQuery] = useState("");
    
   // 1. Existing hooks
   const {
@@ -194,6 +207,39 @@ export default function SearchPage() {
 
   // 6. Merged Handlers
 
+  const hasActiveFilters =
+    (statusFilters && statusFilters.length > 0) ||
+    hideVisited ||
+    hideSaved ||
+    !hideHidden ||
+    hideWithoutImages ||
+    filterContacts ||
+    (selectedContacts && selectedContacts.length > 0) ||
+    (selectedArchitects && selectedArchitects.length > 0) ||
+    (selectedCollections && selectedCollections.length > 0) ||
+    personalMinRating > 0 ||
+    contactMinRating > 0 ||
+    !!selectedCategory ||
+    selectedTypologies.length > 0 ||
+    selectedAttributes.length > 0;
+
+  const handleClearAll = () => {
+    setStatusFilters([]);
+    setHideVisited(false);
+    setHideSaved(false);
+    setHideHidden(true);
+    setHideWithoutImages(false);
+    setFilterContacts(false);
+    setPersonalMinRating(0);
+    setContactMinRating(0);
+    setSelectedCollections([]);
+    setSelectedArchitects([]);
+    setSelectedCategory(null);
+    setSelectedTypologies([]);
+    setSelectedAttributes([]);
+    setSelectedContacts([]);
+  };
+
   const handleUseLocation = async () => {
     const loc = await requestLocation();
     if (loc) {
@@ -279,62 +325,121 @@ export default function SearchPage() {
   };
 
   return (
-    <AppLayout title="Discovery" showLogo={false}>
-      {/* Container to fit available height within AppLayout */}
-      <div className="flex flex-col h-[calc(100dvh_-_9.5rem_-_env(safe-area-inset-bottom))] w-full">
-        <div className="w-full bg-background z-20 border-b">
-          <DiscoveryFilterBar
-            searchQuery={searchQuery}
-            onSearchChange={(val) => {
-              setSearchQuery(val);
-              if (val) setViewMode('list');
+    <AppLayout
+      title="Discovery"
+      showLogo={false}
+      variant="map"
+      searchBar={
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={
+              searchScope === 'users' ? "Search people..." :
+              searchScope === 'architects' ? "Search architects..." :
+              "Search buildings, architects..."
+            }
+            className="pl-9 bg-muted/50 border-none focus-visible:ring-1"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              if (e.target.value) setViewMode('list');
             }}
-            onSearchFocus={handleSearchFocus}
-            // --- Feature Branch Props (Location Search & New Filters) ---
-            onLocationSelect={handleLocationSearch}
-            selectedArchitects={selectedArchitects}
-            onArchitectsChange={setSelectedArchitects}
-            selectedCollections={selectedCollections}
-            onCollectionsChange={setSelectedCollections}
-            availableCollections={availableCollections}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            // --- Main Branch Props (Updated Toggles) ---
-            statusFilters={statusFilters}
-            onStatusFiltersChange={setStatusFilters}
-            hideVisited={hideVisited}
-            onHideVisitedChange={setHideVisited}
-            hideSaved={hideSaved}
-            onHideSavedChange={setHideSaved}
-            hideHidden={hideHidden}
-            onHideHiddenChange={setHideHidden}
-            hideWithoutImages={hideWithoutImages}
-            onHideWithoutImagesChange={setHideWithoutImages}
-
-            filterContacts={filterContacts}
-            onFilterContactsChange={setFilterContacts}
-
-            personalMinRating={personalMinRating}
-            onPersonalMinRatingChange={setPersonalMinRating}
-            contactMinRating={contactMinRating}
-            onContactMinRatingChange={setContactMinRating}
-
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-            selectedTypologies={selectedTypologies}
-            onTypologiesChange={setSelectedTypologies}
-            selectedAttributes={selectedAttributes}
-            onAttributesChange={setSelectedAttributes}
-            selectedContacts={selectedContacts}
-            onSelectedContactsChange={setSelectedContacts}
-
-            // --- Shared Props ---
-            onShowLeaderboard={() => setShowLeaderboard(true)}
-            onUseLocation={handleUseLocation}
-            searchScope={searchScope}
+            onFocus={handleSearchFocus}
           />
         </div>
+      }
+      rightAction={
+        <>
+          <Button variant="ghost" size="icon" onClick={() => setLocationDialogOpen(true)}>
+            <MapPin className="h-5 w-5" />
+          </Button>
+          <Button
+            variant={hasActiveFilters ? "secondary" : "ghost"}
+            size="icon"
+            onClick={() => setFilterSheetOpen(true)}
+            className={hasActiveFilters ? 'text-primary' : ''}
+          >
+            <ListFilter className="h-5 w-5" />
+          </Button>
+        </>
+      }
+    >
+      <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
+        <DialogContent className="top-[20%] translate-y-0 gap-4">
+            <DialogHeader>
+              <DialogTitle>Search Location</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-4">
+                <LocationInput
+                  value={locationQuery}
+                  onLocationSelected={(address, country, place) => {
+                        setLocationQuery(address);
+                        handleLocationSearch(address, country, place);
 
+                        if (country || place) {
+                            setLocationDialogOpen(false);
+                        }
+                  }}
+                  placeholder="City, Region or Country..."
+                  searchTypes={["(regions)"]}
+                  className="w-full"
+                />
+                <Button variant="outline" onClick={() => { handleUseLocation(); setLocationDialogOpen(false); }}>
+                    <Locate className="mr-2 h-4 w-4" /> Use My Current Location
+                </Button>
+            </div>
+        </DialogContent>
+      </Dialog>
+
+      <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+        <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 flex flex-col h-full">
+            <SheetHeader className="p-6 pb-2 flex flex-row items-center justify-between space-y-0">
+                <SheetTitle>Filters</SheetTitle>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={handleClearAll} className="h-8 px-2 text-muted-foreground hover:text-foreground">
+                      Clear All
+                  </Button>
+                )}
+            </SheetHeader>
+
+            <FilterDrawerContent
+              statusFilters={statusFilters}
+              onStatusFiltersChange={setStatusFilters}
+              hideVisited={hideVisited}
+              onHideVisitedChange={setHideVisited}
+              hideSaved={hideSaved}
+              onHideSavedChange={setHideSaved}
+              hideHidden={hideHidden}
+              onHideHiddenChange={setHideHidden}
+              hideWithoutImages={hideWithoutImages}
+              onHideWithoutImagesChange={setHideWithoutImages}
+              personalMinRating={personalMinRating}
+              onPersonalMinRatingChange={setPersonalMinRating}
+              selectedCollections={selectedCollections}
+              onCollectionsChange={setSelectedCollections}
+              availableCollections={availableCollections}
+              filterContacts={filterContacts}
+              onFilterContactsChange={setFilterContacts}
+              contactMinRating={contactMinRating}
+              onContactMinRatingChange={setContactMinRating}
+              selectedContacts={selectedContacts}
+              onSelectedContactsChange={setSelectedContacts}
+              selectedArchitects={selectedArchitects}
+              onArchitectsChange={(!searchScope || searchScope === 'content') ? setSelectedArchitects : undefined}
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+              selectedTypologies={selectedTypologies}
+              onTypologiesChange={setSelectedTypologies}
+              selectedAttributes={selectedAttributes}
+              onAttributesChange={setSelectedAttributes}
+              onShowLeaderboard={() => setShowLeaderboard(true)}
+              onClearAll={handleClearAll}
+            />
+        </SheetContent>
+      </Sheet>
+
+      {/* Container to fit available height within AppLayout */}
+      <div className="flex flex-col h-[calc(100dvh_-_9.5rem_-_env(safe-area-inset-bottom))] w-full">
         {searchScope === 'content' && searchQuery.length >= 3 && (
            <div className="flex flex-col">
              <UserSearchNudge
