@@ -22,6 +22,7 @@ import { useArchitectSearch } from "./hooks/useArchitectSearch";
 import { ArchitectSearchNudge } from "./components/ArchitectSearchNudge";
 import { ArchitectResultsList } from "./components/ArchitectResultsList";
 import { getBoundsFromBuildings, Bounds } from "@/utils/map";
+import { cn } from "@/lib/utils";
 
 export type SearchScope = 'content' | 'users' | 'architects';
 
@@ -330,15 +331,15 @@ export default function SearchPage() {
       showLogo={false}
       variant="map"
       searchBar={
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center w-full max-w-md border rounded-full bg-background shadow-sm hover:shadow-md transition-shadow group">
+          <Search className="ml-3 h-4 w-4 text-muted-foreground shrink-0" />
           <Input
             placeholder={
               searchScope === 'users' ? "Search people..." :
               searchScope === 'architects' ? "Search architects..." :
               "Search buildings, architects..."
             }
-            className="pl-9 bg-muted/50 border-none focus-visible:ring-1"
+            className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none h-10 px-3 placeholder:text-muted-foreground/70"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -346,22 +347,31 @@ export default function SearchPage() {
             }}
             onFocus={handleSearchFocus}
           />
+          <div className="flex items-center gap-1 pr-1.5 shrink-0">
+            <div className="h-5 w-[1px] bg-border mx-1" />
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setLocationDialogOpen(true)}
+                className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+                title="Search Location"
+            >
+                <MapPin className="h-4 w-4" />
+            </Button>
+            <Button
+                variant={hasActiveFilters ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => setFilterSheetOpen(true)}
+                className={cn(
+                    "h-8 w-8 rounded-full transition-colors",
+                    hasActiveFilters ? 'text-primary bg-primary/10 hover:bg-primary/20' : 'text-muted-foreground hover:text-foreground'
+                )}
+                title="Filters"
+            >
+                <ListFilter className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      }
-      rightAction={
-        <>
-          <Button variant="ghost" size="icon" onClick={() => setLocationDialogOpen(true)}>
-            <MapPin className="h-5 w-5" />
-          </Button>
-          <Button
-            variant={hasActiveFilters ? "secondary" : "ghost"}
-            size="icon"
-            onClick={() => setFilterSheetOpen(true)}
-            className={hasActiveFilters ? 'text-primary' : ''}
-          >
-            <ListFilter className="h-5 w-5" />
-          </Button>
-        </>
       }
     >
       <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
