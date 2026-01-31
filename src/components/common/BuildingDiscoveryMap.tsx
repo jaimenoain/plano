@@ -341,9 +341,9 @@ export function BuildingDiscoveryMap({
         dotBgClass = "bg-[#333333]";
         pinTooltip = <span className="opacity-75 capitalize text-center">(Visited)</span>;
     } else if (status === 'pending') {
-        strokeClass = "text-[#EEFF41]";
-        fillClass = "fill-[#EEFF41]"; // Neon
-        dotBgClass = "bg-[#EEFF41]";
+        strokeClass = "text-[#A3A3A3]";
+        fillClass = "fill-[#A3A3A3]"; // Grey
+        dotBgClass = "bg-[#A3A3A3]";
         pinTooltip = <span className="opacity-75 capitalize text-center">(Pending)</span>;
     } else if (building.social_context) {
         strokeClass = "text-[#EEFF41]";
