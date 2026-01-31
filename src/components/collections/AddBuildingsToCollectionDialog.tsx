@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Check, Search, MapPin } from "lucide-react";
+import { Loader2, Plus, Check, Search, MapPin, Circle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -65,6 +65,7 @@ export function AddBuildingsToCollectionDialog({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const buildings = data.map((item: any) => ({
         ...item.building,
+        rating: item.rating,
         hero_image_url: item.building.hero_image_url ? getBuildingImageUrl(item.building.hero_image_url) : null
       }));
 
@@ -218,7 +219,24 @@ export function AddBuildingsToCollectionDialog({
                                     )}
 
                                     <div className="flex-1 min-w-0 text-left">
-                                        <h4 className="font-medium text-sm truncate">{building.name}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-medium text-sm truncate">{building.name}</h4>
+                                            {building.rating > 0 && (
+                                                <div className="flex items-center gap-0.5">
+                                                    {Array.from({ length: 3 }).map((_, i) => (
+                                                        <Circle
+                                                            key={i}
+                                                            className={cn(
+                                                                "w-2 h-2",
+                                                                i < building.rating
+                                                                    ? "fill-[#595959] text-[#595959]"
+                                                                    : "text-muted-foreground/20"
+                                                            )}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="flex items-center text-xs text-muted-foreground truncate">
                                             <MapPin className="h-3 w-3 mr-1 inline" />
                                             {building.city && building.country ? `${building.city}, ${building.country}` : "Unknown location"}
