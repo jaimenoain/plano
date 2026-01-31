@@ -71,6 +71,8 @@ Deno.serve(async (req) => {
         if (key.startsWith(`${user.id}/`)) return false
         // Allow if starts with review-images/user.id/ (new)
         if (key.startsWith(`review-images/${user.id}/`)) return false
+        // Allow if starts with review-videos/user.id/ (video)
+        if (key.startsWith(`review-videos/${user.id}/`)) return false
 
         return true
       })
