@@ -288,7 +288,13 @@ export function FeedHeroCard({
               </div>
             ))}
             {/* The "More" Box */}
-            <div className="relative w-full aspect-square bg-muted flex items-center justify-center text-muted-foreground font-medium text-sm border-l border-background">
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/review/${entry.id}`);
+              }}
+              className="relative w-full aspect-square bg-muted flex items-center justify-center text-muted-foreground font-medium text-sm border-l border-background cursor-pointer hover:bg-muted/80 transition-colors"
+            >
               +{remaining}
             </div>
           </div>
