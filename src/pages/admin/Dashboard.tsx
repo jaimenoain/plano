@@ -3,6 +3,7 @@ import { fetchAdminDashboardStats } from "@/api/admin";
 import { DashboardStats } from "@/types/admin";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PulseZone } from "@/components/admin/PulseZone";
+import { PhotoHeatmapZone } from "@/components/admin/PhotoHeatmapZone";
 import { ActivityTrendsZone } from "@/components/admin/ActivityTrendsZone";
 import { GroupDynamicsZone } from "@/components/admin/GroupDynamicsZone";
 import { ContentIntelligenceZone } from "@/components/admin/ContentIntelligenceZone";
@@ -57,6 +58,11 @@ export default function AdminDashboard() {
         <section className="space-y-4">
           <h2 className="text-xl font-semibold tracking-tight">The Pulse</h2>
           <PulseZone stats={stats.pulse} />
+        </section>
+
+        {/* Zone 1.2: Global Photo Distribution */}
+        <section className="space-y-4">
+          <PhotoHeatmapZone data={stats.heatmap_data} />
         </section>
 
         {/* Zone 1.5: Retention Analysis */}
