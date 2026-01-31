@@ -69,7 +69,7 @@ test('verify map mobile interaction: tap to select, tap to navigate', async ({ p
   });
 
   console.log('Navigating to search page...');
-  await page.goto('http://localhost:3000/search');
+  await page.goto('http://localhost:8080/search');
 
   // Check if Map Container is visible (target the one for mobile)
   const visibleMap = page.locator('[data-testid="map-container"]:visible');
