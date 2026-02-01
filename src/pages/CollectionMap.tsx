@@ -399,6 +399,33 @@ export default function CollectionMap() {
     setCandidateToAdd(null);
   };
 
+  const handleHideCandidate = async (buildingId: string) => {
+    if (!collection?.id) return;
+
+    const { error } = await supabase
+        .from("collection_items")
+        .insert({
+            collection_id: collection.id,
+            building_id: buildingId,
+            is_hidden: true
+        });
+
+    if (error) {
+        toast({
+            title: "Error",
+            description: "Failed to hide building.",
+            variant: "destructive"
+        });
+    } else {
+        toast({
+            title: "Hidden",
+            description: "Building hidden from suggestions."
+        });
+        queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+        queryClient.invalidateQueries({ queryKey: ["collection_items", collection.id] });
+    }
+  };
+
   const handleRemoveItem = (buildingId: string) => {
     const item = items?.find(i => i.building.id === buildingId);
     if (item) {
@@ -535,6 +562,7 @@ export default function CollectionMap() {
                     setCandidateToAdd(building);
                     setShowAddConfirm(true);
                 }}
+                onHideCandidate={canEdit ? handleHideCandidate : undefined}
                 onRemoveItem={canEdit ? handleRemoveItem : undefined}
                 onMarkerClick={(id) => {
                   setHighlightedId(id);
