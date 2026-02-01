@@ -401,15 +401,15 @@ export default function SearchPage() {
       showLogo={false}
       variant="map"
       searchBar={
-        <div className="flex items-center w-full max-w-md border rounded-full bg-background shadow-sm hover:shadow-md transition-shadow group">
-          <Search className="ml-3 h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="flex items-center w-full max-w-2xl border rounded-full bg-background shadow-md hover:shadow-lg transition-all p-1 group">
+          <Search className="ml-3 h-5 w-5 text-muted-foreground shrink-0" />
           <Input
             placeholder={
               searchScope === 'users' ? "Search people..." :
               searchScope === 'architects' ? "Search architects..." :
               "Search buildings, architects..."
             }
-            className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none h-10 px-3 placeholder:text-muted-foreground/70"
+            className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none h-10 px-3 text-base placeholder:text-muted-foreground/70"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -417,25 +417,21 @@ export default function SearchPage() {
             }}
             onFocus={handleSearchFocus}
           />
-          <div className="flex items-center gap-1 pr-1.5 shrink-0">
-            <div className="h-5 w-[1px] bg-border mx-1" />
+          <div className="flex items-center gap-2 pr-1 shrink-0">
             <Button
-                variant="ghost"
+                variant="secondary"
                 size="icon"
                 onClick={() => setLocationDialogOpen(true)}
-                className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+                className="h-9 w-9 rounded-full shadow-sm"
                 title="Search Location"
             >
                 <MapPin className="h-4 w-4" />
             </Button>
             <Button
-                variant={hasActiveFilters ? "secondary" : "ghost"}
+                variant={hasActiveFilters ? "default" : "secondary"}
                 size="icon"
                 onClick={() => setFilterSheetOpen(true)}
-                className={cn(
-                    "h-8 w-8 rounded-full transition-colors",
-                    hasActiveFilters ? 'text-primary bg-primary/10 hover:bg-primary/20' : 'text-muted-foreground hover:text-foreground'
-                )}
+                className="h-9 w-9 rounded-full shadow-sm transition-colors"
                 title="Filters"
             >
                 <ListFilter className="h-4 w-4" />

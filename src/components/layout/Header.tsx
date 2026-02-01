@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   title?: string;
@@ -133,20 +134,26 @@ export function Header({
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b h-16 px-4 transition-all duration-300">
-      <div className="h-full w-full max-w-7xl mx-auto grid grid-cols-3 items-center">
+      <div className={cn(
+        "h-full w-full max-w-7xl mx-auto items-center",
+        effectiveVariant === 'map' ? "flex justify-between gap-4" : "grid grid-cols-3"
+      )}>
 
         {/* Left Slot */}
-        <div className="flex items-center justify-start">
+        <div className="flex items-center justify-start shrink-0">
           {leftContent}
         </div>
 
         {/* Center Slot */}
-        <div className="flex items-center justify-center w-full">
+        <div className={cn(
+          "flex items-center justify-center",
+          effectiveVariant === 'map' ? "flex-1 min-w-0" : "w-full"
+        )}>
           {centerContent}
         </div>
 
         {/* Right Slot */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 shrink-0">
           {rightContent}
           {/* We always show Bell for now unless explicitly decided otherwise,
               but maybe we should group 'rightAction' with it.
