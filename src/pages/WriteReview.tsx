@@ -13,8 +13,7 @@ import {
   Plus,
   Pencil,
   Check,
-  Bookmark,
-  Video
+  Bookmark
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -795,10 +794,7 @@ export default function WriteReview() {
                     className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-muted-foreground/50 cursor-pointer transition-all gap-3"
                 >
                     <div className="p-4 bg-muted rounded-full">
-                         <div className="flex -space-x-2">
-                            <ImagePlus className="w-8 h-8 z-10" />
-                            <Video className="w-8 h-8 text-muted-foreground/50" />
-                         </div>
+                         <ImagePlus className="w-8 h-8" />
                     </div>
                     <div className="text-center">
                         <p className="font-medium text-lg">Add Photos or Video</p>
