@@ -7,6 +7,7 @@ import {
   Merge,
   ShieldAlert,
   Image,
+  Map,
   History,
   Trash2,
 } from "lucide-react";
@@ -56,6 +57,11 @@ const items = [
     title: "Image Wall",
     url: "/admin/images",
     icon: Image,
+  },
+  {
+    title: "Photo Analytics",
+    url: "/admin/photos",
+    icon: Map,
   },
   {
     title: "Storage Jobs",

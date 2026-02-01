@@ -3,7 +3,6 @@ import { fetchAdminDashboardStats } from "@/api/admin";
 import { DashboardStats } from "@/types/admin";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PulseZone } from "@/components/admin/PulseZone";
-import { PhotoHeatmapZone } from "@/components/admin/PhotoHeatmapZone";
 import { ActivityTrendsZone } from "@/components/admin/ActivityTrendsZone";
 import { GroupDynamicsZone } from "@/components/admin/GroupDynamicsZone";
 import { ContentIntelligenceZone } from "@/components/admin/ContentIntelligenceZone";
@@ -12,7 +11,6 @@ import { RetentionZone } from "@/components/admin/RetentionZone";
 import { SessionDiagnosticZone } from "@/components/admin/SessionDiagnosticZone";
 import { NotificationIntelligenceZone } from "@/components/admin/NotificationIntelligenceZone";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NoPhotosMapZone } from "@/components/admin/NoPhotosMapZone";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -59,7 +57,6 @@ export default function AdminDashboard() {
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="photos">Photos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -111,18 +108,6 @@ export default function AdminDashboard() {
             {/* Zone 6: Session Diagnostics & Health */}
             <section className="space-y-4">
               <SessionDiagnosticZone />
-            </section>
-          </TabsContent>
-
-          <TabsContent value="photos" className="space-y-4">
-            {/* Zone 1.2: Global Photo Distribution - Moved here */}
-            <section className="space-y-4">
-              <PhotoHeatmapZone data={stats.heatmap_data} />
-            </section>
-
-            {/* New Zone: Buildings Missing Photos */}
-            <section className="space-y-4">
-              <NoPhotosMapZone />
             </section>
           </TabsContent>
         </Tabs>

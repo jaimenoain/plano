@@ -63,6 +63,7 @@ import MergeComparison from "./pages/admin/MergeComparison";
 import Users from "./pages/admin/Users";
 import Moderation from "./pages/admin/Moderation";
 import ImageWall from "./pages/admin/ImageWall";
+import PhotoAnalytics from "./pages/admin/PhotoAnalytics";
 import BuildingAudit from "./pages/admin/BuildingAudit";
 import StorageJobs from "./pages/admin/StorageJobs";
 import { AdminGuard } from "./components/admin/AdminGuard";
@@ -122,6 +123,7 @@ const router = createBrowserRouter(
         <Route path="/admin/users" element={<Users />} />
         <Route path="/admin/moderation" element={<Moderation />} />
         <Route path="/admin/images" element={<ImageWall />} />
+        <Route path="/admin/photos" element={<PhotoAnalytics />} />
         <Route path="/admin/audit" element={<BuildingAudit />} />
         {/* Storage management tool */}
         <Route path="/admin/storage-jobs" element={<StorageJobs />} />
