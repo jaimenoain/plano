@@ -203,6 +203,7 @@ export function AddBuildingsToCollectionDialog({
                       </p>
                   }
                   onBuildingClick={(building) => setSelectedBuildingId(building.id)}
+                  imagePosition="left"
                   renderAction={(building) => {
                       const isAdded = existingBuildingIds.has(building.id);
                       return (

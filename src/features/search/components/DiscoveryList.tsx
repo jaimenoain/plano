@@ -14,6 +14,7 @@ interface DiscoveryListProps {
   onBuildingClick?: (building: DiscoveryBuilding) => void;
   emptyState?: React.ReactNode;
   className?: string;
+  imagePosition?: 'left' | 'right';
 }
 
 export function DiscoveryList({
@@ -24,6 +25,7 @@ export function DiscoveryList({
   onBuildingClick,
   emptyState,
   className,
+  imagePosition,
 }: DiscoveryListProps) {
   if (isLoading) {
     return (
@@ -82,6 +84,7 @@ export function DiscoveryList({
           socialContext={building.social_context}
           action={renderAction?.(building)}
           onClick={onBuildingClick ? () => onBuildingClick(building) : undefined}
+          imagePosition={imagePosition}
         />
       ))}
     </div>
