@@ -383,6 +383,11 @@ export function BuildingDiscoveryMap({
         onClick={(e) => {
             e.originalEvent.stopPropagation();
 
+            // Prevent navigation if clicking on an action button inside the tooltip
+            if ((e.originalEvent.target as HTMLElement).closest('button')) {
+                return;
+            }
+
             const isTouch = window.matchMedia('(pointer: coarse)').matches;
             const isPinSelected = isSelected || isHighlighted;
 
