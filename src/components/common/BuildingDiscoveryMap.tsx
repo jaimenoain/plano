@@ -143,7 +143,7 @@ export function BuildingDiscoveryMap({
   // Clustering logic
   const supercluster = useMemo(() => {
     return new Supercluster({
-      radius: 40,
+      radius: 30,
       maxZoom: 14 // Reduced maxZoom to break clusters earlier for approximate locations
     });
   }, []);
