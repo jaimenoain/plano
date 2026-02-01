@@ -5,12 +5,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Check, Search, MapPin, Circle } from "lucide-react";
+import { Loader2, Plus, Check, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
 import { BuildingDetailPanel } from "@/components/collections/BuildingDetailPanel";
-import { cn } from "@/lib/utils";
+import { DiscoveryList } from "@/features/search/components/DiscoveryList";
+import { DiscoveryBuilding } from "@/features/search/components/types";
 
 interface AddBuildingsToCollectionDialogProps {
   collectionId: string;
@@ -50,7 +51,9 @@ export function AddBuildingsToCollectionDialog({
             country,
             address,
             slug,
-            hero_image_url
+            hero_image_url,
+            year_completed,
+            building_architects(architect:architects(id, name))
           )
         `)
         .eq("user_id", user.id)
@@ -62,12 +65,16 @@ export function AddBuildingsToCollectionDialog({
       const buildings = data.map((item: any) => ({
         ...item.building,
         rating: item.rating,
-        hero_image_url: item.building.hero_image_url ? getBuildingImageUrl(item.building.hero_image_url) : null
+        main_image_url: item.building.hero_image_url ? getBuildingImageUrl(item.building.hero_image_url) : null,
+        architects: item.building.building_architects?.map((ba: any) => ba.architect) || [],
+        location_lat: 0,
+        location_lng: 0,
+        styles: [],
       }));
 
       // Identify buildings without images
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const buildingsWithoutImages = buildings.filter((b: any) => !b.hero_image_url);
+      const buildingsWithoutImages = buildings.filter((b: any) => !b.main_image_url);
       const buildingIdsWithoutImages = buildingsWithoutImages.map((b: any) => b.id);
 
       if (buildingIdsWithoutImages.length > 0) {
@@ -89,14 +96,14 @@ export function AddBuildingsToCollectionDialog({
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           buildings.forEach((b: any) => {
-            if (!b.hero_image_url && imageMap.has(b.id)) {
-              b.hero_image_url = getBuildingImageUrl(imageMap.get(b.id));
+            if (!b.main_image_url && imageMap.has(b.id)) {
+              b.main_image_url = getBuildingImageUrl(imageMap.get(b.id));
             }
           });
         }
       }
 
-      return buildings;
+      return buildings as DiscoveryBuilding[];
     },
     enabled: !!user && open,
   });
@@ -114,7 +121,8 @@ export function AddBuildingsToCollectionDialog({
           building.name.toLowerCase().includes(query) ||
           building.city?.toLowerCase().includes(query) ||
           building.country?.toLowerCase().includes(query) ||
-          building.address?.toLowerCase().includes(query)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (building as any).address?.toLowerCase().includes(query)
         );
     }
 
@@ -185,77 +193,34 @@ export function AddBuildingsToCollectionDialog({
             </div>
 
             <ScrollArea className="flex-1">
-                <div className="p-2 space-y-1">
-                    {isLoading ? (
-                        <div className="flex justify-center p-8">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        </div>
-                    ) : filteredBuildings.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">
-                            {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
-                        </p>
-                    ) : (
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        filteredBuildings.map((building: any) => {
-                            const isAdded = existingBuildingIds.has(building.id);
-                            const isSelected = selectedBuildingId === building.id;
-                            return (
-                                <div
-                                    key={building.id}
-                                    className={cn(
-                                        "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border border-transparent",
-                                        isSelected ? "bg-accent/50 border-border" : "hover:bg-muted/50"
-                                    )}
-                                    onClick={() => setSelectedBuildingId(building.id)}
-                                >
-                                    {building.hero_image_url ? (
-                                        <img src={building.hero_image_url} alt="" className="w-12 h-12 rounded object-cover bg-secondary" />
-                                    ) : (
-                                        <div className="w-12 h-12 rounded bg-secondary flex items-center justify-center text-xs text-muted-foreground text-center p-1">No Image</div>
-                                    )}
-
-                                    <div className="flex-1 min-w-0 text-left">
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="font-medium text-sm truncate">{building.name}</h4>
-                                            {building.rating > 0 && (
-                                                <div className="flex items-center gap-0.5">
-                                                    {Array.from({ length: 3 }).map((_, i) => (
-                                                        <Circle
-                                                            key={i}
-                                                            className={cn(
-                                                                "w-2 h-2",
-                                                                i < building.rating
-                                                                    ? "fill-[#595959] text-[#595959]"
-                                                                    : "text-muted-foreground/20"
-                                                            )}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center text-xs text-muted-foreground truncate">
-                                            <MapPin className="h-3 w-3 mr-1 inline" />
-                                            {building.city && building.country ? `${building.city}, ${building.country}` : "Unknown location"}
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        size="sm"
-                                        variant={isAdded ? "secondary" : "default"}
-                                        className="h-8 w-8 p-0 shrink-0 ml-auto relative z-10"
-                                        disabled={isAdded || addMutation.isPending}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            addMutation.mutate(building.id);
-                                        }}
-                                    >
-                                        {isAdded ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                                    </Button>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
+                <DiscoveryList
+                  buildings={filteredBuildings}
+                  isLoading={isLoading}
+                  className="p-2"
+                  emptyState={
+                      <p className="text-center text-muted-foreground py-8">
+                          {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
+                      </p>
+                  }
+                  onBuildingClick={(building) => setSelectedBuildingId(building.id)}
+                  renderAction={(building) => {
+                      const isAdded = existingBuildingIds.has(building.id);
+                      return (
+                          <Button
+                              size="sm"
+                              variant={isAdded ? "secondary" : "default"}
+                              className="h-8 w-8 p-0 shrink-0 shadow-sm"
+                              disabled={isAdded || addMutation.isPending}
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  addMutation.mutate(building.id);
+                              }}
+                          >
+                              {isAdded ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                          </Button>
+                      )
+                  }}
+               />
             </ScrollArea>
           </div>
 

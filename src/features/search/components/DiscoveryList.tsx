@@ -4,17 +4,26 @@ import { Button } from "@/components/ui/button";
 import { DiscoveryBuilding } from "./types";
 import { DiscoveryBuildingCard } from "./DiscoveryBuildingCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface DiscoveryListProps {
   buildings: DiscoveryBuilding[];
   isLoading: boolean;
   currentLocation?: { lat: number; lng: number };
+  renderAction?: (building: DiscoveryBuilding) => React.ReactNode;
+  onBuildingClick?: (building: DiscoveryBuilding) => void;
+  emptyState?: React.ReactNode;
+  className?: string;
 }
 
 export function DiscoveryList({
   buildings,
   isLoading,
   currentLocation,
+  renderAction,
+  onBuildingClick,
+  emptyState,
+  className,
 }: DiscoveryListProps) {
   if (isLoading) {
     return (
@@ -37,6 +46,10 @@ export function DiscoveryList({
   }
 
   if (buildings.length === 0) {
+    if (emptyState) {
+      return <>{emptyState}</>;
+    }
+
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center h-full min-h-[50vh]">
         <div className="bg-muted rounded-full p-4 mb-4">
@@ -60,13 +73,15 @@ export function DiscoveryList({
   }
 
   return (
-    <div className="space-y-4 p-4 pb-20 md:pb-4">
+    <div className={cn("space-y-4 p-4 pb-20 md:pb-4", className)}>
       {buildings.map((building) => (
         <DiscoveryBuildingCard
           key={building.id}
           building={building}
           distance={building.distance}
           socialContext={building.social_context}
+          action={renderAction?.(building)}
+          onClick={onBuildingClick ? () => onBuildingClick(building) : undefined}
         />
       ))}
     </div>
