@@ -167,6 +167,7 @@ export default function Explore() {
     <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
       <AppLayout
         isFullScreen
+        showHeader={false}
         variant="map"
         searchBar={
           <div className="relative w-full max-w-sm">
@@ -254,7 +255,7 @@ export default function Explore() {
         {showTutorial && <ExploreTutorial onComplete={() => setShowTutorial(false)} />}
 
         {/* Vertical Snap Container */}
-        <div className="relative h-[calc(100vh-64px)] w-full bg-black text-white overflow-hidden">
+        <div className="relative h-[calc(100vh-80px)] w-full bg-black text-white overflow-hidden">
           <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar">
             {status === 'pending' ? (
                 <div className="h-full w-full flex items-center justify-center snap-center">
