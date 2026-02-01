@@ -66,6 +66,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     name: collection.name,
     description: collection.description || "",
     is_public: collection.is_public,
+    external_link: collection.external_link || "",
     show_community_images: collection.show_community_images,
     categorization_method: collection.categorization_method || 'default',
     custom_categories: collection.custom_categories || [],
@@ -87,6 +88,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
         name: collection.name,
         description: collection.description || "",
         is_public: collection.is_public,
+        external_link: collection.external_link || "",
         show_community_images: collection.show_community_images,
         categorization_method: collection.categorization_method || 'default',
         custom_categories: collection.custom_categories || [],
@@ -119,6 +121,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
         name: formData.name,
         description: formData.description || null,
         is_public: formData.is_public,
+        external_link: formData.external_link || null,
         show_community_images: formData.show_community_images,
         categorization_method: formData.categorization_method,
         custom_categories: formData.custom_categories,
@@ -342,6 +345,15 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="external-link">External Link</Label>
+              <Input
+                id="external-link"
+                value={formData.external_link}
+                onChange={(e) => setFormData({...formData, external_link: e.target.value})}
+                placeholder="https://example.com"
               />
             </div>
             <div className="flex items-center justify-between space-x-2">
