@@ -4,6 +4,7 @@ export interface Collection {
   description: string | null;
   owner_id: string;
   is_public: boolean;
+  external_link: string | null;
   slug: string;
   show_community_images: boolean;
   categorization_method: 'default' | 'custom' | 'status' | 'rating_member';

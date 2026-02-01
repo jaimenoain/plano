@@ -9,7 +9,7 @@ import { CollectionBuildingCard } from "@/components/collections/CollectionBuild
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
-import { Loader2, Settings, Plus } from "lucide-react";
+import { Loader2, Settings, Plus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
@@ -467,6 +467,14 @@ export default function CollectionMap() {
                       By: <Link to={`/profile/${ownerProfile?.username}`} className="hover:underline text-foreground">{ownerProfile?.username}</Link>
                     </div>
                     {collection.description && <p className="text-sm text-muted-foreground line-clamp-2">{collection.description}</p>}
+                    {collection.external_link && (
+                        <Button variant="outline" size="sm" className="mt-2 h-8" asChild>
+                            <a href={collection.external_link} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="w-3 h-3 mr-2" />
+                                Visit Link
+                            </a>
+                        </Button>
+                    )}
                 </div>
                 {canEdit && (
                     <div className="flex items-center gap-2 shrink-0">
