@@ -73,7 +73,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
             }}
         >
             {canEdit && onRemove && (
-                <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                     <Button
                         variant="secondary"
                         size="icon"
