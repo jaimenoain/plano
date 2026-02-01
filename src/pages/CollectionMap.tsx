@@ -324,7 +324,7 @@ export default function CollectionMap() {
   const allMapBuildings = useMemo(() => {
     if (showSavedCandidates && savedCandidates) {
       const filteredCandidates = savedCandidates.filter(c => !existingBuildingIds.has(c.id));
-      return [...mapBuildings, ...filteredCandidates];
+      return [...mapBuildings, ...filteredCandidates.map(c => ({ ...c, isCandidate: true }))];
     }
     return mapBuildings;
   }, [mapBuildings, savedCandidates, showSavedCandidates, existingBuildingIds]);
@@ -473,6 +473,10 @@ export default function CollectionMap() {
             <BuildingDiscoveryMap
                 externalBuildings={allMapBuildings}
                 highlightedId={highlightedId}
+                onAddCandidate={(building) => {
+                    setCandidateToAdd(building);
+                    setShowAddConfirm(true);
+                }}
                 onMarkerClick={(id) => {
                   setHighlightedId(id);
                   
@@ -480,23 +484,13 @@ export default function CollectionMap() {
                   if (existingBuildingIds.has(id)) {
                       const building = mapBuildings.find(b => b.id === id);
                       
-                      // NOTE: The Main branch was using window.open(..., '_blank').
-                      // The Feature branch uses navigate(). 
-                      // Use window.open here if you strictly want new tabs.
                       if (building) {
                         window.open(getBuildingUrl(building.id, building.slug, building.short_id), '_blank');
                       } else {
                         window.open(`/building/${id}`, '_blank');
                       }
                   } 
-                  // 2. If not in collection, treat as a "Candidate" (Feature Branch Logic)
-                  else {
-                      const building = savedCandidates?.find(b => b.id === id);
-                      if (building) {
-                          setCandidateToAdd(building);
-                          setShowAddConfirm(true);
-                      }
-                  }
+                  // 2. If not in collection, just highlight it (Tooltip will show with Add button)
                 }}
                 forcedBounds={bounds}
                 showImages={collection.show_community_images ?? true}

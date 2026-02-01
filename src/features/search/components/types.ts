@@ -35,6 +35,7 @@ export interface DiscoveryBuilding {
   location_precision?: 'exact' | 'approximate';
   status?: 'Built' | 'Under Construction' | 'Unbuilt' | 'Demolished' | 'Temporary' | null;
   color?: string | null;
+  isCandidate?: boolean;
 }
 
 export interface ContactRater {
