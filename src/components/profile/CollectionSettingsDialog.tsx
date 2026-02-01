@@ -149,7 +149,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
       .from("collection_contributors")
       .insert({
         collection_id: collection.id,
-        user_id: userId
+        user_id: userId,
+        role: 'editor'
       });
 
     if (error) {
