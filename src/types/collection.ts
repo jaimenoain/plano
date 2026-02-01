@@ -16,6 +16,7 @@ export interface CollectionItemWithBuilding {
   building_id: string;
   note: string | null;
   custom_category_id: string | null;
+  is_hidden?: boolean;
   building: {
     id: string;
     name: string;
