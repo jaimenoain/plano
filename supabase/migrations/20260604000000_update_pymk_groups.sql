@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS get_people_you_may_know(integer);
+
 CREATE OR REPLACE FUNCTION get_people_you_may_know(p_limit integer DEFAULT 3)
 RETURNS TABLE (
   id uuid,
