@@ -1394,6 +1394,7 @@ export interface Database {
           avatar_url: string | null
           mutual_count: number
           is_follows_me: boolean
+          group_mutual_count: number
         }[]
       },
       find_nearby_buildings: {

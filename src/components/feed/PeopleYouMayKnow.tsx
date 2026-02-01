@@ -35,11 +35,18 @@ export function PeopleYouMayKnow() {
               </Avatar>
               <div className="flex flex-col">
                 <span className="text-sm font-medium leading-none">{person.username}</span>
-                {person.mutual_count > 0 && (
-                   <span className="text-xs text-muted-foreground mt-1">
-                     {person.mutual_count} mutual connection{person.mutual_count !== 1 ? 's' : ''}
-                   </span>
-                )}
+                <div className="flex flex-col text-xs text-muted-foreground mt-1 gap-0.5">
+                  {person.mutual_count > 0 && (
+                    <span>
+                      {person.mutual_count} mutual connection{person.mutual_count !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {person.group_mutual_count > 0 && (
+                    <span>
+                      {person.group_mutual_count} group{person.group_mutual_count !== 1 ? 's' : ''} in common
+                    </span>
+                  )}
+                </div>
               </div>
             </Link>
             <FollowButton userId={person.id} isFollower={person.is_follows_me} />
