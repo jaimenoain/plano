@@ -2,8 +2,9 @@ import { forwardRef, useState, useRef, useEffect } from "react";
 import { CollectionItemWithBuilding } from "@/types/collection";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, MessageSquarePlus } from "lucide-react";
+import { Save, MessageSquarePlus, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -23,10 +24,11 @@ interface CollectionBuildingCardProps {
   customCategories?: { id: string; label: string; color: string }[] | null;
   onUpdateCategory?: (categoryId: string) => void;
   showImages?: boolean;
+  onRemove?: () => void;
 }
 
 export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuildingCardProps>(
-  ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory, showImages = true }, ref) => {
+  ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory, showImages = true, onRemove }, ref) => {
     const [isEditingNote, setIsEditingNote] = useState(false);
     const [noteValue, setNoteValue] = useState(item.note || "");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -70,6 +72,19 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                 onNavigate();
             }}
         >
+            {canEdit && onRemove && (
+                <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-6 w-6 rounded-full shadow-sm bg-background/80 hover:bg-background"
+                        onClick={onRemove}
+                        title="Remove from map"
+                    >
+                        <Check className="h-3 w-3" />
+                    </Button>
+                </div>
+            )}
             <div className="flex flex-row min-h-[7rem]">
                 {/* Content Section */}
                 <div className="flex flex-col flex-1 p-3 min-w-0 justify-between">

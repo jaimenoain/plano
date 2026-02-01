@@ -4,7 +4,7 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus } from "lucide-react";
+import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
@@ -63,6 +63,7 @@ interface BuildingDiscoveryMapProps {
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
   showImages?: boolean;
+  onRemoveItem?: (buildingId: string) => void;
 }
 
 export function BuildingDiscoveryMap({
@@ -78,7 +79,8 @@ export function BuildingDiscoveryMap({
   resetInteractionTrigger,
   highlightedId,
   onMarkerClick,
-  showImages = true
+  showImages = true,
+  onRemoveItem
 }: BuildingDiscoveryMapProps) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
@@ -422,6 +424,18 @@ export function BuildingDiscoveryMap({
                                 <Plus className="w-4 h-4" />
                             </button>
                         )}
+                        {!building.isCandidate && onRemoveItem && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onRemoveItem(building.buildingId);
+                                }}
+                                className="mt-1 bg-white text-black rounded-full p-1 hover:bg-gray-200 transition-colors z-[60]"
+                                title="Remove from map"
+                            >
+                                <Check className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
@@ -445,7 +459,7 @@ export function BuildingDiscoveryMap({
             </div>
         </Marker>
     );
-  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId]);
+  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId, onAddCandidate, onRemoveItem]);
 
   if (isLoading) {
     return (

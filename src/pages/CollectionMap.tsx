@@ -46,6 +46,10 @@ export default function CollectionMap() {
   const [candidateToAdd, setCandidateToAdd] = useState<DiscoveryBuilding | null>(null);
   const [showAddConfirm, setShowAddConfirm] = useState(false);
 
+  // New States for Removal
+  const [itemToRemove, setItemToRemove] = useState<CollectionItemWithBuilding | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+
   // 1. Resolve User (Owner)
   const { data: ownerProfile, isLoading: loadingProfile } = useQuery({
     queryKey: ["profile", username],
@@ -395,6 +399,41 @@ export default function CollectionMap() {
     setCandidateToAdd(null);
   };
 
+  const handleRemoveItem = (buildingId: string) => {
+    const item = items?.find(i => i.building.id === buildingId);
+    if (item) {
+      setItemToRemove(item);
+      setShowRemoveConfirm(true);
+    }
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!itemToRemove) return;
+
+    const { error } = await supabase
+      .from("collection_items")
+      .delete()
+      .eq("id", itemToRemove.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove building from collection.",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Removed",
+        description: `${itemToRemove.building.name} removed from collection.`
+      });
+      refetchItems();
+      // Invalidate saved candidates so it reappears as a candidate if applicable
+      queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+    }
+    setShowRemoveConfirm(false);
+    setItemToRemove(null);
+  };
+
   if (isLoading) {
     return (
       <AppLayout title="Collection" showBack>
@@ -467,6 +506,7 @@ export default function CollectionMap() {
                                 customCategories={collection.custom_categories}
                                 onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
                                 showImages={collection.show_community_images ?? true}
+                                onRemove={() => handleRemoveItem(item.building.id)}
                             />
                         ))
                     ) : (
@@ -487,6 +527,7 @@ export default function CollectionMap() {
                     setCandidateToAdd(building);
                     setShowAddConfirm(true);
                 }}
+                onRemoveItem={canEdit ? handleRemoveItem : undefined}
                 onMarkerClick={(id) => {
                   setHighlightedId(id);
                   
@@ -538,6 +579,27 @@ export default function CollectionMap() {
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setCandidateToAdd(null)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleAddToCollection}>Add</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Remove from Map</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Do you really want to remove <strong>{itemToRemove?.building.name}</strong> from this map?
+                            {itemToRemove?.note && (
+                                <>
+                                    <br /><br />
+                                    <strong>Note:</strong> The note attached to this building will also be deleted.
+                                </>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setItemToRemove(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmRemove}>Remove</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
