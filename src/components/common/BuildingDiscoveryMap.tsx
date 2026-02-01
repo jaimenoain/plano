@@ -4,7 +4,7 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Layers, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
@@ -46,10 +46,12 @@ interface Building {
   location_precision?: 'exact' | 'approximate';
   main_image_url?: string | null;
   color?: string | null;
+  isCandidate?: boolean;
 }
 
 interface BuildingDiscoveryMapProps {
   externalBuildings?: DiscoveryBuilding[];
+  onAddCandidate?: (building: DiscoveryBuilding) => void;
   onRegionChange?: (center: { lat: number, lng: number }) => void;
   onBoundsChange?: (bounds: Bounds) => void;
   onMapInteraction?: () => void;
@@ -65,6 +67,7 @@ interface BuildingDiscoveryMapProps {
 
 export function BuildingDiscoveryMap({
   externalBuildings,
+  onAddCandidate,
   onRegionChange,
   onBoundsChange,
   onMapInteraction,
@@ -396,8 +399,8 @@ export function BuildingDiscoveryMap({
                 data-testid={isApproximate ? "approximate-dot" : "exact-pin"}
                 className="group relative flex flex-col items-center"
             >
-            {/* Tooltip */}
-            <div className={`absolute bottom-full mb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
+            {/* Tooltip - pb-2 used instead of mb-2 to create a hit area bridge for hover */}
+            <div className={`absolute bottom-full pb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
                 <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
                     {showImages && imageUrl && (
                         <div className="w-[200px] h-[200px]">
@@ -407,6 +410,18 @@ export function BuildingDiscoveryMap({
                     <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
                         <span className="font-medium text-white text-center">{building.name}</span>
                         {pinTooltip}
+                        {building.isCandidate && onAddCandidate && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAddCandidate(building as unknown as DiscoveryBuilding);
+                                }}
+                                className="mt-1 bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white transition-colors z-[60]"
+                                title="Add to map"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
