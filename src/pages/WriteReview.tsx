@@ -883,20 +883,6 @@ export default function WriteReview() {
             )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3">
-          {!showLists && (
-            <Button variant="outline" size="sm" onClick={() => setShowLists(true)} className="gap-2">
-               <Plus className="w-4 h-4" /> Add to my maps
-            </Button>
-          )}
-          {!showLinks && (
-            <Button variant="outline" size="sm" onClick={() => setShowLinks(true)} className="gap-2">
-               <LinkIcon className="w-4 h-4" /> Add link
-            </Button>
-          )}
-        </div>
-
         {/* Collections */}
         {showLists && user && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -975,6 +961,20 @@ export default function WriteReview() {
             )}
           </div>
         )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3">
+          {!showLists && (
+            <Button variant="outline" size="sm" onClick={() => setShowLists(true)} className="gap-2">
+               <Plus className="w-4 h-4" /> Add to my maps
+            </Button>
+          )}
+          {!showLinks && (
+            <Button variant="outline" size="sm" onClick={() => setShowLinks(true)} className="gap-2">
+               <LinkIcon className="w-4 h-4" /> Add link
+            </Button>
+          )}
+        </div>
 
         {/* Visibility */}
         <div className="flex items-center gap-2">
