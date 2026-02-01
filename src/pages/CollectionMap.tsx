@@ -45,6 +45,8 @@ export default function CollectionMap() {
   const [showSavedCandidates, setShowSavedCandidates] = useState(false);
   const [candidateToAdd, setCandidateToAdd] = useState<DiscoveryBuilding | null>(null);
   const [showAddConfirm, setShowAddConfirm] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState<CollectionItemWithBuilding | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   // 1. Resolve User (Owner)
   const { data: ownerProfile, isLoading: loadingProfile } = useQuery({
@@ -395,6 +397,40 @@ export default function CollectionMap() {
     setCandidateToAdd(null);
   };
 
+  const handleRemoveItem = (buildingId: string) => {
+    const item = items?.find(i => i.building.id === buildingId);
+    if (item) {
+        setItemToRemove(item);
+        setShowRemoveConfirm(true);
+    }
+  };
+
+  const confirmRemoveItem = async () => {
+    if (!itemToRemove) return;
+
+    const { error } = await supabase
+        .from("collection_items")
+        .delete()
+        .eq("id", itemToRemove.id);
+
+    if (error) {
+         toast({
+            title: "Error",
+            description: "Failed to remove building from collection.",
+            variant: "destructive"
+        });
+    } else {
+         toast({
+            title: "Removed",
+            description: `${itemToRemove.building.name} removed from collection.`
+        });
+        refetchItems();
+        queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+    }
+    setShowRemoveConfirm(false);
+    setItemToRemove(null);
+  };
+
   if (isLoading) {
     return (
       <AppLayout title="Collection" showBack>
@@ -467,6 +503,7 @@ export default function CollectionMap() {
                                 customCategories={collection.custom_categories}
                                 onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
                                 showImages={collection.show_community_images ?? true}
+                                onRemove={() => handleRemoveItem(item.building.id)}
                             />
                         ))
                     ) : (
@@ -504,6 +541,7 @@ export default function CollectionMap() {
                 }}
                 forcedBounds={bounds}
                 showImages={collection.show_community_images ?? true}
+                onRemoveItem={canEdit ? handleRemoveItem : undefined}
             />
         </div>
       </div>
@@ -538,6 +576,31 @@ export default function CollectionMap() {
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setCandidateToAdd(null)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleAddToCollection}>Add</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Remove from Map</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {itemToRemove?.note ? (
+                                <div className="space-y-2">
+                                    <p>Are you sure you want to remove <strong>{itemToRemove.building.name}</strong>?</p>
+                                    <div className="bg-destructive/10 p-3 rounded-md text-sm text-destructive border border-destructive/20">
+                                        <p className="font-semibold">Warning: This building has a note that will be lost.</p>
+                                        <p className="italic mt-1 text-muted-foreground">"{itemToRemove.note}"</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>Are you sure you want to remove <strong>{itemToRemove?.building.name}</strong> from this map?</>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setItemToRemove(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmRemoveItem} className="bg-destructive hover:bg-destructive/90">Remove</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

@@ -2,8 +2,9 @@ import { forwardRef, useState, useRef, useEffect } from "react";
 import { CollectionItemWithBuilding } from "@/types/collection";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, MessageSquarePlus } from "lucide-react";
+import { Save, MessageSquarePlus, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -23,10 +24,11 @@ interface CollectionBuildingCardProps {
   customCategories?: { id: string; label: string; color: string }[] | null;
   onUpdateCategory?: (categoryId: string) => void;
   showImages?: boolean;
+  onRemove?: () => void;
 }
 
 export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuildingCardProps>(
-  ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory, showImages = true }, ref) => {
+  ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory, showImages = true, onRemove }, ref) => {
     const [isEditingNote, setIsEditingNote] = useState(false);
     const [noteValue, setNoteValue] = useState(item.note || "");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -78,6 +80,20 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                              <h3 className="font-semibold text-sm leading-tight line-clamp-2">
                                 {item.building.name}
                              </h3>
+                             {canEdit && onRemove && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-green-600 hover:text-destructive hover:bg-destructive/10 shrink-0 -mr-1 -mt-1"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onRemove();
+                                    }}
+                                    title="Remove from collection"
+                                >
+                                    <Check className="h-4 w-4" />
+                                </Button>
+                             )}
                         </div>
 
                         <div className="text-xs text-muted-foreground mt-1 line-clamp-1">

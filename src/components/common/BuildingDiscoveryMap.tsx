@@ -4,7 +4,7 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus } from "lucide-react";
+import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
@@ -63,6 +63,7 @@ interface BuildingDiscoveryMapProps {
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
   showImages?: boolean;
+  onRemoveItem?: (buildingId: string) => void;
 }
 
 export function BuildingDiscoveryMap({
@@ -78,7 +79,8 @@ export function BuildingDiscoveryMap({
   resetInteractionTrigger,
   highlightedId,
   onMarkerClick,
-  showImages = true
+  showImages = true,
+  onRemoveItem
 }: BuildingDiscoveryMapProps) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
@@ -420,6 +422,18 @@ export function BuildingDiscoveryMap({
                                 title="Add to map"
                             >
                                 <Plus className="w-4 h-4" />
+                            </button>
+                        )}
+                        {!building.isCandidate && onRemoveItem && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onRemoveItem(building.buildingId);
+                                }}
+                                className="mt-1 bg-green-500 text-white rounded-full p-1 hover:bg-red-500 transition-colors z-[60]"
+                                title="Remove from collection"
+                            >
+                                <Check className="w-4 h-4" />
                             </button>
                         )}
                     </div>
