@@ -887,7 +887,7 @@ export default function WriteReview() {
         <div className="flex flex-wrap gap-3">
           {!showLists && (
             <Button variant="outline" size="sm" onClick={() => setShowLists(true)} className="gap-2">
-               <Plus className="w-4 h-4" /> Add to my maps
+               <Plus className="w-4 h-4" /> Add to collection
             </Button>
           )}
           {!showLinks && (
