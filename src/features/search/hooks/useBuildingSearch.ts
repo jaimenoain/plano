@@ -215,35 +215,55 @@ async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string, 
   return enrichedBuildings;
 }
 
+// URL Param Parsers
+const getArrayParam = (param: string | null) => param ? param.split(",") : [];
+const getBoolParam = (param: string | null, defaultVal: boolean) => param !== null ? param === "true" : defaultVal;
+const getNumParam = (param: string | null, defaultVal: number) => param ? parseInt(param) : defaultVal;
+const getJsonParam = <T>(param: string | null, defaultVal: T): T => {
+  if (!param) return defaultVal;
+  try {
+    return JSON.parse(param);
+  } catch (e) {
+    console.error("Failed to parse JSON param:", param, e);
+    return defaultVal;
+  }
+};
+
 export function useBuildingSearch() {
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const debouncedQuery = useDebounce(searchQuery, 300);
 
   // New Filters State
-  const [statusFilters, setStatusFilters] = useState<string[]>([]);
-  const [hideVisited, setHideVisited] = useState(false);
-  const [hideSaved, setHideSaved] = useState(false);
-  const [hideHidden, setHideHidden] = useState(true);
-  const [hideWithoutImages, setHideWithoutImages] = useState(false);
+  const [statusFilters, setStatusFilters] = useState<string[]>(getArrayParam(searchParams.get("status")));
+  const [hideVisited, setHideVisited] = useState(getBoolParam(searchParams.get("hideVisited"), false));
+  const [hideSaved, setHideSaved] = useState(getBoolParam(searchParams.get("hideSaved"), false));
+  const [hideHidden, setHideHidden] = useState(getBoolParam(searchParams.get("hideHidden"), true));
+  const [hideWithoutImages, setHideWithoutImages] = useState(getBoolParam(searchParams.get("hideWithoutImages"), false));
 
-  const [filterContacts, setFilterContacts] = useState(false);
-  const [personalMinRating, setPersonalMinRating] = useState<number>(0);
-  const [contactMinRating, setContactMinRating] = useState<number>(0);
+  const [filterContacts, setFilterContacts] = useState(getBoolParam(searchParams.get("filterContacts"), false));
+  const [personalMinRating, setPersonalMinRating] = useState<number>(getNumParam(searchParams.get("minRating"), 0));
+  const [contactMinRating, setContactMinRating] = useState<number>(getNumParam(searchParams.get("contactMinRating"), 0));
 
   // Pagination State
   const [page, setPage] = useState(0);
 
-  const [selectedArchitects, setSelectedArchitects] = useState<{ id: string; name: string }[]>([]);
-  const [selectedCollections, setSelectedCollections] = useState<{ id: string; name: string }[]>([]);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
+  const [selectedArchitects, setSelectedArchitects] = useState<{ id: string; name: string }[]>(
+    getJsonParam(searchParams.get("architects"), [])
+  );
+  const [selectedCollections, setSelectedCollections] = useState<{ id: string; name: string }[]>(
+    getJsonParam(searchParams.get("collections"), [])
+  );
+  const [viewMode, setViewMode] = useState<'list' | 'map'>((searchParams.get("view") as 'list' | 'map') || 'map');
 
   // New Filters
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
-  const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
-  const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get("category") || null);
+  const [selectedTypologies, setSelectedTypologies] = useState<string[]>(getArrayParam(searchParams.get("typologies")));
+  const [selectedAttributes, setSelectedAttributes] = useState<string[]>(getArrayParam(searchParams.get("attributes")));
+  const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>(
+    getJsonParam(searchParams.get("contacts"), [])
+  );
 
   // Default to London or URL params
   const [userLocation, setUserLocation] = useState({
@@ -286,6 +306,60 @@ export function useBuildingSearch() {
     selectedTypologies,
     selectedAttributes,
     selectedContacts,
+  ]);
+
+  // Sync state to URL params
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (debouncedQuery) params.set("q", debouncedQuery);
+
+    // Location
+    params.set("lat", userLocation.lat.toString());
+    params.set("lng", userLocation.lng.toString());
+
+    // View Mode
+    if (viewMode !== 'map') params.set("view", viewMode);
+
+    // Filters
+    if (statusFilters.length > 0) params.set("status", statusFilters.join(","));
+    if (hideVisited) params.set("hideVisited", "true");
+    if (hideSaved) params.set("hideSaved", "true");
+    if (!hideHidden) params.set("hideHidden", "false"); // Default is true
+    if (hideWithoutImages) params.set("hideWithoutImages", "true");
+
+    if (filterContacts) params.set("filterContacts", "true");
+    if (personalMinRating > 0) params.set("minRating", personalMinRating.toString());
+    if (contactMinRating > 0) params.set("contactMinRating", contactMinRating.toString());
+
+    if (selectedCategory) params.set("category", selectedCategory);
+    if (selectedTypologies.length > 0) params.set("typologies", selectedTypologies.join(","));
+    if (selectedAttributes.length > 0) params.set("attributes", selectedAttributes.join(","));
+
+    if (selectedArchitects.length > 0) params.set("architects", JSON.stringify(selectedArchitects));
+    if (selectedCollections.length > 0) params.set("collections", JSON.stringify(selectedCollections));
+    if (selectedContacts.length > 0) params.set("contacts", JSON.stringify(selectedContacts));
+
+    setSearchParams(params, { replace: true });
+  }, [
+    debouncedQuery,
+    userLocation,
+    viewMode,
+    statusFilters,
+    hideVisited,
+    hideSaved,
+    hideHidden,
+    hideWithoutImages,
+    filterContacts,
+    personalMinRating,
+    contactMinRating,
+    selectedCategory,
+    selectedTypologies,
+    selectedAttributes,
+    selectedArchitects,
+    selectedCollections,
+    selectedContacts,
+    setSearchParams
   ]);
 
   const requestLocation = async () => {

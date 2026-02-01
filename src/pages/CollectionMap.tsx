@@ -475,16 +475,22 @@ export default function CollectionMap() {
                 highlightedId={highlightedId}
                 onMarkerClick={(id) => {
                   setHighlightedId(id);
+                  
+                  // 1. Check if the building is already in the collection
                   if (existingBuildingIds.has(id)) {
-                      // It's already in the collection
                       const building = mapBuildings.find(b => b.id === id);
+                      
+                      // NOTE: The Main branch was using window.open(..., '_blank').
+                      // The Feature branch uses navigate(). 
+                      // Use window.open here if you strictly want new tabs.
                       if (building) {
-                        navigate(getBuildingUrl(building.id, building.slug, building.short_id));
+                        window.open(getBuildingUrl(building.id, building.slug, building.short_id), '_blank');
                       } else {
-                        navigate(`/building/${id}`);
+                        window.open(`/building/${id}`, '_blank');
                       }
-                  } else {
-                      // It's a candidate
+                  } 
+                  // 2. If not in collection, treat as a "Candidate" (Feature Branch Logic)
+                  else {
                       const building = savedCandidates?.find(b => b.id === id);
                       if (building) {
                           setCandidateToAdd(building);
