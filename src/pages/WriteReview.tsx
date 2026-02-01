@@ -759,7 +759,7 @@ export default function WriteReview() {
               </button>
             ))}
             <span className="ml-2 text-sm font-medium text-muted-foreground">
-              {hoverRating ? getRatingLabel(hoverRating) : (rating ? getRatingLabel(rating) : "Select a rating")}
+              {hoverRating ? getRatingLabel(hoverRating) : (rating ? getRatingLabel(rating) : "")}
             </span>
           </div>
         </div>
