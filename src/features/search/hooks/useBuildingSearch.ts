@@ -261,9 +261,46 @@ export function useBuildingSearch() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get("category") || null);
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>(getArrayParam(searchParams.get("typologies")));
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>(getArrayParam(searchParams.get("attributes")));
-  const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>(
-    getJsonParam(searchParams.get("contacts"), [])
-  );
+  const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>([]);
+
+  // Resolve rated_by profiles from URL
+  const ratedByParam = searchParams.get("rated_by");
+  const { data: ratedByProfiles, isLoading: isLoadingRatedBy } = useQuery({
+      queryKey: ['rated-by-profiles', ratedByParam],
+      queryFn: async () => {
+          if (!ratedByParam) return [];
+          const usernames = ratedByParam.split(',').map(s => s.trim()).filter(Boolean);
+          if (usernames.length === 0) return [];
+
+          const { data } = await supabase
+              .from('profiles')
+              .select('id, username, avatar_url, first_name, last_name')
+              .in('username', usernames);
+
+          return data?.map(p => ({
+              id: p.id,
+              username: p.username,
+              avatar_url: p.avatar_url,
+              name: p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : p.username,
+              bio: null // Not needed for selection
+          } as UserSearchResult)) || [];
+      },
+      enabled: !!ratedByParam,
+      staleTime: 1000 * 60 * 60 // 1 hour
+  });
+
+  // Sync resolved profiles to state
+  useEffect(() => {
+      if (ratedByProfiles && ratedByProfiles.length > 0) {
+          const currentUsername = user?.username;
+          const otherContacts = ratedByProfiles.filter(p => p.username !== currentUsername);
+
+          setSelectedContacts(otherContacts);
+      } else if (!ratedByParam) {
+          // If param removed, clear contacts
+          setSelectedContacts([]);
+      }
+  }, [ratedByProfiles, user, ratedByParam]);
 
   // Default to London or URL params
   const [userLocation, setUserLocation] = useState({
@@ -338,10 +375,26 @@ export function useBuildingSearch() {
 
     if (selectedArchitects.length > 0) params.set("architects", JSON.stringify(selectedArchitects));
     if (selectedCollections.length > 0) params.set("collections", JSON.stringify(selectedCollections));
-    if (selectedContacts.length > 0) params.set("contacts", JSON.stringify(selectedContacts));
+
+    // Construct rated_by param
+    const ratedByUsers = new Set<string>();
+    if ((statusFilters.length > 0 || personalMinRating > 0) && user?.username) {
+        ratedByUsers.add(user.username);
+    }
+    selectedContacts.forEach(c => {
+        if (c.username) ratedByUsers.add(c.username);
+    });
+
+    if (ratedByUsers.size > 0) {
+        params.set("rated_by", Array.from(ratedByUsers).join(","));
+    } else if (isLoadingRatedBy && ratedByParam) {
+        params.set("rated_by", ratedByParam);
+    }
 
     setSearchParams(params, { replace: true });
   }, [
+    isLoadingRatedBy,
+    ratedByParam,
     debouncedQuery,
     userLocation,
     viewMode,
@@ -359,7 +412,8 @@ export function useBuildingSearch() {
     selectedArchitects,
     selectedCollections,
     selectedContacts,
-    setSearchParams
+    setSearchParams,
+    user
   ]);
 
   const requestLocation = async () => {
@@ -413,39 +467,73 @@ export function useBuildingSearch() {
         const hasCollections = selectedCollections.length > 0;
         const hasPersonalRating = personalMinRating > 0;
         const hasStatusFilters = statusFilters.length > 0;
+        const ratedByMe = hasStatusFilters || hasPersonalRating;
 
         // Input Sanitization
         const cleanQuery = debouncedQuery.trim() || null;
 
-        if (hasStatusFilters || filterContacts || hasSpecificContacts || hasCollections || hasPersonalRating) {
-            if (!user) return [];
+        if (ratedByMe || filterContacts || hasSpecificContacts || hasCollections) {
 
             const buildingIds = new Set<string>();
 
-            // 1. Contact Buildings (Any or Specific)
-            if (filterContacts || hasSpecificContacts) {
-                let contactIds: string[] = [];
+            // Determine Target Users
+            const targetUserIds = new Set<string>();
+            if (hasSpecificContacts) {
+                selectedContacts.forEach(c => targetUserIds.add(c.id));
+            }
+            if (ratedByMe && user) {
+                targetUserIds.add(user.id);
+            }
 
-                if (hasSpecificContacts) {
-                    contactIds = selectedContacts.map(c => c.id);
-                } else {
-                    // Fetch all follows
-                    const { data: follows } = await supabase
-                        .from('follows')
-                        .select('following_id')
-                        .eq('follower_id', user.id);
-                    contactIds = follows?.map(f => f.following_id) || [];
-                }
+            // 1. Fetch from Target Users (Unified)
+            if (targetUserIds.size > 0) {
+                 let query = supabase
+                    .from('user_buildings')
+                    .select('building_id')
+                    .in('user_id', Array.from(targetUserIds));
 
-                // For contacts, we show all visited/pending buildings
-                const contactStatuses = ['visited', 'pending'];
+                 // Apply Status Filters
+                 // If specific status filters are set, they apply to all target users.
+                 const activeStatuses: string[] = [];
+                 if (statusFilters.includes('visited')) activeStatuses.push('visited');
+                 if (statusFilters.includes('saved')) activeStatuses.push('pending');
+
+                 // If no status filters are set (e.g. just rated_by=peter), we imply "all interesting interactions"
+                 // equivalent to what was previously used for contacts: visited + pending + rated
+                 if (activeStatuses.length > 0) {
+                     query = query.in('status', activeStatuses);
+                 } else {
+                     // Default: visited or pending or rated
+                     query = query.or('status.eq.visited,status.eq.pending,rating.not.is.null');
+                 }
+
+                 // Apply Rating Filters
+                 const effectiveMinRating = Math.max(personalMinRating, contactMinRating);
+                 if (effectiveMinRating > 0) {
+                     query = query.gte('rating', effectiveMinRating);
+                 }
+
+                 const { data: userBuildings, error: ubError } = await query;
+                 if (ubError) throw ubError;
+
+                 userBuildings?.forEach(ub => buildingIds.add(ub.building_id));
+            }
+
+            // 2. Generic "Filter Contacts" (Any Followed Contact)
+            if (filterContacts && user) {
+                // Fetch all follows
+                const { data: follows } = await supabase
+                    .from('follows')
+                    .select('following_id')
+                    .eq('follower_id', user.id);
+                const contactIds = follows?.map(f => f.following_id) || [];
 
                 if (contactIds.length > 0) {
                     let query = supabase
                         .from('user_buildings')
                         .select('building_id')
                         .in('user_id', contactIds)
-                        .in('status', contactStatuses);
+                        .in('status', ['visited', 'pending']); // Default for "Any Contact"
 
                     if (contactMinRating > 0) {
                         query = query.gte('rating', contactMinRating);
@@ -456,31 +544,6 @@ export function useBuildingSearch() {
 
                     contactBuildings?.forEach(cb => buildingIds.add(cb.building_id));
                 }
-            }
-
-            // 2. Personal Buildings (Visited/Saved/Rating)
-            if (hasStatusFilters || hasPersonalRating) {
-                let query = supabase
-                    .from('user_buildings')
-                    .select('building_id')
-                    .eq('user_id', user.id);
-
-                const personalStatuses: string[] = [];
-                if (statusFilters.includes('visited')) personalStatuses.push('visited');
-                if (statusFilters.includes('saved')) personalStatuses.push('pending');
-
-                if (personalStatuses.length > 0) {
-                    query = query.in('status', personalStatuses);
-                }
-
-                if (personalMinRating > 0) {
-                    query = query.gte('rating', personalMinRating);
-                }
-
-                const { data: userBuildings, error: ubError } = await query;
-                if (ubError) throw ubError;
-
-                userBuildings?.forEach(ub => buildingIds.add(ub.building_id));
             }
 
             // 3. Collections (Mapas del usuario)
