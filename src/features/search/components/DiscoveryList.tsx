@@ -15,6 +15,7 @@ interface DiscoveryListProps {
   emptyState?: React.ReactNode;
   className?: string;
   imagePosition?: 'left' | 'right';
+  itemTarget?: string;
 }
 
 export function DiscoveryList({
@@ -26,6 +27,7 @@ export function DiscoveryList({
   emptyState,
   className,
   imagePosition,
+  itemTarget,
 }: DiscoveryListProps) {
   if (isLoading) {
     return (
@@ -85,6 +87,7 @@ export function DiscoveryList({
           action={renderAction?.(building)}
           onClick={onBuildingClick ? () => onBuildingClick(building) : undefined}
           imagePosition={imagePosition}
+          target={itemTarget}
         />
       ))}
     </div>
