@@ -460,8 +460,8 @@ export default function CollectionMap() {
 
         {/* Sidebar List */}
         <div className="w-full lg:w-[450px] bg-background border-r flex flex-col shrink-0 lg:h-full h-[40%] order-2 lg:order-1">
-            <div className="p-4 border-b flex items-center justify-between">
-                <div>
+            <div className="p-4 border-b flex items-center justify-between gap-4">
+                <div className="min-w-0 flex-1">
                     <h1 className="font-bold text-xl truncate">{collection.name}</h1>
                     <div className="text-sm text-muted-foreground mb-1">
                       By: <Link to={`/profile/${ownerProfile?.username}`} className="hover:underline text-foreground">{ownerProfile?.username}</Link>
@@ -469,7 +469,7 @@ export default function CollectionMap() {
                     {collection.description && <p className="text-sm text-muted-foreground line-clamp-2">{collection.description}</p>}
                 </div>
                 {canEdit && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <div className="flex items-center gap-2 mr-2">
                             <Label htmlFor="show-saved" className="text-xs whitespace-nowrap hidden sm:block">Show saved</Label>
                             <Switch

@@ -15,6 +15,7 @@ interface AppLayoutProps {
   showBack?: boolean;
   headerAction?: ReactNode;
   isFullScreen?: boolean;
+  showHeader?: boolean;
 }
 
 export function AppLayout({ 
@@ -28,23 +29,27 @@ export function AppLayout({
   showNav = true,
   showBack = false,
   headerAction,
-  isFullScreen = false
+  isFullScreen = false,
+  showHeader = true
 }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <Header
-        title={title}
-        variant={variant}
-        searchBar={searchBar}
-        leftAction={leftAction}
-        rightAction={rightAction}
-        showLogo={showLogo}
-        showBack={showBack}
-        action={headerAction}
-      />
+      {showHeader && (
+        <Header
+          title={title}
+          variant={variant}
+          searchBar={searchBar}
+          leftAction={leftAction}
+          rightAction={rightAction}
+          showLogo={showLogo}
+          showBack={showBack}
+          action={headerAction}
+        />
+      )}
       {/* CHANGED: Reduced max-w-7xl to max-w-5xl to constrain width and make cards shorter */}
       <main className={cn(
-        "pt-16 w-full",
+        showHeader && "pt-16",
+        "w-full",
         !isFullScreen && "max-w-5xl mx-auto",
         showNav && "pb-20"
       )}>

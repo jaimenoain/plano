@@ -16,6 +16,7 @@ interface DiscoveryBuildingCardProps {
   action?: React.ReactNode;
   onClick?: (e: React.MouseEvent) => void;
   imagePosition?: 'left' | 'right';
+  target?: string;
 }
 
 export function DiscoveryBuildingCard({
@@ -25,6 +26,7 @@ export function DiscoveryBuildingCard({
   action,
   onClick,
   imagePosition = 'right',
+  target,
 }: DiscoveryBuildingCardProps) {
   const imageUrl = getBuildingImageUrl(building.main_image_url);
   const { statuses, ratings } = useUserBuildingStatuses();
@@ -152,7 +154,11 @@ export function DiscoveryBuildingCard({
   }
 
   return (
-    <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="block">
+    <Link
+      to={getBuildingUrl(building.id, building.slug, building.short_id)}
+      className="block"
+      target={target}
+    >
       {Content}
     </Link>
   );

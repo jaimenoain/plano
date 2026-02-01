@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useDiscoveryFeed, DiscoveryFilters } from "@/hooks/useDiscoveryFeed";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -17,6 +18,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 
 export default function Explore() {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { profile } = useUserProfile();
@@ -131,6 +133,8 @@ export default function Explore() {
           }, { onConflict: 'user_id, building_id' });
 
           if (error) throw error;
+
+          queryClient.invalidateQueries({ queryKey: ['discovery_feed'] });
       } catch (error) {
           console.error("Save failed", error);
           toast.error("Failed to save");
@@ -154,6 +158,8 @@ export default function Explore() {
           }, { onConflict: 'user_id, building_id' });
 
           if (error) throw error;
+
+          queryClient.invalidateQueries({ queryKey: ['discovery_feed'] });
       } catch (error) {
           console.error("Hide failed", error);
       }
@@ -167,6 +173,7 @@ export default function Explore() {
     <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
       <AppLayout
         isFullScreen
+        showHeader={false}
         variant="map"
         searchBar={
           <div className="relative w-full max-w-sm">
@@ -254,7 +261,7 @@ export default function Explore() {
         {showTutorial && <ExploreTutorial onComplete={() => setShowTutorial(false)} />}
 
         {/* Vertical Snap Container */}
-        <div className="relative h-[calc(100vh-64px)] w-full bg-black text-white overflow-hidden">
+        <div className="relative h-[calc(100vh-80px)] w-full bg-black text-white overflow-hidden">
           <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar">
             {status === 'pending' ? (
                 <div className="h-full w-full flex items-center justify-center snap-center">
