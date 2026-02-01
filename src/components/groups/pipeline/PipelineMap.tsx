@@ -77,7 +77,7 @@ export function PipelineMap({ items }: PipelineMapProps) {
 
   const supercluster = useMemo(() => {
     return new Supercluster({
-      radius: 40,
+      radius: 30,
       maxZoom: 16
     });
   }, []);
