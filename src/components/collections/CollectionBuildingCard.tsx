@@ -77,7 +77,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     <Button
                         variant="secondary"
                         size="icon"
-                        className="h-6 w-6 rounded-full shadow-sm bg-background/80 hover:bg-background"
+                        className="h-6 w-6 rounded-full shadow-sm bg-green-500 hover:bg-green-600 text-white border-none"
                         onClick={onRemove}
                         title="Remove from map"
                     >

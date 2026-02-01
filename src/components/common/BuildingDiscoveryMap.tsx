@@ -83,7 +83,7 @@ export function BuildingDiscoveryMap({
   highlightedId,
   onMarkerClick,
   showImages = true,
-  onRemoveItem
+  onRemoveItem,
   onHide,
   onSave,
   onVisit
@@ -479,7 +479,7 @@ export function BuildingDiscoveryMap({
                                     e.stopPropagation();
                                     onRemoveItem(building.buildingId);
                                 }}
-                                className="mt-1 bg-white text-black rounded-full p-1 hover:bg-gray-200 transition-colors z-[60]"
+                                className="mt-1 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors z-[60]"
                                 title="Remove from map"
                             >
                                 <Check className="w-4 h-4" />
