@@ -15,6 +15,7 @@ interface DiscoveryBuildingCardProps {
   distance?: number;
   action?: React.ReactNode;
   onClick?: (e: React.MouseEvent) => void;
+  imagePosition?: 'left' | 'right';
 }
 
 export function DiscoveryBuildingCard({
@@ -23,6 +24,7 @@ export function DiscoveryBuildingCard({
   distance,
   action,
   onClick,
+  imagePosition = 'right',
 }: DiscoveryBuildingCardProps) {
   const imageUrl = getBuildingImageUrl(building.main_image_url);
   const { statuses, ratings } = useUserBuildingStatuses();
@@ -30,11 +32,24 @@ export function DiscoveryBuildingCard({
   const userRating = ratings[building.id];
   const isHidden = userStatus === 'ignored';
 
+  const ImageComponent = imageUrl && (
+    <div className="w-32 h-32 relative shrink-0">
+      <img
+        src={imageUrl}
+        alt={building.name}
+        className="w-full h-full object-cover"
+        loading="lazy"
+      />
+    </div>
+  );
+
+  const actionPositionClass = imagePosition === 'left' ? 'bottom-2 right-2' : 'top-2 right-2';
+
   const Content = (
     <Card className="overflow-hidden hover:shadow-md transition-shadow group relative">
       {action && (
         <div
-          className="absolute top-2 right-2 z-10"
+          className={cn("absolute z-10", actionPositionClass)}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -44,6 +59,8 @@ export function DiscoveryBuildingCard({
         </div>
       )}
       <div className="flex flex-row">
+        {imagePosition === 'left' && ImageComponent}
+
         {/* Content */}
         <div className="flex flex-col flex-1 p-3 justify-center">
           <div className="flex justify-between items-start gap-2">
@@ -121,17 +138,7 @@ export function DiscoveryBuildingCard({
           )}
         </div>
 
-        {/* Image */}
-        {imageUrl && (
-          <div className="w-32 h-32 relative shrink-0">
-            <img
-              src={imageUrl}
-              alt={building.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-        )}
+        {imagePosition === 'right' && ImageComponent}
       </div>
     </Card>
   );
