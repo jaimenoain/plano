@@ -4,7 +4,7 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare } from "lucide-react";
+import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
@@ -65,6 +65,7 @@ interface BuildingDiscoveryMapProps {
   showImages?: boolean;
   onRemoveItem?: (buildingId: string) => void;
   onHide?: (buildingId: string) => void;
+  onHideCandidate?: (buildingId: string) => void;
   onSave?: (buildingId: string) => void;
   onVisit?: (buildingId: string) => void;
 }
@@ -85,6 +86,7 @@ export function BuildingDiscoveryMap({
   showImages = true,
   onRemoveItem,
   onHide,
+  onHideCandidate,
   onSave,
   onVisit
 }: BuildingDiscoveryMapProps) {
@@ -466,17 +468,33 @@ export function BuildingDiscoveryMap({
                             )}
                         </div>
 
-                        {building.isCandidate && onAddCandidate && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onAddCandidate(building as unknown as DiscoveryBuilding);
-                                }}
-                                className="mt-1 bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white transition-colors z-[60]"
-                                title="Add to map"
-                            >
-                                <Plus className="w-4 h-4" />
-                            </button>
+                        {building.isCandidate && (
+                            <div className="flex items-center justify-center gap-2 mt-1">
+                                {onHideCandidate && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onHideCandidate(building.buildingId);
+                                        }}
+                                        className="bg-white/10 text-white rounded-full p-1 hover:bg-white/20 transition-colors z-[60]"
+                                        title="Hide suggestion"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                                {onAddCandidate && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onAddCandidate(building as unknown as DiscoveryBuilding);
+                                        }}
+                                        className="bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white transition-colors z-[60]"
+                                        title="Add to map"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
                         )}
                         {!building.isCandidate && onRemoveItem && (
                             <button
@@ -513,7 +531,7 @@ export function BuildingDiscoveryMap({
             </div>
         </Marker>
     );
-  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId, onAddCandidate, onRemoveItem, onHide, onSave, onVisit]);
+  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId, onAddCandidate, onRemoveItem, onHide, onHideCandidate, onSave, onVisit]);
 
   if (isLoading) {
     return (
