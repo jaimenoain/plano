@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useDiscoveryFeed, DiscoveryFilters } from "@/hooks/useDiscoveryFeed";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -17,6 +18,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 
 export default function Explore() {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { profile } = useUserProfile();
@@ -131,6 +133,8 @@ export default function Explore() {
           }, { onConflict: 'user_id, building_id' });
 
           if (error) throw error;
+
+          queryClient.invalidateQueries({ queryKey: ['discovery_feed'] });
       } catch (error) {
           console.error("Save failed", error);
           toast.error("Failed to save");
@@ -154,6 +158,8 @@ export default function Explore() {
           }, { onConflict: 'user_id, building_id' });
 
           if (error) throw error;
+
+          queryClient.invalidateQueries({ queryKey: ['discovery_feed'] });
       } catch (error) {
           console.error("Hide failed", error);
       }
