@@ -23,11 +23,17 @@ import { ArchitectSearchNudge } from "./components/ArchitectSearchNudge";
 import { ArchitectResultsList } from "./components/ArchitectResultsList";
 import { getBoundsFromBuildings, Bounds } from "@/utils/map";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export type SearchScope = 'content' | 'users' | 'architects';
 
 export default function SearchPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [searchScope, setSearchScope] = useState<SearchScope>('content');
 
@@ -325,6 +331,70 @@ export default function SearchPage() {
     }
   };
 
+  const handleHide = async (buildingId: string) => {
+    if (!user) {
+      toast.error("Please sign in to hide buildings");
+      return;
+    }
+    const { error } = await supabase.from("user_buildings").upsert({
+      user_id: user.id,
+      building_id: buildingId,
+      status: 'ignored',
+      edited_at: new Date().toISOString()
+    }, { onConflict: 'user_id, building_id' });
+
+    if (error) {
+      toast.error("Failed to hide building");
+      console.error(error);
+    } else {
+      toast.success("Building hidden");
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["search-buildings"] });
+    }
+  };
+
+  const handleSave = async (buildingId: string) => {
+    if (!user) {
+      toast.error("Please sign in to save buildings");
+      return;
+    }
+    const { error } = await supabase.from("user_buildings").upsert({
+      user_id: user.id,
+      building_id: buildingId,
+      status: 'pending',
+      edited_at: new Date().toISOString()
+    }, { onConflict: 'user_id, building_id' });
+
+    if (error) {
+      toast.error("Failed to save building");
+      console.error(error);
+    } else {
+      toast.success("Building saved");
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses", user.id] });
+    }
+  };
+
+  const handleVisit = async (buildingId: string) => {
+    if (!user) {
+      toast.error("Please sign in to mark as visited");
+      return;
+    }
+    const { error } = await supabase.from("user_buildings").upsert({
+      user_id: user.id,
+      building_id: buildingId,
+      status: 'visited',
+      edited_at: new Date().toISOString()
+    }, { onConflict: 'user_id, building_id' });
+
+    if (error) {
+      toast.error("Failed to mark as visited");
+      console.error(error);
+    } else {
+      toast.success("Marked as visited");
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses", user.id] });
+    }
+  };
+
   return (
     <AppLayout
       title="Discovery"
@@ -509,6 +579,9 @@ export default function SearchPage() {
                       autoZoomOnLowCount={isDefaultState}
                       forcedBounds={flyToBounds}
                       resetInteractionTrigger={mapInteractionResetTrigger}
+                      onHide={handleHide}
+                      onSave={handleSave}
+                      onVisit={handleVisit}
                     />
                   </div>
                 )}
@@ -534,6 +607,9 @@ export default function SearchPage() {
                     autoZoomOnLowCount={isDefaultState}
                     forcedBounds={flyToBounds}
                     resetInteractionTrigger={mapInteractionResetTrigger}
+                    onHide={handleHide}
+                    onSave={handleSave}
+                    onVisit={handleVisit}
                   />
                 </div>
               </div>

@@ -4,7 +4,7 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus } from "lucide-react";
+import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, EyeOff, Bookmark, CheckSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
@@ -63,6 +63,9 @@ interface BuildingDiscoveryMapProps {
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
   showImages?: boolean;
+  onHide?: (buildingId: string) => void;
+  onSave?: (buildingId: string) => void;
+  onVisit?: (buildingId: string) => void;
 }
 
 export function BuildingDiscoveryMap({
@@ -78,7 +81,10 @@ export function BuildingDiscoveryMap({
   resetInteractionTrigger,
   highlightedId,
   onMarkerClick,
-  showImages = true
+  showImages = true,
+  onHide,
+  onSave,
+  onVisit
 }: BuildingDiscoveryMapProps) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
@@ -400,7 +406,10 @@ export function BuildingDiscoveryMap({
                 className="group relative flex flex-col items-center"
             >
             {/* Tooltip - pb-2 used instead of mb-2 to create a hit area bridge for hover */}
-            <div className={`absolute bottom-full pb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
+            <div
+                data-testid="building-tooltip"
+                className={`absolute bottom-full pb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}
+            >
                 <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
                     {showImages && imageUrl && (
                         <div className="w-[200px] h-[200px]">
@@ -410,6 +419,46 @@ export function BuildingDiscoveryMap({
                     <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
                         <span className="font-medium text-white text-center">{building.name}</span>
                         {pinTooltip}
+
+                        <div className="flex items-center gap-2 mt-1">
+                            {onHide && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onHide(building.buildingId);
+                                    }}
+                                    className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-[60]"
+                                    title="Hide"
+                                >
+                                    <EyeOff className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                            {onSave && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSave(building.buildingId);
+                                    }}
+                                    className={`p-1 rounded-full transition-colors z-[60] ${status === 'pending' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                                    title="Save"
+                                >
+                                    <Bookmark className={`w-3.5 h-3.5 ${status === 'pending' ? 'fill-current' : ''}`} />
+                                </button>
+                            )}
+                            {onVisit && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onVisit(building.buildingId);
+                                    }}
+                                    className={`p-1 rounded-full transition-colors z-[60] ${status === 'visited' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                                    title="Mark as Visited"
+                                >
+                                    <CheckSquare className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
+
                         {building.isCandidate && onAddCandidate && (
                             <button
                                 onClick={(e) => {
@@ -445,7 +494,7 @@ export function BuildingDiscoveryMap({
             </div>
         </Marker>
     );
-  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId]);
+  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId, onHide, onSave, onVisit]);
 
   if (isLoading) {
     return (
