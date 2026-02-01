@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Check, Search, EyeOff } from "lucide-react";
+import { Loader2, Plus, Check, Search, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -249,7 +249,7 @@ export function AddBuildingsToCollectionDialog({
                                           hideMutation.mutate(building.id);
                                       }}
                                   >
-                                      <EyeOff className="h-4 w-4" />
+                                      <X className="h-4 w-4" />
                                   </Button>
                               )}
                               <Button
