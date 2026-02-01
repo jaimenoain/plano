@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
 import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -78,7 +77,6 @@ export function BuildingDiscoveryMap({
   onMarkerClick,
   showImages = true
 }: BuildingDiscoveryMapProps) {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const [isSatellite, setIsSatellite] = useState(false);
@@ -389,7 +387,7 @@ export function BuildingDiscoveryMap({
             if (onMarkerClick) {
                 onMarkerClick(building.buildingId);
             } else {
-                navigate(`/building/${building.buildingId}`);
+                window.open(`/building/${building.buildingId}`, '_blank');
             }
         }}
         className={markerClass}
@@ -402,7 +400,7 @@ export function BuildingDiscoveryMap({
             <div className={`absolute bottom-full mb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}>
                 <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
                     {showImages && imageUrl && (
-                        <div className="w-[100px] h-[100px]">
+                        <div className="w-[200px] h-[200px]">
                             <img src={imageUrl} alt="" className="w-full h-full object-cover" />
                         </div>
                     )}
@@ -432,7 +430,7 @@ export function BuildingDiscoveryMap({
             </div>
         </Marker>
     );
-  }), [clusters, navigate, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId]);
+  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId]);
 
   if (isLoading) {
     return (

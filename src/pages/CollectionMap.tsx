@@ -352,9 +352,9 @@ export default function CollectionMap() {
                   setHighlightedId(id);
                   const building = mapBuildings.find(b => b.id === id);
                   if (building) {
-                    navigate(getBuildingUrl(building.id, building.slug, building.short_id));
+                    window.open(getBuildingUrl(building.id, building.slug, building.short_id), '_blank');
                   } else {
-                    navigate(`/building/${id}`);
+                    window.open(`/building/${id}`, '_blank');
                   }
                 }}
                 forcedBounds={bounds}
