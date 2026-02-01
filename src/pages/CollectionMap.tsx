@@ -9,7 +9,7 @@ import { CollectionBuildingCard } from "@/components/collections/CollectionBuild
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
-import { Loader2, Settings, Plus, ExternalLink } from "lucide-react";
+import { Loader2, Settings, Plus, ExternalLink, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
@@ -49,6 +49,10 @@ export default function CollectionMap() {
   // New States for Removal
   const [itemToRemove, setItemToRemove] = useState<CollectionItemWithBuilding | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+
+  // New States for Save All
+  const [showSaveAllConfirm, setShowSaveAllConfirm] = useState(false);
+  const [isSavingAll, setIsSavingAll] = useState(false);
 
   // 1. Resolve User (Owner)
   const { data: ownerProfile, isLoading: loadingProfile } = useQuery({
@@ -461,6 +465,68 @@ export default function CollectionMap() {
     setItemToRemove(null);
   };
 
+  const handleSaveAllBuildings = async () => {
+    if (!user?.id || !items) return;
+
+    setIsSavingAll(true);
+    try {
+        // 1. Get all existing interactions for the current user
+        const { data: existingUserBuildings, error: fetchError } = await supabase
+            .from('user_buildings')
+            .select('building_id')
+            .eq('user_id', user.id);
+
+        if (fetchError) throw fetchError;
+
+        const existingIds = new Set(existingUserBuildings?.map(row => row.building_id) || []);
+
+        // 2. Identify new buildings to save (exclude hidden ones in the collection)
+        const buildingsToSave = items
+            .filter(item => !item.is_hidden)
+            .map(item => item.building.id)
+            .filter(id => !existingIds.has(id));
+
+        if (buildingsToSave.length === 0) {
+             toast({
+                 title: "No new buildings",
+                 description: "You have already saved, visited, or hidden all buildings in this collection."
+             });
+             return;
+        }
+
+        // 3. Bulk Insert
+        const { error: insertError } = await supabase
+            .from('user_buildings')
+            .insert(
+                buildingsToSave.map(id => ({
+                    user_id: user.id,
+                    building_id: id,
+                    status: 'pending'
+                }))
+            );
+
+        if (insertError) throw insertError;
+
+        toast({
+            title: "Saved!",
+            description: `Successfully saved ${buildingsToSave.length} buildings to your profile.`
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+
+    } catch (error) {
+        console.error('Error saving collection:', error);
+        toast({
+            title: "Error",
+            description: "Failed to save buildings.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsSavingAll(false);
+        setShowSaveAllConfirm(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <AppLayout title="Collection" showBack>
@@ -518,6 +584,18 @@ export default function CollectionMap() {
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
                             <Settings className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                    </div>
+                )}
+                {!canEdit && user && (
+                    <div className="flex items-center gap-2 shrink-0">
+                         <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowSaveAllConfirm(true)}
+                         >
+                            <Bookmark className="w-4 h-4 mr-2" />
+                            Save All
                         </Button>
                     </div>
                 )}
@@ -641,6 +719,34 @@ export default function CollectionMap() {
             </AlertDialog>
         </>
       )}
+
+      <AlertDialog open={showSaveAllConfirm} onOpenChange={setShowSaveAllConfirm}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Save Collection</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This will save all buildings from this collection to your profile. Buildings you have already saved, visited, or hidden will be skipped.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel disabled={isSavingAll}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                    onClick={(e) => {
+                        e.preventDefault();
+                        handleSaveAllBuildings();
+                    }}
+                    disabled={isSavingAll}
+                >
+                    {isSavingAll ? (
+                        <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Saving...
+                        </>
+                    ) : "Save All"}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
