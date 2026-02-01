@@ -330,9 +330,11 @@ export default function CollectionMap() {
   }, [mapBuildings, savedCandidates, showSavedCandidates, existingBuildingIds]);
 
   const bounds = useMemo(() => {
-    if (allMapBuildings.length === 0) return null;
-    return getBoundsFromBuildings(allMapBuildings);
-  }, [allMapBuildings]);
+    // Only fit bounds to the collection items, not the candidates.
+    // This prevents the camera from moving when "Show saved" is toggled.
+    if (mapBuildings.length === 0) return null;
+    return getBoundsFromBuildings(mapBuildings);
+  }, [mapBuildings]);
 
   const handleUpdateNote = async (itemId: string, newNote: string) => {
       const { error } = await supabase
