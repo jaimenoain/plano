@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Check, Search } from "lucide-react";
+import { Loader2, Plus, Check, Search, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -16,6 +16,7 @@ import { DiscoveryBuilding } from "@/features/search/components/types";
 interface AddBuildingsToCollectionDialogProps {
   collectionId: string;
   existingBuildingIds: Set<string>;
+  hiddenBuildingIds?: Set<string>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -23,6 +24,7 @@ interface AddBuildingsToCollectionDialogProps {
 export function AddBuildingsToCollectionDialog({
   collectionId,
   existingBuildingIds,
+  hiddenBuildingIds,
   open,
   onOpenChange,
 }: AddBuildingsToCollectionDialogProps) {
@@ -126,8 +128,35 @@ export function AddBuildingsToCollectionDialog({
         );
     }
 
+    if (hiddenBuildingIds && hiddenBuildingIds.size > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        result = result.filter((b: any) => !hiddenBuildingIds.has(b.id));
+    }
+
     return result;
-  }, [savedBuildings, searchQuery]);
+  }, [savedBuildings, searchQuery, hiddenBuildingIds]);
+
+  const hideMutation = useMutation({
+      mutationFn: async (buildingId: string) => {
+          const { error } = await supabase
+              .from("collection_items")
+              .insert({
+                  collection_id: collectionId,
+                  building_id: buildingId,
+                  is_hidden: true
+              });
+
+          if (error) throw error;
+      },
+      onSuccess: () => {
+          toast.success("Building hidden from suggestions");
+          queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
+      },
+      onError: (error) => {
+          console.error("Failed to hide building:", error);
+          toast.error("Failed to hide building");
+      }
+  });
 
   const addMutation = useMutation({
     mutationFn: async (buildingId: string) => {
@@ -207,18 +236,35 @@ export function AddBuildingsToCollectionDialog({
                   renderAction={(building) => {
                       const isAdded = existingBuildingIds.has(building.id);
                       return (
-                          <Button
-                              size="sm"
-                              variant={isAdded ? "secondary" : "default"}
-                              className="h-8 w-8 p-0 shrink-0 shadow-sm"
-                              disabled={isAdded || addMutation.isPending}
-                              onClick={(e) => {
-                                  e.stopPropagation();
-                                  addMutation.mutate(building.id);
-                              }}
-                          >
-                              {isAdded ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                          </Button>
+                          <div className="flex items-center gap-1">
+                              {!isAdded && (
+                                  <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                      title="Hide suggestion"
+                                      disabled={hideMutation.isPending || addMutation.isPending}
+                                      onClick={(e) => {
+                                          e.stopPropagation();
+                                          hideMutation.mutate(building.id);
+                                      }}
+                                  >
+                                      <EyeOff className="h-4 w-4" />
+                                  </Button>
+                              )}
+                              <Button
+                                  size="sm"
+                                  variant={isAdded ? "secondary" : "default"}
+                                  className="h-8 w-8 p-0 shrink-0 shadow-sm"
+                                  disabled={isAdded || addMutation.isPending || hideMutation.isPending}
+                                  onClick={(e) => {
+                                      e.stopPropagation();
+                                      addMutation.mutate(building.id);
+                                  }}
+                              >
+                                  {isAdded ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                              </Button>
+                          </div>
                       )
                   }}
                />

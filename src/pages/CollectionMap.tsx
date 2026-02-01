@@ -92,6 +92,7 @@ export default function CollectionMap() {
           building_id,
           note,
           custom_category_id,
+          is_hidden,
           building:buildings(
             id,
             name,
@@ -130,6 +131,10 @@ export default function CollectionMap() {
 
   const existingBuildingIds = useMemo(() => {
     return new Set(items?.map(item => item.building.id) || []);
+  }, [items]);
+
+  const hiddenBuildingIds = useMemo(() => {
+    return new Set(items?.filter(item => item.is_hidden).map(item => item.building.id) || []);
   }, [items]);
 
   // 3b. Fetch Saved Buildings (Candidates)
@@ -239,6 +244,9 @@ export default function CollectionMap() {
   const mapBuildings = useMemo<DiscoveryBuilding[]>(() => {
     if (!items) return [];
 
+    // Filter out hidden items for display
+    const visibleItems = items.filter(item => !item.is_hidden);
+
     // Pre-calculate stats map
     const statsMap = new Map<string, { visitedCount: number, maxRating: number, hasSaved: boolean }>();
 
@@ -255,7 +263,7 @@ export default function CollectionMap() {
         });
     }
 
-    return items.map(item => {
+    return visibleItems.map(item => {
       let color = null;
 
       if (collection?.categorization_method === 'custom') {
@@ -443,8 +451,8 @@ export default function CollectionMap() {
 
             <ScrollArea className="flex-1">
                 <div className="p-4 space-y-3 pb-24">
-                    {items && items.length > 0 ? (
-                        items.map(item => (
+                    {items && items.filter(i => !i.is_hidden).length > 0 ? (
+                        items.filter(i => !i.is_hidden).map(item => (
                             <CollectionBuildingCard
                                 key={item.id}
                                 item={item}
@@ -514,6 +522,7 @@ export default function CollectionMap() {
             <AddBuildingsToCollectionDialog
                 collectionId={collection.id}
                 existingBuildingIds={existingBuildingIds}
+                hiddenBuildingIds={hiddenBuildingIds}
                 open={showAddBuildings}
                 onOpenChange={setShowAddBuildings}
             />
