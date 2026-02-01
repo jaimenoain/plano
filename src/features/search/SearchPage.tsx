@@ -565,6 +565,7 @@ export default function SearchPage() {
                       buildings={filteredBuildings}
                       isLoading={isLoading}
                       currentLocation={userLocation}
+                      itemTarget="_blank"
                     />
                   </div>
                 ) : (
@@ -594,6 +595,7 @@ export default function SearchPage() {
                     buildings={filteredBuildings}
                     isLoading={isLoading}
                     currentLocation={userLocation}
+                    itemTarget="_blank"
                   />
                 </div>
                 <div className="col-span-7 lg:col-span-8 h-full relative">
