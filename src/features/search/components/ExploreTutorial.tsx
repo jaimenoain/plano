@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MoveRight, MoveLeft, MoveUp } from "lucide-react";
+import { MoveUp, Bookmark, EyeOff } from "lucide-react";
 
 interface ExploreTutorialProps {
   onComplete: () => void;
@@ -29,7 +29,7 @@ export function ExploreTutorial({ onComplete }: ExploreTutorialProps) {
           {/* Swipe Right */}
           <div className="flex items-center gap-5 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm transition-colors hover:bg-white/10">
              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-green-400">
-               <MoveRight className="h-6 w-6" />
+               <Bookmark className="h-6 w-6" />
              </div>
              <div className="flex-1">
                <p className="text-lg font-medium text-white flex items-center gap-2">
@@ -42,7 +42,7 @@ export function ExploreTutorial({ onComplete }: ExploreTutorialProps) {
           {/* Swipe Left */}
           <div className="flex items-center gap-5 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm transition-colors hover:bg-white/10">
              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400">
-               <MoveLeft className="h-6 w-6" />
+               <EyeOff className="h-6 w-6" />
              </div>
              <div className="flex-1">
                <p className="text-lg font-medium text-white flex items-center gap-2">
