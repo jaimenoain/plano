@@ -13,9 +13,15 @@ const navItems = [
 
 export function BottomNav() {
   const location = useLocation();
+  const isExplore = location.pathname === "/explore";
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass safe-area-pb border-t border-border">
+    <nav className={cn(
+      "fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t",
+      isExplore
+        ? "bg-black/90 border-white/10 backdrop-blur-xl"
+        : "glass border-border"
+    )}>
       {/* Increased height to h-20 to accommodate larger text/icons comfortably */}
       <div className="flex items-center justify-around h-20 max-w-lg mx-auto px-2 pb-2">
         {navItems.map(({ icon: Icon, label, path }) => {
@@ -32,8 +38,8 @@ export function BottomNav() {
                 // Minimum touch target width for accessibility
                 "min-w-[64px] min-h-[64px] rounded-xl",
                 isActive 
-                  ? "text-primary" 
-                  : "text-gray-400 hover:text-primary"
+                  ? (isExplore ? "text-[#EEFF41]" : "text-primary")
+                  : (isExplore ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-primary")
               )}
             >
               <div className="relative flex flex-col items-center">
