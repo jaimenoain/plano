@@ -185,6 +185,66 @@ export interface Database {
           }
         ]
       }
+      collection_markers: {
+        Row: {
+          id: string
+          collection_id: string
+          google_place_id: string | null
+          name: string
+          category: "accommodation" | "dining" | "transport" | "attraction" | "other"
+          lat: number
+          lng: number
+          address: string | null
+          notes: string | null
+          website: string | null
+          created_at: string
+          created_by: string
+        }
+        Insert: {
+          id?: string
+          collection_id: string
+          google_place_id?: string | null
+          name: string
+          category: "accommodation" | "dining" | "transport" | "attraction" | "other"
+          lat: number
+          lng: number
+          address?: string | null
+          notes?: string | null
+          website?: string | null
+          created_at?: string
+          created_by: string
+        }
+        Update: {
+          id?: string
+          collection_id?: string
+          google_place_id?: string | null
+          name?: string
+          category?: "accommodation" | "dining" | "transport" | "attraction" | "other"
+          lat?: number
+          lng?: number
+          address?: string | null
+          notes?: string | null
+          website?: string | null
+          created_at?: string
+          created_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_markers_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_markers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       comment_likes: {
         Row: {
           comment_id: string
