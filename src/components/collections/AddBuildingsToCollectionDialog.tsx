@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Check, Search, X } from "lucide-react";
+import { Loader2, Plus, Check, Search, X, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -15,6 +15,20 @@ import { DiscoveryList } from "@/features/search/components/DiscoveryList";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
+import usePlacesAutocomplete, {
+  getGeocode,
+  getLatLng,
+} from "use-places-autocomplete";
+import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+  CommandEmpty,
+} from "@/components/ui/command";
+import { Command as CommandPrimitive } from "cmdk";
+import { cn } from "@/lib/utils";
 
 interface AddBuildingsToCollectionDialogProps {
   collectionId: string;
@@ -22,6 +36,194 @@ interface AddBuildingsToCollectionDialogProps {
   hiddenBuildingIds?: Set<string>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+const mapGoogleTypeToCategory = (types: string[] = []): "accommodation" | "dining" | "transport" | "attraction" | "other" => {
+  if (types.some(t => ["restaurant", "cafe", "bar", "bakery", "meal_takeaway", "meal_delivery", "food"].includes(t))) {
+    return "dining";
+  }
+  if (types.some(t => ["lodging", "hotel", "motel", "hostel", "guesthouse"].includes(t))) {
+    return "accommodation";
+  }
+  if (types.some(t => ["transit_station", "subway_station", "bus_station", "train_station", "airport", "taxi_stand", "light_rail_station"].includes(t))) {
+    return "transport";
+  }
+  if (types.some(t => ["museum", "park", "tourist_attraction", "point_of_interest", "art_gallery", "amusement_park", "aquarium", "zoo"].includes(t))) {
+    return "attraction";
+  }
+
+  return "other";
+};
+
+function OtherMarkersSearch({ collectionId, userId }: { collectionId: string, userId: string }) {
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const initMap = async () => {
+      if (window.google?.maps?.places) {
+        setScriptLoaded(true);
+        return;
+      }
+
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        console.error("VITE_GOOGLE_MAPS_API_KEY is missing");
+        setHasError(true);
+        return;
+      }
+
+      try {
+        setOptions({
+          key: apiKey,
+          version: "weekly",
+        });
+
+        await importLibrary("places");
+        await importLibrary("geocoding");
+
+        setScriptLoaded(true);
+      } catch (error) {
+        console.error("Error loading Google Maps script", error);
+        setHasError(true);
+      }
+    };
+
+    initMap();
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className="p-4 text-center text-red-500">
+        Error loading Google Maps. Please try again later.
+      </div>
+    );
+  }
+
+  if (!scriptLoaded) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return <PlacesAutocomplete collectionId={collectionId} userId={userId} />;
+}
+
+function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, userId: string }) {
+  const {
+    ready,
+    value,
+    setValue,
+    suggestions: { status, data },
+    clearSuggestions,
+  } = usePlacesAutocomplete({
+    debounce: 300,
+    initOnMount: true,
+  });
+
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const commandRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (commandRef.current && !commandRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = async (address: string, placeId: string, mainText: string) => {
+    setValue(address, false);
+    clearSuggestions();
+    setOpen(false);
+
+    try {
+      const results = await getGeocode({ placeId });
+      const { lat, lng } = getLatLng(results[0]);
+      const types = results[0].types;
+      const category = mapGoogleTypeToCategory(types);
+
+      const { error } = await supabase
+        .from("collection_markers")
+        .insert({
+          collection_id: collectionId,
+          google_place_id: placeId,
+          name: mainText,
+          category: category,
+          lat: lat,
+          lng: lng,
+          address: address,
+          created_by: userId
+        });
+
+      if (error) throw error;
+
+      toast.success("Marker added to collection");
+      setValue("", false); // Clear input after successful add
+      queryClient.invalidateQueries({ queryKey: ["collection_markers", collectionId] });
+    } catch (error) {
+      console.error("Error adding marker:", error);
+      toast.error("Failed to add marker");
+    }
+  };
+
+  return (
+    <div className="p-4 relative" ref={commandRef}>
+      <Command shouldFilter={false} className="overflow-visible bg-transparent border rounded-md">
+        <div className="relative">
+          <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+          <CommandPrimitive.Input
+            value={value}
+            onValueChange={(val) => {
+              setValue(val);
+              setOpen(!!val);
+            }}
+            onFocus={() => setOpen(!!value)}
+            disabled={!ready}
+            placeholder="Search for a place (e.g. 'Eiffel Tower')..."
+            autoComplete="off"
+            className={cn(
+              "flex h-10 w-full rounded-md border-none bg-transparent pl-9 pr-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            )}
+          />
+        </div>
+
+        {open && (status === "OK" || status === "ZERO_RESULTS") && (
+          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
+            <CommandList>
+              <CommandGroup>
+                {status === "OK" &&
+                  data.map(({ place_id, description, structured_formatting }) => (
+                    <CommandItem
+                      key={place_id}
+                      value={description}
+                      onSelect={() => handleSelect(description, place_id, structured_formatting?.main_text || description)}
+                      className="cursor-pointer"
+                    >
+                      <MapPin className="mr-2 h-4 w-4 shrink-0" />
+                      <span>{description}</span>
+                    </CommandItem>
+                  ))}
+              </CommandGroup>
+              {status === "ZERO_RESULTS" && (
+                <CommandEmpty>No results found.</CommandEmpty>
+              )}
+            </CommandList>
+          </div>
+        )}
+      </Command>
+      <div className="mt-4 text-sm text-muted-foreground">
+        <p>Search for real-world locations like restaurants, hotels, or transit stations to add them to your collection map.</p>
+        <p className="mt-2">Selected locations are saved immediately.</p>
+      </div>
+    </div>
+  );
 }
 
 export function AddBuildingsToCollectionDialog({
@@ -305,10 +507,8 @@ export function AddBuildingsToCollectionDialog({
             )}
           </TabsContent>
 
-          <TabsContent value="other-markers" className="flex-1 p-4 m-0 mt-0 border-none">
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              Coming soon...
-            </div>
+          <TabsContent value="other-markers" className="flex-1 p-0 m-0 mt-0 border-none data-[state=inactive]:hidden">
+            {user && <OtherMarkersSearch collectionId={collectionId} userId={user.id} />}
           </TabsContent>
         </Tabs>
       </DialogContent>
