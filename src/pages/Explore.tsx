@@ -162,6 +162,7 @@ export default function Explore() {
           queryClient.invalidateQueries({ queryKey: ['discovery_feed'] });
       } catch (error) {
           console.error("Hide failed", error);
+          toast.error("Failed to skip building");
       }
   };
 
