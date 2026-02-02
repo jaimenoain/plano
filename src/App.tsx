@@ -16,6 +16,7 @@ import Explore from "./pages/Explore";
 import Search from "@/features/search/SearchPage";
 import Post from "./pages/Post";
 import Profile from "./pages/Profile";
+import UserPhotoGallery from "./pages/UserPhotoGallery";
 import Settings from "./pages/Settings";
 import GroupSettings from "./pages/GroupSettings";
 import NotFound from "./pages/NotFound";
@@ -161,6 +162,8 @@ const router = createBrowserRouter(
 
       <Route path="/profile" element={<Profile />} />
       <Route path="/profile/:username" element={<Profile />} />
+      <Route path="/profile/photos" element={<UserPhotoGallery />} />
+      <Route path="/profile/:username/photos" element={<UserPhotoGallery />} />
       <Route path="/settings" element={<Settings />} />
 
       <Route path="/building/:id/:slug" element={<BuildingDetails />} />
