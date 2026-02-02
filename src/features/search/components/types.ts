@@ -36,6 +36,7 @@ export interface DiscoveryBuilding {
   status?: 'Built' | 'Under Construction' | 'Unbuilt' | 'Demolished' | 'Temporary' | null;
   color?: string | null;
   isCandidate?: boolean;
+  isDimmed?: boolean;
 }
 
 export interface ContactRater {

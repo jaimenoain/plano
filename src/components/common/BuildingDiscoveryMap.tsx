@@ -47,6 +47,7 @@ interface Building {
   main_image_url?: string | null;
   color?: string | null;
   isCandidate?: boolean;
+  isDimmed?: boolean;
 }
 
 interface BuildingDiscoveryMapProps {
@@ -335,6 +336,7 @@ export function BuildingDiscoveryMap({
     const imageUrl = getBuildingImageUrl(building.main_image_url);
     const isHighlighted = highlightedId === building.buildingId;
     const isSelected = selectedPinId === building.buildingId;
+    const isDimmed = building.isDimmed && !isHighlighted && !isSelected;
 
     // Pin Protocol:
     // Charcoal: Visited
@@ -363,6 +365,12 @@ export function BuildingDiscoveryMap({
         pinTooltip = <span className="opacity-90 text-center">({building.social_context})</span>;
     }
 
+    if (isDimmed) {
+        strokeClass = "text-gray-400";
+        fillClass = "fill-gray-100";
+        dotBgClass = "bg-gray-300";
+    }
+
     if (isSatellite) {
         strokeClass = "text-white";
     }
@@ -370,11 +378,11 @@ export function BuildingDiscoveryMap({
     const pinColorClass = `${strokeClass} ${fillClass}`;
     const dotBorderClass = isSatellite ? "border-white" : "border-background";
 
-    const scaleClass = isHighlighted ? "scale-125 z-50" : "hover:scale-110";
-    const markerClass = `cursor-pointer ${isHighlighted ? 'z-50' : 'hover:z-10'}`;
+    const scaleClass = isHighlighted ? "scale-125 z-50" : (isDimmed ? "scale-90 opacity-70 hover:scale-100 hover:opacity-100" : "hover:scale-110");
+    const markerClass = `cursor-pointer ${isHighlighted ? 'z-50' : (isDimmed ? 'z-0' : 'hover:z-10')}`;
 
-    const pinStyle: React.CSSProperties = building.color ? { color: building.color, fill: building.color } : {};
-    const dotStyle: React.CSSProperties = building.color ? { backgroundColor: building.color } : {};
+    const pinStyle: React.CSSProperties = (building.color && !isDimmed) ? { color: building.color, fill: building.color } : {};
+    const dotStyle: React.CSSProperties = (building.color && !isDimmed) ? { backgroundColor: building.color } : {};
 
     return (
         <Marker
@@ -521,7 +529,7 @@ export function BuildingDiscoveryMap({
             ) : (
                 <div className={`relative transition-transform ${scaleClass}`}>
                     <MapPin
-                        className={`w-8 h-8 ${pinColorClass} drop-shadow-md`}
+                        className={`${isDimmed ? 'w-6 h-6' : 'w-8 h-8'} ${pinColorClass} drop-shadow-md`}
                         style={pinStyle}
                     />
                     {/* White dot overlay to keep inner circle white when pin is filled */}
