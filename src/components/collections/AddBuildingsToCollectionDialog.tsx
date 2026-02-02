@@ -12,6 +12,8 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { BuildingDetailPanel } from "@/components/collections/BuildingDetailPanel";
 import { DiscoveryList } from "@/features/search/components/DiscoveryList";
 import { DiscoveryBuilding } from "@/features/search/components/types";
+import { useDebounce } from "@/hooks/useDebounce";
+import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 
 interface AddBuildingsToCollectionDialogProps {
   collectionId: string;
@@ -33,12 +35,27 @@ export function AddBuildingsToCollectionDialog({
   
   // State merged from both branches
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
-  const { data: savedBuildings, isLoading } = useQuery({
-    queryKey: ["user-saved-buildings", user?.id],
+  const { data: buildings, isLoading } = useQuery({
+    queryKey: ["add-buildings-dialog", user?.id, debouncedSearchQuery],
     queryFn: async () => {
       if (!user) return [];
+
+      // Global search if query exists
+      if (debouncedSearchQuery && debouncedSearchQuery.trim().length > 0) {
+        const results = await searchBuildingsRpc({
+            query_text: debouncedSearchQuery,
+            p_limit: 50
+        });
+
+        // Map results to include proper image URLs
+        return results.map((b) => ({
+            ...b,
+            main_image_url: b.main_image_url ? getBuildingImageUrl(b.main_image_url) : null,
+        }));
+      }
 
       const { data, error } = await supabase
         .from("user_buildings")
@@ -112,21 +129,9 @@ export function AddBuildingsToCollectionDialog({
 
   // Filtering logic merged from main (supports both search and location)
   const filteredBuildings = useMemo(() => {
-    if (!savedBuildings) return [];
+    if (!buildings) return [];
 
-    let result = savedBuildings;
-
-    if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        result = result.filter((building: any) =>
-          building.name.toLowerCase().includes(query) ||
-          building.city?.toLowerCase().includes(query) ||
-          building.country?.toLowerCase().includes(query) ||
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (building as any).address?.toLowerCase().includes(query)
-        );
-    }
+    let result = buildings;
 
     if (hiddenBuildingIds && hiddenBuildingIds.size > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -134,7 +139,7 @@ export function AddBuildingsToCollectionDialog({
     }
 
     return result;
-  }, [savedBuildings, searchQuery, hiddenBuildingIds]);
+  }, [buildings, hiddenBuildingIds]);
 
   const hideMutation = useMutation({
       mutationFn: async (buildingId: string) => {
@@ -194,10 +199,10 @@ export function AddBuildingsToCollectionDialog({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const selectedBuilding = useMemo(() => {
-    if (!selectedBuildingId || !savedBuildings) return null;
+    if (!selectedBuildingId || !buildings) return null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return savedBuildings.find((b: any) => b.id === selectedBuildingId);
-  }, [selectedBuildingId, savedBuildings]);
+    return buildings.find((b: any) => b.id === selectedBuildingId);
+  }, [selectedBuildingId, buildings]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
