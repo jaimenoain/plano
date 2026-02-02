@@ -80,12 +80,16 @@ export const fetchBuildingDetails = async (id: string) => {
 
     // Check if id is UUID
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const isShortId = /^\d+$/.test(id);
 
     if (isUUID) {
         query = query.eq("id", id);
-    } else {
+    } else if (isShortId) {
         // Assume short_id
         query = query.eq("short_id", parseInt(id));
+    } else {
+        // Assume slug
+        query = query.eq("slug", id);
     }
 
     const { data, error } = await query.maybeSingle();
