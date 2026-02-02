@@ -14,6 +14,7 @@ interface Collection {
   is_public: boolean;
   created_at: string;
   collection_items: { count: number }[];
+  owner?: { username: string | null };
 }
 
 interface CollectionsGridProps {
@@ -39,13 +40,13 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
       // 1. Fetch owned collections
       const ownedPromise = supabase
         .from("collections")
-        .select("id, name, slug, is_public, created_at, collection_items(count)")
+        .select("id, name, slug, is_public, created_at, collection_items(count), owner:profiles!collections_owner_id_fkey(username)")
         .eq("owner_id", userId);
 
       // 2. Fetch contributed collections
       const contributedPromise = supabase
         .from("collections")
-        .select("id, name, slug, is_public, created_at, collection_items(count), collection_contributors!inner(user_id)")
+        .select("id, name, slug, is_public, created_at, collection_items(count), collection_contributors!inner(user_id), owner:profiles!collections_owner_id_fkey(username)")
         .eq("collection_contributors.user_id", userId);
 
       const [ownedRes, contributedRes] = await Promise.all([ownedPromise, contributedPromise]);
@@ -111,7 +112,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
           {collections.map((collection) => (
             <Link
               key={collection.id}
-              to={`/map/${username || 'user'}/${collection.slug}`}
+              to={`/map/${collection.owner?.username || username || 'user'}/${collection.slug}`}
               className="block flex-shrink-0 w-[180px] group select-none"
             >
               <Card className="h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative">
