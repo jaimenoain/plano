@@ -146,6 +146,8 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
       }
   };
 
+  const visitedInteractions = building.contact_interactions?.filter(i => i.status === "visited") || [];
+
   return (
     <motion.div
       ref={containerRef as any}
@@ -262,8 +264,8 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
 
       {/* Info Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-6 z-30 text-white pb-24 md:pb-6 pointer-events-none">
-        {building.contact_interactions && building.contact_interactions.length > 0 && (
-          <ContactFacepile interactions={building.contact_interactions} />
+        {visitedInteractions.length > 0 && (
+          <ContactFacepile interactions={visitedInteractions} />
         )}
         <Link
           to={`/building/${building.id}/${building.slug || 'details'}`}
