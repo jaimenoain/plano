@@ -33,10 +33,10 @@ export function ContactFacepile({ interactions, className }: ContactFacepileProp
   if (uniqueUsers.length === 1) {
     text = `${names[0]}`;
   } else if (uniqueUsers.length === 2) {
-    text = `${names[0]} and ${names[1]}`;
+    text = `${names[0]}, ${names[1]}`;
   } else {
     const othersCount = uniqueUsers.length - 2;
-    text = `${names[0]}, ${names[1]} and ${othersCount} other${othersCount === 1 ? '' : 's'}`;
+    text = `${names[0]}, ${names[1]} +${othersCount}`;
   }
 
   return (
