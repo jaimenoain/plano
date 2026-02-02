@@ -115,6 +115,22 @@ export default function Explore() {
     allBuildings.filter(b => !hiddenBuildingIds.has(b.id)),
   [allBuildings, hiddenBuildingIds]);
 
+  const handleSkip = async (buildingId: string) => {
+      try {
+          if (!user) return;
+          const { error } = await supabase.from("user_buildings").upsert({
+              user_id: user.id,
+              building_id: buildingId,
+              status: 'ignored',
+              edited_at: new Date().toISOString()
+          }, { onConflict: 'user_id, building_id' });
+
+          if (error) throw error;
+      } catch (error) {
+          console.error("Skip failed", error);
+      }
+  };
+
   const handleSwipeSave = async (buildingId: string) => {
       setHiddenBuildingIds(prev => {
           const next = new Set(prev);
@@ -286,6 +302,7 @@ export default function Explore() {
                             building={building}
                             onSwipeSave={() => handleSwipeSave(building.id)}
                             onSwipeHide={() => handleSwipeHide(building.id)}
+                            onSkip={() => handleSkip(building.id)}
                         />
                     </div>
                 ))
