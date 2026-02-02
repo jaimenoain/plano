@@ -53,9 +53,9 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
                     </Button>
                 </div>
             )}
-            <div className="flex flex-row min-h-[5rem] items-start p-3 gap-3">
-                <div className="p-2 bg-secondary/50 rounded-full shrink-0">
-                    <Icon className="w-5 h-5 text-muted-foreground" />
+            <div className="flex flex-row min-h-[3.5rem] items-start p-2 gap-3">
+                <div className="p-1.5 bg-secondary/50 rounded-full shrink-0">
+                    <Icon className="w-4 h-4 text-muted-foreground" />
                 </div>
 
                 <div className="flex flex-col flex-1 min-w-0">
