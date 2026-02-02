@@ -39,3 +39,20 @@ export interface CollectionItemWithBuilding {
     }[];
   };
 }
+
+export type CollectionMarkerCategory = 'accommodation' | 'dining' | 'transport' | 'attraction' | 'other';
+
+export interface CollectionMarker {
+  id: string;
+  collection_id: string;
+  google_place_id: string | null;
+  name: string;
+  category: CollectionMarkerCategory;
+  lat: number;
+  lng: number;
+  address: string | null;
+  notes: string | null;
+  website: string | null;
+  created_at: string;
+  created_by: string;
+}
