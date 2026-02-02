@@ -42,12 +42,23 @@ export function FeedHeroCard({
   const isVisited = viewerStatus === 'visited';
   const isIgnored = viewerStatus === 'ignored';
 
+  const navigateToReview = () => {
+    if (!entry.building?.id) return;
+    const url = entry.building.slug
+        ? `/building/${entry.building.id}/${entry.building.slug}/review`
+        : `/building/${entry.building.id}/review`;
+    navigate(url);
+  };
+
   const handleHide = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return;
     if (!entry.building?.id) return;
 
-    if (isIgnored) return;
+    if (isIgnored) {
+        navigateToReview();
+        return;
+    }
 
     setIsSaving(true);
     try {
@@ -75,7 +86,7 @@ export function FeedHeroCard({
     if (!entry.building?.id) return;
 
     if (isSaved) {
-        setShowRatingInput(true);
+        navigateToReview();
         return;
     }
 
@@ -107,7 +118,7 @@ export function FeedHeroCard({
     if (!entry.building?.id) return;
 
     if (isVisited) {
-        setShowRatingInput(true);
+        navigateToReview();
         return;
     }
 
