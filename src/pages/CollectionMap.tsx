@@ -372,6 +372,8 @@ export default function CollectionMap() {
             year_completed: null,
             isMarker: true,
             markerCategory: marker.category,
+            notes: marker.notes,
+            address: marker.address,
             // Use a default marker color if needed, or rely on icon in Map
             color: "#6B7280"
         } as DiscoveryBuilding));
@@ -417,6 +419,23 @@ export default function CollectionMap() {
     if (!error) {
         refetchItems();
     }
+  };
+
+  const handleUpdateMarkerNote = async (markerId: string, newNote: string) => {
+      const { error } = await supabase
+          .from("collection_markers")
+          .update({ notes: newNote })
+          .eq("id", markerId);
+
+      if (!error) {
+          refetchItems();
+      } else {
+        toast({
+            title: "Error",
+            description: "Failed to update note.",
+            variant: "destructive"
+        });
+      }
   };
 
   const handleAddToCollection = async (building: DiscoveryBuilding) => {
@@ -752,6 +771,9 @@ export default function CollectionMap() {
                 }}
                 forcedBounds={bounds}
                 showImages={collection.show_community_images ?? true}
+                onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
+                onRemoveMarker={canEdit ? handleRemoveItem : undefined}
+                onClosePopup={() => setHighlightedId(null)}
             />
         </div>
       </div>

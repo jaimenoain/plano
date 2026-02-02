@@ -8,6 +8,7 @@ import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Boo
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { CollectionMarkerCategory } from "@/types/collection";
+import { MarkerInfoCard } from "../collections/MarkerInfoCard";
 import { MarkerPin } from "./MarkerPin";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -52,6 +53,8 @@ interface Building {
   isDimmed?: boolean;
   isMarker?: boolean;
   markerCategory?: CollectionMarkerCategory;
+  notes?: string | null;
+  address?: string | null;
 }
 
 interface BuildingDiscoveryMapProps {
@@ -73,6 +76,9 @@ interface BuildingDiscoveryMapProps {
   onHideCandidate?: (buildingId: string) => void;
   onSave?: (buildingId: string) => void;
   onVisit?: (buildingId: string) => void;
+  onUpdateMarkerNote?: (id: string, note: string) => void;
+  onRemoveMarker?: (id: string) => void;
+  onClosePopup?: () => void;
 }
 
 export function BuildingDiscoveryMap({
@@ -93,7 +99,10 @@ export function BuildingDiscoveryMap({
   onHide,
   onHideCandidate,
   onSave,
-  onVisit
+  onVisit,
+  onUpdateMarkerNote,
+  onRemoveMarker,
+  onClosePopup
 }: BuildingDiscoveryMapProps) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
@@ -414,6 +423,10 @@ export function BuildingDiscoveryMap({
             }
 
             // Otherwise (Desktop click OR Mobile second tap): Navigate
+            if (building.isMarker) {
+                setSelectedPinId(building.buildingId);
+            }
+
             if (onMarkerClick) {
                 onMarkerClick(building.buildingId);
             } else {
@@ -426,104 +439,121 @@ export function BuildingDiscoveryMap({
                 data-testid={isApproximate ? "approximate-dot" : "exact-pin"}
                 className="group relative flex flex-col items-center"
             >
-            {/* Tooltip - pb-2 used instead of mb-2 to create a hit area bridge for hover */}
-            <div
-                data-testid="building-tooltip"
-                className={`absolute bottom-full pb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}
-            >
-                <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
-                    {showImages && imageUrl && (
-                        <div className="w-[200px] h-[200px]">
-                            <img src={imageUrl} alt="" className="w-full h-full object-cover" />
-                        </div>
-                    )}
-                    <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
-                        <span className="font-medium text-white text-center">{building.name}</span>
-                        {pinTooltip}
+            {building.isMarker && isSelected ? (
+                 <div
+                    className="absolute bottom-full mb-2 z-50 cursor-default text-left"
+                    onClick={e => e.stopPropagation()}
+                 >
+                    <MarkerInfoCard
+                        marker={building as unknown as DiscoveryBuilding}
+                        onClose={() => {
+                            if (isSelected) setSelectedPinId(null);
+                            onClosePopup?.();
+                        }}
+                        onUpdateNote={onUpdateMarkerNote}
+                        onDelete={onRemoveMarker}
+                    />
+                 </div>
+            ) : (
+                /* Tooltip - pb-2 used instead of mb-2 to create a hit area bridge for hover */
+                <div
+                    data-testid="building-tooltip"
+                    className={`absolute bottom-full pb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}
+                >
+                    <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
+                        {showImages && imageUrl && (
+                            <div className="w-[200px] h-[200px]">
+                                <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                            </div>
+                        )}
+                        <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
+                            <span className="font-medium text-white text-center">{building.name}</span>
+                            {pinTooltip}
 
-                        <div className="flex items-center gap-2 mt-1">
-                            {onHide && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onHide(building.buildingId);
-                                    }}
-                                    className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-[60]"
-                                    title="Hide"
-                                >
-                                    <EyeOff className="w-3.5 h-3.5" />
-                                </button>
-                            )}
-                            {onSave && !building.isMarker && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onSave(building.buildingId);
-                                    }}
-                                    className={`p-1 rounded-full transition-colors z-[60] ${status === 'pending' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-                                    title="Save"
-                                >
-                                    <Bookmark className={`w-3.5 h-3.5 ${status === 'pending' ? 'fill-current' : ''}`} />
-                                </button>
-                            )}
-                            {onVisit && !building.isMarker && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onVisit(building.buildingId);
-                                    }}
-                                    className={`p-1 rounded-full transition-colors z-[60] ${status === 'visited' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-                                    title="Mark as Visited"
-                                >
-                                    <CheckSquare className="w-3.5 h-3.5" />
-                                </button>
-                            )}
-                        </div>
-
-                        {building.isCandidate && (
-                            <div className="flex items-center justify-center gap-2 mt-1">
-                                {onHideCandidate && (
+                            <div className="flex items-center gap-2 mt-1">
+                                {onHide && (
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onHideCandidate(building.buildingId);
+                                            onHide(building.buildingId);
                                         }}
-                                        className="bg-white/10 text-white rounded-full p-1 hover:bg-white/20 transition-colors z-[60]"
-                                        title="Hide suggestion"
+                                        className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-[60]"
+                                        title="Hide"
                                     >
-                                        <X className="w-4 h-4" />
+                                        <EyeOff className="w-3.5 h-3.5" />
                                     </button>
                                 )}
-                                {onAddCandidate && (
+                                {onSave && !building.isMarker && (
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onAddCandidate(building as unknown as DiscoveryBuilding);
+                                            onSave(building.buildingId);
                                         }}
-                                        className="bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white transition-colors z-[60]"
-                                        title="Add to map"
+                                        className={`p-1 rounded-full transition-colors z-[60] ${status === 'pending' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                                        title="Save"
                                     >
-                                        <Plus className="w-4 h-4" />
+                                        <Bookmark className={`w-3.5 h-3.5 ${status === 'pending' ? 'fill-current' : ''}`} />
+                                    </button>
+                                )}
+                                {onVisit && !building.isMarker && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onVisit(building.buildingId);
+                                        }}
+                                        className={`p-1 rounded-full transition-colors z-[60] ${status === 'visited' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                                        title="Mark as Visited"
+                                    >
+                                        <CheckSquare className="w-3.5 h-3.5" />
                                     </button>
                                 )}
                             </div>
-                        )}
-                        {!building.isCandidate && onRemoveItem && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onRemoveItem(building.buildingId);
-                                }}
-                                className="mt-1 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors z-[60]"
-                                title="Remove from map"
-                            >
-                                <Check className="w-4 h-4" />
-                            </button>
-                        )}
+
+                            {building.isCandidate && (
+                                <div className="flex items-center justify-center gap-2 mt-1">
+                                    {onHideCandidate && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onHideCandidate(building.buildingId);
+                                            }}
+                                            className="bg-white/10 text-white rounded-full p-1 hover:bg-white/20 transition-colors z-[60]"
+                                            title="Hide suggestion"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    {onAddCandidate && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onAddCandidate(building as unknown as DiscoveryBuilding);
+                                            }}
+                                            className="bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white transition-colors z-[60]"
+                                            title="Add to map"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                            {!building.isCandidate && onRemoveItem && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onRemoveItem(building.buildingId);
+                                    }}
+                                    className="mt-1 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors z-[60]"
+                                    title="Remove from map"
+                                >
+                                    <Check className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
                     </div>
+                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
                 </div>
-                <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
-            </div>
+            )}
 
             {isApproximate ? (
                 <div
