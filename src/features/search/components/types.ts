@@ -1,3 +1,5 @@
+import { CollectionMarkerCategory } from "@/types/collection";
+
 export interface ArchitectSummary {
   id: string;
   name: string;
@@ -37,6 +39,8 @@ export interface DiscoveryBuilding {
   color?: string | null;
   isCandidate?: boolean;
   isDimmed?: boolean;
+  isMarker?: boolean;
+  markerCategory?: CollectionMarkerCategory;
 }
 
 export interface ContactRater {

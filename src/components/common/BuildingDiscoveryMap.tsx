@@ -4,9 +4,10 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X } from "lucide-react";
+import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X, Bed, Utensils, Bus, Camera } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
+import { CollectionMarkerCategory } from "@/types/collection";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Bounds } from "@/utils/map";
@@ -48,6 +49,8 @@ interface Building {
   color?: string | null;
   isCandidate?: boolean;
   isDimmed?: boolean;
+  isMarker?: boolean;
+  markerCategory?: CollectionMarkerCategory;
 }
 
 interface BuildingDiscoveryMapProps {
@@ -384,6 +387,17 @@ export function BuildingDiscoveryMap({
     const pinStyle: React.CSSProperties = (building.color && !isDimmed) ? { color: building.color, fill: building.color } : {};
     const dotStyle: React.CSSProperties = (building.color && !isDimmed) ? { backgroundColor: building.color } : {};
 
+    let IconComponent = MapPin;
+    if (building.isMarker && building.markerCategory) {
+        switch (building.markerCategory) {
+            case 'accommodation': IconComponent = Bed; break;
+            case 'dining': IconComponent = Utensils; break;
+            case 'transport': IconComponent = Bus; break;
+            case 'attraction': IconComponent = Camera; break;
+            case 'other': IconComponent = MapPin; break;
+        }
+    }
+
     return (
         <Marker
         key={building.buildingId}
@@ -450,7 +464,7 @@ export function BuildingDiscoveryMap({
                                     <EyeOff className="w-3.5 h-3.5" />
                                 </button>
                             )}
-                            {onSave && (
+                            {onSave && !building.isMarker && (
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -462,7 +476,7 @@ export function BuildingDiscoveryMap({
                                     <Bookmark className={`w-3.5 h-3.5 ${status === 'pending' ? 'fill-current' : ''}`} />
                                 </button>
                             )}
-                            {onVisit && (
+                            {onVisit && !building.isMarker && (
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -528,12 +542,14 @@ export function BuildingDiscoveryMap({
                 />
             ) : (
                 <div className={`relative transition-transform ${scaleClass}`}>
-                    <MapPin
+                    <IconComponent
                         className={`${isDimmed ? 'w-6 h-6' : 'w-8 h-8'} ${pinColorClass} drop-shadow-md`}
                         style={pinStyle}
                     />
                     {/* White dot overlay to keep inner circle white when pin is filled */}
-                    <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
+                    {!building.isMarker && (
+                        <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
+                    )}
                 </div>
             )}
             </div>
