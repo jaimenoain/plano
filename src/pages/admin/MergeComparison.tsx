@@ -602,9 +602,9 @@ export default function MergeComparison() {
                                             size="lg"
                                             variant="destructive"
                                             className="px-8 h-14 text-lg shadow-lg hover:shadow-xl transition-all"
-                                            disabled={merging || impactLoading}
+                                            disabled={merging || impactLoading || isEditing}
                                         >
-                                            {merging ? <Loader2 className="animate-spin mr-2" /> : "Confirm and Unify"}
+                                            {merging ? <Loader2 className="animate-spin mr-2" /> : isEditing ? "Save Edits First" : "Confirm and Unify"}
                                         </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
