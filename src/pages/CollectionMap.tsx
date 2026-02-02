@@ -13,6 +13,7 @@ import { getBuildingUrl } from "@/utils/url";
 import { Loader2, Settings, Plus, ExternalLink, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
 import { AddBuildingsToCollectionDialog } from "@/components/collections/AddBuildingsToCollectionDialog";
 import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
@@ -718,23 +719,33 @@ export default function CollectionMap() {
                     )}
 
                     {markers && markers.length > 0 && (
-                        <>
-                            <div className="text-sm font-semibold text-muted-foreground pt-2 pl-1">Other Markers</div>
-                            {markers.map(marker => (
-                                <CollectionMarkerCard
-                                    key={marker.id}
-                                    marker={marker}
-                                    isHighlighted={highlightedId === marker.id}
-                                    setHighlightedId={setHighlightedId}
-                                    canEdit={canEdit}
-                                    onRemove={() => handleRemoveItem(marker.id)}
-                                    onNavigate={() => {
-                                        // Just highlight
-                                        setHighlightedId(marker.id);
-                                    }}
-                                />
-                            ))}
-                        </>
+                        <div className="mt-4 border-t pt-2">
+                            <Accordion type="single" collapsible defaultValue="markers">
+                                <AccordionItem value="markers" className="border-none">
+                                    <AccordionTrigger className="py-2 hover:no-underline text-sm font-semibold text-muted-foreground">
+                                        Trip Logistics
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <div className="space-y-3 pt-2">
+                                            {markers.map(marker => (
+                                                <CollectionMarkerCard
+                                                    key={marker.id}
+                                                    marker={marker}
+                                                    isHighlighted={highlightedId === marker.id}
+                                                    setHighlightedId={setHighlightedId}
+                                                    canEdit={canEdit}
+                                                    onRemove={() => handleRemoveItem(marker.id)}
+                                                    onNavigate={() => {
+                                                        // Just highlight
+                                                        setHighlightedId(marker.id);
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                        </div>
                     )}
 
                     {(!items || items.filter(i => !i.is_hidden).length === 0) && (!markers || markers.length === 0) && (
