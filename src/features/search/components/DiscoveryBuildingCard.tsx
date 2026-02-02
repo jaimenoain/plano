@@ -123,21 +123,31 @@ export function DiscoveryBuildingCard({
           </div>
 
           {/* Unified Interactions Facepile */}
-          {building.contact_interactions && building.contact_interactions.length > 0 && (
-            <div className="flex items-center gap-2 mt-2">
-              <div className="flex -space-x-2">
-                {building.contact_interactions.slice(0, 3).map((interaction) => (
-                  <Avatar key={interaction.user.id} className="w-5 h-5 border border-background">
-                    <AvatarImage src={interaction.user.avatar_url || undefined} />
-                    <AvatarFallback className="text-[8px]">{interaction.user.username?.[0] || interaction.user.first_name?.[0] || "?"}</AvatarFallback>
-                  </Avatar>
-                ))}
+          {building.contact_interactions && building.contact_interactions.length > 0 && (() => {
+            const sortedInteractions = [...building.contact_interactions].sort((a, b) => {
+              const aHasAvatar = !!a.user.avatar_url;
+              const bHasAvatar = !!b.user.avatar_url;
+              if (aHasAvatar && !bHasAvatar) return -1;
+              if (!aHasAvatar && bHasAvatar) return 1;
+              return 0;
+            });
+
+            return (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex -space-x-2">
+                  {sortedInteractions.slice(0, 3).map((interaction) => (
+                    <Avatar key={interaction.user.id} className="w-5 h-5 border border-background">
+                      <AvatarImage src={interaction.user.avatar_url || undefined} />
+                      <AvatarFallback className="text-[8px]">{interaction.user.username?.[0] || interaction.user.first_name?.[0] || "?"}</AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {getInteractionText(sortedInteractions)}
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground">
-                {getInteractionText(building.contact_interactions)}
-              </span>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {imagePosition === 'right' && ImageComponent}
