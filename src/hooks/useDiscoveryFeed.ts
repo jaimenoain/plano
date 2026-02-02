@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ContactInteraction } from "@/features/search/components/types";
 
 export interface DiscoveryFeedItem {
   id: string;
@@ -13,6 +14,7 @@ export interface DiscoveryFeedItem {
   main_image_url: string | null;
   save_count: number;
   architects: { id: string; name: string }[] | null;
+  contact_interactions?: ContactInteraction[];
 }
 
 export interface DiscoveryFilters {
@@ -73,6 +75,57 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
           buildings.forEach(building => {
             building.architects = architectsMap[building.id] || [];
           });
+        }
+
+        // Fetch Contact Interactions
+        const { data: follows } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', user.id);
+
+        const followedIds = follows?.map(f => f.following_id) || [];
+
+        if (followedIds.length > 0) {
+          const { data: interactions } = await supabase
+            .from('user_buildings')
+            .select(`
+                building_id,
+                status,
+                rating,
+                user:profiles!inner(id, username, avatar_url, first_name, last_name)
+            `)
+            .in('building_id', buildingIds)
+            .in('user_id', followedIds)
+            .or('status.eq.visited,status.eq.pending,rating.not.is.null');
+
+          if (interactions) {
+            const interactionsMap: Record<string, ContactInteraction[]> = {};
+
+            interactions.forEach((item: any) => {
+              const userProfile = Array.isArray(item.user) ? item.user[0] : item.user;
+
+              const interaction: ContactInteraction = {
+                user: {
+                  id: userProfile.id,
+                  username: userProfile.username,
+                  avatar_url: userProfile.avatar_url,
+                  first_name: userProfile.first_name,
+                  last_name: userProfile.last_name
+                },
+                status: item.status,
+                rating: item.rating
+              };
+
+              if (!interactionsMap[item.building_id]) {
+                interactionsMap[item.building_id] = [];
+              }
+              interactionsMap[item.building_id].push(interaction);
+            });
+
+            buildings.forEach(building => {
+              building.contact_interactions = interactionsMap[building.id] || [];
+            });
+          }
         }
       }
 
