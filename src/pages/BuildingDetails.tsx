@@ -1102,7 +1102,7 @@ export default function BuildingDetails() {
                                         initialRating={myRating}
                                         onRate={handleRate}
                                         status={userStatus || 'visited'}
-                                        label={userStatus === 'pending' ? "Priority" : "Rating"}
+                                        label={userStatus === 'pending' ? "Priority" : "Add points (optional)"}
                                         variant="inline"
                                     />
                                 )}
