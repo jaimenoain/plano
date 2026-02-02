@@ -41,6 +41,8 @@ export interface DiscoveryBuilding {
   isDimmed?: boolean;
   isMarker?: boolean;
   markerCategory?: CollectionMarkerCategory;
+  notes?: string | null;
+  address?: string | null;
 }
 
 export interface ContactRater {
