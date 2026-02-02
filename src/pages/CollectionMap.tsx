@@ -43,8 +43,6 @@ export default function CollectionMap() {
 
   // New States
   const [showSavedCandidates, setShowSavedCandidates] = useState(false);
-  const [candidateToAdd, setCandidateToAdd] = useState<DiscoveryBuilding | null>(null);
-  const [showAddConfirm, setShowAddConfirm] = useState(false);
 
   // New States for Removal
   const [itemToRemove, setItemToRemove] = useState<CollectionItemWithBuilding | null>(null);
@@ -375,14 +373,14 @@ export default function CollectionMap() {
     }
   };
 
-  const handleAddToCollection = async () => {
-    if (!candidateToAdd || !collection?.id) return;
+  const handleAddToCollection = async (building: DiscoveryBuilding) => {
+    if (!collection?.id) return;
 
     const { error } = await supabase
         .from("collection_items")
         .insert({
             collection_id: collection.id,
-            building_id: candidateToAdd.id
+            building_id: building.id
         });
 
     if (error) {
@@ -394,14 +392,12 @@ export default function CollectionMap() {
     } else {
         toast({
             title: "Added",
-            description: `${candidateToAdd.name} added to collection.`
+            description: `${building.name} added to collection.`
         });
         refetchItems();
         // Invalidate saved candidates to refresh the list (it should disappear from candidates)
         queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
     }
-    setShowAddConfirm(false);
-    setCandidateToAdd(null);
   };
 
   const handleHideCandidate = async (buildingId: string) => {
@@ -637,10 +633,7 @@ export default function CollectionMap() {
             <BuildingDiscoveryMap
                 externalBuildings={allMapBuildings}
                 highlightedId={highlightedId}
-                onAddCandidate={(building) => {
-                    setCandidateToAdd(building);
-                    setShowAddConfirm(true);
-                }}
+                onAddCandidate={handleAddToCollection}
                 onHideCandidate={canEdit ? handleHideCandidate : undefined}
                 onRemoveItem={canEdit ? handleRemoveItem : undefined}
                 onMarkerClick={(id) => {
@@ -682,21 +675,6 @@ export default function CollectionMap() {
                 open={showAddBuildings}
                 onOpenChange={setShowAddBuildings}
             />
-
-            <AlertDialog open={showAddConfirm} onOpenChange={setShowAddConfirm}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Add to Map</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Do you want to add <strong>{candidateToAdd?.name}</strong> to this map?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setCandidateToAdd(null)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleAddToCollection}>Add</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
 
             <AlertDialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
                 <AlertDialogContent>
