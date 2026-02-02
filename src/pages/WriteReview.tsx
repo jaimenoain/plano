@@ -747,7 +747,7 @@ export default function WriteReview() {
                 type="button"
                 className="focus:outline-none transition-transform hover:scale-110"
                 onMouseEnter={() => setHoverRating(star)}
-                onClick={() => setRating(star)}
+                onClick={() => setRating(rating === star ? 0 : star)}
               >
                 <Circle
                   className={`w-8 h-8 transition-colors ${
