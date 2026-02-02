@@ -226,6 +226,28 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
   );
 }
 
+interface UserBuildingResponse {
+  building_id: string;
+  status: string;
+  rating: number | null;
+  building: {
+    id: string;
+    name: string;
+    city: string | null;
+    country: string | null;
+    address: string | null;
+    slug: string | null;
+    hero_image_url: string | null;
+    year_completed: number | null;
+    building_architects: {
+      architect: {
+        id: string;
+        name: string;
+      } | null;
+    }[];
+  } | null;
+}
+
 export function AddBuildingsToCollectionDialog({
   collectionId,
   existingBuildingIds,
@@ -279,25 +301,29 @@ export function AddBuildingsToCollectionDialog({
           )
         `)
         .eq("user_id", user.id)
-        .neq("status", "ignored");
+        .neq("status", "ignored")
+        .returns<UserBuildingResponse[]>();
 
       if (error) throw error;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const buildings = data.map((item: any) => ({
-        ...item.building,
-        rating: item.rating,
-        main_image_url: item.building.hero_image_url ? getBuildingImageUrl(item.building.hero_image_url) : null,
-        architects: item.building.building_architects?.map((ba: any) => ba.architect) || [],
-        location_lat: 0,
-        location_lng: 0,
-        styles: [],
-      }));
+      const buildings = data
+        .filter(item => item.building) // Ensure building exists
+        .map((item) => {
+          const b = item.building!;
+          return {
+            ...b,
+            rating: item.rating,
+            main_image_url: b.hero_image_url ? getBuildingImageUrl(b.hero_image_url) : null,
+            architects: b.building_architects?.map((ba) => ba.architect).filter(Boolean) || [],
+            location_lat: 0,
+            location_lng: 0,
+            styles: [],
+          };
+      });
 
       // Identify buildings without images
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const buildingsWithoutImages = buildings.filter((b: any) => !b.main_image_url);
-      const buildingIdsWithoutImages = buildingsWithoutImages.map((b: any) => b.id);
+      const buildingsWithoutImages = buildings.filter((b) => !b.main_image_url);
+      const buildingIdsWithoutImages = buildingsWithoutImages.map((b) => b.id);
 
       if (buildingIdsWithoutImages.length > 0) {
         const { data: imagesData } = await supabase
@@ -308,16 +334,19 @@ export function AddBuildingsToCollectionDialog({
 
         if (imagesData) {
           const imageMap = new Map();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          imagesData.forEach((img: any) => {
-            const bId = img.user_buildings.building_id;
-            if (!imageMap.has(bId)) {
+          imagesData.forEach((img: { storage_path: string; user_buildings: { building_id: string } | { building_id: string }[] | null }) => {
+            if (!img.user_buildings) return;
+            // Handle array or object case for joined relationship (though !inner typically returns object if 1:1 or N:1)
+            // But supabase-js types can be tricky. Here we know it's a join on review_images (N) -> user_buildings (1).
+            // So img.user_buildings should be an object.
+            const bId = Array.isArray(img.user_buildings) ? img.user_buildings[0]?.building_id : img.user_buildings.building_id;
+
+            if (bId && !imageMap.has(bId)) {
               imageMap.set(bId, img.storage_path);
             }
           });
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          buildings.forEach((b: any) => {
+          buildings.forEach((b) => {
             if (!b.main_image_url && imageMap.has(b.id)) {
               b.main_image_url = getBuildingImageUrl(imageMap.get(b.id));
             }
@@ -337,8 +366,7 @@ export function AddBuildingsToCollectionDialog({
     let result = buildings;
 
     if (hiddenBuildingIds && hiddenBuildingIds.size > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        result = result.filter((b: any) => !hiddenBuildingIds.has(b.id));
+        result = result.filter((b) => !hiddenBuildingIds.has(b.id));
     }
 
     return result;
@@ -377,8 +405,9 @@ export function AddBuildingsToCollectionDialog({
             .limit(1);
 
         if (maxOrderError) throw maxOrderError;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const nextOrderIndex = ((maxOrderData?.[0] as any)?.order_index ?? -1) + 1;
+
+        const currentMax = maxOrderData?.[0]?.order_index ?? -1;
+        const nextOrderIndex = currentMax + 1;
 
         const { error } = await supabase
             .from("collection_items")
@@ -400,11 +429,9 @@ export function AddBuildingsToCollectionDialog({
     }
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const selectedBuilding = useMemo(() => {
     if (!selectedBuildingId || !buildings) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return buildings.find((b: any) => b.id === selectedBuildingId);
+    return buildings.find((b) => b.id === selectedBuildingId);
   }, [selectedBuildingId, buildings]);
 
   return (

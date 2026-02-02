@@ -32,6 +32,57 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 
+interface CollectionItemResponse {
+  id: string;
+  building_id: string;
+  note: string | null;
+  custom_category_id: string | null;
+  is_hidden: boolean;
+  building: {
+    id: string;
+    name: string;
+    location: unknown | null;
+    city: string | null;
+    country: string | null;
+    slug: string | null;
+    short_id: number | null;
+    year_completed: number | null;
+    hero_image_url: string | null;
+    community_preview_url: string | null;
+    location_precision: "exact" | "approximate";
+    building_architects: {
+      architects: {
+        id: string;
+        name: string;
+      } | null;
+    }[];
+  } | null;
+}
+
+interface SavedCandidateResponse {
+  building_id: string;
+  status: string;
+  building: {
+    id: string;
+    name: string;
+    location: unknown | null;
+    city: string | null;
+    country: string | null;
+    slug: string | null;
+    short_id: number | null;
+    year_completed: number | null;
+    hero_image_url: string | null;
+    community_preview_url: string | null;
+    location_precision: "exact" | "approximate";
+    building_architects: {
+      architects: {
+        id: string;
+        name: string;
+      } | null;
+    }[];
+  } | null;
+}
+
 export default function CollectionMap() {
   const { username, slug } = useParams();
   const { user } = useAuth();
@@ -119,7 +170,8 @@ export default function CollectionMap() {
             building_architects(architects(id, name))
           )
         `)
-        .eq("collection_id", collection.id);
+        .eq("collection_id", collection.id)
+        .returns<CollectionItemResponse[]>();
 
       const markersPromise = supabase
         .from("collection_markers")
@@ -132,18 +184,25 @@ export default function CollectionMap() {
       if (markersResult.error) throw markersResult.error;
 
       // Transform and parse location for items
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const items = itemsResult.data.map((item: any) => {
-        const location = parseLocation(item.building.location);
-        return {
-          ...item,
-          building: {
-            ...item.building,
-            location_lat: location?.lat || 0,
-            location_lng: location?.lng || 0,
-          }
-        };
-      }) as CollectionItemWithBuilding[];
+      const items = itemsResult.data
+        .filter(item => item.building) // Filter out items with deleted buildings
+        .map((item) => {
+          const b = item.building!;
+          const location = parseLocation(b.location);
+          return {
+            id: item.id,
+            building_id: item.building_id,
+            note: item.note,
+            custom_category_id: item.custom_category_id,
+            is_hidden: item.is_hidden,
+            building: {
+              ...b,
+              location_lat: location?.lat || 0,
+              location_lng: location?.lng || 0,
+              building_architects: b.building_architects || [],
+            }
+          };
+        }) as CollectionItemWithBuilding[];
 
       return {
         items,
@@ -186,41 +245,42 @@ export default function CollectionMap() {
             year_completed,
             hero_image_url,
             community_preview_url,
-            location_precision
+            location_precision,
+            building_architects(architects(id, name))
           )
         `)
         .eq("user_id", user.id)
-        .in("status", ["visited", "pending"]);
+        .in("status", ["visited", "pending"])
+        .returns<SavedCandidateResponse[]>();
 
       if (error) throw error;
 
       // Filter out items already in collection and transform
       return data
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((row: any) => row.building)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((row: any) => {
-            const location = parseLocation(row.building.location);
+        .filter((row) => row.building)
+        .map((row) => {
+            const b = row.building!;
+            const location = parseLocation(b.location);
             return {
-                id: row.building.id,
-                name: row.building.name,
-                main_image_url: row.building.hero_image_url || row.building.community_preview_url,
+                id: b.id,
+                name: b.name,
+                main_image_url: b.hero_image_url || b.community_preview_url,
                 location_lat: location?.lat || 0,
                 location_lng: location?.lng || 0,
-                city: row.building.city,
-                country: row.building.country,
-                slug: row.building.slug,
-                short_id: row.building.short_id,
-                year_completed: row.building.year_completed,
-                location_precision: row.building.location_precision,
-                architects: [], // Not critical for candidate markers
+                city: b.city,
+                country: b.country,
+                slug: b.slug,
+                short_id: b.short_id,
+                year_completed: b.year_completed,
+                location_precision: b.location_precision,
+                architects: b.building_architects?.map((ba) => ba.architects).filter(Boolean) || [],
                 styles: [],
                 color: null // Let BuildingDiscoveryMap use status color
             } as DiscoveryBuilding;
         })
         .filter(b => b.location_lat !== 0 && b.location_lng !== 0);
     },
-    enabled: !!user?.id && showSavedCandidates // Only fetch if toggle is ON (or always fetch? efficient to fetch only on toggle)
+    enabled: !!user?.id && showSavedCandidates
   });
 
   // 4. Fetch Contributors (Only if needed for status/rating)
@@ -350,8 +410,7 @@ export default function CollectionMap() {
             short_id: item.building.short_id,
             year_completed: item.building.year_completed,
             location_precision: item.building.location_precision,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            architects: item.building.building_architects?.map((ba: any) => ba.architects) || [],
+            architects: item.building.building_architects?.map((ba) => ba.architects).filter(Boolean) || [],
             styles: [],
             color: color,
         };
