@@ -51,7 +51,7 @@ export function PersonalRatingButton({
 
   const currentLabel = hoverRating
     ? getRatingLabel(hoverRating)
-    : (initialRating ? getRatingLabel(initialRating) : `Your ${label.toLowerCase()}`);
+    : (initialRating ? getRatingLabel(initialRating) : label);
 
   const renderStars = () => (
     <div className="flex flex-col items-center gap-2">
