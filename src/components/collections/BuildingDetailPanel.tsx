@@ -65,13 +65,17 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
             <CarouselContent>
               {allImages.map((img) => (
                 <CarouselItem key={img.id}>
-                  <div className="aspect-square relative overflow-hidden rounded-md border bg-muted">
+                  <Link
+                    to={`/building/${building.slug}`}
+                    target="_blank"
+                    className="block aspect-square relative overflow-hidden rounded-md border bg-muted group cursor-pointer"
+                  >
                     <img
                       src={img.url}
                       alt={building.name}
-                      className="object-cover w-full h-full"
+                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                     />
-                  </div>
+                  </Link>
                 </CarouselItem>
               ))}
             </CarouselContent>
