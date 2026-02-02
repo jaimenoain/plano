@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { CollectionBuildingCard } from "@/components/collections/CollectionBuildingCard";
+import { CollectionMarkerCard } from "@/components/collections/CollectionMarkerCard";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
@@ -14,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
 import { AddBuildingsToCollectionDialog } from "@/components/collections/AddBuildingsToCollectionDialog";
-import { Collection, CollectionItemWithBuilding } from "@/types/collection";
+import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -47,6 +48,8 @@ export default function CollectionMap() {
   // New States for Removal
   const [itemToRemove, setItemToRemove] = useState<CollectionItemWithBuilding | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [markerToRemove, setMarkerToRemove] = useState<CollectionMarker | null>(null);
+  const [showRemoveMarkerConfirm, setShowRemoveMarkerConfirm] = useState(false);
 
   // New States for Save All
   const [showSaveAllConfirm, setShowSaveAllConfirm] = useState(false);
@@ -86,12 +89,13 @@ export default function CollectionMap() {
     enabled: !!ownerProfile?.id && !!slug
   });
 
-  // 3. Fetch Items
-  const { data: items, isLoading: loadingItems, refetch: refetchItems } = useQuery({
+  // 3. Fetch Items and Markers
+  const { data: collectionData, isLoading: loadingItems, refetch: refetchItems } = useQuery({
     queryKey: ["collection_items", collection?.id],
     queryFn: async () => {
-      if (!collection?.id) return [];
-      const { data, error } = await supabase
+      if (!collection?.id) return { items: [], markers: [] };
+
+      const itemsPromise = supabase
         .from("collection_items")
         .select(`
           id,
@@ -116,11 +120,19 @@ export default function CollectionMap() {
         `)
         .eq("collection_id", collection.id);
 
-      if (error) throw error;
+      const markersPromise = supabase
+        .from("collection_markers")
+        .select("*")
+        .eq("collection_id", collection.id);
 
-      // Transform and parse location
+      const [itemsResult, markersResult] = await Promise.all([itemsPromise, markersPromise]);
+
+      if (itemsResult.error) throw itemsResult.error;
+      if (markersResult.error) throw markersResult.error;
+
+      // Transform and parse location for items
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return data.map((item: any) => {
+      const items = itemsResult.data.map((item: any) => {
         const location = parseLocation(item.building.location);
         return {
           ...item,
@@ -131,16 +143,24 @@ export default function CollectionMap() {
           }
         };
       }) as CollectionItemWithBuilding[];
+
+      return {
+        items,
+        markers: markersResult.data as CollectionMarker[]
+      };
     },
     enabled: !!collection?.id
   });
 
+  const items = collectionData?.items || [];
+  const markers = collectionData?.markers || [];
+
   const existingBuildingIds = useMemo(() => {
-    return new Set(items?.map(item => item.building.id) || []);
+    return new Set(items.map(item => item.building.id) || []);
   }, [items]);
 
   const hiddenBuildingIds = useMemo(() => {
-    return new Set(items?.filter(item => item.is_hidden).map(item => item.building.id) || []);
+    return new Set(items.filter(item => item.is_hidden).map(item => item.building.id) || []);
   }, [items]);
 
   // 3b. Fetch Saved Buildings (Candidates)
@@ -248,92 +268,118 @@ export default function CollectionMap() {
 
   // Prepare map buildings
   const mapBuildings = useMemo<DiscoveryBuilding[]>(() => {
-    if (!items) return [];
+    const buildingNodes: DiscoveryBuilding[] = [];
 
-    // Filter out hidden items for display
-    const visibleItems = items.filter(item => !item.is_hidden);
+    // 1. Process Buildings
+    if (items) {
+        // Filter out hidden items for display
+        const visibleItems = items.filter(item => !item.is_hidden);
 
-    // Pre-calculate stats map
-    const statsMap = new Map<string, { visitedCount: number, maxRating: number, hasSaved: boolean }>();
+        // Pre-calculate stats map
+        const statsMap = new Map<string, { visitedCount: number, maxRating: number, hasSaved: boolean }>();
 
-    if (statsData) {
-        // Group by building
-        statsData.forEach(row => {
-            if (!statsMap.has(row.building_id)) {
-                statsMap.set(row.building_id, { visitedCount: 0, maxRating: 0, hasSaved: false });
+        if (statsData) {
+            // Group by building
+            statsData.forEach(row => {
+                if (!statsMap.has(row.building_id)) {
+                    statsMap.set(row.building_id, { visitedCount: 0, maxRating: 0, hasSaved: false });
+                }
+                const stat = statsMap.get(row.building_id)!;
+                if (row.status === 'visited') stat.visitedCount++;
+                if (row.rating && row.rating > stat.maxRating) stat.maxRating = row.rating;
+                stat.hasSaved = true; // Present in user_buildings implies saved/interested
+            });
+        }
+
+        const mappedBuildings = visibleItems.map(item => {
+        let color = null;
+
+        if (collection?.categorization_method === 'custom') {
+            if (item.custom_category_id) {
+            const category = collection.custom_categories?.find(c => c.id === item.custom_category_id);
+            if (category) {
+                color = category.color;
+            } else {
+                color = "#9CA3AF";
             }
-            const stat = statsMap.get(row.building_id)!;
-            if (row.status === 'visited') stat.visitedCount++;
-            if (row.rating && row.rating > stat.maxRating) stat.maxRating = row.rating;
-            stat.hasSaved = true; // Present in user_buildings implies saved/interested
+            } else {
+            color = "#9CA3AF";
+            }
+        } else if (shouldFetchStats && statsData && memberIds) {
+            const stat = statsMap.get(item.building.id);
+            const targetUserIds = collection?.categorization_selected_members && collection.categorization_selected_members.length > 0
+                ? collection.categorization_selected_members
+                : memberIds;
+            const targetCount = targetUserIds.length;
+
+            if (collection.categorization_method === 'status') {
+                if (!stat || stat.visitedCount === 0) {
+                    color = "#9E9E9E"; // Not visited (Grey)
+                } else {
+                    if (stat.visitedCount >= targetCount && targetCount > 0) {
+                        color = "#4CAF50"; // Visited by All (Green)
+                    } else if (stat.visitedCount > 0) {
+                        color = "#FF9800"; // Visited by Some (Orange)
+                    }
+                }
+            } else if (collection.categorization_method === 'rating_member') {
+                if (!stat || !stat.hasSaved) {
+                    // No color (default) or grey?
+                    // If we want to highlight rated ones, unrated/unsaved can be default or grey.
+                    // Let's make them grey to indicate "no data/rating".
+                    color = "#9E9E9E";
+                } else {
+                    if (stat.maxRating === 3) color = "#FFD700"; // Gold
+                    else if (stat.maxRating === 2) color = "#C0C0C0"; // Silver
+                    else if (stat.maxRating === 1) color = "#CD7F32"; // Bronze
+                    else color = "#2196F3"; // Saved (Blue)
+                }
+            }
+        }
+
+        return {
+            id: item.building.id,
+            name: item.building.name,
+            main_image_url: item.building.hero_image_url || item.building.community_preview_url,
+            location_lat: item.building.location_lat,
+            location_lng: item.building.location_lng,
+            city: item.building.city,
+            country: item.building.country,
+            slug: item.building.slug,
+            short_id: item.building.short_id,
+            year_completed: item.building.year_completed,
+            location_precision: item.building.location_precision,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            architects: item.building.building_architects?.map((ba: any) => ba.architects) || [],
+            styles: [],
+            color: color,
+        };
         });
+        buildingNodes.push(...mappedBuildings);
     }
 
-    return visibleItems.map(item => {
-      let color = null;
+    // 2. Process Markers
+    if (markers) {
+        const mappedMarkers = markers.map(marker => ({
+            id: marker.id,
+            name: marker.name,
+            location_lat: marker.lat,
+            location_lng: marker.lng,
+            city: null,
+            country: null,
+            architects: [],
+            styles: [],
+            year_completed: null,
+            isMarker: true,
+            markerCategory: marker.category,
+            // Use a default marker color if needed, or rely on icon in Map
+            color: "#6B7280"
+        } as DiscoveryBuilding));
+        buildingNodes.push(...mappedMarkers);
+    }
 
-      if (collection?.categorization_method === 'custom') {
-        if (item.custom_category_id) {
-          const category = collection.custom_categories?.find(c => c.id === item.custom_category_id);
-          if (category) {
-            color = category.color;
-          } else {
-            color = "#9CA3AF";
-          }
-        } else {
-          color = "#9CA3AF";
-        }
-      } else if (shouldFetchStats && statsData && memberIds) {
-          const stat = statsMap.get(item.building.id);
-          const targetUserIds = collection?.categorization_selected_members && collection.categorization_selected_members.length > 0
-            ? collection.categorization_selected_members
-            : memberIds;
-          const targetCount = targetUserIds.length;
-
-          if (collection.categorization_method === 'status') {
-              if (!stat || stat.visitedCount === 0) {
-                  color = "#9E9E9E"; // Not visited (Grey)
-              } else {
-                  if (stat.visitedCount >= targetCount && targetCount > 0) {
-                      color = "#4CAF50"; // Visited by All (Green)
-                  } else if (stat.visitedCount > 0) {
-                      color = "#FF9800"; // Visited by Some (Orange)
-                  }
-              }
-          } else if (collection.categorization_method === 'rating_member') {
-              if (!stat || !stat.hasSaved) {
-                   // No color (default) or grey?
-                   // If we want to highlight rated ones, unrated/unsaved can be default or grey.
-                   // Let's make them grey to indicate "no data/rating".
-                   color = "#9E9E9E";
-              } else {
-                  if (stat.maxRating === 3) color = "#FFD700"; // Gold
-                  else if (stat.maxRating === 2) color = "#C0C0C0"; // Silver
-                  else if (stat.maxRating === 1) color = "#CD7F32"; // Bronze
-                  else color = "#2196F3"; // Saved (Blue)
-              }
-          }
-      }
-
-      return {
-        id: item.building.id,
-        name: item.building.name,
-        main_image_url: item.building.hero_image_url || item.building.community_preview_url,
-        location_lat: item.building.location_lat,
-        location_lng: item.building.location_lng,
-        city: item.building.city,
-        country: item.building.country,
-        slug: item.building.slug,
-        short_id: item.building.short_id,
-        year_completed: item.building.year_completed,
-        location_precision: item.building.location_precision,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        architects: item.building.building_architects?.map((ba: any) => ba.architects) || [],
-        styles: [],
-        color: color,
-      };
-    });
-  }, [items, collection, statsData, memberIds, shouldFetchStats]);
+    return buildingNodes;
+  }, [items, markers, collection, statsData, memberIds, shouldFetchStats]);
 
   const allMapBuildings = useMemo(() => {
     if (showSavedCandidates && savedCandidates) {
@@ -432,6 +478,12 @@ export default function CollectionMap() {
     if (item) {
       setItemToRemove(item);
       setShowRemoveConfirm(true);
+      return;
+    }
+    const marker = markers?.find(m => m.id === buildingId);
+    if (marker) {
+        setMarkerToRemove(marker);
+        setShowRemoveMarkerConfirm(true);
     }
   };
 
@@ -460,6 +512,31 @@ export default function CollectionMap() {
     }
     setShowRemoveConfirm(false);
     setItemToRemove(null);
+  };
+
+  const handleConfirmRemoveMarker = async () => {
+    if (!markerToRemove) return;
+
+    const { error } = await supabase
+      .from("collection_markers")
+      .delete()
+      .eq("id", markerToRemove.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove marker.",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Removed",
+        description: `${markerToRemove.name} removed from map.`
+      });
+      refetchItems();
+    }
+    setShowRemoveMarkerConfirm(false);
+    setMarkerToRemove(null);
   };
 
   const handleSaveAllBuildings = async () => {
@@ -600,7 +677,7 @@ export default function CollectionMap() {
 
             <ScrollArea className="flex-1">
                 <div className="p-4 space-y-3 pb-24">
-                    {items && items.filter(i => !i.is_hidden).length > 0 ? (
+                    {items && items.filter(i => !i.is_hidden).length > 0 && (
                         items.filter(i => !i.is_hidden).map(item => (
                             <CollectionBuildingCard
                                 key={item.id}
@@ -619,7 +696,29 @@ export default function CollectionMap() {
                                 onRemove={() => handleRemoveItem(item.building.id)}
                             />
                         ))
-                    ) : (
+                    )}
+
+                    {markers && markers.length > 0 && (
+                        <>
+                            <div className="text-sm font-semibold text-muted-foreground pt-2 pl-1">Other Markers</div>
+                            {markers.map(marker => (
+                                <CollectionMarkerCard
+                                    key={marker.id}
+                                    marker={marker}
+                                    isHighlighted={highlightedId === marker.id}
+                                    setHighlightedId={setHighlightedId}
+                                    canEdit={canEdit}
+                                    onRemove={() => handleRemoveItem(marker.id)}
+                                    onNavigate={() => {
+                                        // Just highlight
+                                        setHighlightedId(marker.id);
+                                    }}
+                                />
+                            ))}
+                        </>
+                    )}
+
+                    {(!items || items.filter(i => !i.is_hidden).length === 0) && (!markers || markers.length === 0) && (
                         <div className="text-center py-8 text-muted-foreground text-sm">
                             No places in this collection yet.
                         </div>
@@ -693,6 +792,21 @@ export default function CollectionMap() {
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setItemToRemove(null)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmRemove}>Remove</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={showRemoveMarkerConfirm} onOpenChange={setShowRemoveMarkerConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Remove Marker</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Do you really want to remove <strong>{markerToRemove?.name}</strong> from this map?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setMarkerToRemove(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmRemoveMarker}>Remove</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
