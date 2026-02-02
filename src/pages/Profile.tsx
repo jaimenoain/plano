@@ -630,7 +630,7 @@ export default function Profile() {
                 variant="secondary"
                 size="icon"
                 className="shrink-0"
-                onClick={() => navigate(`/search?rated_by=${profile?.username || ""}`)}
+                onClick={() => navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true`)}
                 title="Filter by rated buildings"
                 >
                 <Filter className="h-4 w-4" />

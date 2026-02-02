@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { DiscoveryList } from "./components/DiscoveryList";
@@ -36,11 +36,18 @@ export default function SearchPage() {
   const queryClient = useQueryClient();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [searchScope, setSearchScope] = useState<SearchScope>('content');
+  const [searchParams] = useSearchParams();
 
   // Filter UI State
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
+
+  useEffect(() => {
+    if (searchParams.get("open_filters") === "true") {
+      setFilterSheetOpen(true);
+    }
+  }, [searchParams]);
    
   // 1. Existing hooks
   const {
