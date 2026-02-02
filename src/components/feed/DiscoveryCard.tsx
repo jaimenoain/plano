@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Bookmark, Check, EyeOff } from "lucide-react";
@@ -18,19 +18,43 @@ interface DiscoveryCardProps {
   onSave?: (e: React.MouseEvent) => void;
   onSwipeSave?: () => void;
   onSwipeHide?: () => void;
+  onSkip?: () => void;
 }
 
-export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, onSwipeHide }: DiscoveryCardProps) {
+export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, onSwipeHide, onSkip }: DiscoveryCardProps) {
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  const [hasBeenViewed, setHasBeenViewed] = useState(false);
+  const prevVisible = useRef(false);
+
   // Lazy loading setup
   const { containerRef, isVisible } = useIntersectionObserver({
     threshold: 0.1,
   });
+
+  // View tracking setup
+  const { containerRef: viewTrackerRef, isVisible: isViewVisible } = useIntersectionObserver({
+    threshold: 0.6,
+  });
+
+  useEffect(() => {
+    if (isViewVisible) {
+        setHasBeenViewed(true);
+    }
+
+    // Check if transitioned from visible to invisible
+    if (prevVisible.current && !isViewVisible) {
+        if (hasBeenViewed && !isSaved && onSkip) {
+            onSkip();
+        }
+    }
+
+    prevVisible.current = isViewVisible;
+  }, [isViewVisible, hasBeenViewed, isSaved, onSkip]);
 
   // Fetch additional images only when visible
   const { data: additionalImages } = useBuildingImages(building.id, isVisible);
@@ -158,6 +182,9 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
       dragElastic={0.7}
       onDragEnd={handleDragEnd}
     >
+      {/* View Tracker */}
+      <div ref={viewTrackerRef as any} className="absolute inset-0 pointer-events-none" />
+
       {/* Background Layer - Blurred */}
       {uniqueImages[currentImageIndex] && (
         <div
