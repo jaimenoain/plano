@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -211,80 +212,105 @@ export function AddBuildingsToCollectionDialog({
           <DialogTitle>Add to Collection</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-1 h-full min-h-0">
-          {/* Left Column: List */}
-          <div className="w-[350px] shrink-0 flex flex-col border-r">
-            <div className="p-4 pb-2 border-b space-y-2">
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search by name, city, country, or address..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9"
-                    />
-                </div>
-            </div>
+        <Tabs defaultValue="architecture" className="flex flex-col flex-1 h-full min-h-0 overflow-hidden">
+          <div className="px-4 border-b">
+            <TabsList className="justify-start w-full h-12 p-0 bg-transparent rounded-none">
+              <TabsTrigger
+                value="architecture"
+                className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              >
+                Architecture
+              </TabsTrigger>
+              <TabsTrigger
+                value="other-markers"
+                className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              >
+                Other Markers
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-            <ScrollArea className="flex-1">
+          <TabsContent value="architecture" className="flex flex-1 h-full min-h-0 m-0 mt-0 border-none p-0 data-[state=inactive]:hidden">
+            {/* Left Column: List */}
+            <div className="w-[350px] shrink-0 flex flex-col border-r">
+              <div className="p-4 pb-2 border-b space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, city, country, or address..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+
+              <ScrollArea className="flex-1">
                 <DiscoveryList
                   buildings={filteredBuildings}
                   isLoading={isLoading}
                   className="p-2"
                   emptyState={
-                      <p className="text-center text-muted-foreground py-8">
-                          {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
-                      </p>
+                    <p className="text-center text-muted-foreground py-8">
+                      {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
+                    </p>
                   }
                   onBuildingClick={(building) => setSelectedBuildingId(building.id)}
                   imagePosition="left"
                   renderAction={(building) => {
-                      const isAdded = existingBuildingIds.has(building.id);
-                      return (
-                          <div className="flex items-center gap-1">
-                              {!isAdded && (
-                                  <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted"
-                                      title="Hide suggestion"
-                                      disabled={hideMutation.isPending || addMutation.isPending}
-                                      onClick={(e) => {
-                                          e.stopPropagation();
-                                          hideMutation.mutate(building.id);
-                                      }}
-                                  >
-                                      <X className="h-4 w-4" />
-                                  </Button>
-                              )}
-                              <Button
-                                  size="sm"
-                                  variant={isAdded ? "secondary" : "default"}
-                                  className="h-8 w-8 p-0 shrink-0 shadow-sm"
-                                  disabled={isAdded || addMutation.isPending || hideMutation.isPending}
-                                  onClick={(e) => {
-                                      e.stopPropagation();
-                                      addMutation.mutate(building.id);
-                                  }}
-                              >
-                                  {isAdded ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                              </Button>
-                          </div>
-                      )
+                    const isAdded = existingBuildingIds.has(building.id);
+                    return (
+                      <div className="flex items-center gap-1">
+                        {!isAdded && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                            title="Hide suggestion"
+                            disabled={hideMutation.isPending || addMutation.isPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              hideMutation.mutate(building.id);
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant={isAdded ? "secondary" : "default"}
+                          className="h-8 w-8 p-0 shrink-0 shadow-sm"
+                          disabled={isAdded || addMutation.isPending || hideMutation.isPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addMutation.mutate(building.id);
+                          }}
+                        >
+                          {isAdded ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    )
                   }}
-               />
-            </ScrollArea>
-          </div>
+                />
+              </ScrollArea>
+            </div>
 
-          {/* Right Column: Details */}
-          {selectedBuilding ? (
-             <BuildingDetailPanel building={selectedBuilding} />
-          ) : (
-             <div className="flex-1 border-l hidden lg:flex items-center justify-center text-muted-foreground bg-muted/10">
-                 Select a building to view details
-             </div>
-          )}
-        </div>
+            {/* Right Column: Details */}
+            {selectedBuilding ? (
+              <BuildingDetailPanel building={selectedBuilding} />
+            ) : (
+              <div className="flex-1 border-l hidden lg:flex items-center justify-center text-muted-foreground bg-muted/10">
+                Select a building to view details
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="other-markers" className="flex-1 p-4 m-0 mt-0 border-none">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              Coming soon...
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
