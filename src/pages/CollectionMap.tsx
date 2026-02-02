@@ -340,7 +340,8 @@ export default function CollectionMap() {
   const allMapBuildings = useMemo(() => {
     if (showSavedCandidates && savedCandidates) {
       const filteredCandidates = savedCandidates.filter(c => !existingBuildingIds.has(c.id));
-      return [...mapBuildings, ...filteredCandidates.map(c => ({ ...c, isCandidate: true }))];
+      const dimmedExisting = mapBuildings.map(b => ({ ...b, isDimmed: true }));
+      return [...dimmedExisting, ...filteredCandidates.map(c => ({ ...c, isCandidate: true }))];
     }
     return mapBuildings;
   }, [mapBuildings, savedCandidates, showSavedCandidates, existingBuildingIds]);
