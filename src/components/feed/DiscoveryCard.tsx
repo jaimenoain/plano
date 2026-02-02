@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
-import { Bookmark, Check } from "lucide-react";
+import { Bookmark, Check, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBuildingImages } from "@/hooks/useBuildingImages";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
@@ -109,6 +109,8 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
 
   const likeOpacity = useTransform(x, [20, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
+  const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.5]);
+  const nopeOverlayOpacity = useTransform(x, [-100, -20], [0.5, 0]);
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     const threshold = 100;
@@ -183,12 +185,26 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
           <div className="w-1/2 h-full" onClick={nextImage} />
       </div>
 
+      {/* Color Overlays */}
+      <motion.div
+        className="absolute inset-0 bg-green-500 z-15 pointer-events-none"
+        style={{ opacity: likeOverlayOpacity }}
+      />
+      <motion.div
+        className="absolute inset-0 bg-red-500 z-15 pointer-events-none"
+        style={{ opacity: nopeOverlayOpacity }}
+      />
+
       {/* Swipe Feedback Overlays */}
-      <motion.div style={{ opacity: likeOpacity }} className="absolute top-20 left-10 z-50 border-4 border-green-500 rounded-lg p-2 transform -rotate-12 pointer-events-none">
-        <span className="text-green-500 font-bold text-4xl uppercase tracking-widest">SAVED</span>
+      <motion.div style={{ opacity: likeOpacity }} className="absolute top-20 left-10 z-50 pointer-events-none">
+        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+          <Bookmark className="w-10 h-10 text-white" />
+        </div>
       </motion.div>
-      <motion.div style={{ opacity: nopeOpacity }} className="absolute top-20 right-10 z-50 border-4 border-red-500 rounded-lg p-2 transform rotate-12 pointer-events-none">
-        <span className="text-red-500 font-bold text-4xl uppercase tracking-widest">HIDE</span>
+      <motion.div style={{ opacity: nopeOpacity }} className="absolute top-20 right-10 z-50 pointer-events-none">
+        <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+          <EyeOff className="w-10 h-10 text-white" />
+        </div>
       </motion.div>
 
       {/* Rating Overlay */}
