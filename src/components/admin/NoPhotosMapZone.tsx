@@ -41,26 +41,44 @@ export function NoPhotosMapZone() {
   useEffect(() => {
     const fetchBuildings = async () => {
       try {
+        // Step 1: Get IDs of buildings that have public photos (via public reviews with images)
+        // We use !inner on review_images to ensure the review actually has images
+        const { data: publicReviews, error: reviewError } = await supabase
+          .from('user_buildings')
+          .select('building_id, review_images!inner(id)')
+          .eq('visibility', 'public');
+
+        if (reviewError) throw reviewError;
+
+        const buildingsWithPublicPhotos = new Set(
+            publicReviews?.map(r => r.building_id).filter(Boolean)
+        );
+
+        // Step 2: Fetch buildings
+        // We fetch a batch of buildings and filter client-side to ensure we catch those
+        // that might have a 'hero_image_url' (so wouldn't be caught by .is(null))
+        // but only have private photos (so aren't in buildingsWithPublicPhotos).
         const { data, error } = await supabase
           .from('buildings')
           .select('id, name, location')
-          .is('hero_image_url', null)
-          .is('community_preview_url', null)
           .eq('is_deleted', false)
-          .limit(2000);
+          .limit(5000);
 
         if (error) throw error;
 
-        const mapped = (data || []).map(b => {
-            const coords = parseLocation(b.location);
-            if (!coords) return null;
-            return {
-                id: b.id,
-                name: b.name,
-                lat: coords.lat,
-                lng: coords.lng
-            };
-        }).filter((b): b is NoPhotoBuilding => b !== null);
+        const mapped = (data || [])
+            .filter(b => !buildingsWithPublicPhotos.has(b.id))
+            .map(b => {
+                const coords = parseLocation(b.location);
+                if (!coords) return null;
+                return {
+                    id: b.id,
+                    name: b.name,
+                    lat: coords.lat,
+                    lng: coords.lng
+                };
+            })
+            .filter((b): b is NoPhotoBuilding => b !== null);
 
         setBuildings(mapped);
       } catch (err) {
