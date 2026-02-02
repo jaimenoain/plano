@@ -4,10 +4,11 @@ import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X, Bed, Utensils, Bus, Camera } from "lucide-react";
+import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { CollectionMarkerCategory } from "@/types/collection";
+import { MarkerPin } from "./MarkerPin";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Bounds } from "@/utils/map";
@@ -387,17 +388,6 @@ export function BuildingDiscoveryMap({
     const pinStyle: React.CSSProperties = (building.color && !isDimmed) ? { color: building.color, fill: building.color } : {};
     const dotStyle: React.CSSProperties = (building.color && !isDimmed) ? { backgroundColor: building.color } : {};
 
-    let IconComponent = MapPin;
-    if (building.isMarker && building.markerCategory) {
-        switch (building.markerCategory) {
-            case 'accommodation': IconComponent = Bed; break;
-            case 'dining': IconComponent = Utensils; break;
-            case 'transport': IconComponent = Bus; break;
-            case 'attraction': IconComponent = Camera; break;
-            case 'other': IconComponent = MapPin; break;
-        }
-    }
-
     return (
         <Marker
         key={building.buildingId}
@@ -540,16 +530,21 @@ export function BuildingDiscoveryMap({
                     className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`}
                     style={dotStyle}
                 />
+            ) : building.isMarker ? (
+                <div className={`relative transition-transform ${scaleClass}`}>
+                    <MarkerPin
+                        category={building.markerCategory}
+                        color={building.color || undefined}
+                    />
+                </div>
             ) : (
                 <div className={`relative transition-transform ${scaleClass}`}>
-                    <IconComponent
+                    <MapPin
                         className={`${isDimmed ? 'w-6 h-6' : 'w-8 h-8'} ${pinColorClass} drop-shadow-md`}
                         style={pinStyle}
                     />
                     {/* White dot overlay to keep inner circle white when pin is filled */}
-                    {!building.isMarker && (
-                        <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
-                    )}
+                    <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
                 </div>
             )}
             </div>
