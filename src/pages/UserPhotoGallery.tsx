@@ -74,7 +74,7 @@ export default function UserPhotoGallery() {
           likes_count,
           review_id,
           user_buildings!review_images_review_id_fkey (
-            building:buildings!log_building_id_fkey (
+            building:buildings (
               id,
               name,
               slug
