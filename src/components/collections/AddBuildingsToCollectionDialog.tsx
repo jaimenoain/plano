@@ -186,7 +186,7 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
             }}
             onFocus={() => setOpen(!!value)}
             disabled={!ready}
-            placeholder="Search for a place (e.g. 'Eiffel Tower')..."
+            placeholder="Search for a place (e.g. 'Central Station')..."
             autoComplete="off"
             className={cn(
               "flex h-10 w-full rounded-md border-none bg-transparent pl-9 pr-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
