@@ -7,7 +7,7 @@ export interface Collection {
   external_link: string | null;
   slug: string;
   show_community_images: boolean;
-  categorization_method: 'default' | 'custom' | 'status' | 'rating_member';
+  categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
   custom_categories: { id: string; label: string; color: string }[] | null;
   categorization_selected_members: string[] | null;
 }

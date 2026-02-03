@@ -46,6 +46,7 @@ interface Contributor {
 }
 
 const METHOD_DESCRIPTIONS = {
+  uniform: "All pins appear identical, regardless of status or rating.",
   default: "Pins are colored based on your personal status (Visited, Pending, or Unvisited).",
   status: "Pins show if locations have been visited by all selected members (Green), some (Orange), or none (Grey).",
   rating_member: "Pins highlight the highest rating among members: Masterpiece (Gold), Essential (Silver), Impressive (Bronze), or Saved (Blue).",
@@ -59,7 +60,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     description: string;
     is_public: boolean;
     show_community_images: boolean;
-    categorization_method: 'default' | 'custom' | 'status' | 'rating_member';
+    categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
     custom_categories: { id: string; label: string; color: string }[];
     categorization_selected_members: string[] | null;
   }>({
@@ -68,7 +69,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     is_public: collection.is_public,
     external_link: collection.external_link || "",
     show_community_images: collection.show_community_images,
-    categorization_method: collection.categorization_method || 'default',
+    categorization_method: collection.categorization_method || 'uniform',
     custom_categories: collection.custom_categories || [],
     categorization_selected_members: collection.categorization_selected_members || null
   });
@@ -90,7 +91,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
         is_public: collection.is_public,
         external_link: collection.external_link || "",
         show_community_images: collection.show_community_images,
-        categorization_method: collection.categorization_method || 'default',
+        categorization_method: collection.categorization_method || 'uniform',
         custom_categories: collection.custom_categories || [],
         categorization_selected_members: collection.categorization_selected_members || null
       });
@@ -424,6 +425,10 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                     onValueChange={(val: any) => setFormData({...formData, categorization_method: val})}
                     className="space-y-2"
                 >
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="uniform" id="cat-uniform" />
+                        <Label htmlFor="cat-uniform" className="font-normal cursor-pointer">Uniform</Label>
+                    </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="default" id="cat-default" />
                         <Label htmlFor="cat-default" className="font-normal cursor-pointer">Default (Personal Status)</Label>
