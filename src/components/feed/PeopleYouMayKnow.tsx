@@ -68,13 +68,13 @@ export function PeopleYouMayKnow() {
       <div className="space-y-4">
         {suggestions.map((person) => (
           <div key={person.id} className="flex items-center justify-between gap-3">
-            <Link to={`/profile/${person.username || person.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <Link to={`/profile/${person.username || person.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-1 min-w-0">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={person.avatar_url || undefined} />
                 <AvatarFallback>{person.username?.[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium leading-none">{person.username}</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-medium leading-none truncate">{person.username}</span>
                 <div className="flex flex-col text-xs text-muted-foreground mt-1 gap-0.5">
                   {person.mutual_follows && person.mutual_follows.length > 0 ? (
                     <MutualFacepile users={person.mutual_follows} />
@@ -95,7 +95,7 @@ export function PeopleYouMayKnow() {
                 </div>
               </div>
             </Link>
-            <FollowButton userId={person.id} isFollower={person.is_follows_me} />
+            <FollowButton userId={person.id} isFollower={person.is_follows_me} className="shrink-0" />
           </div>
         ))}
       </div>
