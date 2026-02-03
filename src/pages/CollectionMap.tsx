@@ -334,8 +334,6 @@ export default function CollectionMap() {
     enabled: !!items && items.length > 0 && !!memberIds && !!shouldFetchStats && !!collection?.id
   });
 
-  const canEdit = user?.id === collection?.owner_id;
-
   // 6. Check Favorite Status
   const { data: isFavorite, refetch: refetchFavorite } = useQuery({
     queryKey: ["collection_favorite", collection?.id, user?.id],

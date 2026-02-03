@@ -25,41 +25,22 @@ import { LandingFeatureGrid } from "@/components/landing/LandingFeatureGrid";
 // --- New Landing Page Component ---
 function Landing() {
   const navigate = useNavigate();
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Scroll-Aware Header */}
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-background/80 backdrop-blur-md border-b shadow-sm h-16"
-            : "bg-transparent h-20"
-        }`}
-      >
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border h-16 shadow-sm">
         <div className="container h-full mx-auto px-4 flex items-center justify-between">
             <div className="w-32">
                 <PlanoLogo
-                  className={`h-8 w-auto transition-all ${
-                    isScrolled
-                      ? "text-foreground"
-                      : "[&_path]:fill-white"
-                  }`}
+                  className="h-8 w-auto text-foreground [&_path]:fill-current"
                 />
             </div>
 
             <Button
-                variant={isScrolled ? "default" : "secondary"}
+                variant="ghost"
                 onClick={() => navigate("/auth")}
-                className="font-semibold"
+                className="font-semibold bg-foreground text-background hover:bg-foreground/90 hover:text-background"
             >
                 Log in
             </Button>
