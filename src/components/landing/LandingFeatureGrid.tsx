@@ -1,91 +1,101 @@
 import React from "react";
-import { CheckCircle2, List, UserPlus } from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const LandingFeatureGrid = () => {
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
       {/* Card 1: Log Your Journey */}
-      <Card className="flex flex-col border-border bg-card shadow-sm transition-all hover:shadow-md">
-        <CardHeader>
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <CheckCircle2 className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="text-xl font-bold">Log Your Journey</CardTitle>
-          <CardDescription>
+      <div className="col-span-1 md:col-span-4 flex flex-col justify-between rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="mb-6 space-y-2">
+          <h3 className="text-lg font-bold text-foreground">Log Your Journey</h3>
+          <p className="text-sm text-muted-foreground">
             Keep track of every architectural masterpiece you've visited.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="mt-auto">
-          <div className="relative overflow-hidden rounded-md border border-border bg-muted/50 p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-16 rounded bg-muted-foreground/20" />
-              <div className="space-y-2">
-                <div className="h-4 w-24 rounded bg-muted-foreground/20" />
-                <div className="h-3 w-16 rounded bg-muted-foreground/20" />
-              </div>
-              <CheckCircle2 className="ml-auto h-5 w-5 text-green-500" />
+          </p>
+        </div>
+
+        {/* Micro-UI: Visited List */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 p-2.5">
+            <span className="text-sm font-medium">Unité d'Habitation</span>
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 p-2.5">
+            <span className="text-sm font-medium">Barbican Centre</span>
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 p-2.5">
+            <span className="text-sm font-medium">Villa Savoye</span>
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Card 2: Curate Lists */}
-      <Card className="flex flex-col border-border bg-card shadow-sm transition-all hover:shadow-md">
-        <CardHeader>
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <List className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="text-xl font-bold">Curate Lists</CardTitle>
-          <CardDescription>
+      <div className="col-span-1 md:col-span-4 flex flex-col justify-between rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="mb-6 space-y-2">
+          <h3 className="text-lg font-bold text-foreground">Curate Lists</h3>
+          <p className="text-sm text-muted-foreground">
             Organize your favorites into collections like "Brutalist Gems".
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="mt-auto">
-          <div className="space-y-2 rounded-md border border-border bg-muted/50 p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">Brutalist Gems</div>
-              <div className="text-xs text-muted-foreground">12 items</div>
+          </p>
+        </div>
+
+        {/* Micro-UI: Collection Stack */}
+        <div className="relative mt-4 flex h-32 flex-col justify-end">
+            {/* Background Layers */}
+            <div className="absolute bottom-2 left-2 right-2 h-16 rounded-lg border border-border bg-muted/40" />
+            <div className="absolute bottom-1 left-1 right-1 h-16 rounded-lg border border-border bg-muted/60" />
+
+            {/* Top Layer */}
+            <div className="relative z-10 flex items-center justify-between rounded-lg border border-border bg-background p-3 shadow-sm">
+              <div>
+                <div className="text-sm font-bold text-foreground">Brutalist Gems</div>
+                <div className="text-xs text-muted-foreground">12 items</div>
+              </div>
+              <div className="flex -space-x-2">
+                <div className="h-6 w-6 rounded-full bg-slate-200 ring-2 ring-background dark:bg-slate-700" />
+                <div className="h-6 w-6 rounded-full bg-slate-300 ring-2 ring-background dark:bg-slate-600" />
+                <div className="h-6 w-6 rounded-full bg-slate-400 ring-2 ring-background dark:bg-slate-500" />
+              </div>
             </div>
-            <div className="flex -space-x-2">
-               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-6 w-6 rounded-full border border-background bg-muted-foreground/30" />
-               ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Card 3: Follow Architects */}
-      <Card className="flex flex-col border-border bg-card shadow-sm transition-all hover:shadow-md">
-        <CardHeader>
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <UserPlus className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="text-xl font-bold">Follow Architects</CardTitle>
-          <CardDescription>
+      <div className="col-span-1 md:col-span-4 flex flex-col justify-between rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="mb-6 space-y-2">
+          <h3 className="text-lg font-bold text-foreground">Follow Architects</h3>
+          <p className="text-sm text-muted-foreground">
             Stay updated with works from legends like Le Corbusier.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="mt-auto">
-            <div className="flex items-center justify-between rounded-md border border-border bg-muted/50 p-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-muted-foreground/20" />
-                <div className="text-sm font-medium">Le Corbusier</div>
+          </p>
+        </div>
+
+        {/* Micro-UI: Architect Profile */}
+        <div className="mt-auto">
+            <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3 shadow-sm">
+              <div className="h-10 w-10 shrink-0 rounded-full bg-muted" />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-bold text-foreground">Le Corbusier</div>
+                <div className="truncate text-xs text-muted-foreground">Architect</div>
               </div>
-              <Button size="sm" variant="outline" className="h-8 text-xs">
+              <Button variant="outline" size="sm" className="h-8 shrink-0 text-xs">
                 Follow
               </Button>
             </div>
-        </CardContent>
-      </Card>
+
+            {/* Decoration: Blurred second row to hint at more */}
+            <div className="mt-2 flex items-center gap-3 opacity-40 blur-[1px]">
+               <div className="h-8 w-8 rounded-full bg-muted" />
+               <div className="h-3 w-20 rounded bg-muted" />
+            </div>
+        </div>
+      </div>
     </div>
   );
 };
