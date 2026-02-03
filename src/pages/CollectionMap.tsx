@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense, lazy } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,10 +15,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
-import { AddBuildingsToCollectionDialog } from "@/components/collections/AddBuildingsToCollectionDialog";
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
 import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
+
+const CollectionSettingsDialog = lazy(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
+const AddBuildingsToCollectionDialog = lazy(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -906,22 +907,24 @@ export default function CollectionMap() {
 
       {canEdit && (
         <>
-            <CollectionSettingsDialog
-                open={showSettings}
-                onOpenChange={setShowSettings}
-                collection={collection}
-                onUpdate={() => {
-                    refetchItems();
-                    window.location.reload();
-                }}
-            />
-            <AddBuildingsToCollectionDialog
-                collectionId={collection.id}
-                existingBuildingIds={existingBuildingIds}
-                hiddenBuildingIds={hiddenBuildingIds}
-                open={showAddBuildings}
-                onOpenChange={setShowAddBuildings}
-            />
+            <Suspense fallback={null}>
+                <CollectionSettingsDialog
+                    open={showSettings}
+                    onOpenChange={setShowSettings}
+                    collection={collection}
+                    onUpdate={() => {
+                        refetchItems();
+                        window.location.reload();
+                    }}
+                />
+                <AddBuildingsToCollectionDialog
+                    collectionId={collection.id}
+                    existingBuildingIds={existingBuildingIds}
+                    hiddenBuildingIds={hiddenBuildingIds}
+                    open={showAddBuildings}
+                    onOpenChange={setShowAddBuildings}
+                />
+            </Suspense>
 
             <AlertDialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
                 <AlertDialogContent>
