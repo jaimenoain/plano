@@ -326,13 +326,46 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
           <SheetDescription>Manage your collection preferences and collaborators.</SheetDescription>
         </SheetHeader>
 
-        <Tabs defaultValue="general" className="w-full flex-1 flex flex-col min-h-0">
+        <Tabs defaultValue="map" className="w-full flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="map">Map View</TabsTrigger>
+            <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="markers">Markers</TabsTrigger>
             <TabsTrigger value="collaborators">Collaborators</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="map" className="space-y-4 py-4 overflow-y-auto flex-1">
+            <div className="flex items-center justify-between space-x-2">
+              <Label htmlFor="community-images" className="flex flex-col space-y-1">
+                <span>Show Community Images</span>
+                <span className="font-normal text-xs text-muted-foreground">Display images in map and list</span>
+              </Label>
+              <Switch
+                id="community-images"
+                checked={formData.show_community_images}
+                onCheckedChange={(c) => setFormData({...formData, show_community_images: c})}
+              />
+            </div>
+
+            {onShowSavedCandidatesChange && (
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="show-saved-candidates" className="flex flex-col space-y-1">
+                  <span>Show Saved Places</span>
+                  <span className="font-normal text-xs text-muted-foreground">Show your saved places as suggestions on the map</span>
+                </Label>
+                <Switch
+                  id="show-saved-candidates"
+                  checked={showSavedCandidates}
+                  onCheckedChange={onShowSavedCandidatesChange}
+                />
+              </div>
+            )}
+
+            <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </TabsContent>
 
           <TabsContent value="general" className="space-y-4 py-4 overflow-y-auto flex-1">
             <div className="space-y-2">
@@ -408,39 +441,6 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                 Delete Collection
               </Button>
             </div>
-          </TabsContent>
-
-          <TabsContent value="map" className="space-y-4 py-4 overflow-y-auto flex-1">
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="community-images" className="flex flex-col space-y-1">
-                <span>Show Community Images</span>
-                <span className="font-normal text-xs text-muted-foreground">Display images in map and list</span>
-              </Label>
-              <Switch
-                id="community-images"
-                checked={formData.show_community_images}
-                onCheckedChange={(c) => setFormData({...formData, show_community_images: c})}
-              />
-            </div>
-
-            {onShowSavedCandidatesChange && (
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="show-saved-candidates" className="flex flex-col space-y-1">
-                  <span>Show Saved Places</span>
-                  <span className="font-normal text-xs text-muted-foreground">Show your saved places as suggestions on the map</span>
-                </Label>
-                <Switch
-                  id="show-saved-candidates"
-                  checked={showSavedCandidates}
-                  onCheckedChange={onShowSavedCandidatesChange}
-                />
-              </div>
-            )}
-
-            <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
-            </Button>
           </TabsContent>
 
           <TabsContent value="markers" className="space-y-4 py-4 overflow-y-auto flex-1">
