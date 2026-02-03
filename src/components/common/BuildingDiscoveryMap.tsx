@@ -108,6 +108,7 @@ export function BuildingDiscoveryMap({
 }: BuildingDiscoveryMapProps) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
+  const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
@@ -126,22 +127,22 @@ export function BuildingDiscoveryMap({
 
   // Handle flyTo or fitBounds
   useEffect(() => {
-    if (forcedBounds && mapRef.current) {
-        mapRef.current.fitBounds(
+    if (forcedBounds && mapInstance) {
+        mapInstance.fitBounds(
             [
                 [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
                 [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
             ],
             { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
         );
-    } else if (forcedCenter && mapRef.current) {
-        mapRef.current.flyTo({
+    } else if (forcedCenter && mapInstance) {
+        mapInstance.flyTo({
             center: [forcedCenter.lng, forcedCenter.lat],
             zoom: 13,
             duration: 1500
         });
     }
-  }, [forcedCenter, forcedBounds]);
+  }, [forcedCenter, forcedBounds, mapInstance]);
 
   const { data: internalBuildings, isLoading: internalLoading } = useQuery({
     queryKey: ["discovery-buildings"],
@@ -641,7 +642,10 @@ export function BuildingDiscoveryMap({
         data-testid="map-container"
     >
       <MapGL
-        ref={mapRef}
+        ref={(node) => {
+            mapRef.current = node;
+            setMapInstance(node);
+        }}
         {...viewState}
         attributionControl={false}
         onClick={() => {
@@ -669,15 +673,6 @@ export function BuildingDiscoveryMap({
         }}
         onLoad={evt => {
             handleMapUpdate(evt.target);
-            if (forcedBounds) {
-                evt.target.fitBounds(
-                    [
-                        [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
-                        [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
-                    ],
-                    { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
-                );
-            }
         }}
         onMoveEnd={evt => {
             setIsMapMoving(false);
