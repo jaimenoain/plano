@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download } from "lucide-react";
+import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/components/groups/UserSearch";
@@ -37,6 +37,8 @@ interface CollectionSettingsDialogProps {
   showSavedCandidates?: boolean;
   onShowSavedCandidatesChange?: (show: boolean) => void;
   isOwner?: boolean;
+  canEdit?: boolean;
+  onSaveAll?: () => void;
 }
 
 interface Contributor {
@@ -56,7 +58,7 @@ const METHOD_DESCRIPTIONS = {
   custom: "Create custom categories with your own colors to organize locations."
 };
 
-export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange, isOwner = false }: CollectionSettingsDialogProps) {
+export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange, isOwner = false, canEdit = true, onSaveAll }: CollectionSettingsDialogProps) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<{
     name: string;
@@ -328,25 +330,27 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
         </SheetHeader>
 
         <Tabs defaultValue="map" className="w-full flex-1 flex flex-col min-h-0">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className={canEdit ? "grid w-full grid-cols-4" : "grid w-full grid-cols-1"}>
             <TabsTrigger value="map">Map View</TabsTrigger>
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="markers">Markers</TabsTrigger>
-            <TabsTrigger value="collaborators">Collaborators</TabsTrigger>
+            {canEdit && <TabsTrigger value="general">General</TabsTrigger>}
+            {canEdit && <TabsTrigger value="markers">Markers</TabsTrigger>}
+            {canEdit && <TabsTrigger value="collaborators">Collaborators</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="map" className="space-y-4 py-4 overflow-y-auto flex-1">
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="community-images" className="flex flex-col space-y-1">
-                <span>Show Community Images</span>
-                <span className="font-normal text-xs text-muted-foreground">Display images in map and list</span>
-              </Label>
-              <Switch
-                id="community-images"
-                checked={formData.show_community_images}
-                onCheckedChange={(c) => setFormData({...formData, show_community_images: c})}
-              />
-            </div>
+            {canEdit && (
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="community-images" className="flex flex-col space-y-1">
+                  <span>Show Community Images</span>
+                  <span className="font-normal text-xs text-muted-foreground">Display images in map and list</span>
+                </Label>
+                <Switch
+                  id="community-images"
+                  checked={formData.show_community_images}
+                  onCheckedChange={(c) => setFormData({...formData, show_community_images: c})}
+                />
+              </div>
+            )}
 
             {onShowSavedCandidatesChange && (
               <div className="flex items-center justify-between space-x-2">
@@ -362,10 +366,17 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
               </div>
             )}
 
-            <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
-            </Button>
+            {canEdit ? (
+              <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            ) : onSaveAll ? (
+              <Button onClick={() => { onSaveAll(); onOpenChange(false); }} className="w-full" variant="outline">
+                <Bookmark className="w-4 h-4 mr-2" />
+                Save All
+              </Button>
+            ) : null}
           </TabsContent>
 
           <TabsContent value="general" className="space-y-4 py-4 overflow-y-auto flex-1">

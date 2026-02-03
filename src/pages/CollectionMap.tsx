@@ -7,7 +7,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
-import { Loader2, Settings, Plus, ExternalLink, Bookmark, Star } from "lucide-react";
+import { Loader2, Settings, Plus, ExternalLink, Bookmark, Star, ListFilter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -811,13 +811,8 @@ export default function CollectionMap() {
                          >
                             <Star className={cn("h-5 w-5", isFavorite ? "fill-yellow-500 text-yellow-500" : "")} />
                          </Button>
-                         <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowSaveAllConfirm(true)}
-                         >
-                            <Bookmark className="w-4 h-4 mr-2" />
-                            Save All
+                         <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
+                            <ListFilter className="h-5 w-5 text-muted-foreground" />
                         </Button>
                     </div>
                 )}
@@ -935,21 +930,29 @@ export default function CollectionMap() {
         </div>
       </div>
 
+      <Suspense fallback={null}>
+          <CollectionSettingsDialog
+              open={showSettings}
+              onOpenChange={setShowSettings}
+              collection={collection}
+              onUpdate={() => {
+                  refetchItems();
+                  window.location.reload();
+              }}
+              showSavedCandidates={showSavedCandidates}
+              onShowSavedCandidatesChange={setShowSavedCandidates}
+              isOwner={isOwner}
+              canEdit={canEdit}
+              onSaveAll={() => {
+                  setShowSettings(false);
+                  setShowSaveAllConfirm(true);
+              }}
+          />
+      </Suspense>
+
       {canEdit && (
         <>
             <Suspense fallback={null}>
-                <CollectionSettingsDialog
-                    open={showSettings}
-                    onOpenChange={setShowSettings}
-                    collection={collection}
-                    onUpdate={() => {
-                        refetchItems();
-                        window.location.reload();
-                    }}
-                    showSavedCandidates={showSavedCandidates}
-                    onShowSavedCandidatesChange={setShowSavedCandidates}
-                    isOwner={isOwner}
-                />
                 <AddBuildingsToCollectionDialog
                     collectionId={collection.id}
                     existingBuildingIds={existingBuildingIds}
