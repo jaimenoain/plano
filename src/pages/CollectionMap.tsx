@@ -11,11 +11,13 @@ import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
 import { Loader2, Settings, Plus, ExternalLink, Bookmark } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
 import { AddBuildingsToCollectionDialog } from "@/components/collections/AddBuildingsToCollectionDialog";
+import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
 import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { Switch } from "@/components/ui/switch";
@@ -93,6 +95,7 @@ export default function CollectionMap() {
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showAddBuildings, setShowAddBuildings] = useState(false);
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
 
   // New States
   const [showSavedCandidates, setShowSavedCandidates] = useState(false);
@@ -704,10 +707,20 @@ export default function CollectionMap() {
 
   return (
     <AppLayout title={collection.name} showBack isFullScreen>
-      <div className="flex flex-col lg:flex-row h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] overflow-hidden">
+      <div className="flex flex-col lg:flex-row h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] overflow-hidden relative">
+        <div className="lg:hidden">
+          <SearchModeToggle
+            mode={viewMode}
+            onModeChange={setViewMode}
+            className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50"
+          />
+        </div>
 
         {/* Sidebar List */}
-        <div className="w-full lg:w-[450px] bg-background border-r flex flex-col shrink-0 lg:h-full h-[40%] order-2 lg:order-1">
+        <div className={cn(
+          "w-full lg:w-[450px] bg-background border-r flex-col shrink-0 lg:h-full lg:order-1 lg:flex",
+          viewMode === 'list' ? "h-full flex order-2" : "hidden"
+        )}>
             <div className="p-4 border-b flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
                     <h1 className="font-bold text-xl truncate">{collection.name}</h1>
@@ -819,7 +832,10 @@ export default function CollectionMap() {
         </div>
 
         {/* Map */}
-        <div className="flex-1 relative lg:h-full h-[60%] order-1 lg:order-2">
+        <div className={cn(
+          "flex-1 relative lg:h-full lg:order-2 lg:flex",
+          viewMode === 'map' ? "h-full flex order-1" : "hidden"
+        )}>
             <BuildingDiscoveryMap
                 externalBuildings={allMapBuildings}
                 highlightedId={highlightedId}
