@@ -547,7 +547,10 @@ export default function Profile() {
 
       {/* Social Context Section */}
       {!isOwnProfile && (
-        <SocialContextSection mutualAffinityUsers={profileComparison.mutualAffinityUsers} />
+        <SocialContextSection
+          mutualAffinityUsers={profileComparison.mutualAffinityUsers}
+          commonFollowers={profileComparison.commonFollowers}
+        />
       )}
 
       {/* 2. Favorite Buildings */}

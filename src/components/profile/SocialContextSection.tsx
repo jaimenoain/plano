@@ -1,20 +1,30 @@
 import { MutualAffinityUser } from "@/types/cine-sync";
 import { MutualAffinityRow } from "./MutualAffinityRow";
+import { CommonFollowersFacepile } from "./CommonFollowersFacepile";
+import { SimpleProfile } from "@/hooks/useProfileComparison";
 
 interface SocialContextSectionProps {
   mutualAffinityUsers: MutualAffinityUser[];
+  commonFollowers?: {
+    users: SimpleProfile[];
+    count: number;
+  };
 }
 
-export function SocialContextSection({ mutualAffinityUsers }: SocialContextSectionProps) {
-  // The row component handles its own empty state, but to avoid an empty container
-  // we check here as well since this section currently only contains the row.
-  if (!mutualAffinityUsers || mutualAffinityUsers.length === 0) {
+export function SocialContextSection({ mutualAffinityUsers, commonFollowers }: SocialContextSectionProps) {
+  const hasAffinity = mutualAffinityUsers && mutualAffinityUsers.length > 0;
+  const hasCommonFollowers = commonFollowers && commonFollowers.count > 0;
+
+  if (!hasAffinity && !hasCommonFollowers) {
     return null;
   }
 
   return (
     <div className="w-full">
-       <MutualAffinityRow users={mutualAffinityUsers} />
+       {hasCommonFollowers && (
+           <CommonFollowersFacepile users={commonFollowers.users} count={commonFollowers.count} />
+       )}
+       {hasAffinity && <MutualAffinityRow users={mutualAffinityUsers} />}
     </div>
   );
 }
