@@ -296,6 +296,10 @@ export function BuildingDiscoveryMap({
     const { cluster: isCluster, point_count: pointCount } = cluster.properties;
 
     if (isCluster) {
+        // Check if all items in the cluster are dimmed (e.g. existing items in "Show saved" mode)
+        const leaves = supercluster.getLeaves(cluster.id, Infinity);
+        const isAllDimmed = leaves.every(l => l.properties.isDimmed);
+
         return (
             <Marker
                 key={`cluster-${cluster.id}`}
@@ -313,7 +317,7 @@ export function BuildingDiscoveryMap({
 
                     // Check if this is a cluster of approximate locations
                     // If so, we want to zoom deep enough to reveal the jittered points
-                    const leaves = supercluster.getLeaves(cluster.id, Infinity);
+                    // We can reuse the leaves we already fetched
                     const isAllApproximate = leaves.every(l => l.properties.location_precision === 'approximate');
 
                     if (isAllApproximate) {
@@ -334,7 +338,11 @@ export function BuildingDiscoveryMap({
             >
                 <div
                     data-testid="cluster-marker"
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold shadow-md border-2 border-background cursor-pointer hover:scale-110 transition-transform"
+                    className={`flex items-center justify-center w-10 h-10 rounded-full font-bold shadow-md border-2 border-background cursor-pointer transition-transform ${
+                        isAllDimmed
+                            ? "bg-gray-400 text-white scale-90 opacity-70 hover:scale-100 hover:opacity-100"
+                            : "bg-primary text-primary-foreground hover:scale-110"
+                    }`}
                 >
                     {pointCount}
                 </div>
