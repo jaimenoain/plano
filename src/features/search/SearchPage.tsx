@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { DiscoveryList } from "./components/DiscoveryList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, ListFilter, Locate } from "lucide-react";
+import { Search, MapPin, ListFilter, Locate, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FilterDrawerContent } from "@/components/common/FilterDrawerContent";
@@ -29,6 +28,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export type SearchScope = 'content' | 'users' | 'architects';
+
+const BuildingDiscoveryMap = lazy(() => import("@/components/common/BuildingDiscoveryMap").then(module => ({ default: module.BuildingDiscoveryMap })));
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -574,20 +575,22 @@ export default function SearchPage() {
                   </div>
                 ) : (
                   <div className="h-full w-full">
-                    <BuildingDiscoveryMap
-                      externalBuildings={mapBuildings}
-                      onRegionChange={updateLocation}
-                      onBoundsChange={setMapBounds}
-                      onMapInteraction={() => setIgnoreMapBounds(false)}
-                      forcedCenter={flyToCenter}
-                      isFetching={isFetching}
-                      autoZoomOnLowCount={isDefaultState}
-                      forcedBounds={flyToBounds}
-                      resetInteractionTrigger={mapInteractionResetTrigger}
-                      onHide={handleHide}
-                      onSave={handleSave}
-                      onVisit={handleVisit}
-                    />
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+                      <BuildingDiscoveryMap
+                        externalBuildings={mapBuildings}
+                        onRegionChange={updateLocation}
+                        onBoundsChange={setMapBounds}
+                        onMapInteraction={() => setIgnoreMapBounds(false)}
+                        forcedCenter={flyToCenter}
+                        isFetching={isFetching}
+                        autoZoomOnLowCount={isDefaultState}
+                        forcedBounds={flyToBounds}
+                        resetInteractionTrigger={mapInteractionResetTrigger}
+                        onHide={handleHide}
+                        onSave={handleSave}
+                        onVisit={handleVisit}
+                      />
+                    </Suspense>
                   </div>
                 )}
               </div>
@@ -604,20 +607,22 @@ export default function SearchPage() {
                   />
                 </div>
                 <div className="col-span-7 lg:col-span-8 h-full relative">
-                  <BuildingDiscoveryMap
-                    externalBuildings={mapBuildings}
-                    onRegionChange={updateLocation}
-                    onBoundsChange={setMapBounds}
-                    onMapInteraction={() => setIgnoreMapBounds(false)}
-                    forcedCenter={flyToCenter}
-                    isFetching={isFetching}
-                    autoZoomOnLowCount={isDefaultState}
-                    forcedBounds={flyToBounds}
-                    resetInteractionTrigger={mapInteractionResetTrigger}
-                    onHide={handleHide}
-                    onSave={handleSave}
-                    onVisit={handleVisit}
-                  />
+                  <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+                    <BuildingDiscoveryMap
+                      externalBuildings={mapBuildings}
+                      onRegionChange={updateLocation}
+                      onBoundsChange={setMapBounds}
+                      onMapInteraction={() => setIgnoreMapBounds(false)}
+                      forcedCenter={flyToCenter}
+                      isFetching={isFetching}
+                      autoZoomOnLowCount={isDefaultState}
+                      forcedBounds={flyToBounds}
+                      resetInteractionTrigger={mapInteractionResetTrigger}
+                      onHide={handleHide}
+                      onSave={handleSave}
+                      onVisit={handleVisit}
+                    />
+                  </Suspense>
                 </div>
               </div>
             </>
