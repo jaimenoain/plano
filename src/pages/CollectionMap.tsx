@@ -4,8 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
-import { CollectionBuildingCard } from "@/components/collections/CollectionBuildingCard";
 import { CollectionMarkerCard } from "@/components/collections/CollectionMarkerCard";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
@@ -35,6 +33,8 @@ import { useToast } from "@/components/ui/use-toast";
 
 const CollectionSettingsDialog = lazy(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazy(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
+const BuildingDiscoveryMap = lazy(() => import("@/components/common/BuildingDiscoveryMap").then(module => ({ default: module.BuildingDiscoveryMap })));
+const CollectionBuildingCard = lazy(() => import("@/components/collections/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
 
 interface CollectionItemResponse {
   id: string;
@@ -819,24 +819,26 @@ export default function CollectionMap() {
             <ScrollArea className="flex-1">
                 <div className="p-4 space-y-3 pb-24">
                     {items && items.filter(i => !i.is_hidden).length > 0 && (
-                        items.filter(i => !i.is_hidden).map(item => (
-                            <CollectionBuildingCard
-                                key={item.id}
-                                item={item}
-                                isHighlighted={highlightedId === item.building.id}
-                                setHighlightedId={setHighlightedId}
-                                canEdit={canEdit}
-                                onUpdateNote={(note) => handleUpdateNote(item.id, note)}
-                                onNavigate={() => {
-                                    window.open(getBuildingUrl(item.building.id, item.building.slug, item.building.short_id), '_blank');
-                                }}
-                                categorizationMethod={collection.categorization_method}
-                                customCategories={collection.custom_categories}
-                                onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
-                                showImages={collection.show_community_images ?? true}
-                                onRemove={() => handleRemoveItem(item.building.id)}
-                            />
-                        ))
+                        <Suspense fallback={<div className="p-4 text-center text-muted-foreground">Loading items...</div>}>
+                            {items.filter(i => !i.is_hidden).map(item => (
+                                <CollectionBuildingCard
+                                    key={item.id}
+                                    item={item}
+                                    isHighlighted={highlightedId === item.building.id}
+                                    setHighlightedId={setHighlightedId}
+                                    canEdit={canEdit}
+                                    onUpdateNote={(note) => handleUpdateNote(item.id, note)}
+                                    onNavigate={() => {
+                                        window.open(getBuildingUrl(item.building.id, item.building.slug, item.building.short_id), '_blank');
+                                    }}
+                                    categorizationMethod={collection.categorization_method}
+                                    customCategories={collection.custom_categories}
+                                    onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
+                                    showImages={collection.show_community_images ?? true}
+                                    onRemove={() => handleRemoveItem(item.building.id)}
+                                />
+                            ))}
+                        </Suspense>
                     )}
 
                     {markers && markers.length > 0 && (
@@ -883,34 +885,40 @@ export default function CollectionMap() {
           "flex-1 relative lg:h-full lg:order-2 lg:flex",
           viewMode === 'map' ? "h-full flex order-1" : "hidden"
         )}>
-            <BuildingDiscoveryMap
-                externalBuildings={allMapBuildings}
-                highlightedId={highlightedId}
-                onAddCandidate={handleAddToCollection}
-                onHideCandidate={canEdit ? handleHideCandidate : undefined}
-                onRemoveItem={canEdit ? handleRemoveItem : undefined}
-                onMarkerClick={(id) => {
-                  setHighlightedId(id);
-                  
-                  // 1. Check if the building is already in the collection
-                  if (existingBuildingIds.has(id)) {
-                      const building = mapBuildings.find(b => b.id === id);
+            <Suspense fallback={
+                <div className="flex items-center justify-center h-full w-full bg-muted/20">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+            }>
+                <BuildingDiscoveryMap
+                    externalBuildings={allMapBuildings}
+                    highlightedId={highlightedId}
+                    onAddCandidate={handleAddToCollection}
+                    onHideCandidate={canEdit ? handleHideCandidate : undefined}
+                    onRemoveItem={canEdit ? handleRemoveItem : undefined}
+                    onMarkerClick={(id) => {
+                      setHighlightedId(id);
                       
-                      if (building) {
-                        window.open(getBuildingUrl(building.id, building.slug, building.short_id), '_blank');
-                      } else {
-                        window.open(`/building/${id}`, '_blank');
+                      // 1. Check if the building is already in the collection
+                      if (existingBuildingIds.has(id)) {
+                          const building = mapBuildings.find(b => b.id === id);
+
+                          if (building) {
+                            window.open(getBuildingUrl(building.id, building.slug, building.short_id), '_blank');
+                          } else {
+                            window.open(`/building/${id}`, '_blank');
+                          }
                       }
-                  } 
-                  // 2. If not in collection, just highlight it (Tooltip will show with Add button)
-                }}
-                forcedBounds={initialBounds}
-                showImages={collection.show_community_images ?? true}
-                onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
-                onRemoveMarker={canEdit ? handleRemoveItem : undefined}
-                onClosePopup={() => setHighlightedId(null)}
-                showSavedCandidates={showSavedCandidates}
-            />
+                      // 2. If not in collection, just highlight it (Tooltip will show with Add button)
+                    }}
+                    forcedBounds={initialBounds}
+                    showImages={collection.show_community_images ?? true}
+                    onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
+                    onRemoveMarker={canEdit ? handleRemoveItem : undefined}
+                    onClosePopup={() => setHighlightedId(null)}
+                    showSavedCandidates={showSavedCandidates}
+                />
+            </Suspense>
         </div>
       </div>
 
