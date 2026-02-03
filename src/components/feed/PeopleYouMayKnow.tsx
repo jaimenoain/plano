@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/FollowButton";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
+import { MutualFacepile } from "@/components/connect/MutualFacepile";
 
 export function PeopleYouMayKnow() {
   const { user } = useAuth();
@@ -15,7 +16,46 @@ export function PeopleYouMayKnow() {
         p_limit: 3
       });
       if (error) throw error;
-      return data;
+
+      if (!data || data.length === 0 || !user) return data || [];
+
+      // Fetch mutual follows details
+      const suggestionIds = data.map(s => s.id);
+
+      // Get my following list first to filter mutuals
+      const { data: followingData } = await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user.id);
+
+      const myFollowingIds = followingData?.map(f => f.following_id) || [];
+
+      if (myFollowingIds.length === 0) {
+        return data.map(s => ({ ...s, mutual_follows: [] }));
+      }
+
+      const { data: mutualsData } = await supabase
+        .from('follows')
+        .select(`
+          following_id,
+          follower:profiles!follows_follower_id_fkey(id, username, avatar_url)
+        `)
+        .in('following_id', suggestionIds)
+        .in('follower_id', myFollowingIds);
+
+      return data.map(s => {
+        const mutuals = mutualsData
+          ?.filter(m => m.following_id === s.id)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((m: any) => m.follower)
+          .filter(Boolean) as {
+            id: string;
+            username: string | null;
+            avatar_url: string | null;
+          }[] || [];
+
+        return { ...s, mutual_follows: mutuals };
+      });
     },
     enabled: !!user,
   });
@@ -36,10 +76,16 @@ export function PeopleYouMayKnow() {
               <div className="flex flex-col">
                 <span className="text-sm font-medium leading-none">{person.username}</span>
                 <div className="flex flex-col text-xs text-muted-foreground mt-1 gap-0.5">
-                  {person.mutual_count > 0 && (
-                    <span>
-                      {person.mutual_count} mutual connection{person.mutual_count !== 1 ? 's' : ''}
-                    </span>
+                  {person.mutual_follows && person.mutual_follows.length > 0 ? (
+                    <MutualFacepile users={person.mutual_follows} />
+                  ) : (
+                    <>
+                      {person.mutual_count > 0 && (
+                        <span>
+                          {person.mutual_count} mutual connection{person.mutual_count !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </>
                   )}
                   {person.group_mutual_count > 0 && (
                     <span>

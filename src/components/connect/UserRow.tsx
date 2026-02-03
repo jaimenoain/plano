@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/FollowButton";
 import { supabase } from "@/integrations/supabase/client";
+import { MutualFacepile } from "./MutualFacepile";
 
 interface UserRowProps {
   user: {
@@ -14,6 +15,11 @@ interface UserRowProps {
   isFollower?: boolean; // Is the user following me? (For "Follow Back" logic)
   isCloseFriend?: boolean;
   onToggleCloseFriend?: () => void;
+  mutualFollows?: {
+    id: string;
+    username: string | null;
+    avatar_url: string | null;
+  }[];
 }
 
 export function UserRow({
@@ -21,7 +27,8 @@ export function UserRow({
   showFollowButton = false,
   isFollower = false,
   isCloseFriend,
-  onToggleCloseFriend
+  onToggleCloseFriend,
+  mutualFollows
 }: UserRowProps) {
   const navigate = useNavigate();
 
@@ -43,6 +50,7 @@ export function UserRow({
         </Avatar>
         <div className="flex flex-col">
           <span className="font-medium text-sm">{user.username || "Unknown User"}</span>
+          {mutualFollows && <MutualFacepile users={mutualFollows} />}
         </div>
       </div>
 
