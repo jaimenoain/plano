@@ -36,6 +36,7 @@ interface CollectionSettingsDialogProps {
   onUpdate: () => void;
   showSavedCandidates?: boolean;
   onShowSavedCandidatesChange?: (show: boolean) => void;
+  isOwner?: boolean;
 }
 
 interface Contributor {
@@ -55,7 +56,7 @@ const METHOD_DESCRIPTIONS = {
   custom: "Create custom categories with your own colors to organize locations."
 };
 
-export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange }: CollectionSettingsDialogProps) {
+export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange, isOwner = false }: CollectionSettingsDialogProps) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<{
     name: string;
@@ -426,21 +427,23 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
 
             <Separator className="my-6" />
 
-            <div className="border border-destructive/50 rounded-md p-4 bg-destructive/5 space-y-4">
-              <h3 className="text-destructive font-medium flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" /> Danger Zone
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Deleting this collection will permanently remove it and all its associations. This action cannot be undone.
-              </p>
-              <Button
-                variant="destructive"
-                onClick={() => setShowDeleteAlert(true)}
-                className="w-full sm:w-auto"
-              >
-                Delete Collection
-              </Button>
-            </div>
+            {isOwner && (
+              <div className="border border-destructive/50 rounded-md p-4 bg-destructive/5 space-y-4">
+                <h3 className="text-destructive font-medium flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" /> Danger Zone
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Deleting this collection will permanently remove it and all its associations. This action cannot be undone.
+                </p>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteAlert(true)}
+                  className="w-full sm:w-auto"
+                >
+                  Delete Collection
+                </Button>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="markers" className="space-y-4 py-4 overflow-y-auto flex-1">
@@ -594,13 +597,15 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
           </TabsContent>
 
           <TabsContent value="collaborators" className="space-y-4 py-4 overflow-y-auto flex-1">
-             <div className="space-y-2">
-                <Label>Add Collaborator</Label>
-                <UserSearch
-                    onSelect={(id) => handleAddContributor(id)}
-                    excludeIds={contributors.map(c => c.user?.id).filter(Boolean) as string[]}
-                />
-             </div>
+             {isOwner && (
+               <div className="space-y-2">
+                  <Label>Add Collaborator</Label>
+                  <UserSearch
+                      onSelect={(id) => handleAddContributor(id)}
+                      excludeIds={contributors.map(c => c.user?.id).filter(Boolean) as string[]}
+                  />
+               </div>
+             )}
 
              <div className="space-y-2">
                 <Label>Current Collaborators</Label>
@@ -626,14 +631,16 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                                         </Avatar>
                                         <span className="text-sm font-medium">{contributor.user.username}</span>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                        onClick={() => handleRemoveContributor(contributor.user.id)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {isOwner && (
+                                      <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                          onClick={() => handleRemoveContributor(contributor.user.id)}
+                                      >
+                                          <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    )}
                                 </div>
                             );
                             })}

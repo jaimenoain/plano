@@ -147,7 +147,23 @@ export default function CollectionMap() {
     enabled: !!ownerProfile?.id && !!slug
   });
 
-  const canEdit = user?.id === collection?.owner_id;
+  // Check if user is a contributor
+  const { data: isContributor } = useQuery({
+    queryKey: ["is_contributor", collection?.id, user?.id],
+    queryFn: async () => {
+      if (!collection?.id || !user?.id) return false;
+      const { count } = await supabase
+        .from("collection_contributors")
+        .select("*", { count: 'exact', head: true })
+        .eq("collection_id", collection.id)
+        .eq("user_id", user.id);
+      return (count || 0) > 0;
+    },
+    enabled: !!collection?.id && !!user?.id
+  });
+
+  const isOwner = user?.id === collection?.owner_id;
+  const canEdit = isOwner || !!isContributor;
 
   // 3. Fetch Items and Markers
   const { data: collectionData, isLoading: loadingItems, refetch: refetchItems } = useQuery({
@@ -932,6 +948,7 @@ export default function CollectionMap() {
                     }}
                     showSavedCandidates={showSavedCandidates}
                     onShowSavedCandidatesChange={setShowSavedCandidates}
+                    isOwner={isOwner}
                 />
                 <AddBuildingsToCollectionDialog
                     collectionId={collection.id}
