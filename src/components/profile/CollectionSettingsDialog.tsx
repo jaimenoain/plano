@@ -34,6 +34,8 @@ interface CollectionSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
+  showSavedCandidates?: boolean;
+  onShowSavedCandidatesChange?: (show: boolean) => void;
 }
 
 interface Contributor {
@@ -53,7 +55,7 @@ const METHOD_DESCRIPTIONS = {
   custom: "Create custom categories with your own colors to organize locations."
 };
 
-export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate }: CollectionSettingsDialogProps) {
+export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange }: CollectionSettingsDialogProps) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<{
     name: string;
@@ -380,6 +382,21 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                 onCheckedChange={(c) => setFormData({...formData, show_community_images: c})}
               />
             </div>
+
+            {onShowSavedCandidatesChange && (
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="show-saved-candidates" className="flex flex-col space-y-1">
+                  <span>Show Saved Places</span>
+                  <span className="font-normal text-xs text-muted-foreground">Show your saved places as suggestions on the map</span>
+                </Label>
+                <Switch
+                  id="show-saved-candidates"
+                  checked={showSavedCandidates}
+                  onCheckedChange={onShowSavedCandidatesChange}
+                />
+              </div>
+            )}
+
             <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
