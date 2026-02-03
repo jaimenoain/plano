@@ -6,7 +6,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Check, Search, X, MapPin } from "lucide-react";
+import { Loader2, Plus, Check, Search, X, MapPin, PlusCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -257,6 +258,7 @@ export function AddBuildingsToCollectionDialog({
 }: AddBuildingsToCollectionDialogProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   
   // State merged from both branches
   const [searchQuery, setSearchQuery] = useState("");
@@ -480,9 +482,22 @@ export function AddBuildingsToCollectionDialog({
                   isLoading={isLoading}
                   className="p-2"
                   emptyState={
-                    <p className="text-center text-muted-foreground py-8">
-                      {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
-                    </p>
+                    <div className="flex flex-col items-center justify-center py-8 gap-4">
+                      <p className="text-center text-muted-foreground">
+                        {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
+                      </p>
+                      {searchQuery && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/add-building?name=${encodeURIComponent(searchQuery)}`)}
+                          className="gap-2"
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                          Create new building
+                        </Button>
+                      )}
+                    </div>
                   }
                   onBuildingClick={(building) => setSelectedBuildingId(building.id)}
                   imagePosition="left"
