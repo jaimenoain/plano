@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CollectionSettingsDialog } from "@/components/profile/CollectionSettingsDialog";
+import { CollectionSettingsSheet } from "@/components/profile/CollectionSettingsSheet";
 import { AddBuildingsToCollectionDialog } from "@/components/collections/AddBuildingsToCollectionDialog";
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
 import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
@@ -868,7 +868,7 @@ export default function CollectionMap() {
 
       {canEdit && (
         <>
-            <CollectionSettingsDialog
+            <CollectionSettingsSheet
                 open={showSettings}
                 onOpenChange={setShowSettings}
                 collection={collection}
