@@ -950,6 +950,7 @@ export default function CollectionMap() {
               onShowSavedCandidatesChange={setShowSavedCandidates}
               isOwner={isOwner}
               canEdit={canEdit}
+              currentUserId={user?.id}
               onSaveAll={() => {
                   setShowSettings(false);
                   setShowSaveAllConfirm(true);

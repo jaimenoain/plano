@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark } from "lucide-react";
+import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/components/groups/UserSearch";
@@ -39,6 +39,7 @@ interface CollectionSettingsDialogProps {
   isOwner?: boolean;
   canEdit?: boolean;
   onSaveAll?: () => void;
+  currentUserId?: string;
 }
 
 interface Contributor {
@@ -58,7 +59,7 @@ const METHOD_DESCRIPTIONS = {
   custom: "Create custom categories with your own colors to organize locations."
 };
 
-export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange, isOwner = false, canEdit = true, onSaveAll }: CollectionSettingsDialogProps) {
+export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange, isOwner = false, canEdit = true, onSaveAll, currentUserId }: CollectionSettingsDialogProps) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<{
     name: string;
@@ -180,6 +181,29 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     } else {
       toast.success("Contributor removed");
       fetchContributors();
+    }
+  };
+
+  const handleLeaveCollection = async () => {
+    if (!currentUserId) return;
+
+    // Add confirmation
+    if (!window.confirm("Are you sure you want to leave this collection? You will lose access to edit it.")) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("collection_contributors")
+      .delete()
+      .eq("collection_id", collection.id)
+      .eq("user_id", currentUserId);
+
+    if (error) {
+      toast.error("Failed to leave collection");
+    } else {
+      toast.success("You have left the collection");
+      onOpenChange(false);
+      navigate("/profile");
     }
   };
 
@@ -633,6 +657,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                         <div className="divide-y">
                             {contributors.map(contributor => {
                                 if (!contributor.user) return null;
+                                const isMe = currentUserId === contributor.user.id;
                                 return (
                                 <div key={contributor.user.id} className="flex items-center justify-between p-3">
                                     <div className="flex items-center gap-3">
@@ -640,9 +665,12 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                                             <AvatarImage src={contributor.user.avatar_url || undefined} />
                                             <AvatarFallback>{contributor.user.username?.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <span className="text-sm font-medium">{contributor.user.username}</span>
+                                        <span className="text-sm font-medium">
+                                          {contributor.user.username}
+                                          {isMe && <span className="ml-2 text-xs text-muted-foreground">(You)</span>}
+                                        </span>
                                     </div>
-                                    {isOwner && (
+                                    {isOwner && !isMe && (
                                       <Button
                                           variant="ghost"
                                           size="icon"
@@ -650,6 +678,17 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                                           onClick={() => handleRemoveContributor(contributor.user.id)}
                                       >
                                           <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                    {isMe && !isOwner && (
+                                      <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                          onClick={handleLeaveCollection}
+                                          title="Leave Collection"
+                                      >
+                                          <LogOut className="h-4 w-4" />
                                       </Button>
                                     )}
                                 </div>
