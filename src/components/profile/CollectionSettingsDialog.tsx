@@ -448,7 +448,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="default" id="cat-default" />
-                        <Label htmlFor="cat-default" className="font-normal cursor-pointer">Default (Personal Status)</Label>
+                        <Label htmlFor="cat-default" className="font-normal cursor-pointer">Personal Status</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="status" id="cat-status" />
