@@ -819,7 +819,11 @@ export default function CollectionMap() {
             <ScrollArea className="flex-1">
                 <div className="p-4 space-y-3 pb-24">
                     {items && items.filter(i => !i.is_hidden).length > 0 && (
-                        <Suspense fallback={<div className="p-4 text-center text-muted-foreground">Loading items...</div>}>
+                        <Suspense fallback={
+                            <div className="flex items-center justify-center p-8">
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            </div>
+                        }>
                             {items.filter(i => !i.is_hidden).map(item => (
                                 <CollectionBuildingCard
                                     key={item.id}
