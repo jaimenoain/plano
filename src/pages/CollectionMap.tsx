@@ -149,6 +149,8 @@ export default function CollectionMap() {
     enabled: !!ownerProfile?.id && !!slug
   });
 
+  const canEdit = user?.id === collection?.owner_id;
+
   // 3. Fetch Items and Markers
   const { data: collectionData, isLoading: loadingItems, refetch: refetchItems } = useQuery({
     queryKey: ["collection_items", collection?.id],
@@ -362,7 +364,6 @@ export default function CollectionMap() {
   };
 
   const isLoading = loadingProfile || loadingCollection || loadingItems;
-  const canEdit = user?.id === collection?.owner_id;
 
   // Prepare map buildings
   const mapBuildings = useMemo<DiscoveryBuilding[]>(() => {
