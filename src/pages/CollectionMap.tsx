@@ -334,6 +334,8 @@ export default function CollectionMap() {
     enabled: !!items && items.length > 0 && !!memberIds && !!shouldFetchStats && !!collection?.id
   });
 
+  const canEdit = user?.id === collection?.owner_id;
+
   // 6. Check Favorite Status
   const { data: isFavorite, refetch: refetchFavorite } = useQuery({
     queryKey: ["collection_favorite", collection?.id, user?.id],
@@ -779,14 +781,6 @@ export default function CollectionMap() {
                 </div>
                 {canEdit && (
                     <div className="flex items-center gap-2 shrink-0">
-                        <div className="flex items-center gap-2 mr-2">
-                            <Label htmlFor="show-saved" className="text-xs whitespace-nowrap hidden sm:block">Show saved</Label>
-                            <Switch
-                                id="show-saved"
-                                checked={showSavedCandidates}
-                                onCheckedChange={setShowSavedCandidates}
-                            />
-                        </div>
                         <Button variant="ghost" size="icon" onClick={() => setShowAddBuildings(true)}>
                             <Plus className="h-5 w-5 text-muted-foreground" />
                         </Button>
@@ -940,6 +934,8 @@ export default function CollectionMap() {
                         refetchItems();
                         window.location.reload();
                     }}
+                    showSavedCandidates={showSavedCandidates}
+                    onShowSavedCandidatesChange={setShowSavedCandidates}
                 />
                 <AddBuildingsToCollectionDialog
                     collectionId={collection.id}
