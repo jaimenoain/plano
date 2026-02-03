@@ -30,6 +30,7 @@ import { UserCard } from "@/components/profile/UserCard";
 import { ProfileHighlights } from "@/components/profile/ProfileHighlights";
 import { SocialContextSection } from "@/components/profile/SocialContextSection";
 import { CollectionsGrid } from "@/components/profile/CollectionsGrid";
+import { FavoriteCollectionsGrid } from "@/components/profile/FavoriteCollectionsGrid";
 import { CreateCollectionDialog } from "@/components/profile/CreateCollectionDialog";
 import { FeedReview } from "@/types/feed";
 import { useProfileComparison } from "@/hooks/useProfileComparison";
@@ -577,6 +578,7 @@ export default function Profile() {
                 onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
                 refreshKey={collectionsRefreshKey}
               />
+              <FavoriteCollectionsGrid userId={targetUserId} />
           </div>
       )}
 

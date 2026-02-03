@@ -10,7 +10,7 @@ import { CollectionMarkerCard } from "@/components/collections/CollectionMarkerC
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
-import { Loader2, Settings, Plus, ExternalLink, Bookmark } from "lucide-react";
+import { Loader2, Settings, Plus, ExternalLink, Bookmark, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -326,6 +326,35 @@ export default function CollectionMap() {
     },
     enabled: !!items && items.length > 0 && !!memberIds && !!shouldFetchStats && !!collection?.id
   });
+
+  // 6. Check Favorite Status
+  const { data: isFavorite, refetch: refetchFavorite } = useQuery({
+    queryKey: ["collection_favorite", collection?.id, user?.id],
+    queryFn: async () => {
+      if (!collection?.id || !user?.id) return false;
+      const { data } = await supabase
+        .from("collection_favorites")
+        .select("id")
+        .eq("collection_id", collection.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!collection?.id && !!user?.id && !canEdit
+  });
+
+  const handleToggleFavorite = async () => {
+    if (!user || !collection) return;
+
+    if (isFavorite) {
+       const { error } = await supabase.from("collection_favorites").delete().eq("collection_id", collection.id).eq("user_id", user.id);
+       if (!error) toast({ title: "Removed from favorites" });
+    } else {
+       const { error } = await supabase.from("collection_favorites").insert({ collection_id: collection.id, user_id: user.id });
+       if (!error) toast({ title: "Added to favorites" });
+    }
+    refetchFavorite();
+  };
 
   const isLoading = loadingProfile || loadingCollection || loadingItems;
   const canEdit = user?.id === collection?.owner_id;
@@ -757,6 +786,14 @@ export default function CollectionMap() {
                 )}
                 {!canEdit && user && (
                     <div className="flex items-center gap-2 shrink-0">
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleToggleFavorite}
+                            className="text-muted-foreground hover:text-yellow-500"
+                         >
+                            <Star className={cn("h-5 w-5", isFavorite ? "fill-yellow-500 text-yellow-500" : "")} />
+                         </Button>
                          <Button
                             variant="outline"
                             size="sm"
