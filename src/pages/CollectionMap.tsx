@@ -16,8 +16,6 @@ import { SearchModeToggle } from "@/features/search/components/SearchModeToggle"
 import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
 
 import { DiscoveryBuilding } from "@/features/search/components/types";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
