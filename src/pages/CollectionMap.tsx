@@ -18,8 +18,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
 import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
 
-const CollectionSettingsDialog = lazy(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
-const AddBuildingsToCollectionDialog = lazy(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -34,6 +32,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
+
+const CollectionSettingsDialog = lazy(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
+const AddBuildingsToCollectionDialog = lazy(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
 
 interface CollectionItemResponse {
   id: string;
