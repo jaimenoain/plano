@@ -366,6 +366,8 @@ export default function CollectionMap() {
             } else {
             color = "#9CA3AF";
             }
+        } else if (collection?.categorization_method === 'uniform') {
+            color = "#000000";
         } else if (shouldFetchStats && statsData && memberIds) {
             const stat = statsMap.get(item.building.id);
             const targetUserIds = collection?.categorization_selected_members && collection.categorization_selected_members.length > 0
