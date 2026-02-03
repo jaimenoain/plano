@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Bookmark, Check, EyeOff } from "lucide-react";
@@ -62,13 +62,30 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   const mainImageUrl = getBuildingImageUrl(building.main_image_url);
 
   // Combine images
-  const galleryImages = [
+  const galleryImages = useMemo(() => [
     mainImageUrl,
     ...(additionalImages?.map(img => getBuildingImageUrl(img.storage_path)) || [])
-  ].filter((url): url is string => !!url);
+  ].filter((url): url is string => !!url), [mainImageUrl, additionalImages]);
 
   // De-duplicate images just in case
-  const uniqueImages = Array.from(new Set(galleryImages));
+  const uniqueImages = useMemo(() => Array.from(new Set(galleryImages)), [galleryImages]);
+
+  // Determine current image owner
+  const currentImageOwner = useMemo(() => {
+      const currentUrl = uniqueImages[currentImageIndex];
+      if (!currentUrl || !additionalImages) return null;
+
+      const matchingImage = additionalImages.find(img =>
+        getBuildingImageUrl(img.storage_path) === currentUrl
+      );
+
+      if (matchingImage?.user_buildings?.user) {
+          const userData = matchingImage.user_buildings.user;
+          // Handle array return if relation is 1-to-many (though it should be 1-to-1 here from join)
+          return Array.isArray(userData) ? userData[0] : userData;
+      }
+      return null;
+  }, [uniqueImages, currentImageIndex, additionalImages]);
 
   // Format architect names (handle if architects is undefined, e.g. from FeedItem)
   const architectNames = building.architects?.map((a: any) => a.name).join(", ");
@@ -170,7 +187,23 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
       }
   };
 
-  const visitedInteractions = building.contact_interactions?.filter(i => i.status === "visited") || [];
+  const facepileInteractions = useMemo(() => {
+      const visited = building.contact_interactions?.filter(i => i.status === "visited") || [];
+
+      if (currentImageOwner) {
+          // Check if owner is a contact (exists in contact_interactions)
+          const contactInteraction = building.contact_interactions?.find(i => i.user.id === currentImageOwner.id);
+
+          if (contactInteraction) {
+               const alreadyInList = visited.find(i => i.user.id === currentImageOwner.id);
+               if (!alreadyInList) {
+                   // Add them to the list to ensure facepile shows
+                   return [...visited, contactInteraction];
+               }
+          }
+      }
+      return visited;
+  }, [building.contact_interactions, currentImageOwner]);
 
   return (
     <motion.div
@@ -291,8 +324,8 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
 
       {/* Info Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-6 z-30 text-white pb-24 md:pb-6 pointer-events-none">
-        {visitedInteractions.length > 0 && (
-          <ContactFacepile interactions={visitedInteractions} />
+        {facepileInteractions.length > 0 && (
+          <ContactFacepile interactions={facepileInteractions} />
         )}
         <Link
           to={`/building/${building.id}/${building.slug || 'details'}`}

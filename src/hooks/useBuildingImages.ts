@@ -8,9 +8,26 @@ export function useBuildingImages(buildingId: string, enabled: boolean = true) {
       // review_images is linked via user_buildings
       const { data, error } = await supabase
         .from("review_images")
-        .select("id, storage_path, user_buildings!inner(building_id)")
+        .select(`
+          id,
+          storage_path,
+          likes_count,
+          created_at,
+          user_buildings!inner(
+            building_id,
+            user:profiles(
+              id,
+              username,
+              avatar_url,
+              first_name,
+              last_name
+            )
+          )
+        `)
         .eq("user_buildings.building_id", buildingId)
-        .limit(5);
+        .order('likes_count', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(10);
 
       if (error) throw error;
 
