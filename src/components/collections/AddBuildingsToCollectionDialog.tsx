@@ -167,7 +167,7 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
 
       toast.success("Marker added to collection");
       setValue("", false); // Clear input after successful add
-      queryClient.invalidateQueries({ queryKey: ["collection_markers", collectionId] });
+      queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
     } catch (error) {
       console.error("Error adding marker:", error);
       toast.error("Failed to add marker");
