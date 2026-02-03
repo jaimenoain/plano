@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { CollectionMarkerCard } from "@/components/collections/CollectionMarkerCard";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
@@ -35,6 +34,7 @@ const CollectionSettingsDialog = lazy(() => import("@/components/profile/Collect
 const AddBuildingsToCollectionDialog = lazy(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
 const BuildingDiscoveryMap = lazy(() => import("@/components/common/BuildingDiscoveryMap").then(module => ({ default: module.BuildingDiscoveryMap })));
 const CollectionBuildingCard = lazy(() => import("@/components/collections/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
+const CollectionMarkerCard = lazy(() => import("@/components/collections/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 
 interface CollectionItemResponse {
   id: string;
@@ -850,20 +850,22 @@ export default function CollectionMap() {
                                     </AccordionTrigger>
                                     <AccordionContent>
                                         <div className="space-y-3 pt-2">
-                                            {markers.map(marker => (
-                                                <CollectionMarkerCard
-                                                    key={marker.id}
-                                                    marker={marker}
-                                                    isHighlighted={highlightedId === marker.id}
-                                                    setHighlightedId={setHighlightedId}
-                                                    canEdit={canEdit}
-                                                    onRemove={() => handleRemoveItem(marker.id)}
-                                                    onNavigate={() => {
-                                                        // Just highlight
-                                                        setHighlightedId(marker.id);
-                                                    }}
-                                                />
-                                            ))}
+                                            <Suspense fallback={<div className="p-2 text-center text-xs text-muted-foreground">Loading markers...</div>}>
+                                                {markers.map(marker => (
+                                                    <CollectionMarkerCard
+                                                        key={marker.id}
+                                                        marker={marker}
+                                                        isHighlighted={highlightedId === marker.id}
+                                                        setHighlightedId={setHighlightedId}
+                                                        canEdit={canEdit}
+                                                        onRemove={() => handleRemoveItem(marker.id)}
+                                                        onNavigate={() => {
+                                                            // Just highlight
+                                                            setHighlightedId(marker.id);
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Suspense>
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
