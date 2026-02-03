@@ -47,10 +47,10 @@ const MOCK_ACTIVITIES = [
 
 export const LandingMarquee = () => {
   return (
-    <div className="w-full overflow-hidden border-y border-border bg-background py-4">
+    <div className="w-full overflow-hidden border-y border-border bg-background py-3">
       <div className="relative flex w-full max-w-[100vw] items-center">
         <motion.div
-          className="flex flex-nowrap gap-8"
+          className="flex flex-nowrap gap-0"
           animate={{ x: "-50%" }}
           transition={{
             repeat: Infinity,
@@ -63,16 +63,17 @@ export const LandingMarquee = () => {
           {[...MOCK_ACTIVITIES, ...MOCK_ACTIVITIES].map((activity, index) => (
             <div
               key={`${activity.id}-${index}`}
-              className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2 shadow-sm whitespace-nowrap"
+              className="flex items-center gap-3 whitespace-nowrap"
             >
-              <Avatar className="h-8 w-8 border border-border">
+              <Avatar className="h-6 w-6 border border-border">
                 <AvatarImage src={activity.avatar} alt={activity.user} />
                 <AvatarFallback>{activity.user[0]}</AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium">
-                <span className="font-bold">{activity.user}</span> {activity.action}{" "}
-                <span className="font-bold">{activity.target}</span> {activity.details}
+              <span className="text-sm">
+                <span className="font-medium">{activity.user}</span> {activity.action}{" "}
+                <span className="font-medium">{activity.target}</span> {activity.details}
               </span>
+              <span className="mx-8 text-primary">+</span>
             </div>
           ))}
         </motion.div>
