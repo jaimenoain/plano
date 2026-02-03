@@ -89,14 +89,6 @@ export function DiscoveryBuildingCard({
 
           {/* Badges */}
           <div className="flex flex-wrap gap-2 mt-2">
-            {distance !== undefined && (
-              <Badge variant="secondary" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto">
-                <MapPin className="h-3 w-3" />
-                {distance < 1
-                  ? `${(distance * 1000).toFixed(0)}m away`
-                  : `${distance.toFixed(1)}km away`}
-              </Badge>
-            )}
             {(userStatus === 'visited' || userStatus === 'pending') && (
               <Badge variant="secondary" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 border">
                 {userStatus === 'visited' ? "Visited" : "Saved"}
