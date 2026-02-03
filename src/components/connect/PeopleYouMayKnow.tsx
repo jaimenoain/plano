@@ -8,6 +8,11 @@ interface SuggestionUser {
   id: string;
   username: string | null;
   avatar_url: string | null;
+  mutual_follows?: {
+    id: string;
+    username: string | null;
+    avatar_url: string | null;
+  }[];
 }
 
 export function PeopleYouMayKnow() {
@@ -26,7 +31,8 @@ export function PeopleYouMayKnow() {
           .select("following_id")
           .eq("follower_id", user.id);
 
-        const followingIds = new Set(followingData?.map(f => f.following_id) || []);
+        const realFollowingIds = followingData?.map(f => f.following_id) || [];
+        const followingIds = new Set(realFollowingIds);
         followingIds.add(user.id); // Exclude myself
 
         // 2. Fetch profiles
@@ -37,12 +43,42 @@ export function PeopleYouMayKnow() {
           .limit(30);
 
         if (profiles) {
-            const filtered = profiles
-                .filter(p => !followingIds.has(p.id))
-                .slice(0, 3);
-            setSuggestions(filtered);
-        }
+          const filtered = profiles
+            .filter((p) => !followingIds.has(p.id))
+            .slice(0, 3);
 
+          // 3. Fetch mutual follows for these candidates
+          // We want to find: Users in 'realFollowingIds' who follow 'filtered' candidates
+          const candidateIds = filtered.map((u) => u.id);
+
+          if (candidateIds.length > 0 && realFollowingIds.length > 0) {
+            const { data: mutualsData } = await supabase
+              .from("follows")
+              .select(`
+                  following_id,
+                  follower:profiles!follows_follower_id_fkey(id, username, avatar_url)
+                `)
+              .in("following_id", candidateIds)
+              .in("follower_id", realFollowingIds);
+
+            const suggestionsWithMutuals = filtered.map((candidate) => {
+              const mutuals = mutualsData
+                ?.filter((m) => m.following_id === candidate.id)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .map((m: any) => m.follower)
+                .filter(Boolean) as {
+                id: string;
+                username: string | null;
+                avatar_url: string | null;
+              }[];
+
+              return { ...candidate, mutual_follows: mutuals || [] };
+            });
+            setSuggestions(suggestionsWithMutuals);
+          } else {
+            setSuggestions(filtered);
+          }
+        }
       } catch (error) {
         console.error("Error fetching suggestions:", error);
       } finally {
@@ -77,7 +113,7 @@ export function PeopleYouMayKnow() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {suggestions.map(u => (
             <div key={u.id} className="bg-card border rounded-lg shadow-sm overflow-hidden">
-                 <UserRow user={u} showFollowButton={true} />
+                 <UserRow user={u} showFollowButton={true} mutualFollows={u.mutual_follows} />
             </div>
         ))}
       </div>
