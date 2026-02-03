@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/FollowButton";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,9 +12,17 @@ interface UserRowProps {
   };
   showFollowButton?: boolean;
   isFollower?: boolean; // Is the user following me? (For "Follow Back" logic)
+  isCloseFriend?: boolean;
+  onToggleCloseFriend?: () => void;
 }
 
-export function UserRow({ user, showFollowButton = false, isFollower = false }: UserRowProps) {
+export function UserRow({
+  user,
+  showFollowButton = false,
+  isFollower = false,
+  isCloseFriend,
+  onToggleCloseFriend
+}: UserRowProps) {
   const navigate = useNavigate();
 
   const avatarUrl = user.avatar_url
@@ -37,15 +46,31 @@ export function UserRow({ user, showFollowButton = false, isFollower = false }: 
         </div>
       </div>
 
-      {showFollowButton && (
-        <div onClick={(e) => e.stopPropagation()}>
-          <FollowButton
-            userId={user.id}
-            isFollower={isFollower}
-            className="h-8 text-xs px-3"
-          />
-        </div>
-      )}
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        {onToggleCloseFriend && (
+          <button
+            onClick={onToggleCloseFriend}
+            className="p-1 hover:bg-muted rounded-full transition-colors focus:outline-none"
+            title={isCloseFriend ? "Remove from close friends" : "Add to close friends"}
+          >
+            <Star
+              className={`h-5 w-5 ${
+                isCloseFriend ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+              }`}
+            />
+          </button>
+        )}
+
+        {showFollowButton && (
+          <div>
+            <FollowButton
+              userId={user.id}
+              isFollower={isFollower}
+              className="h-8 text-xs px-3"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
