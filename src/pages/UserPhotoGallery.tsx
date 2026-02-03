@@ -2,14 +2,16 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Image as ImageIcon } from "lucide-react";
+import { Loader2, Image as ImageIcon, Heart } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 interface Photo {
   id: string;
   storage_path: string;
   likes_count: number;
+  is_liked: boolean;
   review_id: string;
   building: {
     id: string;
@@ -87,10 +89,26 @@ export default function UserPhotoGallery() {
       if (error) {
         console.error("Error fetching photos:", error);
       } else if (data) {
+        const photoIds = data.map((p) => p.id);
+        let likedIds = new Set<string>();
+
+        if (currentUser && photoIds.length > 0) {
+           const { data: likesData } = await supabase
+             .from("image_likes")
+             .select("image_id")
+             .eq("user_id", currentUser.id)
+             .in("image_id", photoIds);
+
+           if (likesData) {
+             likesData.forEach((l) => likedIds.add(l.image_id));
+           }
+        }
+
         const mappedPhotos = data.map((item: any) => ({
           id: item.id,
           storage_path: item.storage_path,
-          likes_count: item.likes_count,
+          likes_count: item.likes_count || 0,
+          is_liked: likedIds.has(item.id),
           review_id: item.review_id,
           building: item.user_buildings?.building || null
         }));
@@ -102,6 +120,62 @@ export default function UserPhotoGallery() {
 
     fetchData();
   }, [routeUsername, currentUser]);
+
+  const handleLike = async (e: React.MouseEvent, photoId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!currentUser) return;
+
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return;
+
+    const wasLiked = photo.is_liked;
+
+    // Optimistic Update
+    setPhotos(prev => prev.map(p => {
+       if (p.id === photoId) {
+          return {
+             ...p,
+             is_liked: !p.is_liked,
+             likes_count: p.is_liked ? Math.max(0, p.likes_count - 1) : p.likes_count + 1
+          };
+       }
+       return p;
+    }));
+
+    try {
+       if (wasLiked) {
+          const { error } = await supabase
+            .from("image_likes")
+            .delete()
+            .eq("user_id", currentUser.id)
+            .eq("image_id", photoId);
+          if (error) throw error;
+       } else {
+          const { error } = await supabase
+            .from("image_likes")
+            .insert({
+               user_id: currentUser.id,
+               image_id: photoId
+            });
+          if (error) throw error;
+       }
+    } catch (err) {
+       console.error("Error toggling like:", err);
+       // Revert
+       setPhotos(prev => prev.map(p => {
+          if (p.id === photoId) {
+             return {
+                ...p,
+                is_liked: wasLiked,
+                likes_count: photo.likes_count // Restore original count
+             };
+          }
+          return p;
+       }));
+    }
+  };
 
   if (loading) {
     return (
@@ -150,8 +224,25 @@ export default function UserPhotoGallery() {
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+
+                    {/* Like Button */}
+                    <button
+                      onClick={(e) => handleLike(e, photo.id)}
+                      className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors backdrop-blur-sm group/btn z-10 flex items-center gap-1.5"
+                    >
+                      <Heart
+                         className={cn(
+                           "w-4 h-4 transition-colors",
+                           photo.is_liked ? "fill-red-500 text-red-500" : "text-white"
+                         )}
+                      />
+                      {photo.likes_count > 0 && (
+                        <span className="text-xs font-medium text-white">{photo.likes_count}</span>
+                      )}
+                    </button>
+
                     {photo.building && (
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                          <p className="text-white text-xs truncate font-medium">{photo.building.name}</p>
                       </div>
                     )}
