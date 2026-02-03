@@ -2,8 +2,50 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DiscoverySearchInput } from "@/features/search/components/DiscoverySearchInput";
 import { Badge } from "@/components/ui/badge";
-import { MapPin } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 import { motion } from "framer-motion";
+
+interface FloatingCardProps {
+  name: string;
+  rating: string;
+  className?: string;
+  delay?: number;
+}
+
+const FloatingCard = ({ name, rating, className, delay = 0 }: FloatingCardProps) => {
+  return (
+    <motion.div
+      className={`absolute hidden md:flex items-center gap-3 p-3 bg-card border-2 border-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg z-10 ${className}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.8,
+        delay,
+        ease: "easeOut"
+      }}
+    >
+      <motion.div
+        className="flex items-center gap-2"
+        animate={{ y: [0, -10, 0] }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: delay + 0.5
+        }}
+      >
+        <span className="font-semibold text-sm">{name}</span>
+        <div className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded">
+          <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+          <span className="text-xs font-medium">{rating}</span>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 export const LandingHero = () => {
   const [searchValue, setSearchValue] = useState("");
@@ -20,9 +62,30 @@ export const LandingHero = () => {
   };
 
   return (
-    <div className="w-full py-32 flex flex-col items-center justify-center space-y-8 bg-background bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
+    <div className="w-full py-32 flex flex-col items-center justify-center space-y-8 bg-background bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
       {/* Content Container */}
-      <div className="w-full max-w-4xl px-4 flex flex-col items-center text-center space-y-8">
+      <div className="w-full max-w-4xl px-4 flex flex-col items-center text-center space-y-8 relative">
+
+        <FloatingCard
+          name="The Shard"
+          rating="4.9"
+          className="top-[-2rem] left-[-2rem] lg:left-[-6rem] -rotate-6"
+          delay={0.5}
+        />
+
+        <FloatingCard
+          name="Fallingwater"
+          rating="5.0"
+          className="bottom-[10%] right-[-2rem] lg:right-[-6rem] rotate-6"
+          delay={0.7}
+        />
+
+        <FloatingCard
+          name="Guggenheim"
+          rating="4.8"
+          className="top-[40%] left-[-3rem] lg:left-[-8rem] rotate-3 hidden lg:flex"
+          delay={0.9}
+        />
 
         {/* Typography */}
         <motion.div
