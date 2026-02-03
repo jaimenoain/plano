@@ -48,7 +48,7 @@ export const LandingHero = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             whileHover={{ scale: 1.01 }}
         >
-          <div className="relative rounded-xl overflow-hidden shadow-2xl bg-card border border-border p-2">
+          <div className="relative rounded-lg bg-card border-2 border-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-2">
             <DiscoverySearchInput
               value={searchValue}
               onSearchChange={setSearchValue}
