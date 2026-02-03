@@ -20,7 +20,7 @@ export const LandingHero = () => {
   };
 
   return (
-    <div className="w-full py-24 flex flex-col items-center justify-center space-y-8 bg-background">
+    <div className="w-full py-32 flex flex-col items-center justify-center space-y-8 bg-background bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
       {/* Content Container */}
       <div className="w-full max-w-4xl px-4 flex flex-col items-center text-center space-y-8">
 
@@ -31,11 +31,11 @@ export const LandingHero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-foreground">
             The world's architecture, <br className="hidden md:block" />
             cataloged.
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground font-medium max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
             Track visits, rate buildings, and follow friends.
           </p>
         </motion.div>
