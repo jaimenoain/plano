@@ -79,6 +79,7 @@ interface BuildingDiscoveryMapProps {
   onUpdateMarkerNote?: (id: string, note: string) => void;
   onRemoveMarker?: (id: string) => void;
   onClosePopup?: () => void;
+  showSavedCandidates?: boolean;
 }
 
 export function BuildingDiscoveryMap({
@@ -102,13 +103,15 @@ export function BuildingDiscoveryMap({
   onVisit,
   onUpdateMarkerNote,
   onRemoveMarker,
-  onClosePopup
+  onClosePopup,
+  showSavedCandidates
 }: BuildingDiscoveryMapProps) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
+  const [hasVisibleCandidates, setHasVisibleCandidates] = useState(true);
 
   // State to track user interaction to disable auto-zoom
   const [userHasInteracted, setUserHasInteracted] = useState(false);
@@ -156,6 +159,24 @@ export function BuildingDiscoveryMap({
 
   const buildings = externalBuildings || internalBuildings || [];
   const isLoading = externalBuildings ? false : internalLoading;
+
+  const candidates = useMemo(() => buildings?.filter(b => b.isCandidate) || [], [buildings]);
+
+  const checkCandidatesVisibility = (map: maplibregl.Map) => {
+    if (!showSavedCandidates || candidates.length === 0) {
+      setHasVisibleCandidates(true);
+      return;
+    }
+    const bounds = map.getBounds();
+    const isVisible = candidates.some(b => bounds.contains([b.location_lng, b.location_lat]));
+    setHasVisibleCandidates(isVisible);
+  };
+
+  useEffect(() => {
+    if (mapRef.current) {
+      checkCandidatesVisibility(mapRef.current.getMap());
+    }
+  }, [candidates, showSavedCandidates]);
 
   // Fetch user relationships
   const { data: userBuildingsMap } = useQuery({
@@ -606,6 +627,7 @@ export function BuildingDiscoveryMap({
           east: bounds.getEast(),
           west: bounds.getWest()
       });
+      checkCandidatesVisibility(map);
   };
 
   const mapContent = (
@@ -670,6 +692,12 @@ export function BuildingDiscoveryMap({
         <NavigationControl position="bottom-right" />
         {pins}
       </MapGL>
+
+      {showSavedCandidates && candidates.length > 0 && !hasVisibleCandidates && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur px-4 py-2 rounded-full shadow-md text-sm z-10 text-center pointer-events-none border animate-in fade-in slide-in-from-top-2">
+           No saved places in this area. Zoom out to find them.
+        </div>
+      )}
 
       <button
           onClick={(e) => {

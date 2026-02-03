@@ -862,6 +862,7 @@ export default function CollectionMap() {
                 onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
                 onRemoveMarker={canEdit ? handleRemoveItem : undefined}
                 onClosePopup={() => setHighlightedId(null)}
+                showSavedCandidates={showSavedCandidates}
             />
         </div>
       </div>
