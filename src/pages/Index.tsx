@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { EmptyFeed } from "@/components/feed/EmptyFeed";
 import { PeopleYouMayKnow } from "@/components/feed/PeopleYouMayKnow";
@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MetaHead } from "@/components/common/MetaHead";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { FeedReview } from "@/types/feed";
@@ -31,19 +30,17 @@ function Landing() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border h-16 shadow-sm">
         <div className="container h-full mx-auto px-4 flex items-center justify-between">
-            <div className="w-32">
-                <PlanoLogo
-                  className="h-8 w-auto text-foreground [&_path]:fill-current"
-                />
-            </div>
+          <div className="w-32">
+            <PlanoLogo className="h-8 w-auto text-foreground [&_path]:fill-current" />
+          </div>
 
-            <Button
-                variant="ghost"
-                onClick={() => navigate("/auth")}
-                className="font-semibold bg-foreground text-background hover:bg-foreground/90 hover:text-background"
-            >
-                Log in
-            </Button>
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/auth")}
+            className="font-semibold bg-foreground text-background hover:bg-foreground/90 hover:text-background"
+          >
+            Log in
+          </Button>
         </div>
       </header>
 
@@ -52,13 +49,15 @@ function Landing() {
         <LandingHero />
         <LandingMarquee />
         <div className="container mx-auto py-24 px-4">
-             <div className="text-center mb-16 space-y-4">
-                <h2 className="text-3xl md:text-5xl font-bold tracking-tight">Everything you need</h2>
-                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                    Built for architecture enthusiasts, by architecture enthusiasts.
-                </p>
-             </div>
-             <LandingFeatureGrid />
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
+              Everything you need
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Built for architecture enthusiasts, by architecture enthusiasts.
+            </p>
+          </div>
+          <LandingFeatureGrid />
         </div>
       </main>
     </div>
