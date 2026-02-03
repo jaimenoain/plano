@@ -678,7 +678,12 @@ export default function CollectionMap() {
   };
 
   const handleSaveAllBuildings = async () => {
-    if (!user?.id || !items) return;
+    if (!user?.id) {
+        navigate("/auth");
+        return;
+    }
+
+    if (!items) return;
 
     setIsSavingAll(true);
     try {
@@ -801,16 +806,18 @@ export default function CollectionMap() {
                         </Button>
                     </div>
                 )}
-                {!canEdit && user && (
+                {!canEdit && (
                     <div className="flex items-center gap-2 shrink-0">
-                         <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleToggleFavorite}
-                            className="text-muted-foreground hover:text-yellow-500"
-                         >
-                            <Star className={cn("h-5 w-5", isFavorite ? "fill-yellow-500 text-yellow-500" : "")} />
-                         </Button>
+                        {user && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleToggleFavorite}
+                                className="text-muted-foreground hover:text-yellow-500"
+                            >
+                                <Star className={cn("h-5 w-5", isFavorite ? "fill-yellow-500 text-yellow-500" : "")} />
+                            </Button>
+                        )}
                          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
                             <ListFilter className="h-5 w-5 text-muted-foreground" />
                         </Button>
