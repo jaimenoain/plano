@@ -96,6 +96,14 @@ export default function AddBuilding() {
   const [searchParams] = useSearchParams();
   const [mapsLoaded, setMapsLoaded] = useState(false);
 
+  // Handle name param for pre-filling
+  useEffect(() => {
+    const nameParam = searchParams.get("name");
+    if (nameParam && !nameInput) {
+      setNameInput(nameParam);
+    }
+  }, [searchParams]);
+
   // Load Google Maps
   useEffect(() => {
     const loadMaps = async () => {
