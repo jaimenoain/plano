@@ -8,7 +8,7 @@ import { BuildingDiscoveryMap } from "@/components/common/BuildingDiscoveryMap";
 import { CollectionBuildingCard } from "@/components/collections/CollectionBuildingCard";
 import { CollectionMarkerCard } from "@/components/collections/CollectionMarkerCard";
 import { parseLocation } from "@/utils/location";
-import { getBoundsFromBuildings } from "@/utils/map";
+import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
 import { Loader2, Settings, Plus, ExternalLink, Bookmark, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -110,6 +110,9 @@ export default function CollectionMap() {
   // New States for Save All
   const [showSaveAllConfirm, setShowSaveAllConfirm] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
+
+  // Map Bounds State
+  const [initialBounds, setInitialBounds] = useState<Bounds | null>(null);
 
   // 1. Resolve User (Owner)
   const { data: ownerProfile, isLoading: loadingProfile } = useQuery({
@@ -487,12 +490,17 @@ export default function CollectionMap() {
     return mapBuildings;
   }, [mapBuildings, savedCandidates, showSavedCandidates, existingBuildingIds]);
 
-  const bounds = useMemo(() => {
-    // Only fit bounds to the collection items, not the candidates.
-    // This prevents the camera from moving when "Show saved" is toggled.
-    if (mapBuildings.length === 0) return null;
-    return getBoundsFromBuildings(mapBuildings);
-  }, [mapBuildings]);
+  // Calculate bounds only once when buildings are loaded to prevent map movement on updates
+  useEffect(() => {
+    if (!initialBounds && mapBuildings.length > 0) {
+      setInitialBounds(getBoundsFromBuildings(mapBuildings));
+    }
+  }, [mapBuildings, initialBounds]);
+
+  // Reset bounds when switching collections
+  useEffect(() => {
+    setInitialBounds(null);
+  }, [slug]);
 
   const handleUpdateNote = async (itemId: string, newNote: string) => {
       const { error } = await supabase
@@ -895,7 +903,7 @@ export default function CollectionMap() {
                   } 
                   // 2. If not in collection, just highlight it (Tooltip will show with Add button)
                 }}
-                forcedBounds={bounds}
+                forcedBounds={initialBounds}
                 showImages={collection.show_community_images ?? true}
                 onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
                 onRemoveMarker={canEdit ? handleRemoveItem : undefined}
