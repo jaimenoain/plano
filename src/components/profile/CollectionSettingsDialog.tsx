@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -317,12 +317,12 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] h-[80vh] sm:h-auto sm:max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Collection Settings</DialogTitle>
-          <DialogDescription>Manage your collection preferences and collaborators.</DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-[500px] flex flex-col h-full">
+        <SheetHeader>
+          <SheetTitle>Collection Settings</SheetTitle>
+          <SheetDescription>Manage your collection preferences and collaborators.</SheetDescription>
+        </SheetHeader>
 
         <Tabs defaultValue="general" className="w-full flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-3">
@@ -617,7 +617,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
              </div>
           </TabsContent>
         </Tabs>
-      </DialogContent>
+      </SheetContent>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>
@@ -639,6 +639,6 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Dialog>
+    </Sheet>
   );
 }
