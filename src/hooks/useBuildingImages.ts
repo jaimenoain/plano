@@ -13,7 +13,7 @@ export function useBuildingImages(buildingId: string, enabled: boolean = true) {
           storage_path,
           likes_count,
           created_at,
-          user_buildings!inner(
+          user_buildings!review_images_review_id_fkey!inner(
             building_id,
             user:profiles(
               id,

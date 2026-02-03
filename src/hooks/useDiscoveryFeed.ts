@@ -96,7 +96,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
             `)
             .in('building_id', buildingIds)
             .in('user_id', followedIds)
-            .or('status.eq.visited,status.eq.pending,rating.not.is.null');
+            .or('status.eq.visited,status.eq.pending,rating.gt.0');
 
           if (interactions) {
             const interactionsMap: Record<string, ContactInteraction[]> = {};
