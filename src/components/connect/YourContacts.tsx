@@ -10,6 +10,7 @@ interface ContactUser {
   id: string;
   username: string | null;
   avatar_url: string | null;
+  is_close_friend?: boolean;
 }
 
 export function YourContacts() {
@@ -17,6 +18,46 @@ export function YourContacts() {
   const [following, setFollowing] = useState<ContactUser[]>([]);
   const [followers, setFollowers] = useState<ContactUser[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const sortContacts = (contacts: ContactUser[]) => {
+    return [...contacts].sort((a, b) => {
+      if (a.is_close_friend === b.is_close_friend) {
+        return (a.username || "").localeCompare(b.username || "");
+      }
+      return a.is_close_friend ? -1 : 1;
+    });
+  };
+
+  const toggleCloseFriend = async (targetId: string, currentStatus: boolean) => {
+    if (!user) return;
+
+    // Optimistic update
+    setFollowing((prev) => {
+      const updated = prev.map((u) =>
+        u.id === targetId ? { ...u, is_close_friend: !currentStatus } : u
+      );
+      return sortContacts(updated);
+    });
+
+    try {
+      const { error } = await supabase
+        .from("follows")
+        .update({ is_close_friend: !currentStatus } as any)
+        .eq("follower_id", user.id)
+        .eq("following_id", targetId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating close friend status:", error);
+      // Revert on error
+      setFollowing((prev) => {
+        const updated = prev.map((u) =>
+          u.id === targetId ? { ...u, is_close_friend: currentStatus } : u
+        );
+        return sortContacts(updated);
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -26,19 +67,33 @@ export function YourContacts() {
         // Fetch Following
         const { data: followingRefs } = await supabase
           .from("follows")
-          .select("following_id")
+          .select("following_id, is_close_friend")
           .eq("follower_id", user.id);
 
-        const followingIds = followingRefs?.map(r => r.following_id) || [];
+        // Cast to any because is_close_friend is not yet in the types
+        const refs = followingRefs as any[];
+        const followingMap = new Map<string, boolean>();
+        refs?.forEach((r) => {
+          followingMap.set(r.following_id, r.is_close_friend);
+        });
+
+        const followingIds = refs?.map((r) => r.following_id) || [];
 
         if (followingIds.length > 0) {
-             const { data: followingProfiles } = await supabase
-                .from("profiles")
-                .select("id, username, avatar_url")
-                .in("id", followingIds);
-             setFollowing(followingProfiles || []);
+          const { data: followingProfiles } = await supabase
+            .from("profiles")
+            .select("id, username, avatar_url")
+            .in("id", followingIds);
+
+          const mergedFollowing =
+            followingProfiles?.map((p) => ({
+              ...p,
+              is_close_friend: followingMap.get(p.id) || false,
+            })) || [];
+
+          setFollowing(sortContacts(mergedFollowing));
         } else {
-            setFollowing([]);
+          setFollowing([]);
         }
 
         // Fetch Followers
@@ -91,7 +146,13 @@ export function YourContacts() {
                <ScrollArea className="h-[300px] sm:h-[400px]">
                    <div className="p-2 space-y-1">
                        {following.length > 0 ? following.map(u => (
-                           <UserRow key={u.id} user={u} showFollowButton={false} />
+                           <UserRow
+                             key={u.id}
+                             user={u}
+                             showFollowButton={false}
+                             isCloseFriend={u.is_close_friend}
+                             onToggleCloseFriend={() => toggleCloseFriend(u.id, !!u.is_close_friend)}
+                           />
                        )) : (
                            <div className="p-8 text-center text-muted-foreground">You are not following anyone yet.</div>
                        )}
