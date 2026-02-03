@@ -16,6 +16,7 @@ interface DiscoveryListProps {
   className?: string;
   imagePosition?: 'left' | 'right';
   itemTarget?: string;
+  searchQuery?: string;
 }
 
 export function DiscoveryList({
@@ -28,6 +29,7 @@ export function DiscoveryList({
   className,
   imagePosition,
   itemTarget,
+  searchQuery,
 }: DiscoveryListProps) {
   if (isLoading) {
     return (
@@ -90,6 +92,20 @@ export function DiscoveryList({
           target={itemTarget}
         />
       ))}
+
+      {searchQuery && (
+        <div className="flex flex-col items-center justify-center py-8 gap-3 border-t mt-4">
+          <h3 className="text-sm font-medium text-muted-foreground">
+            Not what you are looking for?
+          </h3>
+          <Button asChild variant="outline">
+            <Link to={`/add-building?name=${encodeURIComponent(searchQuery)}${currentLocation ? `&lat=${currentLocation.lat}&lng=${currentLocation.lng}` : ''}`}>
+              <MapPinPlus className="mr-2 h-4 w-4" />
+              Add "{searchQuery}"
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
