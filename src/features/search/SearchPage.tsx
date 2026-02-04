@@ -111,7 +111,7 @@ export default function SearchPage() {
   const [flyToBounds, setFlyToBounds] = useState<Bounds | null>(null);
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
   const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
-  const [mapInteractionResetTrigger, setMapInteractionResetTrigger] = useState(0);
+  const [hasInitialFlyToPerformed, setHasInitialFlyToPerformed] = useState(false);
 
   // Main: Filter controls
   const [sortBy, setSortBy] = useState<string>("distance");
@@ -136,7 +136,6 @@ export default function SearchPage() {
         contactMinRating > 0
       ) {
           setIgnoreMapBounds(true);
-          setMapInteractionResetTrigger(prev => prev + 1);
       } else {
           setIgnoreMapBounds(false);
           setSearchScope('content');
@@ -304,10 +303,24 @@ export default function SearchPage() {
 
   // Handle auto-fly to user location on initial load or update
   useEffect(() => {
+    if (hasInitialFlyToPerformed) return;
+
+    // Case 1: URL has location
+    if (searchParams.get("lat") && searchParams.get("lng")) {
+      setFlyToCenter({
+        lat: parseFloat(searchParams.get("lat")!),
+        lng: parseFloat(searchParams.get("lng")!)
+      });
+      setHasInitialFlyToPerformed(true);
+      return;
+    }
+
+    // Case 2: GPS Location found (and valid)
     if (gpsLocation) {
       setFlyToCenter(gpsLocation);
+      setHasInitialFlyToPerformed(true);
     }
-  }, [gpsLocation]);
+  }, [gpsLocation, searchParams, hasInitialFlyToPerformed]);
 
   // Check if we are in the default clean state (no search/filters) to enable auto-zoom
   const isDefaultState = !searchQuery &&
@@ -588,7 +601,6 @@ export default function SearchPage() {
                         isFetching={isFetching}
                         autoZoomOnLowCount={isDefaultState}
                         forcedBounds={flyToBounds}
-                        resetInteractionTrigger={mapInteractionResetTrigger}
                         onHide={handleHide}
                         onSave={handleSave}
                         onVisit={handleVisit}
@@ -625,7 +637,6 @@ export default function SearchPage() {
                       isFetching={isFetching}
                       autoZoomOnLowCount={isDefaultState}
                       forcedBounds={flyToBounds}
-                      resetInteractionTrigger={mapInteractionResetTrigger}
                       onHide={handleHide}
                       onSave={handleSave}
                       onVisit={handleVisit}
