@@ -13,6 +13,10 @@ import { ArchitectSelect } from "@/features/search/components/ArchitectSelect";
 import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
 import { ShelfDiscover } from "./filters/ShelfDiscover";
 import { ShelfLibrary } from "./filters/ShelfLibrary";
+import { useBuildingMetadata } from "@/hooks/useBuildingMetadata";
+import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 
 // Define props based on what's used in the sheet content
 export interface FilterDrawerContentProps {
@@ -74,6 +78,47 @@ type Scope = 'discover' | 'library' | 'network';
 export function FilterDrawerContent(props: FilterDrawerContentProps) {
   const [activeScope, setActiveScope] = useState<Scope>('discover');
   const [communityQuality, setCommunityQuality] = useState(0);
+
+  const { categories, attributes, attributeGroups } = useBuildingMetadata();
+
+  // Helper logic for Attributes
+  const getGroupId = (name: string) => attributeGroups.find(g => g.name.toLowerCase().includes(name.toLowerCase()))?.id;
+  const materialityGroupId = getGroupId('material');
+  const contextGroupId = getGroupId('context');
+
+  const materialAttributes = attributes.filter(a => a.group_id === materialityGroupId);
+  const contextAttributes = attributes.filter(a => a.group_id === contextGroupId);
+
+  const handleAttributeToggle = (id: string) => {
+    if (props.selectedAttributes.includes(id)) {
+      props.onAttributesChange(props.selectedAttributes.filter(a => a !== id));
+    } else {
+      props.onAttributesChange([...props.selectedAttributes, id]);
+    }
+  };
+
+  // Intervention Logic
+  // We assume these are categories for now, based on typical architecture schemas.
+  // If they are not found, the toggle will just visually indicate selection but not apply filter (or apply if we map correctly).
+  const interventionOptions = ["Obra Nueva", "Rehabilitación"];
+
+  const handleInterventionChange = (value: string) => {
+    if (!value) return; // Toggle group might return empty string if deselecting? But we used type="single"
+    // Find category with this name
+    const category = categories.find(c => c.name.toLowerCase() === value.toLowerCase());
+    if (category) {
+      props.onCategoryChange(category.id);
+    } else {
+      // Fallback: If not a category, maybe check attributes? Or just do nothing.
+      console.warn(`Category ${value} not found`);
+    }
+  };
+
+  // Determine current intervention value based on selectedCategory
+  const currentIntervention = interventionOptions.find(opt => {
+    const cat = categories.find(c => c.id === props.selectedCategory);
+    return cat?.name.toLowerCase() === opt.toLowerCase();
+  }) || "";
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-background">
@@ -141,23 +186,95 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             Global Filters
           </h3>
+
+          {/* Intervention Toggle */}
+          <div className="mb-4">
+            <ToggleGroup
+              type="single"
+              value={currentIntervention}
+              onValueChange={handleInterventionChange}
+              className="justify-start gap-2"
+            >
+              {interventionOptions.map((option) => (
+                <ToggleGroupItem
+                  key={option}
+                  value={option}
+                  className="px-4 py-2 h-auto text-xs font-medium border data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                >
+                  {option}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+
           <Accordion type="multiple" className="w-full">
             <AccordionItem value="category">
               <AccordionTrigger className="text-sm py-3">Categoría</AccordionTrigger>
               <AccordionContent>
-                <div className="text-sm text-muted-foreground p-2">Category filters placeholder</div>
+                <div className="flex flex-wrap gap-2 pt-2 pb-4">
+                  {categories.map((cat) => (
+                    <Badge
+                      key={cat.id}
+                      variant={props.selectedCategory === cat.id ? "default" : "outline"}
+                      className={cn(
+                        "cursor-pointer hover:bg-primary/20 transition-colors",
+                        props.selectedCategory === cat.id ? "hover:bg-primary/90" : ""
+                      )}
+                      onClick={() => props.onCategoryChange(props.selectedCategory === cat.id ? null : cat.id)}
+                    >
+                      {cat.name}
+                    </Badge>
+                  ))}
+                  {categories.length === 0 && (
+                    <span className="text-xs text-muted-foreground">No categories available</span>
+                  )}
+                </div>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="materiality">
               <AccordionTrigger className="text-sm py-3">Materialidad</AccordionTrigger>
               <AccordionContent>
-                 <div className="text-sm text-muted-foreground p-2">Materiality filters placeholder</div>
+                 <div className="flex flex-wrap gap-2 pt-2 pb-4">
+                  {materialAttributes.map((attr) => (
+                    <Badge
+                      key={attr.id}
+                      variant={props.selectedAttributes.includes(attr.id) ? "default" : "outline"}
+                      className={cn(
+                        "cursor-pointer hover:bg-primary/20 transition-colors",
+                        props.selectedAttributes.includes(attr.id) ? "hover:bg-primary/90" : ""
+                      )}
+                      onClick={() => handleAttributeToggle(attr.id)}
+                    >
+                      {attr.name}
+                    </Badge>
+                  ))}
+                  {materialAttributes.length === 0 && (
+                    <span className="text-xs text-muted-foreground">No materials found</span>
+                  )}
+                 </div>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="context">
               <AccordionTrigger className="text-sm py-3">Contexto</AccordionTrigger>
               <AccordionContent>
-                 <div className="text-sm text-muted-foreground p-2">Context filters placeholder</div>
+                 <div className="flex flex-wrap gap-2 pt-2 pb-4">
+                  {contextAttributes.map((attr) => (
+                    <Badge
+                      key={attr.id}
+                      variant={props.selectedAttributes.includes(attr.id) ? "default" : "outline"}
+                      className={cn(
+                        "cursor-pointer hover:bg-primary/20 transition-colors",
+                        props.selectedAttributes.includes(attr.id) ? "hover:bg-primary/90" : ""
+                      )}
+                      onClick={() => handleAttributeToggle(attr.id)}
+                    >
+                      {attr.name}
+                    </Badge>
+                  ))}
+                  {contextAttributes.length === 0 && (
+                    <span className="text-xs text-muted-foreground">No context attributes found</span>
+                  )}
+                 </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
