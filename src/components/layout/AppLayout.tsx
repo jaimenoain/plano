@@ -1,8 +1,6 @@
 import { ReactNode } from "react";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
-import { AppSidebar } from "./AppSidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
@@ -35,38 +33,35 @@ export function AppLayout({
   showHeader = true
 }: AppLayoutProps) {
   return (
-    <SidebarProvider defaultOpen={false}>
-      <AppSidebar />
-      <SidebarInset>
-        {showHeader && (
-          <div className="md:hidden">
-            <Header
-              title={title}
-              variant={variant}
-              searchBar={searchBar}
-              leftAction={leftAction}
-              rightAction={rightAction}
-              showLogo={showLogo}
-              showBack={showBack}
-              action={headerAction}
-            />
-          </div>
-        )}
-        {/* CHANGED: Reduced max-w-7xl to max-w-5xl to constrain width and make cards shorter */}
-        <div className={cn(
-          showHeader && "pt-16 md:pt-0",
-          "w-full",
-          !isFullScreen && "max-w-5xl mx-auto",
-          showNav && "pb-20 md:pb-0"
-        )}>
-          {children}
+    <>
+      {showHeader && (
+        <div className="md:hidden">
+          <Header
+            title={title}
+            variant={variant}
+            searchBar={searchBar}
+            leftAction={leftAction}
+            rightAction={rightAction}
+            showLogo={showLogo}
+            showBack={showBack}
+            action={headerAction}
+          />
         </div>
-        {showNav && (
-          <div className="md:hidden">
-            <BottomNav />
-          </div>
-        )}
-      </SidebarInset>
-    </SidebarProvider>
+      )}
+      {/* CHANGED: Reduced max-w-7xl to max-w-5xl to constrain width and make cards shorter */}
+      <div className={cn(
+        showHeader && "pt-16 md:pt-0",
+        "w-full",
+        !isFullScreen && "max-w-5xl mx-auto",
+        showNav && "pb-20 md:pb-0"
+      )}>
+        {children}
+      </div>
+      {showNav && (
+        <div className="md:hidden">
+          <BottomNav />
+        </div>
+      )}
+    </>
   );
 }

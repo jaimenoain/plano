@@ -15,7 +15,7 @@ import {
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settings, LogOut } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -90,21 +90,27 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
 }
 
 export function AppSidebar() {
+  const { user } = useAuth();
   const location = useLocation();
   const { state, setOpen, isMobile } = useSidebar();
   const isHoveringRef = useRef(false);
+
   const isMenuOpenRef = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     isHoveringRef.current = true;
     setOpen(true);
   };
 
   const handleMouseLeave = () => {
     isHoveringRef.current = false;
-    if (!isMenuOpenRef.current) {
-      setOpen(false);
-    }
+    timeoutRef.current = setTimeout(() => {
+      if (!isHoveringRef.current && !isMenuOpenRef.current) {
+        setOpen(false);
+      }
+    }, 300);
   };
 
   const handleMenuOpenChange = (open: boolean) => {
@@ -120,6 +126,8 @@ export function AppSidebar() {
         onMouseLeave: handleMouseLeave,
       }
     : {};
+
+  if (!user) return null;
 
   return (
     <Sidebar

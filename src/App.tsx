@@ -69,6 +69,7 @@ import BuildingAudit from "./pages/admin/BuildingAudit";
 import StorageJobs from "./pages/admin/StorageJobs";
 import { AdminGuard } from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
+import { MainLayout } from "./components/layout/MainLayout";
 import Unauthorized from "./pages/admin/Unauthorized";
 
 const queryClient = new QueryClient({
@@ -91,29 +92,18 @@ const RootLayout = () => (
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />}>
-      <Route path="/" element={<Index />} />
+      {/* Public / Standalone Routes */}
       <Route path="/auth" element={<Auth />} />
       <Route path="/update-password" element={<UpdatePassword />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/terms" element={<Terms />} />
-      <Route path="/explore" element={<Explore />} />
-      <Route path="/search" element={<Search />} />
-      <Route path="/map/:username/:slug" element={<CollectionMap />} />
-      <Route path="/post" element={<Post />} />
-      <Route path="/notifications" element={<Notifications />} />
-
-      <Route path="/add-building" element={<AddBuilding />} />
-
-      <Route path="/groups" element={<Groups />} />
-      <Route path="/connect" element={<Connect />} />
-      
-      {/* Admin Route */}
       <Route path="/admin/unauthorized" element={<Unauthorized />} />
 
       {/* Accessible Merge Tools */}
       <Route path="/admin/merge" element={<MergeBuildings />} />
       <Route path="/admin/merge/:targetId/:sourceId" element={<MergeComparison />} />
 
+      {/* Admin Routes */}
       <Route element={
         <AdminGuard>
           <AdminLayout />
@@ -131,55 +121,70 @@ const router = createBrowserRouter(
         <Route path="/admin/system" element={<div>System (Coming Soon)</div>} />
       </Route>
 
-      {/* NESTED GROUP ROUTES */}
-      <Route path="/groups/:slug" element={<GroupLayout />}>
-        <Route index element={<GroupSessions />} />
-        <Route path="cycles" element={<GroupCycles />} />
-        <Route path="cycles/:cycleSlug" element={<CycleDetails />} />
-        <Route path="feed" element={<GroupFeed />} />
-        <Route path="polls" element={<PollsTab />} />
-        <Route path="polls/:pollSlug" element={<PollDetails />} />
-        <Route path="watchlist" element={<GroupBucketList />} />
-        <Route path="pipeline" element={<PipelineTabWrapper />} />
-        <Route path="members" element={<GroupMembers />} />
-        {/* <Route path="stats" element={<GroupStatsView />} /> */}
+      {/* Main App Routes (Wrapped in Sidebar) */}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<Index />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/map/:username/:slug" element={<CollectionMap />} />
+        <Route path="/post" element={<Post />} />
+        <Route path="/notifications" element={<Notifications />} />
+
+        <Route path="/add-building" element={<AddBuilding />} />
+
+        <Route path="/groups" element={<Groups />} />
+        <Route path="/connect" element={<Connect />} />
+
+        {/* NESTED GROUP ROUTES */}
+        <Route path="/groups/:slug" element={<GroupLayout />}>
+          <Route index element={<GroupSessions />} />
+          <Route path="cycles" element={<GroupCycles />} />
+          <Route path="cycles/:cycleSlug" element={<CycleDetails />} />
+          <Route path="feed" element={<GroupFeed />} />
+          <Route path="polls" element={<PollsTab />} />
+          <Route path="polls/:pollSlug" element={<PollDetails />} />
+          <Route path="watchlist" element={<GroupBucketList />} />
+          <Route path="pipeline" element={<PipelineTabWrapper />} />
+          <Route path="members" element={<GroupMembers />} />
+          {/* <Route path="stats" element={<GroupStatsView />} /> */}
+        </Route>
+
+        <Route path="/groups/:slug/session/create" element={<CreateSession />} />
+        <Route path="/groups/:slug/session/:sessionId/edit" element={<CreateSession />} />
+        <Route path="/groups/:slug/live/:pollSlug/admin" element={<LivePollAdmin />} />
+        <Route path="/groups/:slug/live/:pollSlug/projector" element={<LivePollProjector />} />
+        <Route path="/groups/:slug/live/:pollSlug/rapid-review" element={<RapidReview />} />
+        <Route path="/groups/:slug/live/:pollSlug" element={<LivePollParticipant />} />
+        <Route path="/groups/:slug/settings" element={<GroupSettings />} />
+        <Route path="/groups/:slug/sessions/:sessionSlug/:sessionId" element={<GroupLayout />}>
+          <Route index element={<SessionDetails />} />
+        </Route>
+        {/* Fallback for old links */}
+        <Route path="/groups/:slug/sessions/:sessionId" element={<GroupLayout />}>
+          <Route index element={<SessionDetails />} />
+        </Route>
+
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:username" element={<Profile />} />
+        <Route path="/profile/photos" element={<UserPhotoGallery />} />
+        <Route path="/profile/:username/photos" element={<UserPhotoGallery />} />
+        <Route path="/settings" element={<Settings />} />
+
+        <Route path="/building/:id/:slug" element={<BuildingDetails />} />
+        <Route path="/building/:id" element={<BuildingDetails />} />
+
+        <Route path="/building/:id/:slug/edit" element={<EditBuilding />} />
+        <Route path="/building/:id/edit" element={<EditBuilding />} />
+
+        <Route path="/architect/:id" element={<ArchitectDetails />} />
+        <Route path="/architect/:id/edit" element={<EditArchitect />} />
+        {/* Review Flow */}
+        <Route path="/building/:id/:slug/review" element={<WriteReview />} />
+        <Route path="/building/:id/review" element={<WriteReview />} />
+        <Route path="/review/:id" element={<ReviewDetails />} />
+
+        <Route path="*" element={<NotFound />} />
       </Route>
-
-      <Route path="/groups/:slug/session/create" element={<CreateSession />} />
-      <Route path="/groups/:slug/session/:sessionId/edit" element={<CreateSession />} />
-      <Route path="/groups/:slug/live/:pollSlug/admin" element={<LivePollAdmin />} />
-      <Route path="/groups/:slug/live/:pollSlug/projector" element={<LivePollProjector />} />
-      <Route path="/groups/:slug/live/:pollSlug/rapid-review" element={<RapidReview />} />
-      <Route path="/groups/:slug/live/:pollSlug" element={<LivePollParticipant />} />
-      <Route path="/groups/:slug/settings" element={<GroupSettings />} />
-      <Route path="/groups/:slug/sessions/:sessionSlug/:sessionId" element={<GroupLayout />}>
-        <Route index element={<SessionDetails />} />
-      </Route>
-      {/* Fallback for old links */}
-      <Route path="/groups/:slug/sessions/:sessionId" element={<GroupLayout />}>
-        <Route index element={<SessionDetails />} />
-      </Route>
-
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/profile/:username" element={<Profile />} />
-      <Route path="/profile/photos" element={<UserPhotoGallery />} />
-      <Route path="/profile/:username/photos" element={<UserPhotoGallery />} />
-      <Route path="/settings" element={<Settings />} />
-
-      <Route path="/building/:id/:slug" element={<BuildingDetails />} />
-      <Route path="/building/:id" element={<BuildingDetails />} />
-
-      <Route path="/building/:id/:slug/edit" element={<EditBuilding />} />
-      <Route path="/building/:id/edit" element={<EditBuilding />} />
-
-      <Route path="/architect/:id" element={<ArchitectDetails />} />
-      <Route path="/architect/:id/edit" element={<EditArchitect />} />
-      {/* Review Flow */}
-      <Route path="/building/:id/:slug/review" element={<WriteReview />} />
-      <Route path="/building/:id/review" element={<WriteReview />} />
-      <Route path="/review/:id" element={<ReviewDetails />} />
-
-      <Route path="*" element={<NotFound />} />
     </Route>
   )
 );
