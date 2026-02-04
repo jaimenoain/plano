@@ -5,6 +5,14 @@ This is an architecture and mapping application ("Plano").
 * **Domain**: Buildings, Architects, Maps, and Urban Planning.
 * **Entities**: We deal with `Buildings` (not Movies), `Architects` (not Directors), and `Collections`.
 
+**DETECT & RESPECT**
+Before generating any code or plans, you must SCAN the existing file structure to determine the established tech stack.
+1. **Read Configuration:** Check `package.json`, `pyproject.toml`, `go.mod`, or similar logic files to identify dependencies.
+2. **Match Versioning:** Use the exact package manager (e.g., `pnpm`, `yarn`, `pip`, `poetry`) and language versions defined in these files.
+3. **Mimic Patterns:** adopting the code style, folder structure, and naming conventions of existing files.
+
+**DO NOT** assume generic defaults. **DO NOT** create new configuration files (like `requirements.txt` or `.babelrc`) if a different standard (like `pyproject.toml` or `vite.config.ts`) already exists.
+
 ## Supabase Edge Functions & Security
 
 ### Security Policy: The "Manual Gatekeeper" Pattern
