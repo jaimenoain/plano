@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
 import { ShelfDiscover } from "./filters/ShelfDiscover";
+import { ShelfLibrary } from "./filters/ShelfLibrary";
 
 // Define props based on what's used in the sheet content
 export interface FilterDrawerContentProps {
@@ -108,7 +109,17 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                 onCommunityQualityChange={setCommunityQuality}
               />
             )}
-            {activeScope === 'library' && <ShelfLibrary />}
+            {activeScope === 'library' && (
+              <ShelfLibrary
+                statusFilters={props.statusFilters}
+                onStatusFiltersChange={props.onStatusFiltersChange}
+                selectedCollections={props.selectedCollections}
+                onCollectionsChange={props.onCollectionsChange}
+                availableCollections={props.availableCollections}
+                personalMinRating={props.personalMinRating}
+                onPersonalMinRatingChange={props.onPersonalMinRatingChange}
+              />
+            )}
             {activeScope === 'network' && <ShelfNetwork />}
           </motion.div>
         </AnimatePresence>
@@ -142,14 +153,6 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
           </Accordion>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ShelfLibrary() {
-  return (
-    <div className="py-4 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg p-4 flex items-center justify-center h-32">
-      Controls for Library Mode
     </div>
   );
 }
