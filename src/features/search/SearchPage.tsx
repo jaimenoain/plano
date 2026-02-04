@@ -237,6 +237,20 @@ export default function SearchPage() {
     selectedTypologies.length > 0 ||
     selectedAttributes.length > 0;
 
+  // Clear forced camera states when user interacts with map manually
+  const handleMapInteraction = () => {
+    setIgnoreMapBounds(false);
+    setFlyToCenter(null);
+    setFlyToBounds(null);
+  };
+
+  const handleRegionChange = (center: { lat: number, lng: number }) => {
+    updateLocation(center);
+    setFlyToCenter(null);
+    setFlyToBounds(null);
+    setIgnoreMapBounds(false);
+  };
+
   const handleClearAll = () => {
     setStatusFilters([]);
     setHideVisited(false);
@@ -594,9 +608,9 @@ export default function SearchPage() {
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                       <BuildingDiscoveryMap
                         externalBuildings={mapBuildings}
-                        onRegionChange={updateLocation}
+                        onRegionChange={handleRegionChange}
                         onBoundsChange={setMapBounds}
-                        onMapInteraction={() => setIgnoreMapBounds(false)}
+                        onMapInteraction={handleMapInteraction}
                         forcedCenter={flyToCenter}
                         isFetching={isFetching}
                         autoZoomOnLowCount={isDefaultState}
@@ -630,9 +644,9 @@ export default function SearchPage() {
                   <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                     <BuildingDiscoveryMap
                       externalBuildings={mapBuildings}
-                      onRegionChange={updateLocation}
+                      onRegionChange={handleRegionChange}
                       onBoundsChange={setMapBounds}
-                      onMapInteraction={() => setIgnoreMapBounds(false)}
+                      onMapInteraction={handleMapInteraction}
                       forcedCenter={flyToCenter}
                       isFetching={isFetching}
                       autoZoomOnLowCount={isDefaultState}
