@@ -533,7 +533,7 @@ export default function Profile() {
 
   return (
     <div style={{
-      marginLeft: (state === 'collapsed' && !isMobile) ? 'calc(var(--sidebar-width) - var(--sidebar-width-icon))' : '0',
+      marginLeft: (!isMobile) ? 'calc(var(--sidebar-width) - var(--sidebar-width-icon))' : '0',
       transition: 'margin-left 0.2s linear',
       width: 'auto'
     }}>
