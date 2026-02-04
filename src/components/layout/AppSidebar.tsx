@@ -10,6 +10,7 @@ import {
   SidebarFooter,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Activity, Users, User, Play, Search } from "lucide-react";
@@ -26,12 +27,13 @@ const navItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { state } = useSidebar();
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-card/50 backdrop-blur-xl">
       <SidebarHeader>
-        <div className="flex h-12 items-center px-2 group-data-[collapsible=icon]:hidden">
-          <PlanoLogo />
+        <div className="flex h-12 items-center px-2">
+          <PlanoLogo viewBox={state === "collapsed" ? "-30 0 85 85" : undefined} />
         </div>
       </SidebarHeader>
       <SidebarContent>
