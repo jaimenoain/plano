@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 export default function Connect() {
   const { state, isMobile } = useSidebar();
-  const shouldCompensate = !isMobile && state === "collapsed";
+  const shouldCompensate = !isMobile;
 
   return (
     <div className={cn("w-full transition-[padding] duration-200 ease-linear", shouldCompensate && "pl-52")}>

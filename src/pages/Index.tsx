@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
 import { MetaHead } from "@/components/common/MetaHead";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { FeedReview } from "@/types/feed";
@@ -74,6 +75,7 @@ export default function Index() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { isMobile } = useSidebar();
   const [showGroupActivity, setShowGroupActivity] = useState(true);
   const { containerRef: loadMoreRef, isVisible: isLoadMoreVisible } = useIntersectionObserver({
     rootMargin: "200px",
@@ -320,78 +322,84 @@ export default function Index() {
   }
 
   return (
-    <AppLayout variant="home">
-      <MetaHead title="Home" />
-      {isLoading ? (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
-      ) : (
-        <div className="px-2 md:px-6 pt-6 md:pt-8 pb-24 mx-auto w-full">
-          {reviews.length === 0 ? (
-            <EmptyFeed />
-          ) : (
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
-              {/* Feed Column */}
-              <div className="w-full lg:w-2/3 flex flex-col gap-3">
-                {aggregatedReviews.map((item) => {
-                  const key = item.type === 'cluster' ? `cluster-${item.entries[0].id}` : item.entry.id;
+    <div style={{
+      marginLeft: !isMobile ? 'calc(var(--sidebar-width) - var(--sidebar-width-icon))' : '0',
+      transition: 'margin-left 0.2s linear',
+      width: 'auto'
+    }}>
+      <AppLayout variant="home">
+        <MetaHead title="Home" />
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="px-2 md:px-6 pt-6 md:pt-8 pb-24 mx-auto w-full">
+            {reviews.length === 0 ? (
+              <EmptyFeed />
+            ) : (
+              <div className="flex flex-col lg:flex-row gap-8 items-start">
+                {/* Feed Column */}
+                <div className="w-full lg:w-2/3 flex flex-col gap-3">
+                  {aggregatedReviews.map((item) => {
+                    const key = item.type === 'cluster' ? `cluster-${item.entries[0].id}` : item.entry.id;
 
-                  if (item.type === 'hero') {
-                      return <FeedHeroCard key={key} entry={item.entry} onLike={handleLike} onImageLike={handleImageLike} />;
-                  }
-                  if (item.type === 'compact') {
-                      return <FeedCompactCard key={key} entry={item.entry} onLike={handleLike} />;
-                  }
-                  if (item.type === 'cluster') {
-                      return <FeedClusterCard key={key} entries={item.entries} user={item.user} location={item.location} timestamp={item.timestamp} />;
-                  }
-                  return null;
-                })}
+                    if (item.type === 'hero') {
+                        return <FeedHeroCard key={key} entry={item.entry} onLike={handleLike} onImageLike={handleImageLike} />;
+                    }
+                    if (item.type === 'compact') {
+                        return <FeedCompactCard key={key} entry={item.entry} onLike={handleLike} />;
+                    }
+                    if (item.type === 'cluster') {
+                        return <FeedClusterCard key={key} entries={item.entries} user={item.user} location={item.location} timestamp={item.timestamp} />;
+                    }
+                    return null;
+                  })}
 
-                {hasNextPage && (
-                  <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
-                    {isFetchingNextPage ? (
-                      <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
-                    ) : isError ? (
-                      <Button
-                        variant="ghost"
-                        onClick={() => fetchNextPage()}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        Error loading more. Click to retry.
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        onClick={() => fetchNextPage()}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        Load More
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Sidebar Column */}
-              <div className="hidden lg:block lg:w-1/3 sticky top-20">
-                 <div className="space-y-4">
-                    <div className="p-5 border rounded-xl bg-card shadow-sm">
-                       <h3 className="font-semibold mb-2">Trending</h3>
-                       <p className="text-sm text-muted-foreground">
-                         Discover popular buildings and active discussions in the community.
-                         <br/><br/>
-                         (Coming soon)
-                       </p>
+                  {hasNextPage && (
+                    <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
+                      {isFetchingNextPage ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+                      ) : isError ? (
+                        <Button
+                          variant="ghost"
+                          onClick={() => fetchNextPage()}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          Error loading more. Click to retry.
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          onClick={() => fetchNextPage()}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          Load More
+                        </Button>
+                      )}
                     </div>
-                    <PeopleYouMayKnow />
-                 </div>
+                  )}
+                </div>
+
+                {/* Sidebar Column */}
+                <div className="hidden lg:block lg:w-1/3 sticky top-20">
+                   <div className="space-y-4">
+                      <div className="p-5 border rounded-xl bg-card shadow-sm">
+                         <h3 className="font-semibold mb-2">Trending</h3>
+                         <p className="text-sm text-muted-foreground">
+                           Discover popular buildings and active discussions in the community.
+                           <br/><br/>
+                           (Coming soon)
+                         </p>
+                      </div>
+                      <PeopleYouMayKnow />
+                   </div>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      )}
-    </AppLayout>
+            )}
+          </div>
+        )}
+      </AppLayout>
+    </div>
   );
 }
