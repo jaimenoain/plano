@@ -108,6 +108,7 @@ export function BuildingDiscoveryMap({
 }: BuildingDiscoveryMapProps) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
+  const isUserInteractionRef = useRef(false);
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -667,8 +668,11 @@ export function BuildingDiscoveryMap({
         onMoveStart={(evt) => {
             setIsMapMoving(true);
             if (evt.originalEvent) {
+                isUserInteractionRef.current = true;
                 setUserHasInteracted(true);
                 onMapInteraction?.();
+            } else {
+                isUserInteractionRef.current = false;
             }
         }}
         onLoad={evt => {
@@ -677,8 +681,11 @@ export function BuildingDiscoveryMap({
         onMoveEnd={evt => {
             setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;
-            onRegionChange?.({ lat: latitude, lng: longitude });
+            if (isUserInteractionRef.current) {
+                onRegionChange?.({ lat: latitude, lng: longitude });
+            }
             handleMapUpdate(evt.target);
+            isUserInteractionRef.current = false;
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
