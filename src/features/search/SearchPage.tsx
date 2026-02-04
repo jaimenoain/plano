@@ -43,6 +43,7 @@ export default function SearchPage() {
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
+  const [communityQuality, setCommunityQuality] = useState(0);
 
   useEffect(() => {
     if (searchParams.get("open_filters") === "true") {
@@ -266,6 +267,7 @@ export default function SearchPage() {
     setSelectedTypologies([]);
     setSelectedAttributes([]);
     setSelectedContacts([]);
+    setCommunityQuality(0);
   };
 
   const handleUseLocation = async () => {
@@ -509,11 +511,6 @@ export default function SearchPage() {
         <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 flex flex-col h-full">
             <SheetHeader className="p-6 pb-2 flex flex-row items-center justify-between space-y-0">
                 <SheetTitle>Filters</SheetTitle>
-                {hasActiveFilters && (
-                  <Button variant="ghost" size="sm" onClick={handleClearAll} className="h-8 px-2 text-muted-foreground hover:text-foreground">
-                      Clear All
-                  </Button>
-                )}
             </SheetHeader>
 
             <FilterDrawerContent
@@ -538,6 +535,8 @@ export default function SearchPage() {
               onContactMinRatingChange={setContactMinRating}
               selectedContacts={selectedContacts}
               onSelectedContactsChange={setSelectedContacts}
+              communityQuality={communityQuality}
+              onCommunityQualityChange={setCommunityQuality}
               selectedArchitects={selectedArchitects}
               onArchitectsChange={(!searchScope || searchScope === 'content') ? setSelectedArchitects : undefined}
               selectedCategory={selectedCategory}
@@ -548,6 +547,7 @@ export default function SearchPage() {
               onAttributesChange={setSelectedAttributes}
               onShowLeaderboard={() => setShowLeaderboard(true)}
               onClearAll={handleClearAll}
+              resultCount={filteredBuildings.length}
             />
         </SheetContent>
       </Sheet>

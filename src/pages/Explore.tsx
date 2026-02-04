@@ -29,6 +29,7 @@ export default function Explore() {
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
   const [selectedArchitects, setSelectedArchitects] = useState<{ id: string; name: string }[]>([]);
+  const [communityQuality, setCommunityQuality] = useState(0);
 
   // Unused personal filters (kept for compatibility with drawer)
   const [showVisited, setShowVisited] = useState(false);
@@ -76,6 +77,7 @@ export default function Explore() {
     setFilterContacts(false);
     setContactMinRating(0);
     setSelectedContacts([]);
+    setCommunityQuality(0);
   };
 
   const {
@@ -219,11 +221,6 @@ export default function Explore() {
         <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 flex flex-col h-full z-[100]">
             <SheetHeader className="p-6 pb-2 flex flex-row items-center justify-between space-y-0">
                 <SheetTitle>Filters</SheetTitle>
-                {hasActiveFilters && (
-                    <Button variant="ghost" size="sm" onClick={handleClearAll} className="h-8 px-2 text-muted-foreground hover:text-foreground">
-                        Clear All
-                    </Button>
-                )}
             </SheetHeader>
             <FilterDrawerContent
                 showLocationInput={true}
@@ -258,6 +255,9 @@ export default function Explore() {
                 selectedContacts={selectedContacts}
                 onSelectedContactsChange={setSelectedContacts}
 
+                communityQuality={communityQuality}
+                onCommunityQualityChange={setCommunityQuality}
+
                 selectedCollections={[]}
                 onCollectionsChange={() => {}}
                 availableCollections={[]}
@@ -272,6 +272,7 @@ export default function Explore() {
                 onAttributesChange={setSelectedAttributes}
 
                 onClearAll={handleClearAll}
+                resultCount={buildings.length}
             />
         </SheetContent>
 
