@@ -102,7 +102,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-border bg-card/50 backdrop-blur-xl"
+      className="border-r border-border bg-sidebar"
       {...sidebarProps}
     >
       <SidebarHeader>
@@ -127,9 +127,9 @@ export function AppSidebar() {
                       tooltip={item.label}
                       isActive={isActive}
                       className={cn(
-                        "transition-all duration-300 text-base [&>svg]:size-6",
+                        "transition-all duration-200 text-base [&>svg]:size-6 border-2 border-transparent",
                         "group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!mx-auto",
-                        "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-bold"
+                        "data-[active=true]:bg-[#eeff41] data-[active=true]:text-black data-[active=true]:font-bold data-[active=true]:border-black data-[active=true]:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                       )}
                     >
                       <Link to={item.path}>
