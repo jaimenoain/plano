@@ -116,7 +116,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const isUserInteractionRef = useRef(false);
-  const debounceRef = useRef<NodeJS.Timeout>();
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -131,57 +130,48 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
 
   useImperativeHandle(ref, () => ({
     flyTo: (location) => {
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-
         // Sanitize: Explicitly discard (0,0)
         if (location.lat === 0 && location.lng === 0) return;
 
-        debounceRef.current = setTimeout(() => {
-            if (mapRef.current) {
-                mapRef.current.flyTo({
-                    center: [location.lng, location.lat],
-                    zoom: 13,
-                    duration: 1500
-                });
-            }
-        }, 100);
+        if (mapRef.current) {
+            mapRef.current.flyTo({
+                center: [location.lng, location.lat],
+                zoom: 13,
+                duration: 1500
+            });
+        }
     },
     fitBounds: (coordinates) => {
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-
         // Sanitize: Explicitly discard (0,0)
         const validCoords = coordinates.filter(c => !(c.lat === 0 && c.lng === 0));
 
         if (validCoords.length === 0) return;
+        if (!mapRef.current) return;
 
-        debounceRef.current = setTimeout(() => {
-            if (!mapRef.current) return;
+        if (validCoords.length === 1) {
+            mapRef.current.flyTo({
+                center: [validCoords[0].lng, validCoords[0].lat],
+                zoom: 14,
+                duration: 1500
+            });
+        } else {
+            const buildingsForBounds = validCoords.map(c => ({
+                location_lat: c.lat,
+                location_lng: c.lng
+            }));
 
-            if (validCoords.length === 1) {
-                mapRef.current.flyTo({
-                    center: [validCoords[0].lng, validCoords[0].lat],
-                    zoom: 14,
-                    duration: 1500
-                });
-            } else {
-                const buildingsForBounds = validCoords.map(c => ({
-                    location_lat: c.lat,
-                    location_lng: c.lng
-                }));
+            const bounds = getBoundsFromBuildings(buildingsForBounds);
 
-                const bounds = getBoundsFromBuildings(buildingsForBounds);
-
-                if (bounds) {
-                    mapRef.current.fitBounds(
-                        [
-                            [bounds.west, bounds.south],
-                            [bounds.east, bounds.north]
-                        ],
-                        { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
-                    );
-                }
+            if (bounds) {
+                mapRef.current.fitBounds(
+                    [
+                        [bounds.west, bounds.south],
+                        [bounds.east, bounds.north]
+                    ],
+                    { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
+                );
             }
-        }, 100);
+        }
     }
   }));
 

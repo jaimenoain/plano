@@ -229,7 +229,7 @@ const getJsonParam = <T>(param: string | null, defaultVal: T): T => {
   }
 };
 
-export function useBuildingSearch() {
+export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersion?: number } = {}) {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -459,7 +459,8 @@ export function useBuildingSearch() {
         selectedContacts,
         userLocation,
         user?.id,
-        page
+        page,
+        searchTriggerVersion
     ],
     queryFn: async () => {
         // Local filtering mode (My Buildings or Contacts)
