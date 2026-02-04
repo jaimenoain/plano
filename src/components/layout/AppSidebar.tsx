@@ -14,6 +14,7 @@ import {
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Activity, Users, User, Play, Search } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Activity, label: "Feed", path: "/" },
@@ -48,10 +49,13 @@ export function AppSidebar() {
                       asChild
                       tooltip={item.label}
                       isActive={isActive}
-                      className="transition-all duration-300"
+                      className={cn(
+                        "transition-all duration-300",
+                        "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-bold"
+                      )}
                     >
                       <Link to={item.path}>
-                        <item.icon />
+                        <item.icon strokeWidth={isActive ? 2.5 : 2} />
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
