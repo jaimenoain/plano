@@ -43,18 +43,18 @@ export function UserRow({
       className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border/50"
       onClick={() => navigate(`/profile/${user.username?.toLowerCase() || user.id}`)}
     >
-      <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 min-w-0 flex-1">
         <Avatar>
           <AvatarImage src={avatarUrl} />
           <AvatarFallback>{user.username?.charAt(0).toUpperCase() || "?"}</AvatarFallback>
         </Avatar>
-        <div className="flex flex-col">
-          <span className="font-medium text-sm">{user.username || "Unknown User"}</span>
+        <div className="flex flex-col min-w-0">
+          <span className="font-medium text-sm truncate">{user.username || "Unknown User"}</span>
           {mutualFollows && <MutualFacepile users={mutualFollows} />}
         </div>
       </div>
 
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center gap-2 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
         {onToggleCloseFriend && (
           <button
             onClick={onToggleCloseFriend}
