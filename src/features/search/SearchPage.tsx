@@ -20,7 +20,7 @@ import { UserResultsList } from "./components/UserResultsList";
 import { useArchitectSearch } from "./hooks/useArchitectSearch";
 import { ArchitectSearchNudge } from "./components/ArchitectSearchNudge";
 import { ArchitectResultsList } from "./components/ArchitectResultsList";
-import { getBoundsFromBuildings, Bounds } from "@/utils/map";
+import { Bounds } from "@/utils/map";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -156,10 +156,15 @@ export default function SearchPage() {
 
         // Smart Bounds: Only consider top 5 buildings
         const relevantBuildings = buildings.slice(0, 5);
-        const bounds = getBoundsFromBuildings(relevantBuildings);
 
-        if (bounds) {
-            mapRef.current?.fitBounds(bounds);
+        // Pass coordinates directly to fitBounds (sanitization happens inside map)
+        const coordinates = relevantBuildings.map(b => ({
+            lat: b.location_lat,
+            lng: b.location_lng
+        }));
+
+        if (coordinates.length > 0) {
+            mapRef.current?.fitBounds(coordinates);
             shouldRecenterRef.current = false;
         }
     }
@@ -270,13 +275,15 @@ export default function SearchPage() {
         // Check for viewport bounds (e.g. for countries)
         const viewport = results[0].geometry.viewport;
         if (viewport) {
-           const bounds = {
-              north: typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lat() : (viewport as any).northeast.lat,
-              east: typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lng() : (viewport as any).northeast.lng,
-              south: typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lat() : (viewport as any).southwest.lat,
-              west: typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lng() : (viewport as any).southwest.lng,
-           };
-           mapRef.current?.fitBounds(bounds);
+           const north = typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lat() : (viewport as any).northeast.lat;
+           const east = typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lng() : (viewport as any).northeast.lng;
+           const south = typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lat() : (viewport as any).southwest.lat;
+           const west = typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lng() : (viewport as any).southwest.lng;
+
+           mapRef.current?.fitBounds([
+             { lat: north, lng: east },
+             { lat: south, lng: west }
+           ]);
         } else {
            // Feature: Fly to location
            mapRef.current?.flyTo(newLoc);
