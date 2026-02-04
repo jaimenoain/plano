@@ -408,6 +408,7 @@ export default function SearchPage() {
       title="Discovery"
       showLogo={false}
       variant="map"
+      isFullScreen={true}
       searchBar={
         <div className="flex items-center w-full max-w-2xl border rounded-full bg-background shadow-md hover:shadow-lg transition-all p-1 group">
           <Search className="ml-3 h-5 w-5 text-muted-foreground shrink-0" />
@@ -523,7 +524,7 @@ export default function SearchPage() {
       </Sheet>
 
       {/* Container to fit available height within AppLayout */}
-      <div className="flex flex-col h-[calc(100dvh_-_9.5rem_-_env(safe-area-inset-bottom))] w-full">
+      <div className="flex flex-col h-[calc(100dvh_-_9rem)] md:h-[100dvh] w-full">
         {searchScope === 'content' && searchQuery.length >= 3 && (
            <div className="flex flex-col">
              <UserSearchNudge
