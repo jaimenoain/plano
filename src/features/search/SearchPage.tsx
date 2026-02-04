@@ -160,8 +160,11 @@ export default function SearchPage() {
 
   // Automatically fly to bounds of results when in global search mode
   useEffect(() => {
-    if (ignoreMapBounds && buildings.length > 0) {
-      const bounds = getBoundsFromBuildings(buildings);
+    if (ignoreMapBounds && buildings.length > 0 && !flyToCenter) {
+      // Prioritize explicit location: !flyToCenter check
+      // Smart Bounds: Only consider top 5 buildings
+      const relevantBuildings = buildings.slice(0, 5);
+      const bounds = getBoundsFromBuildings(relevantBuildings);
       if (bounds) {
         setFlyToBounds((prev) => {
           if (
@@ -178,7 +181,7 @@ export default function SearchPage() {
         setFlyToCenter(null);
       }
     }
-  }, [buildings, ignoreMapBounds]);
+  }, [buildings, ignoreMapBounds, flyToCenter]);
 
   // 4. Merged Filtering Logic
   const filteredBuildings = useMemo(() => {
@@ -337,22 +340,6 @@ export default function SearchPage() {
       setHasInitialFlyToPerformed(true);
     }
   }, [gpsLocation, searchParams, hasInitialFlyToPerformed]);
-
-  // Check if we are in the default clean state (no search/filters) to enable auto-zoom
-  const isDefaultState = !searchQuery &&
-                         (!statusFilters || statusFilters.length === 0) &&
-                         !hideVisited &&
-                         !hideSaved &&
-                         !hideWithoutImages &&
-                         !filterContacts &&
-                         personalMinRating === 0 &&
-                         contactMinRating === 0 &&
-                         selectedArchitects.length === 0 &&
-                         selectedCollections.length === 0 &&
-                         !selectedCategory &&
-                         selectedTypologies.length === 0 &&
-                         selectedAttributes.length === 0 &&
-                         selectedContacts.length === 0;
 
   const handleSearchFocus = () => {
     setViewMode('list');
@@ -613,7 +600,6 @@ export default function SearchPage() {
                         onMapInteraction={handleMapInteraction}
                         forcedCenter={flyToCenter}
                         isFetching={isFetching}
-                        autoZoomOnLowCount={isDefaultState}
                         forcedBounds={flyToBounds}
                         onHide={handleHide}
                         onSave={handleSave}
@@ -649,7 +635,6 @@ export default function SearchPage() {
                       onMapInteraction={handleMapInteraction}
                       forcedCenter={flyToCenter}
                       isFetching={isFetching}
-                      autoZoomOnLowCount={isDefaultState}
                       forcedBounds={flyToBounds}
                       onHide={handleHide}
                       onSave={handleSave}
