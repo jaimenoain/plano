@@ -66,7 +66,6 @@ interface BuildingDiscoveryMapProps {
   forcedCenter?: { lat: number, lng: number } | null;
   forcedBounds?: Bounds | null;
   isFetching?: boolean;
-  resetInteractionTrigger?: number;
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
   showImages?: boolean;
@@ -90,7 +89,6 @@ export function BuildingDiscoveryMap({
   forcedCenter,
   forcedBounds,
   isFetching,
-  resetInteractionTrigger,
   highlightedId,
   onMarkerClick,
   showImages = true,

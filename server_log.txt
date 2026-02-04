@@ -3,7 +3,7 @@
 > vite
 
 
-  VITE v5.4.21  ready in 384 ms
+  VITE v5.4.21  ready in 539 ms
 
   ➜  Local:   http://localhost:8080/
   ➜  Network: http://192.168.0.2:8080/
