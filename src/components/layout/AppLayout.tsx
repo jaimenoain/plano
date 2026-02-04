@@ -35,7 +35,7 @@ export function AppLayout({
   showHeader = true
 }: AppLayoutProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset>
         {showHeader && (
