@@ -9,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { ArchitectSelect } from "@/features/search/components/ArchitectSelect";
 import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
 import { ShelfDiscover } from "./filters/ShelfDiscover";
 import { ShelfLibrary } from "./filters/ShelfLibrary";
@@ -128,6 +129,15 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
       {/* Shelf 3: Global DNA */}
       <div className="border-t bg-muted/20">
         <div className="px-6 py-4">
+          <div className="mb-4">
+            <label className="text-sm font-medium mb-1.5 block">Arquitectos</label>
+            <ArchitectSelect
+              selectedArchitects={props.selectedArchitects || []}
+              setSelectedArchitects={props.onArchitectsChange || (() => {})}
+              placeholder="Buscar arquitectos..."
+              className="w-full"
+            />
+          </div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             Global Filters
           </h3>
