@@ -83,6 +83,9 @@ export interface FilterDrawerContentProps {
 
 type Scope = 'discover' | 'library' | 'network';
 
+const MotionButton = motion(Button);
+const MotionBadge = motion(Badge);
+
 export function FilterDrawerContent(props: FilterDrawerContentProps) {
   const [activeScope, setActiveScope] = useState<Scope>('discover');
 
@@ -146,10 +149,10 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeScope}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
             >
               {activeScope === 'discover' && (
                 <ShelfDiscover
@@ -217,9 +220,10 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                 <AccordionContent>
                   <div className="flex flex-wrap gap-2 pt-2 pb-4">
                     {categories.map((cat) => (
-                      <Badge
+                      <MotionBadge
                         key={cat.id}
                         variant={props.selectedCategory === cat.id ? "default" : "outline"}
+                        whileTap={{ scale: 0.95 }}
                         className={cn(
                           "cursor-pointer hover:bg-primary/20 transition-colors",
                           props.selectedCategory === cat.id ? "hover:bg-primary/90" : ""
@@ -227,7 +231,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                         onClick={() => props.onCategoryChange(props.selectedCategory === cat.id ? null : cat.id)}
                       >
                         {cat.name}
-                      </Badge>
+                      </MotionBadge>
                     ))}
                     {categories.length === 0 && (
                       <span className="text-xs text-muted-foreground">No categories available</span>
@@ -240,9 +244,10 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                 <AccordionContent>
                    <div className="flex flex-wrap gap-2 pt-2 pb-4">
                     {materialAttributes.map((attr) => (
-                      <Badge
+                      <MotionBadge
                         key={attr.id}
                         variant={props.selectedAttributes.includes(attr.id) ? "default" : "outline"}
+                        whileTap={{ scale: 0.95 }}
                         className={cn(
                           "cursor-pointer hover:bg-primary/20 transition-colors",
                           props.selectedAttributes.includes(attr.id) ? "hover:bg-primary/90" : ""
@@ -250,7 +255,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                         onClick={() => handleAttributeToggle(attr.id)}
                       >
                         {attr.name}
-                      </Badge>
+                      </MotionBadge>
                     ))}
                     {materialAttributes.length === 0 && (
                       <span className="text-xs text-muted-foreground">No materials found</span>
@@ -263,9 +268,10 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                 <AccordionContent>
                    <div className="flex flex-wrap gap-2 pt-2 pb-4">
                     {contextAttributes.map((attr) => (
-                      <Badge
+                      <MotionBadge
                         key={attr.id}
                         variant={props.selectedAttributes.includes(attr.id) ? "default" : "outline"}
+                        whileTap={{ scale: 0.95 }}
                         className={cn(
                           "cursor-pointer hover:bg-primary/20 transition-colors",
                           props.selectedAttributes.includes(attr.id) ? "hover:bg-primary/90" : ""
@@ -273,7 +279,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                         onClick={() => handleAttributeToggle(attr.id)}
                       >
                         {attr.name}
-                      </Badge>
+                      </MotionBadge>
                     ))}
                     {contextAttributes.length === 0 && (
                       <span className="text-xs text-muted-foreground">No context attributes found</span>
@@ -296,12 +302,13 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
           >
             Clear All
           </Button>
-          <Button
+          <MotionButton
             className="flex-1"
             onClick={() => {}}
+            whileTap={{ scale: 0.97 }}
           >
             Show {props.resultCount !== undefined ? props.resultCount : ''} Results
-          </Button>
+          </MotionButton>
         </div>
       </div>
     </div>
