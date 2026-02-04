@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export type SearchScope = 'content' | 'users' | 'architects';
 
@@ -35,6 +36,7 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { state, isMobile } = useSidebar();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [searchScope, setSearchScope] = useState<SearchScope>('content');
   const [searchParams] = useSearchParams();
@@ -460,14 +462,21 @@ export default function SearchPage() {
   );
 
   return (
-    <AppLayout
-      title="Discovery"
-      showLogo={false}
-      variant="map"
-      isFullScreen={true}
-      searchBar={searchBar}
+    <div
+      style={{
+        marginLeft: state === "expanded" && !isMobile ? "calc(var(--sidebar-width) - var(--sidebar-width-icon))" : "0",
+        transition: "margin-left 0.2s linear",
+        width: "auto",
+      }}
     >
-      <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
+      <AppLayout
+        title="Discovery"
+        showLogo={false}
+        variant="map"
+        isFullScreen={true}
+        searchBar={searchBar}
+      >
+        <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
         <DialogContent className="top-[20%] translate-y-0 gap-4">
             <DialogHeader>
               <DialogTitle>Search Location</DialogTitle>
@@ -647,6 +656,7 @@ export default function SearchPage() {
           )}
         </div>
       </div>
-    </AppLayout>
+      </AppLayout>
+    </div>
   );
 }
