@@ -964,6 +964,7 @@ export default function CollectionMap() {
                 <AddBuildingsToCollectionDialog
                     collectionId={collection.id}
                     existingBuildingIds={existingBuildingIds}
+                    existingBuildings={mapBuildings.filter(b => !b.isMarker)}
                     hiddenBuildingIds={hiddenBuildingIds}
                     open={showAddBuildings}
                     onOpenChange={setShowAddBuildings}

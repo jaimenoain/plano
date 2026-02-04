@@ -16,6 +16,7 @@ import { DiscoveryList } from "@/features/search/components/DiscoveryList";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
+import { parseLocation } from "@/utils/location";
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
@@ -34,6 +35,7 @@ import { cn } from "@/lib/utils";
 interface AddBuildingsToCollectionDialogProps {
   collectionId: string;
   existingBuildingIds: Set<string>;
+  existingBuildings?: DiscoveryBuilding[];
   hiddenBuildingIds?: Set<string>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -238,6 +240,7 @@ interface UserBuildingResponse {
     country: string | null;
     address: string | null;
     slug: string | null;
+    location: unknown | null;
     hero_image_url: string | null;
     year_completed: number | null;
     building_architects: {
@@ -252,6 +255,7 @@ interface UserBuildingResponse {
 export function AddBuildingsToCollectionDialog({
   collectionId,
   existingBuildingIds,
+  existingBuildings,
   hiddenBuildingIds,
   open,
   onOpenChange,
@@ -297,6 +301,7 @@ export function AddBuildingsToCollectionDialog({
             country,
             address,
             slug,
+            location,
             hero_image_url,
             year_completed,
             building_architects(architect:architects(id, name))
@@ -312,13 +317,14 @@ export function AddBuildingsToCollectionDialog({
         .filter(item => item.building) // Ensure building exists
         .map((item) => {
           const b = item.building!;
+          const location = parseLocation(b.location);
           return {
             ...b,
             rating: item.rating,
             main_image_url: b.hero_image_url ? getBuildingImageUrl(b.hero_image_url) : null,
             architects: b.building_architects?.map((ba) => ba.architect).filter(Boolean) || [],
-            location_lat: 0,
-            location_lng: 0,
+            location_lat: location?.lat || 0,
+            location_lng: location?.lng || 0,
             styles: [],
           };
       });
@@ -365,14 +371,38 @@ export function AddBuildingsToCollectionDialog({
   const filteredBuildings = useMemo(() => {
     if (!buildings) return [];
 
-    let result = buildings;
+    // Create a copy to sort
+    let result = [...buildings];
 
     if (hiddenBuildingIds && hiddenBuildingIds.size > 0) {
         result = result.filter((b) => !hiddenBuildingIds.has(b.id));
     }
 
+    // Sort by distance if no search query and existing buildings are present
+    if (!debouncedSearchQuery && existingBuildings && existingBuildings.length > 0) {
+      const validExisting = existingBuildings.filter(b => b.location_lat !== 0 || b.location_lng !== 0);
+
+      if (validExisting.length > 0) {
+        const sum = validExisting.reduce(
+          (acc, b) => ({ lat: acc.lat + b.location_lat, lng: acc.lng + b.location_lng }),
+          { lat: 0, lng: 0 }
+        );
+        const centroid = { lat: sum.lat / validExisting.length, lng: sum.lng / validExisting.length };
+
+        result.sort((a, b) => {
+            // Push items with invalid location to the end
+            if ((a.location_lat === 0 && a.location_lng === 0)) return 1;
+            if ((b.location_lat === 0 && b.location_lng === 0)) return -1;
+
+            const distA = Math.pow(a.location_lat - centroid.lat, 2) + Math.pow(a.location_lng - centroid.lng, 2);
+            const distB = Math.pow(b.location_lat - centroid.lat, 2) + Math.pow(b.location_lng - centroid.lng, 2);
+            return distA - distB;
+        });
+      }
+    }
+
     return result;
-  }, [buildings, hiddenBuildingIds]);
+  }, [buildings, hiddenBuildingIds, existingBuildings, debouncedSearchQuery]);
 
   const hideMutation = useMutation({
       mutationFn: async (buildingId: string) => {
