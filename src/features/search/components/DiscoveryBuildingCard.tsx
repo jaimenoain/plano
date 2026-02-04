@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Users, EyeOff, Circle } from "lucide-react";
+import { MapPin, EyeOff, Circle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DiscoveryBuilding, ContactInteraction } from "./types";
 import { cn } from "@/lib/utils";
@@ -99,12 +99,6 @@ export function DiscoveryBuildingCard({
                       ))}
                    </div>
                 )}
-              </Badge>
-            )}
-            {socialContext && (!building.contact_visitors || building.contact_visitors.length === 0) && (
-              <Badge variant="secondary" className="flex items-center gap-1 font-normal bg-primary/10 text-primary hover:bg-primary/20 text-xs px-2 py-0.5 h-auto">
-                <Users className="h-3 w-3" />
-                {socialContext}
               </Badge>
             )}
             {(building.status === 'Demolished' || building.status === 'Unbuilt') && (
