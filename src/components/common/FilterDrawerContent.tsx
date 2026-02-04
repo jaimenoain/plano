@@ -108,7 +108,10 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
   };
 
   // Intervention Logic
-  const interventionOptions = ["Obra Nueva", "Rehabilitación"];
+  const interventionOptions = [
+    { label: "New Construction", value: "Obra Nueva" },
+    { label: "Rehabilitation", value: "Rehabilitación" },
+  ];
 
   const handleInterventionChange = (value: string) => {
     if (!value) return;
@@ -123,8 +126,8 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
   // Determine current intervention value based on selectedCategory
   const currentIntervention = interventionOptions.find(opt => {
     const cat = categories.find(c => c.id === props.selectedCategory);
-    return cat?.name.toLowerCase() === opt.toLowerCase();
-  }) || "";
+    return cat?.name.toLowerCase() === opt.value.toLowerCase();
+  })?.value || "";
 
   return (
     <div className="flex flex-col flex-1 w-full relative overflow-hidden bg-background">
@@ -132,9 +135,9 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
       <div className="px-6 pt-6 pb-4 flex-none">
         <SegmentedControl
           options={[
-            { label: 'Descubrir', value: 'discover' },
-            { label: 'Mi Biblioteca', value: 'library' },
-            { label: 'Mi Red', value: 'network' },
+            { label: 'Discover', value: 'discover' },
+            { label: 'My Library', value: 'library' },
+            { label: 'My Network', value: 'network' },
           ]}
           value={activeScope}
           onValueChange={(val) => setActiveScope(val as Scope)}
@@ -182,11 +185,11 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
         <div className="border-t bg-muted/20">
           <div className="px-6 py-4">
             <div className="mb-4">
-              <label className="text-sm font-medium mb-1.5 block">Arquitectos</label>
+              <label className="text-sm font-medium mb-1.5 block">Architects</label>
               <ArchitectSelect
                 selectedArchitects={props.selectedArchitects || []}
                 setSelectedArchitects={props.onArchitectsChange || (() => {})}
-                placeholder="Buscar arquitectos..."
+                placeholder="Search architects..."
                 className="w-full"
               />
             </div>
@@ -204,11 +207,11 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
               >
                 {interventionOptions.map((option) => (
                   <ToggleGroupItem
-                    key={option}
-                    value={option}
+                    key={option.value}
+                    value={option.value}
                     className="px-4 py-2 h-auto text-xs font-medium border data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                   >
-                    {option}
+                    {option.label}
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
@@ -216,7 +219,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
 
             <Accordion type="multiple" className="w-full">
               <AccordionItem value="category">
-                <AccordionTrigger className="text-sm py-3">Categoría</AccordionTrigger>
+                <AccordionTrigger className="text-sm py-3">Category</AccordionTrigger>
                 <AccordionContent>
                   <div className="flex flex-wrap gap-2 pt-2 pb-4">
                     {categories.map((cat) => (
@@ -240,7 +243,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="materiality">
-                <AccordionTrigger className="text-sm py-3">Materialidad</AccordionTrigger>
+                <AccordionTrigger className="text-sm py-3">Materiality</AccordionTrigger>
                 <AccordionContent>
                    <div className="flex flex-wrap gap-2 pt-2 pb-4">
                     {materialAttributes.map((attr) => (
@@ -264,7 +267,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="context">
-                <AccordionTrigger className="text-sm py-3">Contexto</AccordionTrigger>
+                <AccordionTrigger className="text-sm py-3">Context</AccordionTrigger>
                 <AccordionContent>
                    <div className="flex flex-wrap gap-2 pt-2 pb-4">
                     {contextAttributes.map((attr) => (

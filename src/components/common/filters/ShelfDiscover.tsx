@@ -24,7 +24,7 @@ export function ShelfDiscover({
       {/* Filter 1: New Only */}
       <div className="flex items-center justify-between">
         <Label htmlFor="hide-saved" className="text-sm font-medium">
-          Ocultar mis edificios guardados
+          Hide my saved buildings
         </Label>
         <Switch
           id="hide-saved"
@@ -36,7 +36,7 @@ export function ShelfDiscover({
       {/* Filter 2: Community Quality */}
       <div className="flex flex-col gap-4">
         <Label className="text-sm font-medium">
-          Mostrar solo lo mejor
+          Show only the best
         </Label>
         <div className="px-1">
           <Slider
@@ -49,9 +49,9 @@ export function ShelfDiscover({
           />
         </div>
         <div className="flex justify-between text-xs text-muted-foreground px-1">
-          <span>Todos</span>
-          <span>Destacados ★</span>
-          <span>Iconos ★★★</span>
+          <span>All</span>
+          <span>Featured ★</span>
+          <span>Icons ★★★</span>
         </div>
       </div>
     </div>
