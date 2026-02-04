@@ -145,29 +145,24 @@ export default function SearchPage() {
 
   // Handle Explicit Search Fly
   useEffect(() => {
-    if (isLoading || isFetching || isPlaceholderData) {
-        return;
+    if (!isFetching && !isPlaceholderData && buildings.length > 0) {
+       if (searchTriggerVersion > lastHandledVersionRef.current) {
+          lastHandledVersionRef.current = searchTriggerVersion;
+
+          // Smart Bounds: Only consider top 5 buildings
+          const relevantBuildings = buildings.slice(0, 5);
+
+          const coordinates = relevantBuildings.map(b => ({
+              lat: b.location_lat,
+              lng: b.location_lng
+          }));
+
+          if (coordinates.length > 0) {
+              mapRef.current?.fitBounds(coordinates);
+          }
+       }
     }
-
-    if (buildings.length > 0) {
-        if (searchTriggerVersion > lastHandledVersionRef.current) {
-            lastHandledVersionRef.current = searchTriggerVersion;
-
-            // Smart Bounds: Only consider top 5 buildings
-            const relevantBuildings = buildings.slice(0, 5);
-
-            // Pass coordinates directly to fitBounds (sanitization happens inside map)
-            const coordinates = relevantBuildings.map(b => ({
-                lat: b.location_lat,
-                lng: b.location_lng
-            }));
-
-            if (coordinates.length > 0) {
-                mapRef.current?.fitBounds(coordinates);
-            }
-        }
-    }
-  }, [buildings, isFetching, isLoading, isPlaceholderData, searchTriggerVersion]);
+  }, [buildings, isFetching, isPlaceholderData, searchTriggerVersion]);
 
 
   // 4. Merged Filtering Logic
@@ -230,6 +225,10 @@ export default function SearchPage() {
 
   const handleRegionChange = (center: { lat: number, lng: number }) => {
     updateLocation(center);
+  };
+
+  const handleMarkerClick = (buildingId: string) => {
+    navigate(`/building/${buildingId}`);
   };
 
   const handleClearAll = () => {
@@ -585,80 +584,80 @@ export default function SearchPage() {
              <div className="h-full w-full overflow-y-auto bg-background p-0">
                <ArchitectResultsList architects={foundArchitects} isLoading={isArchitectSearchLoading} />
              </div>
-          ) : (
-            <>
-              {/* Mobile View */}
-              <div className="md:hidden h-full w-full relative">
-                <SearchModeToggle
-                  mode={viewMode}
-                  onModeChange={handleViewModeChange}
-                  className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50"
-                />
+          ) : isMobile ? (
+            /* Mobile View */
+            <div className="h-full w-full relative">
+              <SearchModeToggle
+                mode={viewMode}
+                onModeChange={handleViewModeChange}
+                className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50"
+              />
 
-                {viewMode === 'list' ? (
-                  <div className="h-full overflow-y-auto bg-background pb-20">
-                    <DiscoveryList
-                      buildings={filteredBuildings}
-                      isLoading={isLoading}
-                      currentLocation={userLocation}
-                      itemTarget="_blank"
-                      searchQuery={searchQuery}
-                    />
-                  </div>
-                ) : (
-                  <div className="h-full w-full">
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
-                      <BuildingDiscoveryMap
-                        ref={isMobile ? mapRef : undefined}
-                        externalBuildings={mapBuildings}
-                        onRegionChange={handleRegionChange}
-                        onBoundsChange={setMapBounds}
-                        onMapInteraction={handleMapInteraction}
-                        onMapLoad={handleMapLoad}
-                        isFetching={isFetching}
-                        onHide={handleHide}
-                        onSave={handleSave}
-                        onVisit={handleVisit}
-                      />
-                    </Suspense>
-                  </div>
-                )}
-              </div>
-
-              {/* Desktop Split View */}
-              <div className="hidden md:grid grid-cols-12 h-full w-full">
-                <div className="col-span-5 lg:col-span-4 h-full flex flex-col border-r bg-background/50 backdrop-blur-sm z-10">
-                  <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20 border-b">
-                    {searchBar}
-                  </div>
-                  <div className="flex-1 overflow-y-auto pb-4">
-                    <DiscoveryList
-                      buildings={filteredBuildings}
-                      isLoading={isLoading}
-                      currentLocation={userLocation}
-                      itemTarget="_blank"
-                      searchQuery={searchQuery}
-                    />
-                  </div>
+              {viewMode === 'list' ? (
+                <div className="h-full overflow-y-auto bg-background pb-20">
+                  <DiscoveryList
+                    buildings={filteredBuildings}
+                    isLoading={isLoading}
+                    currentLocation={userLocation}
+                    itemTarget="_blank"
+                    searchQuery={searchQuery}
+                  />
                 </div>
-                <div className="col-span-7 lg:col-span-8 h-full relative">
+              ) : (
+                <div className="h-full w-full">
                   <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                     <BuildingDiscoveryMap
-                      ref={!isMobile ? mapRef : undefined}
+                      ref={mapRef}
                       externalBuildings={mapBuildings}
                       onRegionChange={handleRegionChange}
                       onBoundsChange={setMapBounds}
                       onMapInteraction={handleMapInteraction}
                       onMapLoad={handleMapLoad}
                       isFetching={isFetching}
+                      onMarkerClick={handleMarkerClick}
                       onHide={handleHide}
                       onSave={handleSave}
                       onVisit={handleVisit}
                     />
                   </Suspense>
                 </div>
+              )}
+            </div>
+          ) : (
+            /* Desktop Split View */
+            <div className="grid grid-cols-12 h-full w-full">
+              <div className="col-span-5 lg:col-span-4 h-full flex flex-col border-r bg-background/50 backdrop-blur-sm z-10">
+                <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20 border-b">
+                  {searchBar}
+                </div>
+                <div className="flex-1 overflow-y-auto pb-4">
+                  <DiscoveryList
+                    buildings={filteredBuildings}
+                    isLoading={isLoading}
+                    currentLocation={userLocation}
+                    itemTarget="_blank"
+                    searchQuery={searchQuery}
+                  />
+                </div>
               </div>
-            </>
+              <div className="col-span-7 lg:col-span-8 h-full relative">
+                <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+                  <BuildingDiscoveryMap
+                    ref={mapRef}
+                    externalBuildings={mapBuildings}
+                    onRegionChange={handleRegionChange}
+                    onBoundsChange={setMapBounds}
+                    onMapInteraction={handleMapInteraction}
+                    onMapLoad={handleMapLoad}
+                    isFetching={isFetching}
+                    onMarkerClick={handleMarkerClick}
+                    onHide={handleHide}
+                    onSave={handleSave}
+                    onVisit={handleVisit}
+                  />
+                </Suspense>
+              </div>
+            </div>
           )}
         </div>
       </div>
