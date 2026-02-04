@@ -16,12 +16,14 @@ import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
 import { ExploreTutorial } from "@/features/search/components/ExploreTutorial";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export default function Explore() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { profile } = useUserProfile();
+  const { state, isMobile } = useSidebar();
 
   // Filter States
   const [cityFilter, setCityFilter] = useState<string | null>(null);
@@ -190,9 +192,16 @@ export default function Explore() {
 
   return (
     <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-      <AppLayout
-        isFullScreen
-        showHeader={false}
+      <div
+        style={{
+          marginLeft: state === "expanded" && !isMobile ? "calc(var(--sidebar-width) - var(--sidebar-width-icon))" : "0",
+          transition: "margin-left 0.2s linear",
+          width: "auto",
+        }}
+      >
+        <AppLayout
+          isFullScreen
+          showHeader={false}
         variant="map"
         searchBar={
           <div className="relative w-full max-w-sm">
@@ -278,10 +287,10 @@ export default function Explore() {
 
         {showTutorial && <ExploreTutorial onComplete={() => setShowTutorial(false)} />}
 
-        {/* Vertical Snap Container */}
-        <div className="relative h-[calc(100vh-80px)] md:h-screen w-full bg-black text-white overflow-hidden">
-          <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar">
-            {status === 'pending' ? (
+          {/* Vertical Snap Container */}
+          <div className="relative h-[calc(100vh-80px)] md:h-screen w-full bg-black text-white overflow-hidden">
+            <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar">
+              {status === "pending" ? (
                 <div className="h-full w-full flex items-center justify-center snap-center">
                     <Loader2 className="h-8 w-8 animate-spin text-white" />
                 </div>
@@ -309,15 +318,16 @@ export default function Explore() {
                 ))
             )}
 
-            {/* Infinite Scroll Trigger */}
-            {(hasNextPage || isFetchingNextPage) && (
+              {/* Infinite Scroll Trigger */}
+              {(hasNextPage || isFetchingNextPage) && (
                 <div ref={containerRef as any} className="h-20 w-full flex justify-center items-center p-4 snap-end">
-                    {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin text-white/50" />}
+                  {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin text-white/50" />}
                 </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      </AppLayout>
+        </AppLayout>
+      </div>
     </Sheet>
   );
 }
