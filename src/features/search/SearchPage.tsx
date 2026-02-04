@@ -231,7 +231,8 @@ export default function SearchPage() {
 
   // Clear forced camera states when user interacts with map manually
   const handleMapInteraction = () => {
-    // No-op for imperative camera control
+    // Abort any pending recenter command if the user takes control
+    shouldRecenterRef.current = false;
   };
 
   const handleRegionChange = (center: { lat: number, lng: number }) => {
