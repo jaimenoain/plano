@@ -179,7 +179,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarTrigger />
+        <SidebarTrigger className="group-data-[collapsible=icon]:!mx-auto" />
         <UserMenu onOpenChange={handleMenuOpenChange} />
       </SidebarFooter>
       <SidebarRail />
