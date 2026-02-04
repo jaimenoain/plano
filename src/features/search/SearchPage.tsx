@@ -50,7 +50,8 @@ export default function SearchPage() {
 
   // Ref for imperative map control
   const mapRef = useRef<BuildingDiscoveryMapHandle>(null);
-  const shouldRecenterRef = useRef(false);
+  const [searchTriggerVersion, setSearchTriggerVersion] = useState(0);
+  const lastHandledVersionRef = useRef(0);
 
   useEffect(() => {
     if (searchParams.get("open_filters") === "true") {
@@ -80,7 +81,7 @@ export default function SearchPage() {
     userLocation, updateLocation,
     buildings, debouncedQuery, isLoading, isFetching, isPlaceholderData,
     requestLocation, gpsLocation
-  } = useBuildingSearch();
+  } = useBuildingSearch({ searchTriggerVersion });
 
   // 2. New State (Merged Feature + Main)
 
@@ -120,7 +121,7 @@ export default function SearchPage() {
 
   // Command-Based Search Logic
   const triggerExplicitSearch = () => {
-    shouldRecenterRef.current = true;
+    setSearchTriggerVersion(v => v + 1);
   };
 
   // Wrapped Setters for Filters to trigger map move
@@ -144,36 +145,29 @@ export default function SearchPage() {
 
   // Handle Explicit Search Fly
   useEffect(() => {
-    // Check if we have a pending search command that hasn't been handled yet
-    if (!shouldRecenterRef.current) return;
-
-    // Wait until data is not fetching and is synced
-    const isQuerySynced = debouncedQuery === searchQuery;
-    if (isLoading || isFetching || isPlaceholderData || !isQuerySynced) {
+    if (isLoading || isFetching || isPlaceholderData) {
         return;
     }
 
-    // Data is ready. Try to move map if we have results.
     if (buildings.length > 0) {
-        // Smart Bounds: Only consider top 5 buildings
-        const relevantBuildings = buildings.slice(0, 5);
+        if (searchTriggerVersion > lastHandledVersionRef.current) {
+            lastHandledVersionRef.current = searchTriggerVersion;
 
-        // Pass coordinates directly to fitBounds (sanitization happens inside map)
-        const coordinates = relevantBuildings.map(b => ({
-            lat: b.location_lat,
-            lng: b.location_lng
-        }));
+            // Smart Bounds: Only consider top 5 buildings
+            const relevantBuildings = buildings.slice(0, 5);
 
-        if (coordinates.length > 0) {
-            mapRef.current?.fitBounds(coordinates);
+            // Pass coordinates directly to fitBounds (sanitization happens inside map)
+            const coordinates = relevantBuildings.map(b => ({
+                lat: b.location_lat,
+                lng: b.location_lng
+            }));
+
+            if (coordinates.length > 0) {
+                mapRef.current?.fitBounds(coordinates);
+            }
         }
     }
-
-    // Always consume the command once the data is settled,
-    // even if no buildings were found or no move happened.
-    // This prevents "ghost movements" on future data updates.
-    shouldRecenterRef.current = false;
-  }, [buildings, isFetching, isLoading, isPlaceholderData, debouncedQuery, searchQuery]);
+  }, [buildings, isFetching, isLoading, isPlaceholderData, searchTriggerVersion]);
 
 
   // 4. Merged Filtering Logic
@@ -231,8 +225,7 @@ export default function SearchPage() {
 
   // Clear forced camera states when user interacts with map manually
   const handleMapInteraction = () => {
-    // Abort any pending recenter command if the user takes control
-    shouldRecenterRef.current = false;
+    // No-op: Versioning handles this automatically
   };
 
   const handleRegionChange = (center: { lat: number, lng: number }) => {
