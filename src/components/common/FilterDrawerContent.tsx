@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
+import { ShelfDiscover } from "./filters/ShelfDiscover";
 
 // Define props based on what's used in the sheet content
 export interface FilterDrawerContentProps {
@@ -70,6 +71,7 @@ type Scope = 'discover' | 'library' | 'network';
 
 export function FilterDrawerContent(props: FilterDrawerContentProps) {
   const [activeScope, setActiveScope] = useState<Scope>('discover');
+  const [communityQuality, setCommunityQuality] = useState(0);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-background">
@@ -98,7 +100,14 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
             transition={{ duration: 0.2 }}
             className="h-full"
           >
-            {activeScope === 'discover' && <ShelfDiscover />}
+            {activeScope === 'discover' && (
+              <ShelfDiscover
+                hideSaved={props.hideSaved}
+                onHideSavedChange={props.onHideSavedChange}
+                communityQuality={communityQuality}
+                onCommunityQualityChange={setCommunityQuality}
+              />
+            )}
             {activeScope === 'library' && <ShelfLibrary />}
             {activeScope === 'network' && <ShelfNetwork />}
           </motion.div>
@@ -133,14 +142,6 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
           </Accordion>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ShelfDiscover() {
-  return (
-    <div className="py-4 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg p-4 flex items-center justify-center h-32">
-      Controls for Discover Mode
     </div>
   );
 }
