@@ -1,14 +1,14 @@
-import React from 'react';
+import type { SVGProps } from 'react';
 import { cn } from "@/lib/utils";
 
-interface PlanoLogoProps extends React.SVGProps<SVGSVGElement> {
+interface PlanoLogoProps extends SVGProps<SVGSVGElement> {
   className?: string;
 }
 
-export const PlanoLogo = ({ className, ...props }: PlanoLogoProps) => {
+export const PlanoLogo = ({ className, viewBox = "-30 0 358.401 85", ...props }: PlanoLogoProps) => {
   return (
     <svg
-      viewBox="-30 0 358.401 85"
+      viewBox={viewBox}
       xmlns="http://www.w3.org/2000/svg"
       className={cn("w-full h-auto", className)}
       aria-label="PLANO Logo"
