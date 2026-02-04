@@ -49,10 +49,11 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       asChild
+                      size="lg"
                       tooltip={item.label}
                       isActive={isActive}
                       className={cn(
-                        "transition-all duration-300",
+                        "transition-all duration-300 text-base [&>svg]:size-6",
                         "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-bold"
                       )}
                     >
