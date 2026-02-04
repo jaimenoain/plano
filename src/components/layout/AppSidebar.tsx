@@ -13,17 +13,80 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
-import { Activity, Users, User, Play, Search } from "lucide-react";
+import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settings, LogOut } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
   { icon: Activity, label: "Feed", path: "/" },
   { icon: Play, label: "Explore", path: "/explore" },
   { icon: Search, label: "Search", path: "/search" },
   { icon: Users, label: "Connect", path: "/connect" },
-  { icon: User, label: "You", path: "/profile" },
+  { icon: UserIcon, label: "You", path: "/profile" },
 ];
+
+function UserMenu() {
+  const { user, signOut } = useAuth();
+  const { profile } = useUserProfile();
+  const { isMobile } = useSidebar();
+
+  if (!user) return null;
+
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={profile?.avatar_url || ""} alt={profile?.username || user.email || ""} />
+                <AvatarFallback className="rounded-lg">
+                  {(profile?.username || user.email || "U").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">{profile?.username || "User"}</span>
+                <span className="truncate text-xs">{user.email}</span>
+              </div>
+              <ChevronsUpDown className="ml-auto size-4" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            side={isMobile ? "bottom" : "right"}
+            align="end"
+            sideOffset={4}
+          >
+            <DropdownMenuItem asChild>
+              <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+                <Settings className="size-4" />
+                Edit profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+              <LogOut className="size-4" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
 
 export function AppSidebar() {
   const location = useLocation();
@@ -71,6 +134,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarTrigger />
+        <UserMenu />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
