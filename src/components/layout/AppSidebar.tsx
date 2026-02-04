@@ -95,14 +95,14 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-card/50 backdrop-blur-xl">
       <SidebarHeader>
-        <div className="flex h-12 items-center px-2">
+        <div className="flex h-12 items-center px-2 group-data-[collapsible=icon]:px-4 group-data-[collapsible=icon]:justify-center">
           <PlanoLogo viewBox={state === "collapsed" ? "-30 0 85 85" : undefined} />
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-4 group-data-[collapsible=icon]:items-center">
               {navItems.map((item) => {
                 const isActive =
                   location.pathname === item.path ||
@@ -117,6 +117,7 @@ export function AppSidebar() {
                       isActive={isActive}
                       className={cn(
                         "transition-all duration-300 text-base [&>svg]:size-6",
+                        "group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!mx-auto",
                         "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-bold"
                       )}
                     >
