@@ -443,7 +443,7 @@ export function useBuildingSearch() {
   });
 
   // Search query
-  const { data: rawBuildings, isLoading, isFetching } = useQuery({
+  const { data: rawBuildings, isLoading, isFetching, isPlaceholderData } = useQuery({
     queryKey: [
         "search-buildings",
         debouncedQuery,
@@ -615,7 +615,9 @@ export function useBuildingSearch() {
                     status: b.status,
                     // Pass through metadata if needed downstream
                 } as DiscoveryBuilding;
-            }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
+            })
+            .filter(b => !(b.location_lat === 0 && b.location_lng === 0))
+            .sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
             return await enrichBuildings(mappedBuildings, user?.id, selectedContacts.map(c => c.id));
         }
@@ -636,7 +638,10 @@ export function useBuildingSearch() {
             p_limit: 500
         });
 
-        return await enrichBuildings(rpcResults, user?.id, selectedContacts.map(c => c.id));
+        // Sanitize RPC results to remove (0,0) locations
+        const sanitizedResults = rpcResults.filter(b => !(b.location_lat === 0 && b.location_lng === 0));
+
+        return await enrichBuildings(sanitizedResults, user?.id, selectedContacts.map(c => c.id));
     },
     staleTime: 1000 * 60,
     placeholderData: keepPreviousData,
@@ -703,6 +708,7 @@ export function useBuildingSearch() {
       debouncedQuery,
       isLoading,
       isFetching,
+      isPlaceholderData,
       // Pagination
       page,
       setPage,
