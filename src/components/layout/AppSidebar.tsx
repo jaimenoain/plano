@@ -90,10 +90,21 @@ function UserMenu() {
 
 export function AppSidebar() {
   const location = useLocation();
-  const { state } = useSidebar();
+  const { state, setOpen, isMobile } = useSidebar();
+
+  const sidebarProps = !isMobile
+    ? {
+        onMouseEnter: () => setOpen(true),
+        onMouseLeave: () => setOpen(false),
+      }
+    : {};
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border bg-card/50 backdrop-blur-xl">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-border bg-card/50 backdrop-blur-xl"
+      {...sidebarProps}
+    >
       <SidebarHeader>
         <div className="flex h-12 items-center px-2 group-data-[collapsible=icon]:px-4 group-data-[collapsible=icon]:justify-center">
           <PlanoLogo viewBox={state === "collapsed" ? "-30 0 85 85" : undefined} />
