@@ -149,9 +149,10 @@ export function AppSidebar() {
                       tooltip={item.label}
                       isActive={isActive}
                       className={cn(
-                        "transition-all duration-200 text-base [&>svg]:size-6 border-2 border-transparent",
+                        "relative transition-all duration-200 text-base [&>svg]:size-6 text-muted-foreground hover:bg-sidebar-accent/50",
                         "group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!mx-auto",
-                        "data-[active=true]:bg-[#eeff41] data-[active=true]:text-black data-[active=true]:font-bold data-[active=true]:border-black data-[active=true]:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
+                        "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-6 before:rounded-r-full before:bg-primary before:hidden data-[active=true]:before:block"
                       )}
                     >
                       <Link to={item.path}>
