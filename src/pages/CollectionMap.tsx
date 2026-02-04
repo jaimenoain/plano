@@ -766,7 +766,7 @@ export default function CollectionMap() {
 
   return (
     <AppLayout title={collection.name} showBack isFullScreen>
-      <div className="flex flex-col lg:flex-row h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] overflow-hidden relative">
+      <div className="flex flex-col lg:flex-row h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] md:h-[100dvh] overflow-hidden relative">
         <div className="lg:hidden">
           <SearchModeToggle
             mode={viewMode}
