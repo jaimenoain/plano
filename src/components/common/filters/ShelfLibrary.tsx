@@ -11,6 +11,9 @@ import {
 import { Command as CommandPrimitive } from "cmdk";
 import { MichelinRatingInput } from "@/components/ui/michelin-rating-input";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+
+const MotionBadge = motion(Badge);
 
 export interface ShelfLibraryProps {
   statusFilters: string[];
@@ -94,8 +97,9 @@ export function ShelfLibrary({
       <div className="flex flex-col gap-3">
         <Label className="text-sm font-medium">Estado</Label>
         <div className="flex gap-2">
-          <Badge
+          <MotionBadge
             variant={statusFilters.includes("visited") ? "default" : "outline"}
+            whileTap={{ scale: 0.95 }}
             className={cn(
                 "cursor-pointer gap-1.5 pl-2 pr-3 py-1.5 h-8 text-sm transition-all",
                 !statusFilters.includes("visited") && "text-muted-foreground hover:text-foreground"
@@ -108,10 +112,11 @@ export function ShelfLibrary({
                 <Check className="h-3.5 w-3.5 opacity-50" />
             )}
             Visitados
-          </Badge>
+          </MotionBadge>
 
-          <Badge
+          <MotionBadge
             variant={statusFilters.includes("saved") ? "default" : "outline"}
+            whileTap={{ scale: 0.95 }}
             className={cn(
                 "cursor-pointer gap-1.5 pl-2 pr-3 py-1.5 h-8 text-sm transition-all",
                 !statusFilters.includes("saved") && "text-muted-foreground hover:text-foreground"
@@ -126,7 +131,7 @@ export function ShelfLibrary({
                  <Circle className="h-3.5 w-3.5 opacity-50" />
              )}
             Pendientes
-          </Badge>
+          </MotionBadge>
         </div>
       </div>
 
@@ -140,7 +145,12 @@ export function ShelfLibrary({
           <div className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
             <div className="flex flex-wrap gap-1">
               {selectedCollections.map((collection) => (
-                <Badge key={collection.id} variant="secondary" className="pl-2 h-6 gap-1">
+                <MotionBadge
+                  key={collection.id}
+                  variant="secondary"
+                  whileTap={{ scale: 0.95 }}
+                  className="pl-2 h-6 gap-1"
+                >
                   <span className="truncate max-w-[150px]">{collection.name}</span>
                   <button
                     className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -157,7 +167,7 @@ export function ShelfLibrary({
                   >
                     <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                   </button>
-                </Badge>
+                </MotionBadge>
               ))}
               <CommandPrimitive.Input
                 ref={inputRef}
