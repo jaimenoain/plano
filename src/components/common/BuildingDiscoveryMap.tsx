@@ -12,7 +12,7 @@ import { MarkerInfoCard } from "../collections/MarkerInfoCard";
 import { MarkerPin } from "./MarkerPin";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
-import { Bounds } from "@/utils/map";
+import { getBoundsFromBuildings, Bounds } from "@/utils/map";
 import Supercluster from "supercluster";
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -59,7 +59,7 @@ interface Building {
 
 export interface BuildingDiscoveryMapHandle {
     flyTo: (location: { lat: number, lng: number }) => void;
-    fitBounds: (bounds: Bounds) => void;
+    fitBounds: (coordinates: { lat: number, lng: number }[]) => void;
 }
 
 interface BuildingDiscoveryMapProps {
@@ -82,7 +82,15 @@ interface BuildingDiscoveryMapProps {
   onRemoveMarker?: (id: string) => void;
   onClosePopup?: () => void;
   showSavedCandidates?: boolean;
+  // Legacy prop, ignored now
+  forcedBounds?: Bounds | null;
 }
+
+const INITIAL_VIEW_STATE = {
+  latitude: 51.5074,
+  longitude: -0.1278,
+  zoom: 12
+};
 
 export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, BuildingDiscoveryMapProps>(({
   externalBuildings,
@@ -108,48 +116,78 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const isUserInteractionRef = useRef(false);
+  const debounceRef = useRef<NodeJS.Timeout>();
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [hasVisibleCandidates, setHasVisibleCandidates] = useState(true);
 
+  // Internal view state tracking (uncontrolled map)
+  const viewStateRef = useRef(INITIAL_VIEW_STATE);
+
+  // State to trigger data fetching/clustering only when needed (e.g. after move ends)
+  const [queryViewState, setQueryViewState] = useState(INITIAL_VIEW_STATE);
+
   useImperativeHandle(ref, () => ({
     flyTo: (location) => {
-        if (mapRef.current) {
-            mapRef.current.flyTo({
-                center: [location.lng, location.lat],
-                zoom: 13,
-                duration: 1500
-            });
-        }
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
+        debounceRef.current = setTimeout(() => {
+            if (mapRef.current) {
+                mapRef.current.flyTo({
+                    center: [location.lng, location.lat],
+                    zoom: 13,
+                    duration: 1500
+                });
+            }
+        }, 100);
     },
-    fitBounds: (bounds) => {
-        if (mapRef.current) {
-            mapRef.current.fitBounds(
-                [
-                    [bounds.west, bounds.south], // [minLng, minLat]
-                    [bounds.east, bounds.north]  // [maxLng, maxLat]
-                ],
-                { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
-            );
-        }
+    fitBounds: (coordinates) => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
+        // Sanitize: Explicitly discard (0,0)
+        const validCoords = coordinates.filter(c => !(c.lat === 0 && c.lng === 0));
+
+        if (validCoords.length === 0) return;
+
+        debounceRef.current = setTimeout(() => {
+            if (!mapRef.current) return;
+
+            if (validCoords.length === 1) {
+                mapRef.current.flyTo({
+                    center: [validCoords[0].lng, validCoords[0].lat],
+                    zoom: 14,
+                    duration: 1500
+                });
+            } else {
+                const buildingsForBounds = validCoords.map(c => ({
+                    location_lat: c.lat,
+                    location_lng: c.lng
+                }));
+
+                const bounds = getBoundsFromBuildings(buildingsForBounds);
+
+                if (bounds) {
+                    mapRef.current.fitBounds(
+                        [
+                            [bounds.west, bounds.south],
+                            [bounds.east, bounds.north]
+                        ],
+                        { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
+                    );
+                }
+            }
+        }, 100);
     }
   }));
 
-  // Default view state (London)
-  const [viewState, setViewState] = useState({
-    latitude: 51.5074,
-    longitude: -0.1278,
-    zoom: 12
-  });
-
   const { data: internalBuildings, isLoading: internalLoading } = useQuery({
-    queryKey: ["discovery-buildings"],
+    queryKey: ["discovery-buildings", queryViewState.latitude, queryViewState.longitude],
     queryFn: async () => {
       return await findNearbyBuildingsRpc({
-        lat: viewState.latitude,
-        long: viewState.longitude,
+        lat: queryViewState.latitude,
+        long: queryViewState.longitude,
         radius_meters: 500000, // 500km
         name_query: ""
       });
@@ -230,8 +268,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
   }) || [], [buildings]);
 
   const [clusters, setClusters] = useState<any[]>([]);
-  const viewStateRef = useRef(viewState);
-  viewStateRef.current = viewState;
 
   const updateClusters = useMemo(() => {
     return () => {
@@ -251,7 +287,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
   // Update clusters on map move
   useEffect(() => {
     updateClusters();
-  }, [viewState, updateClusters]);
+  }, [queryViewState, updateClusters]);
 
   // Handle Escape key to exit fullscreen
   useEffect(() => {
@@ -304,8 +340,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
                          expansionZoom = Math.max(expansionZoom, 15);
                     }
 
-                    if (expansionZoom <= viewState.zoom) {
-                        expansionZoom = viewState.zoom + 2;
+                    if (expansionZoom <= viewStateRef.current.zoom) {
+                        expansionZoom = viewStateRef.current.zoom + 2;
                     }
 
                     mapRef.current?.flyTo({
@@ -566,7 +602,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
             </div>
         </Marker>
     );
-  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId, onAddCandidate, onRemoveItem, onHide, onHideCandidate, onSave, onVisit]);
+  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewStateRef.current.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId, onAddCandidate, onRemoveItem, onHide, onHideCandidate, onSave, onVisit]);
 
   if (isLoading) {
     return (
@@ -594,7 +630,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
             ? 'fixed inset-0 z-[5000] h-[100dvh] rounded-none m-0 p-0'
             : 'relative h-full rounded-xl'
         }`}
-        data-zoom={viewState.zoom}
+        data-zoom={viewStateRef.current.zoom}
         data-testid="map-container"
     >
       <MapGL
@@ -602,7 +638,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
             mapRef.current = node;
             setMapInstance(node);
         }}
-        {...viewState}
+        initialViewState={INITIAL_VIEW_STATE}
         attributionControl={false}
         onClick={() => {
            if (selectedPinId) {
@@ -610,7 +646,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
            }
         }}
         onMove={evt => {
-            setViewState(evt.viewState);
+            viewStateRef.current = evt.viewState;
+            updateClusters();
             if (evt.originalEvent) {
                 onMapInteraction?.();
             }
@@ -632,6 +669,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
         }}
         onMoveEnd={evt => {
             const { latitude, longitude } = evt.viewState;
+            setQueryViewState(evt.viewState);
             if (isUserInteractionRef.current) {
                 onRegionChange?.({ lat: latitude, lng: longitude });
             }
