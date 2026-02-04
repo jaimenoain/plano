@@ -162,8 +162,8 @@ export function AppSidebar() {
                       className={cn(
                         "relative transition-all duration-200 text-base [&>svg]:size-6 text-muted-foreground hover:bg-sidebar-accent/50 rounded-none",
                         "group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!mx-auto",
-                        "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
-                        "before:absolute before:left-0 before:top-0 before:w-1 before:h-full before:bg-primary before:hidden data-[active=true]:before:block before:rounded-none"
+                        "data-[active=true]:bg-sidebar-accent/40 data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
+                        "before:absolute before:left-0 before:top-0 before:w-[2px] before:h-full before:bg-primary before:hidden data-[active=true]:before:block before:rounded-none"
                       )}
                     >
                       <Link to={item.path}>
