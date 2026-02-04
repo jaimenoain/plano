@@ -145,17 +145,16 @@ export default function SearchPage() {
   // Handle Explicit Search Fly
   useEffect(() => {
     // Check if we have a pending search command that hasn't been handled yet
-    // AND data is not fetching (so we have the NEW results)
-    // AND the results correspond to the current search query (debounced)
+    if (!shouldRecenterRef.current) return;
+
+    // Wait until data is not fetching and is synced
     const isQuerySynced = debouncedQuery === searchQuery;
+    if (isLoading || isFetching || isPlaceholderData || !isQuerySynced) {
+        return;
+    }
 
-    if (shouldRecenterRef.current &&
-        !isLoading &&
-        !isFetching &&
-        !isPlaceholderData &&
-        isQuerySynced &&
-        buildings.length > 0) {
-
+    // Data is ready. Try to move map if we have results.
+    if (buildings.length > 0) {
         // Smart Bounds: Only consider top 5 buildings
         const relevantBuildings = buildings.slice(0, 5);
 
@@ -167,9 +166,13 @@ export default function SearchPage() {
 
         if (coordinates.length > 0) {
             mapRef.current?.fitBounds(coordinates);
-            shouldRecenterRef.current = false;
         }
     }
+
+    // Always consume the command once the data is settled,
+    // even if no buildings were found or no move happened.
+    // This prevents "ghost movements" on future data updates.
+    shouldRecenterRef.current = false;
   }, [buildings, isFetching, isLoading, isPlaceholderData, debouncedQuery, searchQuery]);
 
 
@@ -288,7 +291,9 @@ export default function SearchPage() {
            ]);
         } else {
            // Feature: Fly to location
-           mapRef.current?.flyTo(newLoc);
+           if (!(newLoc.lat === 0 && newLoc.lng === 0)) {
+               mapRef.current?.flyTo(newLoc);
+           }
         }
         
         // Main: Optimistically update user location
@@ -303,16 +308,16 @@ export default function SearchPage() {
   const handleMapLoad = () => {
     if (hasInitialFlyToPerformed) return;
 
-    if (searchParams.get("lat") && searchParams.get("lng")) {
-      mapRef.current?.flyTo({
-        lat: parseFloat(searchParams.get("lat")!),
-        lng: parseFloat(searchParams.get("lng")!)
-      });
+    const lat = parseFloat(searchParams.get("lat")!);
+    const lng = parseFloat(searchParams.get("lng")!);
+
+    if (searchParams.get("lat") && searchParams.get("lng") && !(lat === 0 && lng === 0)) {
+      mapRef.current?.flyTo({ lat, lng });
       setHasInitialFlyToPerformed(true);
       return;
     }
 
-    if (gpsLocation) {
+    if (gpsLocation && !(gpsLocation.lat === 0 && gpsLocation.lng === 0)) {
       mapRef.current?.flyTo(gpsLocation);
       setHasInitialFlyToPerformed(true);
     }
@@ -323,19 +328,19 @@ export default function SearchPage() {
     if (hasInitialFlyToPerformed) return;
 
     // Case 1: URL has location
-    if (searchParams.get("lat") && searchParams.get("lng")) {
+    const lat = parseFloat(searchParams.get("lat")!);
+    const lng = parseFloat(searchParams.get("lng")!);
+
+    if (searchParams.get("lat") && searchParams.get("lng") && !(lat === 0 && lng === 0)) {
       if (mapRef.current) {
-        mapRef.current.flyTo({
-            lat: parseFloat(searchParams.get("lat")!),
-            lng: parseFloat(searchParams.get("lng")!)
-        });
+        mapRef.current.flyTo({ lat, lng });
         setHasInitialFlyToPerformed(true);
       }
       return;
     }
 
     // Case 2: GPS Location found (and valid)
-    if (gpsLocation) {
+    if (gpsLocation && !(gpsLocation.lat === 0 && gpsLocation.lng === 0)) {
       if (mapRef.current) {
          mapRef.current.flyTo(gpsLocation);
          setHasInitialFlyToPerformed(true);

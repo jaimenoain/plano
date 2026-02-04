@@ -133,6 +133,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
     flyTo: (location) => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
+        // Sanitize: Explicitly discard (0,0)
+        if (location.lat === 0 && location.lng === 0) return;
+
         debounceRef.current = setTimeout(() => {
             if (mapRef.current) {
                 mapRef.current.flyTo({
