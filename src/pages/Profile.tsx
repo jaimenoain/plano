@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { MetaHead } from "@/components/common/MetaHead";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useSidebar } from "@/components/ui/sidebar";
 
 // New Components
 import { UserCard } from "@/components/profile/UserCard";
@@ -69,6 +70,7 @@ export default function Profile() {
   const { username: routeUsername } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
+  const { state, isMobile } = useSidebar();
   
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -499,6 +501,11 @@ export default function Profile() {
 
   if (!profile && !loading) {
       return (
+        <div style={{
+          marginLeft: (state === 'collapsed' && !isMobile) ? 'calc(var(--sidebar-width) - var(--sidebar-width-icon))' : '0',
+          transition: 'margin-left 0.2s linear',
+          width: 'auto'
+        }}>
           <AppLayout title="User Not Found" showLogo={false} showBack>
               <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
                   <div className="bg-secondary/50 p-6 rounded-full mb-6">
@@ -511,6 +518,7 @@ export default function Profile() {
                   <Button onClick={() => navigate("/")}>Go Home</Button>
               </div>
           </AppLayout>
+        </div>
       )
   }
 
@@ -524,219 +532,225 @@ export default function Profile() {
     : undefined;
 
   return (
-    <AppLayout title="Profile" showLogo={false} showBack={!isOwnProfile}>
-      <MetaHead
-        title={`${profile?.username} (@${profile?.username})`}
-        description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Plano.`}
-        image={avatarUrl}
-      />
-      
-      {/* 1. Header & User Card */}
-      <UserCard
-        profile={profile}
-        stats={stats}
-        isOwnProfile={isOwnProfile}
-        isFollowing={isFollowing}
-        onFollowToggle={handleFollowToggle}
-        onSignOut={handleSignOut}
-        onOpenUserList={openUserList}
-        // Map tab values to filters for UserCard stats
-        onTabChange={handleFilterChange}
-        squad={squad}
-      />
-
-      {/* Social Context Section */}
-      {!isOwnProfile && (
-        <SocialContextSection
-          mutualAffinityUsers={profileComparison.mutualAffinityUsers}
-          commonFollowers={profileComparison.commonFollowers}
+    <div style={{
+      marginLeft: (state === 'collapsed' && !isMobile) ? 'calc(var(--sidebar-width) - var(--sidebar-width-icon))' : '0',
+      transition: 'margin-left 0.2s linear',
+      width: 'auto'
+    }}>
+      <AppLayout title="Profile" showLogo={false} showBack={!isOwnProfile}>
+        <MetaHead
+          title={`${profile?.username} (@${profile?.username})`}
+          description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Plano.`}
+          image={avatarUrl}
         />
-      )}
 
-      {/* 2. Favorite Buildings */}
-      {!isOwnProfile && buildingFavorites.length > 0 && (
-         <FavoritesSection
-            favorites={buildingFavorites}
+        {/* 1. Header & User Card */}
+        <UserCard
+          profile={profile}
+          stats={stats}
+          isOwnProfile={isOwnProfile}
+          isFollowing={isFollowing}
+          onFollowToggle={handleFollowToggle}
+          onSignOut={handleSignOut}
+          onOpenUserList={openUserList}
+          // Map tab values to filters for UserCard stats
+          onTabChange={handleFilterChange}
+          squad={squad}
+        />
+
+        {/* Social Context Section */}
+        {!isOwnProfile && (
+          <SocialContextSection
+            mutualAffinityUsers={profileComparison.mutualAffinityUsers}
+            commonFollowers={profileComparison.commonFollowers}
+          />
+        )}
+
+        {/* 2. Favorite Buildings */}
+        {!isOwnProfile && buildingFavorites.length > 0 && (
+          <FavoritesSection
+              favorites={buildingFavorites}
+              isOwnProfile={false}
+              onManage={() => {}}
+          />
+        )}
+
+        {/* 3. Highlights (Genres, People, Quotes) */}
+        {!isOwnProfile && (
+          <ProfileHighlights
+            favorites={favorites}
             isOwnProfile={false}
             onManage={() => {}}
-         />
-      )}
+          />
+        )}
 
-      {/* 3. Highlights (Genres, People, Quotes) */}
-      {!isOwnProfile && (
-        <ProfileHighlights
-          favorites={favorites}
-          isOwnProfile={false}
-          onManage={() => {}}
-        />
-      )}
-
-      {/* 4. Collections Grid */}
-      {targetUserId && (
-          <div id="collections-section" className="scroll-mt-24">
-              <CollectionsGrid
-                userId={targetUserId}
-                username={profile?.username || null}
-                isOwnProfile={isOwnProfile}
-                onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
-                refreshKey={collectionsRefreshKey}
-              />
-              <FavoriteCollectionsGrid userId={targetUserId} />
-          </div>
-      )}
-
-      {/* 5. Filter & Content Section */}
-      <div className="px-4 mt-2 scroll-mt-20 min-h-screen" id="profile-content-start">
-          <div className="sticky top-14 bg-background z-10 pt-2 pb-4 space-y-3 shadow-sm border-b border-border/40 -mx-4 px-4 mb-4">
-            <div className="flex items-center justify-between">
-
-              {/* Filter Toggle */}
-              <ToggleGroup type="single" value={activeFilter} onValueChange={handleFilterChange} className="justify-start">
-                  <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                      All
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="visited" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                      Reviews
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="pending" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                      Bucket List
-                  </ToggleGroupItem>
-              </ToggleGroup>
-
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="show-community"
-                  checked={showCommunityImages}
-                  onCheckedChange={setShowCommunityImages}
+        {/* 4. Collections Grid */}
+        {targetUserId && (
+            <div id="collections-section" className="scroll-mt-24">
+                <CollectionsGrid
+                  userId={targetUserId}
+                  username={profile?.username || null}
+                  isOwnProfile={isOwnProfile}
+                  onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
+                  refreshKey={collectionsRefreshKey}
                 />
-                <Label htmlFor="show-community" className="text-xs text-muted-foreground hidden sm:block">
-                  Community Photos
-                </Label>
+                <FavoriteCollectionsGrid userId={targetUserId} />
+            </div>
+        )}
+
+        {/* 5. Filter & Content Section */}
+        <div className="px-4 mt-2 scroll-mt-20 min-h-screen" id="profile-content-start">
+            <div className="sticky top-14 bg-background z-10 pt-2 pb-4 space-y-3 shadow-sm border-b border-border/40 -mx-4 px-4 mb-4">
+              <div className="flex items-center justify-between">
+
+                {/* Filter Toggle */}
+                <ToggleGroup type="single" value={activeFilter} onValueChange={handleFilterChange} className="justify-start">
+                    <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                        All
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="visited" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                        Reviews
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="pending" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                        Bucket List
+                    </ToggleGroupItem>
+                </ToggleGroup>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="show-community"
+                    checked={showCommunityImages}
+                    onCheckedChange={setShowCommunityImages}
+                  />
+                  <Label htmlFor="show-community" className="text-xs text-muted-foreground hidden sm:block">
+                    Community Photos
+                  </Label>
+                </div>
               </div>
-            </div>
 
-            {/* Search Input */}
-            <div className="flex gap-2">
-                <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search reviews..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    className="pl-9 bg-secondary/50 border-transparent focus:bg-background transition-colors"
-                />
-                {searchQuery && (
-                    <button onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                    </button>
-                )}
-                </div>
-                <Button
-                variant="secondary"
-                size="icon"
-                className="shrink-0"
-                onClick={() => navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true`)}
-                title="Filter by rated buildings"
-                >
-                <Filter className="h-4 w-4" />
-                </Button>
-            </div>
-          </div>
-
-          {/* Grid Content */}
-          <div className="mt-0">
-             {contentLoading ? (
-               <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-             ) : filteredContent.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
-                   {filteredContent.map((item) => (
-                     <ReviewCard
-                       key={item.id}
-                       entry={item}
-                       onLike={handleLike}
-                       hideUser
-                       variant="compact"
-                       showCommunityImages={showCommunityImages}
-                     />
-                   ))}
-                </div>
-             ) : (
-                // Empty States
-                (searchQuery) ? (
-                   <EmptyState icon={Search} label="No results found" />
-                ) : activeFilter === 'visited' ? (
-                   <EmptyState icon={Building2} label="No visited buildings yet" />
-                ) : activeFilter === 'pending' ? (
-                   <EmptyState
-                      icon={Bookmark}
-                      label="Bucket List is empty"
-                      description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
-                      action={isOwnProfile ? <Button onClick={() => navigate("/search")}>Search Buildings</Button> : undefined}
-                   />
-                ) : (
-                   <EmptyState icon={Building2} label="No activity yet" />
-                )
-             )}
-          </div>
-      </div>
-
-      {/* User List Modal */}
-      <Dialog open={userListDialog.open} onOpenChange={(open) => setUserListDialog(prev => ({ ...prev, open }))}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="capitalize text-center">{userListDialog.type}</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh]">
-            {userListLoading ? (
-              <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-            ) : userList.length > 0 ? (
-              <div className="space-y-1 p-1">
-                {userList.map((u) => (
-                  <div key={u.id} 
-                       className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors"
-                       onClick={() => { setUserListDialog(prev => ({ ...prev, open: false })); navigate(`/profile/${u.username?.toLowerCase()}`); }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={u.avatar_url || undefined} />
-                        <AvatarFallback>{u.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{u.username || "Unknown"}</span>
-                    </div>
-                    {/* Follow Toggle */}
-                    {currentUser && currentUser.id !== u.id && (
-                       <div onClick={(e) => e.stopPropagation()}>
-                         <FollowButton
-                           userId={u.id}
-                           initialIsFollowing={u.is_following}
-                           isFollower={u.is_follower}
-                           className="h-8 text-xs px-3"
-                         />
-                       </div>
-                    )}
+              {/* Search Input */}
+              <div className="flex gap-2">
+                  <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                      placeholder="Search reviews..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="pl-9 bg-secondary/50 border-transparent focus:bg-background transition-colors"
+                  />
+                  {searchQuery && (
+                      <button onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                      </button>
+                  )}
                   </div>
-                ))}
+                  <Button
+                  variant="secondary"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true`)}
+                  title="Filter by rated buildings"
+                  >
+                  <Filter className="h-4 w-4" />
+                  </Button>
               </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">No users found</div>
-            )}
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+            </div>
 
-      {/* Create Collection Dialog */}
-      {currentUser && (
-        <CreateCollectionDialog
-          open={showCreateCollection}
-          onOpenChange={setShowCreateCollection}
-          userId={currentUser.id}
-          onSuccess={() => {
-             setCollectionsRefreshKey(prev => prev + 1);
-             setShowCreateCollection(false);
-          }}
-        />
-      )}
-    </AppLayout>
+            {/* Grid Content */}
+            <div className="mt-0">
+              {contentLoading ? (
+                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+              ) : filteredContent.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
+                    {filteredContent.map((item) => (
+                      <ReviewCard
+                        key={item.id}
+                        entry={item}
+                        onLike={handleLike}
+                        hideUser
+                        variant="compact"
+                        showCommunityImages={showCommunityImages}
+                      />
+                    ))}
+                  </div>
+              ) : (
+                  // Empty States
+                  (searchQuery) ? (
+                    <EmptyState icon={Search} label="No results found" />
+                  ) : activeFilter === 'visited' ? (
+                    <EmptyState icon={Building2} label="No visited buildings yet" />
+                  ) : activeFilter === 'pending' ? (
+                    <EmptyState
+                        icon={Bookmark}
+                        label="Bucket List is empty"
+                        description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
+                        action={isOwnProfile ? <Button onClick={() => navigate("/search")}>Search Buildings</Button> : undefined}
+                    />
+                  ) : (
+                    <EmptyState icon={Building2} label="No activity yet" />
+                  )
+              )}
+            </div>
+        </div>
+
+        {/* User List Modal */}
+        <Dialog open={userListDialog.open} onOpenChange={(open) => setUserListDialog(prev => ({ ...prev, open }))}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="capitalize text-center">{userListDialog.type}</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh]">
+              {userListLoading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+              ) : userList.length > 0 ? (
+                <div className="space-y-1 p-1">
+                  {userList.map((u) => (
+                    <div key={u.id}
+                        className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors"
+                        onClick={() => { setUserListDialog(prev => ({ ...prev, open: false })); navigate(`/profile/${u.username?.toLowerCase()}`); }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={u.avatar_url || undefined} />
+                          <AvatarFallback>{u.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{u.username || "Unknown"}</span>
+                      </div>
+                      {/* Follow Toggle */}
+                      {currentUser && currentUser.id !== u.id && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <FollowButton
+                            userId={u.id}
+                            initialIsFollowing={u.is_following}
+                            isFollower={u.is_follower}
+                            className="h-8 text-xs px-3"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">No users found</div>
+              )}
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Collection Dialog */}
+        {currentUser && (
+          <CreateCollectionDialog
+            open={showCreateCollection}
+            onOpenChange={setShowCreateCollection}
+            userId={currentUser.id}
+            onSuccess={() => {
+              setCollectionsRefreshKey(prev => prev + 1);
+              setShowCreateCollection(false);
+            }}
+          />
+        )}
+      </AppLayout>
+    </div>
   );
 }
 
