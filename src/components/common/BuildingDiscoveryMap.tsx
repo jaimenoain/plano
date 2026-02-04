@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { createPortal } from "react-dom";
 import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
@@ -57,14 +57,18 @@ interface Building {
   address?: string | null;
 }
 
+export interface BuildingDiscoveryMapHandle {
+    flyTo: (location: { lat: number, lng: number }) => void;
+    fitBounds: (bounds: Bounds) => void;
+}
+
 interface BuildingDiscoveryMapProps {
   externalBuildings?: DiscoveryBuilding[];
   onAddCandidate?: (building: DiscoveryBuilding) => void;
   onRegionChange?: (center: { lat: number, lng: number }) => void;
   onBoundsChange?: (bounds: Bounds) => void;
   onMapInteraction?: () => void;
-  forcedCenter?: { lat: number, lng: number } | null;
-  forcedBounds?: Bounds | null;
+  onMapLoad?: () => void;
   isFetching?: boolean;
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
@@ -80,14 +84,13 @@ interface BuildingDiscoveryMapProps {
   showSavedCandidates?: boolean;
 }
 
-export function BuildingDiscoveryMap({
+export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, BuildingDiscoveryMapProps>(({
   externalBuildings,
   onAddCandidate,
   onRegionChange,
   onBoundsChange,
   onMapInteraction,
-  forcedCenter,
-  forcedBounds,
+  onMapLoad,
   isFetching,
   highlightedId,
   onMarkerClick,
@@ -101,7 +104,7 @@ export function BuildingDiscoveryMap({
   onRemoveMarker,
   onClosePopup,
   showSavedCandidates
-}: BuildingDiscoveryMapProps) {
+}, ref) => {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const isUserInteractionRef = useRef(false);
@@ -111,31 +114,35 @@ export function BuildingDiscoveryMap({
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [hasVisibleCandidates, setHasVisibleCandidates] = useState(true);
 
+  useImperativeHandle(ref, () => ({
+    flyTo: (location) => {
+        if (mapRef.current) {
+            mapRef.current.flyTo({
+                center: [location.lng, location.lat],
+                zoom: 13,
+                duration: 1500
+            });
+        }
+    },
+    fitBounds: (bounds) => {
+        if (mapRef.current) {
+            mapRef.current.fitBounds(
+                [
+                    [bounds.west, bounds.south], // [minLng, minLat]
+                    [bounds.east, bounds.north]  // [maxLng, maxLat]
+                ],
+                { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
+            );
+        }
+    }
+  }));
+
   // Default view state (London)
   const [viewState, setViewState] = useState({
     latitude: 51.5074,
     longitude: -0.1278,
     zoom: 12
   });
-
-  // Handle flyTo or fitBounds
-  useEffect(() => {
-    if (forcedBounds && mapInstance) {
-        mapInstance.fitBounds(
-            [
-                [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
-                [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
-            ],
-            { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
-        );
-    } else if (forcedCenter && mapInstance) {
-        mapInstance.flyTo({
-            center: [forcedCenter.lng, forcedCenter.lat],
-            zoom: 13,
-            duration: 1500
-        });
-    }
-  }, [forcedCenter, forcedBounds, mapInstance]);
 
   const { data: internalBuildings, isLoading: internalLoading } = useQuery({
     queryKey: ["discovery-buildings"],
@@ -621,6 +628,7 @@ export function BuildingDiscoveryMap({
         }}
         onLoad={evt => {
             handleMapUpdate(evt.target);
+            onMapLoad?.();
         }}
         onMoveEnd={evt => {
             const { latitude, longitude } = evt.viewState;
@@ -676,4 +684,6 @@ export function BuildingDiscoveryMap({
   }
 
   return mapContent;
-}
+});
+
+BuildingDiscoveryMap.displayName = "BuildingDiscoveryMap";

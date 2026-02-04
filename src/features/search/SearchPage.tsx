@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DiscoveryList } from "./components/DiscoveryList";
@@ -27,6 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSidebar } from "@/components/ui/sidebar";
+import type { BuildingDiscoveryMapHandle } from "@/components/common/BuildingDiscoveryMap";
 
 export type SearchScope = 'content' | 'users' | 'architects';
 
@@ -46,6 +47,10 @@ export default function SearchPage() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
   const [communityQuality, setCommunityQuality] = useState(0);
+
+  // Ref for imperative map control
+  const mapRef = useRef<BuildingDiscoveryMapHandle>(null);
+  const shouldRecenterRef = useRef(false);
 
   useEffect(() => {
     if (searchParams.get("open_filters") === "true") {
@@ -110,17 +115,12 @@ export default function SearchPage() {
   };
 
   // Feature: Map Interaction controls
-  const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
-  const [flyToBounds, setFlyToBounds] = useState<Bounds | null>(null);
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
   const [hasInitialFlyToPerformed, setHasInitialFlyToPerformed] = useState(false);
 
   // Command-Based Search Logic
-  const [explicitSearchId, setExplicitSearchId] = useState<number | null>(null);
-  const [lastHandledSearchId, setLastHandledSearchId] = useState<number | null>(null);
-
   const triggerExplicitSearch = () => {
-    setExplicitSearchId(Date.now());
+    shouldRecenterRef.current = true;
   };
 
   // Wrapped Setters for Filters to trigger map move
@@ -149,24 +149,21 @@ export default function SearchPage() {
     // AND the results correspond to the current search query (debounced)
     const isQuerySynced = debouncedQuery === searchQuery;
 
-    if (explicitSearchId && explicitSearchId !== lastHandledSearchId &&
+    if (shouldRecenterRef.current &&
         !isFetching &&
         isQuerySynced &&
         buildings.length > 0) {
-
-        // Mark as handled
-        setLastHandledSearchId(explicitSearchId);
 
         // Smart Bounds: Only consider top 5 buildings
         const relevantBuildings = buildings.slice(0, 5);
         const bounds = getBoundsFromBuildings(relevantBuildings);
 
         if (bounds) {
-            setFlyToBounds(bounds);
-            setFlyToCenter(null);
+            mapRef.current?.fitBounds(bounds);
+            shouldRecenterRef.current = false;
         }
     }
-  }, [buildings, isFetching, explicitSearchId, lastHandledSearchId, debouncedQuery, searchQuery]);
+  }, [buildings, isFetching, debouncedQuery, searchQuery]);
 
 
   // 4. Merged Filtering Logic
@@ -224,14 +221,11 @@ export default function SearchPage() {
 
   // Clear forced camera states when user interacts with map manually
   const handleMapInteraction = () => {
-    setFlyToCenter(null);
-    setFlyToBounds(null);
+    // No-op for imperative camera control
   };
 
   const handleRegionChange = (center: { lat: number, lng: number }) => {
     updateLocation(center);
-    setFlyToCenter(null);
-    setFlyToBounds(null);
   };
 
   const handleClearAll = () => {
@@ -258,9 +252,8 @@ export default function SearchPage() {
   const handleUseLocation = async () => {
     const loc = await requestLocation();
     if (loc) {
-      setFlyToCenter(loc);
-      setFlyToBounds(null);
       updateLocation(loc); 
+      mapRef.current?.flyTo(loc);
     }
   };
 
@@ -277,17 +270,16 @@ export default function SearchPage() {
         // Check for viewport bounds (e.g. for countries)
         const viewport = results[0].geometry.viewport;
         if (viewport) {
-           setFlyToBounds({
+           const bounds = {
               north: typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lat() : (viewport as any).northeast.lat,
               east: typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lng() : (viewport as any).northeast.lng,
               south: typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lat() : (viewport as any).southwest.lat,
               west: typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lng() : (viewport as any).southwest.lng,
-           });
-           setFlyToCenter(null);
+           };
+           mapRef.current?.fitBounds(bounds);
         } else {
            // Feature: Fly to location
-           setFlyToCenter(newLoc);
-           setFlyToBounds(null);
+           mapRef.current?.flyTo(newLoc);
         }
         
         // Main: Optimistically update user location
@@ -298,13 +290,12 @@ export default function SearchPage() {
     }
   };
 
-  // Handle auto-fly to user location on initial load or update
-  useEffect(() => {
+  // Initial load handler
+  const handleMapLoad = () => {
     if (hasInitialFlyToPerformed) return;
 
-    // Case 1: URL has location
     if (searchParams.get("lat") && searchParams.get("lng")) {
-      setFlyToCenter({
+      mapRef.current?.flyTo({
         lat: parseFloat(searchParams.get("lat")!),
         lng: parseFloat(searchParams.get("lng")!)
       });
@@ -312,10 +303,34 @@ export default function SearchPage() {
       return;
     }
 
+    if (gpsLocation) {
+      mapRef.current?.flyTo(gpsLocation);
+      setHasInitialFlyToPerformed(true);
+    }
+  };
+
+  // Handle auto-fly to user location if GPS arrives after map load
+  useEffect(() => {
+    if (hasInitialFlyToPerformed) return;
+
+    // Case 1: URL has location
+    if (searchParams.get("lat") && searchParams.get("lng")) {
+      if (mapRef.current) {
+        mapRef.current.flyTo({
+            lat: parseFloat(searchParams.get("lat")!),
+            lng: parseFloat(searchParams.get("lng")!)
+        });
+        setHasInitialFlyToPerformed(true);
+      }
+      return;
+    }
+
     // Case 2: GPS Location found (and valid)
     if (gpsLocation) {
-      setFlyToCenter(gpsLocation);
-      setHasInitialFlyToPerformed(true);
+      if (mapRef.current) {
+         mapRef.current.flyTo(gpsLocation);
+         setHasInitialFlyToPerformed(true);
+      }
     }
   }, [gpsLocation, searchParams, hasInitialFlyToPerformed]);
 
@@ -586,13 +601,13 @@ export default function SearchPage() {
                   <div className="h-full w-full">
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                       <BuildingDiscoveryMap
+                        ref={isMobile ? mapRef : undefined}
                         externalBuildings={mapBuildings}
                         onRegionChange={handleRegionChange}
                         onBoundsChange={setMapBounds}
                         onMapInteraction={handleMapInteraction}
-                        forcedCenter={flyToCenter}
+                        onMapLoad={handleMapLoad}
                         isFetching={isFetching}
-                        forcedBounds={flyToBounds}
                         onHide={handleHide}
                         onSave={handleSave}
                         onVisit={handleVisit}
@@ -621,13 +636,13 @@ export default function SearchPage() {
                 <div className="col-span-7 lg:col-span-8 h-full relative">
                   <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                     <BuildingDiscoveryMap
+                      ref={!isMobile ? mapRef : undefined}
                       externalBuildings={mapBuildings}
                       onRegionChange={handleRegionChange}
                       onBoundsChange={setMapBounds}
                       onMapInteraction={handleMapInteraction}
-                      forcedCenter={flyToCenter}
+                      onMapLoad={handleMapLoad}
                       isFetching={isFetching}
-                      forcedBounds={flyToBounds}
                       onHide={handleHide}
                       onSave={handleSave}
                       onVisit={handleVisit}
