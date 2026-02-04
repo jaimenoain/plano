@@ -49,7 +49,7 @@ function UserMenu() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!mx-auto"
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={profile?.avatar_url || ""} alt={profile?.username || user.email || ""} />
@@ -57,11 +57,11 @@ function UserMenu() {
                   {(profile?.username || user.email || "U").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">{profile?.username || "User"}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -123,7 +123,7 @@ export function AppSidebar() {
                     >
                       <Link to={item.path}>
                         <item.icon strokeWidth={isActive ? 2.5 : 2} />
-                        <span>{item.label}</span>
+                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
