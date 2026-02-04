@@ -137,6 +137,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
         if (location.lat === 0 && location.lng === 0) return;
 
         debounceRef.current = setTimeout(() => {
+            // Guard: Do not fly if user is currently interacting
+            if (isUserInteractionRef.current) return;
+
             if (mapRef.current) {
                 mapRef.current.flyTo({
                     center: [location.lng, location.lat],
@@ -155,6 +158,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
         if (validCoords.length === 0) return;
 
         debounceRef.current = setTimeout(() => {
+            // Guard: Do not fit bounds if user is currently interacting
+            if (isUserInteractionRef.current) return;
+
             if (!mapRef.current) return;
 
             if (validCoords.length === 1) {
@@ -660,6 +666,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
         }}
         onMoveStart={(evt) => {
             if (evt.originalEvent) {
+                // Cancel any pending programmatic moves immediately
+                if (debounceRef.current) clearTimeout(debounceRef.current);
+
                 isUserInteractionRef.current = true;
                 onMapInteraction?.();
             } else {
