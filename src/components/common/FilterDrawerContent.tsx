@@ -88,7 +88,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
       </div>
 
       {/* Shelf 2: Dynamic Interaction */}
-      <div className="flex-1 overflow-y-auto px-6">
+      <div className="flex-1 overflow-y-auto px-6 min-h-[150px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeScope}
@@ -98,21 +98,9 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
             transition={{ duration: 0.2 }}
             className="h-full"
           >
-            {activeScope === 'discover' && (
-              <div className="py-4 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg p-4 flex items-center justify-center h-32">
-                Controls for Discover Mode
-              </div>
-            )}
-            {activeScope === 'library' && (
-              <div className="py-4 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg p-4 flex items-center justify-center h-32">
-                Controls for Library Mode
-              </div>
-            )}
-            {activeScope === 'network' && (
-              <div className="py-4 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg p-4 flex items-center justify-center h-32">
-                Controls for Network Mode
-              </div>
-            )}
+            {activeScope === 'discover' && <ShelfDiscover />}
+            {activeScope === 'library' && <ShelfLibrary />}
+            {activeScope === 'network' && <ShelfNetwork />}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -145,6 +133,30 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
           </Accordion>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ShelfDiscover() {
+  return (
+    <div className="py-4 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg p-4 flex items-center justify-center h-32">
+      Controls for Discover Mode
+    </div>
+  );
+}
+
+function ShelfLibrary() {
+  return (
+    <div className="py-4 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg p-4 flex items-center justify-center h-32">
+      Controls for Library Mode
+    </div>
+  );
+}
+
+function ShelfNetwork() {
+  return (
+    <div className="py-4 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg p-4 flex items-center justify-center h-32">
+      Controls for Network Mode
     </div>
   );
 }
