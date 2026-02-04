@@ -66,7 +66,6 @@ interface BuildingDiscoveryMapProps {
   forcedCenter?: { lat: number, lng: number } | null;
   forcedBounds?: Bounds | null;
   isFetching?: boolean;
-  autoZoomOnLowCount?: boolean;
   resetInteractionTrigger?: number;
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
@@ -91,7 +90,6 @@ export function BuildingDiscoveryMap({
   forcedCenter,
   forcedBounds,
   isFetching,
-  autoZoomOnLowCount,
   resetInteractionTrigger,
   highlightedId,
   onMarkerClick,
@@ -114,10 +112,6 @@ export function BuildingDiscoveryMap({
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [hasVisibleCandidates, setHasVisibleCandidates] = useState(true);
-
-  // State to track user interaction to disable auto-zoom
-  const [userHasInteracted, setUserHasInteracted] = useState(false);
-  const [isMapMoving, setIsMapMoving] = useState(false);
 
   // Default view state (London)
   const [viewState, setViewState] = useState({
@@ -254,20 +248,6 @@ export function BuildingDiscoveryMap({
     updateClusters();
   }, [viewState, updateClusters]);
 
-  // Effect to latch userHasInteracted if auto-zoom is disabled externally (e.g. via search/filter)
-  useEffect(() => {
-    if (!autoZoomOnLowCount) {
-      setUserHasInteracted(true);
-    }
-  }, [autoZoomOnLowCount]);
-
-  // Effect to reset user interaction state when triggered externally (e.g. on new search)
-  useEffect(() => {
-    if (resetInteractionTrigger !== undefined) {
-      setUserHasInteracted(false);
-    }
-  }, [resetInteractionTrigger]);
-
   // Handle Escape key to exit fullscreen
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -286,34 +266,6 @@ export function BuildingDiscoveryMap({
     }, 100);
   }, [isFullScreen]);
 
-  // Auto-zoom logic
-  useEffect(() => {
-    // Only proceed if auto-zoom is enabled and user hasn't interacted
-    if (!autoZoomOnLowCount || userHasInteracted || isMapMoving || isFetching) return;
-
-    // Ensure we have buildings to check against
-    if (!buildings || buildings.length === 0) return;
-
-    // Check minimum zoom level to prevent zooming out to world view excessively
-    if (viewState.zoom <= 2) return;
-
-    const visibleCount = clusters.reduce((acc, cluster) => {
-        return acc + (cluster.properties.point_count || 1);
-    }, 0);
-
-    // If visible count is less than 5 AND we have more buildings available
-    if (visibleCount < 5 && visibleCount < buildings.length) {
-        const timer = setTimeout(() => {
-            setViewState(prev => ({
-                ...prev,
-                zoom: prev.zoom - 1
-            }));
-        }, 500); // 0.5s delay to pace the zoom out
-
-        return () => clearTimeout(timer);
-    }
-  }, [clusters, buildings, autoZoomOnLowCount, userHasInteracted, isMapMoving, isFetching, viewState.zoom]);
-
   const pins = useMemo(() => clusters.map(cluster => {
     const [longitude, latitude] = cluster.geometry.coordinates;
     const { cluster: isCluster, point_count: pointCount } = cluster.properties;
@@ -330,7 +282,6 @@ export function BuildingDiscoveryMap({
                 latitude={latitude}
                 onClick={(e) => {
                     e.originalEvent.stopPropagation();
-                    setUserHasInteracted(true);
                     onMapInteraction?.();
 
                     let expansionZoom = Math.min(
@@ -448,7 +399,6 @@ export function BuildingDiscoveryMap({
             if (isTouch && !isPinSelected) {
                 // First tap on mobile: Select pin
                 setSelectedPinId(building.buildingId);
-                setUserHasInteracted(true);
                 onMapInteraction?.();
                 return;
             }
@@ -657,19 +607,15 @@ export function BuildingDiscoveryMap({
         onMove={evt => {
             setViewState(evt.viewState);
             if (evt.originalEvent) {
-                setUserHasInteracted(true);
                 onMapInteraction?.();
             }
         }}
         onDragStart={() => {
-            setUserHasInteracted(true);
             onMapInteraction?.();
         }}
         onMoveStart={(evt) => {
-            setIsMapMoving(true);
             if (evt.originalEvent) {
                 isUserInteractionRef.current = true;
-                setUserHasInteracted(true);
                 onMapInteraction?.();
             } else {
                 isUserInteractionRef.current = false;
@@ -679,7 +625,6 @@ export function BuildingDiscoveryMap({
             handleMapUpdate(evt.target);
         }}
         onMoveEnd={evt => {
-            setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;
             if (isUserInteractionRef.current) {
                 onRegionChange?.({ lat: latitude, lng: longitude });
@@ -704,7 +649,6 @@ export function BuildingDiscoveryMap({
       <button
           onClick={(e) => {
               e.stopPropagation();
-              setUserHasInteracted(true);
               onMapInteraction?.();
               setIsSatellite(!isSatellite);
           }}
@@ -718,7 +662,6 @@ export function BuildingDiscoveryMap({
       <button
           onClick={(e) => {
               e.stopPropagation();
-              setUserHasInteracted(true);
               onMapInteraction?.();
               setIsFullScreen(!isFullScreen);
           }}
