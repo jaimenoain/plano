@@ -700,6 +700,7 @@ export function useBuildingSearch() {
       requestLocation,
       gpsLocation,
       buildings: buildings || [],
+      debouncedQuery,
       isLoading,
       isFetching,
       // Pagination

@@ -73,7 +73,7 @@ export default function SearchPage() {
     selectedContacts, setSelectedContacts,
     viewMode, setViewMode,
     userLocation, updateLocation,
-    buildings, isLoading, isFetching,
+    buildings, debouncedQuery, isLoading, isFetching,
     requestLocation, gpsLocation
   } = useBuildingSearch();
 
@@ -113,85 +113,69 @@ export default function SearchPage() {
   const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
   const [flyToBounds, setFlyToBounds] = useState<Bounds | null>(null);
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
-  const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
   const [hasInitialFlyToPerformed, setHasInitialFlyToPerformed] = useState(false);
+
+  // Command-Based Search Logic
+  const [explicitSearchId, setExplicitSearchId] = useState<number | null>(null);
+  const [lastHandledSearchId, setLastHandledSearchId] = useState<number | null>(null);
+
+  const triggerExplicitSearch = () => {
+    setExplicitSearchId(Date.now());
+  };
+
+  // Wrapped Setters for Filters to trigger map move
+  const handleStatusFiltersChange = (val: string[]) => { setStatusFilters(val); triggerExplicitSearch(); };
+  const handleHideVisitedChange = (val: boolean) => { setHideVisited(val); triggerExplicitSearch(); };
+  const handleHideSavedChange = (val: boolean) => { setHideSaved(val); triggerExplicitSearch(); };
+  const handleHideHiddenChange = (val: boolean) => { setHideHidden(val); triggerExplicitSearch(); };
+  const handleHideWithoutImagesChange = (val: boolean) => { setHideWithoutImages(val); triggerExplicitSearch(); };
+  const handlePersonalMinRatingChange = (val: number) => { setPersonalMinRating(val); triggerExplicitSearch(); };
+  const handleCollectionsChange = (val: { id: string; name: string }[]) => { setSelectedCollections(val); triggerExplicitSearch(); };
+  const handleFilterContactsChange = (val: boolean) => { setFilterContacts(val); triggerExplicitSearch(); };
+  const handleContactMinRatingChange = (val: number) => { setContactMinRating(val); triggerExplicitSearch(); };
+  const handleSelectedContactsChange = (val: any[]) => { setSelectedContacts(val); triggerExplicitSearch(); };
+  const handleArchitectsChange = (val: { id: string; name: string }[]) => { setSelectedArchitects(val); triggerExplicitSearch(); };
+  const handleCategoryChange = (val: string | null) => { setSelectedCategory(val); triggerExplicitSearch(); };
+  const handleTypologiesChange = (val: string[]) => { setSelectedTypologies(val); triggerExplicitSearch(); };
+  const handleAttributesChange = (val: string[]) => { setSelectedAttributes(val); triggerExplicitSearch(); };
 
   // Main: Filter controls
   const [sortBy, setSortBy] = useState<string>("distance");
 
-  // If a user types a query or uses personal filters, we want to search the full database (ignore map bounds)
-  // until they interact with the map again to filter.
+  // Handle Explicit Search Fly
   useEffect(() => {
-      if (
-        searchQuery ||
-        (statusFilters && statusFilters.length > 0) ||
-        hideVisited ||
-        hideSaved ||
-        hideWithoutImages ||
-        filterContacts ||
-        selectedContacts.length > 0 ||
-        selectedArchitects.length > 0 ||
-        selectedCollections.length > 0 ||
-        selectedCategory ||
-        selectedTypologies.length > 0 ||
-        selectedAttributes.length > 0 ||
-        personalMinRating > 0 ||
-        contactMinRating > 0
-      ) {
-          setIgnoreMapBounds(true);
-      } else {
-          setIgnoreMapBounds(false);
-          setSearchScope('content');
-      }
-  }, [
-    searchQuery,
-    statusFilters,
-    hideVisited,
-    hideSaved,
-    hideWithoutImages,
-    filterContacts,
-    selectedContacts.length,
-    selectedArchitects.length,
-    selectedCollections.length,
-    selectedCategory,
-    selectedTypologies.length,
-    selectedAttributes.length,
-    personalMinRating,
-    contactMinRating
-  ]);
+    // Check if we have a pending search command that hasn't been handled yet
+    // AND data is not fetching (so we have the NEW results)
+    // AND the results correspond to the current search query (debounced)
+    const isQuerySynced = debouncedQuery === searchQuery;
 
-  // Automatically fly to bounds of results when in global search mode
-  useEffect(() => {
-    if (ignoreMapBounds && buildings.length > 0 && !flyToCenter) {
-      // Prioritize explicit location: !flyToCenter check
-      // Smart Bounds: Only consider top 5 buildings
-      const relevantBuildings = buildings.slice(0, 5);
-      const bounds = getBoundsFromBuildings(relevantBuildings);
-      if (bounds) {
-        setFlyToBounds((prev) => {
-          if (
-            prev &&
-            prev.north === bounds.north &&
-            prev.south === bounds.south &&
-            prev.east === bounds.east &&
-            prev.west === bounds.west
-          ) {
-            return prev;
-          }
-          return bounds;
-        });
-        setFlyToCenter(null);
-      }
+    if (explicitSearchId && explicitSearchId !== lastHandledSearchId &&
+        !isFetching &&
+        isQuerySynced &&
+        buildings.length > 0) {
+
+        // Mark as handled
+        setLastHandledSearchId(explicitSearchId);
+
+        // Smart Bounds: Only consider top 5 buildings
+        const relevantBuildings = buildings.slice(0, 5);
+        const bounds = getBoundsFromBuildings(relevantBuildings);
+
+        if (bounds) {
+            setFlyToBounds(bounds);
+            setFlyToCenter(null);
+        }
     }
-  }, [buildings, ignoreMapBounds, flyToCenter]);
+  }, [buildings, isFetching, explicitSearchId, lastHandledSearchId, debouncedQuery, searchQuery]);
+
 
   // 4. Merged Filtering Logic
   const filteredBuildings = useMemo(() => {
     let result = buildings;
 
     // A. Apply Map Bounds (Merged Logic)
-    // Only filter by bounds if we have them AND we aren't explicitly ignoring them (e.g. during text search)
-    if (!ignoreMapBounds && mapBounds) {
+    // Always filter by bounds if we have them
+    if (mapBounds) {
       const { north, south, east, west } = mapBounds;
       result = result.filter(b => {
         const lat = b.location_lat;
@@ -208,19 +192,14 @@ export default function SearchPage() {
     }
 
     // C. Apply Sorting (Main Branch)
-    // Note: 'distance' sorting is usually handled by the backend/hook or geospatial logic, 
-    // but here is a placeholder for client-side sort if needed.
     if (sortBy === "name") {
       result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     }
 
     return result;
-  }, [buildings, mapBounds, ignoreMapBounds, sortBy]);
+  }, [buildings, mapBounds, sortBy]);
 
   // 5. Map Filtering
-  // Since buildings from useBuildingSearch are now fully filtered (including status/exclusions),
-  // we can use them directly for the map pins.
-  // Exception: Hide Demolished/Unbuilt buildings from map, but keep in list.
   const mapBuildings = useMemo(() => {
     return buildings.filter(b => b.status !== 'Demolished' && b.status !== 'Unbuilt');
   }, [buildings]);
@@ -245,7 +224,6 @@ export default function SearchPage() {
 
   // Clear forced camera states when user interacts with map manually
   const handleMapInteraction = () => {
-    setIgnoreMapBounds(false);
     setFlyToCenter(null);
     setFlyToBounds(null);
   };
@@ -254,7 +232,6 @@ export default function SearchPage() {
     updateLocation(center);
     setFlyToCenter(null);
     setFlyToBounds(null);
-    setIgnoreMapBounds(false);
   };
 
   const handleClearAll = () => {
@@ -273,6 +250,9 @@ export default function SearchPage() {
     setSelectedAttributes([]);
     setSelectedContacts([]);
     setCommunityQuality(0);
+
+    // Trigger fly on clear all
+    triggerExplicitSearch();
   };
 
   const handleUseLocation = async () => {
@@ -281,7 +261,6 @@ export default function SearchPage() {
       setFlyToCenter(loc);
       setFlyToBounds(null);
       updateLocation(loc); 
-      setIgnoreMapBounds(false); // Feature: Reset bounds ignore on explicit location use
     }
   };
 
@@ -313,9 +292,6 @@ export default function SearchPage() {
         
         // Main: Optimistically update user location
         updateLocation(newLoc);
-
-        // Feature: Re-enable bounds filtering once we fly to the new location
-        setIgnoreMapBounds(false);
       }
     } catch (error) {
       console.error("Geocoding error:", error);
@@ -437,6 +413,13 @@ export default function SearchPage() {
           if (e.target.value) setViewMode('list');
         }}
         onFocus={handleSearchFocus}
+        onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+                triggerExplicitSearch();
+                // Also blur to hide keyboard on mobile
+                (e.target as HTMLElement).blur();
+            }
+        }}
       />
       <div className="flex items-center gap-2 pr-1 shrink-0">
         <Button
@@ -511,36 +494,36 @@ export default function SearchPage() {
 
             <FilterDrawerContent
               statusFilters={statusFilters}
-              onStatusFiltersChange={setStatusFilters}
+              onStatusFiltersChange={handleStatusFiltersChange}
               hideVisited={hideVisited}
-              onHideVisitedChange={setHideVisited}
+              onHideVisitedChange={handleHideVisitedChange}
               hideSaved={hideSaved}
-              onHideSavedChange={setHideSaved}
+              onHideSavedChange={handleHideSavedChange}
               hideHidden={hideHidden}
-              onHideHiddenChange={setHideHidden}
+              onHideHiddenChange={handleHideHiddenChange}
               hideWithoutImages={hideWithoutImages}
-              onHideWithoutImagesChange={setHideWithoutImages}
+              onHideWithoutImagesChange={handleHideWithoutImagesChange}
               personalMinRating={personalMinRating}
-              onPersonalMinRatingChange={setPersonalMinRating}
+              onPersonalMinRatingChange={handlePersonalMinRatingChange}
               selectedCollections={selectedCollections}
-              onCollectionsChange={setSelectedCollections}
+              onCollectionsChange={handleCollectionsChange}
               availableCollections={availableCollections}
               filterContacts={filterContacts}
-              onFilterContactsChange={setFilterContacts}
+              onFilterContactsChange={handleFilterContactsChange}
               contactMinRating={contactMinRating}
-              onContactMinRatingChange={setContactMinRating}
+              onContactMinRatingChange={handleContactMinRatingChange}
               selectedContacts={selectedContacts}
-              onSelectedContactsChange={setSelectedContacts}
+              onSelectedContactsChange={handleSelectedContactsChange}
               communityQuality={communityQuality}
               onCommunityQualityChange={setCommunityQuality}
               selectedArchitects={selectedArchitects}
-              onArchitectsChange={(!searchScope || searchScope === 'content') ? setSelectedArchitects : undefined}
+              onArchitectsChange={(!searchScope || searchScope === 'content') ? handleArchitectsChange : undefined}
               selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
+              onCategoryChange={handleCategoryChange}
               selectedTypologies={selectedTypologies}
-              onTypologiesChange={setSelectedTypologies}
+              onTypologiesChange={handleTypologiesChange}
               selectedAttributes={selectedAttributes}
-              onAttributesChange={setSelectedAttributes}
+              onAttributesChange={handleAttributesChange}
               onShowLeaderboard={() => setShowLeaderboard(true)}
               onClearAll={handleClearAll}
               resultCount={filteredBuildings.length}
