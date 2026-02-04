@@ -15,6 +15,7 @@ import {
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settings, LogOut } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -35,7 +36,7 @@ const navItems = [
   { icon: UserIcon, label: "You", path: "/profile" },
 ];
 
-function UserMenu() {
+function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) {
   const { user, signOut } = useAuth();
   const { profile } = useUserProfile();
   const { isMobile } = useSidebar();
@@ -45,7 +46,7 @@ function UserMenu() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
+        <DropdownMenu onOpenChange={onOpenChange}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
@@ -91,11 +92,32 @@ function UserMenu() {
 export function AppSidebar() {
   const location = useLocation();
   const { state, setOpen, isMobile } = useSidebar();
+  const isHoveringRef = useRef(false);
+  const isMenuOpenRef = useRef(false);
+
+  const handleMouseEnter = () => {
+    isHoveringRef.current = true;
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    isHoveringRef.current = false;
+    if (!isMenuOpenRef.current) {
+      setOpen(false);
+    }
+  };
+
+  const handleMenuOpenChange = (open: boolean) => {
+    isMenuOpenRef.current = open;
+    if (!open && !isHoveringRef.current) {
+      setOpen(false);
+    }
+  };
 
   const sidebarProps = !isMobile
     ? {
-        onMouseEnter: () => setOpen(true),
-        onMouseLeave: () => setOpen(false),
+        onMouseEnter: handleMouseEnter,
+        onMouseLeave: handleMouseLeave,
       }
     : {};
 
@@ -146,7 +168,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarTrigger />
-        <UserMenu />
+        <UserMenu onOpenChange={handleMenuOpenChange} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
