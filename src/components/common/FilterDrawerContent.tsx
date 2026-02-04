@@ -127,7 +127,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
   }) || "";
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-background">
+    <div className="flex flex-col flex-1 w-full relative overflow-hidden bg-background">
       {/* Shelf 1: Top Navigation */}
       <div className="px-6 pt-6 pb-4 flex-none">
         <SegmentedControl
@@ -143,7 +143,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
       </div>
 
       {/* Scrollable Area: Shelf 2 & Shelf 3 */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 overflow-y-auto min-h-0 pb-24">
         {/* Shelf 2: Dynamic Interaction */}
         <div className="px-6 pb-6 min-h-[150px]">
           <AnimatePresence mode="wait">
@@ -293,7 +293,7 @@ export function FilterDrawerContent(props: FilterDrawerContentProps) {
       </div>
 
       {/* Sticky Footer */}
-      <div className="p-6 border-t bg-background mt-auto flex-none">
+      <div className="p-6 border-t bg-background/80 backdrop-blur-md absolute bottom-0 left-0 right-0 z-10">
         <div className="flex items-center justify-between gap-4">
           <Button
             variant="ghost"
