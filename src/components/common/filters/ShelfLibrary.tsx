@@ -95,7 +95,7 @@ export function ShelfLibrary({
 
       {/* Filter 1: Status */}
       <div className="flex flex-col gap-3">
-        <Label className="text-sm font-medium">Estado</Label>
+        <Label className="text-sm font-medium">Status</Label>
         <div className="flex gap-2">
           <MotionBadge
             variant={statusFilters.includes("visited") ? "default" : "outline"}
@@ -111,7 +111,7 @@ export function ShelfLibrary({
             ) : (
                 <Check className="h-3.5 w-3.5 opacity-50" />
             )}
-            Visitados
+            Visited
           </MotionBadge>
 
           <MotionBadge
@@ -130,14 +130,14 @@ export function ShelfLibrary({
              ) : (
                  <Circle className="h-3.5 w-3.5 opacity-50" />
              )}
-            Pendientes
+            Pending
           </MotionBadge>
         </div>
       </div>
 
       {/* Filter 2: Collections */}
       <div className="flex flex-col gap-3">
-        <Label className="text-sm font-medium">Filtrar por colección...</Label>
+        <Label className="text-sm font-medium">Filter by collection...</Label>
         <Command
             onKeyDown={handleKeyDown}
             className="overflow-visible bg-transparent"
@@ -175,7 +175,7 @@ export function ShelfLibrary({
                 onValueChange={setInputValue}
                 onBlur={() => setTimeout(() => setOpen(false), 200)}
                 onFocus={() => setOpen(true)}
-                placeholder={selectedCollections.length === 0 ? "Seleccionar..." : ""}
+                placeholder={selectedCollections.length === 0 ? "Select..." : ""}
                 className="ml-1 flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px]"
               />
             </div>
@@ -195,7 +195,7 @@ export function ShelfLibrary({
                       </CommandItem>
                     ))}
                     {filteredCollections.length === 0 && (
-                        <CommandItem disabled>No se encontraron colecciones</CommandItem>
+                        <CommandItem disabled>No collections found</CommandItem>
                     )}
                   </CommandGroup>
                 </CommandList>
@@ -208,7 +208,7 @@ export function ShelfLibrary({
       {/* Filter 3: Personal Rating */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Tus Puntos</Label>
+            <Label className="text-sm font-medium">Your Rating</Label>
         </div>
         <div className="bg-muted/10 p-4 rounded-lg border border-muted/20 flex justify-center">
             <MichelinRatingInput
