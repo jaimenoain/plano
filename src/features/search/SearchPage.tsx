@@ -78,7 +78,7 @@ export default function SearchPage() {
     selectedContacts, setSelectedContacts,
     viewMode, setViewMode,
     userLocation, updateLocation,
-    buildings, debouncedQuery, isLoading, isFetching,
+    buildings, debouncedQuery, isLoading, isFetching, isPlaceholderData,
     requestLocation, gpsLocation
   } = useBuildingSearch();
 
@@ -150,7 +150,9 @@ export default function SearchPage() {
     const isQuerySynced = debouncedQuery === searchQuery;
 
     if (shouldRecenterRef.current &&
+        !isLoading &&
         !isFetching &&
+        !isPlaceholderData &&
         isQuerySynced &&
         buildings.length > 0) {
 
@@ -168,7 +170,7 @@ export default function SearchPage() {
             shouldRecenterRef.current = false;
         }
     }
-  }, [buildings, isFetching, debouncedQuery, searchQuery]);
+  }, [buildings, isFetching, isLoading, isPlaceholderData, debouncedQuery, searchQuery]);
 
 
   // 4. Merged Filtering Logic
