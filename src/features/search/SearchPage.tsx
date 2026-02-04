@@ -403,50 +403,52 @@ export default function SearchPage() {
     }
   };
 
+  const searchBarContent = (
+    <div className="flex items-center w-full max-w-2xl border rounded-full bg-background shadow-md hover:shadow-lg transition-all p-1 group">
+      <Search className="ml-3 h-5 w-5 text-muted-foreground shrink-0" />
+      <Input
+        placeholder={
+          searchScope === 'users' ? "Search people..." :
+          searchScope === 'architects' ? "Search architects..." :
+          "Search buildings, architects..."
+        }
+        className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none h-10 px-3 text-base placeholder:text-muted-foreground/70"
+        value={searchQuery}
+        onChange={(e) => {
+          setSearchQuery(e.target.value);
+          if (e.target.value) setViewMode('list');
+        }}
+        onFocus={handleSearchFocus}
+      />
+      <div className="flex items-center gap-2 pr-1 shrink-0">
+        <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => setLocationDialogOpen(true)}
+            className="h-9 w-9 rounded-full shadow-sm"
+            title="Search Location"
+        >
+            <MapPin className="h-4 w-4" />
+        </Button>
+        <Button
+            variant={hasActiveFilters ? "default" : "secondary"}
+            size="icon"
+            onClick={() => setFilterSheetOpen(true)}
+            className="h-9 w-9 rounded-full shadow-sm transition-colors"
+            title="Filters"
+        >
+            <ListFilter className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <AppLayout
       title="Discovery"
       showLogo={false}
       variant="map"
-      searchBar={
-        <div className="flex items-center w-full max-w-2xl border rounded-full bg-background shadow-md hover:shadow-lg transition-all p-1 group">
-          <Search className="ml-3 h-5 w-5 text-muted-foreground shrink-0" />
-          <Input
-            placeholder={
-              searchScope === 'users' ? "Search people..." :
-              searchScope === 'architects' ? "Search architects..." :
-              "Search buildings, architects..."
-            }
-            className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none h-10 px-3 text-base placeholder:text-muted-foreground/70"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              if (e.target.value) setViewMode('list');
-            }}
-            onFocus={handleSearchFocus}
-          />
-          <div className="flex items-center gap-2 pr-1 shrink-0">
-            <Button
-                variant="secondary"
-                size="icon"
-                onClick={() => setLocationDialogOpen(true)}
-                className="h-9 w-9 rounded-full shadow-sm"
-                title="Search Location"
-            >
-                <MapPin className="h-4 w-4" />
-            </Button>
-            <Button
-                variant={hasActiveFilters ? "default" : "secondary"}
-                size="icon"
-                onClick={() => setFilterSheetOpen(true)}
-                className="h-9 w-9 rounded-full shadow-sm transition-colors"
-                title="Filters"
-            >
-                <ListFilter className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      }
+      searchBar={searchBarContent}
     >
       <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
         <DialogContent className="top-[20%] translate-y-0 gap-4">
@@ -598,6 +600,9 @@ export default function SearchPage() {
               {/* Desktop Split View */}
               <div className="hidden md:grid grid-cols-12 h-full w-full">
                 <div className="col-span-5 lg:col-span-4 h-full overflow-y-auto border-r bg-background/50 backdrop-blur-sm z-10 pb-4">
+                  <div className="p-4 sticky top-0 bg-background/95 backdrop-blur z-20 border-b">
+                    {searchBarContent}
+                  </div>
                   <DiscoveryList
                     buildings={filteredBuildings}
                     isLoading={isLoading}

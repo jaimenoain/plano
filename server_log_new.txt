@@ -1,0 +1,3 @@
+$ vite
+/usr/bin/bash: line 1: vite: command not found
+error: script "dev" exited with code 127
