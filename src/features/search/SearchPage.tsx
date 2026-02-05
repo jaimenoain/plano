@@ -143,6 +143,15 @@ export default function SearchPage() {
   // Main: Filter controls
   const [sortBy, setSortBy] = useState<string>("distance");
 
+  // Handle map instance switch (Mobile <-> Desktop)
+  useEffect(() => {
+    // When switching between mobile/desktop layouts, the map component unmounts and remounts.
+    // We need to reset the state tracking refs to ensure the new map instance
+    // receives the correct initial camera position or search bounds.
+    setHasInitialFlyToPerformed(false);
+    lastHandledVersionRef.current = searchTriggerVersion - 1;
+  }, [isMobile, searchTriggerVersion]);
+
   // Handle Explicit Search Fly
   useEffect(() => {
     if (!isFetching && !isPlaceholderData && buildings.length > 0) {
@@ -576,35 +585,86 @@ export default function SearchPage() {
         />
 
         <div className="flex-1 relative overflow-hidden">
-          {searchScope === 'users' ? (
-             <div className="h-full w-full overflow-y-auto bg-background p-0">
-               <UserResultsList users={foundUsers} isLoading={isUserSearchLoading} />
-             </div>
-          ) : searchScope === 'architects' ? (
-             <div className="h-full w-full overflow-y-auto bg-background p-0">
-               <ArchitectResultsList architects={foundArchitects} isLoading={isArchitectSearchLoading} />
-             </div>
-          ) : isMobile ? (
-            /* Mobile View */
-            <div className="h-full w-full relative">
-              <SearchModeToggle
-                mode={viewMode}
-                onModeChange={handleViewModeChange}
-                className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50"
-              />
-
-              {viewMode === 'list' ? (
-                <div className="h-full overflow-y-auto bg-background pb-20">
-                  <DiscoveryList
-                    buildings={filteredBuildings}
-                    isLoading={isLoading}
-                    currentLocation={userLocation}
-                    itemTarget="_blank"
-                    searchQuery={searchQuery}
-                  />
+          {(() => {
+            // Priority 1: User Search
+            if (searchScope === 'users') {
+              return (
+                <div className="h-full w-full overflow-y-auto bg-background p-0">
+                  <UserResultsList users={foundUsers} isLoading={isUserSearchLoading} />
                 </div>
-              ) : (
-                <div className="h-full w-full">
+              );
+            }
+
+            // Priority 2: Architect Search
+            if (searchScope === 'architects') {
+              return (
+                <div className="h-full w-full overflow-y-auto bg-background p-0">
+                  <ArchitectResultsList architects={foundArchitects} isLoading={isArchitectSearchLoading} />
+                </div>
+              );
+            }
+
+            // Priority 3: Mobile Layout
+            if (isMobile) {
+              return (
+                <div className="h-full w-full relative">
+                  <SearchModeToggle
+                    mode={viewMode}
+                    onModeChange={handleViewModeChange}
+                    className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50"
+                  />
+
+                  {viewMode === 'list' ? (
+                    <div className="h-full overflow-y-auto bg-background pb-20">
+                      <DiscoveryList
+                        buildings={filteredBuildings}
+                        isLoading={isLoading}
+                        currentLocation={userLocation}
+                        itemTarget="_blank"
+                        searchQuery={searchQuery}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full w-full">
+                      <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+                        <BuildingDiscoveryMap
+                          ref={mapRef}
+                          externalBuildings={mapBuildings}
+                          onRegionChange={handleRegionChange}
+                          onBoundsChange={setMapBounds}
+                          onMapInteraction={handleMapInteraction}
+                          onMapLoad={handleMapLoad}
+                          isFetching={isFetching}
+                          onMarkerClick={handleMarkerClick}
+                          onHide={handleHide}
+                          onSave={handleSave}
+                          onVisit={handleVisit}
+                        />
+                      </Suspense>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Priority 4: Desktop Layout
+            return (
+              <div className="grid grid-cols-12 h-full w-full">
+                <div className="col-span-5 lg:col-span-4 h-full flex flex-col border-r bg-background/50 backdrop-blur-sm z-10">
+                  <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20 border-b">
+                    {searchBar}
+                  </div>
+                  <div className="flex-1 overflow-y-auto pb-4">
+                    <DiscoveryList
+                      buildings={filteredBuildings}
+                      isLoading={isLoading}
+                      currentLocation={userLocation}
+                      itemTarget="_blank"
+                      searchQuery={searchQuery}
+                    />
+                  </div>
+                </div>
+                <div className="col-span-7 lg:col-span-8 h-full relative">
                   <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                     <BuildingDiscoveryMap
                       ref={mapRef}
@@ -621,44 +681,9 @@ export default function SearchPage() {
                     />
                   </Suspense>
                 </div>
-              )}
-            </div>
-          ) : (
-            /* Desktop Split View */
-            <div className="grid grid-cols-12 h-full w-full">
-              <div className="col-span-5 lg:col-span-4 h-full flex flex-col border-r bg-background/50 backdrop-blur-sm z-10">
-                <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20 border-b">
-                  {searchBar}
-                </div>
-                <div className="flex-1 overflow-y-auto pb-4">
-                  <DiscoveryList
-                    buildings={filteredBuildings}
-                    isLoading={isLoading}
-                    currentLocation={userLocation}
-                    itemTarget="_blank"
-                    searchQuery={searchQuery}
-                  />
-                </div>
               </div>
-              <div className="col-span-7 lg:col-span-8 h-full relative">
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
-                  <BuildingDiscoveryMap
-                    ref={mapRef}
-                    externalBuildings={mapBuildings}
-                    onRegionChange={handleRegionChange}
-                    onBoundsChange={setMapBounds}
-                    onMapInteraction={handleMapInteraction}
-                    onMapLoad={handleMapLoad}
-                    isFetching={isFetching}
-                    onMarkerClick={handleMarkerClick}
-                    onHide={handleHide}
-                    onSave={handleSave}
-                    onVisit={handleVisit}
-                  />
-                </Suspense>
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
       </AppLayout>
