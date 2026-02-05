@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -661,9 +661,9 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
     });
   }, [rawBuildings, hideSaved, hideVisited, hideHidden, hideWithoutImages, userStatuses]);
 
-  const updateLocation = (center: { lat: number, lng: number }) => {
+  const updateLocation = useCallback((center: { lat: number, lng: number }) => {
       setUserLocation(center);
-  };
+  }, []);
 
   return {
       searchQuery,
