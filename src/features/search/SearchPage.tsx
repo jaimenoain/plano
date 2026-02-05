@@ -186,6 +186,45 @@ export default function SearchPage() {
     contactMinRating
   ]);
 
+  // --- TEMPORARY DIAGNOSTIC LOGGER ---
+  useEffect(() => {
+    // Parse filters to inspect raw values
+    const filters = JSON.parse(activeFilterSignature);
+
+    // Re-calculate isCleanState locally
+    const isCleanState = !filters.q &&
+                         (!filters.sf || filters.sf.length === 0) &&
+                         !filters.hv && !filters.hs && !filters.hwi && !filters.fc &&
+                         (!filters.sc || filters.sc.length === 0) &&
+                         (!filters.sa || filters.sa.length === 0) &&
+                         (!filters.scol || filters.scol.length === 0) &&
+                         !filters.cat &&
+                         (!filters.typ || filters.typ.length === 0) &&
+                         (!filters.att || filters.att.length === 0) &&
+                         filters.pmr === 0 && filters.cmr === 0;
+
+    console.group("🕵️‍♂️ MAP DEBUG");
+    console.log(`Timestamp: ${new Date().toISOString()}`);
+    console.log("State Snapshot:", {
+      searchMode,
+      shouldFitBounds,
+      isInteracting: isInteractingRef.current,
+      isCleanState,
+      filters
+    });
+
+    // Critical Check
+    if (isCleanState && (searchMode === 'global' || shouldFitBounds)) {
+      console.warn("⚠️ GHOST MOVEMENT DETECTED: Clean State but forcing Global Mode!", {
+         reason: "State mismatch between filters and map mode",
+         searchMode,
+         shouldFitBounds
+      });
+    }
+    console.groupEnd();
+  }, [activeFilterSignature, searchMode, shouldFitBounds]);
+  // -----------------------------------
+
   // If a user types a query or uses personal filters, we want to search the full database (ignore map bounds)
   // until they interact with the map again to filter.
   useEffect(() => {
