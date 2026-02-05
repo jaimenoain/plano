@@ -50,6 +50,8 @@ export default function SearchPage() {
   const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
   const lastBoundsRef = useRef<Bounds | null>(null);
   const lastFlownLocationRef = useRef<{lat: number, lng: number} | null>(null);
+  const lastAutoFitTimeRef = useRef<number>(0);
+  const regionUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track if user is interacting to prevent auto-fit fighting
   const isInteractingRef = useRef(false);
@@ -218,6 +220,9 @@ export default function SearchPage() {
   useEffect(() => {
     // Only auto-fly if we are in Global Search Mode AND explicitly requested fit
     if (searchMode === 'global' && shouldFitBounds && buildings.length > 0 && !isInteractingRef.current) {
+      // Throttle auto-fit to prevent loops
+      if (Date.now() - lastAutoFitTimeRef.current < 2000) return;
+
       const bounds = getBoundsFromBuildings(buildings);
       if (bounds) {
         // Deep equality check to prevent redundant moves (though shouldFitBounds handles most cases)
@@ -231,6 +236,7 @@ export default function SearchPage() {
         if (!isSame) {
             mapRef.current?.fitBounds(bounds);
             lastBoundsRef.current = bounds;
+            lastAutoFitTimeRef.current = Date.now();
             setShouldFitBounds(false); // Mark fit as done
         } else {
             // Even if bounds are same, we consider "fit" done for this cycle
@@ -365,7 +371,10 @@ export default function SearchPage() {
   // Feature: Guard region updates to prevent feedback loops during programmatic map movement
   const handleRegionChange = useCallback((center: { lat: number; lng: number }) => {
     if (searchMode === 'explore') {
-      updateLocation(center);
+      if (regionUpdateTimeoutRef.current) clearTimeout(regionUpdateTimeoutRef.current);
+      regionUpdateTimeoutRef.current = setTimeout(() => {
+        updateLocation(center);
+      }, 500);
     }
   }, [searchMode, updateLocation]);
 

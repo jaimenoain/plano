@@ -173,6 +173,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       flyTo: (center, zoom) => {
           console.log("🗺️ [MapForensics] Imperative flyTo called", { center, zoom, isMapMoving });
 
+          // Stop any current movement before flying
+          mapRef.current?.getMap().stop();
+
           if (isMapMoving) {
             console.warn("🗺️ [MapForensics] flyTo BLOCKED due to isMapMoving");
             return;
@@ -201,6 +204,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       },
       fitBounds: (bounds) => {
           console.log("🗺️ [MapForensics] Imperative fitBounds called", { bounds, isMapMoving });
+
+          // Stop any current movement before fitting bounds
+          mapRef.current?.getMap().stop();
 
           if (isMapMoving) {
             console.warn("🗺️ [MapForensics] fitBounds BLOCKED due to isMapMoving");
@@ -364,13 +370,19 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
     // Sanitize properties for Worker safety (Requirement: Robust Data Handling)
     // Mapbox/MapLibre workers can crash if expressions expect numbers but get nulls.
-    const safeProps: Record<string, any> = { ...b };
-
-    // Explicitly handle known numeric fields to ensure they are 0 instead of null
+    const safeProps: Record<string, any> = {};
     const numericKeys = ['year_completed', 'distance', 'social_score', 'rating', 'short_id'];
-    numericKeys.forEach(key => {
-        if (safeProps[key] === null || safeProps[key] === undefined) {
-            safeProps[key] = 0;
+
+    Object.keys(b).forEach(key => {
+        const val = (b as any)[key];
+        if (val === null || val === undefined) {
+             if (numericKeys.includes(key)) {
+                 safeProps[key] = 0;
+             } else {
+                 safeProps[key] = ""; // Default string for others to be safe
+             }
+        } else {
+             safeProps[key] = val;
         }
     });
 
