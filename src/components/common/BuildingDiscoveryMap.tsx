@@ -167,6 +167,18 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const buildings = externalBuildings || internalBuildings || [];
   const isLoading = externalBuildings ? false : internalLoading;
 
+  // 1. THE FIREWALL
+  const cleanBuildings = useMemo(() => {
+    return buildings.filter(b => {
+      const lat = b.location_lat;
+      const lng = b.location_lng;
+      return (
+        typeof lat === 'number' && !Number.isNaN(lat) && lat !== 0 &&
+        typeof lng === 'number' && !Number.isNaN(lng) && lng !== 0
+      );
+    });
+  }, [buildings]);
+
   // --- DATA INTEGRITY GUARD ---
   useEffect(() => {
     let invalidCount = 0;
@@ -189,14 +201,21 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       }
     });
 
+    const blockedCount = buildings.length - cleanBuildings.length;
+
     if (buildings.length > 0) {
       console.log("📊 Data Integrity Report:", {
         totalBuildings: buildings.length,
-        invalidCount,
-        bounds: { minLat, maxLat, minLng, maxLng }
+        cleanBuildings: cleanBuildings.length,
+        blockedCount,
+        rawBounds: { minLat, maxLat, minLng, maxLng }
       });
+
+      if (blockedCount > 0) {
+        console.warn(`⚠️ FIREWALL: Blocked ${blockedCount} toxic buildings from rendering`);
+      }
     }
-  }, [buildings]);
+  }, [buildings, cleanBuildings]);
 
   // Watch for NaN ViewState
   useEffect(() => {
@@ -210,7 +229,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   }, [viewState]);
   // ---------------------------
 
-  const candidates = useMemo(() => buildings?.filter(b => b.isCandidate) || [], [buildings]);
+  const candidates = useMemo(() => cleanBuildings?.filter(b => b.isCandidate) || [], [cleanBuildings]);
 
   const checkCandidatesVisibility = (map: maplibregl.Map) => {
     if (!showSavedCandidates || candidates.length === 0) {
@@ -246,7 +265,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     });
   }, []);
 
-  const points = useMemo(() => buildings?.map(b => {
+  const points = useMemo(() => cleanBuildings?.map(b => {
     let [lng, lat] = [b.location_lng, b.location_lat];
 
     // Jitter logic for approximate locations to prevent perfect stacking
@@ -276,7 +295,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             coordinates: [lng, lat]
         }
     };
-  }) || [], [buildings]);
+  }) || [], [cleanBuildings]);
 
   const [clusters, setClusters] = useState<any[]>([]);
   const viewStateRef = useRef(viewState);
@@ -341,13 +360,16 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   // Stable "One-Time Fit" logic
   useEffect(() => {
     // Only triggers when the externalBuildings array first populates (changes from empty to non-empty).
-    if (hasInitialFitRef.current || userHasInteracted || !externalBuildings || externalBuildings.length === 0) return;
+    if (hasInitialFitRef.current || userHasInteracted || !externalBuildings) return;
+
+    // Safety check: Do not fit if no clean buildings
+    if (cleanBuildings.length === 0) return;
 
     // Use a small timeout to ensure the map instance is ready
     const timer = setTimeout(() => {
         if (!mapRef.current) return;
 
-        const bounds = getBoundsFromBuildings(externalBuildings);
+        const bounds = getBoundsFromBuildings(cleanBuildings);
         if (bounds) {
              mapRef.current.fitBounds(
                  [
@@ -361,7 +383,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [externalBuildings, userHasInteracted]);
+  }, [cleanBuildings, userHasInteracted, externalBuildings]);
 
   const pins = useMemo(() => clusters.map(cluster => {
     const [longitude, latitude] = cluster.geometry.coordinates;
