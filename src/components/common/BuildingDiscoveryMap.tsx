@@ -12,7 +12,7 @@ import { MarkerInfoCard } from "../collections/MarkerInfoCard";
 import { MarkerPin } from "./MarkerPin";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
-import { Bounds } from "@/utils/map";
+import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import Supercluster from "supercluster";
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -126,6 +126,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     zoom: 12
   });
 
+  // Track initial fit to prevent loops
+  const hasInitialFitRef = useRef(false);
+
   useImperativeHandle(ref, () => ({
       flyTo: (center, zoom) => {
           if (isMapMoving) return;
@@ -163,17 +166,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   const buildings = externalBuildings || internalBuildings || [];
   const isLoading = externalBuildings ? false : internalLoading;
-
-  useEffect(() => {
-    console.group("🗺️ MAP_DATA_DEBUG");
-    console.log("Data Intake Log:", {
-      timestamp: new Date().toISOString(),
-      externalBuildingsCount: externalBuildings?.length ?? 0,
-      internalBuildingsCount: internalBuildings?.length ?? 0,
-      mergedBuildingsCount: buildings?.length ?? 0
-    });
-    console.groupEnd();
-  }, [externalBuildings, internalBuildings, buildings]);
 
   const candidates = useMemo(() => buildings?.filter(b => b.isCandidate) || [], [buildings]);
 
@@ -250,23 +242,12 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const updateClusters = useMemo(() => {
     return () => {
         if (!mapRef.current) {
-             console.group("🗺️ MAP_DATA_DEBUG");
-             console.log("Supercluster Spy: Map ref not ready");
-             console.groupEnd();
              return;
         }
         const bounds = mapRef.current.getBounds();
         const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()] as [number, number, number, number];
         const zoom = viewStateRef.current.zoom;
         const newClusters = supercluster.getClusters(bbox, Math.round(zoom));
-
-        console.group("🗺️ MAP_DATA_DEBUG");
-        console.log("Supercluster Spy:", {
-            bbox,
-            zoom,
-            clustersCount: newClusters.length
-        });
-        console.groupEnd();
 
         setClusters(newClusters);
     };
@@ -314,54 +295,30 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     }, 100);
   }, [isFullScreen]);
 
-  // Auto-zoom logic
+  // Stable "One-Time Fit" logic
   useEffect(() => {
-    // DIAGNOSTIC LOGGING
-    const visibleCount = clusters.reduce((acc, cluster) => {
-        return acc + (cluster.properties.point_count || 1);
-    }, 0);
+    // Only triggers when the externalBuildings array first populates (changes from empty to non-empty).
+    if (hasInitialFitRef.current || userHasInteracted || !externalBuildings || externalBuildings.length === 0) return;
 
-    console.group("🗺️ MAP_DATA_DEBUG");
-    console.log("Auto-Zoom Interrogator:", {
-        autoZoomOnLowCount,
-        userHasInteracted,
-        isMapMoving,
-        isFetching,
-        buildingsCount: buildings?.length,
-        visibleCount,
-        zoom: viewState.zoom
-    });
+    // Use a small timeout to ensure the map instance is ready
+    const timer = setTimeout(() => {
+        if (!mapRef.current) return;
 
-    let decision = "NO ZOOM";
-    if (!autoZoomOnLowCount || userHasInteracted || isMapMoving || isFetching) decision = "ABORT: Conditions not met";
-    else if (!buildings || buildings.length === 0) decision = "ABORT: No buildings";
-    else if (viewState.zoom <= 2) decision = "ABORT: Zoom too low";
-    else if (visibleCount < 5 && visibleCount < buildings.length) decision = "DECISION -> ZOOM OUT";
+        const bounds = getBoundsFromBuildings(externalBuildings);
+        if (bounds) {
+             mapRef.current.fitBounds(
+                 [
+                     [bounds.west, bounds.south],
+                     [bounds.east, bounds.north]
+                 ],
+                 { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
+             );
+             hasInitialFitRef.current = true;
+        }
+    }, 100);
 
-    console.log("DECISION -> Should I zoom?", decision);
-    console.groupEnd();
-
-    // Only proceed if auto-zoom is enabled and user hasn't interacted
-    if (!autoZoomOnLowCount || userHasInteracted || isMapMoving || isFetching) return;
-
-    // Ensure we have buildings to check against
-    if (!buildings || buildings.length === 0) return;
-
-    // Check minimum zoom level to prevent zooming out to world view excessively
-    if (viewState.zoom <= 2) return;
-
-    // If visible count is less than 5 AND we have more buildings available
-    if (visibleCount < 5 && visibleCount < buildings.length) {
-        const timer = setTimeout(() => {
-            setViewState(prev => ({
-                ...prev,
-                zoom: prev.zoom - 1
-            }));
-        }, 500); // 0.5s delay to pace the zoom out
-
-        return () => clearTimeout(timer);
-    }
-  }, [clusters, buildings, autoZoomOnLowCount, userHasInteracted, isMapMoving, isFetching, viewState.zoom]);
+    return () => clearTimeout(timer);
+  }, [externalBuildings, userHasInteracted]);
 
   const pins = useMemo(() => clusters.map(cluster => {
     const [longitude, latitude] = cluster.geometry.coordinates;
@@ -715,12 +672,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             onMapInteraction?.();
         }}
         onMoveStart={(evt) => {
-            console.group("🗺️ MAP_DATA_DEBUG");
-            console.log("Map State Monitor: onMoveStart", {
-                isUserInteraction: !!evt.originalEvent
-            });
-            console.groupEnd();
-
             setIsMapMoving(true);
             if (evt.originalEvent) {
                 setUserHasInteracted(true);
@@ -731,10 +682,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             handleMapUpdate(evt.target);
         }}
         onMoveEnd={evt => {
-            console.group("🗺️ MAP_DATA_DEBUG");
-            console.log("Map State Monitor: onMoveEnd");
-            console.groupEnd();
-
             setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;
             onRegionChange?.({ lat: latitude, lng: longitude });
