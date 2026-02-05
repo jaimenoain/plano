@@ -49,6 +49,7 @@ export default function SearchPage() {
 
   const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
   const lastBoundsRef = useRef<Bounds | null>(null);
+  const lastFlownLocationRef = useRef<{lat: number, lng: number} | null>(null);
 
   // Track if user is interacting to prevent auto-fit fighting
   const isInteractingRef = useRef(false);
@@ -348,10 +349,17 @@ export default function SearchPage() {
   useEffect(() => {
     // Feature: Guard against auto-centering if we are ignoring map bounds (e.g. searching)
     if (gpsLocation && searchMode === 'explore') {
-      mapRef.current?.flyTo(gpsLocation);
+      const isSame = lastFlownLocationRef.current &&
+                     Math.abs(lastFlownLocationRef.current.lat - gpsLocation.lat) < 0.0001 &&
+                     Math.abs(lastFlownLocationRef.current.lng - gpsLocation.lng) < 0.0001;
+
+      if (!isSame) {
+        mapRef.current?.flyTo(gpsLocation);
+        lastFlownLocationRef.current = gpsLocation;
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gpsLocation]); // Note: Depend on searchMode intentionally omitted in original, but here we check it inside
+  }, [gpsLocation, searchMode]); // Note: Depend on searchMode intentionally omitted in original, but here we check it inside
 
   // Feature: Guard region updates to prevent feedback loops during programmatic map movement
   const handleRegionChange = useCallback((center: { lat: number; lng: number }) => {
@@ -379,6 +387,11 @@ export default function SearchPage() {
   const handleSearchFocus = useCallback(() => {
     setViewMode('list');
   }, [setViewMode]);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      if (e.target.value) setViewMode('list');
+  }, [setSearchQuery, setViewMode]);
 
   const handleViewModeChange = (mode: 'map' | 'list') => {
     setViewMode(mode);
@@ -465,10 +478,7 @@ export default function SearchPage() {
         }
         className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none h-10 px-3 text-base placeholder:text-muted-foreground/70"
         value={searchQuery}
-        onChange={(e) => {
-          setSearchQuery(e.target.value);
-          if (e.target.value) setViewMode('list');
-        }}
+        onChange={handleSearchChange}
         onFocus={handleSearchFocus}
       />
       <div className="flex items-center gap-2 pr-1 shrink-0">
@@ -497,8 +507,7 @@ export default function SearchPage() {
     searchScope,
     hasActiveFilters,
     handleSearchFocus,
-    setSearchQuery,
-    setViewMode,
+    handleSearchChange,
     setLocationDialogOpen,
     setFilterSheetOpen
   ]);
