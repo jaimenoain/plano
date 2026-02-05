@@ -367,7 +367,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     const safeProps: Record<string, any> = { ...b };
 
     // Explicitly handle known numeric fields to ensure they are 0 instead of null
-    const numericKeys = ['year_completed', 'distance', 'social_score', 'rating'];
+    const numericKeys = ['year_completed', 'distance', 'social_score', 'rating', 'short_id'];
     numericKeys.forEach(key => {
         if (safeProps[key] === null || safeProps[key] === undefined) {
             safeProps[key] = 0;

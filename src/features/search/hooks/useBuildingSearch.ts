@@ -617,7 +617,7 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
                     // Pass through metadata if needed downstream
                 } as DiscoveryBuilding;
             })
-            .filter(b => !(b.location_lat === 0 && b.location_lng === 0))
+            .filter(b => !(Math.abs(b.location_lat) < 0.0001 && Math.abs(b.location_lng) < 0.0001))
             .sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
             return await enrichBuildings(mappedBuildings, user?.id, selectedContacts.map(c => c.id));
@@ -640,7 +640,7 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
         });
 
         // Sanitize RPC results to remove (0,0) locations
-        const sanitizedResults = rpcResults.filter(b => !(b.location_lat === 0 && b.location_lng === 0));
+        const sanitizedResults = rpcResults.filter(b => !(Math.abs(b.location_lat) < 0.0001 && Math.abs(b.location_lng) < 0.0001));
 
         return await enrichBuildings(sanitizedResults, user?.id, selectedContacts.map(c => c.id));
     },
