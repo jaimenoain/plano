@@ -140,6 +140,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       },
       fitBounds: (bounds) => {
           if (isMapMoving) return;
+          if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) return;
           mapRef.current?.fitBounds(
               [
                   [bounds.west, bounds.south],
@@ -169,41 +170,23 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // 1. THE FIREWALL - PARANOID VALIDATION
   const cleanBuildings = useMemo(() => {
-    const valid = [];
-    for (const b of buildings) {
-       const lat = b.location_lat;
-       const lng = b.location_lng;
+    if (!buildings) return [];
+    const valid = buildings.filter(b => {
+      // REJECT invalid primitives immediately
+      if (b.location_lat === null || b.location_lat === undefined) return false;
+      if (b.location_lng === null || b.location_lng === undefined) return false;
 
-       // Check 1: Existence (Reject if null/undefined)
-       if (lat === null || lat === undefined || lng === null || lng === undefined) {
-           console.warn(`🚨 [PARANOID] REJECTED (Null/Undefined) ID: ${b.id}`, { rawLat: lat, rawLng: lng });
-           continue;
-       }
+      // REJECT invalid numbers (NaN)
+      const lat = Number(b.location_lat);
+      const lng = Number(b.location_lng);
+      if (isNaN(lat) || isNaN(lng)) return false;
 
-       // Cast explicitly
-       const numLat = Number(lat);
-       const numLng = Number(lng);
+      // REJECT Null Island (0,0) specifically
+      if (Math.abs(lat) < 0.00001 && Math.abs(lng) < 0.00001) return false;
 
-       // Check 2: Type (Reject if not a number)
-       if (Number.isNaN(numLat) || Number.isNaN(numLng)) {
-           console.warn(`🚨 [PARANOID] REJECTED (NaN) ID: ${b.id}`, { rawLat: lat, rawLng: lng, numLat, numLng });
-           continue;
-       }
-
-       // Check 3: Null Island (Reject if exactly 0)
-       if (numLat === 0 && numLng === 0) {
-           console.warn(`🚨 [PARANOID] REJECTED (Null Island) ID: ${b.id}`, { lat: numLat, lng: numLng });
-           continue;
-       }
-
-       // Check 4: Near Zero (Reject if extremely close to 0 - Ghost Artifacts)
-       if (Math.abs(numLat) < 0.00001 && Math.abs(numLng) < 0.00001) {
-           console.warn(`🚨 [PARANOID] REJECTED (Near Zero) ID: ${b.id}`, { lat: numLat, lng: numLng });
-           continue;
-       }
-
-       valid.push(b);
-    }
+      return true;
+    });
+    console.log(`🛡️ FINAL GUARD: Input ${buildings.length} -> Output ${valid.length}`);
     return valid;
   }, [buildings]);
 
@@ -337,7 +320,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     });
   }, []);
 
-  const points = useMemo(() => cleanBuildings?.map(b => {
+  const points = useMemo(() => cleanBuildings.map(b => {
     let [lng, lat] = [b.location_lng, b.location_lat];
 
     // Jitter logic for approximate locations to prevent perfect stacking
@@ -429,48 +412,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     }, 100);
   }, [isFullScreen]);
 
-  // Stable "One-Time Fit" logic
-  useEffect(() => {
-    // --- FORENSIC: AUTO-ZOOM SPY ---
-    console.groupCollapsed("🔬 FORENSIC REPORT: Auto-Zoom Spy");
-    console.log("🕵️‍♂️ AUTO-ZOOM EFFECT TRIGGERED");
-    console.log("   State:", {
-        cleanBuildingsCount: cleanBuildings.length,
-        autoZoomOnLowCount,
-        userHasInteracted,
-        hasInitialFit: hasInitialFitRef.current,
-        hasExternalBuildings: !!externalBuildings
-    });
-    console.groupEnd();
-    // --------------------------------
-
-    // Only triggers when the externalBuildings array first populates (changes from empty to non-empty).
-    if (hasInitialFitRef.current || userHasInteracted || !externalBuildings) return;
-
-    // Safety check: Do not fit if no clean buildings
-    if (cleanBuildings.length === 0) return;
-
-    console.log("🔥 AUTO-ZOOM FIRING: Decreasing zoom / fitting bounds...");
-
-    // Use a small timeout to ensure the map instance is ready
-    const timer = setTimeout(() => {
-        if (!mapRef.current) return;
-
-        const bounds = getBoundsFromBuildings(cleanBuildings);
-        if (bounds) {
-             mapRef.current.fitBounds(
-                 [
-                     [bounds.west, bounds.south],
-                     [bounds.east, bounds.north]
-                 ],
-                 { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
-             );
-             hasInitialFitRef.current = true;
-        }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [cleanBuildings, userHasInteracted, externalBuildings]);
 
   const pins = useMemo(() => clusters.map(cluster => {
     const [longitude, latitude] = cluster.geometry.coordinates;
