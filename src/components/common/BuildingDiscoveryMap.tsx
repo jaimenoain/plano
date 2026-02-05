@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { createPortal } from "react-dom";
 import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
@@ -57,14 +57,17 @@ interface Building {
   address?: string | null;
 }
 
+export interface BuildingDiscoveryMapRef {
+    flyTo: (center: { lat: number, lng: number }, zoom?: number) => void;
+    fitBounds: (bounds: Bounds) => void;
+}
+
 interface BuildingDiscoveryMapProps {
   externalBuildings?: DiscoveryBuilding[];
   onAddCandidate?: (building: DiscoveryBuilding) => void;
   onRegionChange?: (center: { lat: number, lng: number }) => void;
   onBoundsChange?: (bounds: Bounds) => void;
   onMapInteraction?: () => void;
-  forcedCenter?: { lat: number, lng: number } | null;
-  forcedBounds?: Bounds | null;
   isFetching?: boolean;
   autoZoomOnLowCount?: boolean;
   resetInteractionTrigger?: number;
@@ -82,14 +85,12 @@ interface BuildingDiscoveryMapProps {
   showSavedCandidates?: boolean;
 }
 
-export function BuildingDiscoveryMap({
+export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, BuildingDiscoveryMapProps>(({
   externalBuildings,
   onAddCandidate,
   onRegionChange,
   onBoundsChange,
   onMapInteraction,
-  forcedCenter,
-  forcedBounds,
   isFetching,
   autoZoomOnLowCount,
   resetInteractionTrigger,
@@ -105,7 +106,7 @@ export function BuildingDiscoveryMap({
   onRemoveMarker,
   onClosePopup,
   showSavedCandidates
-}: BuildingDiscoveryMapProps) {
+}, ref) => {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
@@ -125,24 +126,24 @@ export function BuildingDiscoveryMap({
     zoom: 12
   });
 
-  // Handle flyTo or fitBounds
-  useEffect(() => {
-    if (forcedBounds && mapInstance) {
-        mapInstance.fitBounds(
-            [
-                [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
-                [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
-            ],
-            { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
-        );
-    } else if (forcedCenter && mapInstance) {
-        mapInstance.flyTo({
-            center: [forcedCenter.lng, forcedCenter.lat],
-            zoom: 13,
-            duration: 1500
-        });
-    }
-  }, [forcedCenter, forcedBounds, mapInstance]);
+  useImperativeHandle(ref, () => ({
+      flyTo: (center, zoom) => {
+          mapRef.current?.flyTo({
+              center: [center.lng, center.lat],
+              zoom: zoom || 13,
+              duration: 1500
+          });
+      },
+      fitBounds: (bounds) => {
+          mapRef.current?.fitBounds(
+              [
+                  [bounds.west, bounds.south],
+                  [bounds.east, bounds.north]
+              ],
+              { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
+           );
+      }
+  }), []);
 
   const { data: internalBuildings, isLoading: internalLoading } = useQuery({
     queryKey: ["discovery-buildings"],
@@ -728,4 +729,6 @@ export function BuildingDiscoveryMap({
   }
 
   return mapContent;
-}
+});
+
+BuildingDiscoveryMap.displayName = "BuildingDiscoveryMap";
