@@ -50,6 +50,9 @@ export default function SearchPage() {
   const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
   const lastBoundsRef = useRef<Bounds | null>(null);
 
+  // Track if user is interacting to prevent auto-fit fighting
+  const isInteractingRef = useRef(false);
+
   const setMapRef = useCallback((node: BuildingDiscoveryMapRef | null) => {
       mapRef.current = node;
       if (node && lastBoundsRef.current) {
@@ -127,31 +130,40 @@ export default function SearchPage() {
   // Main: Filter controls
   const [sortBy, setSortBy] = useState<string>("distance");
 
-  // If a user types a query or uses personal filters, we want to search the full database (ignore map bounds)
-  // until they interact with the map again to filter.
-  useEffect(() => {
-      if (
-        searchQuery ||
-        (statusFilters && statusFilters.length > 0) ||
-        hideVisited ||
-        hideSaved ||
-        hideWithoutImages ||
-        filterContacts ||
-        selectedContacts.length > 0 ||
-        selectedArchitects.length > 0 ||
-        selectedCollections.length > 0 ||
-        selectedCategory ||
-        selectedTypologies.length > 0 ||
-        selectedAttributes.length > 0 ||
-        personalMinRating > 0 ||
-        contactMinRating > 0
-      ) {
-          setIgnoreMapBounds(true);
-          setMapInteractionResetTrigger(prev => prev + 1);
-      } else {
-          setIgnoreMapBounds(false);
-          setSearchScope('content');
-      }
+  const hasActiveFilters =
+    (statusFilters && statusFilters.length > 0) ||
+    hideVisited ||
+    hideSaved ||
+    !hideHidden ||
+    hideWithoutImages ||
+    filterContacts ||
+    (selectedContacts && selectedContacts.length > 0) ||
+    (selectedArchitects && selectedArchitects.length > 0) ||
+    (selectedCollections && selectedCollections.length > 0) ||
+    personalMinRating > 0 ||
+    contactMinRating > 0 ||
+    !!selectedCategory ||
+    selectedTypologies.length > 0 ||
+    selectedAttributes.length > 0;
+
+  // Create a stable signature for filters to prevent infinite loops in useEffect
+  const activeFilterSignature = useMemo(() => {
+    return JSON.stringify({
+      q: searchQuery,
+      sf: statusFilters,
+      hv: hideVisited,
+      hs: hideSaved,
+      hwi: hideWithoutImages,
+      fc: filterContacts,
+      sc: selectedContacts.map(c => c.id).sort(),
+      sa: selectedArchitects.map(a => a.id).sort(),
+      scol: selectedCollections.map(c => c.id).sort(),
+      cat: selectedCategory,
+      typ: selectedTypologies.sort(),
+      att: selectedAttributes.sort(),
+      pmr: personalMinRating,
+      cmr: contactMinRating
+    });
   }, [
     searchQuery,
     statusFilters,
@@ -159,19 +171,46 @@ export default function SearchPage() {
     hideSaved,
     hideWithoutImages,
     filterContacts,
-    selectedContacts.length,
-    selectedArchitects.length,
-    selectedCollections.length,
+    selectedContacts,
+    selectedArchitects,
+    selectedCollections,
     selectedCategory,
-    selectedTypologies.length,
-    selectedAttributes.length,
+    selectedTypologies,
+    selectedAttributes,
     personalMinRating,
     contactMinRating
   ]);
 
+  // If a user types a query or uses personal filters, we want to search the full database (ignore map bounds)
+  // until they interact with the map again to filter.
+  useEffect(() => {
+      // Use the stable signature to detect real changes
+      const filters = JSON.parse(activeFilterSignature);
+      const isCleanState = !filters.q && 
+                           (!filters.sf || filters.sf.length === 0) &&
+                           !filters.hv && !filters.hs && !filters.hwi && !filters.fc &&
+                           (!filters.sc || filters.sc.length === 0) &&
+                           (!filters.sa || filters.sa.length === 0) &&
+                           (!filters.scol || filters.scol.length === 0) &&
+                           !filters.cat &&
+                           (!filters.typ || filters.typ.length === 0) &&
+                           (!filters.att || filters.att.length === 0) &&
+                           filters.pmr === 0 && filters.cmr === 0;
+
+      if (!isCleanState) {
+          setIgnoreMapBounds(true);
+          setMapInteractionResetTrigger(prev => prev + 1);
+          isInteractingRef.current = false; // Reset interaction flag on new filter/search
+      } else {
+          setIgnoreMapBounds(false);
+          setSearchScope('content');
+      }
+  }, [activeFilterSignature]); // DEPEND ONLY ON THE STABLE SIGNATURE
+
   // Automatically fly to bounds of results when in global search mode
   useEffect(() => {
-    if (ignoreMapBounds && buildings.length > 0) {
+    // Only auto-fly if we are ignoring map bounds (Global Search Mode) AND user isn't currently dragging
+    if (ignoreMapBounds && buildings.length > 0 && !isInteractingRef.current) {
       const bounds = getBoundsFromBuildings(buildings);
       if (bounds) {
         // Deep equality check to prevent redundant moves
@@ -231,22 +270,6 @@ export default function SearchPage() {
   }, [buildings]);
 
   // 6. Merged Handlers
-
-  const hasActiveFilters =
-    (statusFilters && statusFilters.length > 0) ||
-    hideVisited ||
-    hideSaved ||
-    !hideHidden ||
-    hideWithoutImages ||
-    filterContacts ||
-    (selectedContacts && selectedContacts.length > 0) ||
-    (selectedArchitects && selectedArchitects.length > 0) ||
-    (selectedCollections && selectedCollections.length > 0) ||
-    personalMinRating > 0 ||
-    contactMinRating > 0 ||
-    !!selectedCategory ||
-    selectedTypologies.length > 0 ||
-    selectedAttributes.length > 0;
 
   const handleClearAll = () => {
     setStatusFilters([]);
@@ -610,7 +633,10 @@ export default function SearchPage() {
                           externalBuildings={mapBuildings}
                           onRegionChange={handleRegionChange}
                           onBoundsChange={setMapBounds}
-                          onMapInteraction={() => setIgnoreMapBounds(false)}
+                          onMapInteraction={() => {
+                              setIgnoreMapBounds(false);
+                              isInteractingRef.current = true;
+                          }}
                           isFetching={isFetching}
                           autoZoomOnLowCount={isDefaultState}
                           resetInteractionTrigger={mapInteractionResetTrigger}
@@ -646,7 +672,10 @@ export default function SearchPage() {
                         externalBuildings={mapBuildings}
                         onRegionChange={handleRegionChange}
                         onBoundsChange={setMapBounds}
-                        onMapInteraction={() => setIgnoreMapBounds(false)}
+                        onMapInteraction={() => {
+                            setIgnoreMapBounds(false);
+                            isInteractingRef.current = true;
+                        }}
                         isFetching={isFetching}
                         autoZoomOnLowCount={isDefaultState}
                         resetInteractionTrigger={mapInteractionResetTrigger}
