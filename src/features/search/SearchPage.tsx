@@ -210,7 +210,8 @@ export default function SearchPage() {
       shouldFitBounds,
       isInteracting: isInteractingRef.current,
       isCleanState,
-      filters
+      filters,
+      searchParams: searchParams.toString()
     });
 
     // Critical Check
@@ -222,7 +223,7 @@ export default function SearchPage() {
       });
     }
     console.groupEnd();
-  }, [activeFilterSignature, searchMode, shouldFitBounds]);
+  }, [activeFilterSignature, searchMode, shouldFitBounds, searchParams]);
   // -----------------------------------
 
   // If a user types a query or uses personal filters, we want to search the full database (ignore map bounds)

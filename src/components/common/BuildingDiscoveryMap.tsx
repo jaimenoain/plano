@@ -167,6 +167,49 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const buildings = externalBuildings || internalBuildings || [];
   const isLoading = externalBuildings ? false : internalLoading;
 
+  // --- DATA INTEGRITY GUARD ---
+  useEffect(() => {
+    let invalidCount = 0;
+    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+
+    buildings.forEach(b => {
+      const { location_lat: lat, location_lng: lng, id } = b;
+
+      const isInvalid = lat === null || lat === undefined || Number.isNaN(lat) ||
+                        lng === null || lng === undefined || Number.isNaN(lng);
+
+      if (isInvalid) {
+        invalidCount++;
+        console.error(`🚨 INVALID COORDINATE DETECTED for Building ID: ${id}`, { lat, lng, building: b });
+      } else {
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+        if (lng < minLng) minLng = lng;
+        if (lng > maxLng) maxLng = lng;
+      }
+    });
+
+    if (buildings.length > 0) {
+      console.log("📊 Data Integrity Report:", {
+        totalBuildings: buildings.length,
+        invalidCount,
+        bounds: { minLat, maxLat, minLng, maxLng }
+      });
+    }
+  }, [buildings]);
+
+  // Watch for NaN ViewState
+  useEffect(() => {
+    if (!viewState) return;
+    const { latitude, longitude, zoom } = viewState;
+    const isInvalid = (val: number | null | undefined) => val === null || val === undefined || Number.isNaN(val);
+
+    if (isInvalid(latitude) || isInvalid(longitude) || isInvalid(zoom)) {
+      console.error("🔥 CRITICAL: ViewState has invalid values!", viewState);
+    }
+  }, [viewState]);
+  // ---------------------------
+
   const candidates = useMemo(() => buildings?.filter(b => b.isCandidate) || [], [buildings]);
 
   const checkCandidatesVisibility = (map: maplibregl.Map) => {
@@ -684,6 +727,16 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         onMoveEnd={evt => {
             setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;
+
+            // --- EVENT SPY ---
+            console.log("Map Move End:", evt.viewState);
+            // Check for extremely small non-zero numbers which indicate float underflow/corruption
+            if ((Math.abs(latitude) > 0 && Math.abs(latitude) < 1e-6) ||
+                (Math.abs(longitude) > 0 && Math.abs(longitude) < 1e-6)) {
+                 console.warn("👻 GHOST COORDINATE DETECTED in onMoveEnd!", evt.viewState);
+            }
+            // ----------------
+
             onRegionChange?.({ lat: latitude, lng: longitude });
             handleMapUpdate(evt.target);
         }}
