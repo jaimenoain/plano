@@ -15,7 +15,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import Supercluster from "supercluster";
 
-const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
 const SATELLITE_STYLE = {
   version: 8,
@@ -131,16 +131,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   useImperativeHandle(ref, () => ({
       flyTo: (center, zoom) => {
-          // --- GATEKEEPER ---
-          const type = "flyTo";
-          const payload = { center, zoom };
-          console.log("🚨 GATEKEEPER: Request received via " + type, payload);
-          const isPoison = (val: any) => val === null || val === undefined || Number.isNaN(Number(val)) || val === Infinity || val === -Infinity;
-          if (isPoison(center?.lat) || isPoison(center?.lng) || isPoison(zoom)) {
-               console.trace("🕵️‍♂️ WHO CALLED ME WITH POISON?");
-          }
-          // ------------------
-
           if (isMapMoving) return;
           mapRef.current?.flyTo({
               center: [center.lng, center.lat],
@@ -149,19 +139,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
           });
       },
       fitBounds: (bounds) => {
-          // --- GATEKEEPER ---
-          const type = "fitBounds";
-          const payload = { bounds };
-          console.log("🚨 GATEKEEPER: Request received via " + type, payload);
-          const isPoison = (val: any) => val === null || val === undefined || Number.isNaN(Number(val)) || val === Infinity || val === -Infinity;
-          if (
-               !bounds ||
-               isPoison(bounds.north) || isPoison(bounds.south) || isPoison(bounds.east) || isPoison(bounds.west)
-          ) {
-               console.trace("🕵️‍♂️ WHO CALLED ME WITH POISON?");
-          }
-          // ------------------
-
           if (isMapMoving) return;
           if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) return;
           mapRef.current?.fitBounds(
@@ -191,10 +168,10 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const buildings = externalBuildings || internalBuildings || [];
   const isLoading = externalBuildings ? false : internalLoading;
 
-  // 1. THE FIREWALL - PARANOID VALIDATION
+  // 1. Validation logic
   const cleanBuildings = useMemo(() => {
     if (!buildings) return [];
-    const valid = buildings.filter(b => {
+    return buildings.filter(b => {
       // REJECT invalid primitives immediately
       if (b.location_lat === null || b.location_lat === undefined) return false;
       if (b.location_lng === null || b.location_lng === undefined) return false;
@@ -209,112 +186,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
       return true;
     });
-    console.log(`🛡️ FINAL GUARD: Input ${buildings.length} -> Output ${valid.length}`);
-    return valid;
   }, [buildings]);
-
-  // --- DATA INTEGRITY GUARD ---
-  useEffect(() => {
-    // Only calculate bounds for valid buildings to avoid polluting stats with bad data
-    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-
-    cleanBuildings.forEach(b => {
-        const lat = b.location_lat;
-        const lng = b.location_lng;
-        if (lat < minLat) minLat = lat;
-        if (lat > maxLat) maxLat = lat;
-        if (lng < minLng) minLng = lng;
-        if (lng > maxLng) maxLng = lng;
-    });
-
-    const blockedCount = buildings.length - cleanBuildings.length;
-
-    if (buildings.length > 0) {
-      console.log("📊 Data Integrity Report:", {
-        totalBuildings: buildings.length,
-        cleanBuildings: cleanBuildings.length,
-        blockedCount,
-        validBounds: { minLat, maxLat, minLng, maxLng }
-      });
-      console.log("🛡️ PARANOID FILTER: Keeping " + cleanBuildings.length + " of " + buildings.length);
-
-      if (blockedCount > 0) {
-        console.warn(`⚠️ FIREWALL: Blocked ${blockedCount} toxic buildings from rendering`);
-      }
-    }
-  }, [buildings, cleanBuildings]);
-
-  // --- FORENSIC: SCHEMA DETECTIVE ---
-  useEffect(() => {
-    if (buildings.length > 0) {
-      console.groupCollapsed("🔬 FORENSIC REPORT: Schema Detective");
-      const first = buildings[0];
-      console.log("🕵️‍♂️ First Building Keys:", Object.keys(first));
-      console.log("cx First Building Sample:", first);
-
-      buildings.forEach((b, i) => {
-         // Deep scan for loose types or alternative keys
-         const anyB = b as any;
-         const lat = anyB.location_lat ?? anyB.lat ?? anyB.latitude;
-         const lng = anyB.location_lng ?? anyB.lng ?? anyB.longitude;
-
-         const isPoison =
-            lat === null || lat === undefined || Number.isNaN(Number(lat)) || Number(lat) === 0 || typeof lat === 'string' ||
-            lng === null || lng === undefined || Number.isNaN(Number(lng)) || Number(lng) === 0 || typeof lng === 'string';
-
-         if (isPoison) {
-             console.warn(`⚠️ POISON DATA FOUND at Index ${i}: ID=${b.id}`, {
-                 keys: Object.keys(b),
-                 rawLat: lat,
-                 rawLng: lng,
-                 valLat: b.location_lat,
-                 valLng: b.location_lng
-             });
-         }
-      });
-      console.groupEnd();
-    }
-  }, [buildings]);
-
-  // --- FORENSIC: EXTERNAL DATA WATCHER ---
-  useEffect(() => {
-    if (externalBuildings && externalBuildings.length > 0) {
-       console.log(`📦 PROP UPDATE: Received ${externalBuildings?.length} buildings from parent.`);
-       if (externalBuildings.length > 0) {
-          console.log("Sample of first 5 buildings:", externalBuildings.slice(0, 5));
-       }
-    }
-  }, [externalBuildings]);
-
-  // --- FORENSIC: STATE STALKER ---
-  useEffect(() => {
-    if (!viewState) return;
-
-    const { latitude, longitude, zoom } = viewState;
-
-    // Only log if meaningful change or anomaly
-    // Source check
-    const source = userHasInteracted ? "User Interaction" : (isMapMoving ? "Programmatic Move" : "Unknown/Init");
-
-    // Anomaly Check
-    if (Math.abs(latitude) < 0.001 && Math.abs(longitude) < 0.001) {
-        console.groupCollapsed("🔬 FORENSIC REPORT: State Stalker (ANOMALY)");
-        console.error(`🚨 ANOMALY: Camera dragged to Null Island! (${latitude}, ${longitude})`);
-        console.log(`🎥 Camera Update [${source}]:`, { latitude, longitude, zoom });
-        console.groupEnd();
-    } else {
-        // Standard logging for verbose debugging
-        console.groupCollapsed("🔬 FORENSIC REPORT: State Stalker");
-        console.log(`🎥 Camera Update [${source}]:`, { latitude, longitude, zoom });
-        console.groupEnd();
-    }
-
-    // Invalid Check
-    const isInvalid = (val: number | null | undefined) => val === null || val === undefined || Number.isNaN(val);
-    if (isInvalid(latitude) || isInvalid(longitude) || isInvalid(zoom)) {
-      console.error("🔥 CRITICAL: ViewState has invalid values!", viewState);
-    }
-  }, [viewState, userHasInteracted, isMapMoving]);
   // ---------------------------
 
   const candidates = useMemo(() => cleanBuildings?.filter(b => b.isCandidate) || [], [cleanBuildings]);
@@ -353,49 +225,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     });
   }, []);
 
-  // DEBUG: Data Interrogator
-  useEffect(() => {
-    if (!buildings) return;
-    console.log("🕵️‍♂️ DATA INTERROGATOR STARTED: Scanning " + buildings.length + " buildings...");
-    let badCount = 0;
-    buildings.forEach((b, i) => {
-      const lat = b.location_lat;
-      const lng = b.location_lng;
-      const isSuspicious =
-        lat === null || lat === undefined ||
-        lng === null || lng === undefined ||
-        typeof lat !== 'number' || typeof lng !== 'number' ||
-        isNaN(lat) || isNaN(lng) ||
-        (Math.abs(Number(lat)) < 0.0001 && Math.abs(Number(lng)) < 0.0001);
-
-      if (isSuspicious || i < 3) { // Log the first 3 for schema verification + any errors
-        console.warn(
-          `🔎 Row ${i} [${b.id}]: Name="${b.name}"`,
-          `\n   Lat: ${lat} (Type: ${typeof lat})`,
-          `\n   Lng: ${lng} (Type: ${typeof lng})`,
-          `\n   Suspicious? ${isSuspicious ? 'YES 🚨' : 'No'}`
-        );
-        if (isSuspicious) badCount++;
-      }
-    });
-    console.log(`🕵️‍♂️ DATA INTERROGATOR FINISHED. Found ${badCount} suspicious records.`);
-  }, [buildings]);
-
-  // --- FORENSIC: CHECKPOINT A ---
-  useEffect(() => {
-    let count = 0;
-    buildings.forEach(b => {
-      if (
-        b.location_lat === null || b.location_lat === undefined ||
-        b.location_lat === 0 ||
-        isNaN(Number(b.location_lat))
-      ) {
-        count++;
-      }
-    });
-    console.log(`🔍 CHECKPOINT A (Input): Total=${buildings.length}, Invalid=${count}`);
-  }, [buildings]);
-
   const points = useMemo(() => cleanBuildings.map(b => {
     let [lng, lat] = [b.location_lng, b.location_lat];
 
@@ -416,19 +245,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
         lng += lngOffset;
         lat += latOffset;
-    }
-
-    const coords = [lng, lat];
-    if (coords[0] === null || coords[1] === null) console.error("💀 FATAL: Null coordinate generated for point:", b.id);
-
-    // --- FORENSIC: CHECKPOINT B ---
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-        console.error("🚨 CHECKPOINT B FAILURE: Generated NaN/Null coordinate!", {
-            id: b.id,
-            original: { lat: b.location_lat, lng: b.location_lng },
-            calculated: { lat, lng },
-            precision: b.location_precision
-        });
     }
 
     return {
@@ -504,12 +320,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   const pins = useMemo(() => clusters.map(cluster => {
     const [longitude, latitude] = cluster.geometry.coordinates;
-
-    // --- FORENSIC: CHECKPOINT C ---
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-        console.error("🔥 CHECKPOINT C FAILURE: Attempting to render Marker with invalid coords", { id: cluster.properties.buildingId, lat: latitude, lng: longitude });
-    }
-
     const { cluster: isCluster, point_count: pointCount } = cluster.properties;
 
     if (isCluster) {
@@ -847,6 +657,13 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
           console.log("Current ViewState:", viewState);
           console.trace("Stack at crash time");
           console.groupEnd();
+
+          // Fallback to satellite if style fails to ensure the map remains usable
+          const errMsg = e.error?.message || "";
+          if (errMsg.toLowerCase().includes("style") || errMsg.toLowerCase().includes("load") || errMsg.toLowerCase().includes("evaluate")) {
+             console.warn("⚠️ Map style failed to load or evaluate. Switching to Satellite fallback.");
+             setIsSatellite(true);
+          }
         }}
         {...viewState}
         attributionControl={false}
@@ -879,15 +696,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         onMoveEnd={evt => {
             setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;
-
-            // --- EVENT SPY ---
-            console.log("Map Move End:", evt.viewState);
-            // Check for extremely small non-zero numbers which indicate float underflow/corruption
-            if ((Math.abs(latitude) > 0 && Math.abs(latitude) < 1e-6) ||
-                (Math.abs(longitude) > 0 && Math.abs(longitude) < 1e-6)) {
-                 console.warn("👻 GHOST COORDINATE DETECTED in onMoveEnd!", evt.viewState);
-            }
-            // ----------------
 
             onRegionChange?.({ lat: latitude, lng: longitude });
             handleMapUpdate(evt.target);

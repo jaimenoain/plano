@@ -6,7 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin, Layers } from "lucide-react";
 import Supercluster from "supercluster";
 
-const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
 const SATELLITE_STYLE = {
   version: 8,
