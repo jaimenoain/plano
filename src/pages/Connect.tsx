@@ -3,15 +3,11 @@ import { PeopleYouMayKnow } from "@/components/connect/PeopleYouMayKnow";
 import { YourContacts } from "@/components/connect/YourContacts";
 import GroupsView from "@/components/groups/GroupsView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 export default function Connect() {
-  const { state, isMobile } = useSidebar();
-  const shouldCompensate = !isMobile;
-
   return (
-    <div className={cn("w-full transition-[padding] duration-200 ease-linear", shouldCompensate && "pl-52")}>
+    <div className={cn("w-full transition-[padding] duration-200 ease-linear", "md:pl-52")}>
       <AppLayout title="Connect" showLogo={false}>
         <div className="w-full pb-20">
           <Tabs defaultValue="people" className="w-full">
