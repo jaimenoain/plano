@@ -124,7 +124,8 @@ export default function SearchPage() {
 
   // Feature: Map Interaction controls
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
-  const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
+  const [searchMode, setSearchMode] = useState<'global' | 'explore'>('explore');
+  const [shouldFitBounds, setShouldFitBounds] = useState(false);
   const [mapInteractionResetTrigger, setMapInteractionResetTrigger] = useState(0);
 
   // Main: Filter controls
@@ -198,22 +199,23 @@ export default function SearchPage() {
                            filters.pmr === 0 && filters.cmr === 0;
 
       if (!isCleanState) {
-          setIgnoreMapBounds(true);
+          setSearchMode('global');
+          setShouldFitBounds(true);
           setMapInteractionResetTrigger(prev => prev + 1);
           isInteractingRef.current = false; // Reset interaction flag on new filter/search
       } else {
-          setIgnoreMapBounds(false);
+          setSearchMode('explore');
           setSearchScope('content');
       }
   }, [activeFilterSignature]); // DEPEND ONLY ON THE STABLE SIGNATURE
 
   // Automatically fly to bounds of results when in global search mode
   useEffect(() => {
-    // Only auto-fly if we are ignoring map bounds (Global Search Mode) AND user isn't currently dragging
-    if (ignoreMapBounds && buildings.length > 0 && !isInteractingRef.current) {
+    // Only auto-fly if we are in Global Search Mode AND explicitly requested fit
+    if (searchMode === 'global' && shouldFitBounds && buildings.length > 0 && !isInteractingRef.current) {
       const bounds = getBoundsFromBuildings(buildings);
       if (bounds) {
-        // Deep equality check to prevent redundant moves
+        // Deep equality check to prevent redundant moves (though shouldFitBounds handles most cases)
         const prev = lastBoundsRef.current;
         const isSame = prev &&
             prev.north === bounds.north &&
@@ -224,10 +226,14 @@ export default function SearchPage() {
         if (!isSame) {
             mapRef.current?.fitBounds(bounds);
             lastBoundsRef.current = bounds;
+            setShouldFitBounds(false); // Mark fit as done
+        } else {
+            // Even if bounds are same, we consider "fit" done for this cycle
+            setShouldFitBounds(false);
         }
       }
     }
-  }, [buildings, ignoreMapBounds]);
+  }, [buildings, searchMode, shouldFitBounds]);
 
   // 4. Merged Filtering Logic
   const filteredBuildings = useMemo(() => {
@@ -235,7 +241,7 @@ export default function SearchPage() {
 
     // A. Apply Map Bounds (Merged Logic)
     // Only filter by bounds if we have them AND we aren't explicitly ignoring them (e.g. during text search)
-    if (!ignoreMapBounds && mapBounds) {
+    if (searchMode === 'explore' && mapBounds) {
       const { north, south, east, west } = mapBounds;
       result = result.filter(b => {
         const lat = b.location_lat;
@@ -259,7 +265,7 @@ export default function SearchPage() {
     }
 
     return result;
-  }, [buildings, mapBounds, ignoreMapBounds, sortBy]);
+  }, [buildings, mapBounds, searchMode, sortBy]);
 
   // 5. Map Filtering
   // Since buildings from useBuildingSearch are now fully filtered (including status/exclusions),
@@ -293,7 +299,8 @@ export default function SearchPage() {
     if (loc) {
       mapRef.current?.flyTo(loc);
       updateLocation(loc); 
-      setIgnoreMapBounds(false); // Feature: Reset bounds ignore on explicit location use
+      setSearchMode('explore'); // Feature: Reset to explore mode on explicit location use
+      setShouldFitBounds(false);
     }
   };
 
@@ -325,8 +332,9 @@ export default function SearchPage() {
         // Main: Optimistically update user location
         updateLocation(newLoc);
 
-        // Feature: Re-enable bounds filtering once we fly to the new location
-        setIgnoreMapBounds(false);
+        // Feature: Switch to explore mode
+        setSearchMode('explore');
+        setShouldFitBounds(false);
       }
     } catch (error) {
       console.error("Geocoding error:", error);
@@ -336,15 +344,15 @@ export default function SearchPage() {
   // Handle auto-fly to user location on initial load or update
   useEffect(() => {
     // Feature: Guard against auto-centering if we are ignoring map bounds (e.g. searching)
-    if (gpsLocation && !ignoreMapBounds) {
+    if (gpsLocation && searchMode === 'explore') {
       mapRef.current?.flyTo(gpsLocation);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gpsLocation]);
+  }, [gpsLocation]); // Note: Depend on searchMode intentionally omitted in original, but here we check it inside
 
   // Feature: Guard region updates to prevent feedback loops during programmatic map movement
   const handleRegionChange = (center: { lat: number; lng: number }) => {
-    if (!ignoreMapBounds) {
+    if (searchMode === 'explore') {
       updateLocation(center);
     }
   };
@@ -634,8 +642,11 @@ export default function SearchPage() {
                           onRegionChange={handleRegionChange}
                           onBoundsChange={setMapBounds}
                           onMapInteraction={() => {
-                              setIgnoreMapBounds(false);
+                              setSearchMode('explore');
+                              setShouldFitBounds(false);
                               isInteractingRef.current = true;
+                              // Force immediate location update for exploration if needed,
+                              // though onRegionChange (via onMoveEnd) usually handles it.
                           }}
                           isFetching={isFetching}
                           autoZoomOnLowCount={isDefaultState}
@@ -673,7 +684,8 @@ export default function SearchPage() {
                         onRegionChange={handleRegionChange}
                         onBoundsChange={setMapBounds}
                         onMapInteraction={() => {
-                            setIgnoreMapBounds(false);
+                            setSearchMode('explore');
+                            setShouldFitBounds(false);
                             isInteractingRef.current = true;
                         }}
                         isFetching={isFetching}

@@ -128,6 +128,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   useImperativeHandle(ref, () => ({
       flyTo: (center, zoom) => {
+          if (isMapMoving) return;
           mapRef.current?.flyTo({
               center: [center.lng, center.lat],
               zoom: zoom || 13,
@@ -135,6 +136,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
           });
       },
       fitBounds: (bounds) => {
+          if (isMapMoving) return;
           mapRef.current?.fitBounds(
               [
                   [bounds.west, bounds.south],
@@ -143,7 +145,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
               { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
            );
       }
-  }), []);
+  }), [isMapMoving]);
 
   const { data: internalBuildings, isLoading: internalLoading } = useQuery({
     queryKey: ["discovery-buildings"],
