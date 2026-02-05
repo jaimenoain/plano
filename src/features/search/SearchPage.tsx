@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export type SearchScope = 'content' | 'users' | 'architects';
@@ -114,6 +115,7 @@ export default function SearchPage() {
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
   const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
   const [mapInteractionResetTrigger, setMapInteractionResetTrigger] = useState(0);
+  const { state, isMobile } = useSidebar();
 
   // Main: Filter controls
   const [sortBy, setSortBy] = useState<string>("distance");
@@ -446,6 +448,14 @@ export default function SearchPage() {
   );
 
   return (
+    <div
+      data-testid="search-page-wrapper"
+      style={{
+        marginLeft: state === "expanded" && !isMobile ? "calc(var(--sidebar-width) - var(--sidebar-width-icon))" : "0",
+        transition: "margin-left 0.2s linear",
+        width: "auto",
+      }}
+    >
     <AppLayout
       title="Discovery"
       showLogo={false}
@@ -642,5 +652,6 @@ export default function SearchPage() {
         </div>
       </div>
     </AppLayout>
+    </div>
   );
 }
