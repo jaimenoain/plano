@@ -164,6 +164,17 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const buildings = externalBuildings || internalBuildings || [];
   const isLoading = externalBuildings ? false : internalLoading;
 
+  useEffect(() => {
+    console.group("🗺️ MAP_DATA_DEBUG");
+    console.log("Data Intake Log:", {
+      timestamp: new Date().toISOString(),
+      externalBuildingsCount: externalBuildings?.length ?? 0,
+      internalBuildingsCount: internalBuildings?.length ?? 0,
+      mergedBuildingsCount: buildings?.length ?? 0
+    });
+    console.groupEnd();
+  }, [externalBuildings, internalBuildings, buildings]);
+
   const candidates = useMemo(() => buildings?.filter(b => b.isCandidate) || [], [buildings]);
 
   const checkCandidatesVisibility = (map: maplibregl.Map) => {
@@ -238,11 +249,26 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   const updateClusters = useMemo(() => {
     return () => {
-        if (!mapRef.current) return;
+        if (!mapRef.current) {
+             console.group("🗺️ MAP_DATA_DEBUG");
+             console.log("Supercluster Spy: Map ref not ready");
+             console.groupEnd();
+             return;
+        }
         const bounds = mapRef.current.getBounds();
         const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()] as [number, number, number, number];
         const zoom = viewStateRef.current.zoom;
-        setClusters(supercluster.getClusters(bbox, Math.round(zoom)));
+        const newClusters = supercluster.getClusters(bbox, Math.round(zoom));
+
+        console.group("🗺️ MAP_DATA_DEBUG");
+        console.log("Supercluster Spy:", {
+            bbox,
+            zoom,
+            clustersCount: newClusters.length
+        });
+        console.groupEnd();
+
+        setClusters(newClusters);
     };
   }, [supercluster]);
 
@@ -290,6 +316,31 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // Auto-zoom logic
   useEffect(() => {
+    // DIAGNOSTIC LOGGING
+    const visibleCount = clusters.reduce((acc, cluster) => {
+        return acc + (cluster.properties.point_count || 1);
+    }, 0);
+
+    console.group("🗺️ MAP_DATA_DEBUG");
+    console.log("Auto-Zoom Interrogator:", {
+        autoZoomOnLowCount,
+        userHasInteracted,
+        isMapMoving,
+        isFetching,
+        buildingsCount: buildings?.length,
+        visibleCount,
+        zoom: viewState.zoom
+    });
+
+    let decision = "NO ZOOM";
+    if (!autoZoomOnLowCount || userHasInteracted || isMapMoving || isFetching) decision = "ABORT: Conditions not met";
+    else if (!buildings || buildings.length === 0) decision = "ABORT: No buildings";
+    else if (viewState.zoom <= 2) decision = "ABORT: Zoom too low";
+    else if (visibleCount < 5 && visibleCount < buildings.length) decision = "DECISION -> ZOOM OUT";
+
+    console.log("DECISION -> Should I zoom?", decision);
+    console.groupEnd();
+
     // Only proceed if auto-zoom is enabled and user hasn't interacted
     if (!autoZoomOnLowCount || userHasInteracted || isMapMoving || isFetching) return;
 
@@ -298,10 +349,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
     // Check minimum zoom level to prevent zooming out to world view excessively
     if (viewState.zoom <= 2) return;
-
-    const visibleCount = clusters.reduce((acc, cluster) => {
-        return acc + (cluster.properties.point_count || 1);
-    }, 0);
 
     // If visible count is less than 5 AND we have more buildings available
     if (visibleCount < 5 && visibleCount < buildings.length) {
@@ -668,6 +715,12 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             onMapInteraction?.();
         }}
         onMoveStart={(evt) => {
+            console.group("🗺️ MAP_DATA_DEBUG");
+            console.log("Map State Monitor: onMoveStart", {
+                isUserInteraction: !!evt.originalEvent
+            });
+            console.groupEnd();
+
             setIsMapMoving(true);
             if (evt.originalEvent) {
                 setUserHasInteracted(true);
@@ -678,6 +731,10 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             handleMapUpdate(evt.target);
         }}
         onMoveEnd={evt => {
+            console.group("🗺️ MAP_DATA_DEBUG");
+            console.log("Map State Monitor: onMoveEnd");
+            console.groupEnd();
+
             setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;
             onRegionChange?.({ lat: latitude, lng: longitude });
