@@ -15,6 +15,28 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import Supercluster from "supercluster";
 
+// Simple throttle implementation
+function throttle<T extends (...args: any[]) => any>(func: T, limit: number) {
+  let inThrottle: boolean;
+  let lastFn: ReturnType<typeof setTimeout>;
+  let lastTime: number;
+  return function(this: any, ...args: Parameters<T>) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      lastTime = Date.now();
+      inThrottle = true;
+    } else {
+      clearTimeout(lastFn);
+      lastFn = setTimeout(() => {
+        if (Date.now() - lastTime >= limit) {
+          func.apply(this, args);
+          lastTime = Date.now();
+        }
+      }, Math.max(limit - (Date.now() - lastTime), 0));
+    }
+  };
+}
+
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
 const SATELLITE_STYLE = {
@@ -150,10 +172,27 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   useImperativeHandle(ref, () => ({
       flyTo: (center, zoom) => {
           console.log("🗺️ [MapForensics] Imperative flyTo called", { center, zoom, isMapMoving });
+
           if (isMapMoving) {
             console.warn("🗺️ [MapForensics] flyTo BLOCKED due to isMapMoving");
             return;
           }
+
+          // Idempotency check
+          if (mapRef.current) {
+             const currentCenter = mapRef.current.getCenter();
+             const currentZoom = mapRef.current.getZoom();
+             const dist = Math.sqrt(
+                 Math.pow(currentCenter.lng - center.lng, 2) +
+                 Math.pow(currentCenter.lat - center.lat, 2)
+             );
+             const targetZoom = zoom || 13;
+             if (dist < 0.0001 && Math.abs(currentZoom - targetZoom) < 0.1) {
+                 console.log("🗺️ [MapForensics] flyTo SKIPPED (Already at location)");
+                 return;
+             }
+          }
+
           mapRef.current?.flyTo({
               center: [center.lng, center.lat],
               zoom: zoom || 13,
@@ -162,14 +201,36 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       },
       fitBounds: (bounds) => {
           console.log("🗺️ [MapForensics] Imperative fitBounds called", { bounds, isMapMoving });
+
           if (isMapMoving) {
             console.warn("🗺️ [MapForensics] fitBounds BLOCKED due to isMapMoving");
             return;
           }
+
           if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) {
              console.error("🗺️ [MapForensics] fitBounds BLOCKED due to invalid bounds", bounds);
              return;
           }
+
+          // Idempotency Check
+          if (mapRef.current) {
+              const currentBounds = mapRef.current.getBounds();
+              const ne = currentBounds.getNorthEast();
+              const sw = currentBounds.getSouthWest();
+              const epsilon = 0.0001;
+
+              const isSame =
+                  Math.abs(ne.lat - bounds.north) < epsilon &&
+                  Math.abs(ne.lng - bounds.east) < epsilon &&
+                  Math.abs(sw.lat - bounds.south) < epsilon &&
+                  Math.abs(sw.lng - bounds.west) < epsilon;
+
+              if (isSame) {
+                  console.log("🗺️ [MapForensics] fitBounds SKIPPED (Already at bounds)");
+                  return;
+              }
+          }
+
           mapRef.current?.fitBounds(
               [
                   [bounds.west, bounds.south],
@@ -301,9 +362,24 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         lat += latOffset;
     }
 
+    // Sanitize properties for Worker safety (Requirement: Robust Data Handling)
+    // Mapbox/MapLibre workers can crash if expressions expect numbers but get nulls.
+    const safeProps: Record<string, any> = { ...b };
+
+    // Explicitly handle known numeric fields to ensure they are 0 instead of null
+    const numericKeys = ['year_completed', 'distance', 'social_score', 'rating'];
+    numericKeys.forEach(key => {
+        if (safeProps[key] === null || safeProps[key] === undefined) {
+            safeProps[key] = 0;
+        }
+    });
+
+    // Ensure ID is a string
+    safeProps.id = String(b.id);
+
     return {
         type: 'Feature' as const,
-        properties: { cluster: false, buildingId: b.id, ...b },
+        properties: { cluster: false, buildingId: b.id, ...safeProps },
         geometry: {
             type: 'Point' as const,
             coordinates: [lng, lat]
@@ -315,8 +391,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const viewStateRef = useRef(viewState);
   viewStateRef.current = viewState;
 
+  // Throttle cluster updates to prevent forced reflows and main thread blocking during map moves
   const updateClusters = useMemo(() => {
-    return () => {
+    const runUpdate = () => {
         if (!mapRef.current) {
              return;
         }
@@ -327,6 +404,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
         setClusters(newClusters);
     };
+    return throttle(runUpdate, 50); // 50ms = ~20fps cap
   }, [supercluster]);
 
   useEffect(() => {
