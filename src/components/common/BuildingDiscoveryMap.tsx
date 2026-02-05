@@ -238,16 +238,67 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     }
   }, [buildings, cleanBuildings]);
 
-  // Watch for NaN ViewState
+  // --- FORENSIC: SCHEMA DETECTIVE ---
+  useEffect(() => {
+    if (buildings.length > 0) {
+      console.groupCollapsed("🔬 FORENSIC REPORT: Schema Detective");
+      const first = buildings[0];
+      console.log("🕵️‍♂️ First Building Keys:", Object.keys(first));
+      console.log("cx First Building Sample:", first);
+
+      buildings.forEach((b, i) => {
+         // Deep scan for loose types or alternative keys
+         const anyB = b as any;
+         const lat = anyB.location_lat ?? anyB.lat ?? anyB.latitude;
+         const lng = anyB.location_lng ?? anyB.lng ?? anyB.longitude;
+
+         const isPoison =
+            lat === null || lat === undefined || Number.isNaN(Number(lat)) || Number(lat) === 0 || typeof lat === 'string' ||
+            lng === null || lng === undefined || Number.isNaN(Number(lng)) || Number(lng) === 0 || typeof lng === 'string';
+
+         if (isPoison) {
+             console.warn(`⚠️ POISON DATA FOUND at Index ${i}: ID=${b.id}`, {
+                 keys: Object.keys(b),
+                 rawLat: lat,
+                 rawLng: lng,
+                 valLat: b.location_lat,
+                 valLng: b.location_lng
+             });
+         }
+      });
+      console.groupEnd();
+    }
+  }, [buildings]);
+
+  // --- FORENSIC: STATE STALKER ---
   useEffect(() => {
     if (!viewState) return;
-    const { latitude, longitude, zoom } = viewState;
-    const isInvalid = (val: number | null | undefined) => val === null || val === undefined || Number.isNaN(val);
 
+    const { latitude, longitude, zoom } = viewState;
+
+    // Only log if meaningful change or anomaly
+    // Source check
+    const source = userHasInteracted ? "User Interaction" : (isMapMoving ? "Programmatic Move" : "Unknown/Init");
+
+    // Anomaly Check
+    if (Math.abs(latitude) < 0.001 && Math.abs(longitude) < 0.001) {
+        console.groupCollapsed("🔬 FORENSIC REPORT: State Stalker (ANOMALY)");
+        console.error(`🚨 ANOMALY: Camera dragged to Null Island! (${latitude}, ${longitude})`);
+        console.log(`🎥 Camera Update [${source}]:`, { latitude, longitude, zoom });
+        console.groupEnd();
+    } else {
+        // Standard logging for verbose debugging
+        console.groupCollapsed("🔬 FORENSIC REPORT: State Stalker");
+        console.log(`🎥 Camera Update [${source}]:`, { latitude, longitude, zoom });
+        console.groupEnd();
+    }
+
+    // Invalid Check
+    const isInvalid = (val: number | null | undefined) => val === null || val === undefined || Number.isNaN(val);
     if (isInvalid(latitude) || isInvalid(longitude) || isInvalid(zoom)) {
       console.error("🔥 CRITICAL: ViewState has invalid values!", viewState);
     }
-  }, [viewState]);
+  }, [viewState, userHasInteracted, isMapMoving]);
   // ---------------------------
 
   const candidates = useMemo(() => cleanBuildings?.filter(b => b.isCandidate) || [], [cleanBuildings]);
@@ -380,11 +431,26 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // Stable "One-Time Fit" logic
   useEffect(() => {
+    // --- FORENSIC: AUTO-ZOOM SPY ---
+    console.groupCollapsed("🔬 FORENSIC REPORT: Auto-Zoom Spy");
+    console.log("🕵️‍♂️ AUTO-ZOOM EFFECT TRIGGERED");
+    console.log("   State:", {
+        cleanBuildingsCount: cleanBuildings.length,
+        autoZoomOnLowCount,
+        userHasInteracted,
+        hasInitialFit: hasInitialFitRef.current,
+        hasExternalBuildings: !!externalBuildings
+    });
+    console.groupEnd();
+    // --------------------------------
+
     // Only triggers when the externalBuildings array first populates (changes from empty to non-empty).
     if (hasInitialFitRef.current || userHasInteracted || !externalBuildings) return;
 
     // Safety check: Do not fit if no clean buildings
     if (cleanBuildings.length === 0) return;
+
+    console.log("🔥 AUTO-ZOOM FIRING: Decreasing zoom / fitting bounds...");
 
     // Use a small timeout to ensure the map instance is ready
     const timer = setTimeout(() => {
@@ -738,6 +804,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         ref={(node) => {
             mapRef.current = node;
             setMapInstance(node);
+        }}
+        onError={(e) => {
+            console.error("🚨 MAPBOX INTERNAL ERROR:", e);
         }}
         {...viewState}
         attributionControl={false}
