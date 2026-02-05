@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
@@ -12,7 +12,7 @@ import { MarkerInfoCard } from "../collections/MarkerInfoCard";
 import { MarkerPin } from "./MarkerPin";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
-import { getBoundsFromBuildings, Bounds } from "@/utils/map";
+import { Bounds } from "@/utils/map";
 import Supercluster from "supercluster";
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -57,19 +57,17 @@ interface Building {
   address?: string | null;
 }
 
-export interface BuildingDiscoveryMapHandle {
-    flyTo: (location: { lat: number, lng: number }) => void;
-    fitBounds: (coordinates: { lat: number, lng: number }[]) => void;
-}
-
 interface BuildingDiscoveryMapProps {
   externalBuildings?: DiscoveryBuilding[];
   onAddCandidate?: (building: DiscoveryBuilding) => void;
   onRegionChange?: (center: { lat: number, lng: number }) => void;
   onBoundsChange?: (bounds: Bounds) => void;
   onMapInteraction?: () => void;
-  onMapLoad?: () => void;
+  forcedCenter?: { lat: number, lng: number } | null;
+  forcedBounds?: Bounds | null;
   isFetching?: boolean;
+  autoZoomOnLowCount?: boolean;
+  resetInteractionTrigger?: number;
   highlightedId?: string | null;
   onMarkerClick?: (buildingId: string) => void;
   showImages?: boolean;
@@ -82,24 +80,19 @@ interface BuildingDiscoveryMapProps {
   onRemoveMarker?: (id: string) => void;
   onClosePopup?: () => void;
   showSavedCandidates?: boolean;
-  // Legacy prop, ignored now
-  forcedBounds?: Bounds | null;
 }
 
-const INITIAL_VIEW_STATE = {
-  latitude: 51.5074,
-  longitude: -0.1278,
-  zoom: 12
-};
-
-export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, BuildingDiscoveryMapProps>(({
+export function BuildingDiscoveryMap({
   externalBuildings,
   onAddCandidate,
   onRegionChange,
   onBoundsChange,
   onMapInteraction,
-  onMapLoad,
+  forcedCenter,
+  forcedBounds,
   isFetching,
+  autoZoomOnLowCount,
+  resetInteractionTrigger,
   highlightedId,
   onMarkerClick,
   showImages = true,
@@ -112,75 +105,51 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
   onRemoveMarker,
   onClosePopup,
   showSavedCandidates
-}, ref) => {
+}: BuildingDiscoveryMapProps) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
-  const isUserInteractionRef = useRef(false);
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [hasVisibleCandidates, setHasVisibleCandidates] = useState(true);
 
-  // Internal view state tracking (uncontrolled map)
-  const viewStateRef = useRef(INITIAL_VIEW_STATE);
+  // State to track user interaction to disable auto-zoom
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
+  const [isMapMoving, setIsMapMoving] = useState(false);
 
-  // State to trigger data fetching/clustering only when needed (e.g. after move ends)
-  const [queryViewState, setQueryViewState] = useState(INITIAL_VIEW_STATE);
+  // Default view state (London)
+  const [viewState, setViewState] = useState({
+    latitude: 51.5074,
+    longitude: -0.1278,
+    zoom: 12
+  });
 
-  useImperativeHandle(ref, () => ({
-    flyTo: (location) => {
-        // Sanitize: Explicitly discard (0,0)
-        if (location.lat === 0 && location.lng === 0) return;
-
-        if (mapRef.current) {
-            mapRef.current.flyTo({
-                center: [location.lng, location.lat],
-                zoom: 13,
-                duration: 1500
-            });
-        }
-    },
-    fitBounds: (coordinates) => {
-        // Sanitize: Explicitly discard (0,0)
-        const validCoords = coordinates.filter(c => !(c.lat === 0 && c.lng === 0));
-
-        if (validCoords.length === 0) return;
-        if (!mapRef.current) return;
-
-        if (validCoords.length === 1) {
-            mapRef.current.flyTo({
-                center: [validCoords[0].lng, validCoords[0].lat],
-                zoom: 14,
-                duration: 1500
-            });
-        } else {
-            const buildingsForBounds = validCoords.map(c => ({
-                location_lat: c.lat,
-                location_lng: c.lng
-            }));
-
-            const bounds = getBoundsFromBuildings(buildingsForBounds);
-
-            if (bounds) {
-                mapRef.current.fitBounds(
-                    [
-                        [bounds.west, bounds.south],
-                        [bounds.east, bounds.north]
-                    ],
-                    { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
-                );
-            }
-        }
+  // Handle flyTo or fitBounds
+  useEffect(() => {
+    if (forcedBounds && mapInstance) {
+        mapInstance.fitBounds(
+            [
+                [forcedBounds.west, forcedBounds.south], // [minLng, minLat]
+                [forcedBounds.east, forcedBounds.north]  // [maxLng, maxLat]
+            ],
+            { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
+        );
+    } else if (forcedCenter && mapInstance) {
+        mapInstance.flyTo({
+            center: [forcedCenter.lng, forcedCenter.lat],
+            zoom: 13,
+            duration: 1500
+        });
     }
-  }));
+  }, [forcedCenter, forcedBounds, mapInstance]);
 
   const { data: internalBuildings, isLoading: internalLoading } = useQuery({
-    queryKey: ["discovery-buildings", queryViewState.latitude, queryViewState.longitude],
+    queryKey: ["discovery-buildings"],
     queryFn: async () => {
       return await findNearbyBuildingsRpc({
-        lat: queryViewState.latitude,
-        long: queryViewState.longitude,
+        lat: viewState.latitude,
+        long: viewState.longitude,
         radius_meters: 500000, // 500km
         name_query: ""
       });
@@ -261,6 +230,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
   }) || [], [buildings]);
 
   const [clusters, setClusters] = useState<any[]>([]);
+  const viewStateRef = useRef(viewState);
+  viewStateRef.current = viewState;
 
   const updateClusters = useMemo(() => {
     return () => {
@@ -280,7 +251,21 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
   // Update clusters on map move
   useEffect(() => {
     updateClusters();
-  }, [queryViewState, updateClusters]);
+  }, [viewState, updateClusters]);
+
+  // Effect to latch userHasInteracted if auto-zoom is disabled externally (e.g. via search/filter)
+  useEffect(() => {
+    if (!autoZoomOnLowCount) {
+      setUserHasInteracted(true);
+    }
+  }, [autoZoomOnLowCount]);
+
+  // Effect to reset user interaction state when triggered externally (e.g. on new search)
+  useEffect(() => {
+    if (resetInteractionTrigger !== undefined) {
+      setUserHasInteracted(false);
+    }
+  }, [resetInteractionTrigger]);
 
   // Handle Escape key to exit fullscreen
   useEffect(() => {
@@ -300,6 +285,34 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
     }, 100);
   }, [isFullScreen]);
 
+  // Auto-zoom logic
+  useEffect(() => {
+    // Only proceed if auto-zoom is enabled and user hasn't interacted
+    if (!autoZoomOnLowCount || userHasInteracted || isMapMoving || isFetching) return;
+
+    // Ensure we have buildings to check against
+    if (!buildings || buildings.length === 0) return;
+
+    // Check minimum zoom level to prevent zooming out to world view excessively
+    if (viewState.zoom <= 2) return;
+
+    const visibleCount = clusters.reduce((acc, cluster) => {
+        return acc + (cluster.properties.point_count || 1);
+    }, 0);
+
+    // If visible count is less than 5 AND we have more buildings available
+    if (visibleCount < 5 && visibleCount < buildings.length) {
+        const timer = setTimeout(() => {
+            setViewState(prev => ({
+                ...prev,
+                zoom: prev.zoom - 1
+            }));
+        }, 500); // 0.5s delay to pace the zoom out
+
+        return () => clearTimeout(timer);
+    }
+  }, [clusters, buildings, autoZoomOnLowCount, userHasInteracted, isMapMoving, isFetching, viewState.zoom]);
+
   const pins = useMemo(() => clusters.map(cluster => {
     const [longitude, latitude] = cluster.geometry.coordinates;
     const { cluster: isCluster, point_count: pointCount } = cluster.properties;
@@ -316,6 +329,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
                 latitude={latitude}
                 onClick={(e) => {
                     e.originalEvent.stopPropagation();
+                    setUserHasInteracted(true);
                     onMapInteraction?.();
 
                     let expansionZoom = Math.min(
@@ -333,8 +347,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
                          expansionZoom = Math.max(expansionZoom, 15);
                     }
 
-                    if (expansionZoom <= viewStateRef.current.zoom) {
-                        expansionZoom = viewStateRef.current.zoom + 2;
+                    if (expansionZoom <= viewState.zoom) {
+                        expansionZoom = viewState.zoom + 2;
                     }
 
                     mapRef.current?.flyTo({
@@ -433,6 +447,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
             if (isTouch && !isPinSelected) {
                 // First tap on mobile: Select pin
                 setSelectedPinId(building.buildingId);
+                setUserHasInteracted(true);
                 onMapInteraction?.();
                 return;
             }
@@ -595,7 +610,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
             </div>
         </Marker>
     );
-  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewStateRef.current.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId, onAddCandidate, onRemoveItem, onHide, onHideCandidate, onSave, onVisit]);
+  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId, onAddCandidate, onRemoveItem, onHide, onHideCandidate, onSave, onVisit]);
 
   if (isLoading) {
     return (
@@ -623,7 +638,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
             ? 'fixed inset-0 z-[5000] h-[100dvh] rounded-none m-0 p-0'
             : 'relative h-full rounded-xl'
         }`}
-        data-zoom={viewStateRef.current.zoom}
+        data-zoom={viewState.zoom}
         data-testid="map-container"
     >
       <MapGL
@@ -631,7 +646,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
             mapRef.current = node;
             setMapInstance(node);
         }}
-        initialViewState={INITIAL_VIEW_STATE}
+        {...viewState}
         attributionControl={false}
         onClick={() => {
            if (selectedPinId) {
@@ -639,35 +654,31 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
            }
         }}
         onMove={evt => {
-            viewStateRef.current = evt.viewState;
-            updateClusters();
+            setViewState(evt.viewState);
             if (evt.originalEvent) {
+                setUserHasInteracted(true);
                 onMapInteraction?.();
             }
         }}
         onDragStart={() => {
+            setUserHasInteracted(true);
             onMapInteraction?.();
         }}
         onMoveStart={(evt) => {
+            setIsMapMoving(true);
             if (evt.originalEvent) {
-                isUserInteractionRef.current = true;
+                setUserHasInteracted(true);
                 onMapInteraction?.();
-            } else {
-                isUserInteractionRef.current = false;
             }
         }}
         onLoad={evt => {
             handleMapUpdate(evt.target);
-            onMapLoad?.();
         }}
         onMoveEnd={evt => {
+            setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;
-            setQueryViewState(evt.viewState);
-            if (isUserInteractionRef.current) {
-                onRegionChange?.({ lat: latitude, lng: longitude });
-            }
+            onRegionChange?.({ lat: latitude, lng: longitude });
             handleMapUpdate(evt.target);
-            isUserInteractionRef.current = false;
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
@@ -686,6 +697,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
       <button
           onClick={(e) => {
               e.stopPropagation();
+              setUserHasInteracted(true);
               onMapInteraction?.();
               setIsSatellite(!isSatellite);
           }}
@@ -699,6 +711,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
       <button
           onClick={(e) => {
               e.stopPropagation();
+              setUserHasInteracted(true);
               onMapInteraction?.();
               setIsFullScreen(!isFullScreen);
           }}
@@ -715,6 +728,4 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapHandle, Build
   }
 
   return mapContent;
-});
-
-BuildingDiscoveryMap.displayName = "BuildingDiscoveryMap";
+}
