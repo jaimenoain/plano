@@ -53,11 +53,14 @@ export default function SearchPage() {
   // Track if user is interacting to prevent auto-fit fighting
   const isInteractingRef = useRef(false);
 
+  const handleMapInteraction = useCallback(() => {
+      setSearchMode('explore');
+      setShouldFitBounds(false);
+      isInteractingRef.current = true;
+  }, []);
+
   const setMapRef = useCallback((node: BuildingDiscoveryMapRef | null) => {
       mapRef.current = node;
-      if (node && lastBoundsRef.current) {
-          node.fitBounds(lastBoundsRef.current);
-      }
   }, []);
 
   useEffect(() => {
@@ -351,11 +354,11 @@ export default function SearchPage() {
   }, [gpsLocation]); // Note: Depend on searchMode intentionally omitted in original, but here we check it inside
 
   // Feature: Guard region updates to prevent feedback loops during programmatic map movement
-  const handleRegionChange = (center: { lat: number; lng: number }) => {
+  const handleRegionChange = useCallback((center: { lat: number; lng: number }) => {
     if (searchMode === 'explore') {
       updateLocation(center);
     }
-  };
+  }, [searchMode, updateLocation]);
 
   // Check if we are in the default clean state (no search/filters) to enable auto-zoom
   const isDefaultState = !searchQuery &&
@@ -373,9 +376,9 @@ export default function SearchPage() {
                          selectedAttributes.length === 0 &&
                          selectedContacts.length === 0;
 
-  const handleSearchFocus = () => {
+  const handleSearchFocus = useCallback(() => {
     setViewMode('list');
-  };
+  }, [setViewMode]);
 
   const handleViewModeChange = (mode: 'map' | 'list') => {
     setViewMode(mode);
@@ -387,7 +390,7 @@ export default function SearchPage() {
     }
   };
 
-  const handleHide = async (buildingId: string) => {
+  const handleHide = useCallback(async (buildingId: string) => {
     if (!user) {
       toast.error("Please sign in to hide buildings");
       return;
@@ -407,9 +410,9 @@ export default function SearchPage() {
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses", user.id] });
       queryClient.invalidateQueries({ queryKey: ["search-buildings"] });
     }
-  };
+  }, [user, queryClient]);
 
-  const handleSave = async (buildingId: string) => {
+  const handleSave = useCallback(async (buildingId: string) => {
     if (!user) {
       toast.error("Please sign in to save buildings");
       return;
@@ -428,9 +431,9 @@ export default function SearchPage() {
       toast.success("Building saved");
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses", user.id] });
     }
-  };
+  }, [user, queryClient]);
 
-  const handleVisit = async (buildingId: string) => {
+  const handleVisit = useCallback(async (buildingId: string) => {
     if (!user) {
       toast.error("Please sign in to mark as visited");
       return;
@@ -449,9 +452,9 @@ export default function SearchPage() {
       toast.success("Marked as visited");
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses", user.id] });
     }
-  };
+  }, [user, queryClient]);
 
-  const searchBarContent = (
+  const searchBarContent = useMemo(() => (
     <div className="flex items-center w-full max-w-2xl border rounded-full bg-background shadow-md hover:shadow-lg transition-all p-1 group">
       <Search className="ml-3 h-5 w-5 text-muted-foreground shrink-0" />
       <Input
@@ -489,7 +492,16 @@ export default function SearchPage() {
         </Button>
       </div>
     </div>
-  );
+  ), [
+    searchQuery,
+    searchScope,
+    hasActiveFilters,
+    handleSearchFocus,
+    setSearchQuery,
+    setViewMode,
+    setLocationDialogOpen,
+    setFilterSheetOpen
+  ]);
 
   return (
     <div
@@ -641,13 +653,7 @@ export default function SearchPage() {
                           externalBuildings={mapBuildings}
                           onRegionChange={handleRegionChange}
                           onBoundsChange={setMapBounds}
-                          onMapInteraction={() => {
-                              setSearchMode('explore');
-                              setShouldFitBounds(false);
-                              isInteractingRef.current = true;
-                              // Force immediate location update for exploration if needed,
-                              // though onRegionChange (via onMoveEnd) usually handles it.
-                          }}
+                          onMapInteraction={handleMapInteraction}
                           isFetching={isFetching}
                           autoZoomOnLowCount={isDefaultState}
                           resetInteractionTrigger={mapInteractionResetTrigger}
@@ -683,11 +689,7 @@ export default function SearchPage() {
                         externalBuildings={mapBuildings}
                         onRegionChange={handleRegionChange}
                         onBoundsChange={setMapBounds}
-                        onMapInteraction={() => {
-                            setSearchMode('explore');
-                            setShouldFitBounds(false);
-                            isInteractingRef.current = true;
-                        }}
+                        onMapInteraction={handleMapInteraction}
                         isFetching={isFetching}
                         autoZoomOnLowCount={isDefaultState}
                         resetInteractionTrigger={mapInteractionResetTrigger}
