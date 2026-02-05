@@ -131,6 +131,16 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   useImperativeHandle(ref, () => ({
       flyTo: (center, zoom) => {
+          // --- GATEKEEPER ---
+          const type = "flyTo";
+          const payload = { center, zoom };
+          console.log("🚨 GATEKEEPER: Request received via " + type, payload);
+          const isPoison = (val: any) => val === null || val === undefined || Number.isNaN(Number(val)) || val === Infinity || val === -Infinity;
+          if (isPoison(center?.lat) || isPoison(center?.lng) || isPoison(zoom)) {
+               console.trace("🕵️‍♂️ WHO CALLED ME WITH POISON?");
+          }
+          // ------------------
+
           if (isMapMoving) return;
           mapRef.current?.flyTo({
               center: [center.lng, center.lat],
@@ -139,6 +149,19 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
           });
       },
       fitBounds: (bounds) => {
+          // --- GATEKEEPER ---
+          const type = "fitBounds";
+          const payload = { bounds };
+          console.log("🚨 GATEKEEPER: Request received via " + type, payload);
+          const isPoison = (val: any) => val === null || val === undefined || Number.isNaN(Number(val)) || val === Infinity || val === -Infinity;
+          if (
+               !bounds ||
+               isPoison(bounds.north) || isPoison(bounds.south) || isPoison(bounds.east) || isPoison(bounds.west)
+          ) {
+               console.trace("🕵️‍♂️ WHO CALLED ME WITH POISON?");
+          }
+          // ------------------
+
           if (isMapMoving) return;
           if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) return;
           mapRef.current?.fitBounds(
@@ -252,6 +275,16 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       console.groupEnd();
     }
   }, [buildings]);
+
+  // --- FORENSIC: EXTERNAL DATA WATCHER ---
+  useEffect(() => {
+    if (externalBuildings && externalBuildings.length > 0) {
+       console.log(`📦 PROP UPDATE: Received ${externalBuildings?.length} buildings from parent.`);
+       if (externalBuildings.length > 0) {
+          console.log("Sample of first 5 buildings:", externalBuildings.slice(0, 5));
+       }
+    }
+  }, [externalBuildings]);
 
   // --- FORENSIC: STATE STALKER ---
   useEffect(() => {
@@ -808,7 +841,13 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             mapRef.current = node;
             setMapInstance(node);
         }}
-        onError={(e) => console.error("💥 MAPBOX INTERNAL ERROR:", e)}
+        onError={(e) => {
+          console.group("💥 MAPBOX CRASH CAUGHT");
+          console.error("Error:", e.error);
+          console.log("Current ViewState:", viewState);
+          console.trace("Stack at crash time");
+          console.groupEnd();
+        }}
         {...viewState}
         attributionControl={false}
         onClick={() => {
