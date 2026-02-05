@@ -348,6 +348,21 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     console.log(`🕵️‍♂️ DATA INTERROGATOR FINISHED. Found ${badCount} suspicious records.`);
   }, [buildings]);
 
+  // --- FORENSIC: CHECKPOINT A ---
+  useEffect(() => {
+    let count = 0;
+    buildings.forEach(b => {
+      if (
+        b.location_lat === null || b.location_lat === undefined ||
+        b.location_lat === 0 ||
+        isNaN(Number(b.location_lat))
+      ) {
+        count++;
+      }
+    });
+    console.log(`🔍 CHECKPOINT A (Input): Total=${buildings.length}, Invalid=${count}`);
+  }, [buildings]);
+
   const points = useMemo(() => cleanBuildings.map(b => {
     let [lng, lat] = [b.location_lng, b.location_lat];
 
@@ -372,6 +387,16 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
     const coords = [lng, lat];
     if (coords[0] === null || coords[1] === null) console.error("💀 FATAL: Null coordinate generated for point:", b.id);
+
+    // --- FORENSIC: CHECKPOINT B ---
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        console.error("🚨 CHECKPOINT B FAILURE: Generated NaN/Null coordinate!", {
+            id: b.id,
+            original: { lat: b.location_lat, lng: b.location_lng },
+            calculated: { lat, lng },
+            precision: b.location_precision
+        });
+    }
 
     return {
         type: 'Feature' as const,
@@ -446,6 +471,12 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   const pins = useMemo(() => clusters.map(cluster => {
     const [longitude, latitude] = cluster.geometry.coordinates;
+
+    // --- FORENSIC: CHECKPOINT C ---
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        console.error("🔥 CHECKPOINT C FAILURE: Attempting to render Marker with invalid coords", { id: cluster.properties.buildingId, lat: latitude, lng: longitude });
+    }
+
     const { cluster: isCluster, point_count: pointCount } = cluster.properties;
 
     if (isCluster) {
@@ -777,9 +808,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             mapRef.current = node;
             setMapInstance(node);
         }}
-        onError={(e) => {
-            console.error("🚨 MAPBOX INTERNAL ERROR:", e);
-        }}
+        onError={(e) => console.error("💥 MAPBOX INTERNAL ERROR:", e)}
         {...viewState}
         attributionControl={false}
         onClick={() => {
