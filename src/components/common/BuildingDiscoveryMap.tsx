@@ -167,38 +167,55 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const buildings = externalBuildings || internalBuildings || [];
   const isLoading = externalBuildings ? false : internalLoading;
 
-  // 1. THE FIREWALL
+  // 1. THE FIREWALL - PARANOID VALIDATION
   const cleanBuildings = useMemo(() => {
-    return buildings.filter(b => {
-      const lat = b.location_lat;
-      const lng = b.location_lng;
-      return (
-        typeof lat === 'number' && !Number.isNaN(lat) && lat !== 0 &&
-        typeof lng === 'number' && !Number.isNaN(lng) && lng !== 0
-      );
-    });
+    const valid = [];
+    for (const b of buildings) {
+       // Cast explicitly
+       const lat = Number(b.location_lat);
+       const lng = Number(b.location_lng);
+
+       // Check 1: Existence
+       if (b.location_lat === null || b.location_lat === undefined || b.location_lng === null || b.location_lng === undefined) {
+           console.warn(`🚨 [PARANOID] REJECTED (Null/Undefined) ID: ${b.id}`, { rawLat: b.location_lat, rawLng: b.location_lng });
+           continue;
+       }
+
+       // Check 2: Type
+       if (Number.isNaN(lat) || Number.isNaN(lng)) {
+           console.warn(`🚨 [PARANOID] REJECTED (NaN) ID: ${b.id}`, { rawLat: b.location_lat, rawLng: b.location_lng, lat, lng });
+           continue;
+       }
+
+       // Check 3: Null Island
+       if (lat === 0 && lng === 0) {
+           console.warn(`🚨 [PARANOID] REJECTED (Null Island) ID: ${b.id}`, { lat, lng });
+           continue;
+       }
+
+       // Check 4: Near Zero
+       if (Math.abs(lat) < 0.0001 && Math.abs(lng) < 0.0001) {
+           console.warn(`🚨 [PARANOID] REJECTED (Near Zero) ID: ${b.id}`, { lat, lng });
+           continue;
+       }
+
+       valid.push(b);
+    }
+    return valid;
   }, [buildings]);
 
   // --- DATA INTEGRITY GUARD ---
   useEffect(() => {
-    let invalidCount = 0;
+    // Only calculate bounds for valid buildings to avoid polluting stats with bad data
     let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
 
-    buildings.forEach(b => {
-      const { location_lat: lat, location_lng: lng, id } = b;
-
-      const isInvalid = lat === null || lat === undefined || Number.isNaN(lat) ||
-                        lng === null || lng === undefined || Number.isNaN(lng);
-
-      if (isInvalid) {
-        invalidCount++;
-        console.error(`🚨 INVALID COORDINATE DETECTED for Building ID: ${id}`, { lat, lng, building: b });
-      } else {
+    cleanBuildings.forEach(b => {
+        const lat = b.location_lat;
+        const lng = b.location_lng;
         if (lat < minLat) minLat = lat;
         if (lat > maxLat) maxLat = lat;
         if (lng < minLng) minLng = lng;
         if (lng > maxLng) maxLng = lng;
-      }
     });
 
     const blockedCount = buildings.length - cleanBuildings.length;
@@ -208,8 +225,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         totalBuildings: buildings.length,
         cleanBuildings: cleanBuildings.length,
         blockedCount,
-        rawBounds: { minLat, maxLat, minLng, maxLng }
+        validBounds: { minLat, maxLat, minLng, maxLng }
       });
+      console.log("🛡️ PARANOID FILTER: Keeping " + cleanBuildings.length + " of " + buildings.length);
 
       if (blockedCount > 0) {
         console.warn(`⚠️ FIREWALL: Blocked ${blockedCount} toxic buildings from rendering`);
