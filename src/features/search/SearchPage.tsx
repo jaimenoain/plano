@@ -27,7 +27,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export type SearchScope = 'content' | 'users' | 'architects';
 
@@ -36,7 +35,7 @@ const BuildingDiscoveryMap = lazy(() => import("@/components/common/BuildingDisc
 export default function SearchPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isMobile = useIsMobile();
+  const { state, isMobile } = useSidebar();
   const queryClient = useQueryClient();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [searchScope, setSearchScope] = useState<SearchScope>('content');
@@ -115,7 +114,6 @@ export default function SearchPage() {
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
   const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
   const [mapInteractionResetTrigger, setMapInteractionResetTrigger] = useState(0);
-  const { state, isMobile } = useSidebar();
 
   // Main: Filter controls
   const [sortBy, setSortBy] = useState<string>("distance");
