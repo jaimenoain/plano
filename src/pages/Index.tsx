@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { MetaHead } from "@/components/common/MetaHead";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { FeedReview } from "@/types/feed";
@@ -322,11 +323,12 @@ export default function Index() {
   }
 
   return (
-    <div style={{
-      marginLeft: !isMobile ? 'calc(var(--sidebar-width) - var(--sidebar-width-icon))' : '0',
-      transition: 'margin-left 0.2s linear',
-      width: 'auto'
-    }}>
+    <div
+      className={cn(
+        "transition-[margin-left] duration-200 ease-linear w-auto",
+        "md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]"
+      )}
+    >
       <AppLayout variant="home">
         <MetaHead title="Home" />
         {isLoading ? (

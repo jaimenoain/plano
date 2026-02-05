@@ -17,6 +17,7 @@ import { ExploreTutorial } from "@/features/search/components/ExploreTutorial";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { useSidebar } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 export default function Explore() {
   const queryClient = useQueryClient();
@@ -193,11 +194,10 @@ export default function Explore() {
   return (
     <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
       <div
-        style={{
-          marginLeft: state === "expanded" && !isMobile ? "calc(var(--sidebar-width) - var(--sidebar-width-icon))" : "0",
-          transition: "margin-left 0.2s linear",
-          width: "auto",
-        }}
+        className={cn(
+          "transition-[margin-left] duration-200 ease-linear w-auto",
+          state === "expanded" ? "md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]" : "md:ml-0"
+        )}
       >
         <AppLayout
           isFullScreen

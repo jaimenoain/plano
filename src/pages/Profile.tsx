@@ -501,11 +501,12 @@ export default function Profile() {
 
   if (!profile && !loading) {
       return (
-        <div style={{
-          marginLeft: (state === 'collapsed' && !isMobile) ? 'calc(var(--sidebar-width) - var(--sidebar-width-icon))' : '0',
-          transition: 'margin-left 0.2s linear',
-          width: 'auto'
-        }}>
+        <div
+          className={cn(
+            "transition-[margin-left] duration-200 ease-linear w-auto",
+            state === "collapsed" ? "md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]" : "md:ml-0"
+          )}
+        >
           <AppLayout title="User Not Found" showLogo={false} showBack>
               <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
                   <div className="bg-secondary/50 p-6 rounded-full mb-6">
@@ -532,11 +533,12 @@ export default function Profile() {
     : undefined;
 
   return (
-    <div style={{
-      marginLeft: (!isMobile) ? 'calc(var(--sidebar-width) - var(--sidebar-width-icon))' : '0',
-      transition: 'margin-left 0.2s linear',
-      width: 'auto'
-    }}>
+    <div
+      className={cn(
+        "transition-[margin-left] duration-200 ease-linear w-auto",
+        "md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]"
+      )}
+    >
       <AppLayout title="Profile" showLogo={false} showBack={!isOwnProfile}>
         <MetaHead
           title={`${profile?.username} (@${profile?.username})`}
