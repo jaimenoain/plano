@@ -19,7 +19,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 // Helper to calculate bounds (same as before)
 const calculateBounds = (buildings: any[]) => {
-  if (!buildings.length) return null;
+  if (!buildings?.length) return null;
   const targetBuildings = buildings.slice(0, 5); // Focus on top 5
   let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
   let validCoords = false;
@@ -56,7 +56,7 @@ export default function SearchPage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // --- 2. The "Ghost Movement" Fix: Request Versioning ---
-  const [searchTriggerVersion, setSearchTriggerVersion] = useState(0);
+  const [searchTriggerVersion, setSearchTriggerVersion] = useState(1);
   const lastHandledVersionRef = useRef(0);
 
   // --- 3. UI State ---
@@ -65,7 +65,7 @@ export default function SearchPage() {
 
   // --- 4. Data Fetching ---
   const { 
-    buildings, 
+    buildings = [],
     isLoading, 
     isFetching, 
     isPlaceholderData, 
