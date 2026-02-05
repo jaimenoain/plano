@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type SearchScope = 'content' | 'users' | 'architects';
 
@@ -34,6 +35,7 @@ const BuildingDiscoveryMap = lazy(() => import("@/components/common/BuildingDisc
 export default function SearchPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [searchScope, setSearchScope] = useState<SearchScope>('content');
@@ -559,25 +561,63 @@ export default function SearchPage() {
           ) : (
             <>
               {/* Mobile View */}
-              <div className="md:hidden h-full w-full relative">
-                <SearchModeToggle
-                  mode={viewMode}
-                  onModeChange={handleViewModeChange}
-                  className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50"
-                />
+              {isMobile ? (
+                <div className="h-full w-full relative">
+                  <SearchModeToggle
+                    mode={viewMode}
+                    onModeChange={handleViewModeChange}
+                    className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50"
+                  />
 
-                {viewMode === 'list' ? (
-                  <div className="h-full overflow-y-auto bg-background pb-20">
-                    <DiscoveryList
-                      buildings={filteredBuildings}
-                      isLoading={isLoading}
-                      currentLocation={userLocation}
-                      itemTarget="_blank"
-                      searchQuery={searchQuery}
-                    />
+                  {viewMode === 'list' ? (
+                    <div className="h-full overflow-y-auto bg-background pb-20">
+                      <DiscoveryList
+                        buildings={filteredBuildings}
+                        isLoading={isLoading}
+                        currentLocation={userLocation}
+                        itemTarget="_blank"
+                        searchQuery={searchQuery}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full w-full">
+                      <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+                        <BuildingDiscoveryMap
+                          externalBuildings={mapBuildings}
+                          onRegionChange={updateLocation}
+                          onBoundsChange={setMapBounds}
+                          onMapInteraction={() => setIgnoreMapBounds(false)}
+                          forcedCenter={flyToCenter}
+                          isFetching={isFetching}
+                          autoZoomOnLowCount={isDefaultState}
+                          forcedBounds={flyToBounds}
+                          resetInteractionTrigger={mapInteractionResetTrigger}
+                          onHide={handleHide}
+                          onSave={handleSave}
+                          onVisit={handleVisit}
+                        />
+                      </Suspense>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Desktop Split View */
+                <div className="grid grid-cols-12 h-full w-full">
+                  <div className="col-span-5 lg:col-span-4 h-full flex flex-col border-r bg-background/50 backdrop-blur-sm z-10">
+                    <div className="p-4 pb-2">
+                      {searchBarContent}
+                    </div>
+                    <div className="flex-1 overflow-y-auto pb-4">
+                      <DiscoveryList
+                        buildings={filteredBuildings}
+                        isLoading={isLoading}
+                        currentLocation={userLocation}
+                        itemTarget="_blank"
+                        searchQuery={searchQuery}
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <div className="h-full w-full">
+                  <div className="col-span-7 lg:col-span-8 h-full relative">
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                       <BuildingDiscoveryMap
                         externalBuildings={mapBuildings}
@@ -595,44 +635,8 @@ export default function SearchPage() {
                       />
                     </Suspense>
                   </div>
-                )}
-              </div>
-
-              {/* Desktop Split View */}
-              <div className="hidden md:grid grid-cols-12 h-full w-full">
-                <div className="col-span-5 lg:col-span-4 h-full flex flex-col border-r bg-background/50 backdrop-blur-sm z-10">
-                  <div className="p-4 pb-2">
-                    {searchBarContent}
-                  </div>
-                  <div className="flex-1 overflow-y-auto pb-4">
-                    <DiscoveryList
-                      buildings={filteredBuildings}
-                      isLoading={isLoading}
-                      currentLocation={userLocation}
-                      itemTarget="_blank"
-                      searchQuery={searchQuery}
-                    />
-                  </div>
                 </div>
-                <div className="col-span-7 lg:col-span-8 h-full relative">
-                  <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
-                    <BuildingDiscoveryMap
-                      externalBuildings={mapBuildings}
-                      onRegionChange={updateLocation}
-                      onBoundsChange={setMapBounds}
-                      onMapInteraction={() => setIgnoreMapBounds(false)}
-                      forcedCenter={flyToCenter}
-                      isFetching={isFetching}
-                      autoZoomOnLowCount={isDefaultState}
-                      forcedBounds={flyToBounds}
-                      resetInteractionTrigger={mapInteractionResetTrigger}
-                      onHide={handleHide}
-                      onSave={handleSave}
-                      onVisit={handleVisit}
-                    />
-                  </Suspense>
-                </div>
-              </div>
+              )}
             </>
           )}
         </div>
