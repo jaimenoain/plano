@@ -171,31 +171,34 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const cleanBuildings = useMemo(() => {
     const valid = [];
     for (const b of buildings) {
+       const lat = b.location_lat;
+       const lng = b.location_lng;
+
+       // Check 1: Existence (Reject if null/undefined)
+       if (lat === null || lat === undefined || lng === null || lng === undefined) {
+           console.warn(`🚨 [PARANOID] REJECTED (Null/Undefined) ID: ${b.id}`, { rawLat: lat, rawLng: lng });
+           continue;
+       }
+
        // Cast explicitly
-       const lat = Number(b.location_lat);
-       const lng = Number(b.location_lng);
+       const numLat = Number(lat);
+       const numLng = Number(lng);
 
-       // Check 1: Existence
-       if (b.location_lat === null || b.location_lat === undefined || b.location_lng === null || b.location_lng === undefined) {
-           console.warn(`🚨 [PARANOID] REJECTED (Null/Undefined) ID: ${b.id}`, { rawLat: b.location_lat, rawLng: b.location_lng });
+       // Check 2: Type (Reject if not a number)
+       if (Number.isNaN(numLat) || Number.isNaN(numLng)) {
+           console.warn(`🚨 [PARANOID] REJECTED (NaN) ID: ${b.id}`, { rawLat: lat, rawLng: lng, numLat, numLng });
            continue;
        }
 
-       // Check 2: Type
-       if (Number.isNaN(lat) || Number.isNaN(lng)) {
-           console.warn(`🚨 [PARANOID] REJECTED (NaN) ID: ${b.id}`, { rawLat: b.location_lat, rawLng: b.location_lng, lat, lng });
+       // Check 3: Null Island (Reject if exactly 0)
+       if (numLat === 0 && numLng === 0) {
+           console.warn(`🚨 [PARANOID] REJECTED (Null Island) ID: ${b.id}`, { lat: numLat, lng: numLng });
            continue;
        }
 
-       // Check 3: Null Island
-       if (lat === 0 && lng === 0) {
-           console.warn(`🚨 [PARANOID] REJECTED (Null Island) ID: ${b.id}`, { lat, lng });
-           continue;
-       }
-
-       // Check 4: Near Zero
-       if (Math.abs(lat) < 0.0001 && Math.abs(lng) < 0.0001) {
-           console.warn(`🚨 [PARANOID] REJECTED (Near Zero) ID: ${b.id}`, { lat, lng });
+       // Check 4: Near Zero (Reject if extremely close to 0 - Ghost Artifacts)
+       if (Math.abs(numLat) < 0.00001 && Math.abs(numLng) < 0.00001) {
+           console.warn(`🚨 [PARANOID] REJECTED (Near Zero) ID: ${b.id}`, { lat: numLat, lng: numLng });
            continue;
        }
 
