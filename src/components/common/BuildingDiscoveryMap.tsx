@@ -320,6 +320,34 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     });
   }, []);
 
+  // DEBUG: Data Interrogator
+  useEffect(() => {
+    if (!buildings) return;
+    console.log("🕵️‍♂️ DATA INTERROGATOR STARTED: Scanning " + buildings.length + " buildings...");
+    let badCount = 0;
+    buildings.forEach((b, i) => {
+      const lat = b.location_lat;
+      const lng = b.location_lng;
+      const isSuspicious =
+        lat === null || lat === undefined ||
+        lng === null || lng === undefined ||
+        typeof lat !== 'number' || typeof lng !== 'number' ||
+        isNaN(lat) || isNaN(lng) ||
+        (Math.abs(Number(lat)) < 0.0001 && Math.abs(Number(lng)) < 0.0001);
+
+      if (isSuspicious || i < 3) { // Log the first 3 for schema verification + any errors
+        console.warn(
+          `🔎 Row ${i} [${b.id}]: Name="${b.name}"`,
+          `\n   Lat: ${lat} (Type: ${typeof lat})`,
+          `\n   Lng: ${lng} (Type: ${typeof lng})`,
+          `\n   Suspicious? ${isSuspicious ? 'YES 🚨' : 'No'}`
+        );
+        if (isSuspicious) badCount++;
+      }
+    });
+    console.log(`🕵️‍♂️ DATA INTERROGATOR FINISHED. Found ${badCount} suspicious records.`);
+  }, [buildings]);
+
   const points = useMemo(() => cleanBuildings.map(b => {
     let [lng, lat] = [b.location_lng, b.location_lat];
 
@@ -341,6 +369,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         lng += lngOffset;
         lat += latOffset;
     }
+
+    const coords = [lng, lat];
+    if (coords[0] === null || coords[1] === null) console.error("💀 FATAL: Null coordinate generated for point:", b.id);
 
     return {
         type: 'Feature' as const,
