@@ -47,6 +47,12 @@ export default function SearchPage() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
 
+  const MOCK_BUILDINGS: any[] = [
+     { id: '1', name: 'Mock Building A', location_lat: 51.505, location_lng: -0.09, main_image_url: null, status: 'completed' },
+     { id: '2', name: 'Mock Building B', location_lat: 51.51, location_lng: -0.1, main_image_url: null, status: 'completed' },
+     { id: '3', name: 'Mock Building C', location_lat: 51.515, location_lng: -0.09, main_image_url: null, status: 'completed' },
+   ];
+
   const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
   const lastBoundsRef = useRef<Bounds | null>(null);
   const lastFlownLocationRef = useRef<{lat: number, lng: number} | null>(null);
@@ -66,11 +72,13 @@ export default function SearchPage() {
       mapRef.current = node;
   }, []);
 
+  /*
   useEffect(() => {
     if (searchParams.get("open_filters") === "true") {
       setFilterSheetOpen(true);
     }
   }, [searchParams]);
+  */
    
   // 1. Existing hooks
   const {
@@ -191,6 +199,7 @@ export default function SearchPage() {
 
   // If a user types a query or uses personal filters, we want to search the full database (ignore map bounds)
   // until they interact with the map again to filter.
+  /*
   useEffect(() => {
       // Use the stable signature to detect real changes
       const filters = JSON.parse(activeFilterSignature);
@@ -215,8 +224,10 @@ export default function SearchPage() {
           setSearchScope('content');
       }
   }, [activeFilterSignature]); // DEPEND ONLY ON THE STABLE SIGNATURE
+  */
 
   // Automatically fly to bounds of results when in global search mode
+  /*
   useEffect(() => {
     // Only auto-fly if we are in Global Search Mode AND explicitly requested fit
     if (searchMode === 'global' && shouldFitBounds && buildings.length > 0 && !isInteractingRef.current) {
@@ -245,6 +256,7 @@ export default function SearchPage() {
       }
     }
   }, [buildings, searchMode, shouldFitBounds]);
+  */
 
   // 4. Merged Filtering Logic
   const filteredBuildings = useMemo(() => {
@@ -353,6 +365,7 @@ export default function SearchPage() {
   };
 
   // Handle auto-fly to user location on initial load or update
+  /*
   useEffect(() => {
     // Feature: Guard against auto-centering if we are ignoring map bounds (e.g. searching)
     if (gpsLocation && searchMode === 'explore') {
@@ -367,6 +380,7 @@ export default function SearchPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gpsLocation, searchMode]); // Note: Depend on searchMode intentionally omitted in original, but here we check it inside
+  */
 
   // Feature: Guard region updates to prevent feedback loops during programmatic map movement
   const handleRegionChange = useCallback((center: { lat: number; lng: number }) => {
@@ -670,11 +684,11 @@ export default function SearchPage() {
                       <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                         <BuildingDiscoveryMap
                           ref={setMapRef}
-                          externalBuildings={mapBuildings}
+                          externalBuildings={MOCK_BUILDINGS}
                           onRegionChange={handleRegionChange}
                           onBoundsChange={setMapBounds}
                           onMapInteraction={handleMapInteraction}
-                          isFetching={isFetching}
+                          isFetching={false}
                           autoZoomOnLowCount={isDefaultState}
                           resetInteractionTrigger={mapInteractionResetTrigger}
                           onHide={handleHide}
@@ -706,11 +720,11 @@ export default function SearchPage() {
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                       <BuildingDiscoveryMap
                         ref={setMapRef}
-                        externalBuildings={mapBuildings}
+                        externalBuildings={MOCK_BUILDINGS}
                         onRegionChange={handleRegionChange}
                         onBoundsChange={setMapBounds}
                         onMapInteraction={handleMapInteraction}
-                        isFetching={isFetching}
+                        isFetching={false}
                         autoZoomOnLowCount={isDefaultState}
                         resetInteractionTrigger={mapInteractionResetTrigger}
                         onHide={handleHide}
