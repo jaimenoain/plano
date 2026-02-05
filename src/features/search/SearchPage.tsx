@@ -477,6 +477,7 @@ export default function SearchPage() {
           searchScope === 'architects' ? "Search architects..." :
           "Search buildings, architects..."
         }
+        name="search-query"
         className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none h-10 px-3 text-base placeholder:text-muted-foreground/70"
         value={searchQuery}
         onChange={handleSearchChange}
