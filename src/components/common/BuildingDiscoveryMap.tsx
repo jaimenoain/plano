@@ -129,9 +129,31 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   // Track initial fit to prevent loops
   const hasInitialFitRef = useRef(false);
 
+  // --- FORENSIC LOGGING START ---
+  useEffect(() => {
+    console.log("🗺️ [MapForensics] Component MOUNT");
+    return () => console.log("🗺️ [MapForensics] Component UNMOUNT");
+  }, []);
+
+  useEffect(() => {
+    console.groupCollapsed("🗺️ [MapForensics] Props Update");
+    console.log("External Buildings Count:", externalBuildings?.length ?? "N/A");
+    if (externalBuildings && externalBuildings.length > 0) {
+        console.log("Sample Building:", externalBuildings[0]);
+    }
+    console.log("isFetching:", isFetching);
+    console.log("autoZoomOnLowCount:", autoZoomOnLowCount);
+    console.groupEnd();
+  }, [externalBuildings, isFetching, autoZoomOnLowCount]);
+  // --- FORENSIC LOGGING END ---
+
   useImperativeHandle(ref, () => ({
       flyTo: (center, zoom) => {
-          if (isMapMoving) return;
+          console.log("🗺️ [MapForensics] Imperative flyTo called", { center, zoom, isMapMoving });
+          if (isMapMoving) {
+            console.warn("🗺️ [MapForensics] flyTo BLOCKED due to isMapMoving");
+            return;
+          }
           mapRef.current?.flyTo({
               center: [center.lng, center.lat],
               zoom: zoom || 13,
@@ -139,8 +161,15 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
           });
       },
       fitBounds: (bounds) => {
-          if (isMapMoving) return;
-          if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) return;
+          console.log("🗺️ [MapForensics] Imperative fitBounds called", { bounds, isMapMoving });
+          if (isMapMoving) {
+            console.warn("🗺️ [MapForensics] fitBounds BLOCKED due to isMapMoving");
+            return;
+          }
+          if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) {
+             console.error("🗺️ [MapForensics] fitBounds BLOCKED due to invalid bounds", bounds);
+             return;
+          }
           mapRef.current?.fitBounds(
               [
                   [bounds.west, bounds.south],
@@ -171,21 +200,46 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   // 1. Validation logic
   const cleanBuildings = useMemo(() => {
     if (!buildings) return [];
-    return buildings.filter(b => {
+
+    // Forensic logging for cleaning
+    let inputCount = buildings.length;
+    let nullIslandCount = 0;
+    let invalidCoordsCount = 0;
+
+    const valid = buildings.filter(b => {
       // REJECT invalid primitives immediately
-      if (b.location_lat === null || b.location_lat === undefined) return false;
-      if (b.location_lng === null || b.location_lng === undefined) return false;
+      if (b.location_lat === null || b.location_lat === undefined) {
+          invalidCoordsCount++;
+          return false;
+      }
+      if (b.location_lng === null || b.location_lng === undefined) {
+          invalidCoordsCount++;
+          return false;
+      }
 
       // REJECT invalid numbers (NaN)
       const lat = Number(b.location_lat);
       const lng = Number(b.location_lng);
-      if (isNaN(lat) || isNaN(lng)) return false;
+      if (isNaN(lat) || isNaN(lng)) {
+          invalidCoordsCount++;
+          return false;
+      }
 
       // REJECT Null Island (0,0) specifically
-      if (Math.abs(lat) < 0.00001 && Math.abs(lng) < 0.00001) return false;
+      if (Math.abs(lat) < 0.00001 && Math.abs(lng) < 0.00001) {
+          nullIslandCount++;
+          return false;
+      }
 
       return true;
     });
+
+    console.groupCollapsed(`🗺️ [MapForensics] cleanBuildings (${inputCount} -> ${valid.length})`);
+    if (nullIslandCount > 0) console.warn(`⚠️ Filtered ${nullIslandCount} Null Island (0,0) locations`);
+    if (invalidCoordsCount > 0) console.warn(`⚠️ Filtered ${invalidCoordsCount} invalid coordinates`);
+    console.groupEnd();
+
+    return valid;
   }, [buildings]);
   // ---------------------------
 
@@ -675,15 +729,21 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         onMove={evt => {
             setViewState(evt.viewState);
             if (evt.originalEvent) {
+                // console.log("🗺️ [MapForensics] onMove (User)");
                 setUserHasInteracted(true);
                 onMapInteraction?.();
             }
         }}
         onDragStart={() => {
+            console.log("🗺️ [MapForensics] onDragStart (User)");
             setUserHasInteracted(true);
             onMapInteraction?.();
         }}
         onMoveStart={(evt) => {
+            console.log("🗺️ [MapForensics] onMoveStart", {
+                cause: evt.originalEvent ? "User Interaction" : "Programmatic",
+                viewState: evt.viewState
+            });
             setIsMapMoving(true);
             if (evt.originalEvent) {
                 setUserHasInteracted(true);
@@ -691,9 +751,14 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             }
         }}
         onLoad={evt => {
+            console.log("🗺️ [MapForensics] Map Loaded");
             handleMapUpdate(evt.target);
         }}
         onMoveEnd={evt => {
+            console.log("🗺️ [MapForensics] onMoveEnd", {
+                center: evt.viewState,
+                isMapMoving: false
+            });
             setIsMapMoving(false);
             const { latitude, longitude } = evt.viewState;
 
