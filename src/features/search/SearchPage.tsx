@@ -306,10 +306,19 @@ export default function SearchPage() {
 
   // Handle auto-fly to user location on initial load or update
   useEffect(() => {
-    if (gpsLocation) {
+    // Feature: Guard against auto-centering if we are ignoring map bounds (e.g. searching)
+    if (gpsLocation && !ignoreMapBounds) {
       setFlyToCenter(gpsLocation);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gpsLocation]);
+
+  // Feature: Guard region updates to prevent feedback loops during programmatic map movement
+  const handleRegionChange = (center: { lat: number; lng: number }) => {
+    if (!ignoreMapBounds) {
+      updateLocation(center);
+    }
+  };
 
   // Check if we are in the default clean state (no search/filters) to enable auto-zoom
   const isDefaultState = !searchQuery &&
@@ -584,7 +593,7 @@ export default function SearchPage() {
                       <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                         <BuildingDiscoveryMap
                           externalBuildings={mapBuildings}
-                          onRegionChange={updateLocation}
+                          onRegionChange={handleRegionChange}
                           onBoundsChange={setMapBounds}
                           onMapInteraction={() => setIgnoreMapBounds(false)}
                           forcedCenter={flyToCenter}
@@ -621,7 +630,7 @@ export default function SearchPage() {
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                       <BuildingDiscoveryMap
                         externalBuildings={mapBuildings}
-                        onRegionChange={updateLocation}
+                        onRegionChange={handleRegionChange}
                         onBoundsChange={setMapBounds}
                         onMapInteraction={() => setIgnoreMapBounds(false)}
                         forcedCenter={flyToCenter}
