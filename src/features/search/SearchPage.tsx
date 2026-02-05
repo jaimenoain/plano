@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DiscoveryList } from "./components/DiscoveryList";
@@ -27,6 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSidebar } from "@/components/ui/sidebar";
+import type { BuildingDiscoveryMapRef } from "@/components/common/BuildingDiscoveryMap";
 
 export type SearchScope = 'content' | 'users' | 'architects';
 
@@ -45,6 +46,16 @@ export default function SearchPage() {
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
+
+  const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
+  const lastBoundsRef = useRef<Bounds | null>(null);
+
+  const setMapRef = useCallback((node: BuildingDiscoveryMapRef | null) => {
+      mapRef.current = node;
+      if (node && lastBoundsRef.current) {
+          node.fitBounds(lastBoundsRef.current);
+      }
+  }, []);
 
   useEffect(() => {
     if (searchParams.get("open_filters") === "true") {
@@ -109,8 +120,6 @@ export default function SearchPage() {
   };
 
   // Feature: Map Interaction controls
-  const [flyToCenter, setFlyToCenter] = useState<{lat: number, lng: number} | null>(null);
-  const [flyToBounds, setFlyToBounds] = useState<Bounds | null>(null);
   const [mapBounds, setMapBounds] = useState<Bounds | null>(null);
   const [ignoreMapBounds, setIgnoreMapBounds] = useState(false);
   const [mapInteractionResetTrigger, setMapInteractionResetTrigger] = useState(0);
@@ -165,19 +174,18 @@ export default function SearchPage() {
     if (ignoreMapBounds && buildings.length > 0) {
       const bounds = getBoundsFromBuildings(buildings);
       if (bounds) {
-        setFlyToBounds((prev) => {
-          if (
-            prev &&
+        // Deep equality check to prevent redundant moves
+        const prev = lastBoundsRef.current;
+        const isSame = prev &&
             prev.north === bounds.north &&
             prev.south === bounds.south &&
             prev.east === bounds.east &&
-            prev.west === bounds.west
-          ) {
-            return prev;
-          }
-          return bounds;
-        });
-        setFlyToCenter(null);
+            prev.west === bounds.west;
+
+        if (!isSame) {
+            mapRef.current?.fitBounds(bounds);
+            lastBoundsRef.current = bounds;
+        }
       }
     }
   }, [buildings, ignoreMapBounds]);
@@ -260,8 +268,7 @@ export default function SearchPage() {
   const handleUseLocation = async () => {
     const loc = await requestLocation();
     if (loc) {
-      setFlyToCenter(loc);
-      setFlyToBounds(null);
+      mapRef.current?.flyTo(loc);
       updateLocation(loc); 
       setIgnoreMapBounds(false); // Feature: Reset bounds ignore on explicit location use
     }
@@ -280,17 +287,16 @@ export default function SearchPage() {
         // Check for viewport bounds (e.g. for countries)
         const viewport = results[0].geometry.viewport;
         if (viewport) {
-           setFlyToBounds({
+           const bounds = {
               north: typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lat() : (viewport as any).northeast.lat,
               east: typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast().lng() : (viewport as any).northeast.lng,
               south: typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lat() : (viewport as any).southwest.lat,
               west: typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest().lng() : (viewport as any).southwest.lng,
-           });
-           setFlyToCenter(null);
+           };
+           mapRef.current?.fitBounds(bounds);
         } else {
            // Feature: Fly to location
-           setFlyToCenter(newLoc);
-           setFlyToBounds(null);
+           mapRef.current?.flyTo(newLoc);
         }
         
         // Main: Optimistically update user location
@@ -308,7 +314,7 @@ export default function SearchPage() {
   useEffect(() => {
     // Feature: Guard against auto-centering if we are ignoring map bounds (e.g. searching)
     if (gpsLocation && !ignoreMapBounds) {
-      setFlyToCenter(gpsLocation);
+      mapRef.current?.flyTo(gpsLocation);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gpsLocation]);
@@ -600,14 +606,13 @@ export default function SearchPage() {
                     <div className="h-full w-full">
                       <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                         <BuildingDiscoveryMap
+                          ref={setMapRef}
                           externalBuildings={mapBuildings}
                           onRegionChange={handleRegionChange}
                           onBoundsChange={setMapBounds}
                           onMapInteraction={() => setIgnoreMapBounds(false)}
-                          forcedCenter={flyToCenter}
                           isFetching={isFetching}
                           autoZoomOnLowCount={isDefaultState}
-                          forcedBounds={flyToBounds}
                           resetInteractionTrigger={mapInteractionResetTrigger}
                           onHide={handleHide}
                           onSave={handleSave}
@@ -637,14 +642,13 @@ export default function SearchPage() {
                   <div className="col-span-7 lg:col-span-8 h-full relative">
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
                       <BuildingDiscoveryMap
+                        ref={setMapRef}
                         externalBuildings={mapBuildings}
                         onRegionChange={handleRegionChange}
                         onBoundsChange={setMapBounds}
                         onMapInteraction={() => setIgnoreMapBounds(false)}
-                        forcedCenter={flyToCenter}
                         isFetching={isFetching}
                         autoZoomOnLowCount={isDefaultState}
-                        forcedBounds={flyToBounds}
                         resetInteractionTrigger={mapInteractionResetTrigger}
                         onHide={handleHide}
                         onSave={handleSave}
