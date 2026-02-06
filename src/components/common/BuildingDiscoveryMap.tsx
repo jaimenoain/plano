@@ -425,8 +425,14 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
     if (isCluster) {
         // Check if all items in the cluster are dimmed (e.g. existing items in "Show saved" mode)
-        const leaves = supercluster.getLeaves(cluster.id, Infinity);
-        const isAllDimmed = leaves.every(l => l.properties.isDimmed);
+        let leaves: any[] = [];
+        try {
+            leaves = supercluster.getLeaves(cluster.id, Infinity);
+        } catch (error) {
+            console.warn("⚠️ [Map] Cluster ID stale, ignoring.");
+            leaves = [];
+        }
+        const isAllDimmed = leaves.length > 0 && leaves.every(l => l.properties.isDimmed);
 
         return (
             <Marker
