@@ -18,8 +18,63 @@ export default function SearchPage() {
     isLoading,
     isFetching,
     searchQuery,
-    updateLocation
+    updateLocation,
+    statusFilters,
+    hideVisited,
+    hideSaved,
+    hideHidden,
+    hideWithoutImages,
+    filterContacts,
+    personalMinRating,
+    contactMinRating,
+    selectedArchitects,
+    selectedCollections,
+    selectedCategory,
+    selectedTypologies,
+    selectedAttributes,
+    selectedContacts
   } = useBuildingSearch();
+
+  const activeFilterSignature = useMemo(() => {
+    return JSON.stringify({
+      searchQuery,
+      statusFilters,
+      hideVisited,
+      hideSaved,
+      hideHidden,
+      hideWithoutImages,
+      filterContacts,
+      personalMinRating,
+      contactMinRating,
+      selectedArchitects,
+      selectedCollections,
+      selectedCategory,
+      selectedTypologies,
+      selectedAttributes,
+      selectedContacts
+    });
+  }, [
+    searchQuery,
+    statusFilters,
+    hideVisited,
+    hideSaved,
+    hideHidden,
+    hideWithoutImages,
+    filterContacts,
+    personalMinRating,
+    contactMinRating,
+    selectedArchitects,
+    selectedCollections,
+    selectedCategory,
+    selectedTypologies,
+    selectedAttributes,
+    selectedContacts
+  ]);
+
+  useEffect(() => {
+    // Log only when the signature actually changes to detect loops
+    console.log('🔍 [FILTERS] Signature Changed/Stable:', JSON.parse(activeFilterSignature));
+  }, [activeFilterSignature]);
 
   const safeBuildings = useMemo(() => {
     if (!buildings) return [];
