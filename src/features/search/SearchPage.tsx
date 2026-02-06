@@ -86,16 +86,27 @@ export default function SearchPage() {
     );
   }, [buildings]);
 
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Derived state to control map behavior
+  const searchMode = searchQuery ? 'global' : 'explore';
+
+  const regionUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userHasMovedMap = useRef(false);
+  const isProgrammaticMove = useRef(false);
 
-  const handleRegionChange = useCallback((center: { lat: number, lng: number }) => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  const handleRegionChange = useCallback((center: { lat: number; lng: number }) => {
+    // GUARD: Ignore updates triggered by our own code (e.g. list clicks)
+    if (isProgrammaticMove.current) {
+      console.log('🛡️ [GUARD] Ignoring region change due to programmatic move.');
+      return;
+    }
 
-    timeoutRef.current = setTimeout(() => {
-      updateLocation(center);
-    }, 500);
-  }, [updateLocation]);
+    if (searchMode === 'explore') {
+      if (regionUpdateTimeoutRef.current) clearTimeout(regionUpdateTimeoutRef.current);
+      regionUpdateTimeoutRef.current = setTimeout(() => {
+        updateLocation(center);
+      }, 500);
+    }
+  }, [searchMode, updateLocation]);
 
   const handleMapInteraction = useCallback(() => {
     userHasMovedMap.current = true;
