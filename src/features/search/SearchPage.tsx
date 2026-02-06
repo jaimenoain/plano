@@ -47,6 +47,7 @@ export default function SearchPage() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const MOCK_BUILDINGS: any[] = [
      { id: '1', name: 'Mock Building A', location_lat: 51.505, location_lng: -0.09, main_image_url: null, status: 'completed' },
      { id: '2', name: 'Mock Building B', location_lat: 51.51, location_lng: -0.1, main_image_url: null, status: 'completed' },
@@ -540,11 +541,6 @@ export default function SearchPage() {
   return (
     <div
       data-testid="search-page-wrapper"
-      style={{
-        marginLeft: state === "expanded" && !isMobile ? "calc(var(--sidebar-width) - var(--sidebar-width-icon))" : "0",
-        transition: "margin-left 0.2s linear",
-        width: "auto",
-      }}
     >
     <AppLayout
       title="Discovery"
@@ -685,9 +681,12 @@ export default function SearchPage() {
                         <BuildingDiscoveryMap
                           ref={setMapRef}
                           externalBuildings={MOCK_BUILDINGS}
-                          onRegionChange={handleRegionChange}
-                          onBoundsChange={setMapBounds}
-                          onMapInteraction={handleMapInteraction}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          onRegionChange={() => { console.log('Region change blocked'); }}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          onBoundsChange={() => { console.log('Bounds change blocked'); }}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          onMapInteraction={() => { console.log('Interaction blocked'); }}
                           isFetching={false}
                           autoZoomOnLowCount={isDefaultState}
                           resetInteractionTrigger={mapInteractionResetTrigger}
@@ -721,9 +720,12 @@ export default function SearchPage() {
                       <BuildingDiscoveryMap
                         ref={setMapRef}
                         externalBuildings={MOCK_BUILDINGS}
-                        onRegionChange={handleRegionChange}
-                        onBoundsChange={setMapBounds}
-                        onMapInteraction={handleMapInteraction}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        onRegionChange={() => { console.log('Region change blocked'); }}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        onBoundsChange={() => { console.log('Bounds change blocked'); }}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        onMapInteraction={() => { console.log('Interaction blocked'); }}
                         isFetching={false}
                         autoZoomOnLowCount={isDefaultState}
                         resetInteractionTrigger={mapInteractionResetTrigger}
