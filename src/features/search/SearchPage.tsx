@@ -1,8 +1,9 @@
-import { lazy, Suspense, useRef } from "react";
+import { lazy, Suspense, useRef, useEffect } from "react";
 import type { BuildingDiscoveryMapRef } from "@/components/common/BuildingDiscoveryMap";
 import { useSidebar } from "@/components/ui/sidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { useBuildingSearch } from "./hooks/useBuildingSearch";
 
 const BuildingDiscoveryMap = lazy(() => import("@/components/common/BuildingDiscoveryMap").then(module => ({ default: module.BuildingDiscoveryMap })));
 
@@ -19,6 +20,26 @@ export default function SearchPage() {
   // Restore Layout & Sidebar hooks
   const { state, isMobile } = useSidebar();
   useAuth();
+
+  // Restore the hook
+  const { userLocation, buildings, isLoading } = useBuildingSearch();
+
+  // DIAGNOSTIC TRAP
+  useEffect(() => {
+     console.log('🔥 [RENDER] SearchPage Re-rendered at', new Date().toISOString());
+  });
+
+  useEffect(() => {
+     console.log('⚠️ [HOOK CHANGE] userLocation changed:', userLocation);
+  }, [userLocation]);
+
+  useEffect(() => {
+     console.log('⚠️ [HOOK CHANGE] buildings array reference changed (Length: ' + buildings.length + ')');
+  }, [buildings]);
+
+  useEffect(() => {
+     console.log('⚠️ [HOOK CHANGE] isLoading changed:', isLoading);
+  }, [isLoading]);
 
   return (
     <AppLayout isFullScreen={true} showHeader={false} showNav={false}>
