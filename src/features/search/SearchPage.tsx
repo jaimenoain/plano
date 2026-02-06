@@ -1,5 +1,8 @@
 import { lazy, Suspense, useRef } from "react";
 import type { BuildingDiscoveryMapRef } from "@/components/common/BuildingDiscoveryMap";
+import { useSidebar } from "@/components/ui/sidebar";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { useAuth } from "@/hooks/useAuth";
 
 const BuildingDiscoveryMap = lazy(() => import("@/components/common/BuildingDiscoveryMap").then(module => ({ default: module.BuildingDiscoveryMap })));
 
@@ -13,8 +16,20 @@ export default function SearchPage() {
 
   const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
 
+  // Restore Layout & Sidebar hooks
+  const { state, isMobile } = useSidebar();
+  useAuth();
+
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#f0f0f0' }}>
+    <AppLayout isFullScreen={true} showHeader={false} showNav={false}>
+     <div
+       style={{
+         marginLeft: state === "expanded" && !isMobile ? "calc(var(--sidebar-width) - var(--sidebar-width-icon))" : "0",
+         transition: "margin-left 0.2s linear",
+         width: "auto",
+         height: "100vh"
+       }}
+     >
        {/* Pure Map. No Sidebars. No Layouts. */}
        <Suspense fallback={<div>Loading...</div>}>
          <BuildingDiscoveryMap
@@ -27,6 +42,7 @@ export default function SearchPage() {
             isFetching={false}
          />
        </Suspense>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
