@@ -1,20 +1,14 @@
-import { lazy, Suspense, useRef, useEffect, useMemo } from "react";
+import { lazy, Suspense, useRef, useEffect, useMemo, useCallback } from "react";
 import type { BuildingDiscoveryMapRef } from "@/components/common/BuildingDiscoveryMap";
 import { useSidebar } from "@/components/ui/sidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useBuildingSearch } from "./hooks/useBuildingSearch";
+import { getBoundsFromBuildings } from "@/utils/map";
 
 const BuildingDiscoveryMap = lazy(() => import("@/components/common/BuildingDiscoveryMap").then(module => ({ default: module.BuildingDiscoveryMap })));
 
 export default function SearchPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const MOCK_BUILDINGS: any[] = [
-     { id: '1', name: 'Mock Building A', location_lat: 51.505, location_lng: -0.09, main_image_url: null, status: 'completed' },
-     { id: '2', name: 'Mock Building B', location_lat: 51.51, location_lng: -0.1, main_image_url: null, status: 'completed' },
-     { id: '3', name: 'Mock Building C', location_lat: 51.515, location_lng: -0.09, main_image_url: null, status: 'completed' },
-   ];
-
   const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
 
   // Restore Layout & Sidebar hooks
@@ -23,11 +17,13 @@ export default function SearchPage() {
 
   // Restore the hook
   const {
-    userLocation,
+    // userLocation, // Not used directly in this simplified view
     buildings,
     isLoading,
     isFetching,
     searchQuery,
+    // Filters (extracted but currently unused in this simplified render, keeping for context if needed later)
+    /*
     statusFilters,
     hideVisited,
     hideSaved,
@@ -41,66 +37,55 @@ export default function SearchPage() {
     selectedCategory,
     selectedTypologies,
     selectedAttributes,
-    selectedContacts
+    selectedContacts,
+    */
+    updateLocation
   } = useBuildingSearch();
 
-  const activeFilterSignature = useMemo(() => {
-    return JSON.stringify({
-      statusFilters,
-      hideVisited,
-      hideSaved,
-      hideHidden,
-      hideWithoutImages,
-      filterContacts,
-      personalMinRating,
-      contactMinRating,
-      selectedArchitects,
-      selectedCollections,
-      selectedCategory,
-      selectedTypologies,
-      selectedAttributes,
-      selectedContacts
-    });
-  }, [
-      statusFilters,
-      hideVisited,
-      hideSaved,
-      hideHidden,
-      hideWithoutImages,
-      filterContacts,
-      personalMinRating,
-      contactMinRating,
-      selectedArchitects,
-      selectedCollections,
-      selectedCategory,
-      selectedTypologies,
-      selectedAttributes,
-      selectedContacts
-  ]);
+  // FIX 1: Stable Data Reference
+  // Only update 'safeBuildings' if the stringified content changes or length changes,
+  // protecting the Map from new array references that contain the same data.
+  const safeBuildings = useMemo(() => {
+    if (!buildings) return [];
+    return buildings.filter(b =>
+      // SANITIZATION: Ensure strict number coordinates to prevent Mapbox crash
+      typeof b.location_lat === 'number' &&
+      typeof b.location_lng === 'number' &&
+      !isNaN(b.location_lat) &&
+      !isNaN(b.location_lng)
+    );
+  }, [buildings]);
 
-   // --- DIAGNOSTIC TRAP START ---
-   useEffect(() => {
-      console.log('🔥 [RENDER] SearchPage Component Rendered at', new Date().toISOString());
-   });
+  // FIX 2: Debounced Interaction
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userHasMovedMap = useRef(false);
 
-   // Monitor the main suspects returned by the hook
-   useEffect(() => {
-      console.log('⚠️ [HOOK] userLocation changed:', userLocation);
-   }, [userLocation]);
+  const handleRegionChange = useCallback((center: { lat: number, lng: number }) => {
+    // Clear pending updates
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-   useEffect(() => {
-      console.log('⚠️ [HOOK] buildings array reference changed (Length: ' + buildings?.length + ')');
-   }, [buildings]);
+    // Wait 500ms after movement stops before triggering a fetch
+    timeoutRef.current = setTimeout(() => {
+      // console.log('🗺️ [Map] Triggering Location Update (Debounced)');
+      updateLocation(center);
+    }, 500);
+  }, [updateLocation]);
 
-   useEffect(() => {
-      console.log('⚠️ [HOOK] searchQuery changed:', searchQuery);
-   }, [searchQuery]);
+  const handleMapInteraction = useCallback(() => {
+    userHasMovedMap.current = true;
+  }, []);
 
-   useEffect(() => {
-      // Monitor the filter signature derived in the component
-      console.log('⚠️ [PAGE] activeFilterSignature changed');
-   }, [activeFilterSignature]);
-   // --- DIAGNOSTIC TRAP END ---
+  // Auto-focus logic
+  useEffect(() => {
+     // Only auto-move if we have a SPECIFIC target search query (like a city name)
+     // AND we haven't moved recently.
+     if (searchQuery && !userHasMovedMap.current && safeBuildings.length > 0) {
+        const bounds = getBoundsFromBuildings(safeBuildings);
+        if (bounds && mapRef.current) {
+             mapRef.current.fitBounds(bounds);
+        }
+     }
+  }, [searchQuery, safeBuildings]);
 
   return (
     <AppLayout isFullScreen={true} showHeader={false} showNav={false}>
@@ -117,10 +102,10 @@ export default function SearchPage() {
        <Suspense fallback={<div>Loading...</div>}>
          <BuildingDiscoveryMap
             ref={mapRef}
-            externalBuildings={buildings}
-            onRegionChange={() => {}}
+            externalBuildings={safeBuildings}
+            onRegionChange={handleRegionChange}
             onBoundsChange={() => {}}
-            onMapInteraction={() => {}}
+            onMapInteraction={handleMapInteraction}
             isLoading={isLoading}
             isFetching={isFetching}
          />
