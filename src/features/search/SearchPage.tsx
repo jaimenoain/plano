@@ -26,6 +26,7 @@ export default function SearchPage() {
     userLocation,
     buildings,
     isLoading,
+    isFetching,
     searchQuery,
     statusFilters,
     hideVisited,
@@ -104,6 +105,7 @@ export default function SearchPage() {
   return (
     <AppLayout isFullScreen={true} showHeader={false} showNav={false}>
      <div
+       data-testid="search-page-wrapper"
        style={{
          marginLeft: state === "expanded" && !isMobile ? "calc(var(--sidebar-width) - var(--sidebar-width-icon))" : "0",
          transition: "margin-left 0.2s linear",
@@ -115,12 +117,12 @@ export default function SearchPage() {
        <Suspense fallback={<div>Loading...</div>}>
          <BuildingDiscoveryMap
             ref={mapRef}
-            externalBuildings={MOCK_BUILDINGS}
+            externalBuildings={buildings}
             onRegionChange={() => {}}
             onBoundsChange={() => {}}
             onMapInteraction={() => {}}
-            isLoading={false}
-            isFetching={false}
+            isLoading={isLoading}
+            isFetching={isFetching}
          />
        </Suspense>
       </div>
