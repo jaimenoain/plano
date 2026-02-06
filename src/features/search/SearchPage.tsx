@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef, useEffect } from "react";
+import { lazy, Suspense, useRef, useEffect, useMemo } from "react";
 import type { BuildingDiscoveryMapRef } from "@/components/common/BuildingDiscoveryMap";
 import { useSidebar } from "@/components/ui/sidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -22,24 +22,84 @@ export default function SearchPage() {
   useAuth();
 
   // Restore the hook
-  const { userLocation, buildings, isLoading } = useBuildingSearch();
+  const {
+    userLocation,
+    buildings,
+    isLoading,
+    searchQuery,
+    statusFilters,
+    hideVisited,
+    hideSaved,
+    hideHidden,
+    hideWithoutImages,
+    filterContacts,
+    personalMinRating,
+    contactMinRating,
+    selectedArchitects,
+    selectedCollections,
+    selectedCategory,
+    selectedTypologies,
+    selectedAttributes,
+    selectedContacts
+  } = useBuildingSearch();
 
-  // DIAGNOSTIC TRAP
-  useEffect(() => {
-     console.log('🔥 [RENDER] SearchPage Re-rendered at', new Date().toISOString());
-  });
+  const activeFilterSignature = useMemo(() => {
+    return JSON.stringify({
+      statusFilters,
+      hideVisited,
+      hideSaved,
+      hideHidden,
+      hideWithoutImages,
+      filterContacts,
+      personalMinRating,
+      contactMinRating,
+      selectedArchitects,
+      selectedCollections,
+      selectedCategory,
+      selectedTypologies,
+      selectedAttributes,
+      selectedContacts
+    });
+  }, [
+      statusFilters,
+      hideVisited,
+      hideSaved,
+      hideHidden,
+      hideWithoutImages,
+      filterContacts,
+      personalMinRating,
+      contactMinRating,
+      selectedArchitects,
+      selectedCollections,
+      selectedCategory,
+      selectedTypologies,
+      selectedAttributes,
+      selectedContacts
+  ]);
 
-  useEffect(() => {
-     console.log('⚠️ [HOOK CHANGE] userLocation changed:', userLocation);
-  }, [userLocation]);
+   // --- DIAGNOSTIC TRAP START ---
+   useEffect(() => {
+      console.log('🔥 [RENDER] SearchPage Component Rendered at', new Date().toISOString());
+   });
 
-  useEffect(() => {
-     console.log('⚠️ [HOOK CHANGE] buildings array reference changed (Length: ' + buildings.length + ')');
-  }, [buildings]);
+   // Monitor the main suspects returned by the hook
+   useEffect(() => {
+      console.log('⚠️ [HOOK] userLocation changed:', userLocation);
+   }, [userLocation]);
 
-  useEffect(() => {
-     console.log('⚠️ [HOOK CHANGE] isLoading changed:', isLoading);
-  }, [isLoading]);
+   useEffect(() => {
+      console.log('⚠️ [HOOK] buildings array reference changed (Length: ' + buildings?.length + ')');
+   }, [buildings]);
+
+   useEffect(() => {
+      console.log('⚠️ [HOOK] searchQuery changed:', searchQuery);
+   }, [searchQuery]);
+
+   useEffect(() => {
+      // Monitor the filter signature derived in the component
+      console.log('⚠️ [PAGE] activeFilterSignature changed');
+   }, [activeFilterSignature]);
+   // --- DIAGNOSTIC TRAP END ---
 
   return (
     <AppLayout isFullScreen={true} showHeader={false} showNav={false}>
