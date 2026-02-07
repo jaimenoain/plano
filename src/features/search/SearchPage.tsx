@@ -85,6 +85,7 @@ export default function SearchPage() {
   const safeBuildings = useMemo(() => {
     if (!buildings) return [];
     return buildings.filter(b =>
+      !!b.id &&
       typeof b.location_lat === 'number' &&
       typeof b.location_lng === 'number' &&
       !isNaN(b.location_lat) &&
