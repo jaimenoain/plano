@@ -13,9 +13,36 @@ import { filterLocalBuildings, applyClientFilters } from "../utils/searchFilters
 import { UserSearchResult } from "./useUserSearch";
 import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
 
+// Type definitions for better type safety
+interface BuildingDataItem {
+  id: string;
+  status: string | null;
+  main_image_url: string | null;
+}
+
+interface ContactInteractionData {
+  building_id: string;
+  status: string | null;
+  rating: number | null;
+  user: {
+    id: string;
+    username: string;
+    avatar_url: string | null;
+  } | {
+    id: string;
+    username: string;
+    avatar_url: string | null;
+  }[];
+}
+
+// Constants
+const EARTH_RADIUS_METERS = 6371000; // Earth's radius in meters
+const VALID_LOCATION_THRESHOLD = 0.0001; // Threshold for filtering invalid (0,0) coordinates
+const DEFAULT_SEARCH_RADIUS = 20000000; // 20,000 km in meters
+const DEFAULT_SEARCH_LIMIT = 500;
+
 // Helper to calculate Haversine distance in meters
-function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371e3; // Radius of the earth in km
+function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
   const a =
@@ -23,202 +50,242 @@ function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; // Distance in meters
+  const d = EARTH_RADIUS_METERS * c;
   return d;
 }
 
-function deg2rad(deg: number) {
+function deg2rad(deg: number): number {
   return deg * (Math.PI / 180);
 }
 
-async function enrichBuildings(buildings: DiscoveryBuilding[], userId?: string, specificContactIds?: string[]) {
+// Validate if coordinates are valid and not at (0,0)
+function isValidCoordinate(lat: number, lng: number): boolean {
+  return (
+    lat >= -90 && 
+    lat <= 90 && 
+    lng >= -180 && 
+    lng <= 180 &&
+    !(Math.abs(lat) < VALID_LOCATION_THRESHOLD && Math.abs(lng) < VALID_LOCATION_THRESHOLD)
+  );
+}
+
+// Helper function to map visitors to interactions
+function mapVisitorsToInteractions(visitors: ContactRater[]): ContactInteraction[] {
+  return visitors.map(v => ({
+    user: v,
+    status: 'visited' as const,
+    rating: null
+  }));
+}
+
+// Helper function to normalize user data from query results
+function normalizeUserData(user: any): ContactRater {
+  const userData = Array.isArray(user) ? user[0] : user;
+  return {
+    id: userData.id,
+    avatar_url: userData.avatar_url,
+    username: userData.username,
+    first_name: null,
+    last_name: null
+  };
+}
+
+async function enrichBuildings(
+  buildings: DiscoveryBuilding[], 
+  userId?: string, 
+  specificContactIds?: string[]
+): Promise<DiscoveryBuilding[]> {
   if (!buildings.length) return [];
 
   let enrichedBuildings = [...buildings];
   const buildingIds = buildings.map(b => b.id);
 
   // 1. Fetch Missing Data (Status & Main Image)
-  // RPC might not return status or main_image_url, so we fetch if missing.
   const missingStatusIds = enrichedBuildings.filter(b => b.status === undefined).map(b => b.id);
   const missingImageIds = enrichedBuildings.filter(b => b.main_image_url === undefined).map(b => b.id);
-
   const idsToFetch = Array.from(new Set([...missingStatusIds, ...missingImageIds]));
 
   if (idsToFetch.length > 0) {
-      const { data: fetchedData } = await supabase
-          .from('buildings')
-          .select('id, status, main_image_url')
-          .in('id', idsToFetch);
+    try {
+      const { data: fetchedData, error } = await supabase
+        .from('buildings')
+        .select('id, status, main_image_url')
+        .in('id', idsToFetch);
 
-      const statusMap = new Map<string, string | null>();
-      const imageMap = new Map<string, string | null>();
+      if (error) {
+        console.error('Error fetching building data:', error);
+      } else if (fetchedData) {
+        const statusMap = new Map<string, string | null>();
+        const imageMap = new Map<string, string | null>();
 
-      fetchedData?.forEach((item: any) => {
+        fetchedData.forEach((item: BuildingDataItem) => {
           statusMap.set(item.id, item.status);
           imageMap.set(item.id, item.main_image_url);
-      });
+        });
 
-      enrichedBuildings = enrichedBuildings.map(b => {
-          const updates: any = {};
+        enrichedBuildings = enrichedBuildings.map(b => {
+          const updates: Partial<DiscoveryBuilding> = {};
           if (b.status === undefined) {
-              updates.status = statusMap.get(b.id) as any || null;
+            updates.status = statusMap.get(b.id) as any || null;
           }
           if (b.main_image_url === undefined) {
-              updates.main_image_url = imageMap.get(b.id) || null;
+            updates.main_image_url = imageMap.get(b.id) || null;
           }
 
-          if (Object.keys(updates).length > 0) {
-              return { ...b, ...updates };
-          }
-          return b;
-      });
+          return Object.keys(updates).length > 0 ? { ...b, ...updates } : b;
+        });
+      }
+    } catch (error) {
+      console.error('Exception fetching building data:', error);
+    }
   }
 
-  // 2. Image URL Transformation (using helper)
-  // RPC returns the path in main_image_url. We need to convert it to a full URL.
+  // 2. Image URL Transformation
   enrichedBuildings = enrichedBuildings.map(b => ({
-      ...b,
-      main_image_url: getBuildingImageUrl(b.main_image_url) || null
+    ...b,
+    main_image_url: getBuildingImageUrl(b.main_image_url) || null
   }));
 
   // 3. Social Enrichment (Facepile)
   if (userId) {
-    const { data: follows } = await supabase
+    try {
+      const { data: follows, error: followsError } = await supabase
         .from('follows')
         .select('following_id')
         .eq('follower_id', userId);
 
-    const followedIds = follows?.map(f => f.following_id) || [];
+      if (followsError) {
+        console.error('Error fetching follows:', followsError);
+      }
 
-    // Combine followed contacts with specifically selected contacts (if any)
-    const contactIds = Array.from(new Set([...followedIds, ...(specificContactIds || [])]));
+      const followedIds = Array.isArray(follows) ? follows.map(f => f.following_id) : [];
+      const contactIds = Array.from(new Set([...followedIds, ...(specificContactIds || [])]));
 
-    if (contactIds.length > 0) {
-        const { data: contactInteractions } = await supabase
-            .from('user_buildings')
-            .select(`
-                building_id,
-                status,
-                rating,
-                user:profiles!inner(id, username, avatar_url)
-            `)
-            .in('building_id', buildingIds)
-            .in('user_id', contactIds)
-            .or('status.eq.visited,status.eq.pending,rating.not.is.null');
+      if (contactIds.length > 0) {
+        const { data: contactInteractions, error: interactionsError } = await supabase
+          .from('user_buildings')
+          .select(`
+            building_id,
+            status,
+            rating,
+            user:profiles!inner(id, username, avatar_url)
+          `)
+          .in('building_id', buildingIds)
+          .in('user_id', contactIds)
+          .or('status.eq.visited,status.eq.pending,rating.not.is.null');
 
-        if (contactInteractions && contactInteractions.length > 0) {
-            const ratingsMap = new Map<string, ContactRater[]>();
-            const visitorsMap = new Map<string, ContactRater[]>();
-            const interactionsMap = new Map<string, ContactInteraction[]>();
+        if (interactionsError) {
+          console.error('Error fetching contact interactions:', interactionsError);
+        } else if (contactInteractions && contactInteractions.length > 0) {
+          const ratingsMap = new Map<string, ContactRater[]>();
+          const visitorsMap = new Map<string, ContactRater[]>();
+          const interactionsMap = new Map<string, ContactInteraction[]>();
 
-            contactInteractions.forEach((item: any) => {
-                const user = Array.isArray(item.user) ? item.user[0] : item.user;
-                const person: ContactRater = {
-                    id: user.id,
-                    avatar_url: user.avatar_url,
-                    username: user.username,
-                    first_name: null,
-                    last_name: null
-                };
+          contactInteractions.forEach((item: ContactInteractionData) => {
+            const person = normalizeUserData(item.user);
 
-                const interaction: ContactInteraction = {
-                    user: person,
-                    status: item.status,
-                    rating: item.rating
-                };
+            const interaction: ContactInteraction = {
+              user: person,
+              status: item.status,
+              rating: item.rating
+            };
 
-                if (!interactionsMap.has(item.building_id)) {
-                    interactionsMap.set(item.building_id, []);
-                }
-                interactionsMap.get(item.building_id)?.push(interaction);
+            if (!interactionsMap.has(item.building_id)) {
+              interactionsMap.set(item.building_id, []);
+            }
+            interactionsMap.get(item.building_id)?.push(interaction);
 
-                // Populate Raters
-                if (item.rating !== null) {
-                    if (!ratingsMap.has(item.building_id)) {
-                        ratingsMap.set(item.building_id, []);
-                    }
-                    ratingsMap.get(item.building_id)?.push(person);
-                }
+            // Populate Raters
+            if (item.rating !== null) {
+              if (!ratingsMap.has(item.building_id)) {
+                ratingsMap.set(item.building_id, []);
+              }
+              ratingsMap.get(item.building_id)?.push(person);
+            }
 
-                // Populate Visitors
-                if (item.status === 'visited') {
-                    if (!visitorsMap.has(item.building_id)) {
-                        visitorsMap.set(item.building_id, []);
-                    }
-                    visitorsMap.get(item.building_id)?.push(person);
-                }
-            });
+            // Populate Visitors
+            if (item.status === 'visited') {
+              if (!visitorsMap.has(item.building_id)) {
+                visitorsMap.set(item.building_id, []);
+              }
+              visitorsMap.get(item.building_id)?.push(person);
+            }
+          });
 
-            enrichedBuildings = enrichedBuildings.map(b => {
-                const rpcVisitors = b.visitors || b.contact_visitors || [];
-                const clientVisitors = visitorsMap.get(b.id) || [];
-
-                // Merge and dedupe visitors (RPC + Client)
-                const mergedVisitors = [...rpcVisitors, ...clientVisitors].filter((v, i, self) =>
-                    i === self.findIndex((t) => (t.id === v.id))
-                );
-
-                // Merge interactions (DB + RPC Visitors)
-                const dbInteractions = interactionsMap.get(b.id) || [];
-                const existingUserIds = new Set(dbInteractions.map(i => i.user.id));
-                const rpcInteractions = rpcVisitors
-                    .filter(v => !existingUserIds.has(v.id))
-                    .map(v => ({
-                        user: v,
-                        status: 'visited' as const,
-                        rating: null
-                    }));
-
-                const mergedInteractions = [...dbInteractions, ...rpcInteractions];
-
-                return {
-                    ...b,
-                    contact_raters: ratingsMap.get(b.id) || [],
-                    contact_visitors: mergedVisitors,
-                    contact_interactions: mergedInteractions
-                };
-            });
-        }
-    } else {
-        // If no contactIds to fetch (or no user), still ensure RPC visitors are mapped to contact_visitors
-        enrichedBuildings = enrichedBuildings.map(b => {
+          enrichedBuildings = enrichedBuildings.map(b => {
             const rpcVisitors = b.visitors || b.contact_visitors || [];
-            const rpcInteractions = rpcVisitors.map(v => ({
+            const clientVisitors = visitorsMap.get(b.id) || [];
+
+            // Merge and dedupe visitors (RPC + Client)
+            const mergedVisitors = [...rpcVisitors, ...clientVisitors].filter((v, i, self) =>
+              i === self.findIndex((t) => (t.id === v.id))
+            );
+
+            // Merge interactions (DB + RPC Visitors)
+            const dbInteractions = interactionsMap.get(b.id) || [];
+            const existingUserIds = new Set(dbInteractions.map(i => i.user.id));
+            const rpcInteractions = rpcVisitors
+              .filter(v => !existingUserIds.has(v.id))
+              .map(v => ({
                 user: v,
                 status: 'visited' as const,
                 rating: null
-            }));
+              }));
+
+            const mergedInteractions = [...dbInteractions, ...rpcInteractions];
+
             return {
-                ...b,
-                contact_visitors: rpcVisitors,
-                contact_interactions: rpcInteractions
+              ...b,
+              contact_raters: ratingsMap.get(b.id) || [],
+              contact_visitors: mergedVisitors,
+              contact_interactions: mergedInteractions
             };
+          });
+        }
+      } else {
+        // No contactIds to fetch, map RPC visitors
+        enrichedBuildings = enrichedBuildings.map(b => {
+          const rpcVisitors = b.visitors || b.contact_visitors || [];
+          return {
+            ...b,
+            contact_visitors: rpcVisitors,
+            contact_interactions: mapVisitorsToInteractions(rpcVisitors)
+          };
         });
+      }
+    } catch (error) {
+      console.error('Exception during social enrichment:', error);
+      // Fall back to RPC visitors only
+      enrichedBuildings = enrichedBuildings.map(b => {
+        const rpcVisitors = b.visitors || b.contact_visitors || [];
+        return {
+          ...b,
+          contact_visitors: rpcVisitors,
+          contact_interactions: mapVisitorsToInteractions(rpcVisitors)
+        };
+      });
     }
   } else {
-      // If no userId, ensure RPC visitors are mapped
-      enrichedBuildings = enrichedBuildings.map(b => {
-          const rpcVisitors = b.visitors || b.contact_visitors || [];
-          const rpcInteractions = rpcVisitors.map(v => ({
-              user: v,
-              status: 'visited' as const,
-              rating: null
-          }));
-          return {
-              ...b,
-              contact_visitors: rpcVisitors,
-              contact_interactions: rpcInteractions
-          };
-      });
+    // No userId, map RPC visitors
+    enrichedBuildings = enrichedBuildings.map(b => {
+      const rpcVisitors = b.visitors || b.contact_visitors || [];
+      return {
+        ...b,
+        contact_visitors: rpcVisitors,
+        contact_interactions: mapVisitorsToInteractions(rpcVisitors)
+      };
+    });
   }
 
   return enrichedBuildings;
 }
 
 // URL Param Parsers
-const getArrayParam = (param: string | null) => param ? param.split(",") : [];
-const getBoolParam = (param: string | null, defaultVal: boolean) => param !== null ? param === "true" : defaultVal;
-const getNumParam = (param: string | null, defaultVal: number) => param ? parseInt(param) : defaultVal;
+const getArrayParam = (param: string | null): string[] => param ? param.split(",") : [];
+const getBoolParam = (param: string | null, defaultVal: boolean): boolean => 
+  param !== null ? param === "true" : defaultVal;
+const getNumParam = (param: string | null, defaultVal: number): number => 
+  param ? parseInt(param, 10) : defaultVal;
 const getJsonParam = <T>(param: string | null, defaultVal: T): T => {
   if (!param) return defaultVal;
   try {
@@ -266,40 +333,48 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
   // Resolve rated_by profiles from URL
   const ratedByParam = searchParams.get("rated_by");
   const { data: ratedByProfiles, isLoading: isLoadingRatedBy } = useQuery({
-      queryKey: ['rated-by-profiles', ratedByParam],
-      queryFn: async () => {
-          if (!ratedByParam) return [];
-          const usernames = ratedByParam.split(',').map(s => s.trim()).filter(Boolean);
-          if (usernames.length === 0) return [];
+    queryKey: ['rated-by-profiles', ratedByParam],
+    queryFn: async () => {
+      if (!ratedByParam) return [];
+      const usernames = ratedByParam.split(',').map(s => s.trim()).filter(Boolean);
+      if (usernames.length === 0) return [];
 
-          const { data } = await supabase
-              .from('profiles')
-              .select('id, username, avatar_url, first_name, last_name')
-              .in('username', usernames);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url, first_name, last_name')
+          .in('username', usernames);
 
-          return data?.map(p => ({
-              id: p.id,
-              username: p.username,
-              avatar_url: p.avatar_url,
-              name: p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : p.username,
-              bio: null // Not needed for selection
-          } as UserSearchResult)) || [];
-      },
-      enabled: !!ratedByParam,
-      staleTime: 1000 * 60 * 60 // 1 hour
+        if (error) {
+          console.error('Error fetching rated_by profiles:', error);
+          return [];
+        }
+
+        return data?.map(p => ({
+          id: p.id,
+          username: p.username,
+          avatar_url: p.avatar_url,
+          name: p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : p.username,
+          bio: null
+        } as UserSearchResult)) || [];
+      } catch (error) {
+        console.error('Exception fetching rated_by profiles:', error);
+        return [];
+      }
+    },
+    enabled: !!ratedByParam,
+    staleTime: 1000 * 60 * 60 // 1 hour
   });
 
   // Sync resolved profiles to state
   useEffect(() => {
-      if (ratedByProfiles && ratedByProfiles.length > 0) {
-          const currentUsername = user?.username;
-          const otherContacts = ratedByProfiles.filter(p => p.username !== currentUsername);
-
-          setSelectedContacts(otherContacts);
-      } else if (!ratedByParam) {
-          // If param removed, clear contacts
-          setSelectedContacts([]);
-      }
+    if (ratedByProfiles && ratedByProfiles.length > 0) {
+      const currentUsername = user?.username;
+      const otherContacts = ratedByProfiles.filter(p => p.username !== currentUsername);
+      setSelectedContacts(otherContacts);
+    } else if (!ratedByParam) {
+      setSelectedContacts([]);
+    }
   }, [ratedByProfiles, user, ratedByParam]);
 
   // Default to London or URL params
@@ -362,7 +437,7 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
     if (statusFilters.length > 0) params.set("status", statusFilters.join(","));
     if (hideVisited) params.set("hideVisited", "true");
     if (hideSaved) params.set("hideSaved", "true");
-    if (!hideHidden) params.set("hideHidden", "false"); // Default is true
+    if (!hideHidden) params.set("hideHidden", "false");
     if (hideWithoutImages) params.set("hideWithoutImages", "true");
 
     if (filterContacts) params.set("filterContacts", "true");
@@ -379,16 +454,16 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
     // Construct rated_by param
     const ratedByUsers = new Set<string>();
     if ((statusFilters.length > 0 || personalMinRating > 0) && user?.username) {
-        ratedByUsers.add(user.username);
+      ratedByUsers.add(user.username);
     }
     selectedContacts.forEach(c => {
-        if (c.username) ratedByUsers.add(c.username);
+      if (c.username) ratedByUsers.add(c.username);
     });
 
     if (ratedByUsers.size > 0) {
-        params.set("rated_by", Array.from(ratedByUsers).join(","));
+      params.set("rated_by", Array.from(ratedByUsers).join(","));
     } else if (isLoadingRatedBy && ratedByParam) {
-        params.set("rated_by", ratedByParam);
+      params.set("rated_by", ratedByParam);
     }
 
     setSearchParams(params, { replace: true });
@@ -416,27 +491,37 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
     user
   ]);
 
-  const requestLocation = async () => {
+  const requestLocation = useCallback(async () => {
     const loc = await requestLocationInternal();
     if (loc) {
       setUserLocation(loc);
       return loc;
     }
     return null;
-  };
+  }, [requestLocationInternal]);
 
   // Fetch available collections for the user
   const { data: availableCollections } = useQuery({
     queryKey: ['user-collections', user?.id],
     queryFn: async () => {
-        if (!user) return [];
-        const { data } = await supabase
-            .from('collections')
-            .select('id, name')
-            .eq('owner_id', user.id)
-            .order('name');
+      if (!user) return [];
+      try {
+        const { data, error } = await supabase
+          .from('collections')
+          .select('id, name')
+          .eq('owner_id', user.id)
+          .order('name');
+
+        if (error) {
+          console.error('Error fetching collections:', error);
+          return [];
+        }
 
         return data || [];
+      } catch (error) {
+        console.error('Exception fetching collections:', error);
+        return [];
+      }
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 5,
@@ -445,24 +530,25 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
   // Search query
   const { data: rawBuildings, isLoading, isFetching, isPlaceholderData } = useQuery({
     queryKey: [
-        "search-buildings",
-        debouncedQuery,
-        statusFilters,
-        filterContacts,
-        personalMinRating,
-        contactMinRating,
-        selectedArchitects,
-        selectedCollections,
-        selectedCategory,
-        selectedTypologies,
-        selectedAttributes,
-        selectedContacts,
-        userLocation,
-        user?.id,
-        page,
-        searchTriggerVersion
+      "search-buildings",
+      debouncedQuery,
+      statusFilters,
+      filterContacts,
+      personalMinRating,
+      contactMinRating,
+      selectedArchitects,
+      selectedCollections,
+      selectedCategory,
+      selectedTypologies,
+      selectedAttributes,
+      selectedContacts,
+      userLocation,
+      user?.id,
+      page,
+      searchTriggerVersion
     ],
     queryFn: async () => {
+      try {
         // Local filtering mode (My Buildings or Contacts)
         const hasSpecificContacts = selectedContacts.length > 0;
         const hasCollections = selectedCollections.length > 0;
@@ -474,175 +560,219 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
         const cleanQuery = debouncedQuery.trim() || null;
 
         if (ratedByMe || filterContacts || hasSpecificContacts || hasCollections) {
+          const buildingIds = new Set<string>();
 
-            const buildingIds = new Set<string>();
+          // Determine Target Users
+          const targetUserIds = new Set<string>();
+          if (hasSpecificContacts) {
+            selectedContacts.forEach(c => targetUserIds.add(c.id));
+          }
+          if (ratedByMe && user) {
+            targetUserIds.add(user.id);
+          }
 
-            // Determine Target Users
-            const targetUserIds = new Set<string>();
-            if (hasSpecificContacts) {
-                selectedContacts.forEach(c => targetUserIds.add(c.id));
+          // 1. Fetch from Target Users (Unified)
+          if (targetUserIds.size > 0) {
+            try {
+              let query = supabase
+                .from('user_buildings')
+                .select('building_id')
+                .in('user_id', Array.from(targetUserIds));
+
+              // Apply Status Filters
+              const activeStatuses: string[] = [];
+              if (statusFilters.includes('visited')) activeStatuses.push('visited');
+              if (statusFilters.includes('saved')) activeStatuses.push('pending');
+
+              if (activeStatuses.length > 0) {
+                query = query.in('status', activeStatuses);
+              } else {
+                // Default: visited or pending or rated
+                query = query.or('status.eq.visited,status.eq.pending,rating.not.is.null');
+              }
+
+              // Apply Rating Filters
+              const effectiveMinRating = Math.max(personalMinRating, contactMinRating);
+              if (effectiveMinRating > 0) {
+                query = query.gte('rating', effectiveMinRating);
+              }
+
+              const { data: userBuildings, error: ubError } = await query;
+              if (ubError) {
+                console.error('Error fetching user buildings:', ubError);
+              } else {
+                userBuildings?.forEach(ub => buildingIds.add(ub.building_id));
+              }
+            } catch (error) {
+              console.error('Exception fetching user buildings:', error);
             }
-            if (ratedByMe && user) {
-                targetUserIds.add(user.id);
-            }
+          }
 
-            // 1. Fetch from Target Users (Unified)
-            if (targetUserIds.size > 0) {
-                 let query = supabase
-                    .from('user_buildings')
-                    .select('building_id')
-                    .in('user_id', Array.from(targetUserIds));
+          // 2. Generic "Filter Contacts" (Any Followed Contact)
+          if (filterContacts && user) {
+            try {
+              const { data: follows, error: followsError } = await supabase
+                .from('follows')
+                .select('following_id')
+                .eq('follower_id', user.id);
 
-                 // Apply Status Filters
-                 // If specific status filters are set, they apply to all target users.
-                 const activeStatuses: string[] = [];
-                 if (statusFilters.includes('visited')) activeStatuses.push('visited');
-                 if (statusFilters.includes('saved')) activeStatuses.push('pending');
-
-                 // If no status filters are set (e.g. just rated_by=peter), we imply "all interesting interactions"
-                 // equivalent to what was previously used for contacts: visited + pending + rated
-                 if (activeStatuses.length > 0) {
-                     query = query.in('status', activeStatuses);
-                 } else {
-                     // Default: visited or pending or rated
-                     query = query.or('status.eq.visited,status.eq.pending,rating.not.is.null');
-                 }
-
-                 // Apply Rating Filters
-                 const effectiveMinRating = Math.max(personalMinRating, contactMinRating);
-                 if (effectiveMinRating > 0) {
-                     query = query.gte('rating', effectiveMinRating);
-                 }
-
-                 const { data: userBuildings, error: ubError } = await query;
-                 if (ubError) throw ubError;
-
-                 userBuildings?.forEach(ub => buildingIds.add(ub.building_id));
-            }
-
-            // 2. Generic "Filter Contacts" (Any Followed Contact)
-            if (filterContacts && user) {
-                // Fetch all follows
-                const { data: follows } = await supabase
-                    .from('follows')
-                    .select('following_id')
-                    .eq('follower_id', user.id);
-                const contactIds = follows?.map(f => f.following_id) || [];
+              if (followsError) {
+                console.error('Error fetching follows for filter:', followsError);
+              } else {
+                const contactIds = Array.isArray(follows) ? follows.map(f => f.following_id) : [];
 
                 if (contactIds.length > 0) {
-                    let query = supabase
-                        .from('user_buildings')
-                        .select('building_id')
-                        .in('user_id', contactIds)
-                        .in('status', ['visited', 'pending']); // Default for "Any Contact"
+                  let query = supabase
+                    .from('user_buildings')
+                    .select('building_id')
+                    .in('user_id', contactIds)
+                    .in('status', ['visited', 'pending']);
 
-                    if (contactMinRating > 0) {
-                        query = query.gte('rating', contactMinRating);
-                    }
+                  if (contactMinRating > 0) {
+                    query = query.gte('rating', contactMinRating);
+                  }
 
-                    const { data: contactBuildings, error: cbError } = await query;
-                    if (cbError) throw cbError;
-
+                  const { data: contactBuildings, error: cbError } = await query;
+                  if (cbError) {
+                    console.error('Error fetching contact buildings:', cbError);
+                  } else {
                     contactBuildings?.forEach(cb => buildingIds.add(cb.building_id));
+                  }
                 }
+              }
+            } catch (error) {
+              console.error('Exception fetching contact buildings:', error);
             }
+          }
 
-            // 3. Collections (Mapas del usuario)
-            if (hasCollections) {
-                 const { data: collectionItems, error: cError } = await supabase
-                     .from('collection_items')
-                     .select('building_id')
-                     .in('collection_id', selectedCollections.map(c => c.id));
+          // 3. Collections
+          if (hasCollections) {
+            try {
+              const { data: collectionItems, error: cError } = await supabase
+                .from('collection_items')
+                .select('building_id')
+                .in('collection_id', selectedCollections.map(c => c.id));
 
-                 if (cError) throw cError;
-
-                 collectionItems?.forEach(item => buildingIds.add(item.building_id));
+              if (cError) {
+                console.error('Error fetching collection items:', cError);
+              } else {
+                collectionItems?.forEach(item => buildingIds.add(item.building_id));
+              }
+            } catch (error) {
+              console.error('Exception fetching collection items:', error);
             }
+          }
 
-            if (buildingIds.size === 0) return [];
+          if (buildingIds.size === 0) return [];
 
-            // 3. Fetch building details + Metadata for filtering
+          // 4. Fetch building details + Metadata for filtering
+          try {
             let query = supabase
-                .from('buildings')
-                .select(`
-                    *,
-                    main_image_url,
-                    architects:building_architects(architect:architects(name, id)),
-                    functional_category_id,
-                    typologies:building_functional_typologies(typology_id),
-                    attributes:building_attributes(attribute_id)
-                `)
-                .in('id', Array.from(buildingIds));
+              .from('buildings')
+              .select(`
+                *,
+                main_image_url,
+                architects:building_architects(architect:architects(name, id)),
+                functional_category_id,
+                typologies:building_functional_typologies(typology_id),
+                attributes:building_attributes(attribute_id)
+              `)
+              .in('id', Array.from(buildingIds));
 
             if (cleanQuery) {
-                query = query.ilike('name', `%${cleanQuery}%`);
+              query = query.ilike('name', `%${cleanQuery}%`);
             }
 
             const { data: buildingsData, error: bError } = await query;
-            if (bError) throw bError;
+            if (bError) {
+              console.error('Error fetching buildings data:', bError);
+              return [];
+            }
 
-            // 4. Apply Characteristics / Architect Filters in Memory
+            // 5. Apply Characteristics / Architect Filters in Memory
             const filteredData = filterLocalBuildings(buildingsData || [], {
-                categoryId: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : null,
-                typologyIds: selectedTypologies,
-                attributeIds: selectedAttributes,
-                selectedArchitects: selectedArchitects.map(a => a.id)
+              categoryId: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : null,
+              typologyIds: selectedTypologies,
+              attributeIds: selectedAttributes,
+              selectedArchitects: selectedArchitects.map(a => a.id)
             });
 
-            // 5. Map to DiscoveryBuilding and calculate distance
-            const mappedBuildings = filteredData.map((b: any) => {
+            // 6. Map to DiscoveryBuilding and calculate distance
+            const mappedBuildings = filteredData
+              .map((b: any) => {
                 const coords = parseLocation(b.location);
                 const location_lat = coords?.lat || 0;
                 const location_lng = coords?.lng || 0;
 
                 const distance = getDistanceFromLatLonInM(
-                    userLocation.lat,
-                    userLocation.lng,
-                    location_lat,
-                    location_lng
+                  userLocation.lat,
+                  userLocation.lng,
+                  location_lat,
+                  location_lng
                 );
 
                 return {
-                    id: b.id,
-                    name: b.name,
-                    main_image_url: b.main_image_url,
-                    architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || [],
-                    year_completed: b.year_completed,
-                    city: b.city,
-                    country: b.country,
-                    location_lat: location_lat,
-                    location_lng: location_lng,
-                    distance: distance,
-                    status: b.status,
-                    // Pass through metadata if needed downstream
+                  id: b.id,
+                  name: b.name,
+                  main_image_url: b.main_image_url,
+                  architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || [],
+                  year_completed: b.year_completed,
+                  city: b.city,
+                  country: b.country,
+                  location_lat: location_lat,
+                  location_lng: location_lng,
+                  distance: distance,
+                  status: b.status,
                 } as DiscoveryBuilding;
-            })
-            .filter(b => !(Math.abs(b.location_lat) < 0.0001 && Math.abs(b.location_lng) < 0.0001))
-            .sort((a, b) => (a.distance || 0) - (b.distance || 0));
+              })
+              .filter(b => isValidCoordinate(b.location_lat, b.location_lng))
+              .sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
-            return await enrichBuildings(mappedBuildings, user?.id, selectedContacts.map(c => c.id));
+            return await enrichBuildings(
+              mappedBuildings, 
+              user?.id, 
+              selectedContacts.map(c => c.id)
+            );
+          } catch (error) {
+            console.error('Exception in local search mode:', error);
+            return [];
+          }
         }
 
         // Global search mode (RPC)
-        const radius = 20000000;
-        const rpcResults = await searchBuildingsRpc({
+        try {
+          const rpcResults = await searchBuildingsRpc({
             query_text: cleanQuery,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
-            radius_meters: radius,
+            radius_meters: DEFAULT_SEARCH_RADIUS,
             filters: {
-                architects: selectedArchitects.length > 0 ? selectedArchitects.map(a => a.id) : undefined,
-                category_id: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : undefined,
-                typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
-                attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined
+              architects: selectedArchitects.length > 0 ? selectedArchitects.map(a => a.id) : undefined,
+              category_id: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : undefined,
+              typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
+              attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined
             },
             sort_by: undefined,
-            p_limit: 500
-        });
+            p_limit: DEFAULT_SEARCH_LIMIT
+          });
 
-        // Sanitize RPC results to remove (0,0) locations
-        const sanitizedResults = rpcResults.filter(b => !(Math.abs(b.location_lat) < 0.0001 && Math.abs(b.location_lng) < 0.0001));
+          // Sanitize RPC results to remove invalid locations
+          const sanitizedResults = rpcResults.filter(b => 
+            isValidCoordinate(b.location_lat, b.location_lng)
+          );
 
-        return await enrichBuildings(sanitizedResults, user?.id, selectedContacts.map(c => c.id));
+          return await enrichBuildings(
+            sanitizedResults, 
+            user?.id, 
+            selectedContacts.map(c => c.id)
+          );
+        } catch (error) {
+          console.error('Exception in global search mode:', error);
+          return [];
+        }
+      } catch (error) {
+        console.error('Exception in search query:', error);
+        return [];
+      }
     },
     staleTime: 1000 * 60,
     placeholderData: keepPreviousData,
@@ -662,56 +792,56 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
   }, [rawBuildings, hideSaved, hideVisited, hideHidden, hideWithoutImages, userStatuses]);
 
   const updateLocation = useCallback((center: { lat: number, lng: number }) => {
-      setUserLocation(center);
+    setUserLocation(center);
   }, []);
 
   return {
-      searchQuery,
-      setSearchQuery,
-      // New State
-      statusFilters,
-      setStatusFilters,
-      hideVisited,
-      setHideVisited,
-      hideSaved,
-      setHideSaved,
-      hideHidden,
-      setHideHidden,
-      hideWithoutImages,
-      setHideWithoutImages,
-      // ...
-      filterContacts,
-      setFilterContacts,
-      personalMinRating,
-      setPersonalMinRating,
-      contactMinRating,
-      setContactMinRating,
-      selectedArchitects,
-      setSelectedArchitects,
-      selectedCollections,
-      setSelectedCollections,
-      availableCollections,
-      selectedCategory,
-      setSelectedCategory,
-      selectedTypologies,
-      setSelectedTypologies,
-      selectedAttributes,
-      setSelectedAttributes,
-      selectedContacts,
-      setSelectedContacts,
-      viewMode,
-      setViewMode,
-      userLocation,
-      updateLocation,
-      requestLocation,
-      gpsLocation,
-      buildings: buildings || [],
-      debouncedQuery,
-      isLoading,
-      isFetching,
-      isPlaceholderData,
-      // Pagination
-      page,
-      setPage,
+    searchQuery,
+    setSearchQuery,
+    // New State
+    statusFilters,
+    setStatusFilters,
+    hideVisited,
+    setHideVisited,
+    hideSaved,
+    setHideSaved,
+    hideHidden,
+    setHideHidden,
+    hideWithoutImages,
+    setHideWithoutImages,
+    // ...
+    filterContacts,
+    setFilterContacts,
+    personalMinRating,
+    setPersonalMinRating,
+    contactMinRating,
+    setContactMinRating,
+    selectedArchitects,
+    setSelectedArchitects,
+    selectedCollections,
+    setSelectedCollections,
+    availableCollections,
+    selectedCategory,
+    setSelectedCategory,
+    selectedTypologies,
+    setSelectedTypologies,
+    selectedAttributes,
+    setSelectedAttributes,
+    selectedContacts,
+    setSelectedContacts,
+    viewMode,
+    setViewMode,
+    userLocation,
+    updateLocation,
+    requestLocation,
+    gpsLocation,
+    buildings: buildings || [],
+    debouncedQuery,
+    isLoading,
+    isFetching,
+    isPlaceholderData,
+    // Pagination
+    page,
+    setPage,
   };
 }
