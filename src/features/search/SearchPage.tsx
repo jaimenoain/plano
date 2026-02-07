@@ -152,14 +152,14 @@ export default function SearchPage() {
       setTimeout(() => { isProgrammaticMove.current = false; }, 1500);
    }, []);
 
-  const onBuildingClickAdapter = useCallback((building: DiscoveryBuilding) => {
-    if (typeof building.location_lat === 'number' && typeof building.location_lng === 'number') {
-      handleListHighlight(building.location_lat, building.location_lng);
-      if (isMobile) {
-        setViewMode('map');
-      }
-    }
-  }, [handleListHighlight, isMobile]);
+  // const onBuildingClickAdapter = useCallback((building: DiscoveryBuilding) => {
+  //   if (typeof building.location_lat === 'number' && typeof building.location_lng === 'number') {
+  //     handleListHighlight(building.location_lat, building.location_lng);
+  //     if (isMobile) {
+  //       setViewMode('map');
+  //     }
+  //   }
+  // }, [handleListHighlight, isMobile]);
 
   return (
     <AppLayout isFullScreen={true} showHeader={false} showNav={false}>
@@ -178,7 +178,7 @@ export default function SearchPage() {
            <DiscoveryList
               buildings={safeBuildings}
               isLoading={isLoading}
-              // onBuildingClick={onBuildingClickAdapter}
+              onBuildingClick={undefined}
               searchQuery={searchQuery}
             />
         </div>
@@ -212,7 +212,7 @@ export default function SearchPage() {
              <DiscoveryList
                 buildings={safeBuildings}
                 isLoading={isLoading}
-                // onBuildingClick={onBuildingClickAdapter}
+                onBuildingClick={undefined}
                 searchQuery={searchQuery}
               />
           </div>
