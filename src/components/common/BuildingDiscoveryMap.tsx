@@ -105,6 +105,7 @@ interface BuildingDiscoveryMapProps {
   onRemoveMarker?: (id: string) => void;
   onClosePopup?: () => void;
   showSavedCandidates?: boolean;
+  mapStyle?: string | object;
 }
 
 export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, BuildingDiscoveryMapProps>(({
@@ -127,7 +128,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   onUpdateMarkerNote,
   onRemoveMarker,
   onClosePopup,
-  showSavedCandidates
+  showSavedCandidates,
+  mapStyle
 }, ref) => {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
@@ -822,7 +824,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
+        mapStyle={isSatellite ? SATELLITE_STYLE : (mapStyle || DEFAULT_MAP_STYLE)}
       >
         <NavigationControl position="bottom-right" />
         {pins}

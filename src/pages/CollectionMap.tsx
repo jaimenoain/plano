@@ -908,6 +908,7 @@ export default function CollectionMap() {
                 <BuildingDiscoveryMap
                     externalBuildings={allMapBuildings}
                     highlightedId={highlightedId}
+                    mapStyle="https://tiles.openfreemap.org/styles/positron"
                     onAddCandidate={handleAddToCollection}
                     onHideCandidate={canEdit ? handleHideCandidate : undefined}
                     onRemoveItem={canEdit ? handleRemoveItem : undefined}
