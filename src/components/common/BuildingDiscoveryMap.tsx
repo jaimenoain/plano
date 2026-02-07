@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useMemo, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { createPortal } from "react-dom";
 import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
@@ -15,29 +15,21 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import Supercluster from "supercluster";
 
-// Simple throttle implementation
-function throttle<T extends (...args: any[]) => any>(func: T, limit: number) {
-  let inThrottle: boolean;
-  let lastFn: ReturnType<typeof setTimeout>;
-  let lastTime: number;
-  return function(this: any, ...args: Parameters<T>) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      lastTime = Date.now();
-      inThrottle = true;
-    } else {
-      clearTimeout(lastFn);
-      lastFn = setTimeout(() => {
-        if (Date.now() - lastTime >= limit) {
-          func.apply(this, args);
-          lastTime = Date.now();
-        }
-      }, Math.max(limit - (Date.now() - lastTime), 0));
-    }
-  };
-}
-
+// Constants
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const JITTER_MULTIPLIER = 0.005;
+const CLUSTER_RADIUS = 30;
+const CLUSTER_MAX_ZOOM = 14;
+const APPROXIMATE_MIN_ZOOM = 15;
+const NULL_ISLAND_THRESHOLD = 0.00001;
+const THROTTLE_DELAY = 50;
+const MAP_ANIMATION_TIMEOUT = 3000; // Safety timeout for stuck animations
+const RESIZE_DELAY = 100;
+const CLUSTER_EXPANSION_DURATION = 500;
+const FLY_TO_DURATION = 1500;
+const IDEMPOTENCY_EPSILON = 0.0001;
+const DEFAULT_ZOOM = 12;
+const DEFAULT_FLY_TO_ZOOM = 13;
 
 const SATELLITE_STYLE = {
   version: 8,
@@ -62,6 +54,7 @@ const SATELLITE_STYLE = {
   ]
 };
 
+// Types
 interface Building {
   id: string;
   name: string;
@@ -79,9 +72,38 @@ interface Building {
   address?: string | null;
 }
 
+interface ClusterFeature {
+  type: 'Feature';
+  id: number;
+  properties: {
+    cluster: true;
+    cluster_id: number;
+    point_count: number;
+    point_count_abbreviated: string;
+  };
+  geometry: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
+}
+
+interface PointFeature {
+  type: 'Feature';
+  properties: Building & {
+    cluster: false;
+    buildingId: string;
+  };
+  geometry: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
+}
+
+type SuperclusterFeature = ClusterFeature | PointFeature;
+
 export interface BuildingDiscoveryMapRef {
-    flyTo: (center: { lat: number, lng: number }, zoom?: number) => void;
-    fitBounds: (bounds: Bounds) => void;
+  flyTo: (center: { lat: number, lng: number }, zoom?: number) => void;
+  fitBounds: (bounds: Bounds) => void;
 }
 
 interface BuildingDiscoveryMapProps {
@@ -105,6 +127,107 @@ interface BuildingDiscoveryMapProps {
   onRemoveMarker?: (id: string) => void;
   onClosePopup?: () => void;
   showSavedCandidates?: boolean;
+}
+
+// Utility Functions
+
+/**
+ * Validates if coordinates are within valid ranges and not at (0,0)
+ */
+function isValidCoordinate(lat: number, lng: number): boolean {
+  return (
+    lat >= -90 && 
+    lat <= 90 && 
+    lng >= -180 && 
+    lng <= 180 &&
+    !(Math.abs(lat) < NULL_ISLAND_THRESHOLD && Math.abs(lng) < NULL_ISLAND_THRESHOLD)
+  );
+}
+
+/**
+ * Custom throttle hook with proper cleanup
+ */
+function useThrottle<T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+): T {
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  const lastRunRef = useRef<number>(0);
+  const callbackRef = useRef(callback);
+
+  // Keep callback ref up to date
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return useCallback(
+    ((...args: Parameters<T>) => {
+      const now = Date.now();
+      const timeSinceLastRun = now - lastRunRef.current;
+
+      if (timeSinceLastRun >= delay) {
+        callbackRef.current(...args);
+        lastRunRef.current = now;
+      } else {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+          callbackRef.current(...args);
+          lastRunRef.current = Date.now();
+        }, delay - timeSinceLastRun);
+      }
+    }) as T,
+    [delay]
+  );
+}
+
+/**
+ * Simple hash function for consistent pseudo-random number generation
+ * Uses Java's String.hashCode algorithm
+ */
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0; // Convert to 32-bit integer
+  }
+  return hash;
+}
+
+/**
+ * Memoized hash values for building IDs to avoid recalculation
+ */
+const buildingHashCache = new Map<string, number>();
+
+function getCachedHash(buildingId: string): number {
+  if (!buildingHashCache.has(buildingId)) {
+    buildingHashCache.set(buildingId, hashString(buildingId));
+  }
+  return buildingHashCache.get(buildingId)!;
+}
+
+/**
+ * Generate deterministic coordinate offsets for approximate locations
+ */
+function getJitteredCoordinates(buildingId: string, lat: number, lng: number): [number, number] {
+  const hash = getCachedHash(buildingId);
+  
+  // ~200-300m spread to ensure visual separation
+  // (0.001 deg is approx 111m lat / 70m lng in London)
+  const latOffset = (((hash % 1000) / 1000) - 0.5) * JITTER_MULTIPLIER;
+  const lngOffset = ((((hash * 17) % 1000) / 1000) - 0.5) * JITTER_MULTIPLIER;
+  
+  return [lng + lngOffset, lat + latOffset];
 }
 
 export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, BuildingDiscoveryMapProps>(({
@@ -131,145 +254,167 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 }, ref) => {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
-  const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [hasVisibleCandidates, setHasVisibleCandidates] = useState(true);
+  const [mapStyleError, setMapStyleError] = useState(false);
 
   // State to track user interaction to disable auto-zoom
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [isMapMoving, setIsMapMoving] = useState(false);
+  const mapMovingTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Default view state (London)
   const [viewState, setViewState] = useState({
     latitude: 51.5074,
     longitude: -0.1278,
-    zoom: 12
+    zoom: DEFAULT_ZOOM
   });
 
   // Track initial fit to prevent loops
   const hasInitialFitRef = useRef(false);
 
-  useImperativeHandle(ref, () => ({
-      flyTo: (center, zoom) => {
-          // Stop any current movement before flying
-          mapRef.current?.getMap().stop();
-
-          if (isMapMoving) {
-            return;
-          }
-
-          // Idempotency check
-          if (mapRef.current) {
-             const currentCenter = mapRef.current.getCenter();
-             const currentZoom = mapRef.current.getZoom();
-             const dist = Math.sqrt(
-                 Math.pow(currentCenter.lng - center.lng, 2) +
-                 Math.pow(currentCenter.lat - center.lat, 2)
-             );
-             const targetZoom = zoom || 13;
-             if (dist < 0.0001 && Math.abs(currentZoom - targetZoom) < 0.1) {
-                 return;
-             }
-          }
-
-          mapRef.current?.flyTo({
-              center: [center.lng, center.lat],
-              zoom: zoom || 13,
-              duration: 1500
-          });
-      },
-      fitBounds: (bounds) => {
-          // Stop any current movement before fitting bounds
-          mapRef.current?.getMap().stop();
-
-          if (isMapMoving) {
-            return;
-          }
-
-          if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) {
-             return;
-          }
-
-          // Idempotency Check
-          if (mapRef.current) {
-              const currentBounds = mapRef.current.getBounds();
-              const ne = currentBounds.getNorthEast();
-              const sw = currentBounds.getSouthWest();
-              const epsilon = 0.0001;
-
-              const isSame =
-                  Math.abs(ne.lat - bounds.north) < epsilon &&
-                  Math.abs(ne.lng - bounds.east) < epsilon &&
-                  Math.abs(sw.lat - bounds.south) < epsilon &&
-                  Math.abs(sw.lng - bounds.west) < epsilon;
-
-              if (isSame) {
-                  return;
-              }
-          }
-
-          mapRef.current?.fitBounds(
-              [
-                  [bounds.west, bounds.south],
-                  [bounds.east, bounds.north]
-              ],
-              { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: 1500, maxZoom: 19 }
-           );
+  // Safety timeout to reset isMapMoving if it gets stuck
+  useEffect(() => {
+    if (isMapMoving) {
+      if (mapMovingTimeoutRef.current) {
+        clearTimeout(mapMovingTimeoutRef.current);
       }
-  }), [isMapMoving]);
+      mapMovingTimeoutRef.current = setTimeout(() => {
+        console.warn('Map animation timeout - resetting isMapMoving');
+        setIsMapMoving(false);
+      }, MAP_ANIMATION_TIMEOUT);
+    }
+    
+    return () => {
+      if (mapMovingTimeoutRef.current) {
+        clearTimeout(mapMovingTimeoutRef.current);
+      }
+    };
+  }, [isMapMoving]);
 
-  const { data: internalBuildings, isLoading: internalLoading } = useQuery({
-    queryKey: ["discovery-buildings"],
-    queryFn: async () => {
-      return await findNearbyBuildingsRpc({
-        lat: viewState.latitude,
-        long: viewState.longitude,
-        radius_meters: 500000, // 500km
-        name_query: ""
+  useImperativeHandle(ref, () => ({
+    flyTo: (center, zoom) => {
+      // Stop any current movement before flying
+      mapRef.current?.getMap().stop();
+
+      if (isMapMoving) {
+        return;
+      }
+
+      // Idempotency check
+      if (mapRef.current) {
+        const currentCenter = mapRef.current.getCenter();
+        const currentZoom = mapRef.current.getZoom();
+        const dist = Math.sqrt(
+          Math.pow(currentCenter.lng - center.lng, 2) +
+          Math.pow(currentCenter.lat - center.lat, 2)
+        );
+        const targetZoom = zoom || DEFAULT_FLY_TO_ZOOM;
+        if (dist < IDEMPOTENCY_EPSILON && Math.abs(currentZoom - targetZoom) < 0.1) {
+          return;
+        }
+      }
+
+      mapRef.current?.flyTo({
+        center: [center.lng, center.lat],
+        zoom: zoom || DEFAULT_FLY_TO_ZOOM,
+        duration: FLY_TO_DURATION
       });
     },
+    fitBounds: (bounds) => {
+      // Stop any current movement before fitting bounds
+      mapRef.current?.getMap().stop();
+
+      if (isMapMoving) {
+        return;
+      }
+
+      if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) {
+        return;
+      }
+
+      // Idempotency Check
+      if (mapRef.current) {
+        const currentBounds = mapRef.current.getBounds();
+        const ne = currentBounds.getNorthEast();
+        const sw = currentBounds.getSouthWest();
+
+        const isSame =
+          Math.abs(ne.lat - bounds.north) < IDEMPOTENCY_EPSILON &&
+          Math.abs(ne.lng - bounds.east) < IDEMPOTENCY_EPSILON &&
+          Math.abs(sw.lat - bounds.south) < IDEMPOTENCY_EPSILON &&
+          Math.abs(sw.lng - bounds.west) < IDEMPOTENCY_EPSILON;
+
+        if (isSame) {
+          return;
+        }
+      }
+
+      mapRef.current?.fitBounds(
+        [
+          [bounds.west, bounds.south],
+          [bounds.east, bounds.north]
+        ],
+        { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: FLY_TO_DURATION, maxZoom: 19 }
+      );
+    }
+  }), [isMapMoving]);
+
+  // Fetch internal buildings if no external buildings provided
+  const { data: internalBuildings, isLoading: internalLoading, error: buildingsError } = useQuery({
+    queryKey: ["discovery-buildings"],
+    queryFn: async () => {
+      try {
+        return await findNearbyBuildingsRpc({
+          lat: viewState.latitude,
+          long: viewState.longitude,
+          radius_meters: 500000, // 500km
+          name_query: ""
+        });
+      } catch (error) {
+        console.error('Error fetching nearby buildings:', error);
+        throw error;
+      }
+    },
     staleTime: 1000 * 60 * 5, // 5 minutes
-    enabled: !externalBuildings // Disable if external data provided
+    enabled: !externalBuildings,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
   });
 
   const buildings = externalBuildings || internalBuildings || [];
   const isLoading = externalBuildings ? false : internalLoading;
 
-  // 1. Validation logic
+  // Validation logic with improved coordinate checking
   const cleanBuildings = useMemo(() => {
     if (!buildings) return [];
 
     return buildings.filter(b => {
-      // REJECT invalid primitives immediately
+      // Reject invalid primitives immediately
       if (b.location_lat === null || b.location_lat === undefined) {
-          return false;
+        return false;
       }
       if (b.location_lng === null || b.location_lng === undefined) {
-          return false;
+        return false;
       }
 
-      // REJECT invalid numbers (NaN)
+      // Reject invalid numbers (NaN)
       const lat = Number(b.location_lat);
       const lng = Number(b.location_lng);
       if (isNaN(lat) || isNaN(lng)) {
-          return false;
+        return false;
       }
 
-      // REJECT Null Island (0,0) specifically
-      if (Math.abs(lat) < 0.00001 && Math.abs(lng) < 0.00001) {
-          return false;
-      }
-
-      return true;
+      // Use centralized validation function
+      return isValidCoordinate(lat, lng);
     });
   }, [buildings]);
-  // ---------------------------
 
   const candidates = useMemo(() => cleanBuildings?.filter(b => b.isCandidate) || [], [cleanBuildings]);
 
-  const checkCandidatesVisibility = (map: maplibregl.Map) => {
+  const checkCandidatesVisibility = useCallback((map: maplibregl.Map) => {
     if (!showSavedCandidates || candidates.length === 0) {
       setHasVisibleCandidates(true);
       return;
@@ -277,112 +422,104 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     const bounds = map.getBounds();
     const isVisible = candidates.some(b => bounds.contains([b.location_lng, b.location_lat]));
     setHasVisibleCandidates(isVisible);
-  };
+  }, [candidates, showSavedCandidates]);
 
   useEffect(() => {
     if (mapRef.current) {
       checkCandidatesVisibility(mapRef.current.getMap());
     }
-  }, [candidates, showSavedCandidates]);
+  }, [candidates, showSavedCandidates, checkCandidatesVisibility]);
 
   // Fetch user relationships
-  const { data: userBuildingsMap } = useQuery({
+  const { data: userBuildingsMap, error: userBuildingsError } = useQuery({
     queryKey: ["user-buildings-map", user?.id],
     enabled: !!user,
     queryFn: async () => {
-        if (!user) return new Map();
+      if (!user) return new Map();
+      try {
         return await fetchUserBuildingsMap(user.id);
-    }
+      } catch (error) {
+        console.error('Error fetching user buildings map:', error);
+        throw error;
+      }
+    },
+    retry: 2
   });
 
   // Clustering logic
   const supercluster = useMemo(() => {
     return new Supercluster({
-      radius: 30,
-      maxZoom: 14 // Reduced maxZoom to break clusters earlier for approximate locations
+      radius: CLUSTER_RADIUS,
+      maxZoom: CLUSTER_MAX_ZOOM
     });
   }, []);
 
-  const points = useMemo(() => cleanBuildings.map(b => {
-    let [lng, lat] = [b.location_lng, b.location_lat];
+  // Memoized points with jittering
+  const points = useMemo(() => {
+    return cleanBuildings.map(b => {
+      let [lng, lat] = [b.location_lng, b.location_lat];
 
-    // Jitter logic for approximate locations to prevent perfect stacking
-    if (b.location_precision === 'approximate') {
-        let hash = 0;
-        const seed = b.id;
-        for (let i = 0; i < seed.length; i++) {
-            hash = ((hash << 5) - hash) + seed.charCodeAt(i);
-            hash |= 0;
-        }
+      // Apply jitter for approximate locations
+      if (b.location_precision === 'approximate') {
+        [lng, lat] = getJitteredCoordinates(b.id, lat, lng);
+      }
 
-        // ~200-300m spread to ensure visual separation
-        // (0.001 deg is approx 111m lat / 70m lng in London)
-        // Multiplier 0.005 provides enough spread to be distinct at zoom 14-15
-        const latOffset = (((hash % 1000) / 1000) - 0.5) * 0.005;
-        const lngOffset = ((((hash * 17) % 1000) / 1000) - 0.5) * 0.005;
+      // Sanitize properties for Worker safety
+      const safeProps: Record<string, any> = {};
+      const numericKeys = ['year_completed', 'year', 'distance', 'social_score', 'rating', 'short_id'];
 
-        lng += lngOffset;
-        lat += latOffset;
-    }
-
-    // Sanitize properties for Worker safety (Requirement: Robust Data Handling)
-    // Mapbox/MapLibre workers can crash if expressions expect numbers but get nulls.
-    // We coalesce nulls to 0 for numeric fields here to avoid needing complex expressions in the map style.
-    const safeProps: Record<string, any> = {};
-    const numericKeys = ['year_completed', 'year', 'distance', 'social_score', 'rating', 'short_id'];
-
-    Object.keys(b).forEach(key => {
+      Object.keys(b).forEach(key => {
         const val = (b as any)[key];
         if (val === null || val === undefined) {
-             if (numericKeys.includes(key)) {
-                 safeProps[key] = 0;
-             } else {
-                 safeProps[key] = ""; // Default string for others to be safe
-             }
+          if (numericKeys.includes(key)) {
+            safeProps[key] = 0;
+          } else {
+            safeProps[key] = "";
+          }
         } else {
-             safeProps[key] = val;
+          safeProps[key] = val;
         }
-    });
+      });
 
-    // Ensure strictly that all numeric keys have a fallback, even if missing from the source object
-    numericKeys.forEach(key => {
+      // Ensure all numeric keys have fallback values
+      numericKeys.forEach(key => {
         if (safeProps[key] === undefined) {
-             safeProps[key] = 0;
+          safeProps[key] = 0;
         }
-    });
+      });
 
-    // Ensure ID is a string
-    safeProps.id = String(b.id);
+      // Ensure ID is a string
+      safeProps.id = String(b.id);
 
-    return {
+      return {
         type: 'Feature' as const,
         properties: { cluster: false, buildingId: b.id, ...safeProps },
         geometry: {
-            type: 'Point' as const,
-            coordinates: [lng, lat]
+          type: 'Point' as const,
+          coordinates: [lng, lat]
         }
-    };
-  }) || [], [cleanBuildings]);
+      };
+    });
+  }, [cleanBuildings]);
 
-  const [clusters, setClusters] = useState<any[]>([]);
+  const [clusters, setClusters] = useState<SuperclusterFeature[]>([]);
   const viewStateRef = useRef(viewState);
   viewStateRef.current = viewState;
 
-  // Throttle cluster updates to prevent forced reflows and main thread blocking during map moves
-  const updateClusters = useMemo(() => {
-    const runUpdate = () => {
-        if (!mapRef.current) {
-             return;
-        }
-        const bounds = mapRef.current.getBounds();
-        const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()] as [number, number, number, number];
-        const zoom = viewStateRef.current.zoom;
-        const newClusters = supercluster.getClusters(bbox, Math.round(zoom));
+  // Throttled cluster update function
+  const updateClustersInternal = useCallback(() => {
+    if (!mapRef.current) {
+      return;
+    }
+    const bounds = mapRef.current.getBounds();
+    const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()] as [number, number, number, number];
+    const zoom = viewStateRef.current.zoom;
+    const newClusters = supercluster.getClusters(bbox, Math.round(zoom));
 
-        setClusters(newClusters);
-    };
-    return throttle(runUpdate, 50); // 50ms = ~20fps cap
+    setClusters(newClusters);
   }, [supercluster]);
+
+  const updateClusters = useThrottle(updateClustersInternal, THROTTLE_DELAY);
 
   useEffect(() => {
     supercluster.load(points);
@@ -394,14 +531,14 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     updateClusters();
   }, [viewState, updateClusters]);
 
-  // Effect to latch userHasInteracted if auto-zoom is disabled externally (e.g. via search/filter)
+  // Effect to latch userHasInteracted if auto-zoom is disabled externally
   useEffect(() => {
     if (!autoZoomOnLowCount) {
       setUserHasInteracted(true);
     }
   }, [autoZoomOnLowCount]);
 
-  // Effect to reset user interaction state when triggered externally (e.g. on new search)
+  // Effect to reset user interaction state when triggered externally
   useEffect(() => {
     if (resetInteractionTrigger !== undefined) {
       setUserHasInteracted(false);
@@ -421,321 +558,380 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // Handle Map Resize when fullscreen toggles
   useEffect(() => {
-    setTimeout(() => {
-        mapRef.current?.resize();
-    }, 100);
+    const timeoutId = setTimeout(() => {
+      mapRef.current?.resize();
+    }, RESIZE_DELAY);
+    
+    return () => clearTimeout(timeoutId);
   }, [isFullScreen]);
 
+  // Cleanup fullscreen on unmount
+  useEffect(() => {
+    return () => {
+      if (isFullScreen) {
+        setIsFullScreen(false);
+      }
+    };
+  }, []);
 
-  const pins = useMemo(() => clusters.map(cluster => {
-    const [longitude, latitude] = cluster.geometry.coordinates;
-    const { cluster: isCluster, point_count: pointCount } = cluster.properties;
+  // Render pins
+  const pins = useMemo(() => {
+    return clusters.map(cluster => {
+      const [longitude, latitude] = cluster.geometry.coordinates;
+      const { cluster: isCluster, point_count: pointCount } = cluster.properties;
 
-    if (isCluster) {
-        // Check if all items in the cluster are dimmed (e.g. existing items in "Show saved" mode)
-        let leaves: any[] = [];
+      if (isCluster) {
+        // Check if all items in the cluster are dimmed
+        let leaves: PointFeature[] = [];
         try {
-            leaves = supercluster.getLeaves(cluster.id, Infinity);
+          leaves = supercluster.getLeaves((cluster as ClusterFeature).id, Infinity);
         } catch (error) {
-            console.warn("⚠️ [Map] Cluster ID stale, ignoring.");
-            leaves = [];
+          console.warn("⚠️ [Map] Cluster ID stale, skipping render.");
+          return null; // Skip rendering stale clusters
         }
-        const isAllDimmed = leaves.length > 0 && leaves.every(l => l.properties.isDimmed);
+        
+        if (leaves.length === 0) {
+          return null; // Skip empty clusters
+        }
+
+        const isAllDimmed = leaves.every(l => l.properties.isDimmed);
 
         return (
-            <Marker
-                key={`cluster-${cluster.id}`}
-                longitude={longitude}
-                latitude={latitude}
-                onClick={(e) => {
-                    e.originalEvent.stopPropagation();
-                    setUserHasInteracted(true);
-                    onMapInteraction?.();
+          <Marker
+            key={`cluster-${(cluster as ClusterFeature).id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setUserHasInteracted(true);
+              onMapInteraction?.();
 
-                    let expansionZoom = Math.min(
-                        supercluster.getClusterExpansionZoom(cluster.id),
-                        20
-                    );
+              let expansionZoom = Math.min(
+                supercluster.getClusterExpansionZoom((cluster as ClusterFeature).id),
+                20
+              );
 
-                    // Check if this is a cluster of approximate locations
-                    // If so, we want to zoom deep enough to reveal the jittered points
-                    // We can reuse the leaves we already fetched
-                    const isAllApproximate = leaves.every(l => l.properties.location_precision === 'approximate');
+              // Check if this is a cluster of approximate locations
+              const isAllApproximate = leaves.every(l => l.properties.location_precision === 'approximate');
 
-                    if (isAllApproximate) {
-                         // Force zoom to a level where jitter is clearly visible (15+)
-                         expansionZoom = Math.max(expansionZoom, 15);
-                    }
+              if (isAllApproximate) {
+                // Force zoom to a level where jitter is clearly visible
+                expansionZoom = Math.max(expansionZoom, APPROXIMATE_MIN_ZOOM);
+              }
 
-                    if (expansionZoom <= viewState.zoom) {
-                        expansionZoom = viewState.zoom + 2;
-                    }
+              if (expansionZoom <= viewState.zoom) {
+                expansionZoom = viewState.zoom + 2;
+              }
 
-                    mapRef.current?.flyTo({
-                        center: [longitude, latitude],
-                        zoom: expansionZoom,
-                        duration: 500
-                    });
-                }}
+              mapRef.current?.flyTo({
+                center: [longitude, latitude],
+                zoom: expansionZoom,
+                duration: CLUSTER_EXPANSION_DURATION
+              });
+            }}
+          >
+            <div
+              data-testid="cluster-marker"
+              className={`flex items-center justify-center w-10 h-10 rounded-full font-bold shadow-md border-2 border-background cursor-pointer transition-transform ${
+                isAllDimmed
+                  ? "bg-gray-400 text-white scale-90 opacity-70 hover:scale-100 hover:opacity-100"
+                  : "bg-primary text-primary-foreground hover:scale-110"
+              }`}
             >
-                <div
-                    data-testid="cluster-marker"
-                    className={`flex items-center justify-center w-10 h-10 rounded-full font-bold shadow-md border-2 border-background cursor-pointer transition-transform ${
-                        isAllDimmed
-                            ? "bg-gray-400 text-white scale-90 opacity-70 hover:scale-100 hover:opacity-100"
-                            : "bg-primary text-primary-foreground hover:scale-110"
-                    }`}
-                >
-                    {pointCount}
-                </div>
-            </Marker>
+              {pointCount}
+            </div>
+          </Marker>
         );
-    }
+      }
 
-    // Leaf node
-    const building = cluster.properties as (Building & { buildingId: string });
-    const status = userBuildingsMap?.get(building.buildingId);
-    const isApproximate = building.location_precision === 'approximate';
-    const imageUrl = getBuildingImageUrl(building.main_image_url);
-    const isHighlighted = highlightedId === building.buildingId;
-    const isSelected = selectedPinId === building.buildingId;
-    const isDimmed = building.isDimmed && !isHighlighted && !isSelected;
+      // Leaf node - render individual building
+      const building = cluster.properties as Building & { buildingId: string };
+      const status = userBuildingsMap?.get(building.buildingId);
+      const isApproximate = building.location_precision === 'approximate';
+      const imageUrl = getBuildingImageUrl(building.main_image_url);
+      const isHighlighted = highlightedId === building.buildingId;
+      const isSelected = selectedPinId === building.buildingId;
+      const isDimmed = building.isDimmed && !isHighlighted && !isSelected;
 
-    // Pin Protocol:
-    // Charcoal: Visited
-    // Neon (#EEFF41): Pending (Wishlist) & Social
-    // Grey/Default: Discovery
+      // Pin Protocol:
+      // Charcoal: Visited
+      // Neon (#EEFF41): Pending (Wishlist) & Social
+      // Grey/Default: Discovery
 
-    let strokeClass = "text-gray-500";
-    let fillClass = "fill-background";
-    let dotBgClass = "bg-gray-500";
-    let pinTooltip = null;
+      let strokeClass = "text-gray-500";
+      let fillClass = "fill-background";
+      let dotBgClass = "bg-gray-500";
+      let pinTooltip = null;
 
-    if (status === 'visited') {
+      if (status === 'visited') {
         strokeClass = "text-gray-600";
         fillClass = "fill-gray-600";
         dotBgClass = "bg-gray-600";
         pinTooltip = <span className="opacity-75 capitalize text-center">(Visited)</span>;
-    } else if (status === 'pending') {
+      } else if (status === 'pending') {
         strokeClass = "text-gray-500";
-        fillClass = "fill-[#EEFF41]"; // Corporate Yellow
+        fillClass = "fill-[#EEFF41]";
         dotBgClass = "bg-[#EEFF41]";
         pinTooltip = <span className="opacity-75 capitalize text-center">(Pending)</span>;
-    } else if (building.social_context) {
+      } else if (building.social_context) {
         strokeClass = "text-gray-500";
-        fillClass = "fill-gray-300"; // Light Grey
+        fillClass = "fill-gray-300";
         dotBgClass = "bg-gray-300";
         pinTooltip = <span className="opacity-90 text-center">({building.social_context})</span>;
-    }
+      }
 
-    if (isDimmed) {
+      if (isDimmed) {
         strokeClass = "text-gray-400";
         fillClass = "fill-gray-100";
         dotBgClass = "bg-gray-300";
-    }
+      }
 
-    if (isSatellite) {
+      if (isSatellite) {
         strokeClass = "text-white";
-    }
+      }
 
-    const pinColorClass = `${strokeClass} ${fillClass}`;
-    const dotBorderClass = isSatellite ? "border-white" : "border-background";
+      const pinColorClass = `${strokeClass} ${fillClass}`;
+      const dotBorderClass = isSatellite ? "border-white" : "border-background";
 
-    const scaleClass = isHighlighted ? "scale-125 z-50" : (isDimmed ? "scale-90 opacity-70 hover:scale-100 hover:opacity-100" : "hover:scale-110");
-    const markerClass = `cursor-pointer ${isHighlighted ? 'z-50' : (isDimmed ? 'z-0' : 'hover:z-10')}`;
+      const scaleClass = isHighlighted 
+        ? "scale-125 z-50" 
+        : (isDimmed ? "scale-90 opacity-70 hover:scale-100 hover:opacity-100" : "hover:scale-110");
+      const markerClass = `cursor-pointer ${isHighlighted ? 'z-50' : (isDimmed ? 'z-0' : 'hover:z-10')}`;
 
-    // EMERGENCY OVERRIDE: Enforce static "Dumb Dot" styling to prevent potential crashes
-    // const pinStyle: React.CSSProperties = (building.color && !isDimmed) ? { color: building.color, fill: building.color } : {};
-    // const dotStyle: React.CSSProperties = (building.color && !isDimmed) ? { backgroundColor: building.color } : {};
+      // Proper color styling with fallbacks
+      const pinStyle: React.CSSProperties = (building.color && !isDimmed) 
+        ? { color: building.color, fill: building.color } 
+        : {};
+      const dotStyle: React.CSSProperties = (building.color && !isDimmed) 
+        ? { backgroundColor: building.color, borderColor: building.color } 
+        : {};
 
-    // Static red for all points as requested to bypass potential data-driven style crashes
-    const pinStyle: React.CSSProperties = { color: '#FF0000', fill: '#FF0000' };
-    const dotStyle: React.CSSProperties = { backgroundColor: '#FF0000' };
-
-    return (
+      return (
         <Marker
-        key={building.buildingId}
-        longitude={longitude}
-        latitude={latitude}
-        anchor={isApproximate ? "center" : "bottom"}
-        onClick={(e) => {
+          key={building.buildingId}
+          longitude={longitude}
+          latitude={latitude}
+          anchor={isApproximate ? "center" : "bottom"}
+          onClick={(e) => {
             e.originalEvent.stopPropagation();
 
             // Prevent navigation if clicking on an action button inside the tooltip
             if ((e.originalEvent.target as HTMLElement).closest('button')) {
-                return;
+              return;
             }
 
             const isTouch = window.matchMedia('(pointer: coarse)').matches;
             const isPinSelected = isSelected || isHighlighted;
 
             if (isTouch && !isPinSelected) {
-                // First tap on mobile: Select pin
-                setSelectedPinId(building.buildingId);
-                setUserHasInteracted(true);
-                onMapInteraction?.();
-                return;
+              // First tap on mobile: Select pin
+              setSelectedPinId(building.buildingId);
+              setUserHasInteracted(true);
+              onMapInteraction?.();
+              return;
             }
 
             // Otherwise (Desktop click OR Mobile second tap): Navigate
             if (building.isMarker) {
-                setSelectedPinId(building.buildingId);
+              setSelectedPinId(building.buildingId);
             }
 
             if (onMarkerClick) {
-                onMarkerClick(building.buildingId);
+              onMarkerClick(building.buildingId);
             } else {
-                window.open(`/building/${building.buildingId}`, '_blank');
+              // Security: Using window.location for internal navigation instead of window.open
+              const url = `/building/${building.buildingId}`;
+              if (window.location) {
+                window.open(url, '_blank', 'noopener,noreferrer');
+              }
             }
-        }}
-        className={markerClass}
+          }}
+          className={markerClass}
         >
-            <div
-                data-testid={isApproximate ? "approximate-dot" : "exact-pin"}
-                className="group relative flex flex-col items-center"
-            >
+          <div
+            data-testid={isApproximate ? "approximate-dot" : "exact-pin"}
+            className="group relative flex flex-col items-center"
+          >
             {building.isMarker && isSelected ? (
-                 <div
-                    className="absolute bottom-full mb-2 z-50 cursor-default text-left"
-                    onClick={e => e.stopPropagation()}
-                 >
-                    <MarkerInfoCard
-                        marker={building as unknown as DiscoveryBuilding}
-                        onClose={() => {
-                            if (isSelected) setSelectedPinId(null);
-                            onClosePopup?.();
-                        }}
-                        onUpdateNote={onUpdateMarkerNote}
-                        onDelete={onRemoveMarker}
-                    />
-                 </div>
+              <div
+                className="absolute bottom-full mb-2 z-50 cursor-default text-left"
+                onClick={e => e.stopPropagation()}
+              >
+                <MarkerInfoCard
+                  marker={building as unknown as DiscoveryBuilding}
+                  onClose={() => {
+                    if (isSelected) setSelectedPinId(null);
+                    onClosePopup?.();
+                  }}
+                  onUpdateNote={onUpdateMarkerNote}
+                  onDelete={onRemoveMarker}
+                />
+              </div>
             ) : (
-                /* Tooltip - pb-2 used instead of mb-2 to create a hit area bridge for hover */
-                <div
-                    data-testid="building-tooltip"
-                    className={`absolute bottom-full pb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}
-                >
-                    <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
-                        {showImages && imageUrl && (
-                            <div className="w-[200px] h-[200px]">
-                                <img src={imageUrl} alt="" className="w-full h-full object-cover" />
-                            </div>
-                        )}
-                        <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
-                            <span className="font-medium text-white text-center">{building.name}</span>
-                            {pinTooltip}
-
-                            <div className="flex items-center gap-2 mt-1">
-                                {onHide && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onHide(building.buildingId);
-                                        }}
-                                        className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-[60]"
-                                        title="Hide"
-                                    >
-                                        <EyeOff className="w-3.5 h-3.5" />
-                                    </button>
-                                )}
-                                {onSave && !building.isMarker && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onSave(building.buildingId);
-                                        }}
-                                        className={`p-1 rounded-full transition-colors z-[60] ${status === 'pending' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-                                        title="Save"
-                                    >
-                                        <Bookmark className={`w-3.5 h-3.5 ${status === 'pending' ? 'fill-current' : ''}`} />
-                                    </button>
-                                )}
-                                {onVisit && !building.isMarker && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onVisit(building.buildingId);
-                                        }}
-                                        className={`p-1 rounded-full transition-colors z-[60] ${status === 'visited' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-                                        title="Mark as Visited"
-                                    >
-                                        <CheckSquare className="w-3.5 h-3.5" />
-                                    </button>
-                                )}
-                            </div>
-
-                            {building.isCandidate && (
-                                <div className="flex items-center justify-center gap-2 mt-1">
-                                    {onHideCandidate && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onHideCandidate(building.buildingId);
-                                            }}
-                                            className="bg-white/10 text-white rounded-full p-1 hover:bg-white/20 transition-colors z-[60]"
-                                            title="Hide suggestion"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                    {onAddCandidate && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onAddCandidate(building as unknown as DiscoveryBuilding);
-                                            }}
-                                            className="bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white transition-colors z-[60]"
-                                            title="Add to map"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                            {!building.isCandidate && onRemoveItem && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onRemoveItem(building.buildingId);
-                                    }}
-                                    className="mt-1 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors z-[60]"
-                                    title="Remove from map"
-                                >
-                                    <Check className="w-4 h-4" />
-                                </button>
-                            )}
-                        </div>
+              <div
+                data-testid="building-tooltip"
+                className={`absolute bottom-full pb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}
+              >
+                <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
+                  {showImages && imageUrl && (
+                    <div className="w-[200px] h-[200px]">
+                      <img src={imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
-                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
+                  )}
+                  <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
+                    <span className="font-medium text-white text-center">{building.name}</span>
+                    {pinTooltip}
+
+                    <div className="flex items-center gap-2 mt-1">
+                      {onHide && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onHide(building.buildingId);
+                          }}
+                          className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
+                          title="Hide"
+                          aria-label="Hide building"
+                        >
+                          <EyeOff className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {onSave && !building.isMarker && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSave(building.buildingId);
+                          }}
+                          className={`p-1 rounded-full transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white ${status === 'pending' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                          title="Save"
+                          aria-label="Save building"
+                        >
+                          <Bookmark className={`w-3.5 h-3.5 ${status === 'pending' ? 'fill-current' : ''}`} />
+                        </button>
+                      )}
+                      {onVisit && !building.isMarker && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onVisit(building.buildingId);
+                          }}
+                          className={`p-1 rounded-full transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white ${status === 'visited' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                          title="Mark as Visited"
+                          aria-label="Mark as visited"
+                        >
+                          <CheckSquare className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {building.isCandidate && (
+                      <div className="flex items-center justify-center gap-2 mt-1">
+                        {onHideCandidate && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onHideCandidate(building.buildingId);
+                            }}
+                            className="bg-white/10 text-white rounded-full p-1 hover:bg-white/20 transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
+                            title="Hide suggestion"
+                            aria-label="Hide suggestion"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                        {onAddCandidate && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAddCandidate(building as unknown as DiscoveryBuilding);
+                            }}
+                            className="bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
+                            title="Add to map"
+                            aria-label="Add to map"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {!building.isCandidate && onRemoveItem && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveItem(building.buildingId);
+                        }}
+                        className="mt-1 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
+                        title="Remove from map"
+                        aria-label="Remove from map"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
+                <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
+              </div>
             )}
 
             {isApproximate ? (
-                <div
-                    className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`}
-                    style={dotStyle}
-                />
+              <div
+                className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`}
+                style={dotStyle}
+              />
             ) : building.isMarker ? (
-                <div className={`relative transition-transform ${scaleClass}`}>
-                    <MarkerPin
-                        category={building.markerCategory}
-                        color={building.color || undefined}
-                    />
-                </div>
+              <div className={`relative transition-transform ${scaleClass}`}>
+                <MarkerPin
+                  category={building.markerCategory}
+                  color={building.color || undefined}
+                />
+              </div>
             ) : (
-                <div className={`relative transition-transform ${scaleClass}`}>
-                    <MapPin
-                        className={`${isDimmed ? 'w-6 h-6' : 'w-8 h-8'} ${pinColorClass} drop-shadow-md`}
-                        style={pinStyle}
-                    />
-                    {/* White dot overlay to keep inner circle white when pin is filled */}
-                    <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
-                </div>
+              <div className={`relative transition-transform ${scaleClass}`}>
+                <MapPin
+                  className={`${isDimmed ? 'w-6 h-6' : 'w-8 h-8'} ${pinColorClass} drop-shadow-md`}
+                  style={pinStyle}
+                />
+                {/* White dot overlay to keep inner circle white when pin is filled */}
+                <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
+              </div>
             )}
-            </div>
+          </div>
         </Marker>
+      );
+    }).filter(Boolean); // Remove null entries from stale clusters
+  }, [
+    clusters,
+    userBuildingsMap,
+    supercluster,
+    onMapInteraction,
+    viewState.zoom,
+    highlightedId,
+    onMarkerClick,
+    isSatellite,
+    selectedPinId,
+    onAddCandidate,
+    onRemoveItem,
+    onHide,
+    onHideCandidate,
+    onSave,
+    onVisit,
+    showImages,
+    onUpdateMarkerNote,
+    onRemoveMarker,
+    onClosePopup
+  ]);
+
+  // Error state display
+  if (buildingsError || userBuildingsError) {
+    return (
+      <div className="flex flex-col justify-center items-center h-full min-h-[50vh] gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">
+          {buildingsError ? 'Failed to load buildings. Retrying...' : 'Failed to load user data. Retrying...'}
+        </p>
+      </div>
     );
-  }), [clusters, userBuildingsMap, supercluster, onMapInteraction, viewState.zoom, highlightedId, onMarkerClick, isSatellite, selectedPinId, onAddCandidate, onRemoveItem, onHide, onHideCandidate, onSave, onVisit]);
+  }
 
   if (isLoading) {
     return (
@@ -745,80 +941,81 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     );
   }
 
-  const handleMapUpdate = (map: maplibregl.Map) => {
-      const bounds = map.getBounds();
-      onBoundsChange?.({
-          north: bounds.getNorth(),
-          south: bounds.getSouth(),
-          east: bounds.getEast(),
-          west: bounds.getWest()
-      });
-      checkCandidatesVisibility(map);
-  };
+  const handleMapUpdate = useCallback((map: maplibregl.Map) => {
+    const bounds = map.getBounds();
+    onBoundsChange?.({
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest()
+    });
+    checkCandidatesVisibility(map);
+  }, [onBoundsChange, checkCandidatesVisibility]);
 
   const mapContent = (
     <div
-        className={`w-full overflow-hidden border border-white/10 transition-all duration-300 bg-background ${
-          isFullScreen
-            ? 'fixed inset-0 z-[5000] h-[100dvh] rounded-none m-0 p-0'
-            : 'relative h-full rounded-xl'
-        }`}
-        data-zoom={viewState.zoom}
-        data-testid="map-container"
+      className={`w-full overflow-hidden border border-white/10 transition-all duration-300 bg-background ${
+        isFullScreen
+          ? 'fixed inset-0 z-[5000] h-[100dvh] rounded-none m-0 p-0'
+          : 'relative h-full rounded-xl'
+      }`}
+      data-zoom={viewState.zoom}
+      data-testid="map-container"
     >
       <MapGL
-        ref={(node) => {
-            mapRef.current = node;
-            setMapInstance(node);
-        }}
+        ref={mapRef}
         onError={(e) => {
-          console.group("💥 MAPBOX CRASH CAUGHT");
+          console.group("💥 MAP ERROR");
           console.error("Error:", e.error);
           console.log("Current ViewState:", viewState);
-          console.trace("Stack at crash time");
+          console.trace("Stack trace");
           console.groupEnd();
 
-          // Fallback to satellite if style fails to ensure the map remains usable
           const errMsg = e.error?.message || "";
-          if (errMsg.toLowerCase().includes("style") || errMsg.toLowerCase().includes("load") || errMsg.toLowerCase().includes("evaluate")) {
-             console.warn("⚠️ Map style failed to load or evaluate. Switching to Satellite fallback.");
-             setIsSatellite(true);
+          if (errMsg.toLowerCase().includes("style") || 
+              errMsg.toLowerCase().includes("load") || 
+              errMsg.toLowerCase().includes("evaluate")) {
+            console.warn("⚠️ Map style error. Switching to Satellite fallback.");
+            setMapStyleError(true);
+            if (!isSatellite) {
+              setIsSatellite(true);
+            }
           }
         }}
         {...viewState}
         attributionControl={false}
         onClick={() => {
-           if (selectedPinId) {
-               setSelectedPinId(null);
-           }
+          if (selectedPinId) {
+            setSelectedPinId(null);
+          }
         }}
         onMove={evt => {
-            setViewState(evt.viewState);
-            if (evt.originalEvent) {
-                setUserHasInteracted(true);
-                onMapInteraction?.();
-            }
-        }}
-        onDragStart={() => {
+          setViewState(evt.viewState);
+          if (evt.originalEvent) {
             setUserHasInteracted(true);
             onMapInteraction?.();
+          }
+        }}
+        onDragStart={() => {
+          setUserHasInteracted(true);
+          onMapInteraction?.();
         }}
         onMoveStart={(evt) => {
-            setIsMapMoving(true);
-            if (evt.originalEvent) {
-                setUserHasInteracted(true);
-                onMapInteraction?.();
-            }
+          setIsMapMoving(true);
+          if (evt.originalEvent) {
+            setUserHasInteracted(true);
+            onMapInteraction?.();
+          }
         }}
         onLoad={evt => {
-            handleMapUpdate(evt.target);
+          handleMapUpdate(evt.target);
         }}
         onMoveEnd={evt => {
-            setIsMapMoving(false);
-            const { latitude, longitude } = evt.viewState;
+          setIsMapMoving(false);
+          const { latitude, longitude } = evt.viewState;
 
-            onRegionChange?.({ lat: latitude, lng: longitude });
-            handleMapUpdate(evt.target);
+          onRegionChange?.({ lat: latitude, lng: longitude });
+          handleMapUpdate(evt.target);
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
@@ -830,41 +1027,52 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
       {showSavedCandidates && candidates.length > 0 && !hasVisibleCandidates && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur px-4 py-2 rounded-full shadow-md text-sm z-10 text-center pointer-events-none border animate-in fade-in slide-in-from-top-2">
-           No saved places in this area. Zoom out to find them.
+          No saved places in this area. Zoom out to find them.
+        </div>
+      )}
+
+      {mapStyleError && !isSatellite && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-500/90 backdrop-blur px-4 py-2 rounded-full shadow-md text-sm z-10 text-center text-white border border-red-700">
+          Map style error. Try satellite view.
         </div>
       )}
 
       <button
-          onClick={(e) => {
-              e.stopPropagation();
-              setUserHasInteracted(true);
-              onMapInteraction?.();
-              setIsSatellite(!isSatellite);
-          }}
-          className="absolute top-2 left-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10 flex items-center gap-2"
-          title={isSatellite ? "Show Map" : "Show Satellite"}
+        onClick={(e) => {
+          e.stopPropagation();
+          setUserHasInteracted(true);
+          onMapInteraction?.();
+          setIsSatellite(!isSatellite);
+          if (mapStyleError && !isSatellite) {
+            setMapStyleError(false);
+          }
+        }}
+        className="absolute top-2 left-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-primary"
+        title={isSatellite ? "Show Map" : "Show Satellite"}
+        aria-label={isSatellite ? "Show Map" : "Show Satellite"}
       >
-          <Layers className="w-4 h-4" />
-          <span className="text-xs font-medium">{isSatellite ? "Map" : "Satellite"}</span>
+        <Layers className="w-4 h-4" />
+        <span className="text-xs font-medium">{isSatellite ? "Map" : "Satellite"}</span>
       </button>
 
       <button
-          onClick={(e) => {
-              e.stopPropagation();
-              setUserHasInteracted(true);
-              onMapInteraction?.();
-              setIsFullScreen(!isFullScreen);
-          }}
-          className="absolute top-2 right-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10"
-          title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+        onClick={(e) => {
+          e.stopPropagation();
+          setUserHasInteracted(true);
+          onMapInteraction?.();
+          setIsFullScreen(!isFullScreen);
+        }}
+        className="absolute top-2 right-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10 focus-visible:ring-2 focus-visible:ring-primary"
+        title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+        aria-label={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
       >
-          {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+        {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
       </button>
     </div>
   );
 
   if (isFullScreen) {
-      return createPortal(mapContent, document.body);
+    return createPortal(mapContent, document.body);
   }
 
   return mapContent;
