@@ -122,23 +122,34 @@ export default function SearchPage() {
      if (searchQuery && !userHasMovedMap.current && safeBuildings.length > 0) {
         const bounds = getBoundsFromBuildings(safeBuildings);
         if (bounds && mapRef.current) {
+          if (typeof bounds.north === 'number' && typeof bounds.east === 'number') {
              mapRef.current.fitBounds(bounds);
+          }
         }
      }
   }, [searchQuery, safeBuildings]);
 
   // Handler for List Item Click (The Shield Logic)
-  const handleListHighlight = useCallback((lat: number, lng: number) => {
-      console.log('point_up [LIST] Programmatic move initiated.');
-      isProgrammaticMove.current = true; // RAISE SHIELD
+  const handleListHighlight = useCallback((lat: any, lng: any) => { // Type as any to catch runtime errors
+      // STRICT SAFETY CHECK
+      const safeLat = parseFloat(lat);
+      const safeLng = parseFloat(lng);
 
-      mapRef.current?.flyTo({ lat, lng, zoom: 16 });
+      if (isNaN(safeLat) || isNaN(safeLng) || !mapRef.current) {
+         console.warn('⚠️ [SearchPage] Invalid coordinates passed to highlight:', lat, lng);
+         return;
+      }
 
-      // Lower shield after animation (approx 1.5s)
-      setTimeout(() => {
-        isProgrammaticMove.current = false;
-        console.log('🛡️ [GUARD] Shield lowered.');
-      }, 1500);
+      console.log('point_up [LIST] Programmatic move:', safeLat, safeLng);
+      isProgrammaticMove.current = true;
+
+      try {
+        mapRef.current.flyTo({ lat: safeLat, lng: safeLng, zoom: 16 });
+      } catch (err) {
+        console.error('💥 [Map] flyTo failed:', err);
+      }
+
+      setTimeout(() => { isProgrammaticMove.current = false; }, 1500);
    }, []);
 
   const onBuildingClickAdapter = useCallback((building: DiscoveryBuilding) => {
@@ -167,7 +178,7 @@ export default function SearchPage() {
            <DiscoveryList
               buildings={safeBuildings}
               isLoading={isLoading}
-              onBuildingClick={onBuildingClickAdapter}
+              // onBuildingClick={onBuildingClickAdapter}
               searchQuery={searchQuery}
             />
         </div>
@@ -201,7 +212,7 @@ export default function SearchPage() {
              <DiscoveryList
                 buildings={safeBuildings}
                 isLoading={isLoading}
-                onBuildingClick={onBuildingClickAdapter}
+                // onBuildingClick={onBuildingClickAdapter}
                 searchQuery={searchQuery}
               />
           </div>
