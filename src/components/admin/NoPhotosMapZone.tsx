@@ -18,19 +18,11 @@ const CIRCLE_LAYER: LayerProps = {
   id: 'no-photos-circles',
   type: 'circle',
   paint: {
-    'circle-radius': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      0, 3,
-      5, 4,
-      10, 6,
-      15, 8
-    ],
-    'circle-color': '#ef4444', // Red-500
+    'circle-radius': 6,
+    'circle-color': '#FF0000',
     'circle-stroke-color': '#ffffff',
     'circle-stroke-width': 1,
-    'circle-opacity': 0.8
+    'circle-opacity': 1
   }
 };
 
