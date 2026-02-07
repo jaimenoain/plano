@@ -544,8 +544,13 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     const scaleClass = isHighlighted ? "scale-125 z-50" : (isDimmed ? "scale-90 opacity-70 hover:scale-100 hover:opacity-100" : "hover:scale-110");
     const markerClass = `cursor-pointer ${isHighlighted ? 'z-50' : (isDimmed ? 'z-0' : 'hover:z-10')}`;
 
-    const pinStyle: React.CSSProperties = (building.color && !isDimmed) ? { color: building.color, fill: building.color } : {};
-    const dotStyle: React.CSSProperties = (building.color && !isDimmed) ? { backgroundColor: building.color } : {};
+    // EMERGENCY OVERRIDE: Enforce static "Dumb Dot" styling to prevent potential crashes
+    // const pinStyle: React.CSSProperties = (building.color && !isDimmed) ? { color: building.color, fill: building.color } : {};
+    // const dotStyle: React.CSSProperties = (building.color && !isDimmed) ? { backgroundColor: building.color } : {};
+
+    // Static red for all points as requested to bypass potential data-driven style crashes
+    const pinStyle: React.CSSProperties = { color: '#FF0000', fill: '#FF0000' };
+    const dotStyle: React.CSSProperties = { backgroundColor: '#FF0000' };
 
     return (
         <Marker
