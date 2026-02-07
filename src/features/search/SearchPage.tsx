@@ -358,9 +358,7 @@ export default function SearchPage() {
     <AppLayout isFullScreen={true} showHeader={false} showNav={false}>
       <div
         data-testid="search-page-wrapper"
-        className={`relative flex flex-col h-full transition-all duration-300 ease-in-out ${
-          isMobile ? 'ml-0' : state === "expanded" ? 'md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]' : ''
-        }`}
+        className={`relative flex flex-col h-full transition-all duration-300 ease-in-out`}
       >
         {/* Desktop List Sidebar */}
         <ListSidebar
@@ -368,7 +366,7 @@ export default function SearchPage() {
           isLoading={isLoading}
           onBuildingClick={onBuildingClickAdapter}
           searchQuery={searchQuery}
-          className="hidden md:block w-[400px] bg-white border-r border-gray-200 overflow-y-auto h-full absolute left-0 top-0 z-10 shadow-lg"
+          className="hidden md:block w-[400px] bg-white border-r border-gray-200 overflow-y-auto h-full absolute left-0 top-0 z-[5] shadow-lg"
         />
 
         {/* Mobile View Toggle */}
