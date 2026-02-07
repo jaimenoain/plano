@@ -327,8 +327,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
     // Sanitize properties for Worker safety (Requirement: Robust Data Handling)
     // Mapbox/MapLibre workers can crash if expressions expect numbers but get nulls.
+    // We coalesce nulls to 0 for numeric fields here to avoid needing complex expressions in the map style.
     const safeProps: Record<string, any> = {};
-    const numericKeys = ['year_completed', 'distance', 'social_score', 'rating', 'short_id'];
+    const numericKeys = ['year_completed', 'year', 'distance', 'social_score', 'rating', 'short_id'];
 
     Object.keys(b).forEach(key => {
         const val = (b as any)[key];
@@ -340,6 +341,13 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
              }
         } else {
              safeProps[key] = val;
+        }
+    });
+
+    // Ensure strictly that all numeric keys have a fallback, even if missing from the source object
+    numericKeys.forEach(key => {
+        if (safeProps[key] === undefined) {
+             safeProps[key] = 0;
         }
     });
 
