@@ -37,7 +37,7 @@ function throttle<T extends (...args: any[]) => any>(func: T, limit: number) {
   };
 }
 
-const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+// const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
 const SATELLITE_STYLE = {
   version: 8,
@@ -132,7 +132,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const [mapInstance, setMapInstance] = useState<MapRef | null>(null);
-  const [isSatellite, setIsSatellite] = useState(false);
+  const [isSatellite, setIsSatellite] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [hasVisibleCandidates, setHasVisibleCandidates] = useState(true);
@@ -822,7 +822,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
+        // mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
+        mapStyle={SATELLITE_STYLE}
       >
         <NavigationControl position="bottom-right" />
         {pins}

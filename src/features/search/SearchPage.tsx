@@ -163,7 +163,11 @@ export default function SearchPage() {
   // }, [handleListHighlight, isMobile]);
 
   return (
-    <AppLayout isFullScreen={true} showHeader={false} showNav={false}>
+    <AppLayout
+      isFullScreen={true}
+      showHeader={false}
+      showNav={false}
+    >
      <div
        data-testid="search-page-wrapper"
        className={`relative flex flex-col h-full transition-all duration-300 ease-in-out ${
@@ -224,7 +228,7 @@ export default function SearchPage() {
          <Suspense fallback={<div>Loading...</div>}>
            <BuildingDiscoveryMap
               ref={mapRef}
-              externalBuildings={safeBuildings}
+              externalBuildings={[]}
               onRegionChange={handleRegionChange}
               onBoundsChange={() => {}}
               onMapInteraction={handleMapInteraction}
