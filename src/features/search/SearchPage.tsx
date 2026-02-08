@@ -9,6 +9,7 @@ import { getBoundsFromBuildings } from "@/utils/map";
 import { DiscoveryList } from "./components/DiscoveryList";
 import { DiscoveryBuilding } from "./components/types";
 import { DiscoverySearchInput } from "./components/DiscoverySearchInput";
+import { SearchFilters } from "./components/SearchFilters";
 import { Button } from "@/components/ui/button";
 import { Map as MapIcon, List as ListIcon, AlertCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
@@ -120,7 +121,22 @@ export default function SearchPage() {
     selectedAttributes,
     selectedContacts,
     viewMode,
-    setViewMode
+    setViewMode,
+    availableCollections,
+    setStatusFilters,
+    setHideVisited,
+    setHideSaved,
+    setHideHidden,
+    setHideWithoutImages,
+    setFilterContacts,
+    setPersonalMinRating,
+    setContactMinRating,
+    setSelectedArchitects,
+    setSelectedCollections,
+    setSelectedCategory,
+    setSelectedTypologies,
+    setSelectedAttributes,
+    setSelectedContacts,
   } = useBuildingSearch();
 
   // State for highlighted building
@@ -367,12 +383,46 @@ export default function SearchPage() {
   }, [updateLocation]);
 
   const searchInput = (
-    <DiscoverySearchInput
-      value={searchQuery}
-      onSearchChange={setSearchQuery}
-      onLocationSelect={handleLocationSelect}
-      placeholder="Search buildings or places..."
-    />
+    <div className="flex gap-2">
+      <DiscoverySearchInput
+        value={searchQuery}
+        onSearchChange={setSearchQuery}
+        onLocationSelect={handleLocationSelect}
+        placeholder="Search buildings or places..."
+        className="flex-1"
+      />
+      <SearchFilters
+        statusFilters={statusFilters}
+        setStatusFilters={setStatusFilters}
+        hideVisited={hideVisited}
+        setHideVisited={setHideVisited}
+        hideSaved={hideSaved}
+        setHideSaved={setHideSaved}
+        hideHidden={hideHidden}
+        setHideHidden={setHideHidden}
+        hideWithoutImages={hideWithoutImages}
+        setHideWithoutImages={setHideWithoutImages}
+        personalMinRating={personalMinRating}
+        setPersonalMinRating={setPersonalMinRating}
+        contactMinRating={contactMinRating}
+        setContactMinRating={setContactMinRating}
+        filterContacts={filterContacts}
+        setFilterContacts={setFilterContacts}
+        selectedContacts={selectedContacts}
+        setSelectedContacts={setSelectedContacts}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        selectedTypologies={selectedTypologies}
+        setSelectedTypologies={setSelectedTypologies}
+        selectedAttributes={selectedAttributes}
+        setSelectedAttributes={setSelectedAttributes}
+        selectedArchitects={selectedArchitects}
+        setSelectedArchitects={setSelectedArchitects}
+        selectedCollections={selectedCollections}
+        setSelectedCollections={setSelectedCollections}
+        availableCollections={availableCollections}
+      />
+    </div>
   );
 
   return (
