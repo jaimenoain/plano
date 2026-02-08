@@ -1,19 +1,18 @@
 import { useState, useMemo, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { createPortal } from "react-dom";
-import MapGL, { Marker, NavigationControl, MapRef } from "react-map-gl";
+import MapGL, { Marker, NavigationControl, MapRef, Source, Layer, LayerProps } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X } from "lucide-react";
+import { Loader2, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useDebounce } from "@/hooks/use-debounce";
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import { CollectionMarkerCategory } from "@/types/collection";
 import { MarkerInfoCard } from "../collections/MarkerInfoCard";
-import { MarkerPin } from "./MarkerPin";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
-import { Bounds, getBoundsFromBuildings } from "@/utils/map";
-import Supercluster from "supercluster";
+import { Bounds } from "@/utils/map";
 
 // Constants
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -22,10 +21,8 @@ const CLUSTER_RADIUS = 30;
 const CLUSTER_MAX_ZOOM = 14;
 const APPROXIMATE_MIN_ZOOM = 15;
 const NULL_ISLAND_THRESHOLD = 0.00001;
-const THROTTLE_DELAY = 50;
 const MAP_ANIMATION_TIMEOUT = 3000; // Safety timeout for stuck animations
 const RESIZE_DELAY = 100;
-const CLUSTER_EXPANSION_DURATION = 500;
 const FLY_TO_DURATION = 1500;
 const IDEMPOTENCY_EPSILON = 0.0001;
 const DEFAULT_ZOOM = 12;
@@ -55,52 +52,6 @@ const SATELLITE_STYLE = {
 };
 
 // Types
-interface Building {
-  id: string;
-  name: string;
-  location_lat: number;
-  location_lng: number;
-  social_context?: string | null;
-  location_precision?: 'exact' | 'approximate';
-  main_image_url?: string | null;
-  color?: string | null;
-  isCandidate?: boolean;
-  isDimmed?: boolean;
-  isMarker?: boolean;
-  markerCategory?: CollectionMarkerCategory;
-  notes?: string | null;
-  address?: string | null;
-}
-
-interface ClusterFeature {
-  type: 'Feature';
-  id: number;
-  properties: {
-    cluster: true;
-    cluster_id: number;
-    point_count: number;
-    point_count_abbreviated: string;
-  };
-  geometry: {
-    type: 'Point';
-    coordinates: [number, number];
-  };
-}
-
-interface PointFeature {
-  type: 'Feature';
-  properties: Building & {
-    cluster: false;
-    buildingId: string;
-  };
-  geometry: {
-    type: 'Point';
-    coordinates: [number, number];
-  };
-}
-
-type SuperclusterFeature = ClusterFeature | PointFeature;
-
 export interface BuildingDiscoveryMapRef {
   flyTo: (center: { lat: number, lng: number }, zoom?: number) => void;
   fitBounds: (bounds: Bounds) => void;
@@ -146,53 +97,6 @@ function isValidCoordinate(lat: number, lng: number): boolean {
 }
 
 /**
- * Custom throttle hook with proper cleanup
- */
-function useThrottle<T extends (...args: any[]) => void>(
-  callback: T,
-  delay: number
-): T {
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const lastRunRef = useRef<number>(0);
-  const callbackRef = useRef(callback);
-
-  // Keep callback ref up to date
-  useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  return useCallback(
-    ((...args: Parameters<T>) => {
-      const now = Date.now();
-      const timeSinceLastRun = now - lastRunRef.current;
-
-      if (timeSinceLastRun >= delay) {
-        callbackRef.current(...args);
-        lastRunRef.current = now;
-      } else {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-        timeoutRef.current = setTimeout(() => {
-          callbackRef.current(...args);
-          lastRunRef.current = Date.now();
-        }, delay - timeSinceLastRun);
-      }
-    }) as T,
-    [delay]
-  );
-}
-
-/**
  * Simple hash function for consistent pseudo-random number generation
  * Uses Java's String.hashCode algorithm
  */
@@ -230,6 +134,80 @@ function getJitteredCoordinates(buildingId: string, lat: number, lng: number): [
   
   return [lng + lngOffset, lat + latOffset];
 }
+
+// Layer Styles
+const clusterLayer: LayerProps = {
+  id: 'clusters',
+  type: 'circle',
+  filter: ['has', 'point_count'],
+  paint: {
+    'circle-color': [
+      'case',
+      ['==', ['get', 'dimmed_count'], ['get', 'point_count']],
+      '#9ca3af', // gray-400 (dimmed)
+      '#EEFF41'  // Default primary (neon)
+    ],
+    'circle-radius': 20,
+    'circle-stroke-width': 2,
+    'circle-stroke-color': '#ffffff'
+  }
+};
+
+const clusterCountLayer: LayerProps = {
+  id: 'cluster-count',
+  type: 'symbol',
+  filter: ['has', 'point_count'],
+  layout: {
+    'text-field': '{point_count_abbreviated}',
+    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+    'text-size': 12
+  },
+  paint: {
+    'text-color': [
+        'case',
+        ['==', ['get', 'dimmed_count'], ['get', 'point_count']],
+        '#ffffff', // text-white for dimmed
+        '#000000'  // text-black for primary (neon background)
+    ]
+  }
+};
+
+const unclusteredPointLayer: LayerProps = {
+  id: 'unclustered-point',
+  type: 'circle',
+  filter: ['!', ['has', 'point_count']],
+  paint: {
+    'circle-color': [
+      'case',
+      ['boolean', ['get', 'isDimmed'], false],
+      '#f3f4f6', // gray-100 (dimmed fill)
+      ['match', ['get', 'status'],
+        'visited', '#4b5563', // gray-600
+        'pending', '#EEFF41', // Neon
+        // default (discovery)
+        '#ffffff' // fill-background (white)
+      ]
+    ],
+    'circle-radius': [
+      'case',
+      ['boolean', ['get', 'isDimmed'], false],
+      6,
+      8
+    ],
+    'circle-stroke-width': 2,
+    'circle-stroke-color': [
+      'case',
+      ['boolean', ['get', 'isDimmed'], false],
+      '#9ca3af', // gray-400
+      ['match', ['get', 'status'],
+        'visited', '#4b5563', // gray-600
+        'pending', '#6b7280', // gray-500
+        // default
+        '#6b7280' // gray-500
+      ]
+    ]
+  }
+};
 
 export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, BuildingDiscoveryMapProps>(({
   externalBuildings,
@@ -274,6 +252,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     longitude: -0.1278,
     zoom: DEFAULT_ZOOM
   });
+
+  const debouncedViewState = useDebounce(viewState, 500);
 
   // Track initial fit to prevent loops
   const hasInitialFitRef = useRef(false);
@@ -380,12 +360,12 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // Fetch internal buildings if no external buildings provided
   const { data: internalBuildings, isLoading: internalLoading, error: buildingsError } = useQuery({
-    queryKey: ["discovery-buildings"],
+    queryKey: ["discovery-buildings", debouncedViewState.latitude, debouncedViewState.longitude],
     queryFn: async () => {
       try {
         return await findNearbyBuildingsRpc({
-          lat: viewState.latitude,
-          long: viewState.longitude,
+          lat: debouncedViewState.latitude,
+          long: debouncedViewState.longitude,
           radius_meters: 500000, // 500km
           name_query: ""
         });
@@ -462,91 +442,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     retry: 2
   });
 
-  // Clustering logic
-  const supercluster = useMemo(() => {
-    return new Supercluster({
-      radius: CLUSTER_RADIUS,
-      maxZoom: CLUSTER_MAX_ZOOM
-    });
-  }, []);
-
-  // Memoized points with jittering
-  const points = useMemo(() => {
-    return cleanBuildings.map(b => {
-      let [lng, lat] = [b.location_lng, b.location_lat];
-
-      // Apply jitter for approximate locations
-      if (b.location_precision === 'approximate') {
-        [lng, lat] = getJitteredCoordinates(b.id, lat, lng);
-      }
-
-      // Sanitize properties for Worker safety
-      const safeProps: Record<string, any> = {};
-      const numericKeys = ['year_completed', 'year', 'distance', 'social_score', 'rating', 'short_id'];
-
-      Object.keys(b).forEach(key => {
-        const val = (b as any)[key];
-        if (val === null || val === undefined) {
-          if (numericKeys.includes(key)) {
-            safeProps[key] = 0;
-          } else {
-            safeProps[key] = "";
-          }
-        } else {
-          safeProps[key] = val;
-        }
-      });
-
-      // Ensure all numeric keys have fallback values
-      numericKeys.forEach(key => {
-        if (safeProps[key] === undefined) {
-          safeProps[key] = 0;
-        }
-      });
-
-      // Ensure ID is a string
-      safeProps.id = String(b.id);
-
-      return {
-        type: 'Feature' as const,
-        properties: { cluster: false, buildingId: b.id, ...safeProps },
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [lng, lat]
-        }
-      };
-    });
-  }, [cleanBuildings]);
-
-  const [clusters, setClusters] = useState<SuperclusterFeature[]>([]);
-  const viewStateRef = useRef(viewState);
-  viewStateRef.current = viewState;
-
-  // Throttled cluster update function
-  const updateClustersInternal = useCallback(() => {
-    if (!mapRef.current) {
-      return;
-    }
-    const bounds = mapRef.current.getBounds();
-    const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()] as [number, number, number, number];
-    const zoom = viewStateRef.current.zoom;
-    const newClusters = supercluster.getClusters(bbox, Math.round(zoom));
-
-    setClusters(newClusters);
-  }, [supercluster]);
-
-  const updateClusters = useThrottle(updateClustersInternal, THROTTLE_DELAY);
-
-  useEffect(() => {
-    supercluster.load(points);
-    updateClusters();
-  }, [points, supercluster, updateClusters]);
-
-  // Update clusters on map move
-  useEffect(() => {
-    updateClusters();
-  }, [viewState, updateClusters]);
-
   // Effect to latch userHasInteracted if auto-zoom is disabled externally
   useEffect(() => {
     if (!autoZoomOnLowCount) {
@@ -590,352 +485,224 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     };
   }, []);
 
-  // Render pins
-  const pins = useMemo(() => {
-    return clusters.map(cluster => {
-      const [longitude, latitude] = cluster.geometry.coordinates;
-      const { cluster: isCluster, point_count: pointCount } = cluster.properties;
+  const handleMapUpdate = useCallback((map: maplibregl.Map) => {
+    const bounds = map.getBounds();
+    onBoundsChange?.({
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest()
+    });
+    checkCandidatesVisibility(map);
+  }, [onBoundsChange, checkCandidatesVisibility]);
 
-      if (isCluster) {
-        // Check if all items in the cluster are dimmed
-        let leaves: PointFeature[] = [];
-        try {
-          leaves = supercluster.getLeaves((cluster as ClusterFeature).id, Infinity);
-        } catch (error) {
-          console.warn("⚠️ [Map] Cluster ID stale, skipping render.");
-          return null; // Skip rendering stale clusters
-        }
-        
-        if (leaves.length === 0) {
-          return null; // Skip empty clusters
-        }
+  // Prepare GeoJSON data
+  const points = useMemo(() => {
+    const features = cleanBuildings.map(b => {
+      let [lng, lat] = [b.location_lng, b.location_lat];
 
-        const isAllDimmed = leaves.every(l => l.properties.isDimmed);
-
-        return (
-          <Marker
-            key={`cluster-${(cluster as ClusterFeature).id}`}
-            longitude={longitude}
-            latitude={latitude}
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              setUserHasInteracted(true);
-              onMapInteraction?.();
-
-              let expansionZoom = Math.min(
-                supercluster.getClusterExpansionZoom((cluster as ClusterFeature).id),
-                20
-              );
-
-              // Check if this is a cluster of approximate locations
-              const isAllApproximate = leaves.every(l => l.properties.location_precision === 'approximate');
-
-              if (isAllApproximate) {
-                // Force zoom to a level where jitter is clearly visible
-                expansionZoom = Math.max(expansionZoom, APPROXIMATE_MIN_ZOOM);
-              }
-
-              if (expansionZoom <= viewState.zoom) {
-                expansionZoom = viewState.zoom + 2;
-              }
-
-              mapRef.current?.flyTo({
-                center: [longitude, latitude],
-                zoom: expansionZoom,
-                duration: CLUSTER_EXPANSION_DURATION
-              });
-            }}
-          >
-            <div
-              data-testid="cluster-marker"
-              className={`flex items-center justify-center w-10 h-10 rounded-full font-bold shadow-md border-2 border-background cursor-pointer transition-transform ${
-                isAllDimmed
-                  ? "bg-gray-400 text-white scale-90 opacity-70 hover:scale-100 hover:opacity-100"
-                  : "bg-primary text-primary-foreground hover:scale-110"
-              }`}
-            >
-              {pointCount}
-            </div>
-          </Marker>
-        );
+      // Apply jitter for approximate locations
+      if (b.location_precision === 'approximate') {
+        [lng, lat] = getJitteredCoordinates(b.id, lat, lng);
       }
 
-      // Leaf node - render individual building
-      const building = cluster.properties as Building & { buildingId: string };
-      const status = userBuildingsMap?.get(building.buildingId);
-      const isApproximate = building.location_precision === 'approximate';
-      const imageUrl = getBuildingImageUrl(building.main_image_url);
-      const isHighlighted = highlightedId === building.buildingId;
-      const isSelected = selectedPinId === building.buildingId;
-      const isDimmed = building.isDimmed && !isHighlighted && !isSelected;
+      const status = userBuildingsMap?.get(b.id) || null;
 
-      // Pin Protocol:
-      // Charcoal: Visited
-      // Neon (#EEFF41): Pending (Wishlist) & Social
-      // Grey/Default: Discovery
+      // Sanitize properties for safety
+      const safeProps: Record<string, any> = {
+          status,
+          isDimmed: b.isDimmed ? true : false,
+          isMarker: b.isMarker ? true : false,
+          location_precision: b.location_precision || 'exact',
+          // Add numeric props for potential clustering aggregation/filters
+          dimmed_count: b.isDimmed ? 1 : 0
+      };
 
-      let strokeClass = "text-gray-500";
-      let fillClass = "fill-background";
-      let dotBgClass = "bg-gray-500";
-      let pinTooltip = null;
+      const numericKeys = ['year_completed', 'year', 'distance', 'social_score', 'rating', 'short_id'];
 
-      if (status === 'visited') {
-        strokeClass = "text-gray-600";
-        fillClass = "fill-gray-600";
-        dotBgClass = "bg-gray-600";
-        pinTooltip = <span className="opacity-75 capitalize text-center">(Visited)</span>;
-      } else if (status === 'pending') {
-        strokeClass = "text-gray-500";
-        fillClass = "fill-[#EEFF41]";
-        dotBgClass = "bg-[#EEFF41]";
-        pinTooltip = <span className="opacity-75 capitalize text-center">(Pending)</span>;
-      } else if (building.social_context) {
-        strokeClass = "text-gray-500";
-        fillClass = "fill-gray-300";
-        dotBgClass = "bg-gray-300";
-        pinTooltip = <span className="opacity-90 text-center">({building.social_context})</span>;
-      }
-
-      if (isDimmed) {
-        strokeClass = "text-gray-400";
-        fillClass = "fill-gray-100";
-        dotBgClass = "bg-gray-300";
-      }
-
-      if (isSatellite) {
-        strokeClass = "text-white";
-      }
-
-      const pinColorClass = `${strokeClass} ${fillClass}`;
-      const dotBorderClass = isSatellite ? "border-white" : "border-background";
-
-      const scaleClass = isHighlighted 
-        ? "scale-125 z-50" 
-        : (isDimmed ? "scale-90 opacity-70 hover:scale-100 hover:opacity-100" : "hover:scale-110");
-      const markerClass = `cursor-pointer ${isHighlighted ? 'z-50' : (isDimmed ? 'z-0' : 'hover:z-10')}`;
-
-      // Proper color styling with fallbacks
-      const pinStyle: React.CSSProperties = (building.color && !isDimmed) 
-        ? { color: building.color, fill: building.color } 
-        : {};
-      const dotStyle: React.CSSProperties = (building.color && !isDimmed) 
-        ? { backgroundColor: building.color, borderColor: building.color } 
-        : {};
-
-      return (
-        <Marker
-          key={building.buildingId}
-          longitude={longitude}
-          latitude={latitude}
-          anchor={isApproximate ? "center" : "bottom"}
-          onClick={(e) => {
-            e.originalEvent.stopPropagation();
-
-            // Prevent navigation if clicking on an action button inside the tooltip
-            if ((e.originalEvent.target as HTMLElement).closest('button')) {
-              return;
-            }
-
-            const isTouch = window.matchMedia('(pointer: coarse)').matches;
-            const isPinSelected = isSelected || isHighlighted;
-
-            if (isTouch && !isPinSelected) {
-              // First tap on mobile: Select pin
-              setSelectedPinId(building.buildingId);
-              setUserHasInteracted(true);
-              onMapInteraction?.();
-              return;
-            }
-
-            // Otherwise (Desktop click OR Mobile second tap): Navigate
-            if (building.isMarker) {
-              setSelectedPinId(building.buildingId);
-            }
-
-            if (onMarkerClick) {
-              onMarkerClick(building.buildingId);
+      Object.keys(b).forEach(key => {
+        const val = (b as any)[key];
+        if (key !== 'id' && !safeProps.hasOwnProperty(key)) { // don't overwrite
+            if (val === null || val === undefined) {
+                if (numericKeys.includes(key)) {
+                    safeProps[key] = 0;
+                } else {
+                    safeProps[key] = "";
+                }
             } else {
-              // Security: Using window.location for internal navigation instead of window.open
-              const url = `/building/${building.buildingId}`;
-              if (window.location) {
-                window.open(url, '_blank', 'noopener,noreferrer');
-              }
+                safeProps[key] = val;
             }
-          }}
-          className={markerClass}
-        >
-          <div
-            data-testid={isApproximate ? "approximate-dot" : "exact-pin"}
-            className="group relative flex flex-col items-center"
-          >
-            {building.isMarker && isSelected ? (
-              <div
+        }
+      });
+
+      safeProps.id = String(b.id);
+      safeProps.buildingId = String(b.id);
+
+      return {
+        type: 'Feature' as const,
+        properties: safeProps,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [lng, lat]
+        }
+      };
+    });
+
+    return {
+        type: "FeatureCollection",
+        features
+    };
+  }, [cleanBuildings, userBuildingsMap]);
+
+  // Selected building logic
+  const selectedBuilding = useMemo(() => {
+      if (!selectedPinId) return null;
+      return cleanBuildings.find(b => b.id === selectedPinId);
+  }, [cleanBuildings, selectedPinId]);
+
+  // Tooltip Logic
+  const renderTooltip = () => {
+    if (!selectedBuilding) return null;
+
+    if (selectedBuilding.isMarker) {
+        // Custom User Marker
+        return (
+            <div
                 className="absolute bottom-full mb-2 z-50 cursor-default text-left"
                 onClick={e => e.stopPropagation()}
-              >
+            >
                 <MarkerInfoCard
-                  marker={building as unknown as DiscoveryBuilding}
-                  onClose={() => {
-                    if (isSelected) setSelectedPinId(null);
-                    onClosePopup?.();
-                  }}
-                  onUpdateNote={onUpdateMarkerNote}
-                  onDelete={onRemoveMarker}
+                    marker={selectedBuilding as unknown as DiscoveryBuilding}
+                    onClose={() => {
+                        setSelectedPinId(null);
+                        onClosePopup?.();
+                    }}
+                    onUpdateNote={onUpdateMarkerNote}
+                    onDelete={onRemoveMarker}
                 />
-              </div>
-            ) : (
-              <div
-                data-testid="building-tooltip"
-                className={`absolute bottom-full pb-2 ${isHighlighted || isSelected ? 'flex' : 'hidden group-hover:flex'} flex-col items-center whitespace-nowrap z-50`}
-              >
-                <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
-                  {showImages && imageUrl && (
-                    <div className="w-[200px] h-[200px]">
-                      <img src={imageUrl} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
-                    <span className="font-medium text-white text-center">{building.name}</span>
-                    {pinTooltip}
+            </div>
+        );
+    }
 
-                    <div className="flex items-center gap-2 mt-1">
-                      {onHide && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onHide(building.buildingId);
-                          }}
-                          className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
-                          title="Hide"
-                          aria-label="Hide building"
-                        >
-                          <EyeOff className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {onSave && !building.isMarker && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSave(building.buildingId);
-                          }}
-                          className={`p-1 rounded-full transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white ${status === 'pending' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-                          title="Save"
-                          aria-label="Save building"
-                        >
-                          <Bookmark className={`w-3.5 h-3.5 ${status === 'pending' ? 'fill-current' : ''}`} />
-                        </button>
-                      )}
-                      {onVisit && !building.isMarker && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onVisit(building.buildingId);
-                          }}
-                          className={`p-1 rounded-full transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white ${status === 'visited' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-                          title="Mark as Visited"
-                          aria-label="Mark as visited"
-                        >
-                          <CheckSquare className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
+    // Discovery Building Tooltip
+    const imageUrl = getBuildingImageUrl(selectedBuilding.main_image_url);
+    const status = userBuildingsMap?.get(selectedBuilding.id);
+    let pinTooltip = null;
+    if (status === 'visited') {
+        pinTooltip = <span className="opacity-75 capitalize text-center">(Visited)</span>;
+    } else if (status === 'pending') {
+        pinTooltip = <span className="opacity-75 capitalize text-center">(Pending)</span>;
+    } else if (selectedBuilding.social_context) {
+        pinTooltip = <span className="opacity-90 text-center">({selectedBuilding.social_context})</span>;
+    }
 
-                    {building.isCandidate && (
-                      <div className="flex items-center justify-center gap-2 mt-1">
-                        {onHideCandidate && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onHideCandidate(building.buildingId);
-                            }}
-                            className="bg-white/10 text-white rounded-full p-1 hover:bg-white/20 transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
-                            title="Hide suggestion"
-                            aria-label="Hide suggestion"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
-                        {onAddCandidate && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onAddCandidate(building as unknown as DiscoveryBuilding);
-                            }}
-                            className="bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
-                            title="Add to map"
-                            aria-label="Add to map"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {!building.isCandidate && onRemoveItem && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemoveItem(building.buildingId);
-                        }}
-                        className="mt-1 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
-                        title="Remove from map"
-                        aria-label="Remove from map"
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
+    return (
+        <div
+            data-testid="building-tooltip"
+            className="absolute bottom-full pb-2 flex flex-col items-center whitespace-nowrap z-50"
+            onClick={e => e.stopPropagation()}
+        >
+            <div className="flex flex-col items-center bg-[#333333] rounded shadow-lg border border-[#EEFF41] overflow-hidden">
+                {showImages && imageUrl && (
+                <div className="w-[200px] h-[200px]">
+                    <img src={imageUrl} alt="" className="w-full h-full object-cover" />
                 </div>
-                <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
-              </div>
-            )}
+                )}
+                <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
+                <span className="font-medium text-white text-center">{selectedBuilding.name}</span>
+                {pinTooltip}
 
-            {isApproximate ? (
-              <div
-                className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-md transition-transform ${scaleClass}`}
-                style={dotStyle}
-              />
-            ) : building.isMarker ? (
-              <div className={`relative transition-transform ${scaleClass}`}>
-                <MarkerPin
-                  category={building.markerCategory}
-                  color={building.color || undefined}
-                />
-              </div>
-            ) : (
-              <div className={`relative transition-transform ${scaleClass}`}>
-                <MapPin
-                  className={`${isDimmed ? 'w-6 h-6' : 'w-8 h-8'} ${pinColorClass} drop-shadow-md`}
-                  style={pinStyle}
-                />
-                {/* White dot overlay to keep inner circle white when pin is filled */}
-                <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
-              </div>
-            )}
-          </div>
-        </Marker>
-      );
-    }).filter(Boolean); // Remove null entries from stale clusters
-  }, [
-    clusters,
-    userBuildingsMap,
-    supercluster,
-    onMapInteraction,
-    viewState.zoom,
-    highlightedId,
-    onMarkerClick,
-    isSatellite,
-    selectedPinId,
-    onAddCandidate,
-    onRemoveItem,
-    onHide,
-    onHideCandidate,
-    onSave,
-    onVisit,
-    showImages,
-    onUpdateMarkerNote,
-    onRemoveMarker,
-    onClosePopup
-  ]);
+                <div className="flex items-center gap-2 mt-1">
+                    {onHide && (
+                    <button
+                        onClick={(e) => {
+                        e.stopPropagation();
+                        onHide(selectedBuilding.id);
+                        }}
+                        className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
+                        title="Hide"
+                        aria-label="Hide building"
+                    >
+                        <EyeOff className="w-3.5 h-3.5" />
+                    </button>
+                    )}
+                    {onSave && !selectedBuilding.isMarker && (
+                    <button
+                        onClick={(e) => {
+                        e.stopPropagation();
+                        onSave(selectedBuilding.id);
+                        }}
+                        className={`p-1 rounded-full transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white ${status === 'pending' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                        title="Save"
+                        aria-label="Save building"
+                    >
+                        <Bookmark className={`w-3.5 h-3.5 ${status === 'pending' ? 'fill-current' : ''}`} />
+                    </button>
+                    )}
+                    {onVisit && !selectedBuilding.isMarker && (
+                    <button
+                        onClick={(e) => {
+                        e.stopPropagation();
+                        onVisit(selectedBuilding.id);
+                        }}
+                        className={`p-1 rounded-full transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white ${status === 'visited' ? 'bg-[#EEFF41] text-black hover:bg-[#EEFF41]/80' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                        title="Mark as Visited"
+                        aria-label="Mark as visited"
+                    >
+                        <CheckSquare className="w-3.5 h-3.5" />
+                    </button>
+                    )}
+                </div>
+
+                {selectedBuilding.isCandidate && (
+                    <div className="flex items-center justify-center gap-2 mt-1">
+                    {onHideCandidate && (
+                        <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onHideCandidate(selectedBuilding.id);
+                        }}
+                        className="bg-white/10 text-white rounded-full p-1 hover:bg-white/20 transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
+                        title="Hide suggestion"
+                        aria-label="Hide suggestion"
+                    >
+                        <X className="w-4 h-4" />
+                        </button>
+                    )}
+                    {onAddCandidate && (
+                        <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onAddCandidate(selectedBuilding as unknown as DiscoveryBuilding);
+                        }}
+                        className="bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
+                        title="Add to map"
+                        aria-label="Add to map"
+                    >
+                        <Plus className="w-4 h-4" />
+                        </button>
+                    )}
+                    </div>
+                )}
+                {!selectedBuilding.isCandidate && onRemoveItem && (
+                    <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveItem(selectedBuilding.id);
+                    }}
+                    className="mt-1 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors z-[60] focus-visible:ring-2 focus-visible:ring-white"
+                    title="Remove from map"
+                    aria-label="Remove from map"
+                    >
+                    <Check className="w-4 h-4" />
+                    </button>
+                )}
+                </div>
+            </div>
+            <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
+        </div>
+    );
+  };
 
   // Error state display
   if (buildingsError || userBuildingsError) {
@@ -956,17 +723,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       </div>
     );
   }
-
-  const handleMapUpdate = useCallback((map: maplibregl.Map) => {
-    const bounds = map.getBounds();
-    onBoundsChange?.({
-      north: bounds.getNorth(),
-      south: bounds.getSouth(),
-      east: bounds.getEast(),
-      west: bounds.getWest()
-    });
-    checkCandidatesVisibility(map);
-  }, [onBoundsChange, checkCandidatesVisibility]);
 
   const mapContent = (
     <div
@@ -1034,12 +790,89 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
           onRegionChange?.({ lat: latitude, lng: longitude });
           handleMapUpdate(evt.target);
         }}
+        interactiveLayerIds={['clusters', 'unclustered-point']}
+        onMouseEnter={(e) => {
+            // Change cursor to pointer
+            if (mapRef.current) mapRef.current.getCanvas().style.cursor = 'pointer';
+        }}
+        onMouseLeave={() => {
+            if (mapRef.current) mapRef.current.getCanvas().style.cursor = '';
+        }}
+        onClick={(e) => {
+             const feature = e.features?.[0];
+             if (!feature) return;
+
+             const clusterId = feature.properties?.cluster_id;
+
+             if (feature.layer.id === 'clusters') {
+                 const mapboxSource = mapRef.current?.getMap().getSource('buildings') as maplibregl.GeoJSONSource;
+
+                 mapboxSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
+                     if (err) return;
+
+                     mapRef.current?.flyTo({
+                         center: (feature.geometry as any).coordinates,
+                         zoom: zoom || DEFAULT_ZOOM,
+                         duration: 500
+                     });
+                 });
+
+                 setUserHasInteracted(true);
+                 onMapInteraction?.();
+                 e.originalEvent.stopPropagation();
+             } else if (feature.layer.id === 'unclustered-point') {
+                 const buildingId = feature.properties?.buildingId;
+                 setSelectedPinId(buildingId);
+
+                 if (onMarkerClick) {
+                     onMarkerClick(buildingId);
+                 } else {
+                     const url = `/building/${buildingId}`;
+                     if (window.location) {
+                         window.open(url, '_blank', 'noopener,noreferrer');
+                     }
+                 }
+
+                 setUserHasInteracted(true);
+                 onMapInteraction?.();
+                 e.originalEvent.stopPropagation();
+             }
+        }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
         mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
       >
         <NavigationControl position="bottom-right" />
-        {pins}
+
+        <Source
+            id="buildings"
+            type="geojson"
+            data={points as any} // Cast because TS sometimes complains about FeatureCollection strictness
+            cluster={true}
+            clusterMaxZoom={CLUSTER_MAX_ZOOM}
+            clusterRadius={CLUSTER_RADIUS}
+            clusterProperties={{
+                dimmed_count: ['+', ['case', ['boolean', ['get', 'isDimmed'], false], 1, 0]]
+            }}
+        >
+            <Layer {...clusterLayer} />
+            <Layer {...clusterCountLayer} />
+            <Layer {...unclusteredPointLayer} />
+        </Source>
+
+        {/* Selected Building Marker (Interactive Overlay) */}
+        {selectedBuilding && (
+            <Marker
+                longitude={selectedBuilding.location_lng}
+                latitude={selectedBuilding.location_lat}
+                anchor="bottom"
+            >
+                {renderTooltip()}
+                {/* Visual anchor for the popup */}
+                <div className="w-2 h-2 bg-transparent" />
+            </Marker>
+        )}
+
       </MapGL>
 
       {showSavedCandidates && candidates.length > 0 && !hasVisibleCandidates && (
