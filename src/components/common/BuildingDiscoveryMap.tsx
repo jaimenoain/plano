@@ -266,6 +266,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   // State to track user interaction to disable auto-zoom
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [isMapMoving, setIsMapMoving] = useState(false);
+  const isMapMovingRef = useRef(false);
   const mapMovingTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Default view state (London)
@@ -287,6 +288,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       mapMovingTimeoutRef.current = setTimeout(() => {
         console.warn('Map animation timeout - resetting isMapMoving');
         setIsMapMoving(false);
+        isMapMovingRef.current = false;
       }, MAP_ANIMATION_TIMEOUT);
     }
     
@@ -307,7 +309,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         // Ignore
     }
 
-    if (isMapMoving) {
+    if (isMapMovingRef.current) {
       return;
     }
 
@@ -337,7 +339,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       ],
       { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: FLY_TO_DURATION, maxZoom: 19 }
     );
-  }, [isMapMoving]);
+  }, []);
 
   // Handle forced bounds updates
   useEffect(() => {
@@ -351,7 +353,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       // Stop any current movement before flying
       mapRef.current?.getMap().stop();
 
-      if (isMapMoving) {
+      if (isMapMovingRef.current) {
         return;
       }
 
@@ -376,7 +378,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       });
     },
     fitBounds: fitMapBounds
-  }), [isMapMoving, fitMapBounds]);
+  }), [fitMapBounds]);
 
   // Fetch internal buildings if no external buildings provided
   const { data: internalBuildings, isLoading: internalLoading, error: buildingsError } = useQuery({
@@ -1018,6 +1020,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         }}
         onMoveStart={(evt) => {
           setIsMapMoving(true);
+          isMapMovingRef.current = true;
           if (evt.originalEvent) {
             setUserHasInteracted(true);
             onMapInteraction?.();
@@ -1029,6 +1032,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         }}
         onMoveEnd={evt => {
           setIsMapMoving(false);
+          isMapMovingRef.current = false;
           const { latitude, longitude } = evt.viewState;
 
           onRegionChange?.({ lat: latitude, lng: longitude });
