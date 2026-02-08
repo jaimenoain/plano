@@ -35,8 +35,8 @@ export function BottomNav() {
               aria-label={label}
               className={cn(
                 "flex flex-col items-center justify-center gap-1.5 transition-all duration-300 relative",
-                // Minimum touch target width for accessibility
-                "min-w-[64px] min-h-[64px] rounded-xl",
+                // Minimum touch target width for accessibility, flex-1 allows shrinking on small screens
+                "flex-1 min-w-0 min-h-[64px] rounded-xl",
                 isActive 
                   ? (isExplore ? "text-[#EEFF41]" : "text-primary")
                   : (isExplore ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-primary")
