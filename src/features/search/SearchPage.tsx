@@ -8,6 +8,7 @@ import { useBuildingSearch } from "./hooks/useBuildingSearch";
 import { getBoundsFromBuildings } from "@/utils/map";
 import { DiscoveryList } from "./components/DiscoveryList";
 import { DiscoveryBuilding } from "./components/types";
+import { DiscoverySearchInput } from "./components/DiscoverySearchInput";
 import { Button } from "@/components/ui/button";
 import { Map as MapIcon, List as ListIcon, AlertCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
@@ -69,16 +70,19 @@ function ListSidebar({
   isLoading, 
   onBuildingClick, 
   searchQuery,
-  className 
+  className,
+  header
 }: {
   buildings: DiscoveryBuilding[];
   isLoading: boolean;
   onBuildingClick?: (building: DiscoveryBuilding) => void;
   searchQuery: string;
   className?: string;
+  header?: React.ReactNode;
 }) {
   return (
     <div className={className}>
+      {header && <div className="p-4 border-b">{header}</div>}
       <DiscoveryList
         buildings={buildings}
         isLoading={isLoading}
@@ -99,6 +103,7 @@ export default function SearchPage() {
     isLoading,
     isFetching,
     searchQuery,
+    setSearchQuery,
     updateLocation,
     statusFilters,
     hideVisited,
@@ -354,8 +359,30 @@ export default function SearchPage() {
     setHighlightedBuildingId(null);
   }, []);
 
+  const handleLocationSelect = useCallback((location: { lat: number; lng: number }) => {
+    updateLocation(location);
+    if (mapRef.current) {
+      mapRef.current.flyTo(location, 14);
+    }
+  }, [updateLocation]);
+
+  const searchInput = (
+    <DiscoverySearchInput
+      value={searchQuery}
+      onSearchChange={setSearchQuery}
+      onLocationSelect={handleLocationSelect}
+      placeholder="Search buildings or places..."
+    />
+  );
+
   return (
-    <AppLayout isFullScreen={true} showHeader={false} showNav={false}>
+    <AppLayout
+      isFullScreen={true}
+      showHeader={true}
+      showNav={false}
+      variant="map"
+      searchBar={searchInput}
+    >
       <div
         data-testid="search-page-wrapper"
         className={`relative flex flex-col h-full transition-all duration-300 ease-in-out`}
@@ -367,6 +394,7 @@ export default function SearchPage() {
           onBuildingClick={onBuildingClickAdapter}
           searchQuery={searchQuery}
           className="hidden md:block w-[400px] bg-white border-r border-gray-200 overflow-y-auto h-full absolute left-0 top-0 z-[5] shadow-lg"
+          header={searchInput}
         />
 
         {/* Mobile View Toggle */}
@@ -400,7 +428,7 @@ export default function SearchPage() {
             isLoading={isLoading}
             onBuildingClick={onBuildingClickAdapter}
             searchQuery={searchQuery}
-            className="absolute inset-0 bg-white z-40 overflow-y-auto pt-16 pb-20"
+            className="absolute inset-0 bg-white z-40 overflow-y-auto pb-20"
           />
         )}
 
