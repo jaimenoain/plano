@@ -18,7 +18,7 @@ import Supercluster from "supercluster";
 // Constants
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const JITTER_MULTIPLIER = 0.005;
-const CLUSTER_RADIUS = 30;
+const CLUSTER_RADIUS = 60;
 const CLUSTER_MAX_ZOOM = 14;
 const APPROXIMATE_MIN_ZOOM = 15;
 const NULL_ISLAND_THRESHOLD = 0.00001;
@@ -592,76 +592,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // Render pins
   const pins = useMemo(() => {
-    return clusters.map(cluster => {
-      const [longitude, latitude] = cluster.geometry.coordinates;
-      const { cluster: isCluster, point_count: pointCount } = cluster.properties;
-
-      if (isCluster) {
-        // Check if all items in the cluster are dimmed
-        let leaves: PointFeature[] = [];
-        try {
-          leaves = supercluster.getLeaves((cluster as ClusterFeature).id, Infinity);
-        } catch (error) {
-          console.warn("⚠️ [Map] Cluster ID stale, skipping render.");
-          return null; // Skip rendering stale clusters
-        }
-        
-        if (leaves.length === 0) {
-          return null; // Skip empty clusters
-        }
-
-        const isAllDimmed = leaves.every(l => l.properties.isDimmed);
-
-        return (
-          <Marker
-            key={`cluster-${(cluster as ClusterFeature).id}`}
-            longitude={longitude}
-            latitude={latitude}
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              setUserHasInteracted(true);
-              onMapInteraction?.();
-
-              let expansionZoom = Math.min(
-                supercluster.getClusterExpansionZoom((cluster as ClusterFeature).id),
-                20
-              );
-
-              // Check if this is a cluster of approximate locations
-              const isAllApproximate = leaves.every(l => l.properties.location_precision === 'approximate');
-
-              if (isAllApproximate) {
-                // Force zoom to a level where jitter is clearly visible
-                expansionZoom = Math.max(expansionZoom, APPROXIMATE_MIN_ZOOM);
-              }
-
-              if (expansionZoom <= viewState.zoom) {
-                expansionZoom = viewState.zoom + 2;
-              }
-
-              mapRef.current?.flyTo({
-                center: [longitude, latitude],
-                zoom: expansionZoom,
-                duration: CLUSTER_EXPANSION_DURATION
-              });
-            }}
-          >
-            <div
-              data-testid="cluster-marker"
-              className={`flex items-center justify-center w-10 h-10 rounded-full font-bold shadow-md border-2 border-background cursor-pointer transition-transform ${
-                isAllDimmed
-                  ? "bg-gray-400 text-white scale-90 opacity-70 hover:scale-100 hover:opacity-100"
-                  : "bg-primary text-primary-foreground hover:scale-110"
-              }`}
-            >
-              {pointCount}
-            </div>
-          </Marker>
-        );
-      }
-
-      // Leaf node - render individual building
-      const building = cluster.properties as Building & { buildingId: string };
+    // Helper to render a single building marker
+    const renderBuildingMarker = (building: Building & { buildingId: string }, longitude: number, latitude: number) => {
       const status = userBuildingsMap?.get(building.buildingId);
       const isApproximate = building.location_precision === 'approximate';
       const imageUrl = getBuildingImageUrl(building.main_image_url);
@@ -914,6 +846,93 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
           </div>
         </Marker>
       );
+    };
+
+    return clusters.flatMap(cluster => {
+      const [longitude, latitude] = cluster.geometry.coordinates;
+      const { cluster: isCluster, point_count: pointCount } = cluster.properties;
+
+      if (isCluster) {
+        let leaves: PointFeature[] = [];
+        try {
+          leaves = supercluster.getLeaves((cluster as ClusterFeature).id, Infinity);
+        } catch (error) {
+          console.warn("⚠️ [Map] Cluster ID stale, skipping render.");
+          return [];
+        }
+
+        if (leaves.length === 0) {
+          return [];
+        }
+
+        // Dynamic declustering logic for small clusters
+        if (pointCount <= 9 && mapRef.current && isMapLoaded) {
+          const map = mapRef.current.getMap();
+          const center = map.project([longitude, latitude]);
+
+          const isTooSpread = leaves.some(leaf => {
+            const leafPos = map.project([leaf.geometry.coordinates[0], leaf.geometry.coordinates[1]]);
+            const dist = Math.sqrt(Math.pow(leafPos.x - center.x, 2) + Math.pow(leafPos.y - center.y, 2));
+            return dist > 30; // 30px threshold
+          });
+
+          if (isTooSpread) {
+            return leaves.map(leaf => renderBuildingMarker(leaf.properties, leaf.geometry.coordinates[0], leaf.geometry.coordinates[1]));
+          }
+        }
+
+        const isAllDimmed = leaves.every(l => l.properties.isDimmed);
+
+        return (
+          <Marker
+            key={`cluster-${(cluster as ClusterFeature).id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setUserHasInteracted(true);
+              onMapInteraction?.();
+
+              let expansionZoom = Math.min(
+                supercluster.getClusterExpansionZoom((cluster as ClusterFeature).id),
+                20
+              );
+
+              // Check if this is a cluster of approximate locations
+              const isAllApproximate = leaves.every(l => l.properties.location_precision === 'approximate');
+
+              if (isAllApproximate) {
+                // Force zoom to a level where jitter is clearly visible
+                expansionZoom = Math.max(expansionZoom, APPROXIMATE_MIN_ZOOM);
+              }
+
+              if (expansionZoom <= viewState.zoom) {
+                expansionZoom = viewState.zoom + 2;
+              }
+
+              mapRef.current?.flyTo({
+                center: [longitude, latitude],
+                zoom: expansionZoom,
+                duration: CLUSTER_EXPANSION_DURATION
+              });
+            }}
+          >
+            <div
+              data-testid="cluster-marker"
+              className={`flex items-center justify-center w-10 h-10 rounded-full font-bold shadow-md border-2 border-background cursor-pointer transition-transform ${
+                isAllDimmed
+                  ? "bg-gray-400 text-white scale-90 opacity-70 hover:scale-100 hover:opacity-100"
+                  : "bg-primary text-primary-foreground hover:scale-110"
+              }`}
+            >
+              {pointCount}
+            </div>
+          </Marker>
+        );
+      }
+
+      // Leaf node - render individual building
+      return renderBuildingMarker(cluster.properties as Building & { buildingId: string }, longitude, latitude);
     }).filter(Boolean); // Remove null entries from stale clusters
   }, [
     clusters,
@@ -934,7 +953,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     showImages,
     onUpdateMarkerNote,
     onRemoveMarker,
-    onClosePopup
+    onClosePopup,
+    isMapLoaded
   ]);
 
   // Error state display
