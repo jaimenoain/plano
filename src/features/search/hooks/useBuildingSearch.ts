@@ -39,7 +39,7 @@ interface ContactInteractionData {
 const EARTH_RADIUS_METERS = 6371000; // Earth's radius in meters
 const VALID_LOCATION_THRESHOLD = 0.0001; // Threshold for filtering invalid (0,0) coordinates
 const DEFAULT_SEARCH_RADIUS = 20000000; // 20,000 km in meters
-const DEFAULT_SEARCH_LIMIT = 500;
+const DEFAULT_SEARCH_LIMIT = 5000;
 
 // Helper to calculate Haversine distance in meters
 function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number): number {
