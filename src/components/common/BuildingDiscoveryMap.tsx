@@ -127,6 +127,7 @@ interface BuildingDiscoveryMapProps {
   onRemoveMarker?: (id: string) => void;
   onClosePopup?: () => void;
   showSavedCandidates?: boolean;
+  forcedBounds?: Bounds | null;
 }
 
 // Utility Functions
@@ -250,13 +251,15 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   onUpdateMarkerNote,
   onRemoveMarker,
   onClosePopup,
-  showSavedCandidates
+  showSavedCandidates,
+  forcedBounds
 }, ref) => {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [hasVisibleCandidates, setHasVisibleCandidates] = useState(true);
   const [mapStyleError, setMapStyleError] = useState(false);
 
@@ -294,6 +297,55 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     };
   }, [isMapMoving]);
 
+  const fitMapBounds = useCallback((bounds: Bounds) => {
+    if (!mapRef.current) return;
+
+    // Stop any current movement before fitting bounds
+    try {
+        mapRef.current.getMap().stop();
+    } catch (e) {
+        // Ignore
+    }
+
+    if (isMapMoving) {
+      return;
+    }
+
+    if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) {
+      return;
+    }
+
+    // Idempotency Check
+    const currentBounds = mapRef.current.getBounds();
+    const ne = currentBounds.getNorthEast();
+    const sw = currentBounds.getSouthWest();
+
+    const isSame =
+      Math.abs(ne.lat - bounds.north) < IDEMPOTENCY_EPSILON &&
+      Math.abs(ne.lng - bounds.east) < IDEMPOTENCY_EPSILON &&
+      Math.abs(sw.lat - bounds.south) < IDEMPOTENCY_EPSILON &&
+      Math.abs(sw.lng - bounds.west) < IDEMPOTENCY_EPSILON;
+
+    if (isSame) {
+      return;
+    }
+
+    mapRef.current.fitBounds(
+      [
+        [bounds.west, bounds.south],
+        [bounds.east, bounds.north]
+      ],
+      { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: FLY_TO_DURATION, maxZoom: 19 }
+    );
+  }, [isMapMoving]);
+
+  // Handle forced bounds updates
+  useEffect(() => {
+    if (forcedBounds && isMapLoaded) {
+      fitMapBounds(forcedBounds);
+    }
+  }, [forcedBounds, isMapLoaded, fitMapBounds]);
+
   useImperativeHandle(ref, () => ({
     flyTo: (center, zoom) => {
       // Stop any current movement before flying
@@ -323,44 +375,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         duration: FLY_TO_DURATION
       });
     },
-    fitBounds: (bounds) => {
-      // Stop any current movement before fitting bounds
-      mapRef.current?.getMap().stop();
-
-      if (isMapMoving) {
-        return;
-      }
-
-      if (!bounds || !Number.isFinite(bounds.north) || !Number.isFinite(bounds.west)) {
-        return;
-      }
-
-      // Idempotency Check
-      if (mapRef.current) {
-        const currentBounds = mapRef.current.getBounds();
-        const ne = currentBounds.getNorthEast();
-        const sw = currentBounds.getSouthWest();
-
-        const isSame =
-          Math.abs(ne.lat - bounds.north) < IDEMPOTENCY_EPSILON &&
-          Math.abs(ne.lng - bounds.east) < IDEMPOTENCY_EPSILON &&
-          Math.abs(sw.lat - bounds.south) < IDEMPOTENCY_EPSILON &&
-          Math.abs(sw.lng - bounds.west) < IDEMPOTENCY_EPSILON;
-
-        if (isSame) {
-          return;
-        }
-      }
-
-      mapRef.current?.fitBounds(
-        [
-          [bounds.west, bounds.south],
-          [bounds.east, bounds.north]
-        ],
-        { padding: { top: 80, bottom: 40, left: 40, right: 40 }, duration: FLY_TO_DURATION, maxZoom: 19 }
-      );
-    }
-  }), [isMapMoving]);
+    fitBounds: fitMapBounds
+  }), [isMapMoving, fitMapBounds]);
 
   // Fetch internal buildings if no external buildings provided
   const { data: internalBuildings, isLoading: internalLoading, error: buildingsError } = useQuery({
@@ -1008,6 +1024,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
           }
         }}
         onLoad={evt => {
+          setIsMapLoaded(true);
           handleMapUpdate(evt.target);
         }}
         onMoveEnd={evt => {
