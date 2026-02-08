@@ -143,6 +143,9 @@ export default function SearchPage() {
   const [highlightedBuildingId, setHighlightedBuildingId] = useState<string | null>(null);
   const [searchTriggerVersion, setSearchTriggerVersion] = useState(0);
 
+  // Community Quality Filter (Local state for now)
+  const [communityQuality, setCommunityQuality] = useState(0);
+
   // Refs for managing programmatic moves and region updates
   const regionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const userHasMovedMap = useRef(false);
@@ -421,6 +424,9 @@ export default function SearchPage() {
         selectedCollections={selectedCollections}
         setSelectedCollections={setSelectedCollections}
         availableCollections={availableCollections}
+        communityQuality={communityQuality}
+        setCommunityQuality={setCommunityQuality}
+        resultCount={safeBuildings.length}
       />
     </div>
   );
