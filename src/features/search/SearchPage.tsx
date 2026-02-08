@@ -211,9 +211,6 @@ export default function SearchPage() {
     );
   }, [buildings]);
 
-  // Derived state to control map behavior
-  const searchMode = searchQuery ? 'global' : 'explore';
-
   // Mutation for updating building status
   const { mutate: updateBuildingStatus } = useMutation({
     mutationFn: async ({ 
@@ -244,7 +241,7 @@ export default function SearchPage() {
 
   /**
    * Handle region changes from map interactions
-   * Only updates location in explore mode and ignores programmatic moves
+   * Updates location on map move to allow search in new area
    */
   const handleRegionChange = useCallback((center: { lat: number; lng: number }) => {
     // Ignore updates triggered by programmatic moves (e.g., list clicks)
@@ -253,16 +250,14 @@ export default function SearchPage() {
       return;
     }
 
-    if (searchMode === 'explore') {
-      if (regionUpdateTimeoutRef.current) {
-        clearTimeout(regionUpdateTimeoutRef.current);
-      }
-      
-      regionUpdateTimeoutRef.current = setTimeout(() => {
-        updateLocation(center);
-      }, REGION_UPDATE_DELAY);
+    if (regionUpdateTimeoutRef.current) {
+      clearTimeout(regionUpdateTimeoutRef.current);
     }
-  }, [searchMode, updateLocation]);
+
+    regionUpdateTimeoutRef.current = setTimeout(() => {
+      updateLocation(center);
+    }, REGION_UPDATE_DELAY);
+  }, [updateLocation]);
 
   /**
    * Track when user manually interacts with map
