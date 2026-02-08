@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('search page content shifts when sidebar is expanded', async ({ page }) => {
+test('search page content remains stable when sidebar is expanded', async ({ page }) => {
   page.on('console', msg => console.log(`CONSOLE: ${msg.text()}`));
   page.on('pageerror', exception => console.log(`Uncaught exception: "${exception}"`));
 
@@ -83,8 +83,8 @@ test('search page content shifts when sidebar is expanded', async ({ page }) => 
   const expandedMargin = await getMarginLeft();
   console.log('Expanded Margin:', expandedMargin);
 
-  // Should be approx 13rem = 208px
-  expect(parseInt(expandedMargin)).toBeGreaterThan(150);
+  // Should remain 0px (no shift)
+  expect(expandedMargin).toBe(initialMargin);
 });
 
 test('search page content does not shift on mobile', async ({ page }) => {
