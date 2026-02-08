@@ -128,6 +128,7 @@ interface BuildingDiscoveryMapProps {
   onClosePopup?: () => void;
   showSavedCandidates?: boolean;
   forcedBounds?: Bounds | null;
+  onMapLoad?: () => void;
 }
 
 // Utility Functions
@@ -252,7 +253,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   onRemoveMarker,
   onClosePopup,
   showSavedCandidates,
-  forcedBounds
+  forcedBounds,
+  onMapLoad
 }, ref) => {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
@@ -1049,6 +1051,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         onLoad={evt => {
           setIsMapLoaded(true);
           handleMapUpdate(evt.target);
+          onMapLoad?.();
         }}
         onMoveEnd={evt => {
           setIsMapMoving(false);

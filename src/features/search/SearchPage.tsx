@@ -106,6 +106,7 @@ export default function SearchPage() {
     searchQuery,
     setSearchQuery,
     updateLocation,
+    gpsLocation,
     statusFilters,
     hideVisited,
     hideSaved,
@@ -142,6 +143,9 @@ export default function SearchPage() {
   // State for highlighted building
   const [highlightedBuildingId, setHighlightedBuildingId] = useState<string | null>(null);
   const [searchTriggerVersion, setSearchTriggerVersion] = useState(0);
+
+  // Track map loading state
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Community Quality Filter (Local state for now)
   const [communityQuality, setCommunityQuality] = useState(0);
@@ -290,6 +294,17 @@ export default function SearchPage() {
       userHasMovedMap.current = false;
     }
   }, [searchQuery]);
+
+  /**
+   * Fly to user's location when GPS becomes available,
+   * provided the user hasn't moved the map yet and isn't searching.
+   */
+  useEffect(() => {
+    if (mapLoaded && gpsLocation && !userHasMovedMap.current && !searchQuery) {
+      debug.log('📍 [GPS] Flying to user location:', gpsLocation);
+      mapRef.current?.flyTo(gpsLocation, 14);
+    }
+  }, [mapLoaded, gpsLocation, searchQuery]);
 
   /**
    * Cleanup timeouts on unmount
@@ -519,6 +534,7 @@ export default function SearchPage() {
                 onVisit={handleVisit}
                 onHide={handleHide}
                 onClosePopup={handleClosePopup}
+                onMapLoad={() => setMapLoaded(true)}
               />
             </Suspense>
           </ErrorBoundary>
