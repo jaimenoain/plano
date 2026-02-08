@@ -16,7 +16,7 @@ import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import Supercluster from "supercluster";
 
 // Constants
-const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const JITTER_MULTIPLIER = 0.005;
 const CLUSTER_RADIUS = 30;
 const CLUSTER_MAX_ZOOM = 14;
