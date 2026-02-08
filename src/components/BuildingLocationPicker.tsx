@@ -28,7 +28,7 @@ interface BuildingLocationPickerProps {
   }) => void;
 }
 
-const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 const SATELLITE_STYLE = {
   version: 8,
