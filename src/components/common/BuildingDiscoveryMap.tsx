@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import MapGL, { Marker, NavigationControl, MapRef, Source, Layer, LayerProps, MapLayerMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Loader2, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding, DiscoveryBuildingMapPin, MapItem, ClusterPoint, BuildingPoint } from "@/features/search/components/types";
@@ -360,11 +360,12 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: !externalBuildings,
     retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    placeholderData: keepPreviousData
   });
 
   const buildings = externalBuildings || internalBuildings || [];
-  const isLoading = externalBuildings ? false : internalLoading;
+  const initialLoading = externalBuildings ? false : internalLoading;
 
   // Validation logic
   const cleanBuildings = useMemo(() => {
@@ -946,7 +947,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     console.warn("[BuildingDiscoveryMap] Failed to load user data, proceeding without it.", userBuildingsError);
   }
 
-  if (isLoading) {
+  if (initialLoading && buildings.length === 0) {
     return (
       <div className="flex justify-center items-center h-full min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -1038,6 +1039,13 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         onMouseLeave={onMouseLeave}
       >
         <NavigationControl position="bottom-right" />
+
+        {/* Loading Indicator */}
+        {(isFetching || (internalLoading && !externalBuildings)) && (
+            <div className="absolute top-0 left-0 right-0 h-1 bg-background z-[100] overflow-hidden">
+                <div className="h-full w-full bg-primary animate-pulse origin-left" />
+            </div>
+        )}
 
         <Source
             id="buildings"

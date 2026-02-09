@@ -18,6 +18,7 @@ interface BuildingMapProps {
   locationPrecision?: 'exact' | 'approximate';
   items?: MapItem[];
   selectedId?: string;
+  isLoading?: boolean;
 }
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -56,11 +57,24 @@ export function BuildingMap({
   mapStyle,
   locationPrecision = 'exact',
   items,
-  selectedId
+  selectedId,
+  isLoading
 }: BuildingMapProps) {
   const mapRef = useRef<MapRef>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const { location: userLocation, requestLocation } = useUserLocation();
+
+  // State to retain items while loading
+  const [displayedItems, setDisplayedItems] = useState<MapItem[] | undefined>(items);
+
+  useEffect(() => {
+    if (items && items.length > 0) {
+      setDisplayedItems(items);
+    } else if (!isLoading) {
+      // Only clear if not loading
+      setDisplayedItems(items);
+    }
+  }, [items, isLoading]);
 
   useEffect(() => {
     requestLocation({ silent: true });
@@ -142,8 +156,15 @@ export function BuildingMap({
           </Marker>
         )}
 
-        {items && items.length > 0 ? (
-          items.map((item) => {
+        {/* Loading Indicator */}
+        {isLoading && (
+            <div className="absolute top-0 left-0 right-0 h-1 bg-background z-[100] overflow-hidden">
+                <div className="h-full w-full bg-primary animate-pulse origin-left" />
+            </div>
+        )}
+
+        {displayedItems && displayedItems.length > 0 ? (
+          displayedItems.map((item) => {
             if (item.is_cluster) {
               const cluster = item as ClusterPoint;
               let sizeClass = "w-[30px] h-[30px] text-xs";
