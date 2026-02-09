@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { DiscoveryBuilding, LeaderboardData } from "@/features/search/components/types";
+import { DiscoveryBuilding, DiscoveryBuildingMapPin, LeaderboardData } from "@/features/search/components/types";
 
 export const searchBuildingsRpc = async (params: {
   query_text: string | null;
@@ -19,6 +19,49 @@ export const searchBuildingsRpc = async (params: {
   const { data, error } = await supabase.rpc('search_buildings', params);
   if (error) throw error;
   return data as DiscoveryBuilding[];
+};
+
+export const getMapPinsRpc = async (params: {
+  query_text: string | null;
+  location_coordinates?: { lat: number; lng: number };
+  radius_meters?: number;
+  filters?: {
+    cities?: string[];
+    styles?: string[]; // Kept for compatibility but unused
+    architects?: string[];
+    category_id?: string;
+    typology_ids?: string[];
+    attribute_ids?: string[];
+  };
+  p_limit?: number;
+}): Promise<DiscoveryBuildingMapPin[]> => {
+  const { data, error } = await supabase.rpc('get_map_pins', params);
+  if (error) throw error;
+
+  // Map snake_case to camelCase
+  return (data || []).map((pin: any) => ({
+    ...pin,
+    isCandidate: pin.is_candidate,
+  })) as DiscoveryBuildingMapPin[];
+};
+
+export const getBuildingsByIds = async (ids: string[]) => {
+  if (!ids.length) return [];
+
+  const { data, error } = await supabase
+    .from('buildings')
+    .select(`
+      *,
+      main_image_url,
+      architects:building_architects(architect:architects(name, id)),
+      functional_category_id,
+      typologies:building_functional_typologies(typology_id),
+      attributes:building_attributes(attribute_id)
+    `)
+    .in('id', ids);
+
+  if (error) throw error;
+  return data || [];
 };
 
 export const getDiscoveryFiltersRpc = async (): Promise<{ cities: string[]; styles: {id: string, name: string, slug: string}[] }> => {

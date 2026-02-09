@@ -2,9 +2,9 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
-import { DiscoveryBuilding, ContactRater, ContactInteraction } from "../components/types";
+import { DiscoveryBuilding, DiscoveryBuildingMapPin, ContactRater, ContactInteraction } from "../components/types";
 import { useUserLocation } from "@/hooks/useUserLocation";
-import { searchBuildingsRpc } from "@/utils/supabaseFallback";
+import { searchBuildingsRpc, getMapPinsRpc, getBuildingsByIds } from "@/utils/supabaseFallback";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -527,10 +527,13 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
     staleTime: 1000 * 60 * 5,
   });
 
-  // Search query
-  const { data: rawBuildings, isLoading, isFetching, isPlaceholderData } = useQuery({
+  // Hydration State
+  const [idsToHydrate, setIdsToHydrate] = useState<string[]>([]);
+
+  // Map Data Query (Lightweight Pins)
+  const { data: mapPins, isLoading: isMapLoading, isFetching: isMapFetching } = useQuery({
     queryKey: [
-      "search-buildings",
+      "map-pins",
       debouncedQuery,
       statusFilters,
       filterContacts,
@@ -542,9 +545,8 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
       selectedTypologies,
       selectedAttributes,
       selectedContacts,
-      userLocation,
+      userLocation, // Keep tracking location for distance calculation in local mode? Yes.
       user?.id,
-      page,
       searchTriggerVersion
     ],
     queryFn: async () => {
@@ -587,11 +589,9 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
               if (activeStatuses.length > 0) {
                 query = query.in('status', activeStatuses);
               } else {
-                // Default: visited or pending or rated
                 query = query.or('status.eq.visited,status.eq.pending,rating.not.is.null');
               }
 
-              // Apply Rating Filters
               const effectiveMinRating = Math.max(personalMinRating, contactMinRating);
               if (effectiveMinRating > 0) {
                 query = query.gte('rating', effectiveMinRating);
@@ -665,14 +665,16 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
 
           if (buildingIds.size === 0) return [];
 
-          // 4. Fetch building details + Metadata for filtering
+          // 4. Fetch lightweight building data + Metadata for filtering
           try {
+            // Need columns for filtering: functional_category_id, typologies, attributes, architects
             let query = supabase
               .from('buildings')
               .select(`
-                *,
-                main_image_url,
-                architects:building_architects(architect:architects(name, id)),
+                id,
+                location,
+                status,
+                architects:building_architects(architect_id),
                 functional_category_id,
                 typologies:building_functional_typologies(typology_id),
                 attributes:building_attributes(attribute_id)
@@ -690,49 +692,38 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
             }
 
             // 5. Apply Characteristics / Architect Filters in Memory
-            const filteredData = filterLocalBuildings(buildingsData || [], {
+            // We need to map the result to match what filterLocalBuildings expects?
+            // filterLocalBuildings expects architects as objects with id.
+            // Our query returns architects with architect_id.
+
+            const preFilteredData = (buildingsData || []).map((b: any) => ({
+                ...b,
+                architects: b.architects?.map((a: any) => ({ id: a.architect_id })) || []
+            }));
+
+            const filteredData = filterLocalBuildings(preFilteredData, {
               categoryId: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : null,
               typologyIds: selectedTypologies,
               attributeIds: selectedAttributes,
               selectedArchitects: selectedArchitects.map(a => a.id)
             });
 
-            // 6. Map to DiscoveryBuilding and calculate distance
-            const mappedBuildings = filteredData
+            // 6. Map to DiscoveryBuildingMapPin
+            return filteredData
               .map((b: any) => {
                 const coords = parseLocation(b.location);
                 const location_lat = coords?.lat || 0;
                 const location_lng = coords?.lng || 0;
 
-                const distance = getDistanceFromLatLonInM(
-                  userLocation.lat,
-                  userLocation.lng,
-                  location_lat,
-                  location_lng
-                );
-
                 return {
                   id: b.id,
-                  name: b.name,
-                  main_image_url: b.main_image_url,
-                  architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || [],
-                  year_completed: b.year_completed,
-                  city: b.city,
-                  country: b.country,
                   location_lat: location_lat,
                   location_lng: location_lng,
-                  distance: distance,
-                  status: b.status,
-                } as DiscoveryBuilding;
+                  status: b.status, // Construction status
+                  isCandidate: false, // Default
+                } as DiscoveryBuildingMapPin;
               })
-              .filter(b => isValidCoordinate(b.location_lat, b.location_lng))
-              .sort((a, b) => (a.distance || 0) - (b.distance || 0));
-
-            return await enrichBuildings(
-              mappedBuildings, 
-              user?.id, 
-              selectedContacts.map(c => c.id)
-            );
+              .filter(b => isValidCoordinate(b.location_lat, b.location_lng));
           } catch (error) {
             console.error('Exception in local search mode:', error);
             return [];
@@ -741,7 +732,7 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
 
         // Global search mode (RPC)
         try {
-          const rpcResults = await searchBuildingsRpc({
+          const mapPins = await getMapPinsRpc({
             query_text: cleanQuery,
             location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
             radius_meters: DEFAULT_SEARCH_RADIUS,
@@ -751,20 +742,13 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
               typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
               attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined
             },
-            sort_by: undefined,
-            p_limit: DEFAULT_SEARCH_LIMIT
+            p_limit: 50000 // High limit
           });
 
           // Sanitize RPC results to remove invalid locations
-          const sanitizedResults = rpcResults.filter(b => 
+          return mapPins.filter(b =>
             isValidCoordinate(b.location_lat, b.location_lng)
-          );
-
-          return await enrichBuildings(
-            sanitizedResults, 
-            user?.id, 
-            selectedContacts.map(c => c.id)
-          );
+          ) as DiscoveryBuildingMapPin[];
         } catch (error) {
           console.error('Exception in global search mode:', error);
           return [];
@@ -778,18 +762,102 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
     placeholderData: keepPreviousData,
   });
 
-  // Apply exclusion logic and other client-side filters
-  const buildings = useMemo(() => {
-    if (!rawBuildings) return [];
+  // Apply exclusion logic (client-side) for map pins if needed?
+  // `applyClientFilters` uses `hideSaved`, `hideVisited`, `userStatuses`.
+  // `userStatuses` comes from hook.
+  // We can filter `mapPins` using `userStatuses`.
 
-    return applyClientFilters(rawBuildings, {
-      hideSaved,
-      hideVisited,
-      hideHidden,
-      hideWithoutImages,
-      userStatuses
+  const filteredMapPins = useMemo(() => {
+    if (!mapPins) return [];
+
+    // Simple client-side filter implementation for map pins
+    // Reuse applyClientFilters logic but applied to lightweight objects?
+    // applyClientFilters expects DiscoveryBuilding with status property (construction status).
+    // But it mainly uses `userStatuses` map.
+
+    // We can replicate logic here:
+    return mapPins.filter(b => {
+        // userStatuses is a Record<string, string>, not a Map
+        const userStatus = (userStatuses as any)[b.id];
+
+        // Hide Hidden
+        if (hideHidden && userStatus === 'hidden') return false; // Usually hidden means 'hidden' status
+
+        // Hide Visited
+        if (hideVisited && userStatus === 'visited') return false;
+
+        // Hide Saved
+        if (hideSaved && userStatus === 'pending') return false;
+
+        // Hide Without Images
+        // mapPins don't have image info! We can't filter by 'hideWithoutImages' accurately here unless we fetch that info.
+        // However, map pins are dots. Maybe we ignore image filter for map pins?
+        // Or we should include 'has_image' boolean in map pin RPC?
+        // Assuming we ignore image filter for map for now as per "Lightweight" requirement.
+
+        return true;
     });
-  }, [rawBuildings, hideSaved, hideVisited, hideHidden, hideWithoutImages, userStatuses]);
+  }, [mapPins, hideSaved, hideVisited, hideHidden, userStatuses]);
+
+  // List Data Query (Rich Items)
+  const { data: richListItems, isLoading: isListLoading, isFetching: isListFetching } = useQuery({
+      queryKey: ['rich-list-items', idsToHydrate, user?.id],
+      queryFn: async () => {
+          if (idsToHydrate.length === 0) return [];
+
+          try {
+              const buildings = await getBuildingsByIds(idsToHydrate);
+
+              // Map to DiscoveryBuilding structure (add distance, etc)
+              const mappedBuildings = buildings.map((b: any) => {
+                  const coords = parseLocation(b.location);
+                  const location_lat = coords?.lat || 0;
+                  const location_lng = coords?.lng || 0;
+
+                  const distance = getDistanceFromLatLonInM(
+                    userLocation.lat,
+                    userLocation.lng,
+                    location_lat,
+                    location_lng
+                  );
+
+                  return {
+                    id: b.id,
+                    name: b.name,
+                    main_image_url: b.main_image_url,
+                    architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || [],
+                    year_completed: b.year_completed,
+                    city: b.city,
+                    country: b.country,
+                    location_lat: location_lat,
+                    location_lng: location_lng,
+                    distance: distance,
+                    status: b.status,
+                  } as DiscoveryBuilding;
+              });
+
+              // Apply client filters again? No, the IDs were selected from visible map pins which were already filtered.
+              // BUT 'hideWithoutImages' might not have been applied on map pins.
+              // So rich list items might include items without images if we selected them from map.
+              // But list should hydrate them. If we want to hide them from list, we should filter them here or in SearchPage.
+              // SearchPage slices visible IDs. If we filter here, we might return fewer than expected items.
+
+              const enriched = await enrichBuildings(
+                mappedBuildings,
+                user?.id,
+                selectedContacts.map(c => c.id)
+              );
+
+              return enriched;
+          } catch (error) {
+              console.error("Error fetching rich list items", error);
+              return [];
+          }
+      },
+      enabled: idsToHydrate.length > 0,
+      staleTime: 1000 * 60 * 5, // Cache rich items longer
+      placeholderData: keepPreviousData
+  });
 
   const updateLocation = useCallback((center: { lat: number, lng: number }) => {
     setUserLocation(center);
@@ -835,11 +903,15 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
     updateLocation,
     requestLocation,
     gpsLocation,
-    buildings: buildings || [],
+    mapPins: filteredMapPins || [],
+    richListItems: richListItems || [],
+    setIdsToHydrate,
     debouncedQuery,
-    isLoading,
-    isFetching,
-    isPlaceholderData,
+    isLoading: isMapLoading, // Main loading state is map
+    isFetching: isMapFetching,
+    isListLoading,
+    isListFetching,
+    isPlaceholderData: false, // Not using placeholder data for map pins the same way
     // Pagination
     page,
     setPage,

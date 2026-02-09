@@ -6,7 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { DiscoveryBuilding } from "@/features/search/components/types";
+import { DiscoveryBuilding, DiscoveryBuildingMapPin } from "@/features/search/components/types";
 import { CollectionMarkerCategory } from "@/types/collection";
 import { MarkerInfoCard } from "../collections/MarkerInfoCard";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
@@ -50,22 +50,12 @@ const SATELLITE_STYLE = {
 };
 
 // Types
-interface Building {
-  id: string;
-  name: string;
-  location_lat: number;
-  location_lng: number;
-  social_context?: string | null;
-  location_precision?: 'exact' | 'approximate';
-  main_image_url?: string | null;
-  color?: string | null;
-  isCandidate?: boolean;
-  isDimmed?: boolean;
-  isMarker?: boolean;
+// Use DiscoveryBuildingMapPin as base, and extend with properties used internally
+interface Building extends DiscoveryBuildingMapPin {
+  name?: string; // Optional in lightweight map pin
   markerCategory?: CollectionMarkerCategory;
   notes?: string | null;
   address?: string | null;
-  status?: string | null;
 }
 
 export interface BuildingDiscoveryMapRef {
@@ -74,8 +64,8 @@ export interface BuildingDiscoveryMapRef {
 }
 
 interface BuildingDiscoveryMapProps {
-  externalBuildings?: DiscoveryBuilding[];
-  onAddCandidate?: (building: DiscoveryBuilding) => void;
+  externalBuildings?: DiscoveryBuildingMapPin[] | DiscoveryBuilding[];
+  onAddCandidate?: (building: DiscoveryBuildingMapPin) => void; // Update type
   onRegionChange?: (center: { lat: number, lng: number }) => void;
   onBoundsChange?: (bounds: Bounds) => void;
   onMapInteraction?: () => void;
@@ -385,7 +375,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       if (isNaN(lat) || isNaN(lng)) return false;
       return isValidCoordinate(lat, lng);
     });
-    return cleaned;
+    return cleaned as Building[]; // Cast to internal Building type
   }, [buildings]);
 
   const candidates = useMemo(() => cleanBuildings?.filter(b => b.isCandidate) || [], [cleanBuildings]);
@@ -638,7 +628,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
                 </div>
               )}
               <div className="text-[#EEFF41] text-xs px-2 py-1 flex flex-col items-center w-full justify-center bg-[#333333]">
-                <span className="font-medium text-white text-center">{building.name}</span>
+                <span className="font-medium text-white text-center">{building.name || "Building"}</span>
                 {pinTooltip}
 
                 <div className="flex items-center gap-2 mt-1">
@@ -695,7 +685,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
                         <button
                             onClick={(e) => {
                             e.stopPropagation();
-                            onAddCandidate(building as unknown as DiscoveryBuilding);
+                            onAddCandidate(building as unknown as DiscoveryBuildingMapPin);
                             }}
                             className="bg-[#EEFF41] text-black rounded-full p-1 hover:bg-white"
                         >

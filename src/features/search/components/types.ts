@@ -11,11 +11,26 @@ export interface StyleSummary {
   slug: string;
 }
 
-export interface DiscoveryBuilding {
+export interface DiscoveryBuildingMapPin {
   id: string;
+  location_lat: number;
+  location_lng: number;
+  status?: string | null;
+  isCandidate?: boolean;
+  color?: string | null;
+  // Optional for map pins
+  name?: string;
+  main_image_url?: string | null;
+  location_precision?: 'exact' | 'approximate';
+  isDimmed?: boolean;
+  isMarker?: boolean;
+  social_context?: string | null;
+}
+
+export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
   short_id?: number | null;
   slug?: string | null;
-  name: string;
+  name: string; // Required for full building
   // This can be a full URL (legacy/external) or a storage path (user uploads).
   // Use getBuildingImageUrl() utility to display it.
   main_image_url?: string | null;
@@ -24,22 +39,14 @@ export interface DiscoveryBuilding {
   year_completed: number | null;
   city: string | null;
   country: string | null;
-  location_lat: number;
-  location_lng: number;
   // Optional display fields
   distance?: number;
-  social_context?: string;
   social_score?: number;
   contact_interactions?: ContactInteraction[];
   contact_raters?: ContactRater[];
   contact_visitors?: ContactRater[];
   visitors?: ContactRater[]; // From RPC
-  location_precision?: 'exact' | 'approximate';
   status?: 'Built' | 'Under Construction' | 'Unbuilt' | 'Demolished' | 'Temporary' | null;
-  color?: string | null;
-  isCandidate?: boolean;
-  isDimmed?: boolean;
-  isMarker?: boolean;
   markerCategory?: CollectionMarkerCategory;
   notes?: string | null;
   address?: string | null;
