@@ -16,7 +16,16 @@ export const searchBuildingsRpc = async (params: {
   sort_by?: 'distance' | 'relevance';
   p_limit?: number;
 }): Promise<DiscoveryBuilding[]> => {
-  const { data, error } = await supabase.rpc('search_buildings', params);
+  const { location_coordinates, ...rest } = params;
+
+  // Map parameters to match new RPC signature
+  const rpcParams = {
+    ...rest,
+    p_lat: location_coordinates?.lat,
+    p_lng: location_coordinates?.lng,
+  };
+
+  const { data, error } = await supabase.rpc('search_buildings', rpcParams);
   if (error) throw error;
   return data as DiscoveryBuilding[];
 };
