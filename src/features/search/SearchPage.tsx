@@ -237,9 +237,8 @@ export default function SearchPage() {
         return distA - distB;
     });
 
-    // Take top 50
-    const pageSize = 50;
-    const ids = visible.slice(0, pageSize).map(p => String(p.id));
+    // Hydrate all visible items
+    const ids = visible.map(p => String(p.id));
     setIdsToHydrate(ids);
 
   }, [mapPins, currentBounds, setIdsToHydrate]);
