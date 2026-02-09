@@ -99,6 +99,17 @@ export default function SearchPage() {
   const { state, isMobile } = useSidebar();
   const { user } = useAuth();
 
+  // State for highlighted building
+  const [highlightedBuildingId, setHighlightedBuildingId] = useState<string | null>(null);
+  const [searchTriggerVersion, setSearchTriggerVersion] = useState(0);
+
+  // Track map loading state
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [currentBounds, setCurrentBounds] = useState<Bounds | null>(null);
+
+  // Community Quality Filter (Local state for now)
+  const [communityQuality, setCommunityQuality] = useState(0);
+
   const {
     mapPins,
     richListItems,
@@ -141,18 +152,7 @@ export default function SearchPage() {
     setSelectedTypologies,
     setSelectedAttributes,
     setSelectedContacts,
-  } = useBuildingSearch();
-
-  // State for highlighted building
-  const [highlightedBuildingId, setHighlightedBuildingId] = useState<string | null>(null);
-  const [searchTriggerVersion, setSearchTriggerVersion] = useState(0);
-
-  // Track map loading state
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [currentBounds, setCurrentBounds] = useState<Bounds | null>(null);
-
-  // Community Quality Filter (Local state for now)
-  const [communityQuality, setCommunityQuality] = useState(0);
+  } = useBuildingSearch({ searchTriggerVersion, bounds: currentBounds });
 
   // Refs for managing programmatic moves and region updates
   const regionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);

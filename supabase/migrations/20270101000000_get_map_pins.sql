@@ -6,7 +6,11 @@ CREATE OR REPLACE FUNCTION get_map_pins(
   location_coordinates jsonb DEFAULT NULL, -- {lat: number, lng: number}
   radius_meters int DEFAULT NULL,
   filters jsonb DEFAULT NULL, -- {cities: text[], country: text, category_id: uuid, typology_ids: uuid[], attribute_ids: uuid[], architects: uuid[]}
-  p_limit int DEFAULT 50000
+  p_limit int DEFAULT 50000,
+  min_lat double precision DEFAULT NULL,
+  max_lat double precision DEFAULT NULL,
+  min_lng double precision DEFAULT NULL,
+  max_lng double precision DEFAULT NULL
 )
 RETURNS TABLE (
   id uuid,
@@ -140,8 +144,13 @@ BEGIN
     )
     AND
     (
-      v_lat IS NULL OR v_lng IS NULL OR
-      st_dwithin(b.location, st_point(v_lng, v_lat)::geography, v_radius)
+        (min_lat IS NOT NULL AND max_lat IS NOT NULL AND min_lng IS NOT NULL AND max_lng IS NOT NULL AND
+         b.location && st_makeenvelope(min_lng, min_lat, max_lng, max_lat, 4326)::geography)
+        OR
+        (
+            (min_lat IS NULL OR max_lat IS NULL OR min_lng IS NULL OR max_lng IS NULL) AND
+            (v_lat IS NULL OR v_lng IS NULL OR st_dwithin(b.location, st_point(v_lng, v_lat)::geography, v_radius))
+        )
     )
     AND
     (b.is_deleted IS FALSE OR b.is_deleted IS NULL)

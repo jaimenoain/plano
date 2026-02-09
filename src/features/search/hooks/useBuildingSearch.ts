@@ -12,6 +12,7 @@ import { parseLocation } from "@/utils/location";
 import { filterLocalBuildings, applyClientFilters } from "../utils/searchFilters";
 import { UserSearchResult } from "./useUserSearch";
 import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
+import { Bounds } from "@/utils/map";
 
 // Type definitions for better type safety
 interface BuildingDataItem {
@@ -296,7 +297,7 @@ const getJsonParam = <T>(param: string | null, defaultVal: T): T => {
   }
 };
 
-export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersion?: number } = {}) {
+export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTriggerVersion?: number, bounds?: Bounds | null } = {}) {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -546,6 +547,7 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
       selectedAttributes,
       selectedContacts,
       userLocation, // Keep tracking location for distance calculation in local mode? Yes.
+      bounds, // Add bounds to query key to trigger refetch on map move
       user?.id,
       searchTriggerVersion
     ],
@@ -742,7 +744,11 @@ export function useBuildingSearch({ searchTriggerVersion }: { searchTriggerVersi
               typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
               attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined
             },
-            p_limit: 50000 // High limit
+            p_limit: 50000, // High limit
+            min_lat: bounds?.south,
+            max_lat: bounds?.north,
+            min_lng: bounds?.west,
+            max_lng: bounds?.east
           });
 
           // Sanitize RPC results to remove invalid locations
