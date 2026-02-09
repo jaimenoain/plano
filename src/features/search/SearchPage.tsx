@@ -543,7 +543,7 @@ export default function SearchPage() {
         {/* Map Container */}
         <div 
           className={`flex-1 relative h-full transition-all duration-300 ${
-            isMobile ? 'w-full' : 'md:ml-[400px] w-full'
+            isMobile ? 'w-full' : 'md:ml-[400px]'
           }`}
         >
           <ErrorBoundary FallbackComponent={MapErrorFallback}>
