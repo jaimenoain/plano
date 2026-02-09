@@ -436,15 +436,19 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   // Prepare GeoJSON Source
   const geoJsonData = useMemo(() => {
     let isServerClustered = false;
-    if (cleanBuildings.length > 0 && 'is_cluster' in cleanBuildings[0]) {
+    if (cleanBuildings.length > 0 && ('is_cluster' in cleanBuildings[0] || 'lat' in cleanBuildings[0])) {
         isServerClustered = true;
     }
 
     const features = cleanBuildings.map((b: any) => {
-        // Handle Server Side Clusters
-        if ('is_cluster' in b) {
+        // Handle Server Side Clusters AND MapItems (RPC Results)
+        // Check for 'lat' to identify MapItem, as 'is_cluster' might be missing from RPC result
+        if ('is_cluster' in b || 'lat' in b) {
             const item = b as MapItem;
-            if (item.is_cluster) {
+            // Default is_cluster to false if undefined
+            const isCluster = 'is_cluster' in b ? item.is_cluster : false;
+
+            if (isCluster) {
                 const clusterItem = item as ClusterPoint;
                  return {
                     type: 'Feature' as const,
