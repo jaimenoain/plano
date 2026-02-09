@@ -35,7 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow, format } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
-import { BuildingMap } from "@/components/common/BuildingMap";
+import { BuildingMap } from "@/components/_legacy_v1/BuildingMap";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { UserPicker } from "@/components/common/UserPicker";
 import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } from "@/utils/supabaseFallback";

@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
-import { UserSearchResult } from "../hooks/useUserSearch";
-import { FilterDrawerContent } from "@/components/common/FilterDrawerContent";
+import { UserSearchResult } from "@/features/search/hooks/useUserSearch";
+import { FilterDrawerContent } from "./FilterDrawerContent";
 
 interface SearchFiltersProps {
   // Status Filters

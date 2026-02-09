@@ -1,6 +1,6 @@
 import { lazy, Suspense, useRef, useEffect, useMemo, useCallback, useState } from "react";
 import { ErrorBoundary } from 'react-error-boundary';
-import type { BuildingDiscoveryMapRef } from "@/components/common/BuildingDiscoveryMap";
+import type { BuildingDiscoveryMapRef } from "@/components/_legacy_v1/BuildingDiscoveryMap";
 import { useSidebar } from "@/components/ui/sidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,14 +9,14 @@ import { getBoundsFromBuildings, getDistanceFromLatLonInM, Bounds } from "@/util
 import { DiscoveryList } from "./components/DiscoveryList";
 import { DiscoveryBuilding, DiscoveryBuildingMapPin, MapItem } from "./components/types";
 import { DiscoverySearchInput } from "./components/DiscoverySearchInput";
-import { SearchFilters } from "./components/SearchFilters";
+import { SearchFilters } from "@/components/_legacy_v1/SearchFilters";
 import { Button } from "@/components/ui/button";
 import { Map as MapIcon, List as ListIcon, AlertCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const BuildingDiscoveryMap = lazy(() => 
-  import("@/components/common/BuildingDiscoveryMap").then(module => ({ 
+  import("@/components/_legacy_v1/BuildingDiscoveryMap").then(module => ({
     default: module.BuildingDiscoveryMap 
   }))
 );
