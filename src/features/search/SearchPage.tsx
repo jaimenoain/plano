@@ -1,6 +1,6 @@
 import { lazy, Suspense, useRef, useEffect, useMemo, useCallback, useState } from "react";
 import { ErrorBoundary } from 'react-error-boundary';
-import type { BuildingDiscoveryMapRef } from "@/components/_legacy_v1/BuildingDiscoveryMap";
+// import type { BuildingDiscoveryMapRef } from "@/components/_legacy_v1/BuildingDiscoveryMap";
 import { useSidebar } from "@/components/ui/sidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,17 +9,17 @@ import { getBoundsFromBuildings, getDistanceFromLatLonInM, Bounds } from "@/util
 import { DiscoveryList } from "./components/DiscoveryList";
 import { DiscoveryBuilding, DiscoveryBuildingMapPin, MapItem } from "./components/types";
 import { DiscoverySearchInput } from "./components/DiscoverySearchInput";
-import { SearchFilters } from "@/components/_legacy_v1/SearchFilters";
+// import { SearchFilters } from "@/components/_legacy_v1/SearchFilters";
 import { Button } from "@/components/ui/button";
 import { Map as MapIcon, List as ListIcon, AlertCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const BuildingDiscoveryMap = lazy(() => 
-  import("@/components/_legacy_v1/BuildingDiscoveryMap").then(module => ({
-    default: module.BuildingDiscoveryMap 
-  }))
-);
+// const BuildingDiscoveryMap = lazy(() =>
+//   import("@/components/_legacy_v1/BuildingDiscoveryMap").then(module => ({
+//     default: module.BuildingDiscoveryMap
+//   }))
+// );
 
 // Debug utility - only logs in development
 const DEBUG = process.env.NODE_ENV === 'development';
@@ -98,7 +98,7 @@ function ListSidebar({
 }
 
 export default function SearchPage() {
-  const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
+  // const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
   const { state, isMobile } = useSidebar();
   const { user } = useAuth();
 
@@ -343,11 +343,11 @@ export default function SearchPage() {
       }));
 
       const bounds = getBoundsFromBuildings(pointsForBounds);
-      if (bounds && mapRef.current) {
-        if (typeof bounds.north === 'number' && typeof bounds.east === 'number') {
-          mapRef.current.fitBounds(bounds);
-        }
-      }
+      // if (bounds && mapRef.current) {
+      //   if (typeof bounds.north === 'number' && typeof bounds.east === 'number') {
+      //     mapRef.current.fitBounds(bounds);
+      //   }
+      // }
     }
   }, [searchQuery, safeMapPins]);
 
@@ -368,7 +368,7 @@ export default function SearchPage() {
   useEffect(() => {
     if (mapLoaded && gpsLocation && !userHasMovedMap.current && !searchQuery) {
       debug.log('📍 [GPS] Flying to user location:', gpsLocation);
-      mapRef.current?.flyTo(gpsLocation, 14);
+      // mapRef.current?.flyTo(gpsLocation, 14);
     }
   }, [mapLoaded, gpsLocation, searchQuery]);
 
@@ -390,16 +390,16 @@ export default function SearchPage() {
    * Handler for list item click - fly to building on map
    */
   const handleListHighlight = useCallback((lat: number, lng: number) => {
-    if (!mapRef.current) {
-      debug.warn('[SearchPage] Map ref not available');
-      return;
-    }
+    // if (!mapRef.current) {
+    //   debug.warn('[SearchPage] Map ref not available');
+    //   return;
+    // }
 
     debug.log('👆 [LIST] Programmatic move:', lat, lng);
     isProgrammaticMove.current = true;
 
     try {
-      mapRef.current.flyTo({ lat, lng }, FLY_TO_ZOOM);
+      // mapRef.current.flyTo({ lat, lng }, FLY_TO_ZOOM);
     } catch (err) {
       debug.error('💥 [Map] flyTo failed:', err);
       isProgrammaticMove.current = false;
@@ -465,9 +465,9 @@ export default function SearchPage() {
 
   const handleLocationSelect = useCallback((location: { lat: number; lng: number }) => {
     updateLocation(location);
-    if (mapRef.current) {
-      mapRef.current.flyTo(location, 14);
-    }
+    // if (mapRef.current) {
+    //   mapRef.current.flyTo(location, 14);
+    // }
   }, [updateLocation]);
 
   const searchInput = (
@@ -479,7 +479,7 @@ export default function SearchPage() {
         placeholder="Search buildings or places..."
         className="flex-1"
       />
-      <SearchFilters
+      {/* <SearchFilters
         statusFilters={statusFilters}
         setStatusFilters={setStatusFilters}
         hideVisited={hideVisited}
@@ -512,7 +512,7 @@ export default function SearchPage() {
         communityQuality={communityQuality}
         setCommunityQuality={setCommunityQuality}
         resultCount={safeMapPins.length}
-      />
+      /> */}
     </div>
   );
 
@@ -583,7 +583,13 @@ export default function SearchPage() {
             marginLeft: isMobile ? 0 : 400 + (isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0)
           }}
         >
-          <ErrorBoundary FallbackComponent={MapErrorFallback}>
+          <div className="flex items-center justify-center h-full bg-muted/20">
+            <div className="text-center text-muted-foreground">
+              <MapIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
+              <p>Map search is currently disabled.</p>
+            </div>
+          </div>
+          {/* <ErrorBoundary FallbackComponent={MapErrorFallback}>
             <Suspense fallback={
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
@@ -611,7 +617,7 @@ export default function SearchPage() {
                 onMapLoad={() => setMapLoaded(true)}
               />
             </Suspense>
-          </ErrorBoundary>
+          </ErrorBoundary> */}
         </div>
       </div>
     </AppLayout>

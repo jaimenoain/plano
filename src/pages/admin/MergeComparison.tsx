@@ -24,7 +24,6 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
-import { SessionMap } from "@/components/_legacy_v1/SessionMap";
 import {
   Carousel,
   CarouselContent,
@@ -440,11 +439,9 @@ export default function MergeComparison() {
                         {targetBuilding.location && (
                             <div className="space-y-1 pt-2">
                                 <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Location</div>
-                                <SessionMap
-                                    buildings={[{ ...targetBuilding, main_image_url: targetBuilding.hero_image }]}
-                                    interactive={false}
-                                    className="w-full h-48 rounded-md border border-border"
-                                />
+                                <div className="w-full h-48 rounded-md border border-border bg-muted flex items-center justify-center text-muted-foreground text-sm">
+                                  Map Preview Disabled
+                                </div>
                             </div>
                         )}
 
@@ -537,11 +534,9 @@ export default function MergeComparison() {
                         {sourceBuilding.location && (
                             <div className="space-y-1 pt-2">
                                 <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Location</div>
-                                <SessionMap
-                                    buildings={[{ ...sourceBuilding, main_image_url: sourceBuilding.hero_image }]}
-                                    interactive={false}
-                                    className="w-full h-48 rounded-md border border-red-200"
-                                />
+                                <div className="w-full h-48 rounded-md border border-red-200 bg-muted flex items-center justify-center text-muted-foreground text-sm">
+                                  Map Preview Disabled
+                                </div>
                             </div>
                         )}
 

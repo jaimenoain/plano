@@ -31,7 +31,6 @@ import CreateSession from "./pages/CreateSession";
 import AddBuilding from "./pages/AddBuilding";
 import EditBuilding from "./pages/EditBuilding";
 import WriteReview from "./pages/WriteReview";
-import CollectionMap from "./components/_legacy_v1/CollectionMap";
 
 import GroupLayout from "./pages/groups/GroupLayout";
 import GroupSessions from "./pages/groups/GroupSessions";
@@ -126,7 +125,6 @@ const router = createBrowserRouter(
         <Route path="/" element={<Index />} />
         <Route path="/explore" element={<Explore />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/map/:username/:slug" element={<CollectionMap />} />
         <Route path="/post" element={<Post />} />
         <Route path="/notifications" element={<Notifications />} />
 
