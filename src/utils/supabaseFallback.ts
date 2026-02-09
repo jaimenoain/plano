@@ -34,6 +34,10 @@ export const getMapPinsRpc = async (params: {
     attribute_ids?: string[];
   };
   p_limit?: number;
+  min_lat?: number;
+  max_lat?: number;
+  min_lng?: number;
+  max_lng?: number;
 }): Promise<DiscoveryBuildingMapPin[]> => {
   const { data, error } = await supabase.rpc('get_map_pins', params);
   if (error) throw error;
