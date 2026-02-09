@@ -82,10 +82,12 @@ const NotFound = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <MetaHead title="404: Scope Reduction" />
-      <Header showLogo={true} />
+      <div className="md:hidden">
+        <Header showLogo={true} />
+      </div>
 
       {/* Main Content - Centered */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 pb-32 pt-20 text-center max-w-4xl mx-auto w-full">
+      <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 pb-32 md:pb-12 pt-20 md:pt-12 text-center max-w-4xl mx-auto w-full">
 
         <ScopeReductionGraphic />
 
@@ -123,7 +125,9 @@ const NotFound = () => {
         </div>
       </main>
 
-      <BottomNav />
+      <div className="md:hidden">
+        <BottomNav />
+      </div>
     </div>
   );
 };
