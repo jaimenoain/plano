@@ -314,9 +314,6 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [personalMinRating, setPersonalMinRating] = useState<number>(getNumParam(searchParams.get("minRating"), 0));
   const [contactMinRating, setContactMinRating] = useState<number>(getNumParam(searchParams.get("contactMinRating"), 0));
 
-  // Pagination State
-  const [page, setPage] = useState(0);
-
   const [selectedArchitects, setSelectedArchitects] = useState<{ id: string; name: string }[]>(
     getJsonParam(searchParams.get("architects"), [])
   );
@@ -399,27 +396,6 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       setUserLocation(gpsLocation);
     }
   }, [gpsLocation]);
-
-  // Reset pagination when filters change
-  useEffect(() => {
-    setPage(0);
-  }, [
-    debouncedQuery,
-    statusFilters,
-    hideVisited,
-    hideSaved,
-    hideHidden,
-    hideWithoutImages,
-    filterContacts,
-    personalMinRating,
-    contactMinRating,
-    selectedArchitects,
-    selectedCollections,
-    selectedCategory,
-    selectedTypologies,
-    selectedAttributes,
-    selectedContacts,
-  ]);
 
   // Sync state to URL params
   useEffect(() => {
@@ -936,8 +912,5 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     isListLoading,
     isListFetching,
     isPlaceholderData: false, // Not using placeholder data for map pins the same way
-    // Pagination
-    page,
-    setPage,
   };
 }
