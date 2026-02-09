@@ -465,7 +465,7 @@ export default function SearchPage() {
 
         {/* Mobile View Toggle */}
         {isMobile && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
             <Button
               onClick={() => setViewMode(prev => prev === 'map' ? 'list' : 'map')}
               className="rounded-full shadow-lg"
