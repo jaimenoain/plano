@@ -37,6 +37,7 @@ const SATELLITE_STYLE = {
       attribution: "&copy; Esri"
     }
   },
+  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
   layers: [
     {
       id: "satellite-layer",
@@ -168,7 +169,7 @@ const clusterCountLayer: LayerProps = {
   filter: ['has', 'point_count'],
   layout: {
     'text-field': '{point_count_abbreviated}',
-    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+    'text-font': ['Noto Sans Bold'],
     'text-size': 12
   }
 };
@@ -372,9 +373,11 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // Validation logic
   const cleanBuildings = useMemo(() => {
-    if (!buildings) return [];
+    if (!buildings) {
+        return [];
+    }
 
-    return buildings.filter(b => {
+    const cleaned = buildings.filter(b => {
       if (b.location_lat === null || b.location_lat === undefined) return false;
       if (b.location_lng === null || b.location_lng === undefined) return false;
       const lat = Number(b.location_lat);
@@ -382,6 +385,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       if (isNaN(lat) || isNaN(lng)) return false;
       return isValidCoordinate(lat, lng);
     });
+    return cleaned;
   }, [buildings]);
 
   const candidates = useMemo(() => cleanBuildings?.filter(b => b.isCandidate) || [], [cleanBuildings]);
@@ -420,7 +424,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // Prepare GeoJSON Source
   const geoJsonData = useMemo(() => {
-    return {
+    const data = {
       type: 'FeatureCollection' as const,
       features: cleanBuildings.map(b => {
         let [lng, lat] = [b.location_lng, b.location_lat];
@@ -467,6 +471,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         };
       })
     };
+    return data;
   }, [cleanBuildings, userBuildingsMap, highlightedId, selectedPinId, isSatellite]);
 
   // Handle Layer Click
@@ -808,15 +813,19 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   }, [selectedPinId, hoveredBuilding, cleanBuildings, userBuildingsMap, onUpdateMarkerNote, onRemoveMarker, onClosePopup, showImages, onHide, onSave, onVisit, onHideCandidate, onAddCandidate, onRemoveItem]);
 
   // Error state display
-  if (buildingsError || userBuildingsError) {
+  if (buildingsError) {
     return (
       <div className="flex flex-col justify-center items-center h-full min-h-[50vh] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          {buildingsError ? 'Failed to load buildings. Retrying...' : 'Failed to load user data. Retrying...'}
+          Failed to load buildings. Retrying...
         </p>
       </div>
     );
+  }
+
+  if (userBuildingsError) {
+    console.warn("[BuildingDiscoveryMap] Failed to load user data, proceeding without it.", userBuildingsError);
   }
 
   if (isLoading) {
