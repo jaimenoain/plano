@@ -80,3 +80,28 @@ export interface LeaderboardData {
   most_visited: LeaderboardBuilding[];
   top_rated: LeaderboardBuilding[];
 }
+
+// RPC Types for get_map_clusters
+
+export interface ClusterPoint {
+  id: string | number; // Unique identifier (RPC returns md5 string)
+  lat: number;
+  lng: number;
+  count: number;
+  is_cluster: true;
+  expansion_zoom?: number; // Optional zoom level to expand cluster
+}
+
+export interface BuildingPoint {
+  id: string;
+  lat: number;
+  lng: number;
+  count: number; // Will be 1
+  is_cluster: false;
+  name: string;
+  slug: string;
+  image_url: string | null;
+  architect_names: string[] | null;
+}
+
+export type MapItem = ClusterPoint | BuildingPoint;
