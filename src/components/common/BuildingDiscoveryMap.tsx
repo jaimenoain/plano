@@ -478,7 +478,13 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
   const onLayerClick = useCallback((event: MapLayerMouseEvent) => {
     event.originalEvent.stopPropagation();
     const feature = event.features?.[0];
-    if (!feature) return;
+
+    if (!feature) {
+      if (selectedPinId) {
+        setSelectedPinId(null);
+      }
+      return;
+    }
 
     const clusterId = feature.properties?.cluster_id;
 
@@ -879,11 +885,6 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         }}
         {...viewState}
         attributionControl={false}
-        onClick={() => {
-          if (selectedPinId) {
-            setSelectedPinId(null);
-          }
-        }}
         onMove={evt => {
           setViewState(evt.viewState);
           if (evt.originalEvent) {
@@ -919,7 +920,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
         mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
-        interactiveLayerIds={['clusters', 'unclustered-point']}
+        interactiveLayerIds={['clusters', 'cluster-count', 'unclustered-point']}
         onClick={onLayerClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
