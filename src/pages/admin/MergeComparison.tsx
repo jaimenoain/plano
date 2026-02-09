@@ -24,7 +24,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
-import { SessionMap } from "@/components/groups/SessionMap";
+import { SessionMap } from "@/components/_legacy_v1/SessionMap";
 import {
   Carousel,
   CarouselContent,

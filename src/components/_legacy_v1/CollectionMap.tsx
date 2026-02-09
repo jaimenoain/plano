@@ -30,7 +30,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const CollectionSettingsDialog = lazy(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazy(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
-const BuildingDiscoveryMap = lazy(() => import("@/components/common/BuildingDiscoveryMap").then(module => ({ default: module.BuildingDiscoveryMap })));
+const BuildingDiscoveryMap = lazy(() => import("./BuildingDiscoveryMap").then(module => ({ default: module.BuildingDiscoveryMap })));
 const CollectionBuildingCard = lazy(() => import("@/components/collections/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
 const CollectionMarkerCard = lazy(() => import("@/components/collections/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 

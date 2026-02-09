@@ -8,7 +8,7 @@ import { Loader2, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, C
 import { useAuth } from "@/hooks/useAuth";
 import { DiscoveryBuilding, DiscoveryBuildingMapPin, MapItem, ClusterPoint, BuildingPoint } from "@/features/search/components/types";
 import { CollectionMarkerCategory } from "@/types/collection";
-import { MarkerInfoCard } from "../collections/MarkerInfoCard";
+import { MarkerInfoCard } from "./MarkerInfoCard";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Bounds } from "@/utils/map";

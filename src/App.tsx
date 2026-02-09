@@ -31,7 +31,7 @@ import CreateSession from "./pages/CreateSession";
 import AddBuilding from "./pages/AddBuilding";
 import EditBuilding from "./pages/EditBuilding";
 import WriteReview from "./pages/WriteReview";
-import CollectionMap from "./pages/CollectionMap";
+import CollectionMap from "./components/_legacy_v1/CollectionMap";
 
 import GroupLayout from "./pages/groups/GroupLayout";
 import GroupSessions from "./pages/groups/GroupSessions";

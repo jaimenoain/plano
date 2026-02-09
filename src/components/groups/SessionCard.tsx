@@ -13,7 +13,7 @@ import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { SessionRatingChart } from "@/components/groups/SessionRatingChart";
 import { slugify, createGoogleCalendarUrl } from "@/lib/utils";
 import { PollCard } from "@/components/groups/polls/PollCard";
-import { SessionMap } from "@/components/groups/SessionMap";
+import { SessionMap } from "@/components/_legacy_v1/SessionMap";
 import { getBuildingImageUrl } from "@/utils/image";
 
 function ResourceItem({ resource }: { resource: { title: string, url: string, description?: string } }) {
