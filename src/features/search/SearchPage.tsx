@@ -106,7 +106,11 @@ export default function SearchPage() {
   // Track map loading state
   const [mapLoaded, setMapLoaded] = useState(false);
   const [currentBounds, setCurrentBounds] = useState<Bounds | null>(null);
-  const [currentZoom, setCurrentZoom] = useState(12);
+  const [viewState, setViewState] = useState({
+    latitude: 51.5074,
+    longitude: -0.1278,
+    zoom: 12
+  });
 
   // Community Quality Filter (Local state for now)
   const [communityQuality, setCommunityQuality] = useState(0);
@@ -153,7 +157,7 @@ export default function SearchPage() {
     setSelectedTypologies,
     setSelectedAttributes,
     setSelectedContacts,
-  } = useBuildingSearch({ searchTriggerVersion, bounds: currentBounds, zoom: currentZoom });
+  } = useBuildingSearch({ searchTriggerVersion, bounds: currentBounds, zoom: viewState.zoom });
 
   // Refs for managing programmatic moves and region updates
   const regionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -293,9 +297,11 @@ export default function SearchPage() {
       return;
     }
 
-    if (center.zoom) {
-      setCurrentZoom(center.zoom);
-    }
+    setViewState(prev => ({
+      latitude: center.lat,
+      longitude: center.lng,
+      zoom: center.zoom ?? prev.zoom
+    }));
 
     if (regionUpdateTimeoutRef.current) {
       clearTimeout(regionUpdateTimeoutRef.current);

@@ -37,7 +37,7 @@ test('search page map requests include bounds', async ({ page }) => {
 
   // Intercept RPC calls
   let boundsRequestFound = false;
-  await page.route('**/rest/v1/rpc/get_map_pins*', async (route) => {
+  await page.route('**/rest/v1/rpc/get_map_clusters*', async (route) => {
     const postData = route.request().postDataJSON();
     console.log('RPC Call:', postData);
 
