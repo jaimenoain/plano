@@ -35,7 +35,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow, format } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
-import { BuildingMap } from "@/components/_legacy_v1/BuildingMap";
 import { PersonalRatingButton } from "@/components/PersonalRatingButton";
 import { UserPicker } from "@/components/common/UserPicker";
 import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } from "@/utils/supabaseFallback";
@@ -826,16 +825,10 @@ export default function BuildingDetails() {
                 )}
 
                 {coordinates ? (
-                <BuildingMap
-                    lat={coordinates.lat}
-                    lng={coordinates.lng}
-                    className={isMapExpanded ? "fixed inset-0 z-[100] h-screen w-screen rounded-none border-0" : "h-48 w-full transition-all duration-300"}
-                    status={userStatus}
-                    socialContext={socialContext}
-                    isExpanded={isMapExpanded}
-                    onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
-                    locationPrecision={building.location_precision}
-                />
+                  /* Map Component will go here */
+                  <div className="h-48 w-full bg-muted/10 rounded-xl border border-white/5 flex items-center justify-center text-muted-foreground/50 text-sm">
+                    Map View Disabled
+                  </div>
                 ) : (
                 <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">
                     <MapPin className="w-6 h-6 opacity-50" />
