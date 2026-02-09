@@ -669,7 +669,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
                     ...matchedBuilding,
                     buildingId: String(matchedBuilding.id),
                     location_lat: matchedBuilding.lat,
-                    location_lng: matchedBuilding.lng
+                    location_lng: matchedBuilding.lng,
+                    // Map image_url (RPC) to main_image_url (Tooltip)
+                    main_image_url: (matchedBuilding as any).image_url || (matchedBuilding as any).main_image_url
                   } as unknown as Building & { buildingId: string });
               } else {
                   setHoveredBuilding({ ...matchedBuilding, buildingId: matchedBuilding.id } as Building & { buildingId: string });
