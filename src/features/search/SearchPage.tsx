@@ -34,6 +34,7 @@ const REGION_UPDATE_DELAY = 500;
 const PROGRAMMATIC_MOVE_DURATION = 1500;
 const FLY_TO_ZOOM = 16;
 const LIST_SIDEBAR_WIDTH = 400;
+const SIDEBAR_EXPANDED_OFFSET = 208; // Approx 13rem
 
 /**
  * Error fallback component for map loading failures
@@ -72,7 +73,8 @@ function ListSidebar({
   onBuildingClick, 
   searchQuery,
   className,
-  header
+  header,
+  style
 }: {
   buildings: DiscoveryBuilding[];
   isLoading: boolean;
@@ -80,9 +82,10 @@ function ListSidebar({
   searchQuery: string;
   className?: string;
   header?: React.ReactNode;
+  style?: React.CSSProperties;
 }) {
   return (
-    <div className={className}>
+    <div className={className} style={style}>
       {header && <div className="p-4 border-b">{header}</div>}
       <DiscoveryList
         buildings={buildings}
@@ -98,6 +101,8 @@ export default function SearchPage() {
   const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
   const { state, isMobile } = useSidebar();
   const { user } = useAuth();
+
+  const isSidebarExpanded = state === 'expanded' && !isMobile;
 
   // State for highlighted building
   const [highlightedBuildingId, setHighlightedBuildingId] = useState<string | null>(null);
@@ -529,7 +534,8 @@ export default function SearchPage() {
           isLoading={isListLoading}
           onBuildingClick={onBuildingClickAdapter}
           searchQuery={searchQuery}
-          className="hidden md:block w-[400px] bg-white border-r border-gray-200 overflow-y-auto h-full absolute left-0 top-0 z-[5] shadow-lg"
+          className="hidden md:block w-[400px] bg-white border-r border-gray-200 overflow-y-auto h-full absolute top-0 z-[5] shadow-lg transition-all duration-300"
+          style={{ left: isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0 }}
           header={searchInput}
         />
 
@@ -571,8 +577,11 @@ export default function SearchPage() {
         {/* Map Container */}
         <div 
           className={`flex-1 relative h-full transition-all duration-300 ${
-            isMobile ? 'w-full' : 'md:ml-[400px]'
+            isMobile ? 'w-full' : ''
           }`}
+          style={{
+            marginLeft: isMobile ? 0 : 400 + (isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0)
+          }}
         >
           <ErrorBoundary FallbackComponent={MapErrorFallback}>
             <Suspense fallback={
