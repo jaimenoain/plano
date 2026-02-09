@@ -581,18 +581,39 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
     if (isClientCluster) {
         // Client Cluster Click
-        const clusterId = feature.properties?.cluster_id; // Mapbox internal ID
+        // Ensure clusterId is a valid number
+        const rawClusterId = feature.properties?.cluster_id;
+        const clusterId = typeof rawClusterId === 'number' ? rawClusterId : Number(rawClusterId);
+
         const mapboxSource = mapRef.current?.getMap().getSource('buildings') as maplibregl.GeoJSONSource;
 
-        // Safety check if source is valid
-        if (mapboxSource && mapboxSource.getClusterExpansionZoom) {
+        // Safety check if source is valid and clusterId is valid
+        if (mapboxSource && mapboxSource.getClusterExpansionZoom && !isNaN(clusterId)) {
             mapboxSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
-                if (err) return;
+                if (err) {
+                    // Fallback to simple zoom in if expansion fails
+                    console.warn('Cluster expansion failed, falling back to simple zoom', err);
+                    mapRef.current?.flyTo({
+                        center: (feature.geometry as any).coordinates,
+                        zoom: (mapRef.current?.getZoom() || DEFAULT_ZOOM) + 2,
+                        duration: 500
+                    });
+                    return;
+                }
+
                 mapRef.current?.flyTo({
                     center: (feature.geometry as any).coordinates,
                     zoom: zoom || DEFAULT_ZOOM + 2,
                     duration: 500
                 });
+            });
+        } else {
+            // Fallback if source or ID invalid
+            console.warn('Invalid cluster source or ID, falling back to simple zoom');
+            mapRef.current?.flyTo({
+                center: (feature.geometry as any).coordinates,
+                zoom: (mapRef.current?.getZoom() || DEFAULT_ZOOM) + 2,
+                duration: 500
             });
         }
         setUserHasInteracted(true);
