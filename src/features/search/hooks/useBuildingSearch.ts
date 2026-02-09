@@ -2,14 +2,14 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
-import { DiscoveryBuilding, DiscoveryBuildingMapPin, ContactRater, ContactInteraction } from "../components/types";
+import { DiscoveryBuilding, DiscoveryBuildingMapPin, ContactRater, ContactInteraction, MapItem, ClusterPoint, BuildingPoint } from "../components/types";
 import { useUserLocation } from "@/hooks/useUserLocation";
-import { searchBuildingsRpc, getMapPinsRpc, getBuildingsByIds } from "@/utils/supabaseFallback";
+import { getBuildingsByIds } from "@/utils/supabaseFallback";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getBuildingImageUrl } from "@/utils/image";
 import { parseLocation } from "@/utils/location";
-import { filterLocalBuildings, applyClientFilters } from "../utils/searchFilters";
+import { filterLocalBuildings } from "../utils/searchFilters";
 import { UserSearchResult } from "./useUserSearch";
 import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
 import { Bounds } from "@/utils/map";
@@ -40,7 +40,6 @@ interface ContactInteractionData {
 const EARTH_RADIUS_METERS = 6371000; // Earth's radius in meters
 const VALID_LOCATION_THRESHOLD = 0.0001; // Threshold for filtering invalid (0,0) coordinates
 const DEFAULT_SEARCH_RADIUS = 20000000; // 20,000 km in meters
-const DEFAULT_SEARCH_LIMIT = 5000;
 
 // Helper to calculate Haversine distance in meters
 function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -297,11 +296,12 @@ const getJsonParam = <T>(param: string | null, defaultVal: T): T => {
   }
 };
 
-export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTriggerVersion?: number, bounds?: Bounds | null } = {}) {
+export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: { searchTriggerVersion?: number, bounds?: Bounds | null, zoom?: number } = {}) {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const debouncedQuery = useDebounce(searchQuery, 300);
+  const debouncedBounds = useDebounce(bounds, 300);
 
   // New Filters State
   const [statusFilters, setStatusFilters] = useState<string[]>(getArrayParam(searchParams.get("status")));
@@ -547,7 +547,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTrig
       selectedAttributes,
       selectedContacts,
       userLocation, // Keep tracking location for distance calculation in local mode? Yes.
-      bounds, // Add bounds to query key to trigger refetch on map move
+      debouncedBounds, // Use debounced bounds
+      zoom, // Use zoom level
       user?.id,
       searchTriggerVersion
     ],
@@ -676,6 +677,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTrig
                 id,
                 location,
                 status,
+                name,
+                main_image_url,
+                slug,
                 architects:building_architects(architect_id),
                 functional_category_id,
                 typologies:building_functional_typologies(typology_id),
@@ -694,10 +698,6 @@ export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTrig
             }
 
             // 5. Apply Characteristics / Architect Filters in Memory
-            // We need to map the result to match what filterLocalBuildings expects?
-            // filterLocalBuildings expects architects as objects with id.
-            // Our query returns architects with architect_id.
-
             const preFilteredData = (buildingsData || []).map((b: any) => ({
                 ...b,
                 architects: b.architects?.map((a: any) => ({ id: a.architect_id })) || []
@@ -710,7 +710,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTrig
               selectedArchitects: selectedArchitects.map(a => a.id)
             });
 
-            // 6. Map to DiscoveryBuildingMapPin
+            // 6. Map to MapItem (BuildingPoint)
             return filteredData
               .map((b: any) => {
                 const coords = parseLocation(b.location);
@@ -719,13 +719,17 @@ export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTrig
 
                 return {
                   id: b.id,
-                  location_lat: location_lat,
-                  location_lng: location_lng,
-                  status: b.status, // Construction status
-                  isCandidate: false, // Default
-                } as DiscoveryBuildingMapPin;
+                  lat: location_lat,
+                  lng: location_lng,
+                  count: 1,
+                  is_cluster: false,
+                  name: b.name,
+                  slug: b.slug,
+                  image_url: b.main_image_url,
+                  architect_names: []
+                } as BuildingPoint;
               })
-              .filter(b => isValidCoordinate(b.location_lat, b.location_lng));
+              .filter(b => isValidCoordinate(b.lat, b.lng));
           } catch (error) {
             console.error('Exception in local search mode:', error);
             return [];
@@ -734,27 +738,43 @@ export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTrig
 
         // Global search mode (RPC)
         try {
-          const mapPins = await getMapPinsRpc({
-            query_text: cleanQuery,
-            location_coordinates: { lat: userLocation.lat, lng: userLocation.lng },
-            radius_meters: DEFAULT_SEARCH_RADIUS,
+          // Calculate buffered bounds
+          let min_lat, max_lat, min_lng, max_lng;
+
+          if (debouncedBounds) {
+            const latBuffer = (debouncedBounds.north - debouncedBounds.south) * 0.25; // 25% buffer
+            const lngBuffer = (debouncedBounds.east - debouncedBounds.west) * 0.25;
+
+            min_lat = debouncedBounds.south - latBuffer;
+            max_lat = debouncedBounds.north + latBuffer;
+            min_lng = debouncedBounds.west - lngBuffer;
+            max_lng = debouncedBounds.east + lngBuffer;
+          }
+
+          const { data, error } = await supabase.rpc('get_map_clusters', {
+            min_lat,
+            max_lat,
+            min_lng,
+            max_lng,
+            zoom: Math.round(zoom),
             filters: {
-              architects: selectedArchitects.length > 0 ? selectedArchitects.map(a => a.id) : undefined,
+              query: cleanQuery,
+              architect_ids: selectedArchitects.length > 0 ? selectedArchitects.map(a => a.id) : undefined,
               category_id: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : undefined,
               typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
               attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined
-            },
-            p_limit: 50000, // High limit
-            min_lat: bounds?.south,
-            max_lat: bounds?.north,
-            min_lng: bounds?.west,
-            max_lng: bounds?.east
+            }
           });
 
+          if (error) {
+            console.error('Error fetching map clusters:', error);
+            return [];
+          }
+
           // Sanitize RPC results to remove invalid locations
-          return mapPins.filter(b =>
-            isValidCoordinate(b.location_lat, b.location_lng)
-          ) as DiscoveryBuildingMapPin[];
+          return (data as MapItem[]).filter(b =>
+            isValidCoordinate(b.lat, b.lng)
+          );
         } catch (error) {
           console.error('Exception in global search mode:', error);
           return [];
@@ -784,6 +804,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTrig
     // We can replicate logic here:
     return mapPins.filter(b => {
         // userStatuses is a Record<string, string>, not a Map
+
+        // For clusters, we can't easily filter by status unless the cluster has status info (it usually doesn't).
+        if (b.is_cluster) return true;
+
         const userStatus = (userStatuses as any)[b.id];
 
         // Hide Hidden
@@ -794,12 +818,6 @@ export function useBuildingSearch({ searchTriggerVersion, bounds }: { searchTrig
 
         // Hide Saved
         if (hideSaved && userStatus === 'pending') return false;
-
-        // Hide Without Images
-        // mapPins don't have image info! We can't filter by 'hideWithoutImages' accurately here unless we fetch that info.
-        // However, map pins are dots. Maybe we ignore image filter for map pins?
-        // Or we should include 'has_image' boolean in map pin RPC?
-        // Assuming we ignore image filter for map for now as per "Lightweight" requirement.
 
         return true;
     });

@@ -6,7 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Layers, Maximize2, Minimize2, Plus, Check, EyeOff, Bookmark, CheckSquare, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { DiscoveryBuilding, DiscoveryBuildingMapPin } from "@/features/search/components/types";
+import { DiscoveryBuilding, DiscoveryBuildingMapPin, MapItem, ClusterPoint, BuildingPoint } from "@/features/search/components/types";
 import { CollectionMarkerCategory } from "@/types/collection";
 import { MarkerInfoCard } from "../collections/MarkerInfoCard";
 import { findNearbyBuildingsRpc, fetchUserBuildingsMap } from "@/utils/supabaseFallback";
@@ -64,9 +64,9 @@ export interface BuildingDiscoveryMapRef {
 }
 
 interface BuildingDiscoveryMapProps {
-  externalBuildings?: DiscoveryBuildingMapPin[] | DiscoveryBuilding[];
+  externalBuildings?: DiscoveryBuildingMapPin[] | DiscoveryBuilding[] | MapItem[];
   onAddCandidate?: (building: DiscoveryBuildingMapPin) => void; // Update type
-  onRegionChange?: (center: { lat: number, lng: number }) => void;
+  onRegionChange?: (region: { lat: number, lng: number, zoom?: number }) => void;
   onBoundsChange?: (bounds: Bounds) => void;
   onMapInteraction?: () => void;
   isFetching?: boolean;
@@ -101,6 +101,11 @@ function isValidCoordinate(lat: number, lng: number): boolean {
     lng <= 180 &&
     !(Math.abs(lat) < NULL_ISLAND_THRESHOLD && Math.abs(lng) < NULL_ISLAND_THRESHOLD)
   );
+}
+
+function formatCount(count: number): string {
+    if (count >= 1000) return (count / 1000).toFixed(1) + 'k';
+    return count.toString();
 }
 
 /**
@@ -368,6 +373,15 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
     }
 
     const cleaned = buildings.filter(b => {
+      // MapItem handling
+      if ('lat' in b) {
+          const lat = Number((b as MapItem).lat);
+          const lng = Number((b as MapItem).lng);
+          if (isNaN(lat) || isNaN(lng)) return false;
+          return isValidCoordinate(lat, lng);
+      }
+
+      // Legacy handling
       if (b.location_lat === null || b.location_lat === undefined) return false;
       if (b.location_lng === null || b.location_lng === undefined) return false;
       const lat = Number(b.location_lat);
@@ -375,10 +389,16 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       if (isNaN(lat) || isNaN(lng)) return false;
       return isValidCoordinate(lat, lng);
     });
-    return cleaned as Building[]; // Cast to internal Building type
+
+    // Convert to Building type for internal use where possible
+    // Note: Clusters won't map perfectly to Building, but we handle them in geoJsonData
+    return cleaned;
   }, [buildings]);
 
-  const candidates = useMemo(() => cleanBuildings?.filter(b => b.isCandidate) || [], [cleanBuildings]);
+  const candidates = useMemo(() => {
+    // Candidates only exist in legacy format
+    return (cleanBuildings as any[]).filter(b => !('is_cluster' in b) && b.isCandidate) || [];
+  }, [cleanBuildings]);
 
   const checkCandidatesVisibility = useCallback((map: maplibregl.Map) => {
     if (!showSavedCandidates || candidates.length === 0) {
@@ -386,7 +406,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       return;
     }
     const bounds = map.getBounds();
-    const isVisible = candidates.some(b => bounds.contains([b.location_lng, b.location_lat]));
+    const isVisible = candidates.some((b: any) => bounds.contains([b.location_lng, b.location_lat]));
     setHasVisibleCandidates(isVisible);
   }, [candidates, showSavedCandidates]);
 
@@ -414,9 +434,65 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // Prepare GeoJSON Source
   const geoJsonData = useMemo(() => {
-    const data = {
-      type: 'FeatureCollection' as const,
-      features: cleanBuildings.map(b => {
+    let isServerClustered = false;
+    if (cleanBuildings.length > 0 && 'is_cluster' in cleanBuildings[0]) {
+        isServerClustered = true;
+    }
+
+    const features = cleanBuildings.map((b: any) => {
+        // Handle Server Side Clusters
+        if ('is_cluster' in b) {
+            const item = b as MapItem;
+            if (item.is_cluster) {
+                const clusterItem = item as ClusterPoint;
+                 return {
+                    type: 'Feature' as const,
+                    properties: {
+                        cluster: true,
+                        point_count: clusterItem.count,
+                        point_count_abbreviated: formatCount(clusterItem.count),
+                        cluster_id: clusterItem.id
+                    },
+                    geometry: {
+                        type: 'Point' as const,
+                        coordinates: [clusterItem.lng, clusterItem.lat]
+                    }
+                };
+            } else {
+                const buildingItem = item as BuildingPoint;
+                // Treat as building point
+                const status = userBuildingsMap?.get(String(buildingItem.id));
+                const isSelected = selectedPinId === String(buildingItem.id);
+                const isHighlighted = highlightedId === String(buildingItem.id);
+                const isDimmed = !isHighlighted && !isSelected; // Simple dimming logic, customize as needed
+
+                // Pin Color Logic
+                let pinColor = "#888888";
+                if (status === 'visited') pinColor = "#4b5563";
+                else if (status === 'pending') pinColor = "#EEFF41";
+
+                return {
+                    type: 'Feature' as const,
+                    properties: {
+                        cluster: false,
+                        buildingId: String(buildingItem.id),
+                        status,
+                        color: pinColor,
+                        isDimmed: false, // Defaulting false for now unless externalBuildings provides it
+                        location_precision: 'exact',
+                        isMarker: false,
+                        name: buildingItem.name,
+                        main_image_url: buildingItem.image_url
+                    },
+                    geometry: {
+                        type: 'Point' as const,
+                        coordinates: [buildingItem.lng, buildingItem.lat]
+                    }
+                };
+            }
+        }
+
+        // Legacy Handling
         let [lng, lat] = [b.location_lng, b.location_lat];
 
         // Apply jitter for approximate locations
@@ -459,9 +535,15 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             coordinates: [lng, lat]
           }
         };
-      })
+    });
+
+    return {
+        data: {
+            type: 'FeatureCollection' as const,
+            features
+        },
+        isServerClustered
     };
-    return data;
   }, [cleanBuildings, userBuildingsMap, highlightedId, selectedPinId, isSatellite]);
 
   // Handle Layer Click
@@ -478,17 +560,40 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
     const clusterId = feature.properties?.cluster_id;
 
-    if (clusterId) {
-        // Cluster Click
-        const mapboxSource = mapRef.current?.getMap().getSource('buildings') as maplibregl.GeoJSONSource;
-        mapboxSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err) return;
+    if (clusterId && geoJsonData.isServerClustered) {
+         // Server side cluster click - just zoom in
+         const zoom = mapRef.current?.getZoom();
+         if (zoom) {
             mapRef.current?.flyTo({
                 center: (feature.geometry as any).coordinates,
-                zoom: zoom || DEFAULT_ZOOM + 2,
+                zoom: zoom + 2, // Hardcode zoom step for server clusters
                 duration: 500
             });
-        });
+         }
+         setUserHasInteracted(true);
+         onMapInteraction?.();
+         return;
+    }
+
+    // Client side cluster id (numeric usually)
+    const isClientCluster = feature.properties?.cluster;
+
+    if (isClientCluster) {
+        // Client Cluster Click
+        const clusterId = feature.properties?.cluster_id; // Mapbox internal ID
+        const mapboxSource = mapRef.current?.getMap().getSource('buildings') as maplibregl.GeoJSONSource;
+
+        // Safety check if source is valid
+        if (mapboxSource && mapboxSource.getClusterExpansionZoom) {
+            mapboxSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
+                if (err) return;
+                mapRef.current?.flyTo({
+                    center: (feature.geometry as any).coordinates,
+                    zoom: zoom || DEFAULT_ZOOM + 2,
+                    duration: 500
+                });
+            });
+        }
         setUserHasInteracted(true);
         onMapInteraction?.();
     } else {
@@ -523,7 +628,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             onMapInteraction?.();
         }
     }
-  }, [selectedPinId, highlightedId, onMarkerClick, onMapInteraction]);
+  }, [selectedPinId, highlightedId, onMarkerClick, onMapInteraction, geoJsonData.isServerClustered]);
 
   // Handle Mouse Events for Hover
   const onMouseEnter = useCallback((event: MapLayerMouseEvent) => {
@@ -534,9 +639,19 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
       const feature = event.features?.[0];
       if (feature && !feature.properties?.cluster) {
           const bId = feature.properties?.buildingId;
-          const matchedBuilding = cleanBuildings.find(b => b.id === bId);
+          const matchedBuilding = cleanBuildings.find((b: any) => String(b.id) === bId);
           if (matchedBuilding) {
-              setHoveredBuilding({ ...matchedBuilding, buildingId: matchedBuilding.id });
+              // Convert to Building if MapItem
+              if ('lat' in matchedBuilding) {
+                  setHoveredBuilding({
+                    ...matchedBuilding,
+                    buildingId: String(matchedBuilding.id),
+                    location_lat: matchedBuilding.lat,
+                    location_lng: matchedBuilding.lng
+                  } as unknown as Building & { buildingId: string });
+              } else {
+                  setHoveredBuilding({ ...matchedBuilding, buildingId: matchedBuilding.id } as Building & { buildingId: string });
+              }
           }
       }
       if (mapRef.current) {
@@ -712,11 +827,18 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
       // Selected Pin Marker
       if (selectedPinId) {
-          const building = cleanBuildings.find(b => b.id === selectedPinId);
+          const building = cleanBuildings.find((b: any) => String(b.id) === selectedPinId);
           if (building) {
-              let [lng, lat] = [building.location_lng, building.location_lat];
-              if (building.location_precision === 'approximate') {
-                  [lng, lat] = getJitteredCoordinates(building.id, lat, lng);
+              let lng, lat;
+              if ('lat' in building) {
+                  lat = building.lat;
+                  lng = building.lng;
+              } else {
+                  lat = building.location_lat;
+                  lng = building.location_lng;
+                  if (building.location_precision === 'approximate') {
+                      [lng, lat] = getJitteredCoordinates(building.id, lat, lng);
+                  }
               }
 
               if (building.isMarker) {
@@ -752,7 +874,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
                           onClick={(e) => e.originalEvent.stopPropagation()}
                       >
                            <div className="absolute bottom-6 pb-2 flex flex-col items-center whitespace-nowrap z-50 animate-in fade-in zoom-in-95 duration-200">
-                                {renderTooltipContent({ ...building, buildingId: building.id }, true)}
+                                {renderTooltipContent({ ...building, buildingId: String(building.id) }, true)}
                                 <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#EEFF41]"></div>
                            </div>
                       </Marker>
@@ -902,9 +1024,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         onMoveEnd={evt => {
           setIsMapMoving(false);
           isMapMovingRef.current = false;
-          const { latitude, longitude } = evt.viewState;
+          const { latitude, longitude, zoom } = evt.viewState;
 
-          onRegionChange?.({ lat: latitude, lng: longitude });
+          onRegionChange?.({ lat: latitude, lng: longitude, zoom });
           handleMapUpdate(evt.target);
         }}
         mapLib={maplibregl}
@@ -920,8 +1042,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
         <Source
             id="buildings"
             type="geojson"
-            data={geoJsonData}
-            cluster={true}
+            data={geoJsonData.data}
+            cluster={!geoJsonData.isServerClustered}
             clusterMaxZoom={CLUSTER_MAX_ZOOM}
             clusterRadius={50}
         >

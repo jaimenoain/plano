@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBuildingSearch } from "./hooks/useBuildingSearch";
 import { getBoundsFromBuildings, getDistanceFromLatLonInM, Bounds } from "@/utils/map";
 import { DiscoveryList } from "./components/DiscoveryList";
-import { DiscoveryBuilding, DiscoveryBuildingMapPin } from "./components/types";
+import { DiscoveryBuilding, DiscoveryBuildingMapPin, MapItem } from "./components/types";
 import { DiscoverySearchInput } from "./components/DiscoverySearchInput";
 import { SearchFilters } from "./components/SearchFilters";
 import { Button } from "@/components/ui/button";
@@ -106,6 +106,7 @@ export default function SearchPage() {
   // Track map loading state
   const [mapLoaded, setMapLoaded] = useState(false);
   const [currentBounds, setCurrentBounds] = useState<Bounds | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(12);
 
   // Community Quality Filter (Local state for now)
   const [communityQuality, setCommunityQuality] = useState(0);
@@ -152,7 +153,7 @@ export default function SearchPage() {
     setSelectedTypologies,
     setSelectedAttributes,
     setSelectedContacts,
-  } = useBuildingSearch({ searchTriggerVersion, bounds: currentBounds });
+  } = useBuildingSearch({ searchTriggerVersion, bounds: currentBounds, zoom: currentZoom });
 
   // Refs for managing programmatic moves and region updates
   const regionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -210,12 +211,16 @@ export default function SearchPage() {
     if (!mapPins || mapPins.length === 0 || !currentBounds) return;
 
     // Filter pins within bounds
-    const visible = mapPins.filter(pin =>
-        pin.location_lat >= currentBounds.south &&
-        pin.location_lat <= currentBounds.north &&
-        pin.location_lng >= currentBounds.west &&
-        pin.location_lng <= currentBounds.east
-    );
+    // Note: mapPins are MapItem[] (lat/lng), not DiscoveryBuildingMapPin (location_lat/location_lng)
+    const visible = mapPins.filter(pin => {
+      // Exclude clusters from list view
+      if (pin.is_cluster) return false;
+
+      return pin.lat >= currentBounds.south &&
+        pin.lat <= currentBounds.north &&
+        pin.lng >= currentBounds.west &&
+        pin.lng <= currentBounds.east;
+    });
 
     // Calculate center of current view
     const centerLat = (currentBounds.north + currentBounds.south) / 2;
@@ -223,14 +228,14 @@ export default function SearchPage() {
 
     // Sort by distance from center
     visible.sort((a, b) => {
-        const distA = getDistanceFromLatLonInM(centerLat, centerLng, a.location_lat, a.location_lng);
-        const distB = getDistanceFromLatLonInM(centerLat, centerLng, b.location_lat, b.location_lng);
+        const distA = getDistanceFromLatLonInM(centerLat, centerLng, a.lat, a.lng);
+        const distB = getDistanceFromLatLonInM(centerLat, centerLng, b.lat, b.lng);
         return distA - distB;
     });
 
     // Take top 50
     const pageSize = 50;
-    const ids = visible.slice(0, pageSize).map(p => p.id);
+    const ids = visible.slice(0, pageSize).map(p => String(p.id));
     setIdsToHydrate(ids);
 
   }, [mapPins, currentBounds, setIdsToHydrate]);
@@ -242,10 +247,10 @@ export default function SearchPage() {
     // The hook already validates, but we double-check for safety
     return mapPins.filter(b =>
       !!b.id &&
-      typeof b.location_lat === 'number' &&
-      typeof b.location_lng === 'number' &&
-      !isNaN(b.location_lat) &&
-      !isNaN(b.location_lng)
+      typeof b.lat === 'number' &&
+      typeof b.lng === 'number' &&
+      !isNaN(b.lat) &&
+      !isNaN(b.lng)
     );
   }, [mapPins]);
 
@@ -281,11 +286,15 @@ export default function SearchPage() {
    * Handle region changes from map interactions
    * Updates location on map move to allow search in new area
    */
-  const handleRegionChange = useCallback((center: { lat: number; lng: number }) => {
+  const handleRegionChange = useCallback((center: { lat: number; lng: number, zoom?: number }) => {
     // Ignore updates triggered by programmatic moves (e.g., list clicks)
     if (isProgrammaticMove.current) {
       debug.log('🛡️ [GUARD] Ignoring region change due to programmatic move');
       return;
+    }
+
+    if (center.zoom) {
+      setCurrentZoom(center.zoom);
     }
 
     if (regionUpdateTimeoutRef.current) {
@@ -293,7 +302,7 @@ export default function SearchPage() {
     }
 
     regionUpdateTimeoutRef.current = setTimeout(() => {
-      updateLocation(center);
+      updateLocation({ lat: center.lat, lng: center.lng });
     }, REGION_UPDATE_DELAY);
   }, [updateLocation]);
 
@@ -309,11 +318,13 @@ export default function SearchPage() {
    */
   useEffect(() => {
     if (searchQuery && !userHasMovedMap.current && safeMapPins.length > 0) {
-      // For auto-fit, we might want to fit to all pins or a subset?
-      // Since mapPins can be huge (50k), fitBounds might be tricky if points are global.
-      // But typically search results are clustered or we want to show all.
-      // getBoundsFromBuildings iterates all. For 50k it might be slightly slow but probably OK.
-      const bounds = getBoundsFromBuildings(safeMapPins);
+      // Map MapItems to the format expected by getBoundsFromBuildings
+      const pointsForBounds = safeMapPins.map(p => ({
+        location_lat: p.lat,
+        location_lng: p.lng
+      }));
+
+      const bounds = getBoundsFromBuildings(pointsForBounds);
       if (bounds && mapRef.current) {
         if (typeof bounds.north === 'number' && typeof bounds.east === 'number') {
           mapRef.current.fitBounds(bounds);
@@ -390,14 +401,18 @@ export default function SearchPage() {
   /**
    * Adapter for building click - validates coordinates and triggers highlight
    */
-  const onBuildingClickAdapter = useCallback((building: DiscoveryBuilding | DiscoveryBuildingMapPin) => {
-    if (typeof building.location_lat === 'number' && 
-        typeof building.location_lng === 'number' &&
-        !isNaN(building.location_lat) &&
-        !isNaN(building.location_lng)) {
+  const onBuildingClickAdapter = useCallback((building: DiscoveryBuilding | DiscoveryBuildingMapPin | any) => {
+    // Handle both DiscoveryBuilding (location_lat) and MapItem (lat) just in case
+    const lat = building.location_lat ?? building.lat;
+    const lng = building.location_lng ?? building.lng;
+
+    if (typeof lat === 'number' &&
+        typeof lng === 'number' &&
+        !isNaN(lat) &&
+        !isNaN(lng)) {
       
-      setHighlightedBuildingId(building.id);
-      handleListHighlight(building.location_lat, building.location_lng);
+      setHighlightedBuildingId(String(building.id));
+      handleListHighlight(lat, lng);
       
       if (isMobile) {
         setViewMode('map');
@@ -557,7 +572,7 @@ export default function SearchPage() {
             }>
               <BuildingDiscoveryMap
                 ref={mapRef}
-                externalBuildings={safeMapPins}
+                externalBuildings={safeMapPins as any}
                 onRegionChange={handleRegionChange}
                 onBoundsChange={handleBoundsChange}
                 onMapInteraction={handleMapInteraction}
