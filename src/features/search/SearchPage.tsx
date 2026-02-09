@@ -210,13 +210,35 @@ export default function SearchPage() {
     setCurrentBounds(bounds);
   }, []);
 
+  // Buildings are already validated by the refactored hook
+  // This is a safety net for edge cases and handles potential string coordinates
+  const safeMapPins = useMemo(() => {
+    if (!mapPins) return [];
+
+    return mapPins
+      .map(b => ({
+        ...b,
+        lat: Number(b.lat),
+        lng: Number(b.lng)
+      }))
+      .filter(b =>
+        !!b.id &&
+        !isNaN(b.lat) &&
+        !isNaN(b.lng)
+      );
+  }, [mapPins]);
+
   // Update visible IDs when map pins or bounds change
   useEffect(() => {
-    if (!mapPins || mapPins.length === 0 || !currentBounds) return;
+    if (!currentBounds) return;
 
-    // Filter pins within bounds
-    // Note: mapPins are MapItem[] (lat/lng), not DiscoveryBuildingMapPin (location_lat/location_lng)
-    const visible = mapPins.filter(pin => {
+    if (!safeMapPins || safeMapPins.length === 0) {
+      setIdsToHydrate([]);
+      return;
+    }
+
+    // Filter pins within bounds using safeMapPins which has normalized numbers
+    const visible = safeMapPins.filter(pin => {
       // Exclude clusters from list view
       if (pin.is_cluster) return false;
 
@@ -241,21 +263,7 @@ export default function SearchPage() {
     const ids = visible.map(p => String(p.id));
     setIdsToHydrate(ids);
 
-  }, [mapPins, currentBounds, setIdsToHydrate]);
-
-  // Buildings are already validated by the refactored hook
-  // This is a safety net for edge cases
-  const safeMapPins = useMemo(() => {
-    if (!mapPins) return [];
-    // The hook already validates, but we double-check for safety
-    return mapPins.filter(b =>
-      !!b.id &&
-      typeof b.lat === 'number' &&
-      typeof b.lng === 'number' &&
-      !isNaN(b.lat) &&
-      !isNaN(b.lng)
-    );
-  }, [mapPins]);
+  }, [safeMapPins, currentBounds, setIdsToHydrate]);
 
   // Mutation for updating building status
   const { mutate: updateBuildingStatus } = useMutation({
