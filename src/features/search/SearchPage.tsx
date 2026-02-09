@@ -5,9 +5,9 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useBuildingSearch } from "./hooks/useBuildingSearch";
-import { getBoundsFromBuildings } from "@/utils/map";
+import { getBoundsFromBuildings, getDistanceFromLatLonInM, Bounds } from "@/utils/map";
 import { DiscoveryList } from "./components/DiscoveryList";
-import { DiscoveryBuilding } from "./components/types";
+import { DiscoveryBuilding, DiscoveryBuildingMapPin } from "./components/types";
 import { DiscoverySearchInput } from "./components/DiscoverySearchInput";
 import { SearchFilters } from "./components/SearchFilters";
 import { Button } from "@/components/ui/button";
@@ -100,9 +100,12 @@ export default function SearchPage() {
   const { user } = useAuth();
 
   const {
-    buildings,
-    isLoading,
+    mapPins,
+    richListItems,
+    setIdsToHydrate,
+    isLoading, // This is map loading
     isFetching,
+    isListLoading,
     searchQuery,
     setSearchQuery,
     updateLocation,
@@ -146,6 +149,7 @@ export default function SearchPage() {
 
   // Track map loading state
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [currentBounds, setCurrentBounds] = useState<Bounds | null>(null);
 
   // Community Quality Filter (Local state for now)
   const [communityQuality, setCommunityQuality] = useState(0);
@@ -197,19 +201,53 @@ export default function SearchPage() {
     debug.log('🔍 [FILTERS] Signature Changed:', JSON.parse(activeFilterSignature));
   }, [activeFilterSignature]);
 
+  const handleBoundsChange = useCallback((bounds: Bounds) => {
+    setCurrentBounds(bounds);
+  }, []);
+
+  // Update visible IDs when map pins or bounds change
+  useEffect(() => {
+    if (!mapPins || mapPins.length === 0 || !currentBounds) return;
+
+    // Filter pins within bounds
+    const visible = mapPins.filter(pin =>
+        pin.location_lat >= currentBounds.south &&
+        pin.location_lat <= currentBounds.north &&
+        pin.location_lng >= currentBounds.west &&
+        pin.location_lng <= currentBounds.east
+    );
+
+    // Calculate center of current view
+    const centerLat = (currentBounds.north + currentBounds.south) / 2;
+    const centerLng = (currentBounds.east + currentBounds.west) / 2;
+
+    // Sort by distance from center
+    visible.sort((a, b) => {
+        const distA = getDistanceFromLatLonInM(centerLat, centerLng, a.location_lat, a.location_lng);
+        const distB = getDistanceFromLatLonInM(centerLat, centerLng, b.location_lat, b.location_lng);
+        return distA - distB;
+    });
+
+    // Take top 50
+    const pageSize = 50;
+    const ids = visible.slice(0, pageSize).map(p => p.id);
+    setIdsToHydrate(ids);
+
+  }, [mapPins, currentBounds, setIdsToHydrate]);
+
   // Buildings are already validated by the refactored hook
   // This is a safety net for edge cases
-  const safeBuildings = useMemo(() => {
-    if (!buildings) return [];
+  const safeMapPins = useMemo(() => {
+    if (!mapPins) return [];
     // The hook already validates, but we double-check for safety
-    return buildings.filter(b =>
+    return mapPins.filter(b =>
       !!b.id &&
       typeof b.location_lat === 'number' &&
       typeof b.location_lng === 'number' &&
       !isNaN(b.location_lat) &&
       !isNaN(b.location_lng)
     );
-  }, [buildings]);
+  }, [mapPins]);
 
   // Mutation for updating building status
   const { mutate: updateBuildingStatus } = useMutation({
@@ -270,15 +308,19 @@ export default function SearchPage() {
    * Auto-fit map bounds when search query changes
    */
   useEffect(() => {
-    if (searchQuery && !userHasMovedMap.current && safeBuildings.length > 0) {
-      const bounds = getBoundsFromBuildings(safeBuildings);
+    if (searchQuery && !userHasMovedMap.current && safeMapPins.length > 0) {
+      // For auto-fit, we might want to fit to all pins or a subset?
+      // Since mapPins can be huge (50k), fitBounds might be tricky if points are global.
+      // But typically search results are clustered or we want to show all.
+      // getBoundsFromBuildings iterates all. For 50k it might be slightly slow but probably OK.
+      const bounds = getBoundsFromBuildings(safeMapPins);
       if (bounds && mapRef.current) {
         if (typeof bounds.north === 'number' && typeof bounds.east === 'number') {
           mapRef.current.fitBounds(bounds);
         }
       }
     }
-  }, [searchQuery, safeBuildings]);
+  }, [searchQuery, safeMapPins]);
 
   /**
    * Reset interaction flag and increment trigger when search changes
@@ -348,7 +390,7 @@ export default function SearchPage() {
   /**
    * Adapter for building click - validates coordinates and triggers highlight
    */
-  const onBuildingClickAdapter = useCallback((building: DiscoveryBuilding) => {
+  const onBuildingClickAdapter = useCallback((building: DiscoveryBuilding | DiscoveryBuildingMapPin) => {
     if (typeof building.location_lat === 'number' && 
         typeof building.location_lng === 'number' &&
         !isNaN(building.location_lat) &&
@@ -436,7 +478,7 @@ export default function SearchPage() {
         availableCollections={availableCollections}
         communityQuality={communityQuality}
         setCommunityQuality={setCommunityQuality}
-        resultCount={safeBuildings.length}
+        resultCount={safeMapPins.length}
       />
     </div>
   );
@@ -455,8 +497,8 @@ export default function SearchPage() {
       >
         {/* Desktop List Sidebar */}
         <ListSidebar
-          buildings={safeBuildings}
-          isLoading={isLoading}
+          buildings={richListItems}
+          isLoading={isListLoading}
           onBuildingClick={onBuildingClickAdapter}
           searchQuery={searchQuery}
           className="hidden md:block w-[400px] bg-white border-r border-gray-200 overflow-y-auto h-full absolute left-0 top-0 z-[5] shadow-lg"
@@ -490,8 +532,8 @@ export default function SearchPage() {
         {/* Mobile List View (Overlay) */}
         {isMobile && viewMode === 'list' && (
           <ListSidebar
-            buildings={safeBuildings}
-            isLoading={isLoading}
+            buildings={richListItems}
+            isLoading={isListLoading}
             onBuildingClick={onBuildingClickAdapter}
             searchQuery={searchQuery}
             className="absolute inset-0 bg-white z-40 overflow-y-auto pb-20"
@@ -515,9 +557,9 @@ export default function SearchPage() {
             }>
               <BuildingDiscoveryMap
                 ref={mapRef}
-                externalBuildings={safeBuildings}
+                externalBuildings={safeMapPins}
                 onRegionChange={handleRegionChange}
-                onBoundsChange={() => {}}
+                onBoundsChange={handleBoundsChange}
                 onMapInteraction={handleMapInteraction}
                 isFetching={isFetching}
                 autoZoomOnLowCount={!userHasMovedMap.current && searchQuery.length > 0}
