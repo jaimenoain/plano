@@ -53,14 +53,14 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!mx-auto"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={profile?.avatar_url || ""} alt={profile?.username || user.email || ""} />
+                <AvatarImage src={profile?.avatar_url || ""} alt={profile?.username || user?.email || ""} />
                 <AvatarFallback className="rounded-lg">
-                  {(profile?.username || user.email || "U").charAt(0).toUpperCase()}
+                  {(profile?.username || user?.email || "U").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">{profile?.username || "User"}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate text-xs">{user?.email || "guest@example.com"}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
