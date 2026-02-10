@@ -115,7 +115,7 @@ export function NoPhotosMapZone() {
             zoom: 1.5
           }}
           style={{ width: '100%', height: '100%' }}
-          mapStyle="https://tiles.openfreemap.org/styles/dark"
+          mapStyle="https://tiles.openfreemap.org/styles/positron"
           mapLib={maplibregl}
           attributionControl={false}
         >
