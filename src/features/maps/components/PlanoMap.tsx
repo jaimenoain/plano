@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { createPortal } from "react-dom";
 import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { Layers, Maximize2, Minimize2 } from "lucide-react";
 import { useURLMapState, DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/features/maps/hooks/useURLMapState';
 import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { MapErrorBoundary } from './MapErrorBoundary';
@@ -11,9 +13,35 @@ import { MapMarkers } from './MapMarkers';
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
+const SATELLITE_STYLE = {
+  version: 8,
+  sources: {
+    "satellite-tiles": {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      ],
+      tileSize: 256,
+      attribution: "&copy; Esri"
+    }
+  },
+  layers: [
+    {
+      id: "satellite-layer",
+      type: "raster",
+      source: "satellite-tiles",
+      minzoom: 0,
+      maxzoom: 22
+    }
+  ]
+};
+
 function PlanoMapContent() {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
+
+  const [isSatellite, setIsSatellite] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Context for sharing state with Sidebar
   const { methods: { setBounds, setHighlightedId }, state: { highlightedId, filters, bounds } } = useMapContext();
@@ -21,6 +49,7 @@ function PlanoMapContent() {
   // Reference to GeolocateControl to trigger it programmatically
   // We use `any` to avoid complex type matching between react-map-gl wrapper and maplibre-gl instance,
   // but in practice it exposes the underlying control or a compatible interface.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const geolocateControlRef = useRef<any>(null);
 
   // Local view state to ensure smooth dragging (60fps) while syncing with URL
@@ -91,15 +120,15 @@ function PlanoMapContent() {
       filters: filters
   });
 
-  return (
-    <div className="relative h-full w-full overflow-hidden bg-background">
+  const mapContent = (
+    <div className={`relative h-full w-full overflow-hidden bg-background ${isExpanded ? "fixed inset-0 z-[9999]" : ""}`}>
         <Map
             {...viewState}
             onMove={onMove}
             onMoveEnd={onMoveEnd}
             onLoad={onLoad}
             mapLib={maplibregl}
-            mapStyle={MAP_STYLE}
+            mapStyle={isSatellite ? SATELLITE_STYLE : MAP_STYLE}
             attributionControl={false}
             onClick={() => setHighlightedId(null)} // Clear highlight on map click
         >
@@ -113,8 +142,41 @@ function PlanoMapContent() {
             <NavigationControl position="bottom-right" />
             {bounds && <MapMarkers clusters={clusters || []} highlightedId={highlightedId} />}
         </Map>
+
+        {/* Top Left: Satellite Toggle */}
+        <div className="absolute top-2 left-2 flex flex-col gap-2 z-10">
+          <button
+            onClick={(e) => {
+                e.stopPropagation();
+                setIsSatellite(!isSatellite);
+            }}
+            className="p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors flex items-center gap-2"
+            title={isSatellite ? "Show Map" : "Show Satellite"}
+          >
+            <Layers className="w-4 h-4" />
+            <span className="text-xs font-medium hidden sm:inline">{isSatellite ? "Map" : "Satellite"}</span>
+          </button>
+        </div>
+
+        {/* Top Right: Fullscreen Toggle */}
+        <button
+            onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+            }}
+            className="absolute top-2 right-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10"
+            title={isExpanded ? "Collapse Map" : "Expand Map"}
+        >
+            {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+        </button>
     </div>
   );
+
+  if (isExpanded) {
+    return createPortal(mapContent, document.body);
+  }
+
+  return mapContent;
 }
 
 export function PlanoMap() {
