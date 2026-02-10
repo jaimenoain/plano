@@ -41,7 +41,22 @@ export const MapFiltersObjectSchema = z.object({
       return val;
     },
     z.number().optional()
-  )
+  ),
+  personalMinRating: z.preprocess(
+    (val) => {
+      if (typeof val === 'string' && val.trim() !== '') {
+        const num = Number(val);
+        return isNaN(num) ? undefined : num;
+      }
+      return val;
+    },
+    z.number().optional()
+  ),
+  collectionIds: z.array(z.string()).optional(),
+  typologies: z.array(z.string()).optional(),
+  materials: z.array(z.string()).optional(),
+  styles: z.array(z.string()).optional(),
+  contexts: z.array(z.string()).optional(),
 }).catchall(z.unknown())
 .transform((obj) => {
     const newObj = { ...obj };
@@ -52,6 +67,10 @@ export const MapFiltersObjectSchema = z.object({
     // Clamp min_rating if present and valid number (legacy support)
     if (typeof newObj.min_rating === 'number') {
         newObj.min_rating = Math.max(0, Math.min(3, newObj.min_rating));
+    }
+    // Clamp personalMinRating if present and valid number
+    if (typeof newObj.personalMinRating === 'number') {
+        newObj.personalMinRating = Math.max(0, Math.min(3, newObj.personalMinRating));
     }
     return newObj;
 });
