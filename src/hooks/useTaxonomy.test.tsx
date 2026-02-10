@@ -25,9 +25,9 @@ describe('useTaxonomy', () => {
     const mockCategories = [{ id: 'c1', name: 'Cat 1' }];
     const mockTypologies = [{ id: 't1', name: 'Typ 1' }];
     const mockGroups = [
-      { id: 'g1', name: 'Materiality' },
-      { id: 'g2', name: 'Context' },
-      { id: 'g3', name: 'Style' },
+      { id: 'g1', name: 'Materiality', slug: 'materiality' },
+      { id: 'g2', name: 'Context', slug: 'context' },
+      { id: 'g3', name: 'Style', slug: 'style' },
     ];
     const mockAttributes = [
       { id: 'a1', name: 'Brick', group_id: 'g1' },
