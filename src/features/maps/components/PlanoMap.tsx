@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
-import Map, { NavigationControl, ViewStateChangeEvent } from 'react-map-gl';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { useURLMapState } from '@/features/maps/hooks/useURLMapState';
+import { useURLMapState, DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/features/maps/hooks/useURLMapState';
 import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { useMapContext } from '../providers/MapContext';
@@ -17,6 +17,11 @@ function PlanoMapContent() {
 
   // Context for sharing state with Sidebar
   const { methods: { setBounds, setHighlightedId }, state: { highlightedId, filters, bounds } } = useMapContext();
+
+  // Reference to GeolocateControl to trigger it programmatically
+  // We use `any` to avoid complex type matching between react-map-gl wrapper and maplibre-gl instance,
+  // but in practice it exposes the underlying control or a compatible interface.
+  const geolocateControlRef = useRef<any>(null);
 
   // Local view state to ensure smooth dragging (60fps) while syncing with URL
   const [viewState, setViewState] = useState({
@@ -70,7 +75,14 @@ function PlanoMapContent() {
 
   const onLoad = useCallback((evt: { target: maplibregl.Map }) => {
       updateBounds(evt.target);
-  }, [updateBounds]);
+
+      // Auto-geolocate if at default view (meaning user didn't specify a location)
+      if (lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM) {
+          // Trigger the geolocation control to find the user
+          // This will ask for permission if not granted
+          geolocateControlRef.current?.trigger();
+      }
+  }, [updateBounds, lat, lng, zoom]);
 
   // Fetch data based on bounds
   const { clusters, isLoading } = useMapData({
@@ -91,6 +103,13 @@ function PlanoMapContent() {
             attributionControl={false}
             onClick={() => setHighlightedId(null)} // Clear highlight on map click
         >
+            <GeolocateControl
+                ref={geolocateControlRef}
+                position="bottom-right"
+                positionOptions={{ enableHighAccuracy: true }}
+                trackUserLocation={true}
+                showUserLocation={true}
+            />
             <NavigationControl position="bottom-right" />
             {bounds && <MapMarkers clusters={clusters || []} highlightedId={highlightedId} />}
         </Map>
