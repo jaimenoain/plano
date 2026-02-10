@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getBuildingImageUrl } from '@/utils/image';
 
 interface Building {
   id: string;
@@ -140,51 +141,54 @@ export function BuildingSidebar() {
   return (
     <ScrollArea className="h-full w-full">
       <div className="space-y-4 p-4">
-        {buildings.map((building) => (
-          <Link to={`/building/${building.slug}`} key={building.id} className="block group">
-            <Card
-              className="overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50"
-              onMouseEnter={() => setHighlightedId(building.id)}
-              onMouseLeave={() => setHighlightedId(null)}
-            >
-              <div className="relative aspect-video bg-muted">
-                {building.image_url ? (
-                  <img
-                    src={building.image_url}
-                    alt={building.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                    No Image
-                  </div>
-                )}
+        {buildings.map((building) => {
+          const imageUrl = getBuildingImageUrl(building.image_url);
+          return (
+            <Link to={`/building/${building.slug}`} key={building.id} className="block group">
+              <Card
+                className="overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50"
+                onMouseEnter={() => setHighlightedId(building.id)}
+                onMouseLeave={() => setHighlightedId(null)}
+              >
+                <div className="relative aspect-video bg-muted">
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={building.name}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+                      No Image
+                    </div>
+                  )}
 
-                {/* Rating Badge */}
-                {building.rating > 0 && (
-                    <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-                        {building.rating} <span className="text-yellow-400">★</span>
-                    </div>
-                )}
-              </div>
-              <CardContent className="p-3">
-                <div className="flex items-start justify-between gap-2">
-                    <h3 className="line-clamp-1 text-sm font-semibold leading-tight group-hover:text-primary" title={building.name}>
-                        {building.name}
-                    </h3>
+                  {/* Rating Badge */}
+                  {building.rating > 0 && (
+                      <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+                          {building.rating} <span className="text-yellow-400">★</span>
+                      </div>
+                  )}
                 </div>
-                {building.status && building.status !== 'none' && (
-                    <div className="mt-1 flex items-center gap-1">
-                        <span className="inline-flex items-center rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
-                            {building.status}
-                        </span>
-                    </div>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+                <CardContent className="p-3">
+                  <div className="flex items-start justify-between gap-2">
+                      <h3 className="line-clamp-1 text-sm font-semibold leading-tight group-hover:text-primary" title={building.name}>
+                          {building.name}
+                      </h3>
+                  </div>
+                  {building.status && building.status !== 'none' && (
+                      <div className="mt-1 flex items-center gap-1">
+                          <span className="inline-flex items-center rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
+                              {building.status}
+                          </span>
+                      </div>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
 
         {/* Infinite Scroll Loader */}
         <div ref={observerTarget} className="flex h-8 w-full items-center justify-center py-2">
