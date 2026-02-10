@@ -1,6 +1,9 @@
 -- Migration to add name, slug, and image_url to get_map_clusters_v2
 -- Migration ID: 20270510000000_update_map_clusters_with_details.sql
 
+-- Drop the function first because we are changing the return type
+DROP FUNCTION IF EXISTS get_map_clusters_v2(double precision, double precision, double precision, double precision, double precision, jsonb);
+
 CREATE OR REPLACE FUNCTION get_map_clusters_v2(
   min_lat double precision,
   min_lng double precision,
