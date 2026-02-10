@@ -1,152 +1,158 @@
 
-import { describe, it, expect } from "bun:test";
-import { applyClientFilters, ClientFilterContext } from "./searchFilters";
+import { describe, it, expect } from 'vitest';
+import { filterLocalBuildings, BuildingFilterData, FilterCriteria } from './searchFilters';
 
-describe("applyClientFilters", () => {
-  const buildings = [
-    { id: "1", status: "Built" },
-    { id: "2", status: "Demolished" },
-    { id: "3", status: "Unbuilt" },
-    { id: "4", status: "Built" },
-    { id: "5", status: "Built" },
-    { id: "6", status: "Built" },
+describe('filterLocalBuildings', () => {
+  const buildings: BuildingFilterData[] = [
+    {
+      id: '1',
+      functional_category_id: 'cat1',
+      typologies: [{ typology_id: 'typ1' }],
+      attributes: [
+        { attribute_id: 'mat1' }, // Material
+        { attribute_id: 'style1' }, // Style
+      ],
+      architects: [{ architect: { id: 'arch1', name: 'Arch 1' } }],
+    },
+    {
+      id: '2',
+      functional_category_id: 'cat2',
+      typologies: [{ typology_id: 'typ2' }],
+      attributes: [
+        { attribute_id: 'mat2' }, // Material
+        { attribute_id: 'ctx1' }, // Context
+      ],
+      architects: [{ architect: { id: 'arch2', name: 'Arch 2' } }],
+    },
+    {
+      id: '3',
+      functional_category_id: 'cat1',
+      typologies: [],
+      attributes: [
+        { attribute_id: 'mat1' },
+        { attribute_id: 'ctx2' },
+        { attribute_id: 'style2' },
+      ],
+      architects: [],
+    },
   ];
 
-  const userStatuses: Record<string, string> = {
-    "1": "pending", // Saved
-    "4": "visited", // Visited
-    "5": "ignored", // Ignored
-    "6": "none",    // No status
+  const emptyFilters: FilterCriteria = {
+    categoryId: null,
+    typologyIds: [],
+    attributeIds: [],
+    selectedArchitects: [],
+    collectionIds: [],
+    materials: [],
+    styles: [],
+    contexts: [],
+    personalMinRating: 0,
   };
 
-  it("should NOT filter out Demolished and Unbuilt buildings (filtered only on map)", () => {
-    const context: ClientFilterContext = {
-      hideSaved: false,
-      hideVisited: false,
-      hideHidden: true,
-      userStatuses: {},
-    };
-    const result = applyClientFilters(buildings, context);
-    expect(result.map(b => b.id)).toContain("2");
-    expect(result.map(b => b.id)).toContain("3");
-    expect(result.map(b => b.id)).toContain("1");
+  it('should return all buildings when no filters are applied', () => {
+    const result = filterLocalBuildings(buildings, emptyFilters);
+    expect(result).toHaveLength(3);
   });
 
-  it("should filter out ignored buildings when hideHidden is true", () => {
-    const context: ClientFilterContext = {
-      hideSaved: false,
-      hideVisited: false,
-      hideHidden: true,
-      userStatuses,
+  it('should filter by collectionIds', () => {
+    const userCollectionMap: Record<string, Set<string>> = {
+      col1: new Set(['1', '3']),
+      col2: new Set(['2']),
     };
-    const result = applyClientFilters(buildings, context);
-    expect(result.map(b => b.id)).not.toContain("5");
+
+    const filters: FilterCriteria = {
+      ...emptyFilters,
+      collectionIds: ['col1'],
+      userCollectionMap,
+    };
+
+    const result = filterLocalBuildings(buildings, filters);
+    expect(result.map(b => b.id)).toEqual(['1', '3']);
   });
 
-  it("should SHOW ignored buildings when hideHidden is false", () => {
-    const context: ClientFilterContext = {
-      hideSaved: false,
-      hideVisited: false,
-      hideHidden: false,
-      userStatuses,
+  it('should filter by personalMinRating', () => {
+    const userRatings: Record<string, number> = {
+      '1': 3,
+      '2': 5,
+      '3': 2,
     };
-    const result = applyClientFilters(buildings, context);
-    expect(result.map(b => b.id)).toContain("5");
+
+    const filters: FilterCriteria = {
+      ...emptyFilters,
+      personalMinRating: 4,
+      userRatings,
+    };
+
+    const result = filterLocalBuildings(buildings, filters);
+    expect(result.map(b => b.id)).toEqual(['2']);
   });
 
-  it("should hide Saved buildings when hideSaved is true", () => {
-    const context: ClientFilterContext = {
-      hideSaved: true,
-      hideVisited: false,
-      hideHidden: true,
-      userStatuses,
+  it('should filter by materials (OR logic within)', () => {
+    const filters: FilterCriteria = {
+      ...emptyFilters,
+      materials: ['mat1', 'mat2'],
     };
-    const result = applyClientFilters(buildings, context);
-    // 1 is pending (Saved), should be hidden
-    expect(result.map(b => b.id)).not.toContain("1");
-    // 4 is visited, should be present
-    expect(result.map(b => b.id)).toContain("4");
+
+    // Building 1: mat1
+    // Building 2: mat2
+    // Building 3: mat1
+    const result = filterLocalBuildings(buildings, filters);
+    expect(result.map(b => b.id)).toEqual(['1', '2', '3']);
   });
 
-  it("should hide Visited buildings when hideVisited is true", () => {
-    const context: ClientFilterContext = {
-      hideSaved: false,
-      hideVisited: true,
-      hideHidden: true,
-      userStatuses,
+  it('should filter by styles', () => {
+    const filters: FilterCriteria = {
+      ...emptyFilters,
+      styles: ['style1'],
     };
-    const result = applyClientFilters(buildings, context);
-    // 4 is visited, should be hidden
-    expect(result.map(b => b.id)).not.toContain("4");
-    // 1 is pending, should be present
-    expect(result.map(b => b.id)).toContain("1");
+
+    const result = filterLocalBuildings(buildings, filters);
+    expect(result.map(b => b.id)).toEqual(['1']);
   });
 
-  it("should hide both if both flags are true", () => {
-    const context: ClientFilterContext = {
-      hideSaved: true,
-      hideVisited: true,
-      hideHidden: true,
-      userStatuses,
+  it('should filter by contexts', () => {
+    const filters: FilterCriteria = {
+      ...emptyFilters,
+      contexts: ['ctx1'],
     };
-    const result = applyClientFilters(buildings, context);
-    expect(result.map(b => b.id)).not.toContain("1");
-    expect(result.map(b => b.id)).not.toContain("4");
-    expect(result.map(b => b.id)).toContain("6");
+
+    const result = filterLocalBuildings(buildings, filters);
+    expect(result.map(b => b.id)).toEqual(['2']);
   });
 
-  // Specific QA Verification Cases
-
-  it("Case A: Exclusion Trumps Inclusion (Input Visited, Hide Visited -> Empty)", () => {
-    // Simulate "Show Visited" chip active (Input list contains only visited items)
-    const visitedOnlyBuildings = [
-      { id: "4", status: "Built" }, // User status: visited
-    ];
-    const context: ClientFilterContext = {
-      hideSaved: false,
-      hideVisited: true, // Exclusion active
-      hideHidden: true,
-      userStatuses,
+  it('should combine filters with AND logic (Material AND Style)', () => {
+    const filters: FilterCriteria = {
+      ...emptyFilters,
+      materials: ['mat1'],
+      styles: ['style1'],
     };
 
-    const result = applyClientFilters(visitedOnlyBuildings, context);
-    expect(result.length).toBe(0);
+    // Building 1 has mat1 AND style1.
+    // Building 3 has mat1 AND style2.
+    const result = filterLocalBuildings(buildings, filters);
+    expect(result.map(b => b.id)).toEqual(['1']);
   });
 
-  it("Case B: Pure Discovery (Hide Visited + Hide Saved -> Only 'null' status)", () => {
-    // Input list has mixed items
-    const context: ClientFilterContext = {
-      hideSaved: true,
-      hideVisited: true,
-      hideHidden: true,
-      userStatuses,
+  it('should combine filters with AND logic (Material AND Context)', () => {
+    const filters: FilterCriteria = {
+      ...emptyFilters,
+      materials: ['mat1'],
+      contexts: ['ctx2'],
     };
-    const result = applyClientFilters(buildings, context);
 
-    // Should NOT contain Saved (1) or Visited (4) or Ignored (5)
-    expect(result.map(b => b.id)).not.toContain("1");
-    expect(result.map(b => b.id)).not.toContain("4");
-    expect(result.map(b => b.id)).not.toContain("5");
-
-    // Should contain None (6)
-    expect(result.map(b => b.id)).toContain("6");
+    // Building 3 has mat1 AND ctx2.
+    const result = filterLocalBuildings(buildings, filters);
+    expect(result.map(b => b.id)).toEqual(['3']);
   });
 
-  it("Case C: Refined List (Input Saved, Hide Visited -> Show Saved)", () => {
-    // Simulate "Show Saved" chip active (Input list contains only saved items)
-    const savedOnlyBuildings = [
-      { id: "1", status: "Built" }, // User status: pending (saved)
-    ];
-    const context: ClientFilterContext = {
-      hideSaved: false,
-      hideVisited: true, // Exclusion active for Visited
-      hideHidden: true,
-      userStatuses,
+  it('should handle missing user maps gracefully', () => {
+    const filters: FilterCriteria = {
+      ...emptyFilters,
+      collectionIds: ['col1'],
+      // userCollectionMap missing
     };
 
-    const result = applyClientFilters(savedOnlyBuildings, context);
-    // Saved items should remain because they are NOT visited
-    expect(result.length).toBe(1);
-    expect(result[0].id).toBe("1");
+    const result = filterLocalBuildings(buildings, filters);
+    expect(result).toHaveLength(0);
   });
 });
