@@ -58,19 +58,19 @@ export function useTaxonomy() {
 
   const materialityAttributes = useMemo(() => {
     if (!attributes || !attributeGroups) return [];
-    const group = attributeGroups.find(g => g.name === 'Materiality');
+    const group = attributeGroups.find(g => g.slug === 'materiality');
     return group ? attributes.filter(a => a.group_id === group.id) : [];
   }, [attributes, attributeGroups]);
 
   const contextAttributes = useMemo(() => {
     if (!attributes || !attributeGroups) return [];
-    const group = attributeGroups.find(g => g.name === 'Context');
+    const group = attributeGroups.find(g => g.slug === 'context');
     return group ? attributes.filter(a => a.group_id === group.id) : [];
   }, [attributes, attributeGroups]);
 
   const styleAttributes = useMemo(() => {
     if (!attributes || !attributeGroups) return [];
-    const group = attributeGroups.find(g => g.name === 'Style');
+    const group = attributeGroups.find(g => g.slug === 'style');
     return group ? attributes.filter(a => a.group_id === group.id) : [];
   }, [attributes, attributeGroups]);
 
