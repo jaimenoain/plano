@@ -117,11 +117,11 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
           closeButton={false}
           closeOnClick={false}
           className="z-[100] map-popup-test"
-          maxWidth="220px"
+          maxWidth="300px"
         >
-          <div className="flex flex-col overflow-hidden rounded-md bg-background shadow-lg">
+          <div className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg">
             {/* Image */}
-            <div className="relative h-24 w-full bg-muted">
+            <div className="relative h-[200px] w-full bg-muted">
                 {activeCluster.image_url ? (
                     <img
                         src={getBuildingImageUrl(activeCluster.image_url)}
