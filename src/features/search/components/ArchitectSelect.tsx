@@ -5,6 +5,7 @@ import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui
 import { Command as CommandPrimitive } from "cmdk"
 import { cn } from "@/lib/utils"
 import { useArchitectSearch, ArchitectSearchResult } from "../hooks/useArchitectSearch"
+import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover"
 
 interface ArchitectSelectProps {
   selectedArchitects: { id: string; name: string }[]
@@ -22,6 +23,8 @@ export function ArchitectSelect({
   const [open, setOpen] = React.useState(false)
   const [inputValue, setInputValue] = React.useState("")
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = React.useState(0)
 
   const { architects, isLoading } = useArchitectSearch({
       searchQuery: inputValue,
@@ -29,11 +32,27 @@ export function ArchitectSelect({
       enabled: open
   });
 
+  React.useLayoutEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.offsetWidth)
+      const observer = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+             if (entry.target instanceof HTMLElement) {
+                 setContainerWidth(entry.target.offsetWidth)
+             }
+          }
+      })
+      observer.observe(containerRef.current)
+      return () => observer.disconnect()
+    }
+  }, [])
+
   const handleSelect = (architect: ArchitectSearchResult) => {
     setInputValue("")
     if (!selectedArchitects.some(a => a.id === architect.id)) {
       setSelectedArchitects([...selectedArchitects, { id: architect.id, name: architect.name }])
     }
+    // Keep focus on input
     setTimeout(() => {
         inputRef.current?.focus()
     }, 0)
@@ -54,6 +73,7 @@ export function ArchitectSelect({
       }
       if (e.key === "Escape") {
         input.blur()
+        setOpen(false)
       }
     }
   }
@@ -62,44 +82,58 @@ export function ArchitectSelect({
       !selectedArchitects.some(sel => sel.id === a.id)
   );
 
+  const showPopover = open && (filteredSuggestions.length > 0 || inputValue.length > 0);
+
   return (
-    <Command
-        onKeyDown={handleKeyDown}
-        className={cn("overflow-visible bg-transparent", className)}
-        shouldFilter={false}
-    >
-      <div
-        className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background"
-      >
-        <div className="flex flex-wrap gap-1">
-          {selectedArchitects.map((architect) => (
-            <Badge key={architect.id} variant="secondary" className="pl-1">
-              <PencilRuler className="h-3 w-3 mr-1" />
-              {architect.name}
-              <button
-                type="button"
-                className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                onClick={() => handleUnselect(architect.id)}
+    <Popover open={showPopover} onOpenChange={setOpen}>
+        <Command
+            onKeyDown={handleKeyDown}
+            className={cn("overflow-visible bg-transparent", className)}
+            shouldFilter={false}
+        >
+          <PopoverAnchor asChild>
+              <div
+                ref={containerRef}
+                className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background relative"
               >
-                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-              </button>
-            </Badge>
-          ))}
-          <CommandPrimitive.Input
-            ref={inputRef}
-            value={inputValue}
-            onValueChange={setInputValue}
-            onBlur={() => setTimeout(() => setOpen(false), 200)}
-            onFocus={() => setOpen(true)}
-            placeholder={placeholder}
-            autoComplete="off"
-            className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px]"
-          />
-        </div>
-      </div>
-      <div className="relative mt-2">
-        {open && (filteredSuggestions.length > 0 || inputValue.length > 0) && (
-          <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
+                <div className="flex flex-wrap gap-1">
+                  {selectedArchitects.map((architect) => (
+                    <Badge key={architect.id} variant="secondary" className="pl-1">
+                      <PencilRuler className="h-3 w-3 mr-1" />
+                      {architect.name}
+                      <button
+                        type="button"
+                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        onClick={() => handleUnselect(architect.id)}
+                      >
+                        <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    </Badge>
+                  ))}
+                  <CommandPrimitive.Input
+                    ref={inputRef}
+                    value={inputValue}
+                    onValueChange={setInputValue}
+                    onFocus={() => setOpen(true)}
+                    onBlur={() => {
+                        if (!showPopover) {
+                            setOpen(false)
+                        }
+                    }}
+                    placeholder={placeholder}
+                    autoComplete="off"
+                    className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px]"
+                  />
+                </div>
+              </div>
+          </PopoverAnchor>
+
+          <PopoverContent
+             className="p-0"
+             align="start"
+             onOpenAutoFocus={(e) => e.preventDefault()}
+             style={{ width: containerWidth > 0 ? containerWidth : "auto" }}
+          >
             <CommandList>
               {isLoading && (
                   <CommandItem disabled>
@@ -129,9 +163,8 @@ export function ArchitectSelect({
                 )}
               </CommandGroup>
             </CommandList>
-          </div>
-        )}
-      </div>
-    </Command>
+          </PopoverContent>
+        </Command>
+    </Popover>
   )
 }
