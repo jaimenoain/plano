@@ -45,6 +45,7 @@ import { Architect } from "@/types/architect";
 import { getBuildingUrl } from "@/utils/url";
 import { CollectionSelector } from "@/components/profile/CollectionSelector";
 import { BuildingAttributes } from "@/components/BuildingAttributes";
+import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 
 // --- Types ---
 interface BuildingDetails {
@@ -825,10 +826,15 @@ export default function BuildingDetails() {
                 )}
 
                 {coordinates ? (
-                  /* Map Component will go here */
-                  <div className="h-48 w-full bg-muted/10 rounded-xl border border-white/5 flex items-center justify-center text-muted-foreground/50 text-sm">
-                    Map View Disabled
-                  </div>
+                  <BuildingLocationMap
+                    lat={coordinates.lat}
+                    lng={coordinates.lng}
+                    status={userStatus}
+                    locationPrecision={building.location_precision}
+                    isExpanded={isMapExpanded}
+                    onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
+                    className={isMapExpanded ? "" : "h-48 w-full"}
+                  />
                 ) : (
                 <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">
                     <MapPin className="w-6 h-6 opacity-50" />
