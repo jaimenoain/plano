@@ -144,7 +144,7 @@ export function BuildingSidebar() {
         {buildings.map((building) => {
           const imageUrl = getBuildingImageUrl(building.image_url);
           return (
-            <Link to={`/building/${building.slug}`} key={building.id} className="block group">
+            <Link to={`/building/${building.slug || building.id}`} key={building.id} className="block group">
               <Card
                 className="overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50"
                 onMouseEnter={() => setHighlightedId(building.id)}
