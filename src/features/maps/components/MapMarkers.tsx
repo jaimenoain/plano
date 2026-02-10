@@ -16,6 +16,13 @@ export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
     return clusters.map((cluster) => {
       // Handle Cluster
       if (cluster.is_cluster) {
+        let sizeClass = 'h-8 w-8 text-xs';
+        if (cluster.count > 1000) {
+          sizeClass = 'h-16 w-16 text-sm';
+        } else if (cluster.count > 100) {
+          sizeClass = 'h-12 w-12 text-sm';
+        }
+
         return (
           <Marker
             key={`cluster-${cluster.id}`}
@@ -28,7 +35,7 @@ export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
               }
             }}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-xs font-bold shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
+            <div className={`flex ${sizeClass} items-center justify-center rounded-full border border-gray-300 bg-white font-bold shadow-sm cursor-pointer hover:bg-gray-50 transition-colors`}>
               {cluster.count}
             </div>
           </Marker>
