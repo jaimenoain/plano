@@ -51,9 +51,9 @@ export function useMapData({ bounds, zoom, filters }: UseMapDataProps) {
       // Construct filter_criteria based on MapFilters
       const filterCriteria = {
         query: filters.query,
-        category: filters.category,
-        typology: filters.typologies,
-        attributes: filters.attributes,
+        category_id: filters.category,
+        typology_ids: filters.typologies,
+        attribute_ids: filters.attributes,
         architect_ids: filters.architects?.map((a) => a.id),
         status: filters.status,
         min_rating: filters.minRating,
