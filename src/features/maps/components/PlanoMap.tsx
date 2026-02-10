@@ -140,7 +140,7 @@ function PlanoMapContent() {
                 showUserLocation={true}
             />
             <NavigationControl position="bottom-right" />
-            {bounds && <MapMarkers clusters={clusters || []} highlightedId={highlightedId} />}
+            {bounds && <MapMarkers clusters={clusters || []} highlightedId={highlightedId} setHighlightedId={setHighlightedId} />}
         </Map>
 
         {/* Top Left: Satellite Toggle */}
