@@ -1,13 +1,16 @@
-import React, { createContext, useContext, useMemo, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useMemo, ReactNode, useCallback, useState } from 'react';
 import { useURLMapState } from '../hooks/useURLMapState';
 import { useStableMapUpdate } from '../hooks/useStableMapUpdate';
 import { MapMode, MapFilters, MapState } from '@/types/plano-map';
+import { Bounds } from '@/utils/map';
 
 interface MapContextMethods {
   moveMap: (lat: number, lng: number, zoom: number) => void;
   setMode: (mode: MapMode) => void;
   setFilter: <K extends keyof MapFilters>(key: K, value: MapFilters[K]) => void;
   setMapState: (state: Partial<MapState>) => void;
+  setBounds: (bounds: Bounds) => void;
+  setHighlightedId: (id: string | null) => void;
 }
 
 interface MapContextValue {
@@ -17,6 +20,8 @@ interface MapContextValue {
     zoom: number;
     mode: MapMode;
     filters: MapFilters;
+    bounds: Bounds | null;
+    highlightedId: string | null;
   };
   methods: MapContextMethods;
 }
@@ -26,6 +31,9 @@ const MapContext = createContext<MapContextValue | null>(null);
 export const MapProvider = ({ children }: { children: ReactNode }) => {
   const { lat, lng, zoom, mode, filters, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
+
+  const [bounds, setBounds] = useState<Bounds | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   const moveMap = useCallback(
     (lat: number, lng: number, zoom: number) => {
@@ -67,15 +75,19 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         zoom,
         mode,
         filters: filters as unknown as MapFilters,
+        bounds,
+        highlightedId,
       },
       methods: {
         moveMap,
         setMode,
         setFilter,
         setMapState,
+        setBounds,
+        setHighlightedId,
       },
     }),
-    [lat, lng, zoom, mode, filters, moveMap, setMode, setFilter, setMapState]
+    [lat, lng, zoom, mode, filters, bounds, highlightedId, moveMap, setMode, setFilter, setMapState]
   );
 
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
