@@ -10,14 +10,50 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ArchitectSelect } from '@/features/search/components/ArchitectSelect';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useMapContext } from '../providers/MapContext';
-import { MichelinRating } from '@/types/plano-map';
+import { MapMode, MichelinRating } from '@/types/plano-map';
 
 export function FilterDrawer() {
   const {
-    state: { filters },
+    state: { mode, filters },
     methods: { setFilter, setMapState },
   } = useMapContext();
+
+  const handleModeChange = (newMode: string) => {
+    const typedMode = newMode as MapMode;
+
+    if (typedMode === 'discover') {
+      // Switch to Discover mode:
+      // - Clear status (so we see everything relevant to discovery)
+      // - Hide saved items by default
+      // - Keep other filters (architects, rating, etc.)
+
+      setMapState({
+        mode: typedMode,
+        filters: {
+          ...filters,
+          status: undefined,
+          hideSaved: true,
+          // We don't touch hideVisited, assuming user might have set it
+        },
+      });
+    } else {
+      // Switch to Library mode:
+      // - Set status to ['visited', 'saved'] to show user's collection
+      // - Ensure we show saved/visited items by disabling hide flags
+
+      setMapState({
+        mode: typedMode,
+        filters: {
+          ...filters,
+          status: ['visited', 'saved'],
+          hideSaved: false,
+          hideVisited: false,
+        },
+      });
+    }
+  };
 
   const handleArchitectsChange = (architects: { id: string; name: string }[]) => {
     setFilter('architects', architects);
@@ -81,6 +117,20 @@ export function FilterDrawer() {
           <SheetTitle>Filters</SheetTitle>
         </SheetHeader>
         <div className="grid gap-6 py-6">
+          {/* Mode Switch */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium leading-none">View Mode</h3>
+            <SegmentedControl
+              options={[
+                { label: 'Discover', value: 'discover' },
+                { label: 'My Library', value: 'library' },
+              ]}
+              value={mode}
+              onValueChange={handleModeChange}
+              className="w-full"
+            />
+          </div>
+
           {/* Architects */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
