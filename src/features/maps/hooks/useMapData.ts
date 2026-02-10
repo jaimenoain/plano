@@ -73,7 +73,7 @@ export function useMapData({ bounds, zoom, filters }: UseMapDataProps) {
         max_lat: fetchBox.north,
         min_lng: fetchBox.west,
         max_lng: fetchBox.east,
-        zoom: Math.round(zoom),
+        zoom_level: Math.round(zoom),
         filter_criteria: filterCriteria,
       });
 
