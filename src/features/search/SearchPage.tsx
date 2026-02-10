@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Map as MapIcon, List as ListIcon } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { getGeocode, getLatLng } from "use-places-autocomplete";
 
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
@@ -28,6 +29,9 @@ function SearchPageContent() {
 
   // View mode state (map vs list) for mobile
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
+
+  // Top location suggestion state
+  const [topLocation, setTopLocation] = useState<{ description: string; place_id: string } | null>(null);
 
   // Sync local search with context filters
   useEffect(() => {
@@ -59,6 +63,17 @@ function SearchPageContent() {
     }
   };
 
+  const handleLocationResultClick = async (placeId: string) => {
+    try {
+      const results = await getGeocode({ placeId });
+      const { lat, lng } = await getLatLng(results[0]);
+      handleLocationSelect({ lat, lng });
+      setSearchValue(""); // Clear search value
+    } catch (error) {
+      console.error("Geocoding error: ", error);
+    }
+  };
+
   const toggleViewMode = () => {
     setViewMode(prev => prev === 'map' ? 'list' : 'map');
   };
@@ -83,13 +98,17 @@ function SearchPageContent() {
                  value={searchValue}
                  onSearchChange={handleSearchChange}
                  onLocationSelect={handleLocationSelect}
+                 onTopLocationChange={setTopLocation}
                  placeholder="Search buildings, architects..."
                  className="w-full"
               />
               <MapControls />
            </div>
            <div className="flex-1 overflow-hidden relative">
-              <BuildingSidebar />
+              <BuildingSidebar
+                topLocation={topLocation}
+                onLocationClick={handleLocationResultClick}
+              />
            </div>
         </div>
 
@@ -135,13 +154,17 @@ function SearchPageContent() {
                     value={searchValue}
                     onSearchChange={handleSearchChange}
                     onLocationSelect={handleLocationSelect}
+                    onTopLocationChange={setTopLocation}
                     placeholder="Search..."
                     className="w-full"
                  />
                  <MapControls />
               </div>
               <div className="flex-1 overflow-hidden relative pb-20">
-                 <BuildingSidebar />
+                 <BuildingSidebar
+                    topLocation={topLocation}
+                    onLocationClick={handleLocationResultClick}
+                 />
               </div>
            </div>
         )}
