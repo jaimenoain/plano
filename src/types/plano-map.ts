@@ -34,6 +34,9 @@ export interface MapFilters {
   // Taxonomy
   category?: string;
   typologies?: string[];
+  materials?: string[];
+  styles?: string[];
+  contexts?: string[];
   attributes?: string[];
   architects?: { id: string; name: string }[];
 
@@ -46,12 +49,14 @@ export interface MapFilters {
 
   // Ratings & Contacts
   minRating?: MichelinRating;
+  personalMinRating?: number;
   contactMinRating?: MichelinRating;
   filterContacts?: boolean;
   ratedBy?: string[];
 
   // Collections
   collections?: { id: string; name: string }[];
+  collectionIds?: string[];
 }
 
 export interface MapState {

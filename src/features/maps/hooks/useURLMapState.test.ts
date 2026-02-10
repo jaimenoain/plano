@@ -22,13 +22,32 @@ describe('MapStateSchema', () => {
     });
   });
 
+  it('should parse new filter fields correctly', () => {
+    const filters = {
+      collectionIds: ['1', '2'],
+      personalMinRating: 2,
+      typologies: ['t1'],
+      materials: ['m1'],
+      styles: ['s1'],
+      contexts: ['c1']
+    };
+
+    const input = {
+      filters: JSON.stringify(filters)
+    };
+
+    const result = MapStateSchema.parse(input);
+
+    expect(result.filters).toEqual(expect.objectContaining(filters));
+  });
+
   it('should clamp invalid ratings', () => {
     // Input rating > 3, expect 3
     const inputHigh = {
-      filters: '{"minRating": 5}'
+      filters: '{"minRating": 5, "personalMinRating": 5}'
     };
     const resultHigh = MapStateSchema.parse(inputHigh);
-    expect(resultHigh.filters).toEqual(expect.objectContaining({ minRating: 3 }));
+    expect(resultHigh.filters).toEqual(expect.objectContaining({ minRating: 3, personalMinRating: 3 }));
 
     // Input rating < 0, expect 0
     const inputLow = {
