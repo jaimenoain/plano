@@ -4,9 +4,9 @@ import { useMemo, useCallback } from 'react';
 import { MapMode } from '@/types/plano-map';
 
 // Constants
-const DEFAULT_LAT = 40.4168;
-const DEFAULT_LNG = -3.7038;
-const DEFAULT_ZOOM = 13;
+const DEFAULT_LAT = 20;
+const DEFAULT_LNG = 0;
+const DEFAULT_ZOOM = 2;
 const DEFAULT_MODE: MapMode = 'discover';
 
 // Schemas
