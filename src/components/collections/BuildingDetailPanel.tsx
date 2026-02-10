@@ -43,7 +43,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
       <div className="p-6 space-y-6 overflow-y-auto h-full">
         <div>
           <Link
-            to={`/building/${building.slug}`}
+            to={`/building/${building.slug || building.id}`}
             target="_blank"
             className="group flex items-start gap-2 hover:text-primary transition-colors"
           >
@@ -66,7 +66,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
               {allImages.map((img) => (
                 <CarouselItem key={img.id}>
                   <Link
-                    to={`/building/${building.slug}`}
+                    to={`/building/${building.slug || building.id}`}
                     target="_blank"
                     className="block aspect-square relative overflow-hidden rounded-md border bg-muted group cursor-pointer"
                   >
