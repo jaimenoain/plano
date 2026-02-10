@@ -10,108 +10,125 @@ interface MapMarkersProps {
 
 export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
   const { current: map } = useMap();
-  const [hoveredInfo, setHoveredInfo] = useState<ClusterResponse | null>(null);
 
-  const markers = useMemo(() => {
-    return clusters.map((cluster) => {
-      // Handle Cluster
-      if (cluster.is_cluster) {
+  // Find the active cluster based on the highlightedId
+  const activeCluster = useMemo(() => {
+    if (!highlightedId || !clusters.length) return null;
+
+    const found = clusters.find(c =>
+      !c.is_cluster && // Only single items
+      c.id === highlightedId // Match the ID directly
+    );
+
+    return found || null;
+  }, [clusters, highlightedId]);
+
+  const markers = useMemo(
+    () =>
+      clusters.map((cluster) => {
+        // Determine the unique key for the marker
+        const key = cluster.is_cluster
+          ? `cluster-${cluster.id}-${cluster.count}`
+          : `marker-${cluster.id}`;
+
         return (
           <Marker
-            key={`cluster-${cluster.id}`}
+            key={key}
             longitude={cluster.lng}
             latitude={cluster.lat}
             onClick={(e) => {
               e.originalEvent.stopPropagation();
-              if (map) {
-                map.flyTo({ center: [cluster.lng, cluster.lat], zoom: map.getZoom() + 2 });
+              if (cluster.is_cluster) {
+                const expansionZoom = Math.min(
+                  (map?.getZoom() || 0) + 2,
+                  20
+                );
+
+                map?.flyTo({
+                  center: [cluster.lng, cluster.lat],
+                  zoom: expansionZoom,
+                  duration: 500,
+                });
+              } else {
+                if (cluster.slug) {
+                    window.location.href = `/building/${cluster.slug}`;
+                } else if (cluster.id) {
+                    window.location.href = `/building/${cluster.id}`;
+                }
               }
             }}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-xs font-bold shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
-              {cluster.count}
+            <div
+              className={`
+                flex items-center justify-center rounded-full border border-white shadow-md transition-all hover:scale-110
+                ${cluster.is_cluster
+                  ? 'bg-primary text-primary-foreground font-bold'
+                  : 'bg-background text-foreground'
+                }
+              `}
+              style={{
+                width: cluster.is_cluster ? `${30 + (cluster.count || 0) * 2}px` : '32px',
+                height: cluster.is_cluster ? `${30 + (cluster.count || 0) * 2}px` : '32px',
+                maxWidth: '60px',
+                maxHeight: '60px',
+              }}
+            >
+              {cluster.is_cluster ? (
+                cluster.count
+              ) : (
+                <div className="flex flex-col items-center justify-center text-[10px] font-medium leading-none">
+                   {/* Show rating if available, otherwise a generic icon */}
+                   {cluster.rating && cluster.rating > 0 ? (
+                      <span>{cluster.rating.toFixed(1)}</span>
+                   ) : (
+                      <div className="h-2 w-2 rounded-full bg-foreground" />
+                   )}
+                </div>
+              )}
             </div>
           </Marker>
         );
-      }
-
-      // Check if highlighted
-      const isHighlighted = highlightedId && String(cluster.id) === highlightedId;
-      const highlightClass = isHighlighted ? 'scale-125 z-50 ring-2 ring-primary ring-offset-2' : '';
-      const transitionClass = 'transition-all duration-300 ease-in-out';
-
-      // Handle Individual Building (Rating Scale)
-      const rating = cluster.rating ?? 0;
-      let markerContent;
-
-      switch (rating) {
-        case 3: // Special Journey: Gold, pulsating
-          markerContent = (
-            <div className={`h-8 w-8 animate-pulse rounded-full border-2 border-white bg-[#FFD700] shadow-lg ${highlightClass} ${transitionClass}`} />
-          );
-          break;
-        case 2: // Worth Detour: Silver
-          markerContent = (
-            <div className={`h-6 w-6 rounded-full border-2 border-white bg-[#C0C0C0] shadow-md ${highlightClass} ${transitionClass}`} />
-          );
-          break;
-        case 1: // Interesting: Bronze
-          markerContent = (
-            <div className={`h-4 w-4 rounded-full border border-white bg-[#CD7F32] shadow-sm ${highlightClass} ${transitionClass}`} />
-          );
-          break;
-        default: // Standard (0 or null): Grey dot
-          markerContent = (
-            <div className={`h-2 w-2 rounded-full bg-gray-500/50 ${highlightClass} ${transitionClass}`} />
-          );
-          break;
-      }
-
-      return (
-        <Marker
-          key={`building-${cluster.id}`}
-          longitude={cluster.lng}
-          latitude={cluster.lat}
-          style={{ cursor: 'pointer', zIndex: isHighlighted ? 50 : 'auto' }}
-        >
-          <div
-            onMouseEnter={() => setHoveredInfo(cluster)}
-            onMouseLeave={() => setHoveredInfo(null)}
-          >
-            {markerContent}
-          </div>
-        </Marker>
-      );
-    });
-  }, [clusters, map, highlightedId]);
+      }),
+    [clusters, map]
+  );
 
   return (
     <>
       {markers}
-      {hoveredInfo && (
+      {activeCluster && (
         <Popup
-          longitude={hoveredInfo.lng}
-          latitude={hoveredInfo.lat}
+          longitude={activeCluster.lng}
+          latitude={activeCluster.lat}
           offset={20}
           closeButton={false}
           closeOnClick={false}
-          className="z-[100]"
+          className="z-[100] map-popup-test"
           maxWidth="220px"
         >
-          <div className="flex flex-col gap-2 overflow-hidden rounded-md bg-background p-0">
-            {hoveredInfo.image_url && (
-              <img
-                src={getBuildingImageUrl(hoveredInfo.image_url)}
-                alt={hoveredInfo.name || 'Building'}
-                className="h-[200px] w-[200px] object-cover"
-              />
-            )}
-            {hoveredInfo.name && (
-              <div className="px-3 pb-2 pt-1">
-                <h3 className="text-sm font-semibold text-foreground">
-                  {hoveredInfo.name}
-                </h3>
-              </div>
+          <div className="flex flex-col overflow-hidden rounded-md bg-background shadow-lg">
+            {/* Image */}
+            <div className="relative h-24 w-full bg-muted">
+                {activeCluster.image_url ? (
+                    <img
+                        src={getBuildingImageUrl(activeCluster.image_url)}
+                        alt={activeCluster.name || 'Building'}
+                        className="h-full w-full object-cover"
+                    />
+                ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                        No Image
+                    </div>
+                )}
+            </div>
+            {/* Content */}
+            {activeCluster.name ? (
+                <div className="p-2">
+                    <h3 className="text-sm font-semibold line-clamp-2">{activeCluster.name}</h3>
+                </div>
+            ) : (
+                <div className="px-3 py-2">
+                    <span className="text-xs text-muted-foreground">Loading details...</span>
+                </div>
             )}
           </div>
         </Popup>
