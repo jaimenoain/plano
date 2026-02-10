@@ -1,520 +1,67 @@
-import { lazy, Suspense, useRef, useEffect, useMemo, useCallback, useState } from "react";
-import { ErrorBoundary } from 'react-error-boundary';
-// import type { BuildingDiscoveryMapRef } from "@/components/_legacy_v1/BuildingDiscoveryMap";
+import { useState, useEffect } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useAuth } from "@/hooks/useAuth";
-import { useBuildingSearch } from "./hooks/useBuildingSearch";
-import { getBoundsFromBuildings, getDistanceFromLatLonInM, Bounds } from "@/utils/map";
-import { DiscoveryList } from "./components/DiscoveryList";
-import { DiscoveryBuilding, DiscoveryBuildingMapPin, MapItem } from "./components/types";
-import { DiscoverySearchInput } from "./components/DiscoverySearchInput";
-// import { SearchFilters } from "@/components/_legacy_v1/SearchFilters";
 import { Button } from "@/components/ui/button";
-import { Map as MapIcon, List as ListIcon, AlertCircle } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Map as MapIcon, List as ListIcon } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
 
-// const BuildingDiscoveryMap = lazy(() =>
-//   import("@/components/_legacy_v1/BuildingDiscoveryMap").then(module => ({
-//     default: module.BuildingDiscoveryMap
-//   }))
-// );
+import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
+import { PlanoMap } from "@/features/maps/components/PlanoMap";
+import { BuildingSidebar } from "@/features/maps/components/BuildingSidebar";
+import { MapControls } from "@/features/maps/components/MapControls";
+import { DiscoverySearchInput } from "@/features/search/components/DiscoverySearchInput";
 
-// Debug utility - only logs in development
-const DEBUG = process.env.NODE_ENV === 'development';
-const debug = {
-  log: (...args: any[]) => DEBUG && console.log(...args),
-  warn: (...args: any[]) => DEBUG && console.warn(...args),
-  error: (...args: any[]) => console.error(...args) // Always log errors
-};
-
-// Constants
-const REGION_UPDATE_DELAY = 500;
-const PROGRAMMATIC_MOVE_DURATION = 1500;
-const FLY_TO_ZOOM = 16;
-const LIST_SIDEBAR_WIDTH = 400;
 const SIDEBAR_EXPANDED_OFFSET = 208; // Approx 13rem
 
-/**
- * Error fallback component for map loading failures
- */
-function MapErrorFallback({ 
-  error, 
-  resetErrorBoundary 
-}: { 
-  error: Error; 
-  resetErrorBoundary: () => void 
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
-      <AlertCircle className="w-16 h-16 text-red-500" />
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Failed to load map
-        </h3>
-        <p className="text-sm text-gray-600 mb-4">
-          {error.message || 'An unexpected error occurred'}
-        </p>
-        <Button onClick={resetErrorBoundary} variant="outline">
-          Try Again
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Reusable list sidebar component
- */
-function ListSidebar({ 
-  buildings, 
-  isLoading, 
-  onBuildingClick, 
-  searchQuery,
-  className,
-  header,
-  style
-}: {
-  buildings: DiscoveryBuilding[];
-  isLoading: boolean;
-  onBuildingClick?: (building: DiscoveryBuilding) => void;
-  searchQuery: string;
-  className?: string;
-  header?: React.ReactNode;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <div className={className} style={style}>
-      {header && <div className="p-4 border-b">{header}</div>}
-      <DiscoveryList
-        buildings={buildings}
-        isLoading={isLoading}
-        onBuildingClick={onBuildingClick}
-        searchQuery={searchQuery}
-      />
-    </div>
-  );
-}
-
-export default function SearchPage() {
-  // const mapRef = useRef<BuildingDiscoveryMapRef | null>(null);
+function SearchPageContent() {
   const { state, isMobile } = useSidebar();
-  const { user } = useAuth();
-
   const isSidebarExpanded = state === 'expanded' && !isMobile;
 
-  // State for highlighted building
-  const [highlightedBuildingId, setHighlightedBuildingId] = useState<string | null>(null);
-  const [searchTriggerVersion, setSearchTriggerVersion] = useState(0);
-
-  // Track map loading state
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [currentBounds, setCurrentBounds] = useState<Bounds | null>(null);
-  const [viewState, setViewState] = useState({
-    latitude: 51.5074,
-    longitude: -0.1278,
-    zoom: 12
-  });
-
-  // Community Quality Filter (Local state for now)
-  const [communityQuality, setCommunityQuality] = useState(0);
-
   const {
-    mapPins,
-    richListItems,
-    setIdsToHydrate,
-    isLoading, // This is map loading
-    isFetching,
-    isListLoading,
-    searchQuery,
-    setSearchQuery,
-    updateLocation,
-    gpsLocation,
-    statusFilters,
-    hideVisited,
-    hideSaved,
-    hideHidden,
-    hideWithoutImages,
-    filterContacts,
-    personalMinRating,
-    contactMinRating,
-    selectedArchitects,
-    selectedCollections,
-    selectedCategory,
-    selectedTypologies,
-    selectedAttributes,
-    selectedContacts,
-    viewMode,
-    setViewMode,
-    availableCollections,
-    setStatusFilters,
-    setHideVisited,
-    setHideSaved,
-    setHideHidden,
-    setHideWithoutImages,
-    setFilterContacts,
-    setPersonalMinRating,
-    setContactMinRating,
-    setSelectedArchitects,
-    setSelectedCollections,
-    setSelectedCategory,
-    setSelectedTypologies,
-    setSelectedAttributes,
-    setSelectedContacts,
-  } = useBuildingSearch({ searchTriggerVersion, bounds: currentBounds, zoom: viewState.zoom });
+    state: { filters },
+    methods: { setFilter, moveMap }
+  } = useMapContext();
 
-  // Refs for managing programmatic moves and region updates
-  const regionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const userHasMovedMap = useRef(false);
-  const isProgrammaticMove = useRef(false);
-  const programmaticMoveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Local search state
+  const [searchValue, setSearchValue] = useState(filters.query || "");
+  const debouncedSearchValue = useDebounce(searchValue, 300);
 
-  // Active filter signature for debugging
-  const activeFilterSignature = useMemo(() => {
-    return JSON.stringify({
-      searchQuery,
-      statusFilters,
-      hideVisited,
-      hideSaved,
-      hideHidden,
-      hideWithoutImages,
-      filterContacts,
-      personalMinRating,
-      contactMinRating,
-      selectedArchitects,
-      selectedCollections,
-      selectedCategory,
-      selectedTypologies,
-      selectedAttributes,
-      selectedContacts
-    });
-  }, [
-    searchQuery,
-    statusFilters,
-    hideVisited,
-    hideSaved,
-    hideHidden,
-    hideWithoutImages,
-    filterContacts,
-    personalMinRating,
-    contactMinRating,
-    selectedArchitects,
-    selectedCollections,
-    selectedCategory,
-    selectedTypologies,
-    selectedAttributes,
-    selectedContacts
-  ]);
+  // View mode state (map vs list) for mobile
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
 
+  // Sync local search with context filters
   useEffect(() => {
-    debug.log('🔍 [FILTERS] Signature Changed:', JSON.parse(activeFilterSignature));
-  }, [activeFilterSignature]);
+    // Only update if different to avoid loops/unnecessary updates
+    if (filters.query !== debouncedSearchValue) {
+       setFilter('query', debouncedSearchValue);
+    }
+  }, [debouncedSearchValue, filters.query, setFilter]);
 
-  const handleBoundsChange = useCallback((bounds: Bounds) => {
-    setCurrentBounds(bounds);
-  }, []);
-
-  // Buildings are already validated by the refactored hook
-  // This is a safety net for edge cases and handles potential string coordinates
-  const safeMapPins = useMemo(() => {
-    if (!mapPins) return [];
-
-    return mapPins
-      .map(b => ({
-        ...b,
-        lat: Number(b.lat),
-        lng: Number(b.lng)
-      }))
-      .filter(b =>
-        !!b.id &&
-        !isNaN(b.lat) &&
-        !isNaN(b.lng)
-      );
-  }, [mapPins]);
-
-  // Update visible IDs when map pins or bounds change
+  // Sync external filter changes (e.g. back button) to local state
   useEffect(() => {
-    if (!currentBounds) return;
-
-    if (!safeMapPins || safeMapPins.length === 0) {
-      setIdsToHydrate([]);
-      return;
-    }
-
-    // Filter pins within bounds using safeMapPins which has normalized numbers
-    const visible = safeMapPins.filter(pin => {
-      // Exclude clusters from list view
-      if (pin.is_cluster) return false;
-
-      return pin.lat >= currentBounds.south &&
-        pin.lat <= currentBounds.north &&
-        pin.lng >= currentBounds.west &&
-        pin.lng <= currentBounds.east;
-    });
-
-    // Calculate center of current view
-    const centerLat = (currentBounds.north + currentBounds.south) / 2;
-    const centerLng = (currentBounds.east + currentBounds.west) / 2;
-
-    // Sort by distance from center
-    visible.sort((a, b) => {
-        const distA = getDistanceFromLatLonInM(centerLat, centerLng, a.lat, a.lng);
-        const distB = getDistanceFromLatLonInM(centerLat, centerLng, b.lat, b.lng);
-        return distA - distB;
-    });
-
-    // Hydrate all visible items
-    const ids = visible.map(p => String(p.id));
-    setIdsToHydrate(ids);
-
-  }, [safeMapPins, currentBounds, setIdsToHydrate]);
-
-  // Mutation for updating building status
-  const { mutate: updateBuildingStatus } = useMutation({
-    mutationFn: async ({ 
-      buildingId, 
-      status 
-    }: { 
-      buildingId: string; 
-      status: 'pending' | 'visited' | 'hidden' 
-    }) => {
-      if (!user) throw new Error('User not authenticated');
-
-      const { error } = await supabase
-        .from('user_buildings')
-        .upsert({
-          user_id: user.id,
-          building_id: buildingId,
-          status: status
-        }, {
-          onConflict: 'user_id,building_id'
-        });
-
-      if (error) throw error;
-    },
-    onError: (error) => {
-      debug.error('Failed to update building status:', error);
-    }
-  });
-
-  /**
-   * Handle region changes from map interactions
-   * Updates location on map move to allow search in new area
-   */
-  const handleRegionChange = useCallback((center: { lat: number; lng: number, zoom?: number }) => {
-    // Ignore updates triggered by programmatic moves (e.g., list clicks)
-    if (isProgrammaticMove.current) {
-      debug.log('🛡️ [GUARD] Ignoring region change due to programmatic move');
-      return;
-    }
-
-    setViewState(prev => ({
-      latitude: center.lat,
-      longitude: center.lng,
-      zoom: center.zoom ?? prev.zoom
-    }));
-
-    if (regionUpdateTimeoutRef.current) {
-      clearTimeout(regionUpdateTimeoutRef.current);
-    }
-
-    regionUpdateTimeoutRef.current = setTimeout(() => {
-      updateLocation({ lat: center.lat, lng: center.lng });
-    }, REGION_UPDATE_DELAY);
-  }, [updateLocation]);
-
-  /**
-   * Track when user manually interacts with map
-   */
-  const handleMapInteraction = useCallback(() => {
-    userHasMovedMap.current = true;
-  }, []);
-
-  /**
-   * Auto-fit map bounds when search query changes
-   */
-  useEffect(() => {
-    if (searchQuery && !userHasMovedMap.current && safeMapPins.length > 0) {
-      // Map MapItems to the format expected by getBoundsFromBuildings
-      const pointsForBounds = safeMapPins.map(p => ({
-        location_lat: p.lat,
-        location_lng: p.lng
-      }));
-
-      const bounds = getBoundsFromBuildings(pointsForBounds);
-      // if (bounds && mapRef.current) {
-      //   if (typeof bounds.north === 'number' && typeof bounds.east === 'number') {
-      //     mapRef.current.fitBounds(bounds);
-      //   }
-      // }
-    }
-  }, [searchQuery, safeMapPins]);
-
-  /**
-   * Reset interaction flag and increment trigger when search changes
-   */
-  useEffect(() => {
-    if (searchQuery) {
-      setSearchTriggerVersion(prev => prev + 1);
-      userHasMovedMap.current = false;
-    }
-  }, [searchQuery]);
-
-  /**
-   * Fly to user's location when GPS becomes available,
-   * provided the user hasn't moved the map yet and isn't searching.
-   */
-  useEffect(() => {
-    if (mapLoaded && gpsLocation && !userHasMovedMap.current && !searchQuery) {
-      debug.log('📍 [GPS] Flying to user location:', gpsLocation);
-      // mapRef.current?.flyTo(gpsLocation, 14);
-    }
-  }, [mapLoaded, gpsLocation, searchQuery]);
-
-  /**
-   * Cleanup timeouts on unmount
-   */
-  useEffect(() => {
-    return () => {
-      if (regionUpdateTimeoutRef.current) {
-        clearTimeout(regionUpdateTimeoutRef.current);
+      // If filters.query is undefined, we assume empty string
+      const query = filters.query || "";
+      if (query !== searchValue) {
+          setSearchValue(query);
       }
-      if (programmaticMoveTimeoutRef.current) {
-        clearTimeout(programmaticMoveTimeoutRef.current);
-      }
-    };
-  }, []);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.query]);
 
-  /**
-   * Handler for list item click - fly to building on map
-   */
-  const handleListHighlight = useCallback((lat: number, lng: number) => {
-    // if (!mapRef.current) {
-    //   debug.warn('[SearchPage] Map ref not available');
-    //   return;
-    // }
+  // Handlers
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value);
+  };
 
-    debug.log('👆 [LIST] Programmatic move:', lat, lng);
-    isProgrammaticMove.current = true;
-
-    try {
-      // mapRef.current.flyTo({ lat, lng }, FLY_TO_ZOOM);
-    } catch (err) {
-      debug.error('💥 [Map] flyTo failed:', err);
-      isProgrammaticMove.current = false;
-      return;
-    }
-
-    // Clear any existing timeout
-    if (programmaticMoveTimeoutRef.current) {
-      clearTimeout(programmaticMoveTimeoutRef.current);
-    }
-
-    programmaticMoveTimeoutRef.current = setTimeout(() => { 
-      isProgrammaticMove.current = false;
-    }, PROGRAMMATIC_MOVE_DURATION);
-  }, []);
-
-  /**
-   * Adapter for building click - validates coordinates and triggers highlight
-   */
-  const onBuildingClickAdapter = useCallback((building: DiscoveryBuilding | DiscoveryBuildingMapPin | any) => {
-    // Handle both DiscoveryBuilding (location_lat) and MapItem (lat) just in case
-    const lat = building.location_lat ?? building.lat;
-    const lng = building.location_lng ?? building.lng;
-
-    if (typeof lat === 'number' &&
-        typeof lng === 'number' &&
-        !isNaN(lat) &&
-        !isNaN(lng)) {
-      
-      setHighlightedBuildingId(String(building.id));
-      handleListHighlight(lat, lng);
-      
-      if (isMobile) {
+  const handleLocationSelect = (location: { lat: number; lng: number }) => {
+    moveMap(location.lat, location.lng, 14); // Zoom to 14 on select
+    if (isMobile) {
         setViewMode('map');
-      }
-    } else {
-      debug.warn('⚠️ [SearchPage] Invalid coordinates for building:', building.id);
     }
-  }, [handleListHighlight, isMobile, setViewMode]);
+  };
 
-  /**
-   * Building interaction handlers
-   */
-  const handleSave = useCallback((buildingId: string) => {
-    updateBuildingStatus({ buildingId, status: 'pending' });
-  }, [updateBuildingStatus]);
-
-  const handleVisit = useCallback((buildingId: string) => {
-    updateBuildingStatus({ buildingId, status: 'visited' });
-  }, [updateBuildingStatus]);
-
-  const handleHide = useCallback((buildingId: string) => {
-    updateBuildingStatus({ buildingId, status: 'hidden' });
-  }, [updateBuildingStatus]);
-
-  const handleMarkerClick = useCallback((buildingId: string) => {
-    setHighlightedBuildingId(buildingId);
-  }, []);
-
-  const handleClosePopup = useCallback(() => {
-    setHighlightedBuildingId(null);
-  }, []);
-
-  const handleLocationSelect = useCallback((location: { lat: number; lng: number }) => {
-    updateLocation(location);
-    // if (mapRef.current) {
-    //   mapRef.current.flyTo(location, 14);
-    // }
-  }, [updateLocation]);
-
-  const searchInput = (
-    <div className="flex gap-2">
-      <DiscoverySearchInput
-        value={searchQuery}
-        onSearchChange={setSearchQuery}
-        onLocationSelect={handleLocationSelect}
-        placeholder="Search buildings or places..."
-        className="flex-1"
-      />
-      {/* <SearchFilters
-        statusFilters={statusFilters}
-        setStatusFilters={setStatusFilters}
-        hideVisited={hideVisited}
-        setHideVisited={setHideVisited}
-        hideSaved={hideSaved}
-        setHideSaved={setHideSaved}
-        hideHidden={hideHidden}
-        setHideHidden={setHideHidden}
-        hideWithoutImages={hideWithoutImages}
-        setHideWithoutImages={setHideWithoutImages}
-        personalMinRating={personalMinRating}
-        setPersonalMinRating={setPersonalMinRating}
-        contactMinRating={contactMinRating}
-        setContactMinRating={setContactMinRating}
-        filterContacts={filterContacts}
-        setFilterContacts={setFilterContacts}
-        selectedContacts={selectedContacts}
-        setSelectedContacts={setSelectedContacts}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-        selectedTypologies={selectedTypologies}
-        setSelectedTypologies={setSelectedTypologies}
-        selectedAttributes={selectedAttributes}
-        setSelectedAttributes={setSelectedAttributes}
-        selectedArchitects={selectedArchitects}
-        setSelectedArchitects={setSelectedArchitects}
-        selectedCollections={selectedCollections}
-        setSelectedCollections={setSelectedCollections}
-        availableCollections={availableCollections}
-        communityQuality={communityQuality}
-        setCommunityQuality={setCommunityQuality}
-        resultCount={safeMapPins.length}
-      /> */}
-    </div>
-  );
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === 'map' ? 'list' : 'map');
+  };
 
   return (
     <AppLayout
@@ -522,30 +69,47 @@ export default function SearchPage() {
       showHeader={true}
       showNav={false}
       variant="map"
-      searchBar={searchInput}
+      searchBar={null}
     >
-      <div
-        data-testid="search-page-wrapper"
-        className={`relative flex flex-col h-full transition-all duration-300 ease-in-out`}
-      >
-        {/* Desktop List Sidebar */}
-        <ListSidebar
-          buildings={richListItems}
-          isLoading={isListLoading}
-          onBuildingClick={onBuildingClickAdapter}
-          searchQuery={searchQuery}
-          className="hidden md:block w-[400px] bg-white border-r border-gray-200 overflow-y-auto h-full absolute top-0 z-[5] shadow-lg transition-all duration-300"
-          style={{ left: isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0 }}
-          header={searchInput}
-        />
+      <div className="relative flex flex-col h-full w-full overflow-hidden">
 
-        {/* Mobile View Toggle */}
+        {/* Desktop Sidebar (Fixed) */}
+        <div
+            className={`hidden md:flex flex-col w-[400px] bg-background border-r border-border absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
+            style={{ left: isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0 }}
+        >
+           <div className="p-4 border-b space-y-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <DiscoverySearchInput
+                 value={searchValue}
+                 onSearchChange={handleSearchChange}
+                 onLocationSelect={handleLocationSelect}
+                 placeholder="Search buildings, architects..."
+                 className="w-full"
+              />
+              <MapControls />
+           </div>
+           <div className="flex-1 overflow-hidden relative">
+              <BuildingSidebar />
+           </div>
+        </div>
+
+        {/* Map Container (Main) */}
+        <div
+          className={`flex-1 h-full relative transition-all duration-300`}
+          style={{
+            marginLeft: isMobile ? 0 : 400 + (isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0)
+          }}
+        >
+           <PlanoMap />
+        </div>
+
+        {/* Mobile Toggle Button */}
         {isMobile && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
             <Button
-              onClick={() => setViewMode(prev => prev === 'map' ? 'list' : 'map')}
-              className="rounded-full shadow-lg"
-              variant="secondary"
+              onClick={toggleViewMode}
+              className="rounded-full shadow-lg h-12 px-6"
+              variant="default"
               aria-label={viewMode === 'map' ? 'Show list view' : 'Show map view'}
             >
               {viewMode === 'map' ? (
@@ -563,63 +127,34 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Mobile List View (Overlay) */}
+        {/* Mobile List Overlay */}
         {isMobile && viewMode === 'list' && (
-          <ListSidebar
-            buildings={richListItems}
-            isLoading={isListLoading}
-            onBuildingClick={onBuildingClickAdapter}
-            searchQuery={searchQuery}
-            className="absolute inset-0 bg-white z-40 overflow-y-auto pb-20"
-          />
+           <div className="absolute inset-0 bg-background z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
+              <div className="p-4 border-b space-y-3">
+                 <DiscoverySearchInput
+                    value={searchValue}
+                    onSearchChange={handleSearchChange}
+                    onLocationSelect={handleLocationSelect}
+                    placeholder="Search..."
+                    className="w-full"
+                 />
+                 <MapControls />
+              </div>
+              <div className="flex-1 overflow-hidden relative pb-20">
+                 <BuildingSidebar />
+              </div>
+           </div>
         )}
 
-        {/* Map Container */}
-        <div 
-          className={`flex-1 relative h-full transition-all duration-300 ${
-            isMobile ? 'w-full' : ''
-          }`}
-          style={{
-            marginLeft: isMobile ? 0 : 400 + (isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0)
-          }}
-        >
-          <div className="flex items-center justify-center h-full bg-muted/20">
-            <div className="text-center text-muted-foreground">
-              <MapIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
-              <p>Map search is currently disabled.</p>
-            </div>
-          </div>
-          {/* <ErrorBoundary FallbackComponent={MapErrorFallback}>
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-                  <p className="mt-4 text-sm text-gray-600">Loading map...</p>
-                </div>
-              </div>
-            }>
-              <BuildingDiscoveryMap
-                ref={mapRef}
-                externalBuildings={safeMapPins as any}
-                onRegionChange={handleRegionChange}
-                onBoundsChange={handleBoundsChange}
-                onMapInteraction={handleMapInteraction}
-                isFetching={isFetching}
-                autoZoomOnLowCount={!userHasMovedMap.current && searchQuery.length > 0}
-                resetInteractionTrigger={searchTriggerVersion}
-                highlightedId={highlightedBuildingId}
-                onMarkerClick={handleMarkerClick}
-                showImages={true}
-                onSave={handleSave}
-                onVisit={handleVisit}
-                onHide={handleHide}
-                onClosePopup={handleClosePopup}
-                onMapLoad={() => setMapLoaded(true)}
-              />
-            </Suspense>
-          </ErrorBoundary> */}
-        </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <MapProvider>
+      <SearchPageContent />
+    </MapProvider>
   );
 }
