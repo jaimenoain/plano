@@ -99,7 +99,7 @@ export function SessionMap({ buildings, className, interactive = true }: Session
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="https://tiles.openfreemap.org/styles/liberty"
+        mapStyle="https://tiles.openfreemap.org/styles/positron"
         scrollZoom={interactive}
         dragPan={interactive}
         doubleClickZoom={interactive}

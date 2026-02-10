@@ -9,7 +9,7 @@ import { useMapContext } from '../providers/MapContext';
 import { useMapData } from '../hooks/useMapData';
 import { MapMarkers } from './MapMarkers';
 
-const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 function PlanoMapContent() {
   const { lat, lng, zoom, setMapURL } = useURLMapState();

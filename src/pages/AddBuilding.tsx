@@ -579,7 +579,7 @@ export default function AddBuilding() {
             onClick={handleMapClick}
             mapLib={maplibregl}
             style={{ width: "100%", height: "100%" }}
-            mapStyle="https://tiles.openfreemap.org/styles/liberty"
+            mapStyle="https://tiles.openfreemap.org/styles/positron"
             cursor="crosshair"
           >
             <NavigationControl position="top-right" />
