@@ -1,0 +1,76 @@
+import { useMemo } from 'react';
+import { Marker, useMap } from 'react-map-gl';
+import { ClusterResponse } from '../hooks/useMapData';
+
+interface MapMarkersProps {
+  clusters: ClusterResponse[];
+}
+
+export function MapMarkers({ clusters }: MapMarkersProps) {
+  const { current: map } = useMap();
+
+  const markers = useMemo(() => {
+    return clusters.map((cluster) => {
+      // Handle Cluster
+      if (cluster.is_cluster) {
+        return (
+          <Marker
+            key={`cluster-${cluster.id}`}
+            longitude={cluster.lng}
+            latitude={cluster.lat}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              if (map) {
+                map.flyTo({ center: [cluster.lng, cluster.lat], zoom: map.getZoom() + 2 });
+              }
+            }}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-xs font-bold shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
+              {cluster.count}
+            </div>
+          </Marker>
+        );
+      }
+
+      // Handle Individual Building (Rating Scale)
+      const rating = cluster.rating ?? 0;
+      let markerContent;
+
+      switch (rating) {
+        case 3: // Special Journey: Gold, pulsating
+          markerContent = (
+            <div className="h-8 w-8 animate-pulse rounded-full border-2 border-white bg-[#FFD700] shadow-lg" />
+          );
+          break;
+        case 2: // Worth Detour: Silver
+          markerContent = (
+            <div className="h-6 w-6 rounded-full border-2 border-white bg-[#C0C0C0] shadow-md" />
+          );
+          break;
+        case 1: // Interesting: Bronze
+          markerContent = (
+            <div className="h-4 w-4 rounded-full border border-white bg-[#CD7F32] shadow-sm" />
+          );
+          break;
+        default: // Standard (0 or null): Grey dot
+          markerContent = (
+            <div className="h-2 w-2 rounded-full bg-gray-500/50" />
+          );
+          break;
+      }
+
+      return (
+        <Marker
+          key={`building-${cluster.id}`}
+          longitude={cluster.lng}
+          latitude={cluster.lat}
+          style={{ cursor: 'pointer' }}
+        >
+          {markerContent}
+        </Marker>
+      );
+    });
+  }, [clusters, map]);
+
+  return <>{markers}</>;
+}
