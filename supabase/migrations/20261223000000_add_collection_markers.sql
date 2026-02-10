@@ -1,4 +1,5 @@
 -- Create collection_markers table
+-- Verified schema for Other Markers feature
 CREATE TABLE public.collection_markers (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
     collection_id uuid NOT NULL,
