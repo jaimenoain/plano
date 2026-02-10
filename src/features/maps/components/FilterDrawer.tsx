@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -7,12 +7,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ArchitectSelect } from '@/features/search/components/ArchitectSelect';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useMapContext } from '../providers/MapContext';
 import { MapMode, MichelinRating } from '@/types/plano-map';
+import { QualityRatingFilter } from './filters/QualityRatingFilter';
+import { CollectionMultiSelect } from './filters/CollectionMultiSelect';
 
 export function FilterDrawer() {
   const {
@@ -59,10 +63,20 @@ export function FilterDrawer() {
     setFilter('architects', architects);
   };
 
-  const handleRatingChange = (value: number[]) => {
-    // Slider returns an array, but we only use one value for minRating
-    const minRating = value[0] as MichelinRating;
-    setFilter('minRating', minRating);
+  const handleMinRatingChange = (value: number) => {
+    setFilter('minRating', value as MichelinRating);
+  };
+
+  const handlePersonalRatingChange = (value: number) => {
+    setFilter('personalMinRating', value);
+  };
+
+  const handleCollectionsChange = (ids: string[]) => {
+    setFilter('collectionIds', ids);
+  };
+
+  const handleHideSavedChange = (checked: boolean) => {
+    setFilter('hideSaved', checked);
   };
 
   const handleStatusChange = (value: string[]) => {
@@ -79,14 +93,6 @@ export function FilterDrawer() {
        updates.hideVisited = false;
     }
 
-    // Use setMapState to batch updates to filters
-    // Note: setMapState expects Partial<MapState>, so we wrap filters
-    // But we need to merge with existing filters because setMapState replaces the 'filters' object in the URL logic if we just pass a new object?
-    // Wait, useURLMapState logic:
-    // if (updates.filters !== undefined) { newParams.set('filters', JSON.stringify(updates.filters)); }
-    // It REPLACES the filters object.
-    // So we MUST merge with existing filters here.
-
     setMapState({
         filters: {
             ...filters,
@@ -97,22 +103,44 @@ export function FilterDrawer() {
 
   // Safe defaults
   const currentMinRating = filters.minRating ?? 0;
+  const currentPersonalMinRating = filters.personalMinRating ?? 0;
   const currentStatus = filters.status ?? [];
   const currentArchitects = filters.architects ?? [];
+  const currentCollectionIds = filters.collectionIds ?? [];
+  const hideSaved = filters.hideSaved ?? false;
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+
+    // Global filters
+    if (currentArchitects.length > 0) count++;
+
+    if (mode === 'discover') {
+      if (currentMinRating > 0) count++;
+      // In discover mode, hideSaved being true is a restriction/filter state
+      if (hideSaved) count++;
+    } else {
+      // Library mode
+      if (currentPersonalMinRating > 0) count++;
+      if (currentCollectionIds.length > 0) count++;
+      if (currentStatus.length > 0) count++;
+    }
+    return count;
+  }, [mode, currentArchitects, currentMinRating, hideSaved, currentPersonalMinRating, currentCollectionIds, currentStatus]);
 
   return (
     <Sheet>
       <SheetTrigger asChild>
         <Button variant="outline" size="sm" className="h-9 px-4">
           Filters
-          {(currentArchitects.length > 0 || currentMinRating > 0 || currentStatus.length > 0) && (
+          {activeFilterCount > 0 && (
             <span className="ml-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-              {currentArchitects.length + (currentMinRating > 0 ? 1 : 0) + (currentStatus.length > 0 ? 1 : 0)}
+              {activeFilterCount}
             </span>
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className="w-[340px] sm:w-[380px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Filters</SheetTitle>
         </SheetHeader>
@@ -131,55 +159,113 @@ export function FilterDrawer() {
             />
           </div>
 
-          {/* Architects */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Architects
-            </h3>
-            <ArchitectSelect
-              selectedArchitects={currentArchitects}
-              setSelectedArchitects={handleArchitectsChange}
-              placeholder="Search architects..."
-            />
-          </div>
+          {mode === 'discover' ? (
+            /* Discover Mode Section */
+            <>
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-xs">
+                  Discovery Settings
+                </h3>
 
-          {/* Rating */}
+                {/* Hide Saved */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="hide-saved" className="text-sm font-medium cursor-pointer">
+                    Hide my saved buildings
+                  </Label>
+                  <Switch
+                    id="hide-saved"
+                    checked={hideSaved}
+                    onCheckedChange={handleHideSavedChange}
+                  />
+                </div>
+
+                {/* Community Rating */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Community Rating</Label>
+                    {currentMinRating > 0 && (
+                      <span className="text-xs text-muted-foreground">Min {currentMinRating}</span>
+                    )}
+                  </div>
+                  <QualityRatingFilter
+                    value={currentMinRating}
+                    onChange={handleMinRatingChange}
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            /* Library Mode Section */
+            <>
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-xs">
+                  Library Settings
+                </h3>
+
+                {/* Status */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Status</Label>
+                  <ToggleGroup
+                    type="multiple"
+                    value={currentStatus}
+                    onValueChange={handleStatusChange}
+                    className="justify-start flex-wrap gap-2"
+                  >
+                    <ToggleGroupItem value="visited" aria-label="Toggle visited" className="flex-1">
+                      Visited
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="saved" aria-label="Toggle saved" className="flex-1">
+                      Saved
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="pending" aria-label="Toggle pending" className="flex-1">
+                      Pending
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+
+                {/* Collections */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Collections</Label>
+                  <CollectionMultiSelect
+                    selectedIds={currentCollectionIds}
+                    onChange={handleCollectionsChange}
+                  />
+                </div>
+
+                {/* Personal Rating */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Your Rating</Label>
+                    {currentPersonalMinRating > 0 && (
+                      <span className="text-xs text-muted-foreground">Min {currentPersonalMinRating}</span>
+                    )}
+                  </div>
+                  <QualityRatingFilter
+                    value={currentPersonalMinRating}
+                    onChange={handlePersonalRatingChange}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <Separator />
+
+          {/* Global Filters Section */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium leading-none">Minimum Rating</h3>
-              <span className="text-sm text-muted-foreground">{currentMinRating}</span>
-            </div>
-            <Slider
-              value={[currentMinRating]}
-              onValueChange={handleRatingChange}
-              max={3}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex justify-between px-1 text-xs text-muted-foreground">
-              <span>0</span>
-              <span>1</span>
-              <span>2</span>
-              <span>3</span>
-            </div>
-          </div>
+             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-xs">
+              Global Filters
+            </h3>
 
-          {/* Status */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium leading-none">Status</h3>
-            <ToggleGroup
-              type="multiple"
-              value={currentStatus}
-              onValueChange={handleStatusChange}
-              className="justify-start"
-            >
-              <ToggleGroupItem value="visited" aria-label="Toggle visited">
-                Visited
-              </ToggleGroupItem>
-              <ToggleGroupItem value="saved" aria-label="Toggle saved">
-                Saved
-              </ToggleGroupItem>
-            </ToggleGroup>
+            {/* Architects */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Architects</Label>
+              <ArchitectSelect
+                selectedArchitects={currentArchitects}
+                setSelectedArchitects={handleArchitectsChange}
+                placeholder="Search architects..."
+              />
+            </div>
           </div>
         </div>
       </SheetContent>
