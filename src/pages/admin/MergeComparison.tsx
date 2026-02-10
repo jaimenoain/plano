@@ -24,6 +24,8 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
+import { BuildingMap } from "@/components/_legacy_v1/BuildingMap";
+import { parseLocation } from "@/utils/location";
 import {
   Carousel,
   CarouselContent,
@@ -299,6 +301,9 @@ export default function MergeComparison() {
     const targetBuilding = buildings.find(b => b.id === targetPointer);
     const sourceBuilding = buildings.find(b => b.id === sourcePointer);
 
+    const targetLocation = targetBuilding?.location ? parseLocation(targetBuilding.location) : null;
+    const sourceLocation = sourceBuilding?.location ? parseLocation(sourceBuilding.location) : null;
+
     if (!targetBuilding || !sourceBuilding) {
         return (
             <div className="container mx-auto py-8 px-4 max-w-7xl flex flex-col items-center justify-center min-h-[50vh] space-y-4">
@@ -436,11 +441,16 @@ export default function MergeComparison() {
                             </>
                         )}
 
-                        {targetBuilding.location && (
+                        {targetLocation && (
                             <div className="space-y-1 pt-2">
                                 <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Location</div>
-                                <div className="w-full h-48 rounded-md border border-border bg-muted flex items-center justify-center text-muted-foreground text-sm">
-                                  Map Preview Disabled
+                                <div className="w-full h-48 rounded-md border border-border bg-muted overflow-hidden relative">
+                                  <BuildingMap
+                                    lat={targetLocation.lat}
+                                    lng={targetLocation.lng}
+                                    className="w-full h-full"
+                                    locationPrecision="exact"
+                                  />
                                 </div>
                             </div>
                         )}
@@ -531,11 +541,16 @@ export default function MergeComparison() {
                              <div className="text-sm text-red-900/80 break-words line-clamp-2" title={sourceBuilding.address || ""}>{sourceBuilding.address || "N/A"}</div>
                         </div>
 
-                        {sourceBuilding.location && (
+                        {sourceLocation && (
                             <div className="space-y-1 pt-2">
                                 <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Location</div>
-                                <div className="w-full h-48 rounded-md border border-red-200 bg-muted flex items-center justify-center text-muted-foreground text-sm">
-                                  Map Preview Disabled
+                                <div className="w-full h-48 rounded-md border border-red-200 bg-muted overflow-hidden relative">
+                                  <BuildingMap
+                                    lat={sourceLocation.lat}
+                                    lng={sourceLocation.lng}
+                                    className="w-full h-full"
+                                    locationPrecision="exact"
+                                  />
                                 </div>
                             </div>
                         )}
