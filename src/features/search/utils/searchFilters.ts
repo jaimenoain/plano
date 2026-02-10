@@ -1,5 +1,6 @@
 
 export interface BuildingFilterData {
+  id: string;
   functional_category_id?: string | null;
   typologies?: { typology_id: string }[];
   attributes?: { attribute_id: string }[];
@@ -12,6 +13,13 @@ export interface FilterCriteria {
   typologyIds: string[];
   attributeIds: string[];
   selectedArchitects: string[]; // IDs
+  collectionIds?: string[];
+  personalMinRating?: number;
+  materials?: string[];
+  styles?: string[];
+  contexts?: string[];
+  userCollectionMap?: Record<string, Set<string>>;
+  userRatings?: Record<string, number>;
 }
 
 export function filterLocalBuildings(
@@ -19,6 +27,22 @@ export function filterLocalBuildings(
   filters: FilterCriteria
 ): BuildingFilterData[] {
   return buildings.filter((b) => {
+    // 1. Collections (OR within collections)
+    if (filters.collectionIds && filters.collectionIds.length > 0) {
+      if (!filters.userCollectionMap) return false;
+      const isInAnyCollection = filters.collectionIds.some(colId =>
+        filters.userCollectionMap![colId]?.has(b.id)
+      );
+      if (!isInAnyCollection) return false;
+    }
+
+    // 2. Personal Rating (>=)
+    if (filters.personalMinRating && filters.personalMinRating > 0) {
+       if (!filters.userRatings) return false;
+       const rating = filters.userRatings[b.id] || 0;
+       if (rating < filters.personalMinRating) return false;
+    }
+
     // Category (Exact Match)
     if (filters.categoryId && b.functional_category_id !== filters.categoryId) {
       return false;
@@ -33,9 +57,35 @@ export function filterLocalBuildings(
       if (!hasMatch) return false;
     }
 
-    // Attributes (Any Match / OR)
+    // Extract attributes once for reuse
+    const buildingAttributeIds = b.attributes?.map((a) => a.attribute_id) || [];
+
+    // Materials (Any Match / OR)
+    if (filters.materials && filters.materials.length > 0) {
+      const hasMatch = filters.materials.some((id) =>
+        buildingAttributeIds.includes(id)
+      );
+      if (!hasMatch) return false;
+    }
+
+    // Styles (Any Match / OR)
+    if (filters.styles && filters.styles.length > 0) {
+      const hasMatch = filters.styles.some((id) =>
+        buildingAttributeIds.includes(id)
+      );
+      if (!hasMatch) return false;
+    }
+
+    // Contexts (Any Match / OR)
+    if (filters.contexts && filters.contexts.length > 0) {
+      const hasMatch = filters.contexts.some((id) =>
+        buildingAttributeIds.includes(id)
+      );
+      if (!hasMatch) return false;
+    }
+
+    // Attributes (Generic) (Any Match / OR)
     if (filters.attributeIds.length > 0) {
-      const buildingAttributeIds = b.attributes?.map((a) => a.attribute_id) || [];
       const hasMatch = filters.attributeIds.some((id) =>
         buildingAttributeIds.includes(id)
       );
