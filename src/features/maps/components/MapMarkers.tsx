@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
-import { Marker, useMap } from 'react-map-gl';
+import { useMemo, useState } from 'react';
+import { Marker, useMap, Popup } from 'react-map-gl';
 import { ClusterResponse } from '../hooks/useMapData';
+import { getBuildingImageUrl } from '@/utils/image';
 
 interface MapMarkersProps {
   clusters: ClusterResponse[];
@@ -9,6 +10,7 @@ interface MapMarkersProps {
 
 export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
   const { current: map } = useMap();
+  const [hoveredInfo, setHoveredInfo] = useState<ClusterResponse | null>(null);
 
   const markers = useMemo(() => {
     return clusters.map((cluster) => {
@@ -72,11 +74,48 @@ export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
           latitude={cluster.lat}
           style={{ cursor: 'pointer', zIndex: isHighlighted ? 50 : 'auto' }}
         >
-          {markerContent}
+          <div
+            onMouseEnter={() => setHoveredInfo(cluster)}
+            onMouseLeave={() => setHoveredInfo(null)}
+          >
+            {markerContent}
+          </div>
         </Marker>
       );
     });
   }, [clusters, map, highlightedId]);
 
-  return <>{markers}</>;
+  return (
+    <>
+      {markers}
+      {hoveredInfo && (
+        <Popup
+          longitude={hoveredInfo.lng}
+          latitude={hoveredInfo.lat}
+          offset={20}
+          closeButton={false}
+          closeOnClick={false}
+          className="z-[100]"
+          maxWidth="220px"
+        >
+          <div className="flex flex-col gap-2 overflow-hidden rounded-md bg-background p-0">
+            {hoveredInfo.image_url && (
+              <img
+                src={getBuildingImageUrl(hoveredInfo.image_url)}
+                alt={hoveredInfo.name || 'Building'}
+                className="h-[200px] w-[200px] object-cover"
+              />
+            )}
+            {hoveredInfo.name && (
+              <div className="px-3 pb-2 pt-1">
+                <h3 className="text-sm font-semibold text-foreground">
+                  {hoveredInfo.name}
+                </h3>
+              </div>
+            )}
+          </div>
+        </Popup>
+      )}
+    </>
+  );
 }

@@ -12,6 +12,9 @@ export interface ClusterResponse {
   count: number;
   rating: number | null;
   status: string | null;
+  name?: string;
+  slug?: string;
+  image_url?: string;
 }
 
 export interface UseMapDataProps {
