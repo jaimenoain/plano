@@ -22,6 +22,16 @@ export const MapModeSchema = z.enum(['discover', 'library']).catch(DEFAULT_MODE)
 
 // 2. Filters Schema (Validation logic for the parsed object)
 export const MapFiltersObjectSchema = z.object({
+  minRating: z.preprocess(
+    (val) => {
+      if (typeof val === 'string' && val.trim() !== '') {
+        const num = Number(val);
+        return isNaN(num) ? undefined : num;
+      }
+      return val;
+    },
+    z.number().optional()
+  ),
   min_rating: z.preprocess(
     (val) => {
       if (typeof val === 'string' && val.trim() !== '') {
@@ -34,11 +44,16 @@ export const MapFiltersObjectSchema = z.object({
   )
 }).catchall(z.unknown())
 .transform((obj) => {
-    // Clamp min_rating if present and valid number
-    if (typeof obj.min_rating === 'number') {
-        return { ...obj, min_rating: Math.max(0, Math.min(3, obj.min_rating)) };
+    const newObj = { ...obj };
+    // Clamp minRating if present and valid number
+    if (typeof newObj.minRating === 'number') {
+        newObj.minRating = Math.max(0, Math.min(3, newObj.minRating));
     }
-    return obj;
+    // Clamp min_rating if present and valid number (legacy support)
+    if (typeof newObj.min_rating === 'number') {
+        newObj.min_rating = Math.max(0, Math.min(3, newObj.min_rating));
+    }
+    return newObj;
 });
 
 // 3. Map State Schema (URL Params)
@@ -82,20 +97,12 @@ export const useURLMapState = () => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
 
-      // We merge the current parsed state with updates to ensure consistency,
-      // but simpler: just update what's changed in the URL.
-      // Actually, if we use 'prev', we keep other params (like utm sources etc).
-      // So we should just set the keys we manage.
-
       if (updates.lat !== undefined) newParams.set('lat', updates.lat.toString());
       if (updates.lng !== undefined) newParams.set('lng', updates.lng.toString());
       if (updates.zoom !== undefined) newParams.set('zoom', updates.zoom.toString());
       if (updates.mode !== undefined) newParams.set('mode', updates.mode);
 
       if (updates.filters !== undefined) {
-         // If filters is empty object, maybe remove it?
-         // Requirement: "Optional JSON string".
-         // If empty, removing cleans URL.
          if (Object.keys(updates.filters).length === 0) {
              newParams.delete('filters');
          } else {
