@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getBuildingImageUrl } from '@/utils/image';
+import { Button } from '@/components/ui/button';
 
 interface Building {
   id: string;
@@ -202,8 +203,13 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
               </div>
 
               {!hasNextPage && buildings.length > 0 && (
-                  <div className="text-center text-xs text-muted-foreground py-2">
-                      End of results
+                  <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Not finding what you're looking for?
+                    </p>
+                    <Button variant="outline" asChild>
+                      <Link to="/add-building">Add building</Link>
+                    </Button>
                   </div>
               )}
            </>
