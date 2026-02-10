@@ -148,7 +148,7 @@ export const fetchBuildingDetails = async (id: string) => {
         query = query.eq("slug", id);
     }
 
-    const { data, error } = await query.maybeSingle();
+    const { data, error } = await query.limit(1).maybeSingle();
 
     if (error) throw error;
     if (!data) throw new Error("Building not found");
