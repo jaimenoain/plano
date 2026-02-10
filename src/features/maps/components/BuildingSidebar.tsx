@@ -4,7 +4,7 @@ import { useMapContext } from '../providers/MapContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getBuildingImageUrl } from '@/utils/image';
 
@@ -19,9 +19,14 @@ interface Building {
   lng: number;
 }
 
+interface BuildingSidebarProps {
+  topLocation?: { description: string; place_id: string } | null;
+  onLocationClick?: (placeId: string) => void;
+}
+
 const PAGE_SIZE = 20;
 
-export function BuildingSidebar() {
+export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSidebarProps = {}) {
   const { state: { bounds, filters }, methods: { setHighlightedId } } = useMapContext();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -104,101 +109,104 @@ export function BuildingSidebar() {
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (!bounds) {
-      return (
-        <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
-          <p>Loading map area...</p>
-        </div>
-      );
-  }
-
-  if (isLoading) {
-      return (
-        <div className="flex h-full items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-  }
-
-  if (isError) {
-      return (
-        <div className="flex h-full items-center justify-center p-4 text-center text-destructive">
-          <p>Failed to load buildings. Please try moving the map.</p>
-        </div>
-      );
-  }
-
   const buildings = data?.pages.flat() || [];
-
-  if (buildings.length === 0) {
-      return (
-        <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
-          <p>No buildings found in this area.</p>
-        </div>
-      );
-  }
 
   return (
     <ScrollArea className="h-full w-full">
       <div className="space-y-4 p-4">
-        {buildings.map((building) => {
-          const imageUrl = getBuildingImageUrl(building.image_url);
-          return (
-            <Link to={`/building/${building.slug || building.id}`} key={building.id} className="block group">
-              <Card
-                className="overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50"
-                onMouseEnter={() => setHighlightedId(building.id)}
-                onMouseLeave={() => setHighlightedId(null)}
-              >
-                <div className="relative aspect-video bg-muted">
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={building.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                      No Image
-                    </div>
-                  )}
+        {/* Top Location Suggestion */}
+        {topLocation && (
+          <Card
+            className="cursor-pointer overflow-hidden border-transparent bg-muted/30 hover:bg-muted/50 transition-colors"
+            onClick={() => onLocationClick?.(topLocation.place_id)}
+          >
+            <CardContent className="flex items-center gap-3 p-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <MapPin className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">{topLocation.description}</p>
+                <p className="text-xs text-muted-foreground">Jump to location</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-                  {/* Rating Badge */}
-                  {building.rating > 0 && (
-                      <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-                          {building.rating} <span className="text-yellow-400">★</span>
+        {/* Loading State */}
+        {!bounds || isLoading ? (
+           <div className="flex items-center justify-center p-8">
+             {(!bounds || isLoading) && <Loader2 className="h-8 w-8 animate-spin text-primary" />}
+           </div>
+        ) : isError ? (
+           <div className="text-center text-destructive p-4">
+             <p>Failed to load buildings.</p>
+           </div>
+        ) : buildings.length === 0 ? (
+           <div className="text-center text-muted-foreground p-4">
+             <p>No buildings found in this area.</p>
+           </div>
+        ) : (
+           <>
+              {buildings.map((building) => {
+                const imageUrl = getBuildingImageUrl(building.image_url);
+                return (
+                  <Link to={`/building/${building.slug || building.id}`} key={building.id} className="block group">
+                    <Card
+                      className="overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50"
+                      onMouseEnter={() => setHighlightedId(building.id)}
+                      onMouseLeave={() => setHighlightedId(null)}
+                    >
+                      <div className="relative aspect-video bg-muted">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={building.name}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+                            No Image
+                          </div>
+                        )}
+
+                        {/* Rating Badge */}
+                        {building.rating > 0 && (
+                            <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+                                {building.rating} <span className="text-yellow-400">★</span>
+                            </div>
+                        )}
                       </div>
-                  )}
-                </div>
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between gap-2">
-                      <h3 className="line-clamp-1 text-sm font-semibold leading-tight group-hover:text-primary" title={building.name}>
-                          {building.name}
-                      </h3>
+                      <CardContent className="p-3">
+                        <div className="flex items-start justify-between gap-2">
+                            <h3 className="line-clamp-1 text-sm font-semibold leading-tight group-hover:text-primary" title={building.name}>
+                                {building.name}
+                            </h3>
+                        </div>
+                        {building.status && building.status !== 'none' && (
+                            <div className="mt-1 flex items-center gap-1">
+                                <span className="inline-flex items-center rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
+                                    {building.status}
+                                </span>
+                            </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+
+              {/* Infinite Scroll Loader */}
+              <div ref={observerTarget} className="flex h-8 w-full items-center justify-center py-2">
+                 {isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
+
+              {!hasNextPage && buildings.length > 0 && (
+                  <div className="text-center text-xs text-muted-foreground py-2">
+                      End of results
                   </div>
-                  {building.status && building.status !== 'none' && (
-                      <div className="mt-1 flex items-center gap-1">
-                          <span className="inline-flex items-center rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
-                              {building.status}
-                          </span>
-                      </div>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-
-        {/* Infinite Scroll Loader */}
-        <div ref={observerTarget} className="flex h-8 w-full items-center justify-center py-2">
-           {isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-        </div>
-
-        {!hasNextPage && buildings.length > 0 && (
-            <div className="text-center text-xs text-muted-foreground py-2">
-                End of results
-            </div>
+              )}
+           </>
         )}
       </div>
     </ScrollArea>

@@ -22,6 +22,7 @@ interface DiscoverySearchInputProps {
   placeholder?: string;
   className?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onTopLocationChange?: (location: { description: string; place_id: string } | null) => void;
 }
 
 export function DiscoverySearchInput({
@@ -31,6 +32,7 @@ export function DiscoverySearchInput({
   placeholder = "Search...",
   className,
   onKeyDown,
+  onTopLocationChange,
 }: DiscoverySearchInputProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
@@ -71,6 +73,18 @@ export function DiscoverySearchInput({
     debounce: 300,
     initOnMount: true,
   });
+
+  // Update top location suggestion
+  useEffect(() => {
+    if (status === "OK" && data.length > 0) {
+      onTopLocationChange?.({
+        description: data[0].description,
+        place_id: data[0].place_id,
+      });
+    } else {
+      onTopLocationChange?.(null);
+    }
+  }, [data, status, onTopLocationChange]);
 
   // Sync external value with internal places value to ensure suggestions are relevant
   useEffect(() => {
