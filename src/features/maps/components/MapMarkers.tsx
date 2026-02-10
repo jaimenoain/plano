@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Marker, useMap, Popup } from 'react-map-gl';
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBuildingImageUrl } from '@/utils/image';
@@ -11,6 +11,17 @@ interface MapMarkersProps {
 export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
   const { current: map } = useMap();
   const [hoveredInfo, setHoveredInfo] = useState<ClusterResponse | null>(null);
+
+  // Clear hover state if the hovered item is no longer in the current cluster set
+  // This prevents tooltips from getting stuck when data updates or filters change
+  useEffect(() => {
+    if (hoveredInfo) {
+      const stillExists = clusters.some(c => c.id === hoveredInfo.id);
+      if (!stillExists) {
+        setHoveredInfo(null);
+      }
+    }
+  }, [clusters, hoveredInfo]);
 
   const markers = useMemo(() => {
     return clusters.map((cluster) => {
@@ -95,7 +106,7 @@ export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
           offset={20}
           closeButton={false}
           closeOnClick={false}
-          className="z-[100]"
+          className="z-[100] pointer-events-none"
           maxWidth="220px"
         >
           <div className="flex flex-col gap-2 overflow-hidden rounded-md bg-background p-0">
