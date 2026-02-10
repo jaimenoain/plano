@@ -67,10 +67,20 @@ export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
                 }
               `}
               style={{
-                width: cluster.is_cluster ? `${30 + (cluster.count || 0) * 2}px` : '32px',
-                height: cluster.is_cluster ? `${30 + (cluster.count || 0) * 2}px` : '32px',
-                maxWidth: '60px',
-                maxHeight: '60px',
+                width: cluster.is_cluster
+                  ? cluster.count > 1000
+                    ? '64px'
+                    : cluster.count > 100
+                      ? '48px'
+                      : '32px'
+                  : '32px',
+                height: cluster.is_cluster
+                  ? cluster.count > 1000
+                    ? '64px'
+                    : cluster.count > 100
+                      ? '48px'
+                      : '32px'
+                  : '32px',
               }}
             >
               {cluster.is_cluster ? (
