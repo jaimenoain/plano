@@ -16,9 +16,9 @@ export function QualityRatingFilter({ value, onChange }: QualityRatingFilterProp
 
   const options = [
     { label: 'All', value: '0' },
-    { label: 'Good', value: '1' },
-    { label: 'Great', value: '2' },
-    { label: 'Exceptional', value: '3' },
+    { label: 'Impressive', value: '1' },
+    { label: 'Essential', value: '2' },
+    { label: 'Masterpiece', value: '3' },
   ];
 
   return (
