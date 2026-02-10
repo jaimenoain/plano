@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useMemo, ReactNode, useCallback } from 'react';
 import { useURLMapState } from '../hooks/useURLMapState';
 import { useStableMapUpdate } from '../hooks/useStableMapUpdate';
-import { MapMode, MapFilters } from '@/types/plano-map';
+import { MapMode, MapFilters, MapState } from '@/types/plano-map';
 
 interface MapContextMethods {
   moveMap: (lat: number, lng: number, zoom: number) => void;
   setMode: (mode: MapMode) => void;
   setFilter: <K extends keyof MapFilters>(key: K, value: MapFilters[K]) => void;
+  setMapState: (state: Partial<MapState>) => void;
 }
 
 interface MapContextValue {
@@ -51,6 +52,13 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     [filters, setMapURL]
   );
 
+  const setMapState = useCallback(
+    (state: Partial<MapState>) => {
+      setMapURL(state as any);
+    },
+    [setMapURL]
+  );
+
   const value = useMemo(
     () => ({
       state: {
@@ -64,9 +72,10 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         moveMap,
         setMode,
         setFilter,
+        setMapState,
       },
     }),
-    [lat, lng, zoom, mode, filters, moveMap, setMode, setFilter]
+    [lat, lng, zoom, mode, filters, moveMap, setMode, setFilter, setMapState]
   );
 
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
