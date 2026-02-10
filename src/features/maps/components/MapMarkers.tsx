@@ -6,9 +6,10 @@ import { getBuildingImageUrl } from '@/utils/image';
 interface MapMarkersProps {
   clusters: ClusterResponse[];
   highlightedId?: string | null;
+  setHighlightedId: (id: string | null) => void;
 }
 
-export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
+export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMarkersProps) {
   const { current: map } = useMap();
 
   // Find the active cluster based on the highlightedId
@@ -82,6 +83,9 @@ export function MapMarkers({ clusters, highlightedId }: MapMarkersProps) {
                       : '32px'
                   : '32px',
               }}
+              onMouseEnter={() => !cluster.is_cluster && setHighlightedId(cluster.id)}
+              onMouseLeave={() => !cluster.is_cluster && setHighlightedId(null)}
+              data-testid={cluster.is_cluster ? "map-marker-cluster" : "map-marker-building"}
             >
               {cluster.is_cluster ? (
                 cluster.count
