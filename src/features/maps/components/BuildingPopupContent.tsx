@@ -32,30 +32,40 @@ export function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave }: Bu
   const isVisited = viewerStatus === 'visited';
   const isIgnored = viewerStatus === 'ignored';
 
-  const handleAction = async (status: 'pending' | 'visited' | 'ignored', successMessage: string) => {
+  const handleAction = async (
+    status: 'pending' | 'visited' | 'ignored',
+    successMessage: string,
+    removeMessage: string
+  ) => {
     if (!user) {
       toast({ title: "Please log in first" });
       return;
     }
 
-    // If status matches current status, we might want to toggle it off?
-    // For now, we follow the pattern of setting the status.
-    if (viewerStatus === status) {
-        return;
-    }
-
     setIsSaving(true);
     try {
-      const { error } = await supabase.from("user_buildings").upsert({
-        user_id: user.id,
-        building_id: buildingId,
-        status: status,
-        edited_at: new Date().toISOString()
-      }, { onConflict: 'user_id, building_id' });
+      if (viewerStatus === status) {
+        // Toggle off (delete)
+        const { error } = await supabase
+          .from("user_buildings")
+          .delete()
+          .match({ user_id: user.id, building_id: buildingId });
 
-      if (error) throw error;
+        if (error) throw error;
+        toast({ title: removeMessage });
+      } else {
+        // Set new status
+        const { error } = await supabase.from("user_buildings").upsert({
+          user_id: user.id,
+          building_id: buildingId,
+          status: status,
+          edited_at: new Date().toISOString()
+        }, { onConflict: 'user_id, building_id' });
 
-      toast({ title: successMessage });
+        if (error) throw error;
+        toast({ title: successMessage });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
     } catch (error) {
       console.error("Action failed", error);
@@ -67,24 +77,24 @@ export function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave }: Bu
 
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleAction('pending', "Saved to your list");
+    handleAction('pending', "Saved to your list", "Removed from your list");
   };
 
   const handleVisit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleAction('visited', "Marked as visited");
+    handleAction('visited', "Marked as visited", "Removed from visited");
   };
 
   const handleHide = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleAction('ignored', "Building hidden");
+    handleAction('ignored', "Building hidden", "Building unhidden");
   };
 
   const handleCardClick = () => {
       if (cluster.slug) {
-        navigate(`/building/${cluster.slug}`);
+        window.open(`/building/${cluster.slug}`, '_blank');
       } else if (cluster.id) {
-        navigate(`/building/${cluster.id}`);
+        window.open(`/building/${cluster.id}`, '_blank');
       }
   };
 

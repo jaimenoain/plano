@@ -80,9 +80,9 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
                 });
               } else {
                 if (cluster.slug) {
-                    window.location.href = `/building/${cluster.slug}`;
+                    window.open(`/building/${cluster.slug}`, '_blank');
                 } else if (cluster.id) {
-                    window.location.href = `/building/${cluster.id}`;
+                    window.open(`/building/${cluster.id}`, '_blank');
                 }
               }
             }}
