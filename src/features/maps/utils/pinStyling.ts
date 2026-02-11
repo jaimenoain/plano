@@ -30,7 +30,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
 
   // Step 2: Shape Check
   // Default to 'pin'. If item.location_approximate exists in the future, check it here.
-  const shape: PinShape = 'pin';
+  const shape: PinShape = item.location_approximate ? 'circle' : 'pin';
 
   // Step 3: Tier Logic
   let tier: PinTier = 'C';
