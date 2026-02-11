@@ -60,6 +60,53 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
           ? `cluster-${cluster.id}-${cluster.count}`
           : `marker-${cluster.id}`;
 
+        const isCluster = cluster.is_cluster;
+        const buildingUrl = !isCluster ? (cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`) : '#';
+
+        const content = (
+            <div
+              className={`
+                flex items-center justify-center rounded-full border border-white shadow-md transition-all hover:scale-110
+                ${isCluster
+                  ? 'bg-primary text-primary-foreground font-bold'
+                  : 'bg-background text-foreground'
+                }
+              `}
+              style={{
+                width: isCluster
+                  ? cluster.count > 1000
+                    ? '64px'
+                    : cluster.count > 100
+                      ? '48px'
+                      : '32px'
+                  : '32px',
+                height: isCluster
+                  ? cluster.count > 1000
+                    ? '64px'
+                    : cluster.count > 100
+                      ? '48px'
+                      : '32px'
+                  : '32px',
+              }}
+              onMouseEnter={() => !isCluster && handleMouseEnter(String(cluster.id))}
+              onMouseLeave={() => !isCluster && handleMouseLeave()}
+              data-testid={isCluster ? "map-marker-cluster" : "map-marker-building"}
+            >
+              {isCluster ? (
+                cluster.count
+              ) : (
+                <div className="flex flex-col items-center justify-center text-[10px] font-medium leading-none">
+                   {/* Show rating if available, otherwise a generic icon */}
+                   {cluster.rating && cluster.rating > 0 ? (
+                      <span>{cluster.rating.toFixed(1)}</span>
+                   ) : (
+                      <div className="h-2 w-2 rounded-full bg-foreground" />
+                   )}
+                </div>
+              )}
+            </div>
+        );
+
         return (
           <Marker
             key={key}
@@ -78,56 +125,22 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
                   zoom: expansionZoom,
                   duration: 500,
                 });
-              } else {
-                if (cluster.slug) {
-                    window.open(`/building/${cluster.slug}`, '_blank');
-                } else if (cluster.id) {
-                    window.open(`/building/${cluster.id}`, '_blank');
-                }
               }
             }}
           >
-            <div
-              className={`
-                flex items-center justify-center rounded-full border border-white shadow-md transition-all hover:scale-110
-                ${cluster.is_cluster
-                  ? 'bg-primary text-primary-foreground font-bold'
-                  : 'bg-background text-foreground'
-                }
-              `}
-              style={{
-                width: cluster.is_cluster
-                  ? cluster.count > 1000
-                    ? '64px'
-                    : cluster.count > 100
-                      ? '48px'
-                      : '32px'
-                  : '32px',
-                height: cluster.is_cluster
-                  ? cluster.count > 1000
-                    ? '64px'
-                    : cluster.count > 100
-                      ? '48px'
-                      : '32px'
-                  : '32px',
-              }}
-              onMouseEnter={() => !cluster.is_cluster && handleMouseEnter(String(cluster.id))}
-              onMouseLeave={() => !cluster.is_cluster && handleMouseLeave()}
-              data-testid={cluster.is_cluster ? "map-marker-cluster" : "map-marker-building"}
-            >
-              {cluster.is_cluster ? (
-                cluster.count
-              ) : (
-                <div className="flex flex-col items-center justify-center text-[10px] font-medium leading-none">
-                   {/* Show rating if available, otherwise a generic icon */}
-                   {cluster.rating && cluster.rating > 0 ? (
-                      <span>{cluster.rating.toFixed(1)}</span>
-                   ) : (
-                      <div className="h-2 w-2 rounded-full bg-foreground" />
-                   )}
-                </div>
-              )}
-            </div>
+            {isCluster ? (
+                content
+            ) : (
+                <a
+                  href={buildingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-inherit no-underline"
+                  aria-label={`View details for ${cluster.name || 'Building'}`}
+                >
+                    {content}
+                </a>
+            )}
           </Marker>
         );
       }),

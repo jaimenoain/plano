@@ -8,7 +8,6 @@ import { useUserBuildingStatuses } from '@/hooks/useUserBuildingStatuses';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 
 interface BuildingPopupContentProps {
   cluster: ClusterResponse;
@@ -22,7 +21,6 @@ export function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave }: Bu
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
-  const navigate = useNavigate();
 
   // Convert cluster ID to string for status lookup
   const buildingId = String(cluster.id);
@@ -77,36 +75,40 @@ export function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave }: Bu
 
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     handleAction('pending', "Saved to your list", "Removed from your list");
   };
 
   const handleVisit = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     handleAction('visited', "Marked as visited", "Removed from visited");
   };
 
   const handleHide = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     handleAction('ignored', "Building hidden", "Building unhidden");
   };
 
-  const handleCardClick = () => {
-      if (cluster.slug) {
-        window.open(`/building/${cluster.slug}`, '_blank');
-      } else if (cluster.id) {
-        window.open(`/building/${cluster.id}`, '_blank');
-      }
-  };
+  const buildingUrl = cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`;
 
   return (
     <div
-      className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg"
+      className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg relative"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      onClick={handleCardClick}
     >
+      <a
+        href={buildingUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute inset-0 z-10"
+        aria-label={`View details for ${cluster.name || 'Building'}`}
+      />
+
       {/* Image */}
-      <div className="relative h-[200px] w-full bg-muted cursor-pointer">
+      <div className="relative h-[200px] w-full bg-muted">
         {cluster.image_url ? (
           <img
             src={getBuildingImageUrl(cluster.image_url)}
@@ -123,13 +125,13 @@ export function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave }: Bu
       {/* Content */}
       <div className="flex flex-col gap-2 p-2">
         {cluster.name ? (
-          <h3 className="text-sm font-semibold line-clamp-2 cursor-pointer">{cluster.name}</h3>
+          <h3 className="text-sm font-semibold line-clamp-2">{cluster.name}</h3>
         ) : (
           <span className="text-xs text-muted-foreground">Loading details...</span>
         )}
 
         {/* Action Bar */}
-        <div className="flex items-center justify-between border-t pt-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-t pt-2 relative z-20" onClick={(e) => e.stopPropagation()}>
             <Button
                 variant="ghost"
                 size="icon"
