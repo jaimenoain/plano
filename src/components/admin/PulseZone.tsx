@@ -7,6 +7,8 @@ interface PulseZoneProps {
 }
 
 export function PulseZone({ stats }: PulseZoneProps) {
+  const totalPending = stats.pending_reports + (stats.pending_tasks || 0);
+
   return (
     <div className="grid gap-4 md:grid-cols-4">
       {/* User Metrics */}
@@ -92,12 +94,12 @@ export function PulseZone({ stats }: PulseZoneProps) {
       {/* System Health */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pending Reports</CardTitle>
-          <AlertCircle className={`h-4 w-4 ${stats.pending_reports > 0 ? "text-red-500" : "text-muted-foreground"}`} />
+          <CardTitle className="text-sm font-medium">Pending Actions</CardTitle>
+          <AlertCircle className={`h-4 w-4 ${totalPending > 0 ? "text-red-500" : "text-muted-foreground"}`} />
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${stats.pending_reports > 0 ? "text-red-500" : ""}`}>{stats.pending_reports}</div>
-          <p className="text-xs text-muted-foreground">Requiring review</p>
+          <div className={`text-2xl font-bold ${totalPending > 0 ? "text-red-500" : ""}`}>{totalPending}</div>
+          <p className="text-xs text-muted-foreground">Reports & Tasks</p>
         </CardContent>
       </Card>
     </div>

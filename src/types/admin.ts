@@ -4,6 +4,16 @@ export type HeatmapPoint = {
   weight: number;
 };
 
+export interface GovernanceTask {
+  id: string;
+  description: string;
+  asset_id?: string;
+  due_date: string;
+  priority: 'High' | 'Medium' | 'Low';
+  status: 'open' | 'resolved' | 'archived';
+  created_at: string;
+}
+
 export type DashboardStats = {
   pulse: {
     total_users: number;
@@ -16,6 +26,7 @@ export type DashboardStats = {
     total_reviews: number;
     total_photos: number;
     pending_reports: number;
+    pending_tasks: number;
   };
   activity_trends: {
     actions: {
@@ -118,6 +129,7 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
     total_reviews: 1200,
     total_photos: 380,
     pending_reports: 5,
+    pending_tasks: 2,
   },
   activity_trends: {
     actions: Array.from({ length: 30 }, (_, i) => ({

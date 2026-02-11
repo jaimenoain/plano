@@ -15,6 +15,7 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     { count: totalReviews, error: reviewsError },
     { count: totalPhotos, error: photosError },
     { count: pendingReports, error: reportsError },
+    { count: pendingTasks, error: tasksError },
   ] = await Promise.all([
     supabase.rpc('get_admin_pulse'),
     supabase.rpc('get_admin_trends'),
@@ -26,6 +27,7 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     supabase.from('user_buildings').select('*', { count: 'exact', head: true }).not('content', 'is', null),
     supabase.from('buildings').select('*', { count: 'exact', head: true }).not('main_image_url', 'is', null).eq('is_deleted', false),
     supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('governance_tasks').select('*', { count: 'exact', head: true }).eq('status', 'open'),
   ]);
 
   if (pulseError) console.error("Pulse Error:", pulseError);
@@ -39,6 +41,7 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
   if (reviewsError) console.error("Failed to count reviews", reviewsError);
   if (photosError) console.error("Failed to count photos", photosError);
   if (reportsError) console.error("Failed to count reports", reportsError);
+  if (tasksError) console.error("Failed to count tasks", tasksError);
 
   // Fallbacks using 'as any' to bypass initial strict typing, validated by return type
   const pulse = (pulseData as any) || {
@@ -96,6 +99,7 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
       total_reviews: totalReviews || 0,
       total_photos: totalPhotos || 0,
       pending_reports: pendingReports || 0,
+      pending_tasks: pendingTasks || 0,
     },
     activity_trends: trends,
     group_dynamics: content.group_dynamics,

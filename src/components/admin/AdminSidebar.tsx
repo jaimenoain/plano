@@ -6,6 +6,7 @@ import {
   LogOut,
   Merge,
   ShieldAlert,
+  Gavel,
   Image,
   Map,
   History,
@@ -52,6 +53,11 @@ const items = [
     title: "Moderation",
     url: "/admin/moderation",
     icon: ShieldAlert,
+  },
+  {
+    title: "Governance",
+    url: "/admin/governance",
+    icon: Gavel,
   },
   {
     title: "Image Wall",
