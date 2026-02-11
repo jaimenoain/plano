@@ -20,6 +20,7 @@ export interface ClusterResponse {
   is_candidate?: boolean;
   address?: string | null;
   tier_rank?: string | null;
+  location_approximate?: boolean;
 }
 
 export interface UseMapDataProps {

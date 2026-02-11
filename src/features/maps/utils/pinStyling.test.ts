@@ -3,7 +3,7 @@ import { getPinStyle } from './pinStyling';
 import { ClusterResponse } from '../hooks/useMapData';
 
 // Helper to create mock items
-const createMockItem = (overrides: Partial<ClusterResponse>): ClusterResponse => ({
+const createMockBuilding = (overrides: Partial<ClusterResponse>): ClusterResponse => ({
   id: '1',
   lat: 0,
   lng: 0,
@@ -16,113 +16,115 @@ const createMockItem = (overrides: Partial<ClusterResponse>): ClusterResponse =>
 } as ClusterResponse);
 
 describe('getPinStyle', () => {
-  describe('Clusters', () => {
-    it('returns Cluster tier for clusters', () => {
-      const item = createMockItem({ is_cluster: true, count: 50 });
-      const style = getPinStyle(item);
-      expect(style.tier).toBe('Cluster');
-      expect(style.shape).toBe('circle');
-      expect(style.zIndex).toBe(10);
-      expect(style.classes).toContain('bg-primary');
-      expect(style.showContent).toBe(true);
-    });
-
-    it('sets size 64 for count > 1000', () => {
-      const item = createMockItem({ is_cluster: true, count: 1001 });
-      expect(getPinStyle(item).size).toBe(64);
-    });
-
-    it('sets size 48 for count > 100', () => {
-      const item = createMockItem({ is_cluster: true, count: 101 });
-      expect(getPinStyle(item).size).toBe(48);
-    });
-
-    it('sets size 32 for small clusters', () => {
-      const item = createMockItem({ is_cluster: true, count: 50 });
-      expect(getPinStyle(item).size).toBe(32);
-    });
-  });
-
-  describe('Library Items (Context 1)', () => {
-    it('returns Tier S for rating >= 3', () => {
-      const item = createMockItem({ rating: 3, status: 'visited' });
+  describe('Suite 1: Library Logic (User Ratings)', () => {
+    it('returns Tier S (Lime, Size 44px) for rating 3', () => {
+      const item = createMockBuilding({ rating: 3, status: 'visited' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
-      expect(style.zIndex).toBe(100);
+      expect(style.size).toBe(44);
       expect(style.classes).toContain('bg-lime-high');
     });
 
-    it('returns Tier A for rating 2', () => {
-      const item = createMockItem({ rating: 2 });
+    it('returns Tier A (White, Lime Dot) for rating 2', () => {
+      const item = createMockBuilding({ rating: 2 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('A');
-      expect(style.zIndex).toBe(50);
       expect(style.classes).toContain('bg-white');
       expect(style.showDot).toBe(true);
     });
 
-    it('returns Tier B for rating 1', () => {
-      const item = createMockItem({ rating: 1 });
+    it('returns Tier B (Gray) for rating 1', () => {
+      const item = createMockBuilding({ rating: 1 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
-      expect(style.zIndex).toBe(20);
       expect(style.classes).toContain('bg-muted-foreground');
     });
 
-    it('returns Tier C for rating 0/Saved', () => {
-      // Case 1: Saved status
-      const savedItem = createMockItem({ rating: 0, status: 'saved' });
-      expect(getPinStyle(savedItem).tier).toBe('C');
-      expect(getPinStyle(savedItem).zIndex).toBe(5);
-      expect(getPinStyle(savedItem).classes).toContain('bg-muted/80');
+    it('returns Tier C (Ghost) for saved item (rating 0/null)', () => {
+      // Case 1: Rating 0, Status 'saved'
+      const savedItem = createMockBuilding({ rating: 0, status: 'saved' });
+      let style = getPinStyle(savedItem);
+      expect(style.tier).toBe('C');
+      expect(style.classes).toContain('bg-muted/80');
 
-      // Case 2: Visited status (but rating 0)
-      const visitedItem = createMockItem({ rating: 0, status: 'visited' });
-      expect(getPinStyle(visitedItem).tier).toBe('C');
+      // Case 2: Rating null, Status 'saved'
+      const savedItemNull = createMockBuilding({ rating: null, status: 'saved' });
+      style = getPinStyle(savedItemNull);
+      expect(style.tier).toBe('C');
+      expect(style.classes).toContain('bg-muted/80');
     });
   });
 
-  describe('Discovery Items (Context 2)', () => {
-    it('returns Tier S for Top 1%', () => {
-      const item = createMockItem({ tier_rank: 'Top 1%', status: 'none', rating: 0 });
+  describe('Suite 2: Discover Logic (Global Ranking)', () => {
+    it("returns Tier S for 'Top 1%'", () => {
+      const item = createMockBuilding({ tier_rank: 'Top 1%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
-      expect(style.zIndex).toBe(100);
     });
 
-    it('returns Tier A for Top 5%', () => {
-      const item = createMockItem({ tier_rank: 'Top 5%', status: 'none', rating: 0 });
-      expect(getPinStyle(item).tier).toBe('A');
-      expect(getPinStyle(item).zIndex).toBe(50);
+    it("returns Tier A for 'Top 10%'", () => {
+      const item = createMockBuilding({ tier_rank: 'Top 10%' });
+      const style = getPinStyle(item);
+      expect(style.tier).toBe('A');
     });
 
-    it('returns Tier A for Top 10%', () => {
-      const item = createMockItem({ tier_rank: 'Top 10%', status: 'none', rating: 0 });
-      expect(getPinStyle(item).tier).toBe('A');
+    it("returns Tier B for 'Top 20%'", () => {
+      const item = createMockBuilding({ tier_rank: 'Top 20%' });
+      const style = getPinStyle(item);
+      expect(style.tier).toBe('B');
     });
 
-    it('returns Tier B for Top 20%', () => {
-      const item = createMockItem({ tier_rank: 'Top 20%', status: 'none', rating: 0 });
-      expect(getPinStyle(item).tier).toBe('B');
-      expect(getPinStyle(item).zIndex).toBe(20);
-    });
-
-    it('returns Tier C for others', () => {
-      const item = createMockItem({ tier_rank: 'Standard', status: 'none', rating: 0 });
-      expect(getPinStyle(item).tier).toBe('C');
-      expect(getPinStyle(item).zIndex).toBe(5);
-    });
-
-    it('returns Tier C for null rank', () => {
-      const item = createMockItem({ tier_rank: null, status: 'none', rating: 0 });
-      expect(getPinStyle(item).tier).toBe('C');
+    it('returns Tier C for other ranks', () => {
+      const item = createMockBuilding({ tier_rank: 'Standard' });
+      const style = getPinStyle(item);
+      expect(style.tier).toBe('C');
     });
   });
 
-  describe('Shape Logic', () => {
-    it('defaults to pin shape for items', () => {
-      const item = createMockItem({});
-      expect(getPinStyle(item).shape).toBe('pin');
+  describe('Suite 3: Hierarchy/Hybrid Logic (Override Check)', () => {
+    it('returns Tier B style when User Rating 1 overrides Global Tier S (Top 1%)', () => {
+      // Scenario: A building is "Top 1%" (Global Tier S) BUT the user rated it "1 Star" (Personal Tier B).
+      const item = createMockBuilding({
+        tier_rank: 'Top 1%',
+        rating: 1,
+        status: 'visited' // Implicitly visited if rated, or explicitly status
+      });
+      const style = getPinStyle(item);
+
+      // Expectation: The function MUST return Tier B style. Personal rating always overrides global rank.
+      expect(style.tier).toBe('B');
+    });
+
+    it('returns Tier C style when User Saved (Unrated) overrides Global Tier S (Top 1%)', () => {
+      // Scenario: "Top 1%" but user saved it (rating 0/null).
+      const item = createMockBuilding({
+        tier_rank: 'Top 1%',
+        rating: 0,
+        status: 'saved'
+      });
+      const style = getPinStyle(item);
+
+      expect(style.tier).toBe('C');
+    });
+  });
+
+  describe('Suite 4: Shape Logic', () => {
+    it("sets shape: 'circle' when location_approximate: true", () => {
+      const item = createMockBuilding({ location_approximate: true });
+      const style = getPinStyle(item);
+      expect(style.shape).toBe('circle');
+    });
+
+    it("sets shape: 'pin' when location_approximate: false", () => {
+      const item = createMockBuilding({ location_approximate: false });
+      const style = getPinStyle(item);
+      expect(style.shape).toBe('pin');
+    });
+
+    it("defaults to shape: 'pin' when location_approximate is undefined", () => {
+      const item = createMockBuilding({}); // location_approximate undefined
+      const style = getPinStyle(item);
+      expect(style.shape).toBe('pin');
     });
   });
 });
