@@ -51,12 +51,23 @@ export function useMapData({ bounds, zoom, filters }: UseMapDataProps) {
   const { data: clusters, isLoading, error } = useQuery({
     queryKey: ['map-clusters', fetchBox, filters],
     queryFn: async () => {
+      // Combine all attribute-related filters
+      const allAttributeIds = [
+        ...(filters.attributes || []),
+        ...(filters.materials || []),
+        ...(filters.styles || []),
+        ...(filters.contexts || []),
+      ];
+
+      // Remove duplicates
+      const uniqueAttributeIds = [...new Set(allAttributeIds)];
+
       // Construct filter_criteria based on MapFilters
       const filterCriteria = {
         query: filters.query,
         category_id: filters.category,
         typology_ids: filters.typologies,
-        attribute_ids: filters.attributes,
+        attribute_ids: uniqueAttributeIds.length > 0 ? uniqueAttributeIds : undefined,
         architect_ids: filters.architects?.map((a) => a.id),
         status: filters.status,
         min_rating: filters.minRating,
