@@ -395,13 +395,25 @@ export function FilterDrawer() {
                     onValueChange={handleStatusChange}
                     className="justify-start flex-wrap gap-2"
                   >
-                    <ToggleGroupItem value="visited" aria-label="Toggle visited" className="flex-1">
+                    <ToggleGroupItem
+                      value="visited"
+                      aria-label="Toggle visited"
+                      className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
                       Visited
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="saved" aria-label="Toggle saved" className="flex-1">
+                    <ToggleGroupItem
+                      value="saved"
+                      aria-label="Toggle saved"
+                      className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
                       Saved
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="pending" aria-label="Toggle pending" className="flex-1">
+                    <ToggleGroupItem
+                      value="pending"
+                      aria-label="Toggle pending"
+                      className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
                       Pending
                     </ToggleGroupItem>
                   </ToggleGroup>
