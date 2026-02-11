@@ -58,7 +58,7 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
         collections: filters.collections?.map((c) => c.id),
         hide_visited: filters.hideVisited,
         hide_saved: filters.hideSaved,
-        hide_hidden: filters.hideHidden,
+        hide_hidden: false,
         hide_without_images: filters.hideWithoutImages,
         contact_min_rating: filters.contactMinRating,
       };
