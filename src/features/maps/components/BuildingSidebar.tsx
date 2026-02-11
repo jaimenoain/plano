@@ -143,8 +143,11 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
              <p>Failed to load buildings.</p>
            </div>
         ) : buildings.length === 0 ? (
-           <div className="text-center text-muted-foreground p-4">
-             <p>No buildings found in this area.</p>
+           <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
+             <p className="text-muted-foreground">No buildings found in this area.</p>
+             <Button variant="outline" asChild>
+                <Link to="/add-building">Add building</Link>
+             </Button>
            </div>
         ) : (
            <>
