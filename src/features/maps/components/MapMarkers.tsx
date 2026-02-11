@@ -168,6 +168,13 @@ export function MapMarkers({
                       if (cluster.is_custom_marker) {
                           e.preventDefault();
                           handleMouseEnter(String(cluster.id));
+                          return;
+                      }
+
+                      // On first tap/click, if not already highlighted, prevent navigation and show popup
+                      if (String(highlightedId) !== String(cluster.id)) {
+                          e.preventDefault();
+                          handleMouseEnter(String(cluster.id));
                       }
                   }}
                 >
