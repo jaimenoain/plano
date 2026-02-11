@@ -18,6 +18,10 @@ interface Building {
   status: string | null;
   lat: number;
   lng: number;
+  architects: string[];
+  year_completed: number | null;
+  city: string | null;
+  country: string | null;
 }
 
 interface BuildingSidebarProps {
@@ -156,7 +160,7 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
                 return (
                   <Link to={`/building/${building.slug || building.id}`} key={building.id} className="block group">
                     <Card
-                      className="flex flex-row overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50 h-28"
+                      className="flex flex-row overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50 min-h-[7rem]"
                       onMouseEnter={() => setHighlightedId(building.id)}
                       onMouseLeave={() => setHighlightedId(null)}
                     >
@@ -166,8 +170,27 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
                                 {building.name}
                             </h3>
                         </div>
+
+                        {/* Architect, Year, Location */}
+                        <div className="mt-1 flex flex-col gap-0.5">
+                            {building.architects && building.architects.length > 0 && (
+                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                    {building.architects.join(', ')}
+                                </p>
+                            )}
+                            {(building.city || building.country || building.year_completed) && (
+                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                    {[
+                                        building.city,
+                                        building.country,
+                                        building.year_completed
+                                    ].filter(Boolean).join(' • ')}
+                                </p>
+                            )}
+                        </div>
+
                         {building.status && building.status !== 'none' && (
-                            <div className="mt-1 flex items-center gap-1">
+                            <div className="mt-2 flex items-center gap-1">
                                 <span className="inline-flex items-center rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
                                     {building.status}
                                 </span>
