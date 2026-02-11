@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { MapMarkers } from './MapMarkers';
@@ -11,8 +12,8 @@ vi.mock('react-map-gl', () => ({
       flyTo: vi.fn(),
     },
   }),
-  Marker: ({ children, onClick }: any) => (
-    <div data-testid="marker-container" onClick={onClick}>
+  Marker: ({ children, onClick, style }: any) => (
+    <div data-testid="marker-container" onClick={onClick} style={style}>
       {children}
     </div>
   ),
@@ -84,5 +85,61 @@ describe('MapMarkers', () => {
 
     // Check render content
     expect(screen.getByText('5')).toBeDefined();
+  });
+
+  it('renders a Top 1% marker with correct zIndex and class', () => {
+    const top1Cluster: ClusterResponse = {
+      ...buildingCluster,
+      id: 3,
+      tier_rank: 'Top 1%'
+    };
+
+    render(
+      <MapMarkers
+        clusters={[top1Cluster]}
+        setHighlightedId={setHighlightedId}
+      />
+    );
+
+    const markerContainer = screen.getByTestId('marker-container');
+    expect(markerContainer.style.zIndex).toBe('100');
+
+    const markerContent = screen.getByTestId('map-marker-building');
+    expect(markerContent.className).toContain('marker-halo-gold');
+  });
+
+  it('renders a Top 5% marker with correct zIndex and class', () => {
+    const top5Cluster: ClusterResponse = {
+      ...buildingCluster,
+      id: 4,
+      tier_rank: 'Top 5%'
+    };
+
+    render(
+      <MapMarkers
+        clusters={[top5Cluster]}
+        setHighlightedId={setHighlightedId}
+      />
+    );
+
+    const markerContainer = screen.getByTestId('marker-container');
+    expect(markerContainer.style.zIndex).toBe('50');
+
+    const markerContent = screen.getByTestId('map-marker-building');
+    expect(markerContent.className).toContain('marker-halo-silver');
+  });
+
+  it('renders a standard marker with default class', () => {
+    render(
+      <MapMarkers
+        clusters={[buildingCluster]}
+        setHighlightedId={setHighlightedId}
+      />
+    );
+
+    const markerContent = screen.getByTestId('map-marker-building');
+    expect(markerContent.className).toContain('marker-standard');
+    expect(markerContent.className).not.toContain('marker-halo-gold');
+    expect(markerContent.className).not.toContain('marker-halo-silver');
   });
 });
