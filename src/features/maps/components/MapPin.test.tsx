@@ -59,7 +59,7 @@ describe('MapPin Component', () => {
     render(<MapPin style={sTierStyle} isHovered={false} />);
     const pulse = screen.getByTestId('map-pin-pulse');
     expect(pulse).toBeTruthy();
-    expect(pulse.className).toContain('animate-ping');
+    expect(pulse.className).toContain('animate-ping-large-slow');
   });
 
   it('renders dot for Tier A (showDot=true)', () => {
