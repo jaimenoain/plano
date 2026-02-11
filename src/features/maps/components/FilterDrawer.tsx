@@ -107,7 +107,7 @@ export function FilterDrawer() {
           ...filters,
           status: undefined,
           hideSaved: true,
-          // We don't touch hideVisited, assuming user might have set it
+          hideVisited: true,
         },
       });
     } else {
@@ -144,7 +144,13 @@ export function FilterDrawer() {
   };
 
   const handleHideSavedChange = (checked: boolean) => {
-    setFilter('hideSaved', checked);
+    setMapState({
+      filters: {
+        ...filters,
+        hideSaved: checked,
+        hideVisited: checked,
+      },
+    });
   };
 
   const handleStatusChange = (value: string[]) => {
