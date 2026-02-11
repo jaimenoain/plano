@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { MapMarkers } from './MapMarkers';
 import { ClusterResponse } from '../hooks/useMapData';
 
@@ -13,7 +13,20 @@ vi.mock('react-map-gl', () => ({
     },
   }),
   Marker: ({ children, onClick, style }: any) => (
-    <div data-testid="marker-container" onClick={onClick} style={style}>
+    <div
+      data-testid="marker-container"
+      onClick={(e) => {
+        // Mock the event structure expected by react-map-gl's Marker onClick
+        // It expects an object with originalEvent
+        const mockEvent = {
+          originalEvent: {
+            stopPropagation: vi.fn(),
+          },
+        };
+        onClick(mockEvent);
+      }}
+      style={style}
+    >
       {children}
     </div>
   ),
@@ -141,5 +154,56 @@ describe('MapMarkers', () => {
     expect(markerContent.className).toContain('marker-standard');
     expect(markerContent.className).not.toContain('marker-halo-gold');
     expect(markerContent.className).not.toContain('marker-halo-silver');
+  });
+
+  it('prevents navigation and highlights when clicking a non-highlighted marker', () => {
+    // highlightedId is undefined
+    render(
+      <MapMarkers
+        clusters={[buildingCluster]}
+        highlightedId={null}
+        setHighlightedId={setHighlightedId}
+      />
+    );
+
+    const link = screen.getByRole('link', { name: /View details for Building 1/i });
+
+    // Create a mock event with preventDefault
+    const preventDefault = vi.fn();
+    const stopPropagation = vi.fn();
+
+    // We need to simulate the click with our mocked event properties
+    // Note: fireEvent.click creates a synthetic event, we need to ensure preventDefault is trackable
+    // or just check if setHighlightedId was called.
+    // However, to test preventDefault specifically with fireEvent, we can wrap the event.
+    // Alternatively, since we are testing the handler logic, we can invoke the handler directly if exposed,
+    // but here we are integration testing via DOM.
+    // The easiest way to check preventDefault in RTL is checking if defaultPrevented is true on the event
+    // BUT fireEvent.click returns true/false based on preventDefault.
+
+    const isDefaultPrevented = !fireEvent.click(link);
+    // fireEvent.click returns false if preventDefault was called.
+
+    expect(isDefaultPrevented).toBe(true);
+    expect(setHighlightedId).toHaveBeenCalledWith('1');
+  });
+
+  it('allows navigation when clicking an already highlighted marker', () => {
+    // highlightedId matches the building id
+    render(
+      <MapMarkers
+        clusters={[buildingCluster]}
+        highlightedId="1"
+        setHighlightedId={setHighlightedId}
+      />
+    );
+
+    const link = screen.getByRole('link', { name: /View details for Building 1/i });
+
+    const isDefaultPrevented = !fireEvent.click(link);
+
+    expect(isDefaultPrevented).toBe(false); // Navigation allowed
+    // setHighlightedId might be called again (idempotent) or not, depending on implementation detail.
+    // The key requirement is that navigation is ALLOWED.
   });
 });
