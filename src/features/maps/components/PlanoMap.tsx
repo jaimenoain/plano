@@ -167,7 +167,7 @@ function PlanoMapContent() {
   });
 
   const mapContent = (
-    <div className={`relative h-full w-full overflow-hidden bg-background ${isExpanded ? "fixed inset-0 z-[9999]" : ""}`}>
+    <div className={`relative h-full w-full overflow-hidden bg-background ${isExpanded ? "fixed inset-0 z-[9999]" : "z-0"}`}>
         <Map
             ref={mapRef}
             {...viewState}
