@@ -106,7 +106,11 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
             setUserStatus('visited');
         }
         setUserRating(rating);
-        toast({ title: "Rating saved" });
+        if (rating >= 2) {
+            toast({ title: "You just boosted this building's rank!", description: "Thanks for your feedback." });
+        } else {
+            toast({ title: "Rating saved" });
+        }
     } catch (error) {
         console.error("Error saving rating:", error);
         toast({ variant: "destructive", title: "Failed to save rating" });

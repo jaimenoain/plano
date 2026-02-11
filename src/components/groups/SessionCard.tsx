@@ -228,10 +228,15 @@ export function SessionCard({
          if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
        queryClient.invalidateQueries({ queryKey: ["group-logs-visible"] });
        if (onUpdateStats) onUpdateStats();
-       toast({ title: "Rating saved" });
+
+       if (variables.rating >= 2) {
+         toast({ title: "You just boosted this building's rank!", description: "Thanks for your feedback." });
+       } else {
+         toast({ title: "Rating saved" });
+       }
     }
   });
 

@@ -578,7 +578,11 @@ export default function BuildingDetails() {
            queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
            queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
 
-           toast({ title: "Rating saved" });
+           if (rating >= 2) {
+               toast({ title: "You just boosted this building's rank!", description: "Thanks for your feedback." });
+           } else {
+               toast({ title: "Rating saved" });
+           }
        } catch (error) {
            console.error("Rating failed", error);
            toast({ variant: "destructive", title: "Failed to save rating" });
