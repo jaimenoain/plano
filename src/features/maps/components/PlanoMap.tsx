@@ -10,6 +10,7 @@ import { MapErrorBoundary } from './MapErrorBoundary';
 import { useMapContext } from '../providers/MapContext';
 import { useMapData } from '../hooks/useMapData';
 import { MapMarkers } from './MapMarkers';
+import { useSidebar } from '@/components/ui/sidebar';
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
@@ -39,6 +40,7 @@ const SATELLITE_STYLE = {
 function PlanoMapContent() {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
+  const { isMobile } = useSidebar();
 
   const [isSatellite, setIsSatellite] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -134,12 +136,13 @@ function PlanoMapContent() {
         >
             <GeolocateControl
                 ref={geolocateControlRef}
-                position="bottom-right"
+                position={isMobile ? "top-right" : "bottom-right"}
+                style={isMobile ? { marginTop: '60px' } : undefined}
                 positionOptions={{ enableHighAccuracy: true }}
                 trackUserLocation={true}
                 showUserLocation={true}
             />
-            <NavigationControl position="bottom-right" />
+            {!isMobile && <NavigationControl position="bottom-right" />}
             {bounds && <MapMarkers clusters={clusters || []} highlightedId={highlightedId} setHighlightedId={setHighlightedId} />}
         </Map>
 

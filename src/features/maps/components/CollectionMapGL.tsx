@@ -11,6 +11,7 @@ import { MapMarkers } from './MapMarkers';
 import { DiscoveryBuilding } from '@/features/search/components/types';
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBoundsFromBuildings } from '@/utils/map';
+import { useSidebar } from '@/components/ui/sidebar';
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
@@ -61,6 +62,7 @@ function CollectionMapGLContent({
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
   const mapRef = useRef<MapRef>(null);
+  const { isMobile } = useSidebar();
 
   const [isSatellite, setIsSatellite] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -183,12 +185,13 @@ function CollectionMapGLContent({
         >
             <GeolocateControl
                 ref={geolocateControlRef}
-                position="bottom-right"
+                position={isMobile ? "top-right" : "bottom-right"}
+                style={isMobile ? { marginTop: '60px' } : undefined}
                 positionOptions={{ enableHighAccuracy: true }}
                 trackUserLocation={true}
                 showUserLocation={true}
             />
-            <NavigationControl position="bottom-right" />
+            {!isMobile && <NavigationControl position="bottom-right" />}
 
             <MapMarkers
                 clusters={clusters}
