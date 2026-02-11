@@ -156,34 +156,13 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
                 return (
                   <Link to={`/building/${building.slug || building.id}`} key={building.id} className="block group">
                     <Card
-                      className="overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50"
+                      className="flex flex-row overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50 h-28"
                       onMouseEnter={() => setHighlightedId(building.id)}
                       onMouseLeave={() => setHighlightedId(null)}
                     >
-                      <div className="relative aspect-video bg-muted overflow-hidden">
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={building.name}
-                            className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                            No Image
-                          </div>
-                        )}
-
-                        {/* Rating Badge */}
-                        {building.rating > 0 && (
-                            <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-                                {building.rating} <span className="text-yellow-400">★</span>
-                            </div>
-                        )}
-                      </div>
-                      <CardContent className="p-3">
+                      <CardContent className="flex-1 min-w-0 p-3 flex flex-col justify-center">
                         <div className="flex items-start justify-between gap-2">
-                            <h3 className="line-clamp-1 text-sm font-semibold leading-tight group-hover:text-primary" title={building.name}>
+                            <h3 className="line-clamp-2 text-sm font-semibold leading-tight group-hover:text-primary" title={building.name}>
                                 {building.name}
                             </h3>
                         </div>
@@ -195,6 +174,28 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
                             </div>
                         )}
                       </CardContent>
+
+                      <div className="relative w-1/4 shrink-0 bg-muted overflow-hidden">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={building.name}
+                            className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-muted-foreground text-[10px]">
+                            No Image
+                          </div>
+                        )}
+
+                        {/* Rating Badge */}
+                        {building.rating > 0 && (
+                            <div className="absolute right-1 top-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+                                {building.rating} <span className="text-yellow-400">★</span>
+                            </div>
+                        )}
+                      </div>
                     </Card>
                   </Link>
                 );
