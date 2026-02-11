@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, username: string, invitedBy?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = "https://plano.app/";
     
     // Validate redirect URL to prevent open redirect vulnerabilities
     if (!isValidRedirect(redirectUrl)) {
@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/update-password`;
+    const redirectUrl = "https://plano.app/update-password";
 
     // Validate redirect URL to prevent open redirect vulnerabilities
     if (!isValidRedirect(redirectUrl)) {
