@@ -1,42 +1,33 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* Map Marker Hierarchies */
+
+/* Top 1% - Gold Halo */
+.marker-halo-gold {
+  box-shadow: 0 0 0 2px #D4AF37, 0 4px 12px rgba(0,0,0,0.3);
+  transform: scale(1.2); /* Base scale for Top 1% */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.marker-halo-gold:hover {
+  transform: scale(1.32); /* 1.2 * 1.1 = 1.32 approx */
+  box-shadow: 0 0 0 3px #E5C100, 0 6px 16px rgba(0,0,0,0.4);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Top 5% - Silver/Subtle */
+.marker-halo-silver {
+  box-shadow: 0 0 0 2px #A0A0A0, 0 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.marker-halo-silver:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px #C0C0C0, 0 4px 10px rgba(0,0,0,0.3);
 }
 
-.card {
-  padding: 2em;
+/* Standard Markers Transition */
+.marker-standard {
+  transition: transform 0.2s ease;
 }
 
-.read-the-docs {
-  color: #888;
+.marker-standard:hover {
+  transform: scale(1.1);
 }

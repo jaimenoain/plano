@@ -19,6 +19,7 @@ export interface ClusterResponse {
   notes?: string | null;
   is_candidate?: boolean;
   address?: string | null;
+  tier_rank?: string | null;
 }
 
 export interface UseMapDataProps {

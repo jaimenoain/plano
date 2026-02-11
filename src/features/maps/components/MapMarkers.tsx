@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Marker, useMap, Popup } from 'react-map-gl';
 import { ClusterResponse } from '../hooks/useMapData';
 import { BuildingPopupContent } from './BuildingPopupContent';
+import '../../../App.css';
 
 interface MapMarkersProps {
   clusters: ClusterResponse[];
@@ -71,16 +72,29 @@ export function MapMarkers({
         const isCluster = cluster.is_cluster;
         const buildingUrl = !isCluster ? (cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`) : '#';
 
-        // Determine if it's a custom marker or candidate for slight visual cues if desired
-        // For now keeping it uniform as per "Search behavior" request
+        // Determine hierarchy properties
+        let zIndex = isCluster ? 10 : 1;
+        let tierClass = '';
+
+        if (!isCluster) {
+          if (cluster.tier_rank === 'Top 1%') {
+            zIndex = 100;
+            tierClass = 'marker-halo-gold';
+          } else if (cluster.tier_rank === 'Top 5%') {
+            zIndex = 50;
+            tierClass = 'marker-halo-silver';
+          } else {
+            tierClass = 'marker-standard';
+          }
+        }
 
         const content = (
             <div
               className={`
-                flex items-center justify-center rounded-full border border-white shadow-md transition-all hover:scale-110
+                flex items-center justify-center rounded-full border border-white shadow-md
                 ${isCluster
-                  ? 'bg-primary text-primary-foreground font-bold'
-                  : 'bg-background text-foreground'
+                  ? 'bg-primary text-primary-foreground font-bold transition-all hover:scale-110'
+                  : `bg-background text-foreground ${tierClass}`
                 }
               `}
               style={{
@@ -123,6 +137,7 @@ export function MapMarkers({
             key={key}
             longitude={cluster.lng}
             latitude={cluster.lat}
+            style={{ zIndex }}
             onClick={(e) => {
               e.originalEvent.stopPropagation();
               if (cluster.is_cluster) {
