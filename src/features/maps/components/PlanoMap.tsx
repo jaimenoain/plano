@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from "react-dom";
-import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl } from 'react-map-gl';
+import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Layers, Maximize2, Minimize2 } from "lucide-react";
@@ -12,6 +12,7 @@ import { useMapData } from '../hooks/useMapData';
 import { MapMarkers } from './MapMarkers';
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
+const LOCAL_STORAGE_MAP_KEY = 'plano_map_view_state';
 
 const SATELLITE_STYLE = {
   version: 8,
@@ -45,6 +46,9 @@ function PlanoMapContent() {
 
   // Context for sharing state with Sidebar
   const { methods: { setBounds, setHighlightedId }, state: { highlightedId, filters, bounds } } = useMapContext();
+
+  // Reference to Map instance
+  const mapRef = useRef<MapRef>(null);
 
   // Reference to GeolocateControl to trigger it programmatically
   // We use `any` to avoid complex type matching between react-map-gl wrapper and maplibre-gl instance,
@@ -98,6 +102,17 @@ function PlanoMapContent() {
       zoom: evt.viewState.zoom
     }, true); // Immediate URL update
 
+    // Save view state to localStorage
+    try {
+        localStorage.setItem(LOCAL_STORAGE_MAP_KEY, JSON.stringify({
+            latitude: evt.viewState.latitude,
+            longitude: evt.viewState.longitude,
+            zoom: evt.viewState.zoom
+        }));
+    } catch (e) {
+        console.warn('Failed to save map state to localStorage', e);
+    }
+
     // Update bounds for sidebar and markers
     updateBounds(evt.target);
   }, [updateMapState, updateBounds]);
@@ -107,11 +122,42 @@ function PlanoMapContent() {
 
       // Auto-geolocate if at default view (meaning user didn't specify a location)
       if (lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM) {
+          // Try to restore from localStorage first
+          let savedState = null;
+          try {
+              savedState = localStorage.getItem(LOCAL_STORAGE_MAP_KEY);
+          } catch (e) {
+              console.warn('LocalStorage access failed', e);
+          }
+
+          if (savedState) {
+              try {
+                  const { latitude, longitude, zoom: savedZoom } = JSON.parse(savedState);
+                  if (typeof latitude === 'number' && typeof longitude === 'number' && typeof savedZoom === 'number') {
+                      // Use mapRef.current for jumpTo if available, or fallback to evt.target
+                      const map = mapRef.current?.getMap() || evt.target;
+                      map.jumpTo({
+                          center: [longitude, latitude],
+                          zoom: savedZoom
+                      });
+                      // Update URL to match restored state
+                      updateMapState({
+                          lat: latitude,
+                          lng: longitude,
+                          zoom: savedZoom
+                      }, true);
+                      return; // Skip geolocation if restored
+                  }
+              } catch (e) {
+                  console.warn('Failed to restore map state from localStorage', e);
+              }
+          }
+
           // Trigger the geolocation control to find the user
           // This will ask for permission if not granted
           geolocateControlRef.current?.trigger();
       }
-  }, [updateBounds, lat, lng, zoom]);
+  }, [updateBounds, lat, lng, zoom, updateMapState]);
 
   // Fetch data based on bounds
   const { clusters, isLoading } = useMapData({
@@ -123,6 +169,7 @@ function PlanoMapContent() {
   const mapContent = (
     <div className={`relative h-full w-full overflow-hidden bg-background ${isExpanded ? "fixed inset-0 z-[9999]" : ""}`}>
         <Map
+            ref={mapRef}
             {...viewState}
             onMove={onMove}
             onMoveEnd={onMoveEnd}
