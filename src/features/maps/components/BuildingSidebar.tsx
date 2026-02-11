@@ -160,12 +160,12 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
                       onMouseEnter={() => setHighlightedId(building.id)}
                       onMouseLeave={() => setHighlightedId(null)}
                     >
-                      <div className="relative aspect-video bg-muted">
+                      <div className="relative aspect-video bg-muted overflow-hidden">
                         {imageUrl ? (
                           <img
                             src={imageUrl}
                             alt={building.name}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
                             loading="lazy"
                           />
                         ) : (
