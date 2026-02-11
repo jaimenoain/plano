@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Circle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export type BuildingStatus = 'pending' | 'visited' | 'ignored' | null;
 
@@ -40,6 +41,7 @@ export function PersonalRatingButton({
 }: PersonalRatingButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [animatingStar, setAnimatingStar] = useState<number | null>(null);
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -53,6 +55,30 @@ export function PersonalRatingButton({
     ? getRatingLabel(hoverRating)
     : (initialRating ? getRatingLabel(initialRating) : label);
 
+  const handleRateClick = async (star: number) => {
+    // Trigger animation state
+    setAnimatingStar(star);
+
+    // Call the rate function
+    onRate(buildingId, star);
+
+    // If it's a high rating, play animation before closing (if in popover)
+    if (star >= 2) {
+      // Delay closing to let the animation play
+      setTimeout(() => {
+        setAnimatingStar(null);
+        if (variant === 'popover') {
+          setIsOpen(false);
+        }
+      }, 600);
+    } else {
+      // Standard rating close immediately
+      if (variant === 'popover') {
+        setIsOpen(false);
+      }
+    }
+  };
+
   const renderStars = () => (
     <div className="flex flex-col items-center gap-2">
       <div
@@ -62,29 +88,51 @@ export function PersonalRatingButton({
         {Array.from({ length: 3 }, (_, i) => i + 1).map((star) => {
           // Fill logic: if hovering, fill up to hoverRating. If not hovering, fill up to initialRating.
           const isFilled = (hoverRating !== null ? star <= hoverRating : (initialRating || 0) >= star);
+          const isAnimating = animatingStar === star;
 
           return (
-            <button
+            <motion.button
               key={star}
               type="button"
               disabled={isLoading}
               className={`
-                p-0.5 rounded-sm transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                relative p-0.5 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring
                 ${isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
               `}
               onMouseEnter={() => setHoverRating(star)}
-              onClick={() => {
-                onRate(buildingId, star);
-                setIsOpen(false);
-              }}
+              onClick={() => handleRateClick(star)}
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
             >
-              <Circle
-                className={`
-                  w-6 h-6 transition-colors
-                  ${isFilled ? "fill-[#595959] text-[#595959]" : "text-muted-foreground/20"}
-                `}
-              />
-            </button>
+              <AnimatePresence>
+                {isAnimating && (
+                   <>
+                     {/* Pulse/Shockwave Effect */}
+                     <motion.div
+                       className="absolute inset-0 rounded-full bg-[#595959]/20"
+                       initial={{ scale: 1, opacity: 0.8 }}
+                       animate={{ scale: 2.5, opacity: 0 }}
+                       exit={{ opacity: 0 }}
+                       transition={{ duration: 0.5, ease: "easeOut" }}
+                     />
+                   </>
+                )}
+              </AnimatePresence>
+
+              <motion.div
+                 animate={isAnimating ? {
+                     scale: [1, 1.4, 1],
+                     transition: { duration: 0.4, type: "spring", stiffness: 300 }
+                 } : {}}
+              >
+                  <Circle
+                    className={`
+                      w-6 h-6 transition-colors
+                      ${isFilled ? "fill-[#595959] text-[#595959]" : "text-muted-foreground/20"}
+                    `}
+                  />
+              </motion.div>
+            </motion.button>
           );
         })}
       </div>
