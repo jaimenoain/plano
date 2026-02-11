@@ -46,12 +46,14 @@ describe('getPinStyle', () => {
       let style = getPinStyle(savedItem);
       expect(style.tier).toBe('C');
       expect(style.classes).toContain('bg-muted/80');
+      expect(style.classes).toContain('border-gray-600');
 
       // Case 2: Rating null, Status 'saved'
       const savedItemNull = createMockBuilding({ rating: null, status: 'saved' });
       style = getPinStyle(savedItemNull);
       expect(style.tier).toBe('C');
       expect(style.classes).toContain('bg-muted/80');
+      expect(style.classes).toContain('border-gray-600');
     });
   });
 

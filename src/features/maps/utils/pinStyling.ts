@@ -105,7 +105,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 5,
         size: 20,
-        classes: 'bg-muted/80 border-white/50 border',
+        classes: 'bg-muted/80 border-gray-600 border',
         showDot: false,
         showContent: true
       };
