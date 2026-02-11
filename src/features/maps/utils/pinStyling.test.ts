@@ -25,19 +25,21 @@ describe('getPinStyle', () => {
       expect(style.classes).toContain('bg-lime-high');
     });
 
-    it('returns Tier A (White, Lime Dot) for rating 2', () => {
+    it('returns Tier A (White, No Dot) for rating 2', () => {
       const item = createMockBuilding({ rating: 2 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('A');
       expect(style.classes).toContain('bg-white');
-      expect(style.showDot).toBe(true);
+      expect(style.showDot).toBe(false);
     });
 
-    it('returns Tier B (Gray) for rating 1', () => {
+    it('returns Tier B (Ghost Style) for rating 1', () => {
       const item = createMockBuilding({ rating: 1 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
-      expect(style.classes).toContain('bg-muted-foreground');
+      expect(style.size).toBe(28);
+      expect(style.classes).toContain('bg-muted/80');
+      expect(style.classes).toContain('border-gray-600');
     });
 
     it('returns Tier C (Ghost) for saved item (rating 0/null)', () => {
