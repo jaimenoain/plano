@@ -47,6 +47,7 @@ import { getBuildingUrl } from "@/utils/url";
 import { CollectionSelector } from "@/components/profile/CollectionSelector";
 import { BuildingAttributes } from "@/components/BuildingAttributes";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
+import { PopularityBadge } from "@/components/PopularityBadge";
 
 // --- Types ---
 interface BuildingDetails {
@@ -54,6 +55,7 @@ interface BuildingDetails {
   short_id?: number | null;
   slug?: string | null;
   name: string;
+  tier_rank?: string | null;
   location: any; // PostGIS point handling usually requires parsing
   location_precision?: 'exact' | 'approximate';
   address: string;
@@ -121,7 +123,10 @@ const BuildingHeader = ({ building, showEditLink, className }: BuildingHeaderPro
     return (
         <div className={`${className || ""} group`}>
             <div className="flex justify-between items-start">
-                <h1 className="text-4xl font-extrabold tracking-tight mb-2">{building.name}</h1>
+                <div className="flex flex-col items-start gap-2 mb-2">
+                    <PopularityBadge rank={building.tier_rank} city={building.city} />
+                    <h1 className="text-4xl font-extrabold tracking-tight">{building.name}</h1>
+                </div>
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 {building.year_completed && (
