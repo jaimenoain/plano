@@ -86,6 +86,7 @@ export function useMapData({ bounds, zoom, filters }: UseMapDataProps) {
         hide_hidden: true,
         hide_without_images: filters.hideWithoutImages,
         contact_min_rating: filters.contactMinRating,
+        personal_min_rating: filters.personalMinRating,
       };
 
       const { data, error } = await supabase.rpc('get_map_clusters_v2', {

@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { renderHook, waitFor } from '@testing-library/react';
 import { useMapData } from './useMapData';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -92,5 +93,31 @@ describe('useMapData', () => {
     if (attributeIds) {
         expect(attributeIds).toHaveLength(0);
     }
+  });
+
+  it('should include personal_min_rating in RPC call', async () => {
+    const filters = {
+      personalMinRating: 3
+    };
+
+    const bounds = { north: 10, south: 0, east: 10, west: 0 };
+    const zoom = 10;
+
+    // @ts-ignore
+    const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Verify RPC call args
+    expect(rpcMock).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+            filter_criteria: expect.objectContaining({
+                personal_min_rating: 3
+            })
+        })
+    );
   });
 });

@@ -18,6 +18,7 @@ import { MapMode, MichelinRating } from '@/types/plano-map';
 import { QualityRatingFilter } from './filters/QualityRatingFilter';
 import { CollectionMultiSelect } from './filters/CollectionMultiSelect';
 import { useTaxonomy } from '@/hooks/useTaxonomy';
+import { Slider } from '@/components/ui/slider';
 import {
   Accordion,
   AccordionContent,
@@ -308,6 +309,16 @@ export function FilterDrawer() {
       return functionalTypologies.filter(t => t.parent_category_id === currentCategory);
   }, [functionalTypologies, currentCategory]);
 
+  const getTierLabel = (value: number) => {
+    switch (value) {
+      case 0: return 'All';
+      case 1: return 'Top 20%';
+      case 2: return 'Top 5%';
+      case 3: return 'Top 1%';
+      default: return 'All';
+    }
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -370,16 +381,18 @@ export function FilterDrawer() {
                 </div>
 
                 {/* Community Rating */}
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Community Rating</Label>
-                    {currentMinRating > 0 && (
-                      <span className="text-xs text-muted-foreground">Min {currentMinRating}</span>
-                    )}
+                    <Label className="text-sm font-medium">Show only the best</Label>
+                    <span className="text-xs text-muted-foreground">{getTierLabel(currentMinRating)}</span>
                   </div>
-                  <QualityRatingFilter
-                    value={currentMinRating}
-                    onChange={handleMinRatingChange}
+                  <Slider
+                    defaultValue={[0]}
+                    max={3}
+                    step={1}
+                    value={[currentMinRating]}
+                    onValueChange={(values) => handleMinRatingChange(values[0])}
+                    className="w-full"
                   />
                 </div>
               </div>
@@ -425,15 +438,6 @@ export function FilterDrawer() {
                   </ToggleGroup>
                 </div>
 
-                {/* Collections */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Collections</Label>
-                  <CollectionMultiSelect
-                    selectedIds={currentCollectionIds}
-                    onChange={handleCollectionsChange}
-                  />
-                </div>
-
                 {/* Personal Rating */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -447,6 +451,19 @@ export function FilterDrawer() {
                     onChange={handlePersonalRatingChange}
                   />
                 </div>
+
+                {/* Collections */}
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="collections" className="border-none">
+                    <AccordionTrigger className="text-sm font-medium py-2 hover:no-underline">Collections</AccordionTrigger>
+                    <AccordionContent>
+                      <CollectionMultiSelect
+                        selectedIds={currentCollectionIds}
+                        onChange={handleCollectionsChange}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </div>
             </>
           )}
