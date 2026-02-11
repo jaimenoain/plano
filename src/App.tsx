@@ -66,6 +66,7 @@ import Moderation from "./pages/admin/Moderation";
 import ImageWall from "./pages/admin/ImageWall";
 import PhotoAnalytics from "./pages/admin/PhotoAnalytics";
 import BuildingAudit from "./pages/admin/BuildingAudit";
+import Governance from "./pages/admin/Governance";
 import StorageJobs from "./pages/admin/StorageJobs";
 import { AdminGuard } from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -116,6 +117,7 @@ const router = createBrowserRouter(
         <Route path="/admin/images" element={<ImageWall />} />
         <Route path="/admin/photos" element={<PhotoAnalytics />} />
         <Route path="/admin/audit" element={<BuildingAudit />} />
+        <Route path="/admin/governance" element={<Governance />} />
         {/* Storage management tool */}
         <Route path="/admin/storage-jobs" element={<StorageJobs />} />
         <Route path="/admin/system" element={<div>System (Coming Soon)</div>} />
