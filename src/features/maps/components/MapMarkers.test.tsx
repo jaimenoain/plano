@@ -55,7 +55,9 @@ describe('MapMarkers', () => {
     count: 1,
     is_cluster: false,
     image_url: null,
-    rating: 0
+    rating: 0,
+    status: undefined,
+    tier_rank: 'Top 50%' // Default
   };
 
   const clusterGroup: ClusterResponse = {
@@ -89,7 +91,7 @@ describe('MapMarkers', () => {
       />
     );
 
-    const clusterMarker = screen.getByTestId('map-marker-cluster');
+    const clusterMarker = screen.getByTestId('map-pin-container');
     expect(clusterMarker).toBeDefined();
 
     // Check it is NOT inside an anchor
@@ -117,8 +119,9 @@ describe('MapMarkers', () => {
     const markerContainer = screen.getByTestId('marker-container');
     expect(markerContainer.style.zIndex).toBe('100');
 
-    const markerContent = screen.getByTestId('map-marker-building');
-    expect(markerContent.className).toContain('marker-halo-gold');
+    const markerContent = screen.getByTestId('map-pin-container');
+    // Tier S: bg-lime-high
+    expect(markerContent.className).toContain('bg-lime-high');
   });
 
   it('renders a Top 5% marker with correct zIndex and class', () => {
@@ -138,8 +141,9 @@ describe('MapMarkers', () => {
     const markerContainer = screen.getByTestId('marker-container');
     expect(markerContainer.style.zIndex).toBe('50');
 
-    const markerContent = screen.getByTestId('map-marker-building');
-    expect(markerContent.className).toContain('marker-halo-silver');
+    const markerContent = screen.getByTestId('map-pin-container');
+    // Tier A: bg-white
+    expect(markerContent.className).toContain('bg-white');
   });
 
   it('renders a standard marker with default class', () => {
@@ -150,10 +154,11 @@ describe('MapMarkers', () => {
       />
     );
 
-    const markerContent = screen.getByTestId('map-marker-building');
-    expect(markerContent.className).toContain('marker-standard');
-    expect(markerContent.className).not.toContain('marker-halo-gold');
-    expect(markerContent.className).not.toContain('marker-halo-silver');
+    const markerContent = screen.getByTestId('map-pin-container');
+    // Tier C: bg-muted/80
+    expect(markerContent.className).toContain('bg-muted/80');
+    expect(markerContent.className).not.toContain('bg-lime-high');
+    expect(markerContent.className).not.toContain('bg-white');
   });
 
   it('prevents navigation and highlights when clicking a non-highlighted marker', () => {
@@ -175,9 +180,6 @@ describe('MapMarkers', () => {
     // We need to simulate the click with our mocked event properties
     // Note: fireEvent.click creates a synthetic event, we need to ensure preventDefault is trackable
     // or just check if setHighlightedId was called.
-    // However, to test preventDefault specifically with fireEvent, we can wrap the event.
-    // Alternatively, since we are testing the handler logic, we can invoke the handler directly if exposed,
-    // but here we are integration testing via DOM.
     // The easiest way to check preventDefault in RTL is checking if defaultPrevented is true on the event
     // BUT fireEvent.click returns true/false based on preventDefault.
 

@@ -1,7 +1,9 @@
-import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { useMemo, useRef, useEffect, useCallback } from 'react';
 import { Marker, useMap, Popup } from 'react-map-gl';
 import { ClusterResponse } from '../hooks/useMapData';
 import { BuildingPopupContent } from './BuildingPopupContent';
+import { getPinStyle } from '../utils/pinStyling';
+import { MapPin } from './MapPin';
 import '../../../App.css';
 
 interface MapMarkersProps {
@@ -72,64 +74,48 @@ export function MapMarkers({
         const isCluster = cluster.is_cluster;
         const buildingUrl = !isCluster ? (cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`) : '#';
 
-        // Determine hierarchy properties
-        let zIndex = isCluster ? 10 : 1;
-        let tierClass = '';
+        const pinStyle = getPinStyle(cluster);
+        const isHovered = String(highlightedId) === String(cluster.id);
 
-        if (!isCluster) {
-          if (cluster.tier_rank === 'Top 1%') {
-            zIndex = 100;
-            tierClass = 'marker-halo-gold';
-          } else if (cluster.tier_rank === 'Top 5%') {
-            zIndex = 50;
-            tierClass = 'marker-halo-silver';
-          } else {
-            tierClass = 'marker-standard';
-          }
-        }
+        // Boost Z-Index if hovered
+        const finalZIndex = isHovered ? 999 : pinStyle.zIndex;
 
         const content = (
-            <div
-              className={`
-                flex items-center justify-center rounded-full border border-white shadow-md
-                ${isCluster
-                  ? 'bg-primary text-primary-foreground font-bold transition-all hover:scale-110'
-                  : `bg-background text-foreground ${tierClass}`
-                }
-              `}
-              style={{
-                width: isCluster
-                  ? cluster.count > 1000
-                    ? '64px'
-                    : cluster.count > 100
-                      ? '48px'
-                      : '32px'
-                  : '32px',
-                height: isCluster
-                  ? cluster.count > 1000
-                    ? '64px'
-                    : cluster.count > 100
-                      ? '48px'
-                      : '32px'
-                  : '32px',
-              }}
-              onMouseEnter={() => !isCluster && handleMouseEnter(String(cluster.id))}
-              onMouseLeave={() => !isCluster && handleMouseLeave()}
-              data-testid={isCluster ? "map-marker-cluster" : "map-marker-building"}
-            >
-              {isCluster ? (
-                cluster.count
+          <MapPin
+              style={pinStyle}
+              isHovered={isHovered}
+          >
+              {/* Logic for children */}
+              {cluster.is_cluster ? (
+                  <span>{cluster.count}</span>
               ) : (
-                <div className="flex flex-col items-center justify-center text-[10px] font-medium leading-none">
-                   {/* Show rating if available, otherwise a generic icon */}
-                   {cluster.rating && cluster.rating > 0 ? (
-                      <span>{cluster.rating.toFixed(1)}</span>
-                   ) : (
-                      <div className={`h-2 w-2 rounded-full ${cluster.is_candidate ? 'bg-yellow-500' : 'bg-foreground'}`} />
-                   )}
-                </div>
+                  pinStyle.showContent && (
+                     /* Keep existing Rating or fallback dot logic here if needed,
+                        or leave empty if the Pin Style handles the visuals (e.g. dots)
+                     */
+                     cluster.rating && cluster.rating > 0 ? (
+                        <span className="text-[10px] font-bold">{cluster.rating.toFixed(1)}</span>
+                     ) : (
+                        // Fallback logic for unrated items
+                        // If it's a candidate, show a yellow dot inside
+                        cluster.is_candidate ? (
+                           <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                        ) : null
+                     )
+                  )
               )}
-            </div>
+          </MapPin>
+        );
+
+        // Wrap non-cluster content with mouse handlers for hover effect
+        const interactiveContent = (
+          <div
+            onMouseEnter={() => !isCluster && handleMouseEnter(String(cluster.id))}
+            onMouseLeave={() => !isCluster && handleMouseLeave()}
+            className="cursor-pointer" // Ensure pointer cursor
+          >
+            {content}
+          </div>
         );
 
         return (
@@ -137,7 +123,7 @@ export function MapMarkers({
             key={key}
             longitude={cluster.lng}
             latitude={cluster.lat}
-            style={{ zIndex }}
+            style={{ zIndex: finalZIndex }}
             onClick={(e) => {
               e.originalEvent.stopPropagation();
               if (cluster.is_cluster) {
@@ -155,7 +141,7 @@ export function MapMarkers({
             }}
           >
             {isCluster ? (
-                content
+                interactiveContent
             ) : (
                 <a
                   href={buildingUrl}
@@ -177,6 +163,8 @@ export function MapMarkers({
                           handleMouseEnter(String(cluster.id));
                       }
                   }}
+                  onMouseEnter={() => handleMouseEnter(String(cluster.id))}
+                  onMouseLeave={() => handleMouseLeave()}
                 >
                     {content}
                 </a>
@@ -184,7 +172,7 @@ export function MapMarkers({
           </Marker>
         );
       }),
-    [clusters, map, handleMouseEnter, handleMouseLeave]
+    [clusters, map, handleMouseEnter, handleMouseLeave, highlightedId]
   );
 
   return (
