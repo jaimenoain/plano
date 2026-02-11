@@ -10,7 +10,7 @@ export function isValidRedirect(url: string): boolean {
   // Allow absolute URLs that match the current origin
   try {
     const urlObj = new URL(url);
-    return urlObj.origin === window.location.origin;
+    return urlObj.origin === window.location.origin || urlObj.origin === 'https://plano.app';
   } catch (e) {
     return false;
   }
