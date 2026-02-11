@@ -223,6 +223,28 @@ export function FilterDrawer() {
       });
   };
 
+  const handleClearAll = () => {
+    setMapState({
+      filters: {
+        ...filters,
+        // Global Taxonomy
+        architects: undefined,
+        category: undefined,
+        typologies: undefined,
+        materials: undefined,
+        contexts: undefined,
+        styles: undefined,
+        // Mode-Specific
+        minRating: undefined,
+        personalMinRating: undefined,
+        status: undefined,
+        collectionIds: undefined,
+        hideSaved: false,
+        hideVisited: false,
+      }
+    });
+  };
+
   // Safe defaults
   const currentMinRating = filters.minRating ?? 0;
   const currentPersonalMinRating = filters.personalMinRating ?? 0;
@@ -293,8 +315,18 @@ export function FilterDrawer() {
         </Button>
       </SheetTrigger>
       <SheetContent className="w-[340px] sm:w-[380px] overflow-y-auto">
-        <SheetHeader>
+        <SheetHeader className="flex flex-row items-center justify-between space-y-0">
           <SheetTitle>Filters</SheetTitle>
+          {activeFilterCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearAll}
+              className="h-auto px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear all
+            </Button>
+          )}
         </SheetHeader>
         <div className="grid gap-6 py-6">
           {/* Mode Switch */}
