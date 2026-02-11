@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { parseLocation } from "@/utils/location";
 import { Loader2 } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
-interface NoPhotoBuilding {
+export interface NoPhotoBuilding {
   id: string;
   name: string;
   lat: number;
   lng: number;
+  slug?: string | null;
 }
 
 const CIRCLE_LAYER: LayerProps = {
@@ -26,9 +28,39 @@ const CIRCLE_LAYER: LayerProps = {
   }
 };
 
+// Extracted logic for testing
+export const filterMissingPhotoBuildings = (
+    buildings: any[],
+    publicReviewBuildingIds: Set<string>,
+    parseLocationFn: (loc: any) => { lat: number; lng: number } | null
+): NoPhotoBuilding[] => {
+    return buildings
+        .filter(b => {
+             // If it has a hero image, it's not "missing photos"
+             if (b.hero_image_url) return false;
+             // If it has public reviews with photos, it's not "missing photos"
+             if (publicReviewBuildingIds.has(b.id)) return false;
+             return true;
+        })
+        .map(b => {
+            const coords = parseLocationFn(b.location);
+            if (!coords) return null;
+            return {
+                id: b.id,
+                name: b.name,
+                lat: coords.lat,
+                lng: coords.lng,
+                slug: b.slug
+            };
+        })
+        .filter((b): b is NoPhotoBuilding => b !== null);
+};
+
 export function NoPhotosMapZone() {
   const [buildings, setBuildings] = useState<NoPhotoBuilding[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cursor, setCursor] = useState<string>('auto');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBuildings = async () => {
@@ -52,25 +84,13 @@ export function NoPhotosMapZone() {
         // but only have private photos (so aren't in buildingsWithPublicPhotos).
         const { data, error } = await supabase
           .from('buildings')
-          .select('id, name, location')
+          .select('id, name, location, slug, hero_image_url')
           .eq('is_deleted', false)
           .limit(5000);
 
         if (error) throw error;
 
-        const mapped = (data || [])
-            .filter(b => !buildingsWithPublicPhotos.has(b.id))
-            .map(b => {
-                const coords = parseLocation(b.location);
-                if (!coords) return null;
-                return {
-                    id: b.id,
-                    name: b.name,
-                    lat: coords.lat,
-                    lng: coords.lng
-                };
-            })
-            .filter((b): b is NoPhotoBuilding => b !== null);
+        const mapped = filterMissingPhotoBuildings(data || [], buildingsWithPublicPhotos, parseLocation);
 
         setBuildings(mapped);
       } catch (err) {
@@ -88,7 +108,7 @@ export function NoPhotosMapZone() {
       type: 'FeatureCollection' as const,
       features: buildings.map(b => ({
         type: 'Feature' as const,
-        properties: { id: b.id, name: b.name },
+        properties: { id: b.id, name: b.name, slug: b.slug },
         geometry: {
           type: 'Point' as const,
           coordinates: [b.lng, b.lat]
@@ -96,6 +116,18 @@ export function NoPhotosMapZone() {
       }))
     };
   }, [buildings]);
+
+  const handleMapClick = (event: any) => {
+    const feature = event.features?.[0];
+    if (feature) {
+      const { id, slug } = feature.properties;
+      // Parse JSON if needed? No, mapbox/maplibre returns properties as object.
+      // But ensure slug is handled if it's "null" string or actual null.
+      // GeoJSON properties can sometimes serialize null as null.
+      const url = slug ? `/building/${id}/${slug}` : `/building/${id}`;
+      navigate(url);
+    }
+  };
 
   return (
     <Card className="col-span-4">
@@ -118,6 +150,11 @@ export function NoPhotosMapZone() {
           mapStyle="https://tiles.openfreemap.org/styles/positron"
           mapLib={maplibregl}
           attributionControl={false}
+          interactiveLayerIds={['no-photos-circles']}
+          onClick={handleMapClick}
+          cursor={cursor}
+          onMouseEnter={() => setCursor('pointer')}
+          onMouseLeave={() => setCursor('auto')}
         >
           <NavigationControl position="top-right" />
           <Source type="geojson" data={geoJsonData}>
