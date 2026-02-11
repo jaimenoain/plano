@@ -512,28 +512,27 @@ export function FilterDrawer() {
                     </AccordionContent>
                 </AccordionItem>
 
-                 {/* Item 4: Context & Style */}
-                 <AccordionItem value="context-style">
-                    <AccordionTrigger className="text-sm">Context & Style</AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-2">
-                        <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">Context</Label>
-                            <MultiSelectCheckboxList
-                                items={contextAttributes}
-                                selectedIds={currentContexts}
-                                onChange={handleContextsChange}
-                                className="h-[150px]"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">Style</Label>
-                            <MultiSelectCheckboxList
-                                items={styleAttributes}
-                                selectedIds={currentStyles}
-                                onChange={handleStylesChange}
-                                className="h-[150px]"
-                            />
-                        </div>
+                 {/* Item 4: Style */}
+                 <AccordionItem value="style">
+                    <AccordionTrigger className="text-sm">Style</AccordionTrigger>
+                    <AccordionContent className="pt-2">
+                        <MultiSelectCheckboxList
+                            items={styleAttributes}
+                            selectedIds={currentStyles}
+                            onChange={handleStylesChange}
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+
+                 {/* Item 5: Context */}
+                 <AccordionItem value="context">
+                    <AccordionTrigger className="text-sm">Context</AccordionTrigger>
+                    <AccordionContent className="pt-2">
+                        <MultiSelectCheckboxList
+                            items={contextAttributes}
+                            selectedIds={currentContexts}
+                            onChange={handleContextsChange}
+                        />
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
