@@ -1,7 +1,7 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Marker, useMap, Popup } from 'react-map-gl';
 import { ClusterResponse } from '../hooks/useMapData';
-import { getBuildingImageUrl } from '@/utils/image';
+import { BuildingPopupContent } from './BuildingPopupContent';
 
 interface MapMarkersProps {
   clusters: ClusterResponse[];
@@ -22,15 +22,15 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
     };
   }, []);
 
-  const handleMouseEnter = (id: string) => {
+  const handleMouseEnter = useCallback((id: string) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
     setHighlightedId(id);
-  };
+  }, [setHighlightedId]);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -38,7 +38,7 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
       setHighlightedId(null);
       timeoutRef.current = null;
     }, 300);
-  };
+  }, [setHighlightedId]);
 
   // Find the active cluster based on the highlightedId
   const activeCluster = useMemo(() => {
@@ -111,7 +111,7 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
                       : '32px'
                   : '32px',
               }}
-              onMouseEnter={() => !cluster.is_cluster && handleMouseEnter(cluster.id)}
+              onMouseEnter={() => !cluster.is_cluster && handleMouseEnter(String(cluster.id))}
               onMouseLeave={() => !cluster.is_cluster && handleMouseLeave()}
               data-testid={cluster.is_cluster ? "map-marker-cluster" : "map-marker-building"}
             >
@@ -131,7 +131,7 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
           </Marker>
         );
       }),
-    [clusters, map]
+    [clusters, map, handleMouseEnter, handleMouseLeave]
   );
 
   return (
@@ -147,36 +147,11 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
           className="z-[100] map-popup-test"
           maxWidth="300px"
         >
-          <div
-            className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg"
-            onMouseEnter={() => handleMouseEnter(activeCluster.id)}
+          <BuildingPopupContent
+            cluster={activeCluster}
+            onMouseEnter={() => handleMouseEnter(String(activeCluster.id))}
             onMouseLeave={handleMouseLeave}
-          >
-            {/* Image */}
-            <div className="relative h-[200px] w-full bg-muted">
-                {activeCluster.image_url ? (
-                    <img
-                        src={getBuildingImageUrl(activeCluster.image_url)}
-                        alt={activeCluster.name || 'Building'}
-                        className="h-full w-full object-cover"
-                    />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                        No Image
-                    </div>
-                )}
-            </div>
-            {/* Content */}
-            {activeCluster.name ? (
-                <div className="p-2">
-                    <h3 className="text-sm font-semibold line-clamp-2">{activeCluster.name}</h3>
-                </div>
-            ) : (
-                <div className="px-3 py-2">
-                    <span className="text-xs text-muted-foreground">Loading details...</span>
-                </div>
-            )}
-          </div>
+          />
         </Popup>
       )}
     </>
