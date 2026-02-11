@@ -112,7 +112,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
           {collections.map((collection) => (
             <Link
               key={collection.id}
-              to={`/map/${collection.owner?.username || username || 'user'}/${collection.slug}`}
+              to={`/${collection.owner?.username || username || 'user'}/map/${collection.slug}`}
               className="block flex-shrink-0 w-[180px] group select-none"
             >
               <Card className="h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative">
