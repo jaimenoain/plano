@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { renderHook, waitFor } from '@testing-library/react';
 import { useMapData } from './useMapData';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
