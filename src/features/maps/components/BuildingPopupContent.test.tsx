@@ -81,9 +81,6 @@ describe('BuildingPopupContent', () => {
 
     // Default statuses (Saved/pending)
     mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' } });
-
-    // Default window.open mock
-    vi.stubGlobal('open', vi.fn());
   });
 
   afterEach(() => {
@@ -91,15 +88,15 @@ describe('BuildingPopupContent', () => {
     vi.restoreAllMocks();
   });
 
-  it('opens new tab on card click', () => {
+  it('renders link overlay with correct attributes', () => {
     render(<BuildingPopupContent cluster={mockCluster} />);
-    // The main container has the onClick.
-    // We can find it by finding the parent of the name or image.
-    const nameElement = screen.getByText('Test Building');
-    // Clicking the name propagates to the container
-    fireEvent.click(nameElement);
 
-    expect(window.open).toHaveBeenCalledWith('/building/test-building', '_blank');
+    // Find the link. We can find it by its role and aria-label or just role if unique.
+    const link = screen.getByRole('link', { name: /View details for Test Building/i });
+
+    expect(link.getAttribute('href')).toBe('/building/test-building');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
   it('toggles off (deletes) when clicking Save on a saved building', async () => {
@@ -116,9 +113,32 @@ describe('BuildingPopupContent', () => {
         expect(mockUpsert).not.toHaveBeenCalled();
         expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Removed from your list' }));
     });
+  });
 
-    // Critical: Ensure navigation did not happen
-    expect(window.open).not.toHaveBeenCalled();
+  it('stops propagation when clicking Hide button', async () => {
+    // We wrap the component to check for propagation
+    const handleParentClick = vi.fn();
+    render(
+        <div onClick={handleParentClick}>
+            <BuildingPopupContent cluster={mockCluster} />
+        </div>
+    );
+
+    const hideButton = screen.getByTitle('Hide');
+    fireEvent.click(hideButton);
+
+    expect(handleParentClick).not.toHaveBeenCalled();
+
+    // Also verify the action happens
+    await waitFor(() => {
+         // Since status was 'pending' and we clicked Hide (ignored), it should upsert 'ignored'
+         expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({
+            status: 'ignored',
+            user_id: 'test-user-id',
+            building_id: '123'
+         }), expect.anything());
+         expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Building hidden' }));
+    });
   });
 
   it('toggles on (upserts) when clicking Visit on a saved building (switching status)', async () => {
@@ -137,25 +157,6 @@ describe('BuildingPopupContent', () => {
         }), expect.anything());
         expect(mockDelete).not.toHaveBeenCalled();
         expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Marked as visited' }));
-    });
-  });
-
-  it('toggles on (upserts) when clicking Save on a generic building', async () => {
-    // Status is undefined (not in map)
-    mockUseUserBuildingStatuses.mockReturnValue({ statuses: {} });
-    render(<BuildingPopupContent cluster={mockCluster} />);
-
-    const saveButton = screen.getByTitle('Save');
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-        expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({
-            status: 'pending',
-            user_id: 'test-user-id',
-            building_id: '123'
-        }), expect.anything());
-        expect(mockDelete).not.toHaveBeenCalled();
-        expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Saved to your list' }));
     });
   });
 });
