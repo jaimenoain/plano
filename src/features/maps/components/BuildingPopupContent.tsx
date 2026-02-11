@@ -65,6 +65,7 @@ export function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave }: Bu
       }
 
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+      queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
     } catch (error) {
       console.error("Action failed", error);
       toast({ variant: "destructive", title: "Failed to update status" });

@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { BuildingPopupContent } from './BuildingPopupContent';
@@ -112,6 +113,7 @@ describe('BuildingPopupContent', () => {
         expect(mockMatch).toHaveBeenCalledWith({ user_id: 'test-user-id', building_id: '123' });
         expect(mockUpsert).not.toHaveBeenCalled();
         expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Removed from your list' }));
+        expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["map-clusters"] });
     });
   });
 
@@ -138,6 +140,7 @@ describe('BuildingPopupContent', () => {
             building_id: '123'
          }), expect.anything());
          expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Building hidden' }));
+         expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["map-clusters"] });
     });
   });
 
@@ -157,6 +160,7 @@ describe('BuildingPopupContent', () => {
         }), expect.anything());
         expect(mockDelete).not.toHaveBeenCalled();
         expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Marked as visited' }));
+        expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["map-clusters"] });
     });
   });
 });
