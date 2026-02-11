@@ -572,7 +572,7 @@ export default function AddBuilding() {
         </div>
 
         {/* Map Area */}
-        <div className="h-[600px] rounded-xl overflow-hidden border shadow-sm relative bg-muted">
+        <div className="h-[300px] md:h-[600px] rounded-xl overflow-hidden border shadow-sm relative bg-muted">
           <MapGL
             {...viewState}
             onMove={evt => setViewState(evt.viewState)}
