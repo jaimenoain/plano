@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bookmark, Check, EyeOff } from 'lucide-react';
+import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBuildingImageUrl } from '@/utils/image';
@@ -13,9 +13,17 @@ interface BuildingPopupContentProps {
   cluster: ClusterResponse;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onRemoveFromCollection?: (id: string) => void;
+  onAddCandidate?: (id: string) => void;
 }
 
-export function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave }: BuildingPopupContentProps) {
+export function BuildingPopupContent({
+  cluster,
+  onMouseEnter,
+  onMouseLeave,
+  onRemoveFromCollection,
+  onAddCandidate
+}: BuildingPopupContentProps) {
   const { user } = useAuth();
   const { statuses } = useUserBuildingStatuses();
   const { toast } = useToast();
@@ -91,8 +99,133 @@ export function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave }: Bu
     handleAction('ignored', "Building hidden", "Building unhidden");
   };
 
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onRemoveFromCollection) {
+        onRemoveFromCollection(buildingId);
+    }
+  };
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onAddCandidate) {
+        onAddCandidate(buildingId);
+    }
+  };
+
   const buildingUrl = cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`;
 
+  // Custom Marker Logic
+  if (cluster.is_custom_marker) {
+      return (
+        <div
+            className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg relative"
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+        >
+            {/* Image or Icon */}
+            <div className="relative h-[120px] w-full bg-muted flex items-center justify-center">
+                {cluster.image_url ? (
+                <img
+                    src={getBuildingImageUrl(cluster.image_url)}
+                    alt={cluster.name || 'Marker'}
+                    className="h-full w-full object-cover"
+                />
+                ) : (
+                   <MapPin className="h-10 w-10 text-muted-foreground/50" />
+                )}
+            </div>
+
+            <div className="flex flex-col gap-2 p-3">
+                {cluster.name ? (
+                <h3 className="text-sm font-semibold line-clamp-2">{cluster.name}</h3>
+                ) : (
+                <span className="text-xs text-muted-foreground">Unlabeled Marker</span>
+                )}
+
+                {cluster.notes && (
+                    <p className="text-xs text-muted-foreground line-clamp-3 italic">
+                        "{cluster.notes}"
+                    </p>
+                )}
+
+                {onRemoveFromCollection && (
+                    <div className="flex justify-end pt-2 border-t">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={handleRemove}
+                        >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Remove
+                        </Button>
+                    </div>
+                )}
+            </div>
+        </div>
+      );
+  }
+
+  // Candidate Logic (Simplified Actions)
+  if (cluster.is_candidate) {
+      return (
+        <div
+            className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg relative"
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+        >
+            <a
+                href={buildingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute inset-0 z-10"
+                aria-label={`View details for ${cluster.name || 'Building'}`}
+            />
+            <div className="relative h-[200px] w-full bg-muted">
+                {cluster.image_url ? (
+                <img
+                    src={getBuildingImageUrl(cluster.image_url)}
+                    alt={cluster.name || 'Building'}
+                    className="h-full w-full object-cover"
+                />
+                ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                    No Image
+                </div>
+                )}
+                <div className="absolute top-2 right-2 z-20">
+                     <span className="bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                        SUGGESTED
+                     </span>
+                </div>
+            </div>
+             <div className="flex flex-col gap-2 p-2">
+                {cluster.name ? (
+                <h3 className="text-sm font-semibold line-clamp-2">{cluster.name}</h3>
+                ) : (
+                <span className="text-xs text-muted-foreground">Loading...</span>
+                )}
+
+                <div className="flex items-center justify-center pt-2 relative z-20" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                        variant="default"
+                        size="sm"
+                        className="w-full h-8"
+                        onClick={handleAdd}
+                    >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add to Map
+                    </Button>
+                </div>
+            </div>
+        </div>
+      );
+  }
+
+  // Standard Building Logic
   return (
     <div
       className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg relative"
@@ -164,6 +297,20 @@ export function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave }: Bu
             >
                 <EyeOff className="h-4 w-4" />
             </Button>
+
+            {onRemoveFromCollection && (
+                <div className="ml-1 pl-1 border-l">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={handleRemove}
+                        title="Remove from map"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
         </div>
       </div>
     </div>

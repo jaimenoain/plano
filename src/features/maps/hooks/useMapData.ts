@@ -15,6 +15,10 @@ export interface ClusterResponse {
   name?: string;
   slug?: string;
   image_url?: string;
+  is_custom_marker?: boolean;
+  notes?: string | null;
+  is_candidate?: boolean;
+  address?: string | null;
 }
 
 export interface UseMapDataProps {

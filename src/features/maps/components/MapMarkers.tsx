@@ -7,9 +7,17 @@ interface MapMarkersProps {
   clusters: ClusterResponse[];
   highlightedId?: string | null;
   setHighlightedId: (id: string | null) => void;
+  onRemoveFromCollection?: (id: string) => void;
+  onAddCandidate?: (id: string) => void;
 }
 
-export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMarkersProps) {
+export function MapMarkers({
+  clusters,
+  highlightedId,
+  setHighlightedId,
+  onRemoveFromCollection,
+  onAddCandidate
+}: MapMarkersProps) {
   const { current: map } = useMap();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -46,7 +54,7 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
 
     const found = clusters.find(c =>
       !c.is_cluster && // Only single items
-      c.id === highlightedId // Match the ID directly
+      String(c.id) === String(highlightedId) // Match the ID directly (ensure string comparison)
     );
 
     return found || null;
@@ -62,6 +70,9 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
 
         const isCluster = cluster.is_cluster;
         const buildingUrl = !isCluster ? (cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`) : '#';
+
+        // Determine if it's a custom marker or candidate for slight visual cues if desired
+        // For now keeping it uniform as per "Search behavior" request
 
         const content = (
             <div
@@ -100,7 +111,7 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
                    {cluster.rating && cluster.rating > 0 ? (
                       <span>{cluster.rating.toFixed(1)}</span>
                    ) : (
-                      <div className="h-2 w-2 rounded-full bg-foreground" />
+                      <div className={`h-2 w-2 rounded-full ${cluster.is_candidate ? 'bg-yellow-500' : 'bg-foreground'}`} />
                    )}
                 </div>
               )}
@@ -137,6 +148,13 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
                   rel="noopener noreferrer"
                   className="block text-inherit no-underline"
                   aria-label={`View details for ${cluster.name || 'Building'}`}
+                  onClick={(e) => {
+                      // If it's a custom marker, prevent navigation and just select (highlight)
+                      if (cluster.is_custom_marker) {
+                          e.preventDefault();
+                          handleMouseEnter(String(cluster.id));
+                      }
+                  }}
                 >
                     {content}
                 </a>
@@ -164,6 +182,8 @@ export function MapMarkers({ clusters, highlightedId, setHighlightedId }: MapMar
             cluster={activeCluster}
             onMouseEnter={() => handleMouseEnter(String(activeCluster.id))}
             onMouseLeave={handleMouseLeave}
+            onRemoveFromCollection={onRemoveFromCollection}
+            onAddCandidate={onAddCandidate}
           />
         </Popup>
       )}

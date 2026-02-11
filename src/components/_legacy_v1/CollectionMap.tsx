@@ -30,7 +30,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const CollectionSettingsDialog = lazy(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazy(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
-const BuildingDiscoveryMap = lazy(() => import("./BuildingDiscoveryMap").then(module => ({ default: module.BuildingDiscoveryMap })));
+const CollectionMapGL = lazy(() => import("@/features/maps/components/CollectionMapGL").then(module => ({ default: module.CollectionMapGL })));
 const CollectionBuildingCard = lazy(() => import("@/components/collections/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
 const CollectionMarkerCard = lazy(() => import("@/components/collections/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 
@@ -905,32 +905,14 @@ export default function CollectionMap() {
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
             }>
-                <BuildingDiscoveryMap
-                    externalBuildings={allMapBuildings}
+                <CollectionMapGL
+                    buildings={allMapBuildings}
                     highlightedId={highlightedId}
+                    setHighlightedId={setHighlightedId}
                     onAddCandidate={handleAddToCollection}
-                    onHideCandidate={canEdit ? handleHideCandidate : undefined}
                     onRemoveItem={canEdit ? handleRemoveItem : undefined}
-                    onMarkerClick={(id) => {
-                      setHighlightedId(id);
-                      
-                      // 1. Check if the building is already in the collection
-                      if (existingBuildingIds.has(id)) {
-                          const building = mapBuildings.find(b => b.id === id);
-
-                          if (building) {
-                            window.open(getBuildingUrl(building.id, building.slug, building.short_id), '_blank');
-                          } else {
-                            window.open(`/building/${id}`, '_blank');
-                          }
-                      }
-                      // 2. If not in collection, just highlight it (Tooltip will show with Add button)
-                    }}
-                    forcedBounds={initialBounds}
-                    showImages={collection.show_community_images ?? true}
                     onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
                     onRemoveMarker={canEdit ? handleRemoveItem : undefined}
-                    onClosePopup={() => setHighlightedId(null)}
                     showSavedCandidates={showSavedCandidates}
                 />
             </Suspense>
