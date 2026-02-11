@@ -13,6 +13,8 @@ export interface ClusterPoint {
   expansion_zoom?: number; // Optional zoom level to expand cluster
 }
 
+export type TierRank = 'Top 1%' | 'Top 5%' | 'Top 10%' | 'Top 20%' | 'Standard';
+
 export interface BuildingPoint {
   id: string;
   lat: number;
@@ -23,6 +25,8 @@ export interface BuildingPoint {
   slug: string;
   image_url: string | null;
   architect_names: string[] | null;
+  popularity_score?: number | null;
+  tier_rank?: TierRank | null;
 }
 
 export type MapItem = ClusterPoint | BuildingPoint;
