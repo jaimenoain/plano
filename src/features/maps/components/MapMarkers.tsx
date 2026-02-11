@@ -93,15 +93,10 @@ export function MapMarkers({
                      /* Keep existing Rating or fallback dot logic here if needed,
                         or leave empty if the Pin Style handles the visuals (e.g. dots)
                      */
-                     cluster.rating && cluster.rating > 0 ? (
-                        <span className="text-[10px] font-bold">{cluster.rating.toFixed(1)}</span>
-                     ) : (
-                        // Fallback logic for unrated items
-                        // If it's a candidate, show a yellow dot inside
-                        cluster.is_candidate ? (
-                           <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                        ) : null
-                     )
+                    // If it's a candidate, show a yellow dot inside
+                    cluster.is_candidate ? (
+                        <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                    ) : null
                   )
               )}
           </MapPin>
