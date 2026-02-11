@@ -745,7 +745,7 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
 
   // Sync selectedPinId if highlightedId changes
   useEffect(() => {
-      if (highlightedId) {
+      if (highlightedId !== undefined) {
           setSelectedPinId(highlightedId);
       }
   }, [highlightedId]);
