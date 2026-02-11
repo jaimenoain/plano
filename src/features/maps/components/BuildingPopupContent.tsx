@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ClusterResponse } from '../hooks/useMapData';
@@ -153,7 +153,10 @@ export function BuildingPopupContent({
                 )}
 
                 {onRemoveFromCollection && (
-                    <div className="flex justify-end pt-2 border-t">
+                    <div
+                        className="flex justify-end pt-2 border-t"
+                        onTouchStart={(e) => e.stopPropagation()}
+                    >
                         <Button
                             variant="ghost"
                             size="sm"
@@ -210,7 +213,11 @@ export function BuildingPopupContent({
                 <span className="text-xs text-muted-foreground">Loading...</span>
                 )}
 
-                <div className="flex items-center justify-center pt-2 relative z-20" onClick={(e) => e.stopPropagation()}>
+                <div
+                    className="flex items-center justify-center pt-2 relative z-20"
+                    onClick={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                >
                     <Button
                         variant="default"
                         size="sm"
@@ -265,7 +272,11 @@ export function BuildingPopupContent({
         )}
 
         {/* Action Bar */}
-        <div className="flex items-center justify-between border-t pt-2 relative z-20" onClick={(e) => e.stopPropagation()}>
+        <div
+            className="flex items-center justify-between border-t pt-2 relative z-20"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+        >
             <Button
                 variant="ghost"
                 size="icon"

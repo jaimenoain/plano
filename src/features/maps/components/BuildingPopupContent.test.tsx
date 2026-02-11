@@ -163,4 +163,19 @@ describe('BuildingPopupContent', () => {
         expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["map-clusters"] });
     });
   });
+
+  it('stops propagation when touching Action Bar', () => {
+    const handleTouchStart = vi.fn();
+    render(
+        <div onTouchStart={handleTouchStart}>
+            <BuildingPopupContent cluster={mockCluster} />
+        </div>
+    );
+
+    const saveButton = screen.getByTitle('Save');
+    // Fire touchStart on the button
+    fireEvent.touchStart(saveButton);
+
+    expect(handleTouchStart).not.toHaveBeenCalled();
+  });
 });
