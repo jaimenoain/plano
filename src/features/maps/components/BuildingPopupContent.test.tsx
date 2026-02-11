@@ -158,4 +158,26 @@ describe('BuildingPopupContent', () => {
         expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Saved to your list' }));
     });
   });
+
+  it('toggles off (hides) when clicking Hide on a building', async () => {
+    // Current status is 'pending'. Clicking Hide should upsert 'ignored'.
+    mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' } });
+    render(<BuildingPopupContent cluster={mockCluster} />);
+
+    const hideButton = screen.getByTitle('Hide');
+    fireEvent.click(hideButton);
+
+    await waitFor(() => {
+        expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({
+            status: 'ignored',
+            user_id: 'test-user-id',
+            building_id: '123'
+        }), expect.anything());
+        expect(mockDelete).not.toHaveBeenCalled();
+        expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Building hidden' }));
+    });
+
+    // Critical: Ensure navigation did not happen
+    expect(window.open).not.toHaveBeenCalled();
+  });
 });

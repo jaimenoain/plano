@@ -160,6 +160,7 @@ export function DiscoveryBuildingCard({
       to={getBuildingUrl(building.id, building.slug, building.short_id)}
       className="block"
       target={target}
+      rel={target === '_blank' ? "noopener noreferrer" : undefined}
     >
       {Content}
     </Link>
