@@ -85,7 +85,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         zIndex: 50,
         size: 36,
         classes: 'bg-white border-foreground border-2',
-        showDot: true,
+        showDot: false,
         showContent: true
       };
     case 'B':
@@ -94,7 +94,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 20,
         size: 28,
-        classes: 'bg-muted-foreground border-white border',
+        classes: 'bg-muted/80 border-gray-600 border',
         showDot: false,
         showContent: true
       };
