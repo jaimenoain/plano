@@ -61,6 +61,10 @@ export default {
           border: "hsl(var(--border))",
           ring: "hsl(var(--ring))",
         },
+        lime: {
+          high: "#eeff41",
+          DEFAULT: "#eeff41",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
