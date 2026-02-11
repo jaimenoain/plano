@@ -32,6 +32,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow, format } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
@@ -179,6 +180,7 @@ export default function BuildingDetails() {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const [building, setBuilding] = useState<BuildingDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -534,6 +536,9 @@ export default function BuildingDetails() {
             : newStatus === 'ignored' ? "Building Hidden"
             : "Added to Pending";
 
+          queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+          queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
+
           toast({ title });
       } catch (error) {
           console.error("Status update failed", error);
@@ -564,6 +569,9 @@ export default function BuildingDetails() {
            }, { onConflict: 'user_id, building_id' });
 
            if (error) throw error;
+
+           queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+           queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
 
            toast({ title: "Rating saved" });
        } catch (error) {
@@ -709,6 +717,8 @@ export default function BuildingDetails() {
 
           toast({ title: "Review saved" });
           setIsEditing(false);
+          queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+          queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
           fetchBuildingData();
       } catch (error: any) {
           console.error("Save note failed", error);
@@ -746,6 +756,9 @@ export default function BuildingDetails() {
           setSelectedCollectionIds([]);
           setInitialCollectionIds([]);
           setIsEditing(false);
+
+          queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+          queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
 
           toast({ title: "Removed from list" });
       } catch (error) {
