@@ -41,14 +41,14 @@ export function SegmentedControl({
             onClick={() => onValueChange(option.value)}
             className={cn(
               "relative z-10 flex-1 px-3 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             )}
             type="button"
           >
             {isActive && (
               <motion.div
                 layoutId={layoutId}
-                className="absolute inset-0 z-[-1] rounded-md bg-background shadow-sm ring-1 ring-black/5"
+                className="absolute inset-0 z-[-1] rounded-md bg-primary shadow-sm"
                 transition={{
                   type: "spring",
                   stiffness: 300,
