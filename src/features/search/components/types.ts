@@ -25,6 +25,7 @@ export interface DiscoveryBuildingMapPin {
   isDimmed?: boolean;
   isMarker?: boolean;
   social_context?: string | null;
+  tier_rank?: string | number | null;
 }
 
 export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
