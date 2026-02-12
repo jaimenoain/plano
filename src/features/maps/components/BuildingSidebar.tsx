@@ -57,6 +57,7 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
         architect_ids: filters.architects?.map((a) => a.id),
         status: filters.status,
         min_rating: filters.minRating,
+        personal_min_rating: filters.personalMinRating,
         rated_by: filters.ratedBy,
         filter_contacts: filters.filterContacts,
         collections: filters.collections?.map((c) => c.id),
