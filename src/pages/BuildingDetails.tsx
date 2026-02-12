@@ -933,10 +933,10 @@ export default function BuildingDetails() {
                     {displayImages.map((img) => {
                         const isVideoPlaceholder = img.type === 'video' && !img.poster;
                         return (
-                        <div key={img.id} className="w-full aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group bg-black/5">
+                        <div key={img.id} className="w-full min-h-[300px] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group bg-black/5">
                             <img
                               src={img.type === 'video' && img.poster ? img.poster : img.url}
-                              className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${isVideoPlaceholder ? 'opacity-50' : ''}`}
+                              className={`w-full h-auto max-h-[600px] object-cover cursor-pointer hover:opacity-90 transition-opacity ${isVideoPlaceholder ? 'opacity-50' : ''}`}
                               alt={building.name}
                               onClick={() => setSelectedImage(img)}
                             />
