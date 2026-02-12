@@ -852,6 +852,8 @@ export default function BuildingDetails() {
                     lat={coordinates.lat}
                     lng={coordinates.lng}
                     status={userStatus}
+                    rating={myRating}
+                    tierRank={building.tier_rank}
                     locationPrecision={building.location_precision}
                     isExpanded={isMapExpanded}
                     onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
