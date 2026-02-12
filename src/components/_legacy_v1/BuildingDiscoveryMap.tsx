@@ -147,6 +147,14 @@ function getJitteredCoordinates(buildingId: string, lat: number, lng: number): [
   return [lng + lngOffset, lat + latOffset];
 }
 
+function getTierRank(building: any): number {
+  if (typeof building.tier_rank === 'number') return building.tier_rank;
+  const label = building.tier_rank;
+  if (label === 'Top 1%') return 3;
+  if (label === 'Top 5%' || label === 'Top 10%') return 2;
+  return 1;
+}
+
 // Layer Styles
 const clusterLayer: LayerProps = {
   id: 'clusters',
@@ -533,7 +541,8 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             color: pinColor,
             isDimmed,
             location_precision: b.location_precision,
-            isMarker: b.isMarker
+            isMarker: b.isMarker,
+            tier_rank: getTierRank(b)
           },
           geometry: {
             type: 'Point' as const,
@@ -1081,6 +1090,9 @@ export const BuildingDiscoveryMap = forwardRef<BuildingDiscoveryMapRef, Building
             cluster={!geoJsonData.isServerClustered}
             clusterMaxZoom={CLUSTER_MAX_ZOOM}
             clusterRadius={50}
+            clusterProperties={{
+              max_tier: ['max', ['get', 'tier_rank']]
+            }}
         >
             <Layer {...clusterLayer} />
             <Layer {...clusterCountLayer} />
