@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useMapContext } from '../providers/MapContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -92,6 +92,7 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
     // Only fetch if bounds are valid
     enabled: !!bounds,
     initialPageParam: 1,
+    placeholderData: keepPreviousData,
   });
 
   // Infinite scroll observer
