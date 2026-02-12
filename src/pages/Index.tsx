@@ -323,13 +323,7 @@ export default function Index() {
   }
 
   return (
-    <div
-      className={cn(
-        "transition-[margin-left] duration-200 ease-linear w-auto",
-        "md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]"
-      )}
-    >
-      <AppLayout variant="home">
+    <AppLayout variant="home">
         <MetaHead title="Home" />
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
@@ -342,7 +336,7 @@ export default function Index() {
             ) : (
               <div className="flex flex-col lg:flex-row gap-8 items-start">
                 {/* Feed Column */}
-                <div className="w-full lg:w-2/3 flex flex-col gap-3">
+                <div className="w-full lg:w-2/3 flex flex-col gap-3 min-w-0">
                   {aggregatedReviews.map((item) => {
                     const key = item.type === 'cluster' ? `cluster-${item.entries[0].id}` : item.entry.id;
 
@@ -402,6 +396,5 @@ export default function Index() {
           </div>
         )}
       </AppLayout>
-    </div>
   );
 }
