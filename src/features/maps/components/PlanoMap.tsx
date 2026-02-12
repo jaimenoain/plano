@@ -45,7 +45,7 @@ function PlanoMapContent() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Context for sharing state with Sidebar
-  const { methods: { setBounds, setHighlightedId }, state: { highlightedId, filters, bounds } } = useMapContext();
+  const { methods: { setBounds, setHighlightedId }, state: { highlightedId, filters, bounds, mode } } = useMapContext();
 
   // Reference to Map instance
   const mapRef = useRef<MapRef>(null);
@@ -163,7 +163,8 @@ function PlanoMapContent() {
   const { clusters, isLoading } = useMapData({
       bounds: bounds || { north: 0, south: 0, east: 0, west: 0 }, // fallback
       zoom: viewState.zoom,
-      filters: filters
+      filters: filters,
+      mode: mode
   });
 
   const mapContent = (

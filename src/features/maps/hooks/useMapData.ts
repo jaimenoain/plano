@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Bounds } from '@/utils/map';
-import { MapFilters } from '@/types/plano-map';
+import { MapFilters, MapMode } from '@/types/plano-map';
 
 export interface ClusterResponse {
   id: string | number;
@@ -29,6 +29,7 @@ export interface UseMapDataProps {
   bounds: Bounds;
   zoom: number;
   filters: MapFilters;
+  mode?: MapMode;
 }
 
 // 30% buffer
@@ -77,11 +78,11 @@ function calculateTierRank(item: any): number {
   return 1;
 }
 
-export function useMapData({ bounds, zoom, filters }: UseMapDataProps) {
+export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapDataProps) {
   const fetchBox = useMemo(() => calculateFetchBox(bounds), [bounds]);
 
   const { data: clusters, isLoading, error } = useQuery({
-    queryKey: ['map-clusters', fetchBox, filters],
+    queryKey: ['map-clusters', fetchBox, filters, mode],
     queryFn: async () => {
       // Combine all attribute-related filters
       const allAttributeIds = [
@@ -113,6 +114,7 @@ export function useMapData({ bounds, zoom, filters }: UseMapDataProps) {
         hide_without_images: filters.hideWithoutImages,
         contact_min_rating: filters.contactMinRating,
         personal_min_rating: filters.personalMinRating,
+        ranking_preference: mode === 'library' ? 'personal' : 'global',
       };
 
       const { data, error } = await supabase.rpc('get_map_clusters_v2', {
