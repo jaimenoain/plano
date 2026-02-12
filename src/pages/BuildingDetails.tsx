@@ -1008,10 +1008,10 @@ export default function BuildingDetails() {
             />
 
             {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
-            <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4">
+            <div className="space-y-6">
                 {!isEditing && userStatus ? (
                     // Summary View
-                    <div className="space-y-4">
+                    <div className="bg-muted/30 rounded-2xl p-5 border border-transparent space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                                 Your Activity
@@ -1089,29 +1089,29 @@ export default function BuildingDetails() {
                     <>
                         <div className="flex flex-col gap-4">
                             {/* Toggle Status */}
-                            <div className="grid grid-cols-3 gap-2 w-full">
+                            <div className="flex items-center gap-2 w-full">
                                 <Button
-                                    variant={userStatus === 'pending' ? "default" : "outline"}
+                                    variant={userStatus === 'pending' ? "default" : "secondary"}
                                     size="sm"
-                                    className="w-full"
+                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-muted-foreground/10 data-[state=active]:bg-primary"
                                     onClick={() => handleStatusChange('pending')}
                                 >
                                     <Bookmark className={`w-4 h-4 mr-2 ${userStatus === 'pending' ? "fill-current" : ""}`} />
-                                    {userStatus === 'pending' ? "Pending" : "Save"}
+                                    {userStatus === 'pending' ? "Saved" : "Save"}
                                 </Button>
                                 <Button
-                                    variant={userStatus === 'visited' ? "default" : "outline"}
+                                    variant={userStatus === 'visited' ? "default" : "secondary"}
                                     size="sm"
-                                    className="w-full"
+                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-muted-foreground/10"
                                     onClick={() => handleStatusChange('visited')}
                                 >
                                     <Check className="w-4 h-4 mr-2" />
                                     Visited
                                 </Button>
                                 <Button
-                                    variant={userStatus === 'ignored' ? "default" : "outline"}
+                                    variant={userStatus === 'ignored' ? "default" : "secondary"}
                                     size="sm"
-                                    className="w-full"
+                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-muted-foreground/10"
                                     onClick={() => handleStatusChange('ignored')}
                                 >
                                     <EyeOff className="w-4 h-4 mr-2" />
