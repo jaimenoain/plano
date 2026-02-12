@@ -211,7 +211,7 @@ function PlacesAutocomplete({
         </div>
 
         {open && (status === "OK" || status === "ZERO_RESULTS") && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
+          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-[1150] rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
             <CommandList>
               <CommandGroup>
                 {status === "OK" &&
