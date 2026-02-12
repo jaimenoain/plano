@@ -23,6 +23,7 @@ export interface ClusterResponse {
   tier_rank?: number;
   location_approximate?: boolean;
   max_tier?: number;
+  color?: string | null;
 }
 
 export interface UseMapDataProps {
