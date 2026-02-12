@@ -379,6 +379,34 @@ export default function CollectionMap() {
 
   const isLoading = loadingProfile || loadingCollection || loadingItems;
 
+  // 3c. Fetch User Interactions (Personal Status)
+  const { data: userInteractions } = useQuery({
+    queryKey: ["user_interactions", user?.id, collection?.id, items?.length],
+    queryFn: async () => {
+      if (!user?.id || !items || items.length === 0) return [];
+      const buildingIds = items.map(i => i.building.id);
+
+      const { data, error } = await supabase
+        .from("user_buildings")
+        .select("building_id, rating, status")
+        .eq("user_id", user.id)
+        .in("building_id", buildingIds);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && !!items && items.length > 0
+  });
+
+  // Create a map for quick lookup
+  const userInteractionMap = useMemo(() => {
+    const map = new Map<string, { rating: number | null, status: string | null }>();
+    userInteractions?.forEach(i => {
+        map.set(i.building_id, { rating: i.rating, status: i.status });
+    });
+    return map;
+  }, [userInteractions]);
+
   // Prepare map buildings
   const mapBuildings = useMemo<DiscoveryBuilding[]>(() => {
     const buildingNodes: DiscoveryBuilding[] = [];
@@ -406,6 +434,7 @@ export default function CollectionMap() {
 
         const mappedBuildings = visibleItems.map(item => {
         let color = null;
+        const interaction = userInteractionMap.get(item.building.id);
 
         if (collection?.categorization_method === 'custom') {
             if (item.custom_category_id) {
@@ -467,6 +496,8 @@ export default function CollectionMap() {
             architects: item.building.building_architects?.map((ba) => ba.architects).filter(Boolean) || [],
             styles: [],
             color: color,
+            personal_rating: interaction?.rating || null,
+            personal_status: interaction?.status || null,
         };
         });
         buildingNodes.push(...mappedBuildings);
@@ -495,7 +526,7 @@ export default function CollectionMap() {
     }
 
     return buildingNodes;
-  }, [items, markers, collection, statsData, memberIds, shouldFetchStats]);
+  }, [items, markers, collection, statsData, memberIds, shouldFetchStats, userInteractionMap]);
 
   const allMapBuildings = useMemo(() => {
     if (showSavedCandidates && savedCandidates) {

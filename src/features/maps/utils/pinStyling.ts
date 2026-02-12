@@ -11,6 +11,7 @@ export interface PinStyle {
   classes: string;
   showDot: boolean;
   showContent: boolean;
+  backgroundColor?: string;
 }
 
 export function getPinStyle(item: ClusterResponse): PinStyle {
@@ -50,6 +51,20 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
   // Step 2: Shape Check
   // Default to 'pin'. If item.location_approximate exists in the future, check it here.
   const shape: PinShape = item.location_approximate ? 'circle' : 'pin';
+
+  // Step 2b: Color Override (Custom Category / Member Status)
+  if (item.color) {
+    return {
+      tier: 'C',
+      shape,
+      zIndex: 20,
+      size: 28,
+      classes: 'border-white border-2 text-black',
+      backgroundColor: item.color,
+      showDot: false,
+      showContent: true
+    };
+  }
 
   // Step 3: Tier Logic
   let tier: PinTier = 'C';

@@ -31,6 +31,7 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
       style={{
         width: `${style.size}px`,
         height: `${style.size}px`,
+        backgroundColor: style.backgroundColor,
       }}
       data-testid="map-pin-container"
     >
