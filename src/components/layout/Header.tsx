@@ -84,7 +84,7 @@ export function Header({
   if (effectiveVariant === 'home') {
     centerContent = (
       <Link to="/">
-        <PlanoLogo className="h-8 w-auto" />
+        <PlanoLogo className="h-6 md:h-8 w-auto" />
       </Link>
     );
   } else if (effectiveVariant === 'map') {
