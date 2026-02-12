@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from "react-dom";
+import { useSearchParams } from 'react-router-dom';
 import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -62,6 +63,10 @@ function CollectionMapGLContent({
   const { updateMapState } = useStableMapUpdate(setMapURL);
   const mapRef = useRef<MapRef>(null);
 
+  const [searchParams] = useSearchParams();
+  // Determine if we should auto-fit bounds on mount (only if no explicit URL params provided)
+  const [shouldAutoFit] = useState(() => !searchParams.has('lat') && !searchParams.has('lng'));
+
   const [isSatellite, setIsSatellite] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasFittedBounds, setHasFittedBounds] = useState(false);
@@ -91,9 +96,7 @@ function CollectionMapGLContent({
   // Fit bounds logic
   useEffect(() => {
       if (!hasFittedBounds && buildings.length > 0 && mapRef.current) {
-          const isDefault = lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM;
-
-          if (isDefault) {
+          if (shouldAutoFit) {
               const bounds = getBoundsFromBuildings(buildings);
               if (bounds) {
                   // Small delay to ensure map is ready
@@ -112,7 +115,7 @@ function CollectionMapGLContent({
              setHasFittedBounds(true);
           }
       }
-  }, [buildings, hasFittedBounds, lat, lng, zoom]);
+  }, [buildings, hasFittedBounds, shouldAutoFit]);
 
   const onMove = useCallback((evt: ViewStateChangeEvent) => {
     setViewState(evt.viewState);
