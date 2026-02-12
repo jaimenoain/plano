@@ -2,13 +2,18 @@ import { useState, useRef } from "react";
 import Map, { Marker, NavigationControl, GeolocateControl, MapRef } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Layers, MapPin, Maximize2, Minimize2 } from "lucide-react";
+import { Layers, Maximize2, Minimize2 } from "lucide-react";
+import { MapPin as MapPinComponent } from "./MapPin";
+import { getPinStyle } from "../utils/pinStyling";
+import { ClusterResponse } from "../hooks/useMapData";
 
 interface BuildingLocationMapProps {
   lat: number;
   lng: number;
   className?: string;
   status?: 'visited' | 'pending' | 'ignored' | null;
+  rating?: number;
+  tierRank?: string | null;
   locationPrecision?: 'exact' | 'approximate';
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -44,6 +49,8 @@ export function BuildingLocationMap({
   lng,
   className,
   status,
+  rating = 0,
+  tierRank,
   locationPrecision = 'exact',
   isExpanded,
   onToggleExpand
@@ -53,26 +60,21 @@ export function BuildingLocationMap({
 
   const isApproximate = locationPrecision === 'approximate';
 
-  let strokeClass = "text-gray-500";
-  let fillClass = "fill-background";
-  let dotBgClass = "bg-gray-500";
+  // Construct a partial ClusterResponse object to feed into getPinStyle
+  const pinData: Partial<ClusterResponse> = {
+    id: 'current-building', // Dummy ID
+    lat,
+    lng,
+    rating: rating,
+    status: status as any, // Cast to match ClusterResponse status type if needed
+    tier_rank_label: tierRank || null,
+    is_cluster: false,
+    count: 1,
+    location_approximate: isApproximate
+  };
 
-  if (status === 'visited') {
-    strokeClass = "text-gray-600";
-    fillClass = "fill-gray-600";
-    dotBgClass = "bg-gray-600";
-  } else if (status === 'pending') {
-    strokeClass = "text-gray-500";
-    fillClass = "fill-[#EEFF41]";
-    dotBgClass = "bg-[#EEFF41]";
-  }
-
-  if (isSatellite) {
-    strokeClass = "text-white";
-  }
-
-  const pinColor = `${strokeClass} ${fillClass}`;
-  const dotBorderClass = isSatellite ? "border-white" : "border-background";
+  // Get the style from the utility
+  const pinStyle = getPinStyle(pinData as ClusterResponse);
 
   return (
     <div className={`relative ${isExpanded ? "fixed inset-0 z-50 h-screen w-screen bg-background" : "rounded-xl overflow-hidden border border-white/10"} ${className || ""}`}>
@@ -94,17 +96,13 @@ export function BuildingLocationMap({
         <Marker
             longitude={lng}
             latitude={lat}
-            anchor={isApproximate ? "center" : "bottom"}
+            anchor={pinStyle.shape === 'pin' ? "bottom" : "center"}
             style={{ zIndex: 10 }}
         >
-            {isApproximate ? (
-                <div className={`w-6 h-6 rounded-full border-2 ${dotBorderClass} ${dotBgClass} drop-shadow-lg`} />
-            ) : (
-                <div className="relative">
-                    <MapPin className={`w-8 h-8 drop-shadow-lg ${pinColor}`} />
-                    <div className="absolute top-[41.7%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] bg-white rounded-full pointer-events-none" />
-                </div>
-            )}
+            <MapPinComponent
+                style={pinStyle}
+                isHovered={false}
+            />
         </Marker>
       </Map>
 
