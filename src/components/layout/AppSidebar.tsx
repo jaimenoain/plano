@@ -9,7 +9,6 @@ import {
   SidebarHeader,
   SidebarFooter,
   SidebarRail,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
@@ -180,7 +179,6 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarTrigger className="group-data-[collapsible=icon]:!mx-auto" />
         <UserMenu onOpenChange={handleMenuOpenChange} />
       </SidebarFooter>
       <SidebarRail />
