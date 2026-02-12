@@ -278,7 +278,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
             className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm"
             onClick={(e) => e.stopPropagation()}
           >
-              <h3 className="text-white text-2xl font-bold mb-8">Rate this building</h3>
+              <h3 className="text-white text-2xl font-bold mb-8">Add points? (Optional)</h3>
               <div className="flex gap-6">
                   {[1, 2, 3].map((val) => (
                       <button
