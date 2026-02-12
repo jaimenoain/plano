@@ -200,12 +200,12 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
                         )}
                       </CardContent>
 
-                      <div className="relative w-1/4 shrink-0 bg-muted overflow-hidden">
+                      <div className="relative w-28 shrink-0 bg-muted overflow-hidden">
                         {imageUrl ? (
                           <img
                             src={imageUrl}
                             alt={building.name}
-                            className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
                             loading="lazy"
                           />
                         ) : (
