@@ -54,7 +54,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
     }
   } else {
     // Context 2: Discover (No User Rating)
-    const rank = item.tier_rank;
+    const rank = item.tier_rank_label;
     if (rank === 'Top 1%') {
       tier = 'S';
     } else if (rank === 'Top 5%' || rank === 'Top 10%') {

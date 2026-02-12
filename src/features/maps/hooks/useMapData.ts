@@ -19,7 +19,8 @@ export interface ClusterResponse {
   notes?: string | null;
   is_candidate?: boolean;
   address?: string | null;
-  tier_rank?: string | null;
+  tier_rank_label?: string | null;
+  tier_rank?: number;
   location_approximate?: boolean;
 }
 
@@ -49,6 +50,30 @@ function calculateFetchBox(bounds: Bounds): Bounds {
   const west = Math.max(MIN_LNG, bounds.west - lngBuffer);
 
   return { north, south, east, west };
+}
+
+function calculateTierRank(item: any): number {
+  // Determine context: Library (User Rating/Status) vs Discover (Global Rank)
+  const userRating = item.rating ?? 0;
+  const status = item.status;
+  // Check if item is in library (rated > 0, or explicitly saved/visited)
+  const isLibraryItem = userRating > 0 || status === 'visited' || status === 'saved';
+
+  if (isLibraryItem) {
+    if (userRating >= 3) return 3;
+    if (userRating === 2) return 2;
+    // Rating 1, 0, or just saved -> Standard (Rank 1)
+    return 1;
+  }
+
+  // Discover Context
+  const label = item.tier_rank; // This comes from DB as string
+
+  if (label === 'Top 1%') return 3;
+  if (label === 'Top 5%' || label === 'Top 10%') return 2;
+
+  // "Top 20%", "Standard", or anything else -> 1
+  return 1;
 }
 
 export function useMapData({ bounds, zoom, filters }: UseMapDataProps) {
@@ -103,7 +128,18 @@ export function useMapData({ bounds, zoom, filters }: UseMapDataProps) {
         throw error;
       }
 
-      return data as ClusterResponse[];
+      // Transform data to inject numeric tier_rank and preserve label
+      const transformedData = (data as any[]).map(item => {
+        const rank = calculateTierRank(item);
+
+        return {
+          ...item,
+          tier_rank_label: item.tier_rank, // Preserve original string as label
+          tier_rank: rank // Inject numeric rank
+        };
+      });
+
+      return transformedData as ClusterResponse[];
     },
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5, // 5 minutes cache
