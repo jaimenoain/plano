@@ -191,11 +191,20 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
                             )}
                         </div>
 
-                        {building.status && building.status !== 'none' && (
-                            <div className="mt-2 flex items-center gap-1">
-                                <span className="inline-flex items-center rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
-                                    {building.status}
-                                </span>
+                        {( (building.status && building.status !== 'none') || building.rating > 0 ) && (
+                            <div className="mt-2 flex items-center gap-2">
+                                {building.status && building.status !== 'none' && (
+                                    <span className="inline-flex items-center rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
+                                        {building.status}
+                                    </span>
+                                )}
+                                {building.rating > 0 && (
+                                    <div className="flex gap-1" aria-label={`Rating: ${building.rating} stars`}>
+                                        {Array.from({ length: building.rating }).map((_, i) => (
+                                            <div key={i} className="h-2 w-2 rounded-full bg-yellow-400" />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                       </CardContent>
@@ -212,13 +221,6 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
                           <div className="flex h-full items-center justify-center text-muted-foreground text-[10px]">
                             No Image
                           </div>
-                        )}
-
-                        {/* Rating Badge */}
-                        {building.rating > 0 && (
-                            <div className="absolute right-1 top-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-                                {building.rating} <span className="text-yellow-400">★</span>
-                            </div>
                         )}
                       </div>
                     </Card>

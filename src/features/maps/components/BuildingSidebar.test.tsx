@@ -88,6 +88,11 @@ describe('BuildingSidebar', () => {
 
     // Check Status
     expect(screen.getByText('visited')).toBeDefined();
+
+    // Check Rating
+    const ratingContainer = screen.getByLabelText('Rating: 5 stars');
+    expect(ratingContainer).toBeDefined();
+    expect(ratingContainer.children.length).toBe(5);
   });
 
   it('uses keepPreviousData for smoother transitions', () => {
