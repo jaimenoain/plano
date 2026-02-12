@@ -78,13 +78,24 @@ function SearchPageContent() {
     setViewMode(prev => prev === 'map' ? 'list' : 'map');
   };
 
+  const mobileSearchBar = (
+    <DiscoverySearchInput
+      value={searchValue}
+      onSearchChange={handleSearchChange}
+      onLocationSelect={handleLocationSelect}
+      onTopLocationChange={setTopLocation}
+      placeholder="Search..."
+      className="w-full"
+    />
+  );
+
   return (
     <AppLayout
       isFullScreen={true}
       showHeader={true}
       showNav={false}
       variant="map"
-      searchBar={null}
+      searchBar={mobileSearchBar}
     >
       <div className="relative flex flex-col h-full w-full overflow-hidden">
 
@@ -150,14 +161,6 @@ function SearchPageContent() {
         {isMobile && viewMode === 'list' && (
            <div className="absolute inset-0 bg-background z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
               <div className="p-4 border-b space-y-3">
-                 <DiscoverySearchInput
-                    value={searchValue}
-                    onSearchChange={handleSearchChange}
-                    onLocationSelect={handleLocationSelect}
-                    onTopLocationChange={setTopLocation}
-                    placeholder="Search..."
-                    className="w-full"
-                 />
                  <MapControls />
               </div>
               <div className="flex-1 overflow-hidden relative pb-20">
