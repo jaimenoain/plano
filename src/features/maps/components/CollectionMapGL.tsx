@@ -70,6 +70,7 @@ function CollectionMapGLContent({
   const [isSatellite, setIsSatellite] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasFittedBounds, setHasFittedBounds] = useState(false);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const geolocateControlRef = useRef<any>(null);
@@ -95,27 +96,24 @@ function CollectionMapGLContent({
 
   // Fit bounds logic
   useEffect(() => {
-      if (!hasFittedBounds && buildings.length > 0 && mapRef.current) {
+      if (!hasFittedBounds && buildings.length > 0 && mapRef.current && isMapLoaded) {
           if (shouldAutoFit) {
               const bounds = getBoundsFromBuildings(buildings);
               if (bounds) {
-                  // Small delay to ensure map is ready
-                  setTimeout(() => {
-                      mapRef.current?.fitBounds(
-                          [
-                              [bounds.west, bounds.south],
-                              [bounds.east, bounds.north]
-                          ],
-                          { padding: 50, duration: 1000 }
-                      );
-                  }, 100);
+                  mapRef.current.fitBounds(
+                      [
+                          [bounds.west, bounds.south],
+                          [bounds.east, bounds.north]
+                      ],
+                      { padding: 50, duration: 1000 }
+                  );
                   setHasFittedBounds(true);
               }
           } else {
              setHasFittedBounds(true);
           }
       }
-  }, [buildings, hasFittedBounds, shouldAutoFit]);
+  }, [buildings, hasFittedBounds, shouldAutoFit, isMapLoaded]);
 
   const onMove = useCallback((evt: ViewStateChangeEvent) => {
     setViewState(evt.viewState);
@@ -179,6 +177,7 @@ function CollectionMapGLContent({
             {...viewState}
             onMove={onMove}
             onMoveEnd={onMoveEnd}
+            onLoad={() => setIsMapLoaded(true)}
             mapLib={maplibregl}
             mapStyle={isSatellite ? SATELLITE_STYLE : MAP_STYLE}
             attributionControl={false}
