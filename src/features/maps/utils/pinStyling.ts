@@ -24,11 +24,11 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
 
     if (item.max_tier === 3) {
       // Tier 3: Lime Tinted
-      classes += ' bg-lime-high/20 border-lime-high';
+      classes += ' bg-[#F6FFA0]/90 border-lime-high';
       zIndex = 20;
     } else if (item.max_tier === 2) {
       // Tier 2: White Tinted
-      classes += ' bg-white/20 border-white';
+      classes += ' bg-white/90 border-white';
       zIndex = 20;
     } else {
       // Tier 1: Standard Solid

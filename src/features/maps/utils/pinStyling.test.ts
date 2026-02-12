@@ -132,4 +132,30 @@ describe('getPinStyle', () => {
       expect(style.shape).toBe('pin');
     });
   });
+
+  describe('Suite 5: Cluster Logic', () => {
+    it('returns high opacity lime mix for Tier 3 clusters', () => {
+      const item = createMockBuilding({ is_cluster: true, max_tier: 3, count: 10 });
+      const style = getPinStyle(item);
+      expect(style.tier).toBe('Cluster');
+      expect(style.classes).toContain('bg-[#F6FFA0]/90');
+      expect(style.classes).toContain('border-lime-high');
+    });
+
+    it('returns high opacity white for Tier 2 clusters', () => {
+      const item = createMockBuilding({ is_cluster: true, max_tier: 2, count: 10 });
+      const style = getPinStyle(item);
+      expect(style.tier).toBe('Cluster');
+      expect(style.classes).toContain('bg-white/90');
+      expect(style.classes).toContain('border-white');
+    });
+
+    it('returns standard style for Tier 1 clusters', () => {
+      const item = createMockBuilding({ is_cluster: true, max_tier: 1, count: 10 });
+      const style = getPinStyle(item);
+      expect(style.tier).toBe('Cluster');
+      expect(style.classes).toContain('bg-[#f5f5f5]');
+      expect(style.classes).toContain('border-gray-600');
+    });
+  });
 });
