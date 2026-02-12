@@ -57,7 +57,8 @@ describe('MapMarkers', () => {
     image_url: null,
     rating: 0,
     status: undefined,
-    tier_rank: 'Top 50%' // Default
+    tier_rank_label: 'Top 50%', // Default
+    tier_rank: 1
   };
 
   const clusterGroup: ClusterResponse = {
@@ -106,7 +107,8 @@ describe('MapMarkers', () => {
     const top1Cluster: ClusterResponse = {
       ...buildingCluster,
       id: 3,
-      tier_rank: 'Top 1%'
+      tier_rank_label: 'Top 1%',
+      tier_rank: 3
     };
 
     render(
@@ -128,7 +130,8 @@ describe('MapMarkers', () => {
     const top5Cluster: ClusterResponse = {
       ...buildingCluster,
       id: 4,
-      tier_rank: 'Top 5%'
+      tier_rank_label: 'Top 5%',
+      tier_rank: 2
     };
 
     render(

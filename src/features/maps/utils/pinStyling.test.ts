@@ -11,7 +11,8 @@ const createMockBuilding = (overrides: Partial<ClusterResponse>): ClusterRespons
   count: 1,
   rating: null,
   status: 'none',
-  tier_rank: null,
+  tier_rank_label: null,
+  tier_rank: 1,
   ...overrides
 } as ClusterResponse);
 
@@ -61,25 +62,25 @@ describe('getPinStyle', () => {
 
   describe('Suite 2: Discover Logic (Global Ranking)', () => {
     it("returns Tier S for 'Top 1%'", () => {
-      const item = createMockBuilding({ tier_rank: 'Top 1%' });
+      const item = createMockBuilding({ tier_rank_label: 'Top 1%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
     });
 
     it("returns Tier A for 'Top 10%'", () => {
-      const item = createMockBuilding({ tier_rank: 'Top 10%' });
+      const item = createMockBuilding({ tier_rank_label: 'Top 10%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('A');
     });
 
     it("returns Tier B for 'Top 20%'", () => {
-      const item = createMockBuilding({ tier_rank: 'Top 20%' });
+      const item = createMockBuilding({ tier_rank_label: 'Top 20%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
     });
 
     it('returns Tier C for other ranks', () => {
-      const item = createMockBuilding({ tier_rank: 'Standard' });
+      const item = createMockBuilding({ tier_rank_label: 'Standard' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('C');
     });
@@ -89,7 +90,7 @@ describe('getPinStyle', () => {
     it('returns Tier B style when User Rating 1 overrides Global Tier S (Top 1%)', () => {
       // Scenario: A building is "Top 1%" (Global Tier S) BUT the user rated it "1 Star" (Personal Tier B).
       const item = createMockBuilding({
-        tier_rank: 'Top 1%',
+        tier_rank_label: 'Top 1%',
         rating: 1,
         status: 'visited' // Implicitly visited if rated, or explicitly status
       });
@@ -102,7 +103,7 @@ describe('getPinStyle', () => {
     it('returns Tier C style when User Saved (Unrated) overrides Global Tier S (Top 1%)', () => {
       // Scenario: "Top 1%" but user saved it (rating 0/null).
       const item = createMockBuilding({
-        tier_rank: 'Top 1%',
+        tier_rank_label: 'Top 1%',
         rating: 0,
         status: 'saved'
       });
