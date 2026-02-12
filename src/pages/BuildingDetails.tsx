@@ -928,11 +928,13 @@ export default function BuildingDetails() {
 
             {displayImages.length > 0 ? (
                 <div className="space-y-6">
-                    {displayImages.map((img) => (
-                        <div key={img.id} className="aspect-[4/3] w-full rounded-xl overflow-hidden shadow-lg border border-white/10 relative group bg-black/5">
+                    {displayImages.map((img) => {
+                        const isVideoPlaceholder = img.type === 'video' && !img.poster;
+                        return (
+                        <div key={img.id} className={`${isVideoPlaceholder ? 'aspect-[4/3] w-full' : 'w-fit mx-auto max-w-full'} rounded-xl overflow-hidden shadow-lg border border-white/10 relative group bg-black/5`}>
                             <img
                               src={img.type === 'video' && img.poster ? img.poster : img.url}
-                              className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${!img.poster && img.type === 'video' ? 'opacity-50' : ''}`}
+                              className={`${isVideoPlaceholder ? 'w-full h-full object-cover' : 'block w-auto h-auto max-h-[75vh] max-w-full object-contain'} cursor-pointer hover:opacity-90 transition-opacity ${isVideoPlaceholder ? 'opacity-50' : ''}`}
                               alt={building.name}
                               onClick={() => setSelectedImage(img)}
                             />
@@ -967,7 +969,8 @@ export default function BuildingDetails() {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
