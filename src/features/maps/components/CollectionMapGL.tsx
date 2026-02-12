@@ -100,20 +100,39 @@ function CollectionMapGLContent({
           if (shouldAutoFit) {
               const bounds = getBoundsFromBuildings(buildings);
               if (bounds) {
-                  mapRef.current.fitBounds(
+                  // Calculate target state deterministically
+                  const camera = mapRef.current.getMap().cameraForBounds(
                       [
                           [bounds.west, bounds.south],
                           [bounds.east, bounds.north]
                       ],
-                      { padding: 50, duration: 1000 }
+                      { padding: 50 }
                   );
-                  setHasFittedBounds(true);
+
+                  if (camera && camera.center && typeof camera.zoom === 'number') {
+                      const { center, zoom } = camera;
+
+                      // Update both local viewState and URL immediately
+                      // This atomic update prevents race conditions with the URL sync hook
+                      setViewState({
+                          latitude: center.lat,
+                          longitude: center.lng,
+                          zoom: zoom
+                      });
+                      updateMapState({
+                          lat: center.lat,
+                          lng: center.lng,
+                          zoom: zoom
+                      }, true);
+
+                      setHasFittedBounds(true);
+                  }
               }
           } else {
              setHasFittedBounds(true);
           }
       }
-  }, [buildings, hasFittedBounds, shouldAutoFit, isMapLoaded]);
+  }, [buildings, hasFittedBounds, shouldAutoFit, isMapLoaded, updateMapState]);
 
   const onMove = useCallback((evt: ViewStateChangeEvent) => {
     setViewState(evt.viewState);
