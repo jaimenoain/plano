@@ -10,7 +10,7 @@ import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
 import { BuildingSidebar } from "@/features/maps/components/BuildingSidebar";
 import { MapControls } from "@/features/maps/components/MapControls";
-import { DiscoverySearchInput } from "@/features/search/components/DiscoverySearchInput";
+import { DiscoverySearchInput, Suggestion } from "@/features/search/components/DiscoverySearchInput";
 
 const SIDEBAR_EXPANDED_OFFSET = 208; // Approx 13rem
 
@@ -30,8 +30,8 @@ function SearchPageContent() {
   // View mode state (map vs list) for mobile
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
 
-  // Top location suggestion state
-  const [topLocation, setTopLocation] = useState<{ description: string; place_id: string } | null>(null);
+  // Location suggestions state
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   // Sync local search with context filters
   useEffect(() => {
@@ -83,7 +83,8 @@ function SearchPageContent() {
       value={searchValue}
       onSearchChange={handleSearchChange}
       onLocationSelect={handleLocationSelect}
-      onTopLocationChange={setTopLocation}
+      onSuggestionsChange={setSuggestions}
+      disableDropdown={viewMode === 'list'}
       placeholder="Search..."
       className="w-full"
     />
@@ -109,7 +110,8 @@ function SearchPageContent() {
                  value={searchValue}
                  onSearchChange={handleSearchChange}
                  onLocationSelect={handleLocationSelect}
-                 onTopLocationChange={setTopLocation}
+                 onSuggestionsChange={setSuggestions}
+                 disableDropdown={true}
                  placeholder="Search buildings, architects..."
                  className="w-full"
               />
@@ -117,7 +119,7 @@ function SearchPageContent() {
            </div>
            <div className="flex-1 overflow-hidden relative">
               <BuildingSidebar
-                topLocation={topLocation}
+                suggestions={suggestions}
                 onLocationClick={handleLocationResultClick}
               />
            </div>
@@ -165,7 +167,7 @@ function SearchPageContent() {
               </div>
               <div className="flex-1 overflow-hidden relative pb-20">
                  <BuildingSidebar
-                    topLocation={topLocation}
+                    suggestions={suggestions}
                     onLocationClick={handleLocationResultClick}
                  />
               </div>

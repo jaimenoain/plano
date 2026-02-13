@@ -8,6 +8,7 @@ import { Loader2, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getBuildingImageUrl } from '@/utils/image';
 import { Button } from '@/components/ui/button';
+import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
 
 interface Building {
   id: string;
@@ -27,11 +28,12 @@ interface Building {
 interface BuildingSidebarProps {
   topLocation?: { description: string; place_id: string } | null;
   onLocationClick?: (placeId: string) => void;
+  suggestions?: Suggestion[];
 }
 
 const PAGE_SIZE = 20;
 
-export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSidebarProps = {}) {
+export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: BuildingSidebarProps = {}) {
   const { state: { bounds, filters }, methods: { setHighlightedId } } = useMapContext();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -121,8 +123,28 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
   return (
     <ScrollArea className="h-full w-full">
       <div className="space-y-4 p-4">
-        {/* Top Location Suggestion */}
-        {topLocation && (
+        {/* Location Suggestions (replaces topLocation) */}
+        {suggestions && suggestions.length > 0 ? (
+          <div className="space-y-2">
+            {suggestions.map((suggestion) => (
+              <Card
+                key={suggestion.place_id}
+                className="cursor-pointer overflow-hidden border-transparent bg-muted/30 hover:bg-muted/50 transition-colors"
+                onClick={() => onLocationClick?.(suggestion.place_id)}
+              >
+                <CardContent className="flex items-center gap-3 p-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <MapPin className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{suggestion.description}</p>
+                    <p className="text-xs text-muted-foreground">Jump to location</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : topLocation ? (
           <Card
             className="cursor-pointer overflow-hidden border-transparent bg-muted/30 hover:bg-muted/50 transition-colors"
             onClick={() => onLocationClick?.(topLocation.place_id)}
@@ -137,7 +159,7 @@ export function BuildingSidebar({ topLocation, onLocationClick }: BuildingSideba
               </div>
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
         {/* Loading State */}
         {!bounds || isLoading ? (

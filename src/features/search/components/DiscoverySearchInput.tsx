@@ -15,6 +15,11 @@ import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export interface Suggestion {
+  place_id: string;
+  description: string;
+}
+
 interface DiscoverySearchInputProps {
   value: string;
   onSearchChange: (value: string) => void;
@@ -23,6 +28,8 @@ interface DiscoverySearchInputProps {
   className?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onTopLocationChange?: (location: { description: string; place_id: string } | null) => void;
+  disableDropdown?: boolean;
+  onSuggestionsChange?: (suggestions: Suggestion[]) => void;
 }
 
 export function DiscoverySearchInput({
@@ -33,6 +40,8 @@ export function DiscoverySearchInput({
   className,
   onKeyDown,
   onTopLocationChange,
+  disableDropdown = false,
+  onSuggestionsChange,
 }: DiscoverySearchInputProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
@@ -74,17 +83,25 @@ export function DiscoverySearchInput({
     initOnMount: true,
   });
 
-  // Update top location suggestion
+  // Update suggestions and top location
   useEffect(() => {
-    if (status === "OK" && data.length > 0) {
-      onTopLocationChange?.({
-        description: data[0].description,
-        place_id: data[0].place_id,
-      });
+    if (status === "OK") {
+      const suggestions = data.map(d => ({ place_id: d.place_id, description: d.description }));
+      onSuggestionsChange?.(suggestions);
+
+      if (data.length > 0) {
+        onTopLocationChange?.({
+          description: data[0].description,
+          place_id: data[0].place_id,
+        });
+      } else {
+        onTopLocationChange?.(null);
+      }
     } else {
+      onSuggestionsChange?.([]);
       onTopLocationChange?.(null);
     }
-  }, [data, status, onTopLocationChange]);
+  }, [data, status, onTopLocationChange, onSuggestionsChange]);
 
   // Sync external value with internal places value to ensure suggestions are relevant
   useEffect(() => {
@@ -151,7 +168,7 @@ export function DiscoverySearchInput({
             />
         </div>
 
-        {open && (status === "OK") && (
+        {!disableDropdown && open && (status === "OK") && (
           <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
             <CommandList>
               <CommandGroup heading="Locations">
