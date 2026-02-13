@@ -48,6 +48,7 @@ import { CollectionSelector } from "@/components/profile/CollectionSelector";
 import { BuildingAttributes } from "@/components/BuildingAttributes";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 import { PopularityBadge } from "@/components/PopularityBadge";
+import { BuildingImageCard } from "@/components/BuildingImageCard";
 
 // --- Types ---
 interface BuildingDetails {
@@ -208,6 +209,7 @@ export default function BuildingDetails() {
   // New State for Edit View Enhancement
   const [userLinks, setUserLinks] = useState<{id: string, url: string, title: string}[]>([]);
   const [pendingImages, setPendingImages] = useState<{id: string, file: File, preview: string}[]>([]);
+  const [likedImageIds, setLikedImageIds] = useState<Set<string>>(new Set());
   const [showCollections, setShowCollections] = useState(false);
   const [showLinkEditor, setShowLinkEditor] = useState(false);
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -468,6 +470,24 @@ export default function BuildingDetails() {
           });
 
           setEntries(sanitizedEntries);
+      }
+
+      // Fetch user likes for these images
+      if (user && communityImages.length > 0) {
+          const imageIds = communityImages
+              .filter(img => img.type === 'image')
+              .map(img => img.id);
+
+          if (imageIds.length > 0) {
+              const { data: likesData } = await supabase
+                  .from("image_likes")
+                  .select("image_id")
+                  .eq("user_id", user.id)
+                  .in("image_id", imageIds);
+
+              const likedSet = new Set(likesData?.map(l => l.image_id) || []);
+              setLikedImageIds(likedSet);
+          }
       }
 
       // Combine with main image
@@ -930,53 +950,14 @@ export default function BuildingDetails() {
 
             {displayImages.length > 0 ? (
                 <div className="space-y-6">
-                    {displayImages.map((img) => {
-                        const isVideoPlaceholder = img.type === 'video' && !img.poster;
-                        return (
-                        <div key={img.id} className="w-full space-y-3 group">
-                            <div className="relative rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/5">
-                                <img
-                                src={img.type === 'video' && img.poster ? img.poster : img.url}
-                                className={`w-full h-auto max-h-[600px] object-cover cursor-pointer hover:opacity-90 transition-opacity ${isVideoPlaceholder ? 'opacity-50' : ''}`}
-                                alt={building.name}
-                                onClick={() => setSelectedImage(img)}
-                                />
-
-                                {/* Video Indicator */}
-                                {img.type === 'video' && (
-                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                        <div className="bg-black/40 rounded-full p-3 backdrop-blur-sm">
-                                            <Play className="w-6 h-6 text-white fill-white" />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Attribution Strip */}
-                            <div className="flex items-center justify-between px-1">
-                                <div className="flex items-center gap-2">
-                                    <Avatar className="w-8 h-8 border border-border">
-                                        <AvatarImage src={img.user?.avatar_url || undefined} />
-                                        <AvatarFallback className="text-[10px] bg-muted text-muted-foreground border-border">{img.user?.username?.[0]?.toUpperCase()}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-medium text-foreground">{img.user?.username || "Anonymous"}</span>
-                                        <span className="text-xs text-muted-foreground">{format(new Date(img.created_at), 'MMM d, yyyy')}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4 text-muted-foreground">
-                                    <div className="flex items-center gap-1.5">
-                                         <Heart className="w-4 h-4" />
-                                         <span className="text-xs font-medium">{img.likes_count}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                         <MessageCircle className="w-4 h-4" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        );
-                    })}
+                    {displayImages.map((img) => (
+                        <BuildingImageCard
+                            key={img.id}
+                            image={img}
+                            initialIsLiked={likedImageIds.has(img.id)}
+                            onOpen={() => setSelectedImage(img)}
+                        />
+                    ))}
                 </div>
             ) : (
                 <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
