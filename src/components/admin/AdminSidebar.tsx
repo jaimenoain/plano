@@ -11,7 +11,7 @@ import {
   History,
   Trash2,
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -83,6 +83,12 @@ const items = [
 export function AdminSidebar() {
   const location = useLocation();
   const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -129,7 +135,7 @@ export function AdminSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => signOut()}>
+            <SidebarMenuButton onClick={handleSignOut}>
               <LogOut />
               <span>Sign out</span>
             </SidebarMenuButton>

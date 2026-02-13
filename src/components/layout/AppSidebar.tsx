@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settings, LogOut } from "lucide-react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,6 +39,12 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
   const { user, signOut } = useAuth();
   const { profile } = useUserProfile();
   const { isMobile } = useSidebar();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   if (!user) return null;
 
@@ -77,7 +83,7 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+            <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
               <LogOut className="size-4" />
               Sign out
             </DropdownMenuItem>
