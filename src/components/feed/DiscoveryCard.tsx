@@ -147,7 +147,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   // Framer Motion
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-10, 10]);
-  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 1]);
 
   const likeOpacity = useTransform(x, [20, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
