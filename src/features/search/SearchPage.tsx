@@ -130,7 +130,7 @@ function SearchPageContent() {
             marginLeft: isMobile ? 0 : 400 + (isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0)
           }}
         >
-           <PlanoMap />
+           <PlanoMap showEmptyMessage={true} />
         </div>
 
         {/* Mobile Toggle Button */}
