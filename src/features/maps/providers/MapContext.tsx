@@ -37,8 +37,8 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
 
   const moveMap = useCallback(
     (lat: number, lng: number, zoom: number) => {
-      // Debounced update via useStableMapUpdate
-      updateMapState({ lat, lng, zoom });
+      // Immediate update via useStableMapUpdate to ensure responsive map jumps
+      updateMapState({ lat, lng, zoom }, true);
     },
     [updateMapState]
   );
