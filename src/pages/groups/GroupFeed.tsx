@@ -170,8 +170,8 @@ export default function GroupFeed() {
   const entries = data?.pages.flat() || [];
 
   return (
-    <div>
-      <div className="flex items-center space-x-2 mb-6">
+    <div className="w-full max-w-full min-w-0 space-y-6 overflow-x-hidden">
+      <div className="flex items-center space-x-2">
         <Switch
           id="show-off-session"
           checked={showOffSession}
@@ -186,7 +186,7 @@ export default function GroupFeed() {
         </div>
       ) : entries.length > 0 ? (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {entries.map((entry: any) => (
               <ReviewCard key={entry.id} entry={entry} onLike={handleLike} />
             ))}
