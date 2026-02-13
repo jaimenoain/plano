@@ -19,6 +19,8 @@ export interface DiscoveryFeedItem {
 
 export interface DiscoveryFilters {
   city?: string | null;
+  country?: string | null;
+  region?: string | null;
   categoryId?: string | null;
   typologyIds?: string[];
   attributeIds?: string[];
@@ -30,10 +32,10 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
   const LIMIT = 10;
 
   // Destructure for dependency array stability
-  const { city, categoryId, typologyIds, attributeIds, architectIds } = filters;
+  const { city, country, region, categoryId, typologyIds, attributeIds, architectIds } = filters;
 
   return useInfiniteQuery({
-    queryKey: ["discovery_feed", user?.id, city, categoryId, typologyIds, attributeIds, architectIds],
+    queryKey: ["discovery_feed", user?.id, city, country, region, categoryId, typologyIds, attributeIds, architectIds],
     queryFn: async ({ pageParam = 0 }) => {
       if (!user) return [];
 
@@ -42,6 +44,8 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         p_limit: LIMIT,
         p_offset: pageParam,
         p_city_filter: city || null,
+        p_country_filter: country || null,
+        p_region_filter: region || null,
         p_category_id: categoryId || null,
         p_typology_ids: typologyIds && typologyIds.length > 0 ? typologyIds : null,
         p_attribute_ids: attributeIds && attributeIds.length > 0 ? attributeIds : null,

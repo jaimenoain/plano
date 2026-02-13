@@ -30,6 +30,7 @@ interface DiscoverySearchInputProps {
   onTopLocationChange?: (location: { description: string; place_id: string } | null) => void;
   disableDropdown?: boolean;
   onSuggestionsChange?: (suggestions: Suggestion[]) => void;
+  onPlaceDetails?: (details: google.maps.GeocoderResult) => void;
 }
 
 export function DiscoverySearchInput({
@@ -42,6 +43,7 @@ export function DiscoverySearchInput({
   onTopLocationChange,
   disableDropdown = false,
   onSuggestionsChange,
+  onPlaceDetails,
 }: DiscoverySearchInputProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
@@ -132,6 +134,7 @@ export function DiscoverySearchInput({
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
       onLocationSelect({ lat, lng });
+      onPlaceDetails?.(results[0]);
     } catch (error) {
       console.error("Geocoding error: ", error);
     }
