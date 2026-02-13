@@ -132,8 +132,12 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         throw error;
       }
 
+      // Filter out hidden (ignored) items client-side as a safeguard
+      // The RPC should handle this with hide_hidden: true, but we double check
+      const visibleData = (data as any[]).filter(item => item.status !== 'ignored');
+
       // Transform data to inject numeric tier_rank and preserve label
-      const transformedData = (data as any[]).map(item => {
+      const transformedData = visibleData.map(item => {
         const rank = calculateTierRank(item);
 
         return {
