@@ -28,7 +28,7 @@ export function PopularityBadge({ rank, city }: PopularityBadgeProps) {
   const text = city ? `${rank} in ${city}` : rank;
 
   return (
-    <Badge variant="outline" className={`font-medium px-2 py-0.5 whitespace-nowrap ${badgeClass}`}>
+    <Badge variant="outline" className={`font-medium px-2 py-0.5 whitespace-normal sm:whitespace-nowrap text-left ${badgeClass}`}>
       {icon}
       {text}
     </Badge>

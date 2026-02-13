@@ -110,25 +110,25 @@ export function BuildingImageCard({ image, initialIsLiked, onOpen }: BuildingIma
         )}
       </div>
 
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <Avatar className="w-8 h-8 border border-border">
+      <div className="flex items-center justify-between px-1 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Avatar className="w-8 h-8 border border-border shrink-0">
             <AvatarImage src={image.user?.avatar_url || undefined} />
             <AvatarFallback className="text-[10px] bg-muted text-muted-foreground border-border">
               {image.user?.username?.[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-foreground">
+          <div className="flex flex-col min-w-0">
+            <span className="text-sm font-medium text-foreground truncate">
               {image.user?.username || "Anonymous"}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground truncate">
               {format(new Date(image.created_at), 'MMM d, yyyy')}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-muted-foreground">
+        <div className="flex items-center gap-4 text-muted-foreground shrink-0">
           {!isVideo && (
             <button
               onClick={handleLike}
