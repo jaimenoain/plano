@@ -18,12 +18,13 @@ const createMockBuilding = (overrides: Partial<ClusterResponse>): ClusterRespons
 
 describe('getPinStyle', () => {
   describe('Suite 1: Library Logic (User Ratings)', () => {
-    it('returns Tier S (Lime, Size 44px) for rating 3', () => {
+    it('returns Tier S (Dark, Size 44px) for rating 3', () => {
       const item = createMockBuilding({ rating: 3, status: 'visited' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
       expect(style.size).toBe(44);
-      expect(style.classes).toContain('bg-lime-high');
+      expect(style.classes).toContain('bg-primary');
+      expect(style.classes).toContain('text-primary-foreground');
     });
 
     it('returns Tier A (White, No Dot) for rating 2', () => {
@@ -61,10 +62,11 @@ describe('getPinStyle', () => {
   });
 
   describe('Suite 2: Discover Logic (Global Ranking)', () => {
-    it("returns Tier S for 'Top 1%'", () => {
+    it("returns Tier S (Lime) for 'Top 1%'", () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 1%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
+      expect(style.classes).toContain('bg-lime-high');
     });
 
     it("returns Tier A for 'Top 10%'", () => {
