@@ -95,7 +95,7 @@ export function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className={cn("relative group bg-black overflow-hidden", className)}
+      className={cn("relative group bg-black overflow-hidden max-w-full", className)}
       onMouseEnter={() => setIsControlsVisible(true)}
       onMouseLeave={() => setIsControlsVisible(false)}
       onClick={togglePlay}
