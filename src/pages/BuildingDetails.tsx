@@ -111,6 +111,7 @@ interface DisplayImage {
         username: string | null;
         avatar_url: string | null;
     } | null;
+    is_generated?: boolean;
 }
 
 // --- Reusable Header Component ---
@@ -199,7 +200,7 @@ export default function BuildingDetails() {
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-3
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [displayImages, setDisplayImages] = useState<DisplayImage[]>([]);
-  const [userImages, setUserImages] = useState<{id: string, storage_path: string}[]>([]);
+  const [userImages, setUserImages] = useState<{id: string, storage_path: string, is_generated?: boolean}[]>([]);
   const [selectedImage, setSelectedImage] = useState<DisplayImage | null>(null);
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
   const [linksLoading, setLinksLoading] = useState(true);
@@ -208,7 +209,7 @@ export default function BuildingDetails() {
 
   // New State for Edit View Enhancement
   const [userLinks, setUserLinks] = useState<{id: string, url: string, title: string}[]>([]);
-  const [pendingImages, setPendingImages] = useState<{id: string, file: File, preview: string}[]>([]);
+  const [pendingImages, setPendingImages] = useState<{id: string, file: File, preview: string, is_generated: boolean}[]>([]);
   const [likedImageIds, setLikedImageIds] = useState<Set<string>>(new Set());
   const [showCollections, setShowCollections] = useState(false);
   const [showLinkEditor, setShowLinkEditor] = useState(false);
@@ -310,7 +311,7 @@ export default function BuildingDetails() {
         // 2. Fetch User Entry (Direct Supabase call)
         const { data: userEntry, error: userEntryError } = await supabase
             .from("user_buildings")
-            .select("*, images:review_images(id, storage_path)")
+            .select("*, images:review_images(id, storage_path, is_generated)")
             .eq("user_id", user.id)
             .eq("building_id", resolvedBuildingId)
             .maybeSingle();
@@ -380,7 +381,7 @@ export default function BuildingDetails() {
         .select(`
           id, user_id, content, rating, status, tags, created_at, video_url,
           user:profiles(username, avatar_url),
-          images:review_images(id, storage_path, likes_count, created_at)
+          images:review_images(id, storage_path, likes_count, created_at, is_generated)
         `)
         .eq("building_id", resolvedBuildingId)
         .order("created_at", { ascending: false });
@@ -434,7 +435,8 @@ export default function BuildingDetails() {
                                 type: 'image',
                                 likes_count: img.likes_count || 0,
                                 created_at: img.created_at || entry.created_at,
-                                user: entry.user
+                                user: entry.user,
+                                is_generated: img.is_generated
                             });
                         }
                   });
@@ -620,7 +622,8 @@ export default function BuildingDetails() {
           setPendingImages(prev => [...prev, {
             id: crypto.randomUUID(),
             file: compressedFile,
-            preview: previewUrl
+            preview: previewUrl,
+            is_generated: false
           }]);
         } catch (error) {
           console.error("Error processing image", error);
@@ -736,7 +739,8 @@ export default function BuildingDetails() {
                   await supabase.from("review_images").insert({
                       review_id: reviewId,
                       user_id: user.id,
-                      storage_path: storagePath
+                      storage_path: storagePath,
+                      is_generated: img.is_generated
                   });
               }
               // Clear pending images
@@ -1055,7 +1059,8 @@ export default function BuildingDetails() {
                                         user: {
                                             username: profile?.username || user?.email || "Me",
                                             avatar_url: profile?.avatar_url || null
-                                        }
+                                        },
+                                        is_generated: img.is_generated
                                     };
 
                                     return (
@@ -1180,9 +1185,17 @@ export default function BuildingDetails() {
                                         {pendingImages.map((img) => (
                                             <div key={img.id} className="relative aspect-square group rounded-md overflow-hidden border bg-muted">
                                                 <img src={img.preview} className="w-full h-full object-cover" alt="Preview" />
+
+                                                <button
+                                                    onClick={() => setPendingImages(prev => prev.map(p => p.id === img.id ? { ...p, is_generated: !p.is_generated } : p))}
+                                                    className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase transition-colors z-10 ${img.is_generated ? 'bg-primary text-primary-foreground' : 'bg-black/60 text-white hover:bg-black/80'}`}
+                                                >
+                                                    {img.is_generated ? 'Render' : 'Photo'}
+                                                </button>
+
                                                 <button
                                                     onClick={() => removePendingImage(img.id)}
-                                                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                                 >
                                                     <Trash2 className="w-3 h-3" />
                                                 </button>
@@ -1456,6 +1469,7 @@ export default function BuildingDetails() {
         onPrev={handlePrevImage}
         hasNext={selectedIndex < displayImages.length - 1}
         hasPrev={selectedIndex > 0}
+        isGenerated={selectedImage?.is_generated}
       />
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>

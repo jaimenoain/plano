@@ -1203,6 +1203,7 @@ export interface Database {
           review_id: string
           storage_path: string
           user_id: string
+          is_generated: boolean
         }
         Insert: {
           created_at?: string
@@ -1211,6 +1212,7 @@ export interface Database {
           review_id: string
           storage_path: string
           user_id: string
+          is_generated?: boolean
         }
         Update: {
           created_at?: string
@@ -1219,6 +1221,7 @@ export interface Database {
           review_id?: string
           storage_path?: string
           user_id?: string
+          is_generated?: boolean
         }
         Relationships: [
           {

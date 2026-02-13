@@ -18,6 +18,7 @@ interface BuildingImageCardProps {
       username: string | null;
       avatar_url: string | null;
     } | null;
+    is_generated?: boolean;
   };
   initialIsLiked: boolean;
   onOpen: () => void;
@@ -97,6 +98,14 @@ export function BuildingImageCard({ image, initialIsLiked, onOpen }: BuildingIma
             <div className="bg-black/40 rounded-full p-3 backdrop-blur-sm">
               <Play className="w-6 h-6 text-white fill-white" />
             </div>
+          </div>
+        )}
+
+        {image.is_generated && (
+          <div className="absolute top-2 left-2 pointer-events-none">
+            <span className="bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+              Render
+            </span>
           </div>
         )}
       </div>
