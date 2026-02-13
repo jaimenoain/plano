@@ -140,6 +140,7 @@ describe('getPinStyle', () => {
       expect(style.tier).toBe('Cluster');
       expect(style.classes).toContain('bg-[#F6FFA0]/90');
       expect(style.classes).toContain('border-lime-high');
+      expect(style.classes).toContain('border-2');
     });
 
     it('returns high opacity white for Tier 2 clusters', () => {
@@ -148,6 +149,7 @@ describe('getPinStyle', () => {
       expect(style.tier).toBe('Cluster');
       expect(style.classes).toContain('bg-white/90');
       expect(style.classes).toContain('border-white');
+      expect(style.classes).toContain('border-2');
     });
 
     it('returns standard style for Tier 1 clusters', () => {
@@ -156,6 +158,8 @@ describe('getPinStyle', () => {
       expect(style.tier).toBe('Cluster');
       expect(style.classes).toContain('bg-[#f5f5f5]');
       expect(style.classes).toContain('border-gray-600');
+      expect(style.classes).toContain('border');
+      expect(style.classes).not.toContain('border-2');
     });
   });
 });
