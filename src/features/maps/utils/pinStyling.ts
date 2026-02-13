@@ -20,20 +20,20 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
     const size = item.count > 1000 ? 64 : item.count > 100 ? 48 : 32;
 
     // Smart Clusters logic based on max_tier
-    let classes = 'text-black font-bold border-2';
+    let classes = 'text-black font-bold';
     let zIndex = 10;
 
     if (item.max_tier === 3) {
       // Tier 3: Lime Tinted
-      classes += ' bg-[#F6FFA0]/90 border-lime-high';
+      classes += ' bg-[#F6FFA0]/90 border-lime-high border-2';
       zIndex = 20;
     } else if (item.max_tier === 2) {
       // Tier 2: White Tinted
-      classes += ' bg-white/90 border-white';
+      classes += ' bg-white/90 border-white border-2';
       zIndex = 20;
     } else {
       // Tier 1: Standard Solid
-      classes += ' bg-[#f5f5f5] border-gray-600';
+      classes += ' bg-[#f5f5f5] border-gray-600 border';
       zIndex = 10;
     }
 
