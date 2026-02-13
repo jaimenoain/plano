@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const buildingSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string(),
   hero_image_url: z.string().nullable().optional(),
   // Preprocess handles conversion from string input (e.g. from HTML input) to number or null
   year_completed: z.preprocess((val) => {
@@ -30,9 +30,13 @@ export const buildingSchema = z.object({
       slug: z.string()
     })
   ).optional().default([]),
-  functional_category_id: z.string().uuid("Category is required"),
+  functional_category_id: z.union([
+      z.string().uuid(),
+      z.literal(""),
+      z.null(),
+      z.undefined()
+  ]).transform(val => (val === "" || val === undefined) ? null : val),
   functional_typology_ids: z.array(z.string().uuid())
-    .min(1, "At least one typology is required")
     .refine((items) => new Set(items).size === items.length, {
       message: "Duplicate typologies are not allowed",
     }),
