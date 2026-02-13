@@ -40,8 +40,8 @@ export function ContactFacepile({ interactions, className }: ContactFacepileProp
   }
 
   return (
-    <div className={`flex items-center gap-2 mb-2 ${className || ""}`}>
-      <div className="flex -space-x-2">
+    <div className={`flex items-center gap-2 mb-2 min-w-0 ${className || ""}`}>
+      <div className="flex -space-x-2 shrink-0">
         {displayUsers.map((user) => (
           <Avatar key={user.id} className="h-6 w-6 border-2 border-black">
             <AvatarImage src={user.avatar_url || ""} alt={user.username || "User"} />
@@ -51,7 +51,7 @@ export function ContactFacepile({ interactions, className }: ContactFacepileProp
           </Avatar>
         ))}
       </div>
-      <span className="text-xs text-white/90 font-medium drop-shadow-md">
+      <span className="text-xs text-white/90 font-medium drop-shadow-md truncate">
         {text}
       </span>
     </div>
