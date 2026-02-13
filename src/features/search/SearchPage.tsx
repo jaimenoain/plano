@@ -94,7 +94,6 @@ function SearchPageContent() {
     <AppLayout
       isFullScreen={true}
       showHeader={true}
-      showNav={false}
       variant="map"
       searchBar={mobileSearchBar}
     >
