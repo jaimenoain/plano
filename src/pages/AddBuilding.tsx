@@ -5,7 +5,7 @@ import { LocationInput } from "@/components/ui/LocationInput";
 import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { importLibrary } from "@googlemaps/js-api-loader";
-import { Loader2, MapPin, Navigation, Plus, ArrowRight, Building2 } from "lucide-react";
+import { Loader2, MapPin, Navigation, Plus, ArrowRight, Building2, Layers } from "lucide-react";
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -30,6 +30,31 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getBuildingImageUrl } from "@/utils/image";
 
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
+
+const SATELLITE_STYLE = {
+  version: 8,
+  sources: {
+    "satellite-tiles": {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      ],
+      tileSize: 256,
+      attribution: "&copy; Esri"
+    }
+  },
+  layers: [
+    {
+      id: "satellite-layer",
+      type: "raster",
+      source: "satellite-tiles",
+      minzoom: 0,
+      maxzoom: 22
+    }
+  ]
+};
+
 // Helper to parse Geocoder results
 const STOP_WORDS = [
   'building', 'tower', 'house', 'center', 'centre', 'plaza', 'court',
@@ -40,7 +65,16 @@ const STOP_WORDS = [
   'shop', 'block', 'street', 'avenue', 'road'
 ];
 
-const extractLocationDetails = (result: any) => {
+interface GoogleAddressComponent {
+  long_name: string;
+  types: string[];
+}
+
+interface GoogleGeocoderResult {
+  address_components: GoogleAddressComponent[];
+}
+
+const extractLocationDetails = (result: GoogleGeocoderResult) => {
   let city = null;
   let country = null;
 
@@ -90,6 +124,7 @@ export default function AddBuilding() {
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [extractedLocation, setExtractedLocation] = useState<{ city: string | null; country: string | null }>({ city: null, country: null });
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [isSatellite, setIsSatellite] = useState(true);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -102,7 +137,7 @@ export default function AddBuilding() {
     if (nameParam && !nameInput) {
       setNameInput(nameParam);
     }
-  }, [searchParams]);
+  }, [searchParams, nameInput]);
 
   // Load Google Maps
   useEffect(() => {
@@ -143,7 +178,7 @@ export default function AddBuilding() {
         }
 
         const map = new Map();
-        data.forEach((item: any) => {
+        data.forEach((item: { building_id: string; status: string }) => {
             map.set(item.building_id, item.status);
         });
         return map;
@@ -579,7 +614,7 @@ export default function AddBuilding() {
             onClick={handleMapClick}
             mapLib={maplibregl}
             style={{ width: "100%", height: "100%" }}
-            mapStyle="https://tiles.openfreemap.org/styles/positron"
+            mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
             cursor="crosshair"
           >
             <NavigationControl position="top-right" />
@@ -672,6 +707,18 @@ export default function AddBuilding() {
                      <span>Checking nearby...</span>
                  </div>
              )}
+          </div>
+
+          <div className="absolute bottom-4 left-4 z-10">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsSatellite(!isSatellite)}
+              className="bg-background/90 backdrop-blur shadow-sm hover:bg-muted"
+            >
+              <Layers className="h-4 w-4 mr-2" />
+              {isSatellite ? "Map" : "Satellite"}
+            </Button>
           </div>
         </div>
       </div>
