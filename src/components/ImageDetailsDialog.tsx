@@ -298,15 +298,24 @@ export function ImageDetailsDialog({
                     muted={false} // Unmuted in full view
                 />
             ) : (
-                <img
-                  src={initialUrl || ""}
-                  alt="Expanded view"
-                  className="max-h-full max-w-full object-contain"
-                />
+                <div className="relative inline-flex max-h-full max-w-full items-center justify-center">
+                    <img
+                      src={initialUrl || ""}
+                      alt="Expanded view"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                    {isGenerated && (
+                        <div className="absolute top-4 left-4 z-20 pointer-events-none">
+                            <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+                                Render / CGI
+                            </span>
+                        </div>
+                    )}
+                </div>
             )}
           </div>
 
-          {isGenerated && (
+          {isGenerated && type === 'video' && (
              <div className="absolute top-4 left-4 z-20 pointer-events-none">
                  <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded backdrop-blur-sm border border-white/10 uppercase tracking-wider">
                      Render / CGI
