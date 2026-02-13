@@ -18,13 +18,13 @@ const createMockBuilding = (overrides: Partial<ClusterResponse>): ClusterRespons
 
 describe('getPinStyle', () => {
   describe('Suite 1: Library Logic (User Ratings)', () => {
-    it('returns Tier S (Dark, Size 44px) for rating 3', () => {
+    it('returns Tier S (Lime) for rating 3', () => {
       const item = createMockBuilding({ rating: 3, status: 'visited' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
       expect(style.size).toBe(44);
-      expect(style.classes).toContain('bg-primary');
-      expect(style.classes).toContain('text-primary-foreground');
+      expect(style.classes).toContain('bg-lime-high');
+      expect(style.classes).toContain('text-black');
     });
 
     it('returns Tier A (White, No Dot) for rating 2', () => {
