@@ -968,7 +968,13 @@ export default function BuildingDetails() {
                     <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground text-center p-6">
                         <ImageIcon className="w-12 h-12 text-muted-foreground/20 mb-3" />
                         <h3 className="font-medium text-muted-foreground mb-1">No image yet</h3>
-                        <p className="text-xs text-muted-foreground/50 max-w-[200px]">Be the first to add a photo of this building</p>
+                        <p className="text-xs text-muted-foreground/50 max-w-[200px] mb-4">Be the first to add a photo of this building</p>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}>
+                                <ImagePlus className="w-4 h-4 mr-2" />
+                                Upload photo
+                            </Link>
+                        </Button>
                     </div>
                 </div>
             )}
