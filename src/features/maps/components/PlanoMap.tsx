@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from "react-dom";
 import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
@@ -37,7 +37,11 @@ const SATELLITE_STYLE = {
   ]
 };
 
-function PlanoMapContent() {
+interface PlanoMapProps {
+  showEmptyMessage?: boolean;
+}
+
+function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
 
@@ -167,6 +171,14 @@ function PlanoMapContent() {
       mode: mode
   });
 
+  const visibleClustersCount = useMemo(() => {
+    if (!clusters || !bounds) return 0;
+    return clusters.filter(c =>
+        c.lat <= bounds.north && c.lat >= bounds.south &&
+        c.lng <= bounds.east && c.lng >= bounds.west
+    ).length;
+  }, [clusters, bounds]);
+
   const mapContent = (
     <div className={`relative h-full w-full overflow-hidden bg-background ${isExpanded ? "fixed inset-0 z-[9999]" : "z-0"}`}>
         <Map
@@ -190,6 +202,19 @@ function PlanoMapContent() {
             <NavigationControl position="bottom-right" />
             {bounds && <MapMarkers clusters={clusters || []} highlightedId={highlightedId} setHighlightedId={setHighlightedId} />}
         </Map>
+
+        {/* Empty State Overlay */}
+        {showEmptyMessage && !isLoading && bounds && visibleClustersCount === 0 && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-background/80 backdrop-blur-md border rounded-lg shadow-lg p-4 text-center max-w-xs animate-in fade-in zoom-in duration-300">
+              <p className="text-sm font-medium mb-2">No hay edificios en esta ubicación.</p>
+              <button
+                  onClick={() => mapRef.current?.zoomOut()}
+                  className="text-primary text-sm hover:underline font-semibold"
+              >
+                  Alejar para ver más
+              </button>
+          </div>
+        )}
 
         {/* Top Left: Satellite Toggle */}
         <div className="absolute top-2 left-2 flex flex-col gap-2 z-10">
@@ -227,10 +252,10 @@ function PlanoMapContent() {
   return mapContent;
 }
 
-export function PlanoMap() {
+export function PlanoMap({ showEmptyMessage }: PlanoMapProps) {
     return (
         <MapErrorBoundary>
-            <PlanoMapContent />
+            <PlanoMapContent showEmptyMessage={showEmptyMessage} />
         </MapErrorBoundary>
     );
 }
