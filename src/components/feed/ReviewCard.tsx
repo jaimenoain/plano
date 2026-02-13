@@ -280,7 +280,7 @@ export function ReviewCard({
             )}
 
             {entry.content && (
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-sm text-muted-foreground mb-2 break-words">
                 {entry.content}
               </p>
             )}
@@ -470,7 +470,7 @@ export function ReviewCard({
   ) : (
       <>
         {entry.content && (
-           <p className="text-sm text-foreground mb-2 leading-relaxed">
+           <p className="text-sm text-foreground mb-2 leading-relaxed break-words">
              {entry.content}
            </p>
         )}
