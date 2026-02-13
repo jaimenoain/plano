@@ -354,7 +354,7 @@ export function FeedHeroCard({
         </Avatar>
         <div className="flex flex-col gap-0.5 w-full">
           {/* Line 1: User Action Building */}
-          <div className="text-sm md:text-base text-foreground leading-snug">
+          <div className="text-sm md:text-base text-foreground leading-snug break-words">
             <span className="font-bold text-foreground">{username}</span>
             <span className="text-muted-foreground/60 font-normal"> {actionText} </span>
             <span className="font-bold text-foreground">{mainTitle}</span>
@@ -392,12 +392,12 @@ export function FeedHeroCard({
       )}
 
       {/* Hero Images (UGC) - Full Bleed */}
-      <div className="w-full bg-secondary overflow-hidden">
+      <div className="w-full bg-secondary overflow-hidden min-w-0">
         {renderImages()}
       </div>
 
       {/* Footer */}
-      <div className="p-4 pt-3 flex items-center gap-4 mt-auto border-t border-border/50">
+      <div className="p-4 pt-3 flex flex-wrap items-center gap-4 mt-auto border-t border-border/50">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -436,7 +436,7 @@ export function FeedHeroCard({
                  disabled={isSaving}
                >
                  <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3px]' : ''}`} />
-                 <span className={`text-xs ${isVisited ? '' : 'font-medium'}`}>Visited</span>
+                 <span className={`text-xs hidden sm:inline ${isVisited ? '' : 'font-medium'}`}>Visited</span>
                </button>
              )}
 
@@ -451,7 +451,7 @@ export function FeedHeroCard({
                  disabled={isSaving}
                >
                  <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-primary' : ''}`} />
-                 <span className={`text-xs ${isSaved ? '' : 'font-medium'}`}>Save</span>
+                 <span className={`text-xs hidden sm:inline ${isSaved ? '' : 'font-medium'}`}>Save</span>
                </button>
              )}
 
@@ -467,7 +467,7 @@ export function FeedHeroCard({
                  title="Hide from map"
                >
                  <EyeOff className="h-4 w-4" />
-                 <span className={`text-xs ${isIgnored ? '' : 'font-medium'}`}>Hide</span>
+                 <span className={`text-xs hidden sm:inline ${isIgnored ? '' : 'font-medium'}`}>Hide</span>
                </button>
              )}
            </div>
