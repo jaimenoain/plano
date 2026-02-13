@@ -357,7 +357,7 @@ export function FeedHeroCard({
           <AvatarImage src={avatarUrl} />
           <AvatarFallback>{userInitial}</AvatarFallback>
         </Avatar>
-        <div className="flex flex-col gap-0.5 w-full">
+        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           {/* Line 1: User Action Building */}
           <div className="text-sm md:text-base text-foreground leading-snug break-words">
             <span className="font-bold text-foreground">{username}</span>
@@ -390,7 +390,7 @@ export function FeedHeroCard({
       {/* Content Body (Review Text) */}
       {entry.content && (
         <div className="px-4 pt-3 pb-2 flex flex-col gap-2">
-           <p className="text-sm text-foreground leading-relaxed">
+           <p className="text-sm text-foreground leading-relaxed break-words">
              {entry.content}
            </p>
         </div>
