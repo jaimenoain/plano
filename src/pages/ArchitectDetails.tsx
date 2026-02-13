@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { MetaHead } from "@/components/common/MetaHead";
-import { MapPin, Globe, Edit } from "lucide-react";
+import { MapPin, Globe, Edit, Map as MapIcon } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 
 export default function ArchitectDetails() {
@@ -82,34 +82,39 @@ export default function ArchitectDetails() {
           )}
         </div>
 
-        {(architect.headquarters || architect.website_url || architect.bio) && (
-          <div className="space-y-4 max-w-3xl">
-            {architect.bio && (
-              <p className="text-muted-foreground whitespace-pre-line">{architect.bio}</p>
+        <div className="space-y-4 max-w-3xl">
+          {architect.bio && (
+            <p className="text-muted-foreground whitespace-pre-line">{architect.bio}</p>
+          )}
+          <div className="flex flex-wrap gap-4 text-sm">
+            {architect.headquarters && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <MapPin className="h-4 w-4" />
+                <span>{architect.headquarters}</span>
+              </div>
             )}
-            <div className="flex flex-wrap gap-4 text-sm">
-              {architect.headquarters && (
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>{architect.headquarters}</span>
-                </div>
-              )}
-              {architect.website_url && (
-                <div className="flex items-center gap-1.5">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                  <a
-                    href={architect.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    Website
-                  </a>
-                </div>
-              )}
-            </div>
+            {architect.website_url && (
+              <div className="flex items-center gap-1.5">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                <a
+                  href={architect.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Website
+                </a>
+              </div>
+            )}
+            <Link
+              to={`/search?filters=${encodeURIComponent(JSON.stringify({ query: architect.name }))}`}
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <MapIcon className="h-4 w-4" />
+              <span>View on Map</span>
+            </Link>
           </div>
-        )}
+        </div>
 
         {buildings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-muted/30 rounded-lg border border-dashed">
