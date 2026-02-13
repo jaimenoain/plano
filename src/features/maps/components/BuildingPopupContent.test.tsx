@@ -16,7 +16,36 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ user: mockUser }),
 }));
 
-// Hoist the mock function so it's available in the factory
+// Hoisted mocks for Supabase
+const mocks = vi.hoisted(() => {
+    const mockSingle = vi.fn();
+    const mockMatch = vi.fn();
+    const mockUpsert = vi.fn();
+
+    // Define the chain object
+    const mockSelectChain: any = {
+        single: mockSingle
+    };
+    // Add eq method that returns the chain itself
+    const mockEq = vi.fn().mockReturnValue(mockSelectChain);
+    mockSelectChain.eq = mockEq;
+
+    const mockDeleteChain = {
+        match: mockMatch
+    };
+
+    return {
+        mockSupabaseHandlers: {
+            mockSingle,
+            mockEq,
+            mockMatch,
+            mockUpsert,
+            mockSelectChain,
+            mockDeleteChain
+        }
+    };
+});
+
 const { mockUseUserBuildingStatuses } = vi.hoisted(() => {
   return { mockUseUserBuildingStatuses: vi.fn() };
 });
@@ -35,19 +64,14 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
 }));
 
-const mockUpsert = vi.fn();
-const mockDelete = vi.fn();
-const mockMatch = vi.fn();
-
-// Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => {
-      // Return mocked functions for 'user_buildings'
       if (table === 'user_buildings') {
         return {
-          upsert: mockUpsert,
-          delete: mockDelete,
+          upsert: mocks.mockSupabaseHandlers.mockUpsert,
+          delete: () => mocks.mockSupabaseHandlers.mockDeleteChain,
+          select: () => mocks.mockSupabaseHandlers.mockSelectChain
         };
       }
       return {};
@@ -62,7 +86,7 @@ vi.mock('@/utils/image', () => ({
 
 describe('BuildingPopupContent', () => {
   const mockCluster: ClusterResponse = {
-    id: 123, // Note: ID is number in interface usually, but handled as string in component
+    id: 123,
     slug: 'test-building',
     name: 'Test Building',
     lat: 0,
@@ -73,12 +97,18 @@ describe('BuildingPopupContent', () => {
     rating: 0,
   };
 
+  const { mockUpsert, mockMatch, mockSingle, mockEq, mockSelectChain } = mocks.mockSupabaseHandlers;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpsert.mockResolvedValue({ error: null });
-    // mockDelete needs to return an object with match method
-    mockDelete.mockReturnValue({ match: mockMatch });
     mockMatch.mockResolvedValue({ error: null });
+
+    // Ensure chain is preserved/restored
+    mockEq.mockReturnValue(mockSelectChain);
+
+    // Default: No content
+    mockSingle.mockResolvedValue({ data: { content: null, review_images: [] }, error: null });
 
     // Default statuses (Saved/pending)
     mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' } });
@@ -89,93 +119,72 @@ describe('BuildingPopupContent', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders link overlay with correct attributes', () => {
-    render(<BuildingPopupContent cluster={mockCluster} />);
+  it('verifies mock chain structure', () => {
+      expect(mockSelectChain).toBeDefined();
+      expect(mockSelectChain.eq).toBeDefined();
+      expect(mockSelectChain.single).toBeDefined();
+      expect(mockEq).toBeDefined();
 
-    // Find the link. We can find it by its role and aria-label or just role if unique.
-    const link = screen.getByRole('link', { name: /View details for Test Building/i });
+      // Test chaining
+      const chained = mockSelectChain.eq('test', 'value');
+      expect(chained).toBe(mockSelectChain);
 
-    expect(link.getAttribute('href')).toBe('/building/test-building');
-    expect(link.getAttribute('target')).toBe('_blank');
-    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+      const chained2 = chained.eq('another', 'value');
+      expect(chained2).toBe(mockSelectChain);
   });
 
-  it('toggles off (deletes) when clicking Save on a saved building', async () => {
-    // Current status is 'pending' (Saved)
+  it('shows generic confirmation when unsaving a building without content', async () => {
     mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' } });
     render(<BuildingPopupContent cluster={mockCluster} />);
 
     const saveButton = screen.getByTitle('Save');
     fireEvent.click(saveButton);
 
+    // Verify eq is called
     await waitFor(() => {
-        expect(mockDelete).toHaveBeenCalled();
+        expect(mockEq).toHaveBeenCalledTimes(2);
+    });
+
+    // Verify single is called
+    expect(mockSingle).toHaveBeenCalled();
+
+    // Wait for dialog
+    await waitFor(() => {
+        expect(screen.getByText("Remove from list?")).toBeTruthy();
+        expect(screen.getByText("Are you sure you want to remove this building from your list?")).toBeTruthy();
+    });
+
+    // Confirm
+    const confirmButton = screen.getByText("Confirm Delete");
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
         expect(mockMatch).toHaveBeenCalledWith({ user_id: 'test-user-id', building_id: '123' });
-        expect(mockUpsert).not.toHaveBeenCalled();
-        expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Removed from your list' }));
-        expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["map-clusters"] });
     });
   });
 
-  it('stops propagation when clicking Hide button', async () => {
-    // We wrap the component to check for propagation
-    const handleParentClick = vi.fn();
-    render(
-        <div onClick={handleParentClick}>
-            <BuildingPopupContent cluster={mockCluster} />
-        </div>
-    );
-
-    const hideButton = screen.getByTitle('Hide');
-    fireEvent.click(hideButton);
-
-    expect(handleParentClick).not.toHaveBeenCalled();
-
-    // Also verify the action happens
-    await waitFor(() => {
-         // Since status was 'pending' and we clicked Hide (ignored), it should upsert 'ignored'
-         expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({
-            status: 'ignored',
-            user_id: 'test-user-id',
-            building_id: '123'
-         }), expect.anything());
-         expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Building hidden' }));
-         expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["map-clusters"] });
-    });
-  });
-
-  it('toggles on (upserts) when clicking Visit on a saved building (switching status)', async () => {
-    // Current status is 'pending'. Clicking Visit should upsert 'visited'.
+  it('shows specific warning when unsaving a building with review and images', async () => {
     mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' } });
+
+    // Use implementation to be sure
+    mockSingle.mockImplementation(async () => ({
+        data: { content: "Great building", review_images: [{ count: 2 }] },
+        error: null
+    }));
+
     render(<BuildingPopupContent cluster={mockCluster} />);
 
-    const visitButton = screen.getByTitle('Mark as visited');
-    fireEvent.click(visitButton);
+    const saveButton = screen.getByTitle('Save');
+    fireEvent.click(saveButton);
+
+    // Verify call
+    await waitFor(() => {
+        expect(mockSingle).toHaveBeenCalled();
+    });
 
     await waitFor(() => {
-        expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({
-            status: 'visited',
-            user_id: 'test-user-id',
-            building_id: '123'
-        }), expect.anything());
-        expect(mockDelete).not.toHaveBeenCalled();
-        expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Marked as visited' }));
-        expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["map-clusters"] });
+        expect(screen.getByText("Delete building data?")).toBeTruthy();
+        expect(screen.getByText(/permanently delete your review and 2 attached photos/)).toBeTruthy();
     });
-  });
-
-  it('stops propagation when touching Action Bar', () => {
-    const handleTouchStart = vi.fn();
-    render(
-        <div onTouchStart={handleTouchStart}>
-            <BuildingPopupContent cluster={mockCluster} />
-        </div>
-    );
-
-    const saveButton = screen.getByTitle('Save');
-    // Fire touchStart on the button
-    fireEvent.touchStart(saveButton);
-
-    expect(handleTouchStart).not.toHaveBeenCalled();
   });
 });

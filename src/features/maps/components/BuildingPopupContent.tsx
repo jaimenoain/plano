@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBuildingImageUrl } from '@/utils/image';
 import { useAuth } from '@/hooks/useAuth';
@@ -30,6 +40,12 @@ export function BuildingPopupContent({
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
 
+  // Confirmation State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState("");
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [pendingDeletion, setPendingDeletion] = useState<(() => void) | null>(null);
+
   // Convert cluster ID to string for status lookup
   const buildingId = String(cluster.id);
   const viewerStatus = statuses[buildingId];
@@ -38,15 +54,12 @@ export function BuildingPopupContent({
   const isVisited = viewerStatus === 'visited';
   const isIgnored = viewerStatus === 'ignored';
 
-  const handleAction = async (
+  const performUpdate = async (
     status: 'pending' | 'visited' | 'ignored',
     successMessage: string,
     removeMessage: string
   ) => {
-    if (!user) {
-      toast({ title: "Please log in first" });
-      return;
-    }
+    if (!user) return;
 
     setIsSaving(true);
     try {
@@ -79,7 +92,75 @@ export function BuildingPopupContent({
       toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
       setIsSaving(false);
+      setConfirmOpen(false); // Ensure dialog is closed
     }
+  };
+
+  const handleAction = async (
+    status: 'pending' | 'visited' | 'ignored',
+    successMessage: string,
+    removeMessage: string
+  ) => {
+    if (!user) {
+      toast({ title: "Please log in first" });
+      return;
+    }
+
+    // If we are REMOVING the status (toggling off)
+    if (viewerStatus === status) {
+        // Check for content (reviews, images)
+        setIsSaving(true);
+        try {
+            const { data, error } = await supabase
+                .from('user_buildings')
+                .select('content, review_images(count)')
+                .eq('user_id', user.id)
+                .eq('building_id', buildingId)
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // Ignore "no rows" error if that happens, though unusual here
+                console.error("Error checking content:", error);
+            }
+
+            const hasReview = data?.content && data.content.trim().length > 0;
+            const imageCount = data?.review_images?.[0]?.count || 0;
+
+            if (hasReview || imageCount > 0) {
+                let msg = "You are about to remove this building from your list.";
+                if (hasReview && imageCount > 0) {
+                    msg += ` This will permanently delete your review and ${imageCount} attached photo${imageCount > 1 ? 's' : ''}.`;
+                } else if (hasReview) {
+                    msg += " This will permanently delete your written review.";
+                } else if (imageCount > 0) {
+                    msg += ` This will permanently delete ${imageCount} attached photo${imageCount > 1 ? 's' : ''}.`;
+                }
+
+                setConfirmTitle("Delete building data?");
+                setConfirmMessage(msg);
+            } else {
+                setConfirmTitle("Remove from list?");
+                setConfirmMessage("Are you sure you want to remove this building from your list?");
+            }
+
+            setPendingDeletion(() => () => performUpdate(status, successMessage, removeMessage));
+            setConfirmOpen(true);
+            setIsSaving(false); // Stop loading so dialog can show
+            return;
+
+        } catch (err) {
+            console.error("Error in check:", err);
+            // Fallback to confirming anyway or just proceeding? Better to confirm safe.
+            setConfirmTitle("Remove from list?");
+            setConfirmMessage("Are you sure you want to remove this building?");
+            setPendingDeletion(() => () => performUpdate(status, successMessage, removeMessage));
+            setConfirmOpen(true);
+            setIsSaving(false);
+            return;
+        }
+    }
+
+    // Otherwise, just do it (Upsert)
+    performUpdate(status, successMessage, removeMessage);
   };
 
   const handleSave = (e: React.MouseEvent) => {
@@ -278,9 +359,9 @@ export function BuildingPopupContent({
             onTouchStart={(e) => e.stopPropagation()}
         >
             <Button
-                variant="ghost"
+                variant={isVisited ? "default" : "ghost"}
                 size="icon"
-                className={`h-8 w-8 hover:bg-primary/10 ${isVisited ? 'text-primary' : 'text-muted-foreground'}`}
+                className={`h-8 w-8 ${isVisited ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-muted-foreground hover:bg-primary/10'}`}
                 onClick={handleVisit}
                 title="Mark as visited"
                 disabled={isSaving}
@@ -289,9 +370,9 @@ export function BuildingPopupContent({
             </Button>
 
             <Button
-                variant="ghost"
+                variant={isSaved ? "default" : "ghost"}
                 size="icon"
-                className={`h-8 w-8 hover:bg-primary/10 ${isSaved ? 'text-primary' : 'text-muted-foreground'}`}
+                className={`h-8 w-8 ${isSaved ? '' : 'text-muted-foreground hover:bg-primary/10'}`}
                 onClick={handleSave}
                 title="Save"
                 disabled={isSaving}
@@ -300,9 +381,9 @@ export function BuildingPopupContent({
             </Button>
 
             <Button
-                variant="ghost"
+                variant={isIgnored ? "destructive" : "ghost"}
                 size="icon"
-                className={`h-8 w-8 hover:bg-destructive/10 ${isIgnored ? 'text-destructive' : 'text-muted-foreground'}`}
+                className={`h-8 w-8 ${isIgnored ? '' : 'text-muted-foreground hover:bg-destructive/10'}`}
                 onClick={handleHide}
                 title="Hide"
                 disabled={isSaving}
@@ -325,6 +406,26 @@ export function BuildingPopupContent({
             )}
         </div>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    {confirmMessage}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setConfirmOpen(false)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                    onClick={() => pendingDeletion && pendingDeletion()}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                    Confirm Delete
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
