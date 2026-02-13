@@ -1076,7 +1076,7 @@ export default function BuildingDetails() {
                     <>
                         <div className="flex flex-col gap-4">
                             {/* Toggle Status */}
-                            <div className="flex items-center gap-2 w-full">
+                            <div className="flex items-center gap-2 w-full py-4 border-y border-dashed border-border/60">
                                 <Button
                                     variant={userStatus === 'pending' ? "default" : "secondary"}
                                     size="sm"
