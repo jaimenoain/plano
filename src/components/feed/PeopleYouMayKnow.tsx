@@ -13,7 +13,7 @@ export function PeopleYouMayKnow() {
     queryKey: ["people-you-may-know", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_people_you_may_know", {
-        p_limit: 3
+        p_limit: 5
       });
       if (error) throw error;
 
@@ -63,39 +63,41 @@ export function PeopleYouMayKnow() {
   if (isLoading || !suggestions || suggestions.length === 0) return null;
 
   return (
-    <div className="p-5 border rounded-xl bg-card shadow-sm space-y-4">
+    <div className="p-5 border rounded-xl bg-card shadow-sm space-y-4 max-w-full">
       <h3 className="font-semibold">People you may know</h3>
-      <div className="space-y-4">
+      <div className="flex overflow-x-auto gap-4 pb-2 -mx-1 px-1 snap-x no-scrollbar">
         {suggestions.map((person) => (
-          <div key={person.id} className="flex items-center justify-between gap-3">
-            <Link to={`/profile/${person.username || person.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-1 min-w-0">
-              <Avatar className="h-10 w-10">
+          <div key={person.id} className="flex flex-col items-center justify-between gap-3 min-w-[160px] max-w-[160px] snap-center p-4 border rounded-lg bg-background/50 shrink-0 h-full">
+            <Link to={`/profile/${person.username || person.id}`} className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity w-full text-center">
+              <Avatar className="h-14 w-14 mb-1 border-2 border-background shadow-sm">
                 <AvatarImage src={person.avatar_url || undefined} />
                 <AvatarFallback>{person.username?.[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
-              <div className="flex flex-col min-w-0">
-                <span className="text-sm font-medium leading-none truncate">{person.username}</span>
-                <div className="flex flex-col text-xs text-muted-foreground mt-1 gap-0.5">
+              <div className="flex flex-col items-center w-full min-w-0 gap-1">
+                <span className="text-sm font-semibold leading-none truncate w-full">{person.username}</span>
+                <div className="flex flex-col items-center text-xs text-muted-foreground w-full gap-0.5">
                   {person.mutual_follows && person.mutual_follows.length > 0 ? (
-                    <MutualFacepile users={person.mutual_follows} />
+                    <div className="scale-90 origin-top w-full flex justify-center">
+                        <MutualFacepile users={person.mutual_follows} className="justify-center" />
+                    </div>
                   ) : (
-                    <>
+                    <div className="h-5 flex items-center justify-center w-full">
                       {person.mutual_count > 0 && (
-                        <span>
-                          {person.mutual_count} mutual connection{person.mutual_count !== 1 ? 's' : ''}
+                        <span className="truncate">
+                          {person.mutual_count} mutual
                         </span>
                       )}
-                    </>
+                    </div>
                   )}
                   {person.group_mutual_count > 0 && (
-                    <span>
-                      {person.group_mutual_count} group{person.group_mutual_count !== 1 ? 's' : ''} in common
+                     <span className="truncate w-full text-[10px] text-muted-foreground/80">
+                      {person.group_mutual_count} group{person.group_mutual_count !== 1 ? 's' : ''} common
                     </span>
                   )}
                 </div>
               </div>
             </Link>
-            <FollowButton userId={person.id} isFollower={person.is_follows_me} className="shrink-0" />
+            <FollowButton userId={person.id} isFollower={person.is_follows_me} className="w-full mt-auto" />
           </div>
         ))}
       </div>
