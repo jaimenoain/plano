@@ -340,7 +340,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         )}
 
         {/* Add Buttons Row */}
-        {(!showYear || !showArchitects || !showStyles) && (
+        {(!showYear || !showArchitects) && (
             <div className="flex gap-2 flex-wrap">
                 {!showYear && (
                     <Button
@@ -362,17 +362,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
                         onClick={() => setShowArchitects(true)}
                     >
                         <Plus className="h-3 w-3 mr-1" /> Add Architects
-                    </Button>
-                )}
-                {!showStyles && (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full h-8"
-                        onClick={() => setShowStyles(true)}
-                    >
-                        <Plus className="h-3 w-3 mr-1" /> Add Styles
                     </Button>
                 )}
             </div>
