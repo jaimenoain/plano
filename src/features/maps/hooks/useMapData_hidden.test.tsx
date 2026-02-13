@@ -101,4 +101,27 @@ describe('useMapData (hidden)', () => {
       })
     }));
   });
+
+  it('should filter out items with status "ignored" even if returned by RPC', async () => {
+    // Setup RPC to return one normal and one ignored item
+    const mockData = [
+      { id: 1, lat: 0, lng: 0, status: 'saved', tier_rank: 'Standard' },
+      { id: 2, lat: 0, lng: 0, status: 'ignored', tier_rank: 'Standard' }, // Should be filtered
+    ];
+    rpcMock.mockResolvedValue({ data: mockData, error: null });
+
+    const filters = {};
+    const bounds = { north: 10, south: 0, east: 10, west: 0 };
+    const zoom = 10;
+
+    const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Verify only the non-ignored item is returned
+    expect(result.current.clusters).toHaveLength(1);
+    expect(result.current.clusters?.[0].id).toBe(1);
+  });
 });

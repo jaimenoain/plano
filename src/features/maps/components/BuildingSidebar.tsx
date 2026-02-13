@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useMapContext } from '../providers/MapContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -118,7 +118,18 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: B
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const buildings = data?.pages.flat() || [];
+  // Sort buildings: Hidden (ignored) items go to the bottom
+  const buildings = useMemo(() => {
+    const allBuildings = data?.pages.flat() || [];
+    return [...allBuildings].sort((a, b) => {
+        const isHiddenA = a.status === 'ignored';
+        const isHiddenB = b.status === 'ignored';
+
+        if (isHiddenA && !isHiddenB) return 1;
+        if (!isHiddenA && isHiddenB) return -1;
+        return 0;
+    });
+  }, [data?.pages]);
 
   return (
     <ScrollArea className="h-full w-full">
