@@ -137,6 +137,7 @@ export interface Database {
           country: string | null
           functional_category_id: string | null
           location_precision: Database["public"]["Enums"]["location_precision"]
+          merged_into_id: string | null
         }
         Insert: {
           created_at?: string
@@ -152,6 +153,7 @@ export interface Database {
           country?: string | null
           functional_category_id?: string | null
           location_precision?: Database["public"]["Enums"]["location_precision"]
+          merged_into_id?: string | null
         }
         Update: {
           created_at?: string
@@ -167,6 +169,7 @@ export interface Database {
           country?: string | null
           functional_category_id?: string | null
           location_precision?: Database["public"]["Enums"]["location_precision"]
+          merged_into_id?: string | null
         }
         Relationships: [
           {
