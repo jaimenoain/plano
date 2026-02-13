@@ -50,7 +50,7 @@ export function FeedClusterCard({
         <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
       </Avatar>
 
-      <div className="text-sm text-foreground/90 flex-1 truncate leading-none">
+      <div className="text-sm text-foreground/90 flex-1 truncate leading-none min-w-0">
         <span className="font-semibold">{username}</span>
         <span className="text-muted-foreground"> {action} </span>
         {uniqueCount > 2 ? (
