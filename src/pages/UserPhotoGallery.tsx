@@ -6,6 +6,13 @@ import { Loader2, Image as ImageIcon, Heart } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Photo {
   id: string;
@@ -28,6 +35,7 @@ export default function UserPhotoGallery() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileUsername, setProfileUsername] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'recent' | 'popular'>('recent');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,7 +92,7 @@ export default function UserPhotoGallery() {
           )
         `)
         .eq("user_id", targetUserId)
-        .order("created_at", { ascending: false });
+        .order(sortOrder === 'popular' ? "likes_count" : "created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching photos:", error);
@@ -119,7 +127,7 @@ export default function UserPhotoGallery() {
     };
 
     fetchData();
-  }, [routeUsername, currentUser]);
+  }, [routeUsername, currentUser, sortOrder]);
 
   const handleLike = async (e: React.MouseEvent, photoId: string) => {
     e.preventDefault();
@@ -198,6 +206,20 @@ export default function UserPhotoGallery() {
   return (
     <AppLayout title={`${profileUsername}'s Photos`} showBack showLogo={false}>
       <div className="p-4">
+        {photos.length > 0 && (
+          <div className="flex justify-end mb-4">
+            <Select value={sortOrder} onValueChange={(val: 'recent' | 'popular') => setSortOrder(val)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Recent</SelectItem>
+                <SelectItem value="popular">Popular</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {photos.length === 0 ? (
            <div className="flex flex-col items-center justify-center min-h-[40vh] text-muted-foreground gap-2">
              <div className="bg-secondary/50 p-4 rounded-full">
