@@ -353,11 +353,12 @@ export function BuildingPopupContent({
         )}
 
         {/* Action Bar */}
-        <div
+        {user && (
+          <div
             className="flex items-center justify-between border-t pt-2 relative z-20"
             onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-        >
+          >
             <Button
                 variant={isVisited ? "default" : "ghost"}
                 size="icon"
@@ -404,7 +405,8 @@ export function BuildingPopupContent({
                     </Button>
                 </div>
             )}
-        </div>
+          </div>
+        )}
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
