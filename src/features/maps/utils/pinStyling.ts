@@ -77,7 +77,16 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
   if (isLibraryItem) {
     // Context 1: My Library
     if (userRating >= 3) {
-      tier = 'S';
+      // Tier S (User): Dark Theme (Charcoal BG / Lime Text)
+      return {
+        tier: 'S',
+        shape,
+        zIndex: 100,
+        size: 44,
+        classes: 'bg-primary border-white border-2 text-primary-foreground',
+        showDot: false,
+        showContent: true
+      };
     } else if (userRating === 2) {
       tier = 'A';
     } else if (userRating === 1) {
