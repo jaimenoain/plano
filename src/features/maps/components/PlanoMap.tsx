@@ -206,12 +206,12 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
         {/* Empty State Overlay */}
         {showEmptyMessage && !isLoading && bounds && visibleClustersCount === 0 && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-background/80 backdrop-blur-md border rounded-lg shadow-lg p-4 text-center max-w-xs animate-in fade-in zoom-in duration-300">
-              <p className="text-sm font-medium mb-2">No hay edificios en esta ubicación.</p>
+              <p className="text-sm font-medium mb-2">No buildings in this location.</p>
               <button
                   onClick={() => mapRef.current?.zoomOut()}
                   className="text-primary text-sm hover:underline font-semibold"
               >
-                  Alejar para ver más
+                  Zoom out to see more
               </button>
           </div>
         )}
