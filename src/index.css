@@ -70,6 +70,8 @@
     -moz-osx-font-smoothing: grayscale;
     /* Prevent text resizing on mobile rotation which disorients seniors */
     -webkit-text-size-adjust: 100%; 
+    overflow-x: hidden;
+    width: 100%;
   }
 
   body {
@@ -77,6 +79,8 @@
     /* Base font size 16px is critical for legibility */
     font-size: 16px; 
     line-height: 1.5;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   ::selection {

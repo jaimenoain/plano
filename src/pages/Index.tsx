@@ -28,7 +28,7 @@ function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col w-full overflow-x-hidden">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border h-16 shadow-sm">
         <div className="container h-full mx-auto px-4 flex items-center justify-between">
@@ -47,7 +47,7 @@ function Landing() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 w-full min-w-0 overflow-x-hidden">
         <LandingHero />
         <LandingMarquee />
         <div className="container mx-auto py-24 px-4">

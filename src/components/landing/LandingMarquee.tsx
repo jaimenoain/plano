@@ -47,8 +47,8 @@ const MOCK_ACTIVITIES = [
 
 export const LandingMarquee = () => {
   return (
-    <div className="w-full overflow-hidden border-y border-border bg-background py-3">
-      <div className="relative flex w-full max-w-[100vw] items-center">
+    <div className="w-0 min-w-full overflow-hidden border-y border-border bg-background py-3">
+      <div className="relative flex w-full items-center">
         <motion.div
           className="flex flex-nowrap gap-0"
           animate={{ x: "-50%" }}

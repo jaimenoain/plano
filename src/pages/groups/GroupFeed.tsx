@@ -170,7 +170,7 @@ export default function GroupFeed() {
   const entries = data?.pages.flat() || [];
 
   return (
-    <div className="w-full max-w-full min-w-0 space-y-6">
+    <div className="w-full max-w-full min-w-0 space-y-6 px-4 md:px-0">
       <div className="flex items-center space-x-2">
         <Switch
           id="show-off-session"
