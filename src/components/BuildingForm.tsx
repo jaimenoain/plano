@@ -258,13 +258,12 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Name {mode === 'create' && "*"}</Label>
+          <Label htmlFor="name">Name</Label>
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Sydney Opera House"
-            required={mode === 'create'}
             autoComplete="off"
           />
         </div>
@@ -391,7 +390,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="category-select">Category {mode === 'create' && "*"}</Label>
+            <Label htmlFor="category-select">Category</Label>
             {isLoadingCategories ? (
                <Skeleton className="h-10 w-full" />
             ) : (
@@ -411,7 +410,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
           </div>
 
           <div className="space-y-2">
-            <Label>Typology {mode === 'create' && "*"}</Label>
+            <Label>Typology</Label>
             {isLoadingTypologies ? (
                <div className="flex flex-wrap gap-2">
                  <Skeleton className="h-8 w-24" />
