@@ -78,99 +78,104 @@ function SearchPageContent() {
     setViewMode(prev => prev === 'map' ? 'list' : 'map');
   };
 
-  const mobileSearchBar = (
-    <DiscoverySearchInput
-      value={searchValue}
-      onSearchChange={handleSearchChange}
-      onLocationSelect={handleLocationSelect}
-      onTopLocationChange={setTopLocation}
-      placeholder="Search..."
-      className="w-full"
-    />
-  );
-
   return (
     <AppLayout
       isFullScreen={true}
-      showHeader={true}
+      showHeader={false}
       showNav={false}
       variant="map"
-      searchBar={mobileSearchBar}
     >
       <div className="relative flex flex-col h-full w-full overflow-hidden">
 
-        {/* Desktop Sidebar (Fixed) */}
-        <div
-            className={`hidden md:flex flex-col w-[400px] bg-background border-r border-border absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
-            style={{ left: isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0 }}
-        >
-           <div className="p-4 border-b space-y-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <DiscoverySearchInput
-                 value={searchValue}
-                 onSearchChange={handleSearchChange}
-                 onLocationSelect={handleLocationSelect}
-                 onTopLocationChange={setTopLocation}
-                 placeholder="Search buildings, architects..."
-                 className="w-full"
-              />
-              <MapControls />
-           </div>
-           <div className="flex-1 overflow-hidden relative">
-              <BuildingSidebar
-                topLocation={topLocation}
-                onLocationClick={handleLocationResultClick}
-              />
-           </div>
-        </div>
-
-        {/* Map Container (Main) */}
-        <div
-          className={`flex-1 h-full relative transition-all duration-300`}
-          style={{
-            marginLeft: isMobile ? 0 : 400 + (isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0)
-          }}
-        >
-           <PlanoMap />
-        </div>
-
-        {/* Mobile Toggle Button */}
+        {/* Mobile Search Header */}
         {isMobile && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
-            <Button
-              onClick={toggleViewMode}
-              className="rounded-full shadow-lg h-12 px-6"
-              variant="default"
-              aria-label={viewMode === 'map' ? 'Show list view' : 'Show map view'}
-            >
-              {viewMode === 'map' ? (
-                <>
-                  <ListIcon className="mr-2 h-4 w-4" />
-                  List
-                </>
-              ) : (
-                <>
-                  <MapIcon className="mr-2 h-4 w-4" />
-                  Map
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-
-        {/* Mobile List Overlay */}
-        {isMobile && viewMode === 'list' && (
-           <div className="absolute inset-0 bg-background z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
-              <div className="p-4 border-b space-y-3">
-                 <MapControls />
-              </div>
-              <div className="flex-1 overflow-hidden relative pb-20">
-                 <BuildingSidebar
-                    topLocation={topLocation}
-                    onLocationClick={handleLocationResultClick}
-                 />
-              </div>
+           <div className="z-50 p-4 bg-background border-b shrink-0">
+              <DiscoverySearchInput
+                value={searchValue}
+                onSearchChange={handleSearchChange}
+                onLocationSelect={handleLocationSelect}
+                onTopLocationChange={setTopLocation}
+                placeholder="Search..."
+                className="w-full"
+                dropdownMode="relative"
+              />
            </div>
         )}
+
+        <div className="flex-1 relative w-full overflow-hidden">
+          {/* Desktop Sidebar (Fixed) */}
+          <div
+              className={`hidden md:flex flex-col w-[400px] bg-background border-r border-border absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
+              style={{ left: isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0 }}
+          >
+             <div className="p-4 border-b space-y-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <DiscoverySearchInput
+                   value={searchValue}
+                   onSearchChange={handleSearchChange}
+                   onLocationSelect={handleLocationSelect}
+                   onTopLocationChange={setTopLocation}
+                   placeholder="Search buildings, architects..."
+                   className="w-full"
+                />
+                <MapControls />
+             </div>
+             <div className="flex-1 overflow-hidden relative">
+                <BuildingSidebar
+                  topLocation={topLocation}
+                  onLocationClick={handleLocationResultClick}
+                />
+             </div>
+          </div>
+
+          {/* Map Container (Main) */}
+          <div
+            className={`flex-1 h-full relative transition-all duration-300`}
+            style={{
+              marginLeft: isMobile ? 0 : 400 + (isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0)
+            }}
+          >
+             <PlanoMap />
+          </div>
+
+          {/* Mobile Toggle Button */}
+          {isMobile && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
+              <Button
+                onClick={toggleViewMode}
+                className="rounded-full shadow-lg h-12 px-6"
+                variant="default"
+                aria-label={viewMode === 'map' ? 'Show list view' : 'Show map view'}
+              >
+                {viewMode === 'map' ? (
+                  <>
+                    <ListIcon className="mr-2 h-4 w-4" />
+                    List
+                  </>
+                ) : (
+                  <>
+                    <MapIcon className="mr-2 h-4 w-4" />
+                    Map
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Mobile List Overlay */}
+          {isMobile && viewMode === 'list' && (
+             <div className="absolute inset-0 bg-background z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
+                <div className="p-4 border-b space-y-3">
+                   <MapControls />
+                </div>
+                <div className="flex-1 overflow-hidden relative pb-20">
+                   <BuildingSidebar
+                      topLocation={topLocation}
+                      onLocationClick={handleLocationResultClick}
+                   />
+                </div>
+             </div>
+          )}
+        </div>
 
       </div>
     </AppLayout>

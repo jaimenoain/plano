@@ -23,6 +23,7 @@ interface DiscoverySearchInputProps {
   className?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onTopLocationChange?: (location: { description: string; place_id: string } | null) => void;
+  dropdownMode?: 'absolute' | 'relative';
 }
 
 export function DiscoverySearchInput({
@@ -33,6 +34,7 @@ export function DiscoverySearchInput({
   className,
   onKeyDown,
   onTopLocationChange,
+  dropdownMode = 'absolute',
 }: DiscoverySearchInputProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
@@ -152,7 +154,10 @@ export function DiscoverySearchInput({
         </div>
 
         {open && (status === "OK") && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
+          <div className={cn(
+            dropdownMode === 'absolute' ? "absolute top-[calc(100%+4px)] left-0 w-full" : "relative mt-1 w-full",
+            "z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95"
+          )}>
             <CommandList>
               <CommandGroup heading="Locations">
                 {data.map(({ place_id, description }) => (
