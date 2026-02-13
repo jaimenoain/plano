@@ -323,7 +323,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
       <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-20 pointer-events-none" />
 
       {/* Info Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 z-30 text-white pb-24 md:pb-6 pointer-events-none">
+      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 z-30 text-white pb-24 md:pb-6 pointer-events-none break-words">
         {facepileInteractions.length > 0 && (
           <ContactFacepile interactions={facepileInteractions} />
         )}
@@ -348,7 +348,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
       </div>
 
       {/* Save Button (kept for manual click) */}
-      <div className="absolute bottom-8 right-6 z-40 pointer-events-auto">
+      <div className="absolute bottom-8 right-4 md:right-6 z-40 pointer-events-auto">
         <Button
           variant={isSaved ? "default" : "secondary"}
           size="icon"

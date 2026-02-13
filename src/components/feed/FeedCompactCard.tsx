@@ -44,7 +44,7 @@ export function FeedCompactCard({
       onClick={handleCardClick}
       className="flex items-center gap-3 py-1.5 px-2 w-full group cursor-pointer hover:bg-muted/50 rounded-lg transition-colors"
     >
-      <Avatar className="h-6 w-6 border border-border/50">
+      <Avatar className="h-6 w-6 border border-border/50 shrink-0">
         <AvatarImage src={avatarUrl} />
         <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
       </Avatar>

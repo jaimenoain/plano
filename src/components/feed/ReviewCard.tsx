@@ -321,11 +321,11 @@ export function ReviewCard({
 
   const Header = !hideUser && (
         <div className={`p-3 md:p-4 flex items-center gap-3 border-b border-border/40`}>
-          <Avatar className="h-10 w-10 border border-border/50">
+          <Avatar className="h-10 w-10 border border-border/50 shrink-0">
             <AvatarImage src={avatarUrl} />
             <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
-          <div className="text-sm md:text-base text-foreground leading-snug">
+          <div className="text-sm md:text-base text-foreground leading-snug min-w-0 flex-1 break-words">
             <span className="font-semibold">{username}</span>
             <span className="text-muted-foreground/60 font-normal"> {action} </span>
             <span className="font-semibold text-foreground">{mainTitle}</span>
@@ -478,7 +478,7 @@ export function ReviewCard({
   );
 
   const Footer = (
-        <div className={`flex items-center gap-4 ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border/50' : 'mt-auto pt-3 border-t border-border/50'}`}>
+        <div className={`flex items-center gap-4 flex-wrap ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border/50' : 'mt-auto pt-3 border-t border-border/50'}`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
