@@ -83,13 +83,28 @@ export function DiscoverySearchInput({
     setValue: setPlacesValue,
     suggestions: { status, data },
     clearSuggestions,
+    init,
   } = usePlacesAutocomplete({
     requestOptions: {
       types: ["(regions)"],
     },
     debounce: 300,
-    initOnMount: true,
+    initOnMount: false,
   });
+
+  // Initialize places autocomplete when script is loaded
+  useEffect(() => {
+    if (scriptLoaded) {
+      init();
+    }
+  }, [scriptLoaded, init]);
+
+  // Re-trigger search when ready becomes true
+  useEffect(() => {
+    if (ready && value) {
+      setPlacesValue(value);
+    }
+  }, [ready, value, setPlacesValue]);
 
   // Update suggestions and top location
   useEffect(() => {
