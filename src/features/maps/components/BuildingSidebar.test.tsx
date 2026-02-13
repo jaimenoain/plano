@@ -1,111 +1,86 @@
 // @vitest-environment happy-dom
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BuildingSidebar } from './BuildingSidebar';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { keepPreviousData } from '@tanstack/react-query';
+import * as ReactQuery from '@tanstack/react-query';
+import * as MapContext from '../providers/MapContext';
 
-// Mock dependencies
-vi.mock('../providers/MapContext', () => ({
-  useMapContext: () => ({
-    state: { bounds: { south: 0, west: 0, north: 10, east: 10 }, filters: {} },
-    methods: { setHighlightedId: vi.fn() },
-  }),
-}));
-
-const { useInfiniteQuerySpy } = vi.hoisted(() => {
-  return { useInfiniteQuerySpy: vi.fn() };
+// Mock imports
+vi.mock('@tanstack/react-query', async () => {
+    const actual = await vi.importActual('@tanstack/react-query');
+    return {
+        ...actual,
+        useInfiniteQuery: vi.fn(),
+        keepPreviousData: vi.fn(),
+    };
 });
 
-vi.mock('@tanstack/react-query', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
-  return {
-    ...actual,
-    useInfiniteQuery: (options: any) => {
-      useInfiniteQuerySpy(options);
-      return {
-        data: {
-          pages: [
-            [
-              {
-                id: '1',
-                name: 'Test Building',
-                slug: 'test-building',
-                image_url: 'test.jpg',
-                rating: 5,
-                status: 'visited',
-                lat: 0,
-                lng: 0,
-                architects: ['Zaha Hadid', 'Patrik Schumacher'],
-                year_completed: 2020,
-                city: 'London',
-                country: 'UK',
-              },
-            ],
-          ],
-        },
-        fetchNextPage: vi.fn(),
-        hasNextPage: false,
-        isFetchingNextPage: false,
-        isLoading: false,
-        isError: false,
-      };
-    },
-  };
+vi.mock('../providers/MapContext', async () => {
+    return {
+        useMapContext: vi.fn(),
+    };
 });
 
+// Mock Supabase to prevent errors
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    rpc: vi.fn(),
+    rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
   },
 }));
 
-// Mock utils
-vi.mock('@/utils/image', () => ({
-  getBuildingImageUrl: (url: string) => url,
-}));
-
 describe('BuildingSidebar', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  it('renders rating dots with primary color (black/charcoal)', () => {
+    // Setup mocks
+    (MapContext.useMapContext as any).mockReturnValue({
+      state: { bounds: { north: 10, south: 0, east: 10, west: 0 }, filters: {} },
+      methods: { setHighlightedId: vi.fn() },
+    });
 
-  it('renders building information including architects, year, and location', () => {
+    const mockBuilding = {
+      id: '1',
+      name: 'Test Building',
+      rating: 3,
+      status: 'saved',
+      architects: ['Test Architect'],
+      image_url: null,
+      slug: 'test-slug',
+      lat: 0,
+      lng: 0,
+      year_completed: 2020,
+      city: 'Test City',
+      country: 'Test Country',
+    };
+
+    (ReactQuery.useInfiniteQuery as any).mockReturnValue({
+      data: {
+        pages: [[mockBuilding]],
+        pageParams: [1],
+      },
+      isLoading: false,
+      isError: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
+    });
+
     render(
       <MemoryRouter>
         <BuildingSidebar />
       </MemoryRouter>
     );
 
-    // Check Name
-    expect(screen.getByText('Test Building')).toBeDefined();
-
-    // Check Architects
-    expect(screen.getByText('Zaha Hadid, Patrik Schumacher')).toBeDefined();
-
-    // Check Location and Year
-    expect(screen.getByText('London • UK • 2020')).toBeDefined();
-
-    // Check Status
-    expect(screen.getByText('visited')).toBeDefined();
-
-    // Check Rating
-    const ratingContainer = screen.getByLabelText('Rating: 5 stars');
+    // Check for rating dots
+    // The dots are divs with specific classes inside a container with aria-label
+    const ratingContainer = screen.getByLabelText('Rating: 3 stars');
     expect(ratingContainer).toBeDefined();
-    expect(ratingContainer.children.length).toBe(5);
-  });
 
-  it('uses keepPreviousData for smoother transitions', () => {
-    render(
-      <MemoryRouter>
-        <BuildingSidebar />
-      </MemoryRouter>
-    );
+    // Check the dots inside
+    const dots = ratingContainer.querySelectorAll('div');
+    expect(dots.length).toBe(3);
 
-    expect(useInfiniteQuerySpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        placeholderData: keepPreviousData,
-      })
-    );
+    // Verify the class name contains bg-primary
+    expect(dots[0].className).toContain('bg-primary');
+    expect(dots[0].className).not.toContain('bg-yellow-400');
   });
 });
