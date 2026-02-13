@@ -126,6 +126,9 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: B
         {/* Location Suggestions (replaces topLocation) */}
         {suggestions && suggestions.length > 0 ? (
           <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+              Jump to Location
+            </h4>
             {suggestions.map((suggestion) => (
               <Card
                 key={suggestion.place_id}
@@ -138,27 +141,34 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: B
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{suggestion.description}</p>
-                    <p className="text-xs text-muted-foreground">Jump to location</p>
+                    <p className="text-xs text-muted-foreground">Location</p>
                   </div>
                 </CardContent>
               </Card>
             ))}
+            <div className="h-px bg-border my-4" />
           </div>
         ) : topLocation ? (
-          <Card
-            className="cursor-pointer overflow-hidden border-transparent bg-muted/30 hover:bg-muted/50 transition-colors"
-            onClick={() => onLocationClick?.(topLocation.place_id)}
-          >
-            <CardContent className="flex items-center gap-3 p-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <MapPin className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{topLocation.description}</p>
-                <p className="text-xs text-muted-foreground">Jump to location</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+              Jump to Location
+            </h4>
+            <Card
+              className="cursor-pointer overflow-hidden border-transparent bg-muted/30 hover:bg-muted/50 transition-colors"
+              onClick={() => onLocationClick?.(topLocation.place_id)}
+            >
+              <CardContent className="flex items-center gap-3 p-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <MapPin className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{topLocation.description}</p>
+                  <p className="text-xs text-muted-foreground">Location</p>
+                </div>
+              </CardContent>
+            </Card>
+            <div className="h-px bg-border my-4" />
+          </div>
         ) : null}
 
         {/* Loading State */}
@@ -179,6 +189,9 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: B
            </div>
         ) : (
            <>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                 Buildings
+              </h4>
               {buildings.map((building) => {
                 const imageUrl = getBuildingImageUrl(building.image_url);
                 return (

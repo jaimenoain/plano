@@ -57,12 +57,18 @@ export function DiscoverySearchInput({
         return;
       }
       const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      if (!apiKey) return;
+      if (!apiKey) {
+        console.error("DiscoverySearchInput: VITE_GOOGLE_MAPS_API_KEY is missing. Location search disabled.");
+        return;
+      }
 
       try {
         setOptions({ key: apiKey, version: "weekly" });
-        await importLibrary("places");
-        await importLibrary("geocoding");
+        // Add timeout to prevent hanging indefinitely
+        await Promise.race([
+          Promise.all([importLibrary("places"), importLibrary("geocoding")]),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Google Maps load timeout")), 10000))
+        ]);
         setScriptLoaded(true);
       } catch (error) {
         console.error("Error loading Google Maps script", error);
