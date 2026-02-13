@@ -226,7 +226,7 @@ export default function GroupLayout() {
       />
 
       {/* Hero Header */}
-      <div className="relative bg-gradient-to-b from-muted/30 to-background pt-10 pb-2 px-4 border-b border-border/40 overflow-hidden">
+      <div className="relative w-full bg-gradient-to-b from-muted/30 to-background pt-10 pb-2 px-4 border-b border-border/40 overflow-hidden">
         {group.cover_url && (
           <>
             <div className="absolute inset-0">
@@ -349,7 +349,7 @@ export default function GroupLayout() {
           </div>
 
           {/* Navigation Bar */}
-          <div className="relative">
+          <div className="relative w-full min-w-0">
             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pt-4">
               {navItems.map((item) => {
                 const active = isActive(item.path);
