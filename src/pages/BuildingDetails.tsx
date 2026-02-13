@@ -933,41 +933,45 @@ export default function BuildingDetails() {
                     {displayImages.map((img) => {
                         const isVideoPlaceholder = img.type === 'video' && !img.poster;
                         return (
-                        <div key={img.id} className="w-full rounded-xl overflow-hidden shadow-lg border border-white/10 relative group bg-black/5">
-                            <img
-                              src={img.type === 'video' && img.poster ? img.poster : img.url}
-                              className={`w-full h-auto max-h-[600px] object-cover cursor-pointer hover:opacity-90 transition-opacity ${isVideoPlaceholder ? 'opacity-50' : ''}`}
-                              alt={building.name}
-                              onClick={() => setSelectedImage(img)}
-                            />
+                        <div key={img.id} className="w-full space-y-3 group">
+                            <div className="relative rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/5">
+                                <img
+                                src={img.type === 'video' && img.poster ? img.poster : img.url}
+                                className={`w-full h-auto max-h-[600px] object-cover cursor-pointer hover:opacity-90 transition-opacity ${isVideoPlaceholder ? 'opacity-50' : ''}`}
+                                alt={building.name}
+                                onClick={() => setSelectedImage(img)}
+                                />
 
-                            {/* Video Indicator */}
-                            {img.type === 'video' && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="bg-black/40 rounded-full p-3 backdrop-blur-sm">
-                                        <Play className="w-6 h-6 text-white fill-white" />
+                                {/* Video Indicator */}
+                                {img.type === 'video' && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <div className="bg-black/40 rounded-full p-3 backdrop-blur-sm">
+                                            <Play className="w-6 h-6 text-white fill-white" />
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
-                            {/* Attribution Overlay */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex items-end justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                            {/* Attribution Strip */}
+                            <div className="flex items-center justify-between px-1">
                                 <div className="flex items-center gap-2">
-                                    <Avatar className="w-6 h-6 border border-white/20">
+                                    <Avatar className="w-8 h-8 border border-border">
                                         <AvatarImage src={img.user?.avatar_url || undefined} />
-                                        <AvatarFallback className="text-[10px] bg-background/20 text-white border-white/20">{img.user?.username?.[0]?.toUpperCase()}</AvatarFallback>
+                                        <AvatarFallback className="text-[10px] bg-muted text-muted-foreground border-border">{img.user?.username?.[0]?.toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-semibold text-white drop-shadow-sm">{img.user?.username}</span>
-                                        <span className="text-[10px] text-white/80 drop-shadow-sm">{format(new Date(img.created_at), 'MMM yyyy')}</span>
+                                        <span className="text-sm font-medium text-foreground">{img.user?.username || "Anonymous"}</span>
+                                        <span className="text-xs text-muted-foreground">{format(new Date(img.created_at), 'MMM d, yyyy')}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3 mb-0.5">
-                                    <div className="flex items-center gap-1">
-                                         <Heart className="w-4 h-4 text-white" />
-                                         <span className="text-xs text-white font-medium drop-shadow-sm">{img.likes_count}</span>
+                                <div className="flex items-center gap-4 text-muted-foreground">
+                                    <div className="flex items-center gap-1.5">
+                                         <Heart className="w-4 h-4" />
+                                         <span className="text-xs font-medium">{img.likes_count}</span>
                                     </div>
-                                    <MessageCircle className="w-4 h-4 text-white" />
+                                    <div className="flex items-center gap-1.5">
+                                         <MessageCircle className="w-4 h-4" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
