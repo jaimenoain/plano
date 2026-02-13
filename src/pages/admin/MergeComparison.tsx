@@ -411,6 +411,15 @@ export default function MergeComparison() {
                                         className="bg-white min-h-[60px]"
                                     />
                                 </div>
+
+                                <div className="flex justify-end gap-2 pt-4 border-t border-green-100">
+                                     <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className="text-red-600 hover:text-red-700 hover:bg-red-100/50">
+                                         <X className="h-4 w-4 mr-1" /> Cancel
+                                     </Button>
+                                     <Button size="sm" variant="default" onClick={handleEditSave} className="bg-green-600 hover:bg-green-700">
+                                         <Save className="h-4 w-4 mr-1" /> Save
+                                     </Button>
+                                </div>
                             </div>
                         ) : (
                             <>
