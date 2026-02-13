@@ -37,6 +37,7 @@ interface ImageDetailsDialogProps {
   onPrev?: () => void;
   hasNext?: boolean;
   hasPrev?: boolean;
+  isGenerated?: boolean;
 }
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -53,7 +54,8 @@ export function ImageDetailsDialog({
   onNext,
   onPrev,
   hasNext,
-  hasPrev
+  hasPrev,
+  isGenerated
 }: ImageDetailsDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -303,6 +305,14 @@ export function ImageDetailsDialog({
                 />
             )}
           </div>
+
+          {isGenerated && (
+             <div className="absolute top-4 left-4 z-20 pointer-events-none">
+                 <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+                     Render / CGI
+                 </span>
+             </div>
+          )}
 
           {hasNext && (
             <Button

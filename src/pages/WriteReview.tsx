@@ -53,6 +53,7 @@ interface ReviewImage {
   file?: File;
   preview: string;
   storage_path?: string;
+  is_generated?: boolean;
 }
 
 interface VideoState {
@@ -197,14 +198,15 @@ export default function WriteReview() {
             // Fetch Images
             const { data: remoteImages } = await supabase
               .from('review_images')
-              .select('id, storage_path')
+              .select('id, storage_path, is_generated')
               .eq('review_id', userBuilding.id);
 
             if (remoteImages) {
               const loadedImages: ReviewImage[] = remoteImages.map(img => ({
                 id: img.id,
                 preview: getBuildingImageUrl(img.storage_path) || "",
-                storage_path: img.storage_path
+                storage_path: img.storage_path,
+                is_generated: img.is_generated
               }));
               setImages(loadedImages);
             }
@@ -238,7 +240,8 @@ export default function WriteReview() {
         newImages.push({
           id: crypto.randomUUID(),
           file: compressedFile,
-          preview: previewUrl
+          preview: previewUrl,
+          is_generated: false
         });
       } catch (error) {
         console.error("Error compressing image:", error);
@@ -641,7 +644,21 @@ export default function WriteReview() {
         }
       }
 
-      // 4. Handle New Image Uploads
+      // 4. Update Existing Images Metadata
+      const existingImages = images.filter(img => img.storage_path && !deletedImages.some(d => d.id === img.id));
+      if (existingImages.length > 0) {
+        const updatePromises = existingImages.map(async (img) => {
+             const { error: updateError } = await supabase
+              .from('review_images')
+              .update({ is_generated: img.is_generated })
+              .eq('id', img.id);
+
+            if (updateError) throw updateError;
+        });
+        await Promise.all(updatePromises);
+      }
+
+      // 5. Handle New Image Uploads
       const newImages = images.filter(img => img.file);
       if (newImages.length > 0) {
         const uploadPromises = newImages.map(async (img) => {
@@ -655,7 +672,8 @@ export default function WriteReview() {
             .insert({
               review_id: reviewId,
               user_id: user.id,
-              storage_path: storagePath
+              storage_path: storagePath,
+              is_generated: img.is_generated
             });
 
           if (insertError) throw insertError;
@@ -862,9 +880,17 @@ export default function WriteReview() {
                                  alt="Preview"
                                  className="w-full h-full object-cover"
                                />
+
+                               <button
+                                   onClick={() => setImages(prev => prev.map(p => p.id === img.id ? { ...p, is_generated: !p.is_generated } : p))}
+                                   className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase transition-colors z-10 ${img.is_generated ? 'bg-primary text-primary-foreground' : 'bg-black/60 text-white hover:bg-black/80'}`}
+                               >
+                                   {img.is_generated ? 'Render' : 'Photo'}
+                               </button>
+
                                <button
                                  onClick={() => removeImage(img.id)}
-                                 className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                 className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                >
                                  <X className="w-4 h-4" />
                                </button>
