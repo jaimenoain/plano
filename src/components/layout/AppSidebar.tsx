@@ -12,7 +12,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
-import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settings, LogOut } from "lucide-react";
+import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settings, LogOut, Bell } from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ const navItems = [
   { icon: Play, label: "Explore", path: "/explore" },
   { icon: Search, label: "Search", path: "/search" },
   { icon: Users, label: "Connect", path: "/connect" },
+  { icon: Bell, label: "Notifications", path: "/notifications" },
   { icon: UserIcon, label: "You", path: "/profile" },
 ];
 
