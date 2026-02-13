@@ -236,7 +236,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: B
                                 {building.rating > 0 && (
                                     <div className="flex gap-1" aria-label={`Rating: ${building.rating} stars`}>
                                         {Array.from({ length: building.rating }).map((_, i) => (
-                                            <div key={i} className="h-2 w-2 rounded-full bg-yellow-400" />
+                                            <div key={i} className="h-2 w-2 rounded-full bg-primary" />
                                         ))}
                                     </div>
                                 )}
