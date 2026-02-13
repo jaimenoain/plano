@@ -10,6 +10,7 @@ import { getBuildingUrl } from "@/utils/url";
 import { useState } from "react";
 import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 interface FeedHeroCardProps {
   entry: FeedReview;
@@ -255,8 +256,12 @@ export function FeedHeroCard({
           </div>
           {/* Remaining Images - Side by Side */}
           <div
-            className="grid gap-0.5"
-            style={{ gridTemplateColumns: `repeat(${count - 1}, minmax(0, 1fr))` }}
+            className={cn(
+              "grid gap-0.5",
+              count === 3 && "grid-cols-2",
+              count === 4 && "grid-cols-3",
+              count === 5 && "grid-cols-2 sm:grid-cols-4"
+            )}
           >
             {images.slice(1).map((img) => (
               <div key={img.id} className="relative w-full aspect-square">
@@ -287,7 +292,7 @@ export function FeedHeroCard({
             />
           </div>
           {/* Row 2: 4 images + box = 5 columns */}
-          <div className="grid grid-cols-5 gap-0.5">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-0.5">
             {images.slice(1, 5).map((img) => (
               <div key={img.id} className="relative w-full aspect-square">
                 <img

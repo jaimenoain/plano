@@ -43,7 +43,7 @@ export function FeedClusterCard({
   return (
     <div
       onClick={handleClick}
-      className="flex items-center gap-3 py-1.5 px-2 w-full group cursor-pointer hover:bg-muted/50 rounded-lg transition-colors"
+      className="flex items-center gap-3 py-1.5 px-2 w-full max-w-full group cursor-pointer hover:bg-muted/50 rounded-lg transition-colors"
     >
       <Avatar className="h-6 w-6 border border-border/50">
         <AvatarImage src={avatarUrl} />
