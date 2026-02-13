@@ -11,9 +11,13 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-const mockUser = { id: 'test-user-id' };
+// Hoisted mocks for useAuth
+const { mockUseAuth } = vi.hoisted(() => {
+  return { mockUseAuth: vi.fn() };
+});
+
 vi.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({ user: mockUser }),
+  useAuth: mockUseAuth,
 }));
 
 // Hoisted mocks for Supabase
@@ -101,6 +105,7 @@ describe('BuildingPopupContent', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { id: 'test-user-id' } });
     mockUpsert.mockResolvedValue({ error: null });
     mockMatch.mockResolvedValue({ error: null });
 
@@ -186,5 +191,20 @@ describe('BuildingPopupContent', () => {
         expect(screen.getByText("Delete building data?")).toBeTruthy();
         expect(screen.getByText(/permanently delete your review and 2 attached photos/)).toBeTruthy();
     });
+  });
+
+  it('hides action buttons when user is not logged in', () => {
+    // Override user for this test
+    mockUseAuth.mockReturnValue({ user: null });
+
+    render(<BuildingPopupContent cluster={mockCluster} />);
+
+    // Buttons should NOT be present
+    expect(screen.queryByTitle('Save')).toBeNull();
+    expect(screen.queryByTitle('Mark as visited')).toBeNull();
+    expect(screen.queryByTitle('Hide')).toBeNull();
+
+    // The content itself should still be visible
+    expect(screen.getByText('Test Building')).toBeTruthy();
   });
 });
