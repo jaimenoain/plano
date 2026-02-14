@@ -1,13 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/FollowButton";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import { MutualFacepile } from "@/components/connect/MutualFacepile";
+import { X } from "lucide-react";
 
 export function PeopleYouMayKnow() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: suggestions, isLoading } = useQuery({
     queryKey: ["people-you-may-know", user?.id],
@@ -60,6 +62,22 @@ export function PeopleYouMayKnow() {
     enabled: !!user,
   });
 
+  const hideMutation = useMutation({
+    mutationFn: async (suggestedId: string) => {
+        if (!user) return;
+        const { error } = await supabase
+            .from("suggested_profile_hides" as any)
+            .insert({
+                user_id: user.id,
+                suggested_user_id: suggestedId
+            });
+        if (error) throw error;
+    },
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["people-you-may-know"] });
+    }
+  });
+
   if (isLoading || !suggestions || suggestions.length === 0) return null;
 
   return (
@@ -67,7 +85,19 @@ export function PeopleYouMayKnow() {
       <h3 className="font-semibold">People you may know</h3>
       <div className="flex overflow-x-auto gap-4 pb-2 -mx-1 px-1 snap-x no-scrollbar">
         {suggestions.map((person) => (
-          <div key={person.id} className="flex flex-col items-center justify-between gap-3 min-w-[160px] max-w-[160px] snap-center p-4 border rounded-lg bg-background/50 shrink-0 h-full">
+          <div key={person.id} className="relative flex flex-col items-center justify-between gap-3 min-w-[160px] max-w-[160px] snap-center p-4 border rounded-lg bg-background/50 shrink-0 h-full group">
+            <button
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    hideMutation.mutate(person.id);
+                }}
+                className="absolute top-1 right-1 p-1 text-muted-foreground/30 hover:text-foreground hover:bg-muted rounded-full transition-colors z-10"
+                title="Hide suggestion"
+            >
+                <X className="h-4 w-4" />
+            </button>
+
             <Link to={`/profile/${person.username || person.id}`} className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity w-full text-center">
               <Avatar className="h-14 w-14 mb-1 border-2 border-background shadow-sm">
                 <AvatarImage src={person.avatar_url || undefined} />

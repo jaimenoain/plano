@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Star } from "lucide-react";
+import { Star, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/FollowButton";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ interface UserRowProps {
   isFollower?: boolean; // Is the user following me? (For "Follow Back" logic)
   isCloseFriend?: boolean;
   onToggleCloseFriend?: () => void;
+  onHide?: () => void;
   mutualFollows?: {
     id: string;
     username: string | null;
@@ -28,6 +29,7 @@ export function UserRow({
   isFollower = false,
   isCloseFriend,
   onToggleCloseFriend,
+  onHide,
   mutualFollows
 }: UserRowProps) {
   const navigate = useNavigate();
@@ -40,7 +42,7 @@ export function UserRow({
 
   return (
     <div
-      className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border/50"
+      className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border/50 relative group"
       onClick={() => navigate(`/profile/${user.username?.toLowerCase() || user.id}`)}
     >
     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -55,6 +57,16 @@ export function UserRow({
       </div>
 
       <div className="flex items-center gap-2 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
+        {onHide && (
+            <button
+                onClick={onHide}
+                className="p-1.5 hover:bg-muted rounded-full transition-colors focus:outline-none text-muted-foreground hover:text-foreground"
+                title="Hide suggestion"
+            >
+                <X className="h-4 w-4" />
+            </button>
+        )}
+
         {onToggleCloseFriend && (
           <button
             onClick={onToggleCloseFriend}
