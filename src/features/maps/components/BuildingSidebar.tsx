@@ -60,7 +60,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: B
         status: filters.status,
         min_rating: filters.minRating,
         personal_min_rating: filters.personalMinRating,
-        rated_by: filters.ratedBy,
+        rated_by: filters.contacts?.map((c) => c.name) || filters.ratedBy,
         filter_contacts: filters.filterContacts,
         collections: filters.collections?.map((c) => c.id),
         hide_visited: filters.hideVisited,

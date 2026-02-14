@@ -57,6 +57,7 @@ export interface MapFilters {
   contactMinRating?: MichelinRating;
   filterContacts?: boolean;
   ratedBy?: string[];
+  contacts?: { id: string; name: string; avatar_url?: string | null }[];
 
   // Collections
   collections?: { id: string; name: string }[];

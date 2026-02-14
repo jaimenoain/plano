@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ArchitectSelect } from '@/features/search/components/ArchitectSelect';
+import { ContactPicker } from '@/features/search/components/ContactPicker';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useMapContext } from '../providers/MapContext';
 import { MapMode, MichelinRating } from '@/types/plano-map';
@@ -35,6 +36,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { UserSearchResult } from '@/features/search/hooks/useUserSearch';
 
 interface MultiSelectCheckboxListProps {
   items: { id: string; name: string }[];
@@ -132,6 +134,20 @@ export function FilterDrawer() {
     setFilter('architects', architects);
   };
 
+  const handleContactsChange = (newContacts: UserSearchResult[]) => {
+      const mapped = newContacts.map(c => ({
+          id: c.id,
+          name: c.username || '',
+          avatar_url: c.avatar_url || null
+      }));
+      setFilter('contacts', mapped);
+
+      // Auto-Selection UX: If contacts selected and no status set, default to visited/saved
+      if (mapped.length > 0 && (!filters.status || filters.status.length === 0)) {
+          setFilter('status', ['visited', 'saved']);
+      }
+  };
+
   const handleMinRatingChange = (value: number) => {
     setFilter('minRating', value as MichelinRating);
   };
@@ -221,6 +237,7 @@ export function FilterDrawer() {
           filters: {
               ...filters,
               architects: undefined,
+              contacts: undefined,
               category: undefined,
               typologies: undefined,
               materials: undefined,
@@ -236,6 +253,7 @@ export function FilterDrawer() {
         ...filters,
         // Global Taxonomy
         architects: undefined,
+        contacts: undefined,
         category: undefined,
         typologies: undefined,
         materials: undefined,
@@ -257,6 +275,13 @@ export function FilterDrawer() {
   const currentPersonalMinRating = filters.personalMinRating ?? 0;
   const currentStatus = filters.status ?? [];
   const currentArchitects = filters.architects ?? [];
+  const currentContacts = useMemo(() => {
+    return (filters.contacts || []).map(c => ({
+        id: c.id,
+        username: c.name,
+        avatar_url: c.avatar_url || null
+    } as UserSearchResult));
+  }, [filters.contacts]);
   const currentCollectionIds = filters.collectionIds ?? [];
   const hideSaved = filters.hideSaved ?? false;
 
@@ -271,6 +296,7 @@ export function FilterDrawer() {
 
     // Global filters
     if (currentArchitects.length > 0) count++;
+    if (currentContacts.length > 0) count++;
     if (currentCategory) count++;
     if (currentTypologies.length > 0) count++;
     if (currentMaterials.length > 0) count++;
@@ -291,6 +317,7 @@ export function FilterDrawer() {
   }, [
       mode,
       currentArchitects,
+      currentContacts,
       currentMinRating,
       hideSaved,
       currentPersonalMinRating,
@@ -318,6 +345,10 @@ export function FilterDrawer() {
       default: return 'All';
     }
   };
+
+  const isContactMode = currentContacts.length > 0;
+  // If contact mode is active, we behave like Library mode but for the contact
+  const effectiveMode = isContactMode ? 'library' : mode;
 
   return (
     <Sheet>
@@ -360,7 +391,7 @@ export function FilterDrawer() {
             />
           </div>
 
-          {mode === 'discover' ? (
+          {effectiveMode === 'discover' ? (
             /* Discover Mode Section */
             <>
               <div className="space-y-4">
@@ -402,12 +433,14 @@ export function FilterDrawer() {
             <>
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-xs">
-                  Library Settings
+                  {isContactMode ? 'Contact Filters' : 'Library Settings'}
                 </h3>
 
                 {/* Status */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Status</Label>
+                  <Label className="text-sm font-medium">
+                      {isContactMode ? 'Curator Status' : 'Status'}
+                  </Label>
                   <ToggleGroup
                     type="multiple"
                     value={currentStatus}
@@ -441,7 +474,9 @@ export function FilterDrawer() {
                 {/* Personal Rating */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Your Rating</Label>
+                    <Label className="text-sm font-medium">
+                        {isContactMode ? 'Your Rating (Overlap)' : 'Your Rating'}
+                    </Label>
                     {currentPersonalMinRating > 0 && (
                       <span className="text-xs text-muted-foreground">Min {currentPersonalMinRating}</span>
                     )}
@@ -452,18 +487,21 @@ export function FilterDrawer() {
                   />
                 </div>
 
-                {/* Collections */}
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="collections" className="border-none">
-                    <AccordionTrigger className="text-sm font-medium py-2 hover:no-underline">Collections</AccordionTrigger>
-                    <AccordionContent>
-                      <CollectionMultiSelect
-                        selectedIds={currentCollectionIds}
-                        onChange={handleCollectionsChange}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                {/* Collections - Only show in My Library mode, maybe irrelevant for contact mode?
+                    Unless we support 'Friend's Collections' later. For now, hide in contact mode to reduce clutter/confusion. */}
+                {!isContactMode && (
+                    <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="collections" className="border-none">
+                        <AccordionTrigger className="text-sm font-medium py-2 hover:no-underline">Collections</AccordionTrigger>
+                        <AccordionContent>
+                        <CollectionMultiSelect
+                            selectedIds={currentCollectionIds}
+                            onChange={handleCollectionsChange}
+                        />
+                        </AccordionContent>
+                    </AccordionItem>
+                    </Accordion>
+                )}
               </div>
             </>
           )}
@@ -487,6 +525,18 @@ export function FilterDrawer() {
             </div>
 
             <Accordion type="single" collapsible className="w-full">
+                {/* Item 0: Contacts (NEW) */}
+                <AccordionItem value="contacts">
+                    <AccordionTrigger className="text-sm">Curators & Friends</AccordionTrigger>
+                    <AccordionContent>
+                        <ContactPicker
+                            selectedContacts={currentContacts}
+                            setSelectedContacts={handleContactsChange}
+                            placeholder="Search people..."
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+
                 {/* Item 1: Architects */}
                 <AccordionItem value="architects">
                     <AccordionTrigger className="text-sm">Architects</AccordionTrigger>
