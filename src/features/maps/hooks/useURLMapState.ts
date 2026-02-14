@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useMemo, useCallback } from 'react';
-import { MapMode } from '@/types/plano-map';
+import { MapMode, MapFilters } from '@/types/plano-map';
 
 // Constants
 export const DEFAULT_LAT = 20;
@@ -57,6 +57,12 @@ export const MapFiltersObjectSchema = z.object({
   materials: z.array(z.string()).optional(),
   styles: z.array(z.string()).optional(),
   contexts: z.array(z.string()).optional(),
+  contacts: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    avatar_url: z.string().optional().nullable(),
+  })).optional(),
+  ratedBy: z.array(z.string()).optional(),
 }).catchall(z.unknown())
 .transform((obj) => {
     const newObj = { ...obj };
@@ -109,7 +115,20 @@ export const useURLMapState = () => {
       mode: searchParams.get('mode'),
       filters: searchParams.get('filters'),
     };
-    return MapStateSchema.parse(raw);
+    const parsed = MapStateSchema.parse(raw);
+
+    // Deep-link support: populate ratedBy from URL if present
+    const ratedByParam = searchParams.get('rated_by');
+    if (ratedByParam) {
+      const ratedByList = ratedByParam.split(',').map(s => s.trim()).filter(Boolean);
+      if (ratedByList.length > 0) {
+        // We inject it into the filters object.
+        // MapFiltersObjectSchema includes ratedBy now, so TS should be happy if we typed it, but parsed.filters is loosely typed via transform.
+        (parsed.filters as unknown as MapFilters).ratedBy = ratedByList;
+      }
+    }
+
+    return parsed;
   }, [searchParams]);
 
   const setMapURL = useCallback((updates: Partial<MapState>) => {
@@ -124,8 +143,22 @@ export const useURLMapState = () => {
       if (updates.filters !== undefined) {
          if (Object.keys(updates.filters).length === 0) {
              newParams.delete('filters');
+             newParams.delete('rated_by');
          } else {
              newParams.set('filters', JSON.stringify(updates.filters));
+
+             // Sync contacts to rated_by
+             const contacts = (updates.filters as unknown as MapFilters).contacts;
+             if (contacts && Array.isArray(contacts) && contacts.length > 0) {
+                 const names = contacts.map((c) => c.name).filter(Boolean);
+                 if (names.length > 0) {
+                     newParams.set('rated_by', names.join(','));
+                 } else {
+                     newParams.delete('rated_by');
+                 }
+             } else {
+                 newParams.delete('rated_by');
+             }
          }
       }
 
