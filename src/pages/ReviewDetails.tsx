@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { MetaHead } from "@/components/common/MetaHead";
 import NotFound from "@/pages/NotFound";
 import { getBuildingImageUrl } from "@/utils/image";
+import { ImageDetailsDialog } from "@/components/ImageDetailsDialog";
 
 interface FeedReview {
   id: string;
@@ -39,7 +40,7 @@ interface FeedReview {
     main_image_url: string | null;
     architects: { id: string; name: string }[] | null;
   };
-  images: { id: string; url: string }[];
+  images: { id: string; url: string; is_generated?: boolean }[];
   likes_count: number;
   comments_count: number;
   is_liked: boolean;
@@ -99,6 +100,7 @@ export default function ReviewDetails() {
   const [submitting, setSubmitting] = useState(false);
   const [showLikesDialog, setShowLikesDialog] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -119,7 +121,7 @@ export default function ReviewDetails() {
                     id, content, rating, tags, created_at, user_id, building_id, status,
                     user:profiles(username, avatar_url),
                     building:buildings(id, name, year_completed, address, main_image_url, architects:building_architects(architect:architects(name, id))),
-                    images:review_images(id, storage_path)
+                    images:review_images(id, storage_path, is_generated)
                 `)
                 .eq("id", paramId)
                 .single();
@@ -155,7 +157,8 @@ export default function ReviewDetails() {
 
             const images = (reviewData.images || []).map((img: any) => ({
                 id: img.id,
-                url: getBuildingImageUrl(img.storage_path)
+                url: getBuildingImageUrl(img.storage_path),
+                is_generated: img.is_generated
             })).filter((img: any) => img.url);
 
             setReview({
@@ -605,11 +608,15 @@ export default function ReviewDetails() {
                             {review.images.length > 0 && (
                                 <div className="space-y-6">
                                     {review.images.map((img) => (
-                                        <div key={img.id} className="rounded-lg overflow-hidden">
+                                        <div
+                                            key={img.id}
+                                            className="rounded-lg overflow-hidden cursor-pointer"
+                                            onClick={() => setSelectedImageId(img.id)}
+                                        >
                                             <img
                                                 src={img.url}
                                                 alt="Review attachment"
-                                                className="w-full h-auto block"
+                                                className="w-full h-full block hover:opacity-95 transition-opacity"
                                             />
                                         </div>
                                     ))}
@@ -910,6 +917,33 @@ export default function ReviewDetails() {
                 </ScrollArea>
             </DialogContent>
         </Dialog>
+
+        <ImageDetailsDialog
+            isOpen={!!selectedImageId}
+            onClose={() => setSelectedImageId(null)}
+            imageId={selectedImageId}
+            initialUrl={review.images.find(img => img.id === selectedImageId)?.url || null}
+            uploadedBy={{
+                username: review.user.username,
+                avatar_url: review.user.avatar_url
+            }}
+            uploadDate={review.created_at}
+            isGenerated={review.images.find(img => img.id === selectedImageId)?.is_generated}
+            onNext={() => {
+                const currentIndex = review.images.findIndex(img => img.id === selectedImageId);
+                if (currentIndex < review.images.length - 1) {
+                    setSelectedImageId(review.images[currentIndex + 1].id);
+                }
+            }}
+            onPrev={() => {
+                const currentIndex = review.images.findIndex(img => img.id === selectedImageId);
+                if (currentIndex > 0) {
+                    setSelectedImageId(review.images[currentIndex - 1].id);
+                }
+            }}
+            hasNext={review.images.findIndex(img => img.id === selectedImageId) < review.images.length - 1}
+            hasPrev={review.images.findIndex(img => img.id === selectedImageId) > 0}
+        />
     </AppLayout>
   );
 }
