@@ -90,6 +90,24 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
       });
   }, [setBounds]);
 
+  // Initial bounds safeguard
+  useEffect(() => {
+      if (mapRef.current && !bounds) {
+          const map = mapRef.current.getMap();
+          if (map) {
+              // Check if map is actually ready and has bounds
+              try {
+                  const b = map.getBounds();
+                  if (b && (b.getNorth() !== b.getSouth())) {
+                      updateBounds(map);
+                  }
+              } catch (e) {
+                  // Map might not be ready
+              }
+          }
+      }
+  }, [bounds, updateBounds]);
+
   const onMove = useCallback((evt: ViewStateChangeEvent) => {
     setViewState(evt.viewState); // Immediate local update
     updateMapState({
@@ -187,6 +205,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
             onMove={onMove}
             onMoveEnd={onMoveEnd}
             onLoad={onLoad}
+            onResize={(evt) => updateBounds(evt.target)}
             mapLib={maplibregl}
             mapStyle={isSatellite ? SATELLITE_STYLE : MAP_STYLE}
             attributionControl={false}
