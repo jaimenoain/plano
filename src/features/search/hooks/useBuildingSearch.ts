@@ -90,6 +90,52 @@ function normalizeUserData(user: any): ContactRater {
   };
 }
 
+// Logic for filtering building IDs based on user and contacts (Intersection vs Union)
+export function filterBuildingIds(
+  userBuildings: { building_id: string; user_id?: string }[],
+  user: { id: string } | null,
+  selectedContacts: { id: string }[],
+  ratedByMe: boolean,
+  hasSpecificContacts: boolean
+): Set<string> {
+  const buildingIds = new Set<string>();
+  const isIntersectionMode = ratedByMe && hasSpecificContacts;
+
+  if (isIntersectionMode && user) {
+    // Group by building_id
+    const buildingMap = new Map<string, Set<string>>(); // building_id -> Set<user_id>
+    userBuildings.forEach((ub) => {
+      if (!buildingMap.has(ub.building_id)) {
+        buildingMap.set(ub.building_id, new Set());
+      }
+      if (ub.user_id) {
+        buildingMap.get(ub.building_id)?.add(ub.user_id);
+      }
+    });
+
+    // Filter for Intersection
+    buildingMap.forEach((userIds, buildingId) => {
+      const hasMe = userIds.has(user.id);
+      // Check if any contact is present
+      let hasContact = false;
+      for (const contact of selectedContacts) {
+        if (userIds.has(contact.id)) {
+          hasContact = true;
+          break;
+        }
+      }
+
+      if (hasMe && hasContact) {
+        buildingIds.add(buildingId);
+      }
+    });
+  } else {
+    // Union Mode (Standard)
+    userBuildings.forEach(ub => buildingIds.add(ub.building_id));
+  }
+  return buildingIds;
+}
+
 async function enrichBuildings(
   buildings: DiscoveryBuilding[], 
   userId?: string, 
@@ -557,7 +603,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
             try {
               let query = supabase
                 .from('user_buildings')
-                .select('building_id')
+                .select('building_id, user_id')
                 .in('user_id', Array.from(targetUserIds));
 
               // Apply Status Filters
@@ -579,8 +625,15 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               const { data: userBuildings, error: ubError } = await query;
               if (ubError) {
                 console.error('Error fetching user buildings:', ubError);
-              } else {
-                userBuildings?.forEach(ub => buildingIds.add(ub.building_id));
+              } else if (userBuildings) {
+                const ids = filterBuildingIds(
+                  userBuildings,
+                  user,
+                  selectedContacts,
+                  ratedByMe,
+                  hasSpecificContacts
+                );
+                ids.forEach(id => buildingIds.add(id));
               }
             } catch (error) {
               console.error('Exception fetching user buildings:', error);
@@ -789,11 +842,13 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         // Hide Hidden
         if (hideHidden && userStatus === 'hidden') return false; // Usually hidden means 'hidden' status
 
+        const isViewingContacts = selectedContacts.length > 0;
+
         // Hide Visited
-        if (hideVisited && userStatus === 'visited') return false;
+        if (!isViewingContacts && hideVisited && userStatus === 'visited') return false;
 
         // Hide Saved
-        if (hideSaved && userStatus === 'pending') return false;
+        if (!isViewingContacts && hideSaved && userStatus === 'pending') return false;
 
         return true;
     });
