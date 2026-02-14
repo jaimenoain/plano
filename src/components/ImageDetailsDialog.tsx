@@ -262,7 +262,7 @@ export function ImageDetailsDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         hideCloseButton
-        className="max-w-5xl h-[90vh] p-0 overflow-hidden flex flex-col md:flex-row gap-0 border-none bg-background sm:rounded-lg"
+        className="max-w-5xl h-[95vh] md:h-[90vh] p-0 overflow-hidden flex flex-col md:flex-row gap-0 border-none bg-background sm:rounded-lg"
       >
         {/* Hidden titles for accessibility */}
         <DialogTitle className="sr-only">Image Details</DialogTitle>
@@ -289,7 +289,7 @@ export function ImageDetailsDialog({
             </Button>
           )}
 
-          <div className="absolute inset-0 flex items-center justify-center p-4">
+          <div className="absolute inset-0 flex items-center justify-center p-0 md:p-4">
             {type === 'video' ? (
                 <VideoPlayer
                     src={initialUrl || ""}
@@ -340,7 +340,7 @@ export function ImageDetailsDialog({
 
         {/* RIGHT: Sidebar (Comments & Actions) */}
         {isInteractive && (
-          <div className="w-full md:w-[400px] flex flex-col bg-background border-l border-border h-[50vh] md:h-full">
+          <div className="w-full md:w-[400px] flex flex-col bg-background border-l border-border h-[35vh] md:h-full">
 
             {/* Header: User Info */}
             <div className="p-4 border-b flex items-center justify-between shrink-0">
