@@ -66,6 +66,7 @@ vi.mock('@/integrations/supabase/client', () => {
     maybeSingle: () => Promise.resolve({ data: { id: 'user-123', username: 'testuser' } }),
     limit: () => Promise.resolve({ data: [] }),
     order: () => mockQueryBuilder,
+    range: () => Promise.resolve({ data: [] }),
   };
 
   return {

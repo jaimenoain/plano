@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, ReactNode } from "react";
+import { useState, useEffect, useMemo, ReactNode, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { 
   Settings, LogOut, Building2, Bookmark, Loader2,
@@ -36,6 +36,7 @@ import { CreateCollectionDialog } from "@/components/profile/CreateCollectionDia
 import { FeedReview } from "@/types/feed";
 import { useProfileComparison } from "@/hooks/useProfileComparison";
 import { getBuildingImageUrl } from "@/utils/image";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 
 // --- Types ---
 interface Profile {
@@ -64,6 +65,8 @@ interface UserListItem {
   is_follower: boolean;
 }
 
+const ITEMS_PER_PAGE = 15;
+
 export default function Profile() {
   const { user: currentUser, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -85,8 +88,14 @@ export default function Profile() {
 
   const [loading, setLoading] = useState(true);
   
+  // Pagination State
   const [content, setContent] = useState<FeedReview[]>([]);
-  const [contentLoading, setContentLoading] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false); // Initial load
+  const [isFetchingMore, setIsFetchingMore] = useState(false); // Subsequent pages
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  const { containerRef, isVisible } = useIntersectionObserver();
 
   // Favorites
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
@@ -233,101 +242,62 @@ export default function Profile() {
   useEffect(() => {
     if (targetUserId) {
       checkIfFollowing();
-      fetchUserContent();
       fetchSquad();
     }
   }, [targetUserId, currentUser]);
 
   // --- Logic ---
 
-  // Computed: Filtered Content
-  const filteredContent = useMemo(() => {
-    return content.filter(item => {
-      const matchesSearch = searchQuery === "" ||
-        item.building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.content && item.content.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      const matchesFilter = activeFilter === 'all' || item.status === activeFilter;
-
-      return matchesSearch && matchesFilter;
-    });
-  }, [content, searchQuery, activeFilter]);
-
-  const checkIfFollowing = async () => {
-    if (!currentUser || !targetUserId || currentUser.id === targetUserId) return;
-    const { data } = await supabase.from("follows").select("*").eq("follower_id", currentUser.id).eq("following_id", targetUserId).maybeSingle();
-    setIsFollowing(!!data);
-  };
-
-  const fetchStats = async () => {
+  const fetchUserContent = useCallback(async (pageIndex: number, reset: boolean = false) => {
     if (!targetUserId) return;
 
-    // We can also fetch the number of collections if needed for stats
-    // But currently stats.maps uses something else.
-    // For now, let's keep stats as is, but maybe 'maps' count needs to be updated.
-    // In original code: `stats={{ ...stats, maps: allTags.length }}`
-    // We should probably fetch collection count for 'maps' stat.
-
-    const [reviewsResult, pendingResult, followersResult, followingResult, photosResult, collectionsResult] = await Promise.all([
-      supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "visited"),
-      supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "pending"),
-      supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", targetUserId),
-      supabase.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", targetUserId),
-      supabase.from("review_images").select("id", { count: "exact", head: true }).eq("user_id", targetUserId),
-      supabase.from("collections").select("id", { count: "exact", head: true }).eq("owner_id", targetUserId)
-    ]);
-
-    setStats({
-      reviews: reviewsResult.count || 0,
-      pending: pendingResult.count || 0,
-      followers: followersResult.count || 0,
-      following: followingResult.count || 0,
-      photos: photosResult.count || 0,
-      maps: collectionsResult.count || 0,
-    });
-  };
-
-
-  const fetchSquad = async () => {
-      if (!targetUserId || !isOwnProfile) return;
-      const { data } = await supabase
-          .from("follows")
-          .select("following:profiles!follows_following_id_fkey(id, username, avatar_url)")
-          .eq("follower_id", targetUserId)
-          .limit(5);
-
-      if (data) {
-          const squadMembers = data.map((d: any) => d.following).filter(Boolean);
-          setSquad(squadMembers);
-      }
-  }
-
-  const fetchUserContent = async () => {
-    if (!targetUserId) return;
-    setContentLoading(true);
+    if (pageIndex === 0) {
+        setContentLoading(true);
+    } else {
+        setIsFetchingMore(true);
+    }
 
     try {
-        // Fetch BOTH visited and pending items
-        const { data: entriesData, error: entriesError } = await supabase
+        let query = supabase
             .from("user_buildings")
             .select(`
             id, content, rating, created_at, edited_at, user_id, building_id, status,
             building:buildings ( id, name, address, year_completed, main_image_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )
             `)
             .eq("user_id", targetUserId)
-            .in("status", ["visited", "pending"]) // Fetch both
             .order("edited_at", { ascending: false });
+
+        // Apply status filter in the query
+        if (activeFilter === 'visited') {
+            query = query.eq('status', 'visited');
+        } else if (activeFilter === 'pending') {
+            query = query.eq('status', 'pending');
+        } else {
+            query = query.in('status', ['visited', 'pending']);
+        }
+
+        // Pagination
+        const from = pageIndex * ITEMS_PER_PAGE;
+        const to = from + ITEMS_PER_PAGE - 1;
+        query = query.range(from, to);
+
+        const { data: entriesData, error: entriesError } = await query;
 
         if (entriesError) throw entriesError;
 
         if (!entriesData || entriesData.length === 0) {
-            setContent([]);
+            if (reset) {
+                setContent([]);
+                setHasMore(false);
+            } else {
+                setHasMore(false);
+            }
             return;
         }
 
         const entryIds = entriesData.map((r) => r.id);
 
-        // Fetch review images
+        // Fetch review images ONLY for the current page IDs
         const { data: imagesData } = await supabase
           .from('review_images')
           .select('id, review_id, storage_path, likes_count')
@@ -335,6 +305,7 @@ export default function Profile() {
 
         const imageIds = imagesData?.map(img => img.id) || [];
 
+        // Fetch interactions ONLY for the current page IDs
         const [likesResult, commentsResult, userLikesResult, imageLikesResult] = await Promise.all([
             supabase.from("likes").select("interaction_id").in("interaction_id", entryIds),
             supabase.from("comments").select("interaction_id").in("interaction_id", entryIds),
@@ -389,18 +360,98 @@ export default function Profile() {
             likes_count: likesCount.get(item.id) || 0,
             comments_count: commentsCount.get(item.id) || 0,
             is_liked: userLikes.has(item.id),
-            watch_with_users: [], // Removed watch_with for now
+            watch_with_users: [],
             images: imagesByReviewId.get(item.id) || [],
             };
         });
 
-        setContent(formattedContent);
+        if (reset) {
+            setContent(formattedContent);
+            setHasMore(formattedContent.length === ITEMS_PER_PAGE);
+            setPage(0);
+        } else {
+            setContent(prev => [...prev, ...formattedContent]);
+            setHasMore(formattedContent.length === ITEMS_PER_PAGE);
+        }
     } catch (error) {
       console.error("Error fetching content:", error);
     } finally {
       setContentLoading(false);
+      setIsFetchingMore(false);
     }
+  }, [targetUserId, activeFilter, currentUser, profile]);
+
+  // Initial Fetch Effect
+  useEffect(() => {
+    if (targetUserId) {
+        fetchUserContent(0, true);
+    }
+  }, [fetchUserContent]);
+
+  // Infinite Scroll Effect
+  useEffect(() => {
+    if (isVisible && hasMore && !isFetchingMore && !contentLoading) {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        fetchUserContent(nextPage, false);
+    }
+  }, [isVisible, hasMore, isFetchingMore, contentLoading, page, fetchUserContent]);
+
+
+  // Computed: Filtered Content (Only Client-Side Search)
+  const filteredContent = useMemo(() => {
+    return content.filter(item => {
+      // Status filtering is now handled by the API
+      const matchesSearch = searchQuery === "" ||
+        item.building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.content && item.content.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      return matchesSearch;
+    });
+  }, [content, searchQuery]);
+
+  const checkIfFollowing = async () => {
+    if (!currentUser || !targetUserId || currentUser.id === targetUserId) return;
+    const { data } = await supabase.from("follows").select("*").eq("follower_id", currentUser.id).eq("following_id", targetUserId).maybeSingle();
+    setIsFollowing(!!data);
   };
+
+  const fetchStats = async () => {
+    if (!targetUserId) return;
+
+    const [reviewsResult, pendingResult, followersResult, followingResult, photosResult, collectionsResult] = await Promise.all([
+      supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "visited"),
+      supabase.from("user_buildings").select("id", { count: "exact", head: true }).eq("user_id", targetUserId).eq("status", "pending"),
+      supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", targetUserId),
+      supabase.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", targetUserId),
+      supabase.from("review_images").select("id", { count: "exact", head: true }).eq("user_id", targetUserId),
+      supabase.from("collections").select("id", { count: "exact", head: true }).eq("owner_id", targetUserId)
+    ]);
+
+    setStats({
+      reviews: reviewsResult.count || 0,
+      pending: pendingResult.count || 0,
+      followers: followersResult.count || 0,
+      following: followingResult.count || 0,
+      photos: photosResult.count || 0,
+      maps: collectionsResult.count || 0,
+    });
+  };
+
+
+  const fetchSquad = async () => {
+      if (!targetUserId || !isOwnProfile) return;
+      const { data } = await supabase
+          .from("follows")
+          .select("following:profiles!follows_following_id_fkey(id, username, avatar_url)")
+          .eq("follower_id", targetUserId)
+          .limit(5);
+
+      if (data) {
+          const squadMembers = data.map((d: any) => d.following).filter(Boolean);
+          setSquad(squadMembers);
+      }
+  }
 
   const handleLike = async (reviewId: string) => {
     if (!currentUser) return;
@@ -663,6 +714,7 @@ export default function Profile() {
               {contentLoading ? (
                 <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : filteredContent.length > 0 ? (
+                  <>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
                     {filteredContent.map((item) => (
                       <ReviewCard
@@ -675,6 +727,8 @@ export default function Profile() {
                       />
                     ))}
                   </div>
+                  <div ref={containerRef} className="h-4 w-full" />
+                  </>
               ) : (
                   // Empty States
                   (searchQuery) ? (
@@ -691,6 +745,11 @@ export default function Profile() {
                   ) : (
                     <EmptyState icon={Building2} label="No activity yet" />
                   )
+              )}
+              {isFetchingMore && (
+                  <div className="flex justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
               )}
             </div>
         </div>
