@@ -287,6 +287,7 @@ export function FilterDrawer() {
       setMapState({
           filters: {
               ...filters,
+              // Explicitly clear global filters including Contacts, but preserve View Mode settings (status, hideSaved, etc.)
               architects: undefined,
               contacts: undefined,
               category: undefined,
