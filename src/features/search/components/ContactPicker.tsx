@@ -83,7 +83,11 @@ export function ContactPicker({
               <button
                 type="button"
                 className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                onClick={() => handleUnselect(contact.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleUnselect(contact.id);
+                }}
               >
                 <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
               </button>
@@ -103,7 +107,7 @@ export function ContactPicker({
       </div>
       <div className="relative mt-2">
         {open && (filteredSuggestions.length > 0 || inputValue.length > 0) && (
-          <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
+          <div className="absolute top-0 z-50 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
             <CommandList>
               {isLoading && (
                   <CommandItem disabled>
