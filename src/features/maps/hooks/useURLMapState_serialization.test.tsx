@@ -55,9 +55,9 @@ describe('useURLMapState serialization', () => {
 
     // Check if the state reflects the change (which comes from URL)
     // The hook parses `rated_by` from URL into `filters.ratedBy`
-    expect(result.current.filters.contacts).toHaveLength(1);
-    expect(result.current.filters.contacts![0].name).toBe('charlie');
     expect(result.current.filters.ratedBy).toEqual(['charlie']);
+    // Contacts are stripped from JSON in favor of rated_by param
+    expect(result.current.filters.contacts).toBeUndefined();
   });
 
   it('removes rated_by param when contacts are cleared', () => {

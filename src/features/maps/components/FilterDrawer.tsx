@@ -1,6 +1,5 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
   SheetContent,
@@ -95,50 +94,6 @@ export function FilterDrawer() {
     contextAttributes,
     styleAttributes,
   } = useTaxonomy();
-
-  // Hydration: If URL has ratedBy but no contacts (deep link), fetch user details
-  useEffect(() => {
-    const ratedBy = filters.ratedBy;
-    const currentContacts = filters.contacts;
-
-    if (ratedBy && ratedBy.length > 0 && (!currentContacts || currentContacts.length === 0)) {
-      const fetchProfiles = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('id, username, avatar_url')
-            .in('username', ratedBy);
-
-          if (error) {
-            console.error('Error fetching profiles for hydration:', error);
-            return;
-          }
-
-          if (data && data.length > 0) {
-            const mapped = data.map(p => ({
-              id: p.id,
-              name: p.username || '',
-              avatar_url: p.avatar_url || null
-            }));
-
-            // Update contacts filter without losing other filters
-            const newFilters: any = { ...filters, contacts: mapped };
-             if (!filters.status || filters.status.length === 0) {
-                newFilters.status = ['visited', 'saved'];
-                newFilters.hideSaved = false;
-                newFilters.hideVisited = false;
-            }
-
-            setMapState({ filters: newFilters });
-          }
-        } catch (err) {
-          console.error('Unexpected error during hydration:', err);
-        }
-      };
-
-      fetchProfiles();
-    }
-  }, [filters.ratedBy, filters.contacts, filters.status, filters, setMapState]);
 
   const handleModeChange = (newMode: string) => {
     const typedMode = newMode as MapMode;
