@@ -148,25 +148,33 @@ export const useURLMapState = () => {
              // Prepare clean filters object for JSON (excluding ratedBy to avoid redundancy)
              const filtersForJson = { ...updates.filters } as unknown as MapFilters;
              delete filtersForJson.ratedBy;
-             newParams.set('filters', JSON.stringify(filtersForJson));
 
              // Sync contacts OR ratedBy to rated_by param
              const contacts = (updates.filters as unknown as MapFilters).contacts;
              const ratedBy = (updates.filters as unknown as MapFilters).ratedBy;
 
+             let hasSetRatedBy = false;
+
              if (contacts && Array.isArray(contacts) && contacts.length > 0) {
                  const names = contacts.map((c) => c.name).filter(Boolean);
                  if (names.length > 0) {
                      newParams.set('rated_by', names.join(','));
+                     // If we set rated_by from contacts, we can remove contacts from JSON
+                     // to avoid duplication and "weird characters" (large JSON)
+                     delete filtersForJson.contacts;
+                     hasSetRatedBy = true;
                  } else {
                      newParams.delete('rated_by');
                  }
              } else if (ratedBy && Array.isArray(ratedBy) && ratedBy.length > 0) {
                  // Fallback: If no rich contacts, use simple ratedBy list
                  newParams.set('rated_by', ratedBy.join(','));
+                 hasSetRatedBy = true;
              } else {
                  newParams.delete('rated_by');
              }
+
+             newParams.set('filters', JSON.stringify(filtersForJson));
          }
       }
 
