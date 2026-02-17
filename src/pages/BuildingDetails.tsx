@@ -4,7 +4,7 @@ import {
   Loader2, MapPin, Calendar, Send,
   Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
-  MessageCircle, EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon
+  MessageCircle, EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon, Users, X
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -229,6 +229,7 @@ export default function BuildingDetails() {
   // Visit With state
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [sendingInvites, setSendingInvites] = useState(false);
+  const [showVisitWith, setShowVisitWith] = useState(false);
 
   // Map state
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -1301,26 +1302,47 @@ export default function BuildingDetails() {
                 {/* Visit With Feature - Only visible when status is 'pending' */}
                 {userStatus === 'pending' && (
                     <div className="pt-4 border-t border-dashed">
-                        <label className="text-sm font-medium mb-2 block">Visit with...</label>
-                        <div className="flex gap-2 items-start">
-                            <div className="flex-1">
-                                <UserPicker
-                                    selectedIds={selectedFriends}
-                                    onSelect={(id) => setSelectedFriends([...selectedFriends, id])}
-                                    onRemove={(id) => setSelectedFriends(selectedFriends.filter(uid => uid !== id))}
-                                />
-                            </div>
+                        {!showVisitWith ? (
                             <Button
-                                size="sm"
-                                disabled={selectedFriends.length === 0 || sendingInvites}
-                                onClick={handleSendInvites}
+                                variant="outline"
+                                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                                onClick={() => setShowVisitWith(true)}
                             >
-                                {sendingInvites ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                <span className="flex items-center gap-2">
+                                    <Users className="w-4 h-4" />
+                                    Visit with...
+                                </span>
                             </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                            Invite friends to join you. They'll get a notification.
-                        </p>
+                        ) : (
+                            <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium">Visit with...</label>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowVisitWith(false)}>
+                                        <X className="w-3 h-3" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex gap-2 items-start">
+                                    <div className="flex-1">
+                                        <UserPicker
+                                            selectedIds={selectedFriends}
+                                            onSelect={(id) => setSelectedFriends([...selectedFriends, id])}
+                                            onRemove={(id) => setSelectedFriends(selectedFriends.filter(uid => uid !== id))}
+                                        />
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        disabled={selectedFriends.length === 0 || sendingInvites}
+                                        onClick={handleSendInvites}
+                                    >
+                                        {sendingInvites ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Invite friends to join you. They'll get a notification.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
