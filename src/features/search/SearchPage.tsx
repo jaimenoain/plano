@@ -79,15 +79,18 @@ function SearchPageContent() {
   };
 
   const mobileSearchBar = (
-    <DiscoverySearchInput
-      value={searchValue}
-      onSearchChange={handleSearchChange}
-      onLocationSelect={handleLocationSelect}
-      onSuggestionsChange={setSuggestions}
-      disableDropdown={viewMode === 'list'}
-      placeholder="Search..."
-      className="w-full"
-    />
+    <div className="flex items-center gap-2 w-full">
+      <DiscoverySearchInput
+        value={searchValue}
+        onSearchChange={handleSearchChange}
+        onLocationSelect={handleLocationSelect}
+        onSuggestionsChange={setSuggestions}
+        disableDropdown={viewMode === 'list'}
+        placeholder="Search..."
+        className="flex-1"
+      />
+      <MapControls />
+    </div>
   );
 
   return (
@@ -104,7 +107,7 @@ function SearchPageContent() {
             className={`hidden md:flex flex-col w-[400px] bg-background border-r border-border absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
             style={{ left: isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0 }}
         >
-           <div className="p-4 border-b space-y-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+           <div className="p-4 border-b flex items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <DiscoverySearchInput
                  value={searchValue}
                  onSearchChange={handleSearchChange}
@@ -112,7 +115,7 @@ function SearchPageContent() {
                  onSuggestionsChange={setSuggestions}
                  disableDropdown={true}
                  placeholder="Search buildings, architects..."
-                 className="w-full"
+                 className="flex-1"
               />
               <MapControls />
            </div>
@@ -161,9 +164,6 @@ function SearchPageContent() {
         {/* Mobile List Overlay */}
         {isMobile && viewMode === 'list' && (
            <div className="absolute inset-0 bg-background z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
-              <div className="p-4 border-b space-y-3">
-                 <MapControls />
-              </div>
               <div className="flex-1 overflow-hidden relative pb-20">
                  <BuildingSidebar
                     suggestions={suggestions}
