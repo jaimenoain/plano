@@ -351,9 +351,9 @@ export default function MergeComparison() {
                         </div>
                     </div>
                     <div className="aspect-video w-full bg-muted relative overflow-hidden group">
-                        {targetBuilding.hero_image ? (
+                        {targetBuilding.hero_image_url ? (
                             <img
-                                src={getBuildingImageUrl(targetBuilding.hero_image)}
+                                src={getBuildingImageUrl(targetBuilding.hero_image_url)}
                                 alt={targetBuilding.name}
                                 className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500"
                             />
@@ -510,9 +510,9 @@ export default function MergeComparison() {
                         <Badge variant="destructive">Will be Deleted</Badge>
                     </div>
                     <div className="aspect-video w-full bg-muted relative overflow-hidden group">
-                        {sourceBuilding.hero_image ? (
+                        {sourceBuilding.hero_image_url ? (
                             <img
-                                src={getBuildingImageUrl(sourceBuilding.hero_image)}
+                                src={getBuildingImageUrl(sourceBuilding.hero_image_url)}
                                 alt={sourceBuilding.name}
                                 className="w-full h-full object-cover grayscale opacity-90 transition-transform group-hover:scale-105 duration-500"
                             />
