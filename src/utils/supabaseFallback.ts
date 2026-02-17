@@ -132,7 +132,7 @@ export const fetchUserBuildingsMap = async (userId: string): Promise<Map<string,
 };
 
 export const fetchBuildingDetails = async (id: string) => {
-    let query = supabase.from("buildings").select("*, styles:building_styles(style:architectural_styles(id, name)), architects:building_architects(architect:architects(id, name))");
+    let query = supabase.from("buildings").select("*, alt_name, aliases, styles:building_styles(style:architectural_styles(id, name)), architects:building_architects(architect:architects(id, name))");
 
     // Check if id is UUID
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
