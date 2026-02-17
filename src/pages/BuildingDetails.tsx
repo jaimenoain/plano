@@ -284,19 +284,9 @@ export default function BuildingDetails() {
       const data = await fetchBuildingDetails(id);
       const resolvedBuildingId = data.id;
 
-      // 1.5 Fetch Relational Architects
-      const { data: relationalArchitectsData } = await supabase
-        .from("building_architects")
-        .select("architect:architects(id, name)")
-        .eq("building_id", resolvedBuildingId);
-
-      const relationalArchitects = relationalArchitectsData
-        ?.map((item: any) => item.architect)
-        .filter((a: any) => a) || [];
-
       const sanitizedBuilding = {
         ...data,
-        architects: relationalArchitects,
+        architects: (data as any).architects || [],
       };
 
       setBuilding(sanitizedBuilding as unknown as BuildingDetails);
@@ -305,196 +295,204 @@ export default function BuildingDetails() {
           setIsCreator(true);
       }
 
-      // 1.8 Fetch Top Links (RPC) - non-blocking
-      fetchTopLinks(resolvedBuildingId);
+      const tasks: Promise<any>[] = [];
 
+      // Task 1: Fetch Top Links (RPC)
+      tasks.push(fetchTopLinks(resolvedBuildingId));
+
+      // Task 2: Fetch User Entry (if logged in)
       if (user) {
-        // 2. Fetch User Entry (Direct Supabase call)
-        const { data: userEntry, error: userEntryError } = await supabase
-            .from("user_buildings")
-            .select("*, images:review_images(id, storage_path, is_generated)")
-            .eq("user_id", user.id)
-            .eq("building_id", resolvedBuildingId)
-            .maybeSingle();
+        tasks.push((async () => {
+          const { data: userEntry, error: userEntryError } = await supabase
+              .from("user_buildings")
+              .select("*, images:review_images(id, storage_path, is_generated)")
+              .eq("user_id", user.id)
+              .eq("building_id", resolvedBuildingId)
+              .maybeSingle();
 
-        // 2.5 Fetch Collection Items
-        const { data: collectionItems } = await supabase
-            .from("collection_items")
-            .select("collection_id, collections(owner_id)")
-            .eq("building_id", resolvedBuildingId);
+          // Fetch Collection Items
+          const { data: collectionItems } = await supabase
+              .from("collection_items")
+              .select("collection_id, collections(owner_id)")
+              .eq("building_id", resolvedBuildingId);
 
-        const myCollectionIds = collectionItems
-            // @ts-ignore
-            ?.filter(item => item.collections?.owner_id === user.id)
-            .map(item => item.collection_id) || [];
+          const myCollectionIds = collectionItems
+              // @ts-ignore
+              ?.filter(item => item.collections?.owner_id === user.id)
+              .map(item => item.collection_id) || [];
 
-        setSelectedCollectionIds(myCollectionIds);
-        setInitialCollectionIds(myCollectionIds);
+          setSelectedCollectionIds(myCollectionIds);
+          setInitialCollectionIds(myCollectionIds);
 
-        if (userEntry) {
-            setUserStatus(userEntry.status);
-            setMyRating(userEntry.rating || 0);
-            setNote(userEntry.content || "");
-            // setTags(userEntry.tags || []); // Deprecated
-            // @ts-ignore - Supabase types join inference can be tricky
-            setUserImages(userEntry.images || []);
-            setIsEditing(false);
-            if (userEntry.content || (myCollectionIds.length > 0)) {
-                setShowNoteEditor(true);
-            }
+          if (userEntry) {
+              setUserStatus(userEntry.status);
+              setMyRating(userEntry.rating || 0);
+              setNote(userEntry.content || "");
+              // setTags(userEntry.tags || []); // Deprecated
+              // @ts-ignore - Supabase types join inference can be tricky
+              setUserImages(userEntry.images || []);
+              setIsEditing(false);
+              if (userEntry.content || (myCollectionIds.length > 0)) {
+                  setShowNoteEditor(true);
+              }
 
-            if (myCollectionIds.length > 0) {
-                setShowCollections(true);
-            }
+              if (myCollectionIds.length > 0) {
+                  setShowCollections(true);
+              }
 
-            // Fetch User Links
-            const { data: userLinksData } = await supabase
-              .from("review_links")
-              .select("id, url, title")
-              .eq("review_id", userEntry.id);
-            if (userLinksData) setUserLinks(userLinksData);
-        } else {
-            setIsEditing(true);
-            if (userEntryError) {
-                console.error("Error fetching user status:", userEntryError);
-            }
-        }
-      }
-
-      // 3. Fetch Social Feed (Direct Supabase call) - NOW GLOBAL
-      console.log("Fetching social feed for building:", resolvedBuildingId);
-
-      // Fetch follows for prioritization
-      let followedIds = new Set<string>();
-      if (user) {
-        const { data: followsData } = await supabase
-          .from("follows")
-          .select("following_id")
-          .eq("follower_id", user.id);
-
-        if (followsData) {
-          followedIds = new Set(followsData.map(f => f.following_id));
-        }
-      }
-
-      const { data: entriesData, error: entriesError } = await supabase
-        .from("user_buildings")
-        .select(`
-          id, user_id, content, rating, status, tags, created_at, video_url,
-          user:profiles(username, avatar_url),
-          images:review_images(id, storage_path, likes_count, created_at, is_generated)
-        `)
-        .eq("building_id", resolvedBuildingId)
-        .order("created_at", { ascending: false });
-
-      const communityImages: DisplayImage[] = [];
-
-      if (entriesError) {
-            console.warn("Error fetching feed:", entriesError);
-            // toast({ variant: "destructive", title: "Could not load activity feed" });
-      } else if (entriesData) {
-          console.log("Fetched feed entries:", entriesData);
-
-          // Determine Social Context
-          if (followedIds.size > 0) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const friendEntry = entriesData.find((e: any) => followedIds.has(e.user_id));
-              if (friendEntry) {
-                   setSocialContext("Saved by contacts");
+              // Fetch User Links
+              const { data: userLinksData } = await supabase
+                .from("review_links")
+                .select("id, url, title")
+                .eq("review_id", userEntry.id);
+              if (userLinksData) setUserLinks(userLinksData);
+          } else {
+              setIsEditing(true);
+              if (userEntryError) {
+                  console.error("Error fetching user status:", userEntryError);
               }
           }
-          
-          // Extract images & video
-          entriesData.forEach((entry: any) => {
-              // Video
-              if (entry.video_url) {
-                  // Attempt to find a poster from images or main building
-                  let posterUrl: string | undefined = undefined;
-                  if (entry.images && entry.images.length > 0) {
-                      posterUrl = getBuildingImageUrl(entry.images[0].storage_path) || undefined;
-                  }
-
-                  communityImages.push({
-                      id: `video-${entry.id}`,
-                      url: entry.video_url,
-                      poster: posterUrl,
-                      type: 'video',
-                      likes_count: 0, // Videos typically share likes with the review, which isn't separately tracked per image currently in this view
-                      created_at: entry.created_at,
-                      user: entry.user
-                  });
-              }
-
-              // Images
-              if (entry.images && entry.images.length > 0) {
-                  entry.images.forEach((img: any) => {
-                        const publicUrl = getBuildingImageUrl(img.storage_path);
-                        if (publicUrl) {
-                            communityImages.push({
-                                id: img.id,
-                                url: publicUrl,
-                                type: 'image',
-                                likes_count: img.likes_count || 0,
-                                created_at: img.created_at || entry.created_at,
-                                user: entry.user,
-                                is_generated: img.is_generated
-                            });
-                        }
-                  });
-              }
-          });
-
-          // Sort images
-          communityImages.sort((a, b) => {
-              if (b.likes_count !== a.likes_count) return b.likes_count - a.likes_count;
-              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-          });
-
-          // Sanitize entries
-          let sanitizedEntries = entriesData.map((e: any) => ({
-              ...e,
-              user: {
-                  ...e.user,
-                  avatar_url: e.user.avatar_url || null
-              },
-              images: e.images || []
-          }));
-
-          // Sort entries: Followed users first, then by date (recency)
-          sanitizedEntries.sort((a, b) => {
-              const aIsFollowed = followedIds.has(a.user_id);
-              const bIsFollowed = followedIds.has(b.user_id);
-
-              if (aIsFollowed && !bIsFollowed) return -1;
-              if (!aIsFollowed && bIsFollowed) return 1;
-
-              // If both followed or both not followed, sort by date desc
-              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-          });
-
-          setEntries(sanitizedEntries);
+        })());
       }
 
-      // Fetch user likes for these images
-      if (user && communityImages.length > 0) {
-          const imageIds = communityImages
-              .filter(img => img.type === 'image')
-              .map(img => img.id);
+      // Task 3: Fetch Social Feed (Direct Supabase call)
+      tasks.push((async () => {
+        console.log("Fetching social feed for building:", resolvedBuildingId);
 
-          if (imageIds.length > 0) {
-              const { data: likesData } = await supabase
-                  .from("image_likes")
-                  .select("image_id")
-                  .eq("user_id", user.id)
-                  .in("image_id", imageIds);
+        // Fetch follows for prioritization
+        let followedIds = new Set<string>();
+        if (user) {
+          const { data: followsData } = await supabase
+            .from("follows")
+            .select("following_id")
+            .eq("follower_id", user.id);
 
-              const likedSet = new Set(likesData?.map(l => l.image_id) || []);
-              setLikedImageIds(likedSet);
+          if (followsData) {
+            followedIds = new Set(followsData.map(f => f.following_id));
           }
-      }
+        }
 
-      // Combine with main image
-      setDisplayImages(communityImages);
+        const { data: entriesData, error: entriesError } = await supabase
+          .from("user_buildings")
+          .select(`
+            id, user_id, content, rating, status, tags, created_at, video_url,
+            user:profiles(username, avatar_url),
+            images:review_images(id, storage_path, likes_count, created_at, is_generated)
+          `)
+          .eq("building_id", resolvedBuildingId)
+          .order("created_at", { ascending: false });
+
+        const communityImages: DisplayImage[] = [];
+
+        if (entriesError) {
+              console.warn("Error fetching feed:", entriesError);
+              // toast({ variant: "destructive", title: "Could not load activity feed" });
+        } else if (entriesData) {
+            console.log("Fetched feed entries:", entriesData);
+
+            // Determine Social Context
+            if (followedIds.size > 0) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const friendEntry = entriesData.find((e: any) => followedIds.has(e.user_id));
+                if (friendEntry) {
+                     setSocialContext("Saved by contacts");
+                }
+            }
+
+            // Extract images & video
+            entriesData.forEach((entry: any) => {
+                // Video
+                if (entry.video_url) {
+                    // Attempt to find a poster from images or main building
+                    let posterUrl: string | undefined = undefined;
+                    if (entry.images && entry.images.length > 0) {
+                        posterUrl = getBuildingImageUrl(entry.images[0].storage_path) || undefined;
+                    }
+
+                    communityImages.push({
+                        id: `video-${entry.id}`,
+                        url: entry.video_url,
+                        poster: posterUrl,
+                        type: 'video',
+                        likes_count: 0, // Videos typically share likes with the review, which isn't separately tracked per image currently in this view
+                        created_at: entry.created_at,
+                        user: entry.user
+                    });
+                }
+
+                // Images
+                if (entry.images && entry.images.length > 0) {
+                    entry.images.forEach((img: any) => {
+                          const publicUrl = getBuildingImageUrl(img.storage_path);
+                          if (publicUrl) {
+                              communityImages.push({
+                                  id: img.id,
+                                  url: publicUrl,
+                                  type: 'image',
+                                  likes_count: img.likes_count || 0,
+                                  created_at: img.created_at || entry.created_at,
+                                  user: entry.user,
+                                  is_generated: img.is_generated
+                              });
+                          }
+                    });
+                }
+            });
+
+            // Sort images
+            communityImages.sort((a, b) => {
+                if (b.likes_count !== a.likes_count) return b.likes_count - a.likes_count;
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            });
+
+            // Sanitize entries
+            let sanitizedEntries = entriesData.map((e: any) => ({
+                ...e,
+                user: {
+                    ...e.user,
+                    avatar_url: e.user.avatar_url || null
+                },
+                images: e.images || []
+            }));
+
+            // Sort entries: Followed users first, then by date (recency)
+            sanitizedEntries.sort((a, b) => {
+                const aIsFollowed = followedIds.has(a.user_id);
+                const bIsFollowed = followedIds.has(b.user_id);
+
+                if (aIsFollowed && !bIsFollowed) return -1;
+                if (!aIsFollowed && bIsFollowed) return 1;
+
+                // If both followed or both not followed, sort by date desc
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            });
+
+            setEntries(sanitizedEntries);
+        }
+
+        // Fetch user likes for these images
+        if (user && communityImages.length > 0) {
+            const imageIds = communityImages
+                .filter(img => img.type === 'image')
+                .map(img => img.id);
+
+            if (imageIds.length > 0) {
+                const { data: likesData } = await supabase
+                    .from("image_likes")
+                    .select("image_id")
+                    .eq("user_id", user.id)
+                    .in("image_id", imageIds);
+
+                const likedSet = new Set(likesData?.map(l => l.image_id) || []);
+                setLikedImageIds(likedSet);
+            }
+        }
+
+        // Combine with main image
+        setDisplayImages(communityImages);
+      })());
+
+      await Promise.all(tasks);
     } catch (error: any) {
       console.error("Error:", error);
       toast({ variant: "destructive", title: "Error", description: "Building not found" });
