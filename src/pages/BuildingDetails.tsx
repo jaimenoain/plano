@@ -56,6 +56,8 @@ interface BuildingDetails {
   short_id?: number | null;
   slug?: string | null;
   name: string;
+  alt_name?: string | null;
+  aliases?: string[] | null;
   tier_rank?: string | null;
   location: any; // PostGIS point handling usually requires parsing
   location_precision?: 'exact' | 'approximate';

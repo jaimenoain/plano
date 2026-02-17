@@ -34,6 +34,8 @@ export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
   short_id?: number | null;
   slug?: string | null;
   name: string; // Required for full building
+  alt_name?: string | null;
+  aliases?: string[] | null;
   // This can be a full URL (legacy/external) or a storage path (user uploads).
   // Use getBuildingImageUrl() utility to display it.
   main_image_url?: string | null;
