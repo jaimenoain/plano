@@ -132,7 +132,7 @@ export const fetchUserBuildingsMap = async (userId: string): Promise<Map<string,
 };
 
 export const fetchBuildingDetails = async (id: string) => {
-    let query = supabase.from("buildings").select("*, styles:building_styles(style:architectural_styles(id, name))");
+    let query = supabase.from("buildings").select("*, styles:building_styles(style:architectural_styles(id, name)), architects:building_architects(architect:architects(id, name))");
 
     // Check if id is UUID
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -155,8 +155,9 @@ export const fetchBuildingDetails = async (id: string) => {
 
     // Transform styles from nested structure to flat array of objects
     const styles = (data.styles as any)?.map((s: any) => s.style) || [];
+    const architects = (data.architects as any)?.map((a: any) => a.architect) || [];
 
-    return { ...data, styles };
+    return { ...data, styles, architects };
 };
 
 export const fetchUserBuildingStatus = async (userId: string, buildingId: string) => {

@@ -136,81 +136,87 @@ export default function WriteReview() {
         // @ts-ignore
         setBuildingShortId(building.short_id);
 
-        // 2. Fetch Existing Review/Status
+        // 2. Fetch Existing Review/Status & Collections in Parallel
         if (user) {
-          // Fetch collections for this building
-          const { data: collectionItems } = await supabase
-              .from("collection_items")
-              .select("collection_id, collections!inner(owner_id)")
-              .eq("building_id", building.id)
-              .eq("collections.owner_id", user.id);
+          const tasks: Promise<any>[] = [];
 
-          if (collectionItems) {
-              const ids = collectionItems.map(c => c.collection_id);
-              setSelectedCollectionIds(ids);
-              if (ids.length > 0) setShowLists(true);
-          }
+          // Task A: Fetch collections
+          tasks.push((async () => {
+              const { data: collectionItems } = await supabase
+                  .from("collection_items")
+                  .select("collection_id, collections!inner(owner_id)")
+                  .eq("building_id", building.id)
+                  .eq("collections.owner_id", user.id);
 
-          const { data: userBuilding, error: ubError } = await supabase
-            .from("user_buildings")
-            .select("id, rating, content, status, visibility, video_url")
-            .eq("user_id", user.id)
-            .eq("building_id", building.id)
-            .maybeSingle();
+              if (collectionItems) {
+                  const ids = collectionItems.map(c => c.collection_id);
+                  setSelectedCollectionIds(ids);
+                  if (ids.length > 0) setShowLists(true);
+              }
+          })());
 
-          if (ubError) throw ubError;
+          // Task B: Fetch User Building + Relations
+          tasks.push((async () => {
+              const { data: userBuilding, error: ubError } = await supabase
+                .from("user_buildings")
+                .select(`
+                    id, rating, content, status, visibility, video_url,
+                    review_links(id, url, title),
+                    review_images(id, storage_path, is_generated)
+                `)
+                .eq("user_id", user.id)
+                .eq("building_id", building.id)
+                .maybeSingle();
 
-          if (userBuilding) {
-            setReviewId(userBuilding.id);
-            if (userBuilding.rating) setRating(userBuilding.rating);
-            if (userBuilding.content) setContent(userBuilding.content);
-            
-            // Merged Logic: Set visibility setting
-            if (userBuilding.visibility) setVisibility(userBuilding.visibility);
-            
-            if (userBuilding.status === 'pending') {
-              setStatus('pending');
-            } else {
-              setStatus('visited');
-            }
+              if (ubError) throw ubError;
 
-            if (userBuilding.video_url) {
-              setVideo({
-                file: null,
-                preview: getBuildingImageUrl(userBuilding.video_url) || null,
-                storage_path: userBuilding.video_url,
-                status: 'ready',
-                progress: 100
-              });
-            }
+              if (userBuilding) {
+                setReviewId(userBuilding.id);
+                if (userBuilding.rating) setRating(userBuilding.rating);
+                if (userBuilding.content) setContent(userBuilding.content);
 
-            // Fetch Links
-            const { data: existingLinks } = await supabase
-              .from("review_links")
-              .select("id, url, title")
-              .eq("review_id", userBuilding.id);
+                if (userBuilding.visibility) setVisibility(userBuilding.visibility);
 
-            if (existingLinks) {
-              setLinks(existingLinks);
-              if (existingLinks.length > 0) setShowLinks(true);
-            }
+                if (userBuilding.status === 'pending') {
+                  setStatus('pending');
+                } else {
+                  setStatus('visited');
+                }
 
-            // Fetch Images
-            const { data: remoteImages } = await supabase
-              .from('review_images')
-              .select('id, storage_path, is_generated')
-              .eq('review_id', userBuilding.id);
+                if (userBuilding.video_url) {
+                  setVideo({
+                    file: null,
+                    preview: getBuildingImageUrl(userBuilding.video_url) || null,
+                    storage_path: userBuilding.video_url,
+                    status: 'ready',
+                    progress: 100
+                  });
+                }
 
-            if (remoteImages) {
-              const loadedImages: ReviewImage[] = remoteImages.map(img => ({
-                id: img.id,
-                preview: getBuildingImageUrl(img.storage_path) || "",
-                storage_path: img.storage_path,
-                is_generated: img.is_generated
-              }));
-              setImages(loadedImages);
-            }
-          }
+                // Process Links (Nested)
+                // @ts-ignore
+                const existingLinks = userBuilding.review_links;
+                if (existingLinks) {
+                  setLinks(existingLinks);
+                  if (existingLinks.length > 0) setShowLinks(true);
+                }
+
+                // Process Images (Nested)
+                // @ts-ignore
+                const remoteImages = userBuilding.review_images;
+                if (remoteImages) {
+                  const loadedImages: ReviewImage[] = remoteImages.map((img: any) => ({
+                    id: img.id,
+                    preview: getBuildingImageUrl(img.storage_path) || "",
+                    storage_path: img.storage_path,
+                    is_generated: img.is_generated
+                  }));
+                  setImages(loadedImages);
+                }
+              }
+          })());
+
+          await Promise.all(tasks);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
