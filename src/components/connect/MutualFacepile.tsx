@@ -51,7 +51,7 @@ export function MutualFacepile({ users, className }: MutualFacepileProps) {
             );
         })}
       </div>
-      <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+      <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">
         {text}
       </span>
     </div>

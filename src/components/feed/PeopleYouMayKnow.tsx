@@ -83,9 +83,9 @@ export function PeopleYouMayKnow() {
   return (
     <div className="p-5 border rounded-xl bg-card shadow-sm space-y-4 max-w-full">
       <h3 className="font-semibold">People you may know</h3>
-      <div className="flex overflow-x-auto gap-4 pb-2 -mx-1 px-1 snap-x no-scrollbar">
+      <div className="flex overflow-x-auto gap-4 pb-4 -mx-1 px-1 snap-x hide-scrollbar">
         {suggestions.map((person) => (
-          <div key={person.id} className="relative flex flex-col items-center justify-between gap-3 min-w-[160px] max-w-[160px] snap-center p-4 border rounded-lg bg-background/50 shrink-0 h-full group">
+          <div key={person.id} className="relative flex flex-col items-center justify-between gap-3 min-w-[200px] max-w-[200px] snap-center p-4 border rounded-lg bg-background/50 shrink-0 h-full group">
             <button
                 onClick={(e) => {
                     e.preventDefault();
@@ -108,7 +108,7 @@ export function PeopleYouMayKnow() {
                 <div className="flex flex-col items-center text-xs text-muted-foreground w-full gap-0.5">
                   {person.mutual_follows && person.mutual_follows.length > 0 ? (
                     <div className="scale-90 origin-top w-full flex justify-center">
-                        <MutualFacepile users={person.mutual_follows} className="justify-center" />
+                        <MutualFacepile users={person.mutual_follows} className="justify-center w-full" />
                     </div>
                   ) : (
                     <div className="h-5 flex items-center justify-center w-full">
