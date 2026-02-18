@@ -70,6 +70,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
+  const [showAliases, setShowAliases] = useState(!!initialValues.alt_name || (initialValues.aliases?.length ?? 0) > 0);
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["functional_categories"],
@@ -270,31 +271,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="alt_name">Alternative Name (English)</Label>
-          <Input
-            id="alt_name"
-            value={alt_name}
-            onChange={(e) => setAltName(e.target.value)}
-            placeholder="e.g. Eiffel Tower"
-            autoComplete="off"
-          />
-          <p className="text-xs text-muted-foreground">
-            Display name for international users (e.g. 'Eiffel Tower' vs 'Tour Eiffel').
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Search Aliases (Hidden)</Label>
-          <TagInput
-            placeholder="Add alias..."
-            tags={aliases}
-            setTags={setAliases}
-          />
-          <p className="text-xs text-muted-foreground">
-            Nicknames or alternate spellings for search only (e.g. 'Iron Lady'). Press Enter to add.
-          </p>
-        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -324,6 +300,37 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             </Select>
           </div>
         </div>
+
+        {/* Alt Name & Aliases */}
+        {showAliases && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="alt_name">Alternative Name (English)</Label>
+              <Input
+                id="alt_name"
+                value={alt_name}
+                onChange={(e) => setAltName(e.target.value)}
+                placeholder="e.g. Eiffel Tower"
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground">
+                Display name for international users (e.g. 'Eiffel Tower' vs 'Tour Eiffel').
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Search Aliases (Hidden)</Label>
+              <TagInput
+                placeholder="Add alias..."
+                tags={aliases}
+                setTags={setAliases}
+              />
+              <p className="text-xs text-muted-foreground">
+                Nicknames or alternate spellings for search only (e.g. 'Iron Lady'). Press Enter to add.
+              </p>
+            </div>
+          </>
+        )}
 
         {/* Year Built */}
         {showYear && (
@@ -356,8 +363,19 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         )}
 
         {/* Add Buttons Row */}
-        {(!showYear || !showArchitects) && (
+        {(!showYear || !showArchitects || !showAliases) && (
             <div className="flex gap-2 flex-wrap">
+                {!showAliases && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full h-8"
+                        onClick={() => setShowAliases(true)}
+                    >
+                        <Plus className="h-3 w-3 mr-1" /> Add Aliases
+                    </Button>
+                )}
                 {!showYear && (
                     <Button
                         type="button"
