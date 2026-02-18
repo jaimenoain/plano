@@ -6,7 +6,6 @@ import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
-import { StyleSelect, StyleSummary } from "@/components/ui/style-select";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionalCategory, FunctionalTypology, AttributeGroup, Attribute } from "@/types/classification";
@@ -34,7 +33,6 @@ export interface BuildingFormData {
   status?: string | null;
   access?: string | null;
   architects: Architect[];
-  styles: StyleSummary[];
   functional_category_id: string | null;
   functional_typology_ids: string[];
   selected_attribute_ids: string[];
@@ -56,7 +54,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [status, setStatus] = useState<string>(initialValues.status || "");
   const [access, setAccess] = useState<string>(initialValues.access || "");
   const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
-  const [styles, setStyles] = useState<StyleSummary[]>(initialValues.styles || []);
   const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id || "");
   const [functional_typology_ids, setTypologyIds] = useState<string[]>(initialValues.functional_typology_ids);
   const [selected_attribute_ids, setAttributeIds] = useState<string[]>(initialValues.selected_attribute_ids);
@@ -73,7 +70,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
   const [showYear, setShowYear] = useState(!!initialValues.year_completed);
   const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
-  const [showStyles, setShowStyles] = useState((initialValues.styles || []).length > 0);
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["functional_categories"],
@@ -233,7 +229,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         status: status || null,
         access: access || null,
         architects,
-        styles,
         functional_category_id,
         functional_typology_ids,
         selected_attribute_ids,
@@ -357,18 +352,6 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             <p className="text-xs text-muted-foreground">
               Add multiple architects if applicable. If not found, you can create a new one.
             </p>
-          </div>
-        )}
-
-        {/* Styles */}
-        {showStyles && (
-          <div className="space-y-2">
-            <Label>Architectural Styles</Label>
-            <StyleSelect
-              selectedStyles={styles}
-              setSelectedStyles={setStyles}
-              placeholder="Search styles or add new..."
-            />
           </div>
         )}
 

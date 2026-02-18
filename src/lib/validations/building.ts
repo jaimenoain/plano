@@ -25,13 +25,6 @@ export const buildingSchema = z.object({
       type: z.enum(['individual', 'studio'])
     })
   ),
-  styles: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      slug: z.string()
-    })
-  ).optional().default([]),
   functional_category_id: z.union([
       z.string().uuid(),
       z.literal(""),
@@ -72,13 +65,6 @@ export const editBuildingSchema = z.object({
       type: z.enum(['individual', 'studio'])
     })
   ).optional(),
-  styles: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      slug: z.string()
-    })
-  ).optional().default([]),
   functional_category_id: z.union([
       z.string().uuid(),
       z.literal(""),
