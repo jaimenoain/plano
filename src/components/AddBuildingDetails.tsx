@@ -41,6 +41,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         .from('buildings')
         .insert({
           name: data.name,
+          alt_name: data.alt_name || null,
+          aliases: data.aliases || [],
           year_completed: data.year_completed,
           status: data.status as any,
           access: data.access as any,
@@ -175,6 +177,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
   const initialValues: BuildingFormData = {
     name: locationData.name || "",
+    alt_name: "",
+    aliases: [],
     year_completed: null,
     status: null,
     access: null,

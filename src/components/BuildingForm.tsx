@@ -20,12 +20,15 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { TagInput } from "@/components/ui/tag-input";
 
 const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary'];
 const ACCESS_OPTIONS = ['Open Access', 'Admission Fee', 'Customers Only', 'Appointment Only', 'Exterior View Only', 'No Access'];
 
 export interface BuildingFormData {
   name: string;
+  alt_name?: string | null;
+  aliases?: string[];
   hero_image_url?: string | null;
   year_completed: number | null;
   status?: string | null;
@@ -47,6 +50,8 @@ interface BuildingFormProps {
 
 export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create' }: BuildingFormProps) {
   const [name, setName] = useState(initialValues.name);
+  const [alt_name, setAltName] = useState(initialValues.alt_name || "");
+  const [aliases, setAliases] = useState<string[]>(initialValues.aliases || []);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
   const [status, setStatus] = useState<string>(initialValues.status || "");
   const [access, setAccess] = useState<string>(initialValues.access || "");
@@ -221,6 +226,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
     try {
       const rawData = {
         name,
+        alt_name: alt_name || null,
+        aliases,
         // hero_image_url removed
         year_completed,
         status: status || null,
@@ -266,6 +273,32 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             placeholder="e.g. Sydney Opera House"
             autoComplete="off"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="alt_name">Alternative Name (English)</Label>
+          <Input
+            id="alt_name"
+            value={alt_name}
+            onChange={(e) => setAltName(e.target.value)}
+            placeholder="e.g. Eiffel Tower"
+            autoComplete="off"
+          />
+          <p className="text-xs text-muted-foreground">
+            Display name for international users (e.g. 'Eiffel Tower' vs 'Tour Eiffel').
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Search Aliases (Hidden)</Label>
+          <TagInput
+            placeholder="Add alias..."
+            tags={aliases}
+            setTags={setAliases}
+          />
+          <p className="text-xs text-muted-foreground">
+            Nicknames or alternate spellings for search only (e.g. 'Iron Lady'). Press Enter to add.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

@@ -128,6 +128,8 @@ export default function EditBuilding() {
 
       setInitialValues({
         name: data.name,
+        alt_name: (data as any).alt_name || "",
+        aliases: (data as any).aliases || [],
         year_completed: data.year_completed,
         status: (data as any).status || "",
         access: (data as any).access || "",
@@ -207,6 +209,8 @@ export default function EditBuilding() {
         .from('buildings')
         .update({
           name: formData.name,
+          alt_name: formData.alt_name || null,
+          aliases: formData.aliases || [],
           year_completed: formData.year_completed,
           status: formData.status as any,
           access: formData.access as any,
