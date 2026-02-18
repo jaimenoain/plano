@@ -23,6 +23,7 @@ interface Building {
   year_completed: number | null;
   city: string | null;
   country: string | null;
+  alt_name?: string | null;
 }
 
 interface BuildingSidebarProps {
@@ -214,9 +215,16 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: B
                     >
                       <CardContent className="flex-1 min-w-0 p-3 flex flex-col justify-center">
                         <div className="flex items-start justify-between gap-2">
+                          <div className="flex flex-col">
                             <h3 className="line-clamp-2 text-sm font-semibold leading-tight group-hover:text-primary" title={building.name}>
                                 {building.name}
                             </h3>
+                            {building.alt_name && building.alt_name !== building.name && (
+                                <span className="text-xs text-muted-foreground italic truncate max-w-[200px]">
+                                    {building.alt_name}
+                                </span>
+                            )}
+                          </div>
                         </div>
 
                         {/* Architect, Year, Location */}
