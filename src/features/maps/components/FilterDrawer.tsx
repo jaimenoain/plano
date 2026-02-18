@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -360,10 +361,10 @@ export function FilterDrawer() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 px-4">
-          Filters
+        <Button variant="outline" size="icon" className="h-9 w-9 relative" aria-label="Filters">
+          <ListFilter className="h-4 w-4" />
           {activeFilterCount > 0 && (
-            <span className="ml-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+            <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground">
               {activeFilterCount}
             </span>
           )}
