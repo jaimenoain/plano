@@ -89,4 +89,29 @@ describe('DiscoveryBuildingCard', () => {
     const flexRow = container.querySelector('.flex-row');
     expect(flexRow).not.toBeNull();
   });
+
+  it('renders alt_name when provided and different from name', () => {
+    const buildingWithAltName = { ...mockBuilding, alt_name: 'Alternative Name' };
+    render(
+      <BrowserRouter>
+        <DiscoveryBuildingCard building={buildingWithAltName} />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('Alternative Name')).toBeDefined();
+  });
+
+  it('does not render alt_name when it is the same as name', () => {
+    const buildingWithSameAltName = { ...mockBuilding, alt_name: 'Test Building' };
+    render(
+      <BrowserRouter>
+        <DiscoveryBuildingCard building={buildingWithSameAltName} />
+      </BrowserRouter>
+    );
+
+    // queryByText returns null if not found
+    const altNames = screen.queryAllByText('Test Building');
+    // We expect only 1 occurrence (the main title), not 2
+    expect(altNames.length).toBe(1);
+  });
 });

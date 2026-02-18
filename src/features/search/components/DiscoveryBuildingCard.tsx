@@ -65,10 +65,15 @@ export function DiscoveryBuildingCard({
 
         {/* Content */}
         <div className="flex flex-col flex-1 p-3 justify-center">
-          <div className="flex justify-between items-start gap-2">
-            <h3 className="font-semibold text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors pr-6">
+          <div className="flex flex-col pr-6">
+            <h3 className="font-semibold text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
               {building.name}
             </h3>
+            {building.alt_name && building.alt_name !== building.name && (
+              <span className="text-xs text-muted-foreground line-clamp-1 italic">
+                {building.alt_name}
+              </span>
+            )}
           </div>
 
           <div className={cn("text-xs text-muted-foreground mt-1", imageUrl ? "line-clamp-2" : "line-clamp-1")}>
