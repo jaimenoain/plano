@@ -815,27 +815,29 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : (
-                    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                      <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} />
-                      <DragOverlay dropAnimation={null}>
-                        {activeId ? (
-                          <div className="w-[280px] scale-105 shadow-xl z-50 cursor-grabbing rounded-xl bg-card border overflow-hidden opacity-90">
-                            {(() => {
-                              const activeItem = content.find((i) => i.id === activeId);
-                              return activeItem ? (
-                                <ReviewCard
-                                  entry={activeItem}
-                                  variant="compact"
-                                  hideUser
-                                  imagePosition="left"
-                                  showCommunityImages={showCommunityImages}
-                                />
-                              ) : null;
-                            })()}
-                          </div>
-                        ) : null}
-                      </DragOverlay>
-                    </DndContext>
+                    <div className="-mx-4">
+                      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                        <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} />
+                        <DragOverlay dropAnimation={null}>
+                          {activeId ? (
+                            <div className="w-[280px] scale-105 shadow-xl z-50 cursor-grabbing rounded-xl bg-card border overflow-hidden opacity-90">
+                              {(() => {
+                                const activeItem = content.find((i) => i.id === activeId);
+                                return activeItem ? (
+                                  <ReviewCard
+                                    entry={activeItem}
+                                    variant="compact"
+                                    hideUser
+                                    imagePosition="left"
+                                    showCommunityImages={showCommunityImages}
+                                  />
+                                ) : null;
+                              })()}
+                            </div>
+                          ) : null}
+                        </DragOverlay>
+                      </DndContext>
+                    </div>
                   )}
                   <div ref={containerRef} className="h-4 w-full" />
                   </>
