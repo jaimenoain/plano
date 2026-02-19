@@ -44,7 +44,7 @@ export function ProfileKanbanView({ kanbanData, showCommunityImages, updatingIte
 
   return (
     <div className="relative group w-full min-w-0 max-w-[100vw]">
-      <div className="w-full min-w-0 flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] min-h-[500px] snap-x snap-mandatory pl-4 pr-12 md:px-4">
+      <div className="w-full min-w-0 flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-140px)] min-h-[500px] snap-x snap-mandatory pl-4 pr-12 md:px-4">
         {columns.map((col) => (
           <KanbanColumn
             key={col.id}
