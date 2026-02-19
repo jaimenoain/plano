@@ -53,9 +53,9 @@ describe('ProfileKanbanView', () => {
     );
 
     expect(screen.getByText('Saved')).toBeTruthy();
-    expect(screen.getByText('1 Point')).toBeTruthy();
-    expect(screen.getByText('2 Points')).toBeTruthy();
-    expect(screen.getByText('3 Points')).toBeTruthy();
+    expect(screen.getByText('Impressive')).toBeTruthy();
+    expect(screen.getByText('Essential')).toBeTruthy();
+    expect(screen.getByText('Masterpiece')).toBeTruthy();
 
     // Check if items are rendered.
     // DraggableReviewCard might render specific content, but we can rely on KanbanColumn item counts or content.
@@ -84,8 +84,8 @@ describe('ProfileKanbanView', () => {
     expect(screen.getByText('Saved')).toBeTruthy();
     // Empty state should be visible
     expect(screen.getByText('No saved buildings')).toBeTruthy();
-    expect(screen.getByText('No 1-point buildings')).toBeTruthy();
-    expect(screen.getByText('No 2-point buildings')).toBeTruthy();
-    expect(screen.getByText('No 3-point buildings')).toBeTruthy();
+    expect(screen.getByText('No Impressive buildings')).toBeTruthy();
+    expect(screen.getByText('No Essential buildings')).toBeTruthy();
+    expect(screen.getByText('No Masterpiece buildings')).toBeTruthy();
   });
 });
