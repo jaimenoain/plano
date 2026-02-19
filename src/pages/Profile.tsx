@@ -15,7 +15,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { 
   Settings, LogOut, Building2, Bookmark, Loader2,
   MoreVertical, Heart, Map as MapIcon, Star, ArrowRight,
-  Search, X, Share2, Edit2, LayoutGrid, Columns
+  Search, X, Share2, Edit2, LayoutGrid, Columns, List
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -89,7 +89,7 @@ export default function Profile() {
   const { toast } = useToast();
   const { state, isMobile } = useSidebar();
   
-  const [viewMode, setViewMode] = useState<'grid' | 'kanban'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'kanban' | 'list'>('grid');
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0, photos: 0, maps: 0 });
@@ -744,12 +744,15 @@ export default function Profile() {
                   </ToggleGroup>
 
                   {/* View Toggle */}
-                  <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as 'grid' | 'kanban')}>
+                  <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as 'grid' | 'kanban' | 'list')}>
                     <ToggleGroupItem value="grid" size="sm" aria-label="Grid View">
                       <LayoutGrid className="h-4 w-4" />
                     </ToggleGroupItem>
                     <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban View">
                       <Columns className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="list" size="sm" aria-label="List View">
+                      <List className="h-4 w-4" />
                     </ToggleGroupItem>
                   </ToggleGroup>
                 </div>
@@ -814,6 +817,8 @@ export default function Profile() {
                         />
                       ))}
                     </div>
+                  ) : viewMode === 'list' ? (
+                    <div className="py-8 text-center text-muted-foreground">List View Placeholder</div>
                   ) : (
                     <div className="-mx-4">
                       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
