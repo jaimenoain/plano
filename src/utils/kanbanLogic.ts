@@ -8,6 +8,7 @@ interface HandleDragEndParams {
   setContent: (value: React.SetStateAction<FeedReview[]>) => void;
   supabase: SupabaseClient<any, "public", any>;
   toast: (props: any) => void;
+  setUpdatingItemId?: (id: string | null) => void;
 }
 
 export const handleDragEndLogic = async ({
@@ -17,6 +18,7 @@ export const handleDragEndLogic = async ({
   setContent,
   supabase,
   toast,
+  setUpdatingItemId,
 }: HandleDragEndParams) => {
   if (!overId) return;
   if (activeId === overId) return;
@@ -69,6 +71,10 @@ export const handleDragEndLogic = async ({
     )
   );
 
+  if (setUpdatingItemId) {
+    setUpdatingItemId(activeItem.id);
+  }
+
   try {
     // Supabase Update
     const dbRating = newRating === 0 || newRating === null ? null : newRating;
@@ -93,5 +99,9 @@ export const handleDragEndLogic = async ({
       title: "Update failed",
       description: "Could not move the card. Please try again.",
     });
+  } finally {
+    if (setUpdatingItemId) {
+      setUpdatingItemId(null);
+    }
   }
 };
