@@ -246,6 +246,16 @@ describe('Profile Regression Tests', () => {
       expect(screen.queryByText('Chrysler Building')).toBeNull();
   });
 
+  it('should switch to List view and render placeholder', async () => {
+      renderProfileWithUrl();
+      await screen.findByTestId('review-card-review-1');
+
+      const listToggle = screen.getByLabelText('List View');
+      fireEvent.click(listToggle);
+
+      expect(await screen.findByText('List View Placeholder')).toBeTruthy();
+  });
+
   it('should filter by Tab (Reviews vs Bucket List)', async () => {
       renderProfileWithUrl('/profile/testuser?tab=reviews');
 
