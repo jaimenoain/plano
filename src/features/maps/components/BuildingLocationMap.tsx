@@ -77,61 +77,79 @@ export function BuildingLocationMap({
   const pinStyle = getPinStyle(pinData as ClusterResponse);
 
   return (
-    <div className={`relative ${isExpanded ? "fixed inset-0 z-50 h-screen w-screen bg-background" : "rounded-xl overflow-hidden border border-white/10"} ${className || ""}`}>
-      <Map
-        ref={mapRef}
-        initialViewState={{
-          longitude: lng,
-          latitude: lat,
-          zoom: 15
-        }}
-        mapLib={maplibregl}
-        style={{ width: "100%", height: "100%" }}
-        mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
-        attributionControl={false}
+    <div
+      className={
+        isExpanded
+          ? "fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          : `relative rounded-xl overflow-hidden border border-white/10 ${className || ""}`
+      }
+      onClick={isExpanded && onToggleExpand ? onToggleExpand : undefined}
+      data-testid="map-backdrop"
+    >
+      <div
+        className={
+          isExpanded
+            ? "relative w-full h-full max-w-7xl max-h-[90vh] bg-background rounded-xl overflow-hidden shadow-2xl border border-white/10"
+            : "w-full h-full"
+        }
+        onClick={isExpanded ? (e) => e.stopPropagation() : undefined}
+        data-testid="map-inner-container"
       >
-        <NavigationControl position="bottom-right" />
-        <GeolocateControl position="bottom-right" trackUserLocation={true} showUserLocation={true} />
-
-        <Marker
-            longitude={lng}
-            latitude={lat}
-            anchor={pinStyle.shape === 'pin' ? "bottom" : "center"}
-            style={{ zIndex: 10 }}
+        <Map
+          ref={mapRef}
+          initialViewState={{
+            longitude: lng,
+            latitude: lat,
+            zoom: 15
+          }}
+          mapLib={maplibregl}
+          style={{ width: "100%", height: "100%" }}
+          mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
+          attributionControl={false}
         >
-            <MapPinComponent
-                style={pinStyle}
-                isHovered={false}
-            />
-        </Marker>
-      </Map>
+          <NavigationControl position="bottom-right" />
+          <GeolocateControl position="bottom-right" trackUserLocation={true} showUserLocation={true} />
 
-      <div className="absolute top-2 left-2 flex flex-col gap-2 z-10">
-          <button
-            onClick={(e) => {
-                e.stopPropagation();
-                setIsSatellite(!isSatellite);
-            }}
-            className="p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors flex items-center gap-2"
-            title={isSatellite ? "Show Map" : "Show Satellite"}
+          <Marker
+              longitude={lng}
+              latitude={lat}
+              anchor={pinStyle.shape === 'pin' ? "bottom" : "center"}
+              style={{ zIndex: 10 }}
           >
-            <Layers className="w-4 h-4" />
-            <span className="text-xs font-medium hidden sm:inline">{isSatellite ? "Map" : "Satellite"}</span>
-          </button>
-      </div>
+              <MapPinComponent
+                  style={pinStyle}
+                  isHovered={false}
+              />
+          </Marker>
+        </Map>
 
-      {onToggleExpand && (
-        <button
-            onClick={(e) => {
-                e.stopPropagation();
-                onToggleExpand();
-            }}
-            className="absolute top-2 right-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10"
-            title={isExpanded ? "Collapse Map" : "Expand Map"}
-        >
-            {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </button>
-      )}
+        <div className="absolute top-2 left-2 flex flex-col gap-2 z-10">
+            <button
+              onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSatellite(!isSatellite);
+              }}
+              className="p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors flex items-center gap-2"
+              title={isSatellite ? "Show Map" : "Show Satellite"}
+            >
+              <Layers className="w-4 h-4" />
+              <span className="text-xs font-medium hidden sm:inline">{isSatellite ? "Map" : "Satellite"}</span>
+            </button>
+        </div>
+
+        {onToggleExpand && (
+          <button
+              onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleExpand();
+              }}
+              className="absolute top-2 right-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10"
+              title={isExpanded ? "Collapse Map" : "Expand Map"}
+          >
+              {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
