@@ -24,19 +24,19 @@ export function ProfileKanbanView({ kanbanData, showCommunityImages, updatingIte
     },
     {
       id: "1-point",
-      title: "1 Point",
+      title: "Impressive",
       items: kanbanData.onePoint,
       ratingValue: 1
     },
     {
       id: "2-points",
-      title: "2 Points",
+      title: "Essential",
       items: kanbanData.twoPoints,
       ratingValue: 2
     },
     {
       id: "3-points",
-      title: "3 Points",
+      title: "Masterpiece",
       items: kanbanData.threePoints,
       ratingValue: 3
     },
