@@ -12,6 +12,7 @@ import { PlanoMap } from "@/features/maps/components/PlanoMap";
 import { BuildingSidebar } from "@/features/maps/components/BuildingSidebar";
 import { MapControls } from "@/features/maps/components/MapControls";
 import { DiscoverySearchInput, Suggestion } from "@/features/search/components/DiscoverySearchInput";
+import { useArchitectSearch } from "@/features/search/hooks/useArchitectSearch";
 
 const SIDEBAR_EXPANDED_OFFSET = 208; // Approx 13rem
 
@@ -27,6 +28,9 @@ function SearchPageContent() {
   // Local search state
   const [searchValue, setSearchValue] = useState(filters.query || "");
   const debouncedSearchValue = useDebounce(searchValue, 300);
+
+  // Architect Search
+  const { architects } = useArchitectSearch({ searchQuery: searchValue });
 
   // View mode state (map vs list) for mobile
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
@@ -140,6 +144,7 @@ function SearchPageContent() {
               <BuildingSidebar
                 suggestions={suggestions}
                 onLocationClick={handleLocationResultClick}
+                architects={architects}
               />
            </div>
         </div>
@@ -185,6 +190,7 @@ function SearchPageContent() {
                  <BuildingSidebar
                     suggestions={suggestions}
                     onLocationClick={handleLocationResultClick}
+                    architects={architects}
                  />
               </div>
            </div>
