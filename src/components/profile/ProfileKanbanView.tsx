@@ -3,39 +3,38 @@ import { KanbanColumn } from "./KanbanColumn";
 import { DraggableReviewCard } from "./DraggableReviewCard";
 
 interface ProfileKanbanViewProps {
-  items: FeedReview[];
+  kanbanData: {
+    saved: FeedReview[];
+    onePoint: FeedReview[];
+    twoPoints: FeedReview[];
+    threePoints: FeedReview[];
+  };
 }
 
-export function ProfileKanbanView({ items }: ProfileKanbanViewProps) {
-  // Logic to partition buildings
-  const savedItems = items.filter(i => i.rating === null || i.rating === 0);
-  const onePointItems = items.filter(i => i.rating === 1);
-  const twoPointItems = items.filter(i => i.rating === 2);
-  const threePointItems = items.filter(i => i.rating === 3);
-
+export function ProfileKanbanView({ kanbanData }: ProfileKanbanViewProps) {
   const columns = [
     {
       id: "saved",
       title: "Saved",
-      items: savedItems,
+      items: kanbanData.saved,
       ratingValue: 0
     },
     {
       id: "1-point",
       title: "1 Point",
-      items: onePointItems,
+      items: kanbanData.onePoint,
       ratingValue: 1
     },
     {
       id: "2-points",
       title: "2 Points",
-      items: twoPointItems,
+      items: kanbanData.twoPoints,
       ratingValue: 2
     },
     {
       id: "3-points",
       title: "3 Points",
-      items: threePointItems,
+      items: kanbanData.threePoints,
       ratingValue: 3
     },
   ];

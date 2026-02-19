@@ -431,6 +431,16 @@ export default function Profile() {
     });
   }, [content, searchQuery]);
 
+  // Computed: Partitioned Content for Kanban
+  const kanbanData = useMemo(() => {
+    return {
+      saved: filteredContent.filter(item => item.rating === null || item.rating === 0),
+      onePoint: filteredContent.filter(item => item.rating === 1),
+      twoPoints: filteredContent.filter(item => item.rating === 2),
+      threePoints: filteredContent.filter(item => item.rating === 3),
+    };
+  }, [filteredContent]);
+
   const checkIfFollowing = async () => {
     if (!currentUser || !targetUserId || currentUser.id === targetUserId) return;
     const { data } = await supabase.from("follows").select("*").eq("follower_id", currentUser.id).eq("following_id", targetUserId).maybeSingle();
@@ -763,7 +773,7 @@ export default function Profile() {
                     </div>
                   ) : (
                     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                      <ProfileKanbanView items={filteredContent} />
+                      <ProfileKanbanView kanbanData={kanbanData} />
                     </DndContext>
                   )}
                   <div ref={containerRef} className="h-4 w-full" />
