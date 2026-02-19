@@ -10,9 +10,10 @@ interface ProfileKanbanViewProps {
     twoPoints: FeedReview[];
     threePoints: FeedReview[];
   };
+  showCommunityImages?: boolean;
 }
 
-export function ProfileKanbanView({ kanbanData }: ProfileKanbanViewProps) {
+export function ProfileKanbanView({ kanbanData, showCommunityImages }: ProfileKanbanViewProps) {
   const columns = [
     {
       id: "saved",
@@ -53,7 +54,7 @@ export function ProfileKanbanView({ kanbanData }: ProfileKanbanViewProps) {
           >
               <div className="space-y-3">
                {col.items.map((item) => (
-                 <DraggableReviewCard key={item.id} review={item} />
+                 <DraggableReviewCard key={item.id} review={item} showCommunityImages={showCommunityImages} />
                ))}
             </div>
           </KanbanColumn>
