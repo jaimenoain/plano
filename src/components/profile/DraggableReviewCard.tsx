@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 interface DraggableReviewCardProps {
   review: FeedReview;
   className?: string;
+  showCommunityImages?: boolean;
 }
 
-export function DraggableReviewCard({ review, className }: DraggableReviewCardProps) {
+export function DraggableReviewCard({ review, className, showCommunityImages }: DraggableReviewCardProps) {
   const {
     attributes,
     listeners,
@@ -42,6 +43,7 @@ export function DraggableReviewCard({ review, className }: DraggableReviewCardPr
         variant="compact"
         hideUser
         imagePosition="left"
+        showCommunityImages={showCommunityImages}
         // Prevent click events from propagating to drag
         // Wait, ReviewCard handles clicks internally for navigation.
         // dnd-kit handles drag start based on movement.

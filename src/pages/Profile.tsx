@@ -801,7 +801,7 @@ export default function Profile() {
                     </div>
                   ) : (
                     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                      <ProfileKanbanView kanbanData={kanbanData} />
+                      <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} />
                       <DragOverlay dropAnimation={null}>
                         {activeId ? (
                           <div className="w-[280px] scale-105 shadow-xl z-50 cursor-grabbing rounded-xl bg-card border overflow-hidden opacity-90">
@@ -813,6 +813,7 @@ export default function Profile() {
                                   variant="compact"
                                   hideUser
                                   imagePosition="left"
+                                  showCommunityImages={showCommunityImages}
                                 />
                               ) : null;
                             })()}
