@@ -246,14 +246,16 @@ describe('Profile Regression Tests', () => {
       expect(screen.queryByText('Chrysler Building')).toBeNull();
   });
 
-  it('should switch to List view and render placeholder', async () => {
+  it('should switch to List view and render table', async () => {
       renderProfileWithUrl();
       await screen.findByTestId('review-card-review-1');
 
       const listToggle = screen.getByLabelText('List View');
       fireEvent.click(listToggle);
 
-      expect(await screen.findByText('List View Placeholder')).toBeTruthy();
+      expect(await screen.findByText('Name')).toBeTruthy();
+      expect(screen.getByText('Empire State')).toBeTruthy();
+      expect(screen.getByText('Chrysler Building')).toBeTruthy();
   });
 
   it('should filter by Tab (Reviews vs Bucket List)', async () => {
