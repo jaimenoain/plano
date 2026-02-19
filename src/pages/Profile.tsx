@@ -514,6 +514,11 @@ export default function Profile() {
       }
   }
 
+  const handleBuildingAdded = () => {
+      fetchUserContent(0, true);
+      fetchStats();
+  };
+
   const handleLike = async (reviewId: string) => {
     if (!currentUser) return;
     const item = content.find((r) => r.id === reviewId);
@@ -669,6 +674,7 @@ export default function Profile() {
           onOpenUserList={openUserList}
           // Map tab values to filters for UserCard stats
           onTabChange={handleFilterChange}
+          onBuildingAdded={handleBuildingAdded}
           squad={squad}
         />
 
