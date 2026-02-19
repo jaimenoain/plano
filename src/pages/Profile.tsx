@@ -1,4 +1,13 @@
 import { useState, useEffect, useMemo, ReactNode, useCallback } from "react";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { 
   Settings, LogOut, Building2, Bookmark, Loader2,
@@ -106,6 +115,16 @@ export default function Profile() {
   // Collections State
   const [showCreateCollection, setShowCreateCollection] = useState(false);
   const [collectionsRefreshKey, setCollectionsRefreshKey] = useState(0);
+
+  // Drag and Drop Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    console.log("Drag end:", event.active.id, event.over?.id);
+  };
 
   // New Profile Features
   const [squad, setSquad] = useState<Profile[]>([]);
@@ -743,7 +762,9 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : (
-                    <ProfileKanbanView items={filteredContent} />
+                    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                      <ProfileKanbanView items={filteredContent} />
+                    </DndContext>
                   )}
                   <div ref={containerRef} className="h-4 w-full" />
                   </>
