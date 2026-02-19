@@ -4,11 +4,12 @@ import { useMapContext } from '../providers/MapContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, MapPin } from 'lucide-react';
+import { Loader2, MapPin, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getBuildingImageUrl } from '@/utils/image';
 import { Button } from '@/components/ui/button';
 import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
+import { ArchitectSearchResult } from '@/features/search/hooks/useArchitectSearch';
 
 interface Building {
   id: string;
@@ -30,11 +31,12 @@ interface BuildingSidebarProps {
   topLocation?: { description: string; place_id: string } | null;
   onLocationClick?: (placeId: string) => void;
   suggestions?: Suggestion[];
+  architects?: ArchitectSearchResult[];
 }
 
 const PAGE_SIZE = 20;
 
-export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: BuildingSidebarProps = {}) {
+export function BuildingSidebar({ topLocation, onLocationClick, suggestions, architects }: BuildingSidebarProps = {}) {
   const { state: { bounds, filters }, methods: { setHighlightedId } } = useMapContext();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -135,6 +137,35 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions }: B
   return (
     <ScrollArea className="h-full w-full">
       <div className="space-y-4 p-4">
+        {/* Architect Results */}
+        {architects && architects.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+              Architects
+            </h4>
+            {architects.map((architect) => (
+              <Link to={`/architect/${architect.id}`} key={architect.id} className="block group">
+                <Card className="flex flex-row overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50 hover:bg-muted/50 bg-muted/30">
+                  <CardContent className="flex items-center gap-3 p-3 w-full">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                      <UserRound className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="line-clamp-1 text-sm font-semibold group-hover:text-primary transition-colors">
+                        {architect.name}
+                      </h3>
+                      <span className="text-xs text-muted-foreground capitalize">
+                        {architect.type}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+            <div className="h-px bg-border my-4" />
+          </div>
+        )}
+
         {/* Location Suggestions (replaces topLocation) */}
         {suggestions && suggestions.length > 0 ? (
           <div className="space-y-2">
