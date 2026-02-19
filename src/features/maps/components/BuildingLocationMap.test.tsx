@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { BuildingLocationMap } from './BuildingLocationMap';
 
 // Mock react-map-gl
@@ -113,5 +113,25 @@ describe('BuildingLocationMap', () => {
 
     const marker = screen.getByTestId('marker-container');
     expect(marker.getAttribute('data-anchor')).toBe('center');
+  });
+
+  it('calls onToggleExpand when clicking backdrop in expanded mode', () => {
+    const onToggleExpand = vi.fn();
+    render(<BuildingLocationMap {...defaultProps} isExpanded={true} onToggleExpand={onToggleExpand} />);
+
+    const backdrop = screen.getByTestId('map-backdrop');
+    fireEvent.click(backdrop);
+
+    expect(onToggleExpand).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onToggleExpand when clicking the map inner container in expanded mode', () => {
+    const onToggleExpand = vi.fn();
+    render(<BuildingLocationMap {...defaultProps} isExpanded={true} onToggleExpand={onToggleExpand} />);
+
+    const innerContainer = screen.getByTestId('map-inner-container');
+    fireEvent.click(innerContainer);
+
+    expect(onToggleExpand).not.toHaveBeenCalled();
   });
 });
