@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { 
   Settings, LogOut, Building2, Bookmark, Loader2,
   MoreVertical, Heart, Filter, Star, ArrowRight,
-  Search, X, Share2, Edit2
+  Search, X, Share2, Edit2, LayoutGrid, Columns
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -75,6 +75,7 @@ export default function Profile() {
   const { toast } = useToast();
   const { state, isMobile } = useSidebar();
   
+  const [viewMode, setViewMode] = useState<'grid' | 'kanban'>('grid');
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0, photos: 0, maps: 0 });
@@ -656,18 +657,30 @@ export default function Profile() {
             <div className="sticky top-14 md:top-0 bg-background z-10 pt-2 pb-4 space-y-3 shadow-sm border-b border-border/40 -mx-4 px-4 mb-4">
               <div className="flex items-center justify-between">
 
-                {/* Filter Toggle */}
-                <ToggleGroup type="single" value={activeFilter} onValueChange={handleFilterChange} className="justify-start">
-                    <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                        All
+                <div className="flex items-center gap-4">
+                  {/* Filter Toggle */}
+                  <ToggleGroup type="single" value={activeFilter} onValueChange={handleFilterChange} className="justify-start">
+                      <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                          All
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="visited" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                          Reviews
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="pending" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                          Bucket List
+                      </ToggleGroupItem>
+                  </ToggleGroup>
+
+                  {/* View Toggle */}
+                  <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as 'grid' | 'kanban')}>
+                    <ToggleGroupItem value="grid" size="sm" aria-label="Grid View">
+                      <LayoutGrid className="h-4 w-4" />
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="visited" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                        Reviews
+                    <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban View">
+                      <Columns className="h-4 w-4" />
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="pending" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                        Bucket List
-                    </ToggleGroupItem>
-                </ToggleGroup>
+                  </ToggleGroup>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <Switch
@@ -715,18 +728,27 @@ export default function Profile() {
                 <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : filteredContent.length > 0 ? (
                   <>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
-                    {filteredContent.map((item) => (
-                      <ReviewCard
-                        key={item.id}
-                        entry={item}
-                        onLike={handleLike}
-                        hideUser
-                        variant="compact"
-                        showCommunityImages={showCommunityImages}
-                      />
-                    ))}
-                  </div>
+                  {viewMode === 'grid' ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
+                      {filteredContent.map((item) => (
+                        <ReviewCard
+                          key={item.id}
+                          entry={item}
+                          onLike={handleLike}
+                          hideUser
+                          variant="compact"
+                          showCommunityImages={showCommunityImages}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="w-full h-64 bg-secondary/20 border-2 border-dashed border-border rounded-lg flex items-center justify-center mb-20">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                          <Columns className="h-5 w-5" />
+                          Kanban View Coming Soon
+                        </span>
+                    </div>
+                  )}
                   <div ref={containerRef} className="h-4 w-full" />
                   </>
               ) : (
