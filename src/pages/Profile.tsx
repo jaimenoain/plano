@@ -199,7 +199,7 @@ export default function Profile() {
     } else {
       newParams.delete("search");
     }
-    setSearchParams(newParams, { replace: true });
+    setSearchParams(newParams, { replace: true, preventScrollReset: true });
   };
 
   const handleShare = () => {
