@@ -349,7 +349,7 @@ export function FeedHeroCard({
   return (
     <article
       onClick={handleCardClick}
-      className="group relative flex flex-col w-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer mb-6"
+      className="group relative flex flex-col w-full max-w-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer mb-6"
     >
       {/* Header */}
       <div className="p-4 flex items-start gap-3 border-b border-border/40">
@@ -359,7 +359,7 @@ export function FeedHeroCard({
         </Avatar>
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           {/* Line 1: User Action Building */}
-          <div className="text-sm md:text-base text-foreground leading-snug break-words">
+          <div className="text-sm md:text-base text-foreground leading-snug break-words w-full">
             <span className="font-bold text-foreground">{username}</span>
             <span className="text-muted-foreground/60 font-normal"> {actionText} </span>
             <span className="font-bold text-foreground">{mainTitle}</span>
@@ -390,7 +390,7 @@ export function FeedHeroCard({
       {/* Content Body (Review Text) */}
       {entry.content && (
         <div className="px-4 pt-3 pb-2 flex flex-col gap-2">
-           <p className="text-sm text-foreground leading-relaxed break-words">
+           <p className="text-sm text-foreground leading-relaxed break-words w-full">
              {entry.content}
            </p>
         </div>
