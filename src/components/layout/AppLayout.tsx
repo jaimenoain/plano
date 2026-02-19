@@ -16,6 +16,7 @@ interface AppLayoutProps {
   headerAction?: ReactNode;
   isFullScreen?: boolean;
   showHeader?: boolean;
+  fullWidth?: boolean;
 }
 
 export function AppLayout({ 
@@ -30,7 +31,8 @@ export function AppLayout({
   showBack = false,
   headerAction,
   isFullScreen = false,
-  showHeader = true
+  showHeader = true,
+  fullWidth = false
 }: AppLayoutProps) {
   return (
     <>
@@ -52,7 +54,7 @@ export function AppLayout({
       <div className={cn(
         showHeader && "pt-16 md:pt-0",
         "w-full min-w-0 overflow-x-hidden",
-        !isFullScreen && "md:max-w-5xl mx-auto",
+        (!isFullScreen && !fullWidth) && "md:max-w-5xl mx-auto",
         isFullScreen && "h-full flex flex-col flex-1",
         showNav && "pb-20 md:pb-0"
       )}>

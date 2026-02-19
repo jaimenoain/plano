@@ -651,7 +651,7 @@ export default function Profile() {
         "md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]"
       )}
     >
-      <AppLayout title="Profile" showLogo={false} showBack={!isOwnProfile}>
+      <AppLayout title="Profile" showLogo={false} showBack={!isOwnProfile} fullWidth>
         <MetaHead
           title={`${profile?.username} (@${profile?.username})`}
           description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Plano.`}
@@ -674,33 +674,39 @@ export default function Profile() {
 
         {/* Social Context Section */}
         {!isOwnProfile && (
-          <SocialContextSection
-            mutualAffinityUsers={profileComparison.mutualAffinityUsers}
-            commonFollowers={profileComparison.commonFollowers}
-          />
+          <div className="max-w-7xl mx-auto">
+            <SocialContextSection
+              mutualAffinityUsers={profileComparison.mutualAffinityUsers}
+              commonFollowers={profileComparison.commonFollowers}
+            />
+          </div>
         )}
 
         {/* 2. Favorite Buildings */}
         {!isOwnProfile && buildingFavorites.length > 0 && (
-          <FavoritesSection
-              favorites={buildingFavorites}
-              isOwnProfile={false}
-              onManage={() => {}}
-          />
+          <div className="max-w-7xl mx-auto">
+            <FavoritesSection
+                favorites={buildingFavorites}
+                isOwnProfile={false}
+                onManage={() => {}}
+            />
+          </div>
         )}
 
         {/* 3. Highlights (Genres, People, Quotes) */}
         {!isOwnProfile && (
-          <ProfileHighlights
-            favorites={favorites}
-            isOwnProfile={false}
-            onManage={() => {}}
-          />
+          <div className="max-w-7xl mx-auto">
+            <ProfileHighlights
+              favorites={favorites}
+              isOwnProfile={false}
+              onManage={() => {}}
+            />
+          </div>
         )}
 
         {/* 4. Collections Grid */}
         {targetUserId && (
-            <div id="collections-section" className="scroll-mt-24">
+            <div id="collections-section" className="scroll-mt-24 max-w-7xl mx-auto">
                 <CollectionsGrid
                   userId={targetUserId}
                   username={profile?.username || null}
@@ -789,7 +795,7 @@ export default function Profile() {
               ) : filteredContent.length > 0 ? (
                   <>
                   {viewMode === 'grid' ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pb-20">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 pb-20">
                       {filteredContent.map((item) => (
                         <ReviewCard
                           key={item.id}
