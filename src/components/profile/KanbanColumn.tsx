@@ -1,7 +1,7 @@
 import React from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Bookmark, Plus } from "lucide-react";
+import { Bookmark, Plus, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface KanbanColumnProps {
@@ -55,15 +55,22 @@ export function KanbanColumn({
         isOver ? "bg-background/90 border-primary/40" : "bg-background/80 border-border/40"
       )}>
         <div className="flex items-center gap-2">
-          <span className="text-foreground flex items-center justify-center w-6 h-6 rounded-full bg-secondary/50">
             {ratingValue === 0 || ratingValue === null ? (
-              <Bookmark className="w-4 h-4" aria-label="Saved" />
+              <span className="text-foreground flex items-center justify-center w-6 h-6 rounded-full bg-secondary/50">
+                <Bookmark className="w-4 h-4" aria-label="Saved" />
+              </span>
             ) : (
-              <span className="text-foreground text-sm tracking-tighter" aria-label={`${ratingValue} point${ratingValue > 1 ? 's' : ''}`}>
-                {"●".repeat(ratingValue)}
+              <span className="text-foreground flex items-center justify-center h-6 px-1.5 rounded-full bg-secondary/50">
+                 <div className="flex items-center gap-0.5" aria-label={`${ratingValue} point${ratingValue > 1 ? 's' : ''}`}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                       <Circle
+                          key={i}
+                          className={`w-3 h-3 ${i < ratingValue ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
+                       />
+                    ))}
+                 </div>
               </span>
             )}
-          </span>
           <span className="text-sm font-semibold">{title}</span>
         </div>
         <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">

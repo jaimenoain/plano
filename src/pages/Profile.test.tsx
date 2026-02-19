@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import Profile from './Profile';
 import { BrowserRouter } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -84,6 +84,10 @@ vi.mock('@/integrations/supabase/client', () => {
 describe('Profile Sign Out', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should call signOut and navigate to / when sign out is triggered', async () => {

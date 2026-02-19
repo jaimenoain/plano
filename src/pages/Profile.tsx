@@ -118,6 +118,7 @@ export default function Profile() {
 
   // Drag State
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
 
   // Collections State
   const [showCreateCollection, setShowCreateCollection] = useState(false);
@@ -143,7 +144,8 @@ export default function Profile() {
       content,
       setContent,
       supabase,
-      toast
+      toast,
+      setUpdatingItemId
     });
   };
 
@@ -801,7 +803,7 @@ export default function Profile() {
                     </div>
                   ) : (
                     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                      <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} />
+                      <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} />
                       <DragOverlay dropAnimation={null}>
                         {activeId ? (
                           <div className="w-[280px] scale-105 shadow-xl z-50 cursor-grabbing rounded-xl bg-card border overflow-hidden opacity-90">

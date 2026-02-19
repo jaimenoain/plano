@@ -45,8 +45,13 @@ describe('KanbanColumn', () => {
         </KanbanColumn>
       </DndContext>
     );
-    expect(screen.getByLabelText('2 points')).toBeTruthy();
-    expect(screen.getByText('●●')).toBeTruthy();
+    // Check for aria-label which describes the points
+    const pointsContainer = screen.getByLabelText('2 points');
+    expect(pointsContainer).toBeTruthy();
+
+    // We can also check if it contains 3 SVG elements (circles)
+    const circles = pointsContainer.querySelectorAll('svg');
+    expect(circles.length).toBe(3);
   });
 
   it('renders children correctly', () => {
