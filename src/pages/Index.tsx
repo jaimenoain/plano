@@ -336,7 +336,7 @@ export default function Index() {
             ) : (
               <div className="flex flex-col lg:flex-row gap-8 items-start">
                 {/* Feed Column */}
-                <div className="w-full lg:w-2/3 flex flex-col gap-3 min-w-0">
+                <div className="w-full lg:w-2/3 flex flex-col gap-3 min-w-0 max-w-full">
                   {aggregatedReviews.map((item) => {
                     const key = item.type === 'cluster' ? `cluster-${item.entries[0].id}` : item.entry.id;
 
