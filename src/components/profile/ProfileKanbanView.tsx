@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { FeedReview } from "@/types/feed";
 import { KanbanColumn } from "./KanbanColumn";
 import { DraggableReviewCard } from "./DraggableReviewCard";
@@ -40,22 +41,27 @@ export function ProfileKanbanView({ kanbanData }: ProfileKanbanViewProps) {
   ];
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] min-h-[500px] snap-x snap-mandatory px-1">
-      {columns.map((col) => (
-        <KanbanColumn
-          key={col.id}
-          id={col.id}
-          title={col.title}
-          ratingValue={col.ratingValue}
-          items={col.items.map(i => i.id)}
-        >
-            <div className="space-y-3">
-             {col.items.map((item) => (
-               <DraggableReviewCard key={item.id} review={item} />
-             ))}
-          </div>
-        </KanbanColumn>
-      ))}
+    <div className="relative group">
+      <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] min-h-[500px] snap-x snap-mandatory pl-1 pr-12 md:pr-1 md:px-1">
+        {columns.map((col) => (
+          <KanbanColumn
+            key={col.id}
+            id={col.id}
+            title={col.title}
+            ratingValue={col.ratingValue}
+            items={col.items.map(i => i.id)}
+          >
+              <div className="space-y-3">
+               {col.items.map((item) => (
+                 <DraggableReviewCard key={item.id} review={item} />
+               ))}
+            </div>
+          </KanbanColumn>
+        ))}
+      </div>
+      <div className="md:hidden absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-background via-background/80 to-transparent pointer-events-none flex items-center justify-end pr-1 opacity-80">
+        <ChevronRight className="w-8 h-8 animate-pulse text-muted-foreground/70" />
+      </div>
     </div>
   );
 }
