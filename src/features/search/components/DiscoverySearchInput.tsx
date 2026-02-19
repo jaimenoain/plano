@@ -4,6 +4,7 @@ import usePlacesAutocomplete, {
   getLatLng,
 } from "use-places-autocomplete";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
+import { config } from "@/config";
 import { Command as CommandPrimitive } from "cmdk";
 import {
   Command,
@@ -57,7 +58,7 @@ export function DiscoverySearchInput({
         setScriptLoaded(true);
         return;
       }
-      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      const apiKey = config.googleMaps.apiKey;
       if (!apiKey) {
         console.error("DiscoverySearchInput: VITE_GOOGLE_MAPS_API_KEY is missing. Location search disabled.");
         return;

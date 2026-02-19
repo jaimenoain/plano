@@ -5,6 +5,7 @@ import { LocationInput } from "@/components/ui/LocationInput";
 import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { importLibrary } from "@googlemaps/js-api-loader";
+import { config } from "@/config";
 import { Loader2, MapPin, Navigation, Plus, ArrowRight, Building2, Layers } from "lucide-react";
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
 import maplibregl from "maplibre-gl";
@@ -146,7 +147,7 @@ export default function AddBuilding() {
             setMapsLoaded(true);
             return;
         }
-        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        const apiKey = config.googleMaps.apiKey;
         if (apiKey) {
             try {
                 await importLibrary("places");

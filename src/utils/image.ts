@@ -1,3 +1,4 @@
+import { config } from '@/config';
 
 /**
  * Transforms a building image path (or URL) into a fully qualified public URL.
@@ -9,32 +10,6 @@
  * @param path - The image path (from storage) or full URL.
  * @returns The full public URL, or undefined if the path is empty.
  */
-
-// Helper to get environment variables safely in both Vite and Node environments
-const getEnv = (key: string): string | undefined => {
-  // Check import.meta.env (Vite)
-  try {
-    // @ts-ignore
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
-      // @ts-ignore
-      return import.meta.env[key];
-    }
-  } catch (e) {
-    // import.meta might not be available
-  }
-
-  // Check process.env (Node/Testing)
-  try {
-    if (typeof process !== 'undefined' && process.env && process.env[key]) {
-      return process.env[key];
-    }
-  } catch (e) {
-    // process might not be available
-  }
-
-  return undefined;
-};
-
 export const getBuildingImageUrl = (path: string | null | undefined): string | undefined => {
   if (!path) return undefined;
 
@@ -43,15 +18,7 @@ export const getBuildingImageUrl = (path: string | null | undefined): string | u
     return path;
   }
 
-  const customUrl = getEnv('VITE_PUBLIC_STORAGE_URL');
-  let baseUrl = '';
-
-  if (customUrl) {
-    baseUrl = customUrl;
-  } else {
-    // Default to S3 bucket
-    baseUrl = "https://s3.eu-west-2.amazonaws.com/plano.app";
-  }
+  const baseUrl = config.storage.publicUrl;
 
   // Normalize slashes
   const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
