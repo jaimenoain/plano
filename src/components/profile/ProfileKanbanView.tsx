@@ -49,15 +49,10 @@ export function ProfileKanbanView({ kanbanData }: ProfileKanbanViewProps) {
           ratingValue={col.ratingValue}
           items={col.items.map(i => i.id)}
         >
-            <div className="space-y-3 min-h-[50px]">
+            <div className="space-y-3">
              {col.items.map((item) => (
                <DraggableReviewCard key={item.id} review={item} />
              ))}
-             {col.items.length === 0 && (
-                <div className="h-32 flex items-center justify-center text-muted-foreground/40 text-sm italic border-2 border-dashed border-border/30 rounded-lg">
-                    Empty
-                </div>
-            )}
           </div>
         </KanbanColumn>
       ))}
