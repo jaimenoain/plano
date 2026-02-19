@@ -13,6 +13,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { BlockUserDialog } from "./BlockUserDialog";
+import { AddBuildingDialog } from "./AddBuildingDialog";
 
 interface Profile {
     id: string;
@@ -41,6 +42,7 @@ interface UserCardProps {
     onSignOut: () => void;
     onOpenUserList: (type: "followers" | "following") => void;
     onTabChange: (tab: string) => void;
+    onBuildingAdded?: () => void;
     squad?: Profile[];
 }
 
@@ -53,6 +55,7 @@ export function UserCard({
     onSignOut,
     onOpenUserList,
     onTabChange,
+    onBuildingAdded,
     squad = []
 }: UserCardProps) {
     const navigate = useNavigate();
@@ -87,6 +90,7 @@ export function UserCard({
                                     <Button variant="secondary" size="sm" onClick={() => navigate("/settings")} className="h-8">
                                         Edit profile
                                     </Button>
+                                    <AddBuildingDialog onBuildingAdded={onBuildingAdded} />
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                              <Button variant="ghost" size="icon" className="h-8 w-8">
