@@ -65,7 +65,7 @@ export function UserCard({
     const totalBuildings = stats.reviews + stats.pending;
 
     return (
-        <div className="px-4 py-6 md:py-10 max-w-4xl mx-auto">
+        <div className="px-4 py-6 md:py-10 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start md:items-center">
 
                 {/* Avatar Section */}
