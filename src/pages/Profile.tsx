@@ -37,6 +37,7 @@ import { FeedReview } from "@/types/feed";
 import { useProfileComparison } from "@/hooks/useProfileComparison";
 import { getBuildingImageUrl } from "@/utils/image";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { ProfileKanbanView } from "@/components/profile/ProfileKanbanView";
 
 // --- Types ---
 interface Profile {
@@ -742,12 +743,7 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : (
-                    <div className="w-full h-64 bg-secondary/20 border-2 border-dashed border-border rounded-lg flex items-center justify-center mb-20">
-                        <span className="text-muted-foreground flex items-center gap-2">
-                          <Columns className="h-5 w-5" />
-                          Kanban View Coming Soon
-                        </span>
-                    </div>
+                    <ProfileKanbanView items={filteredContent} />
                   )}
                   <div ref={containerRef} className="h-4 w-full" />
                   </>
