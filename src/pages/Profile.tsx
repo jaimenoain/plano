@@ -371,7 +371,8 @@ export default function Profile() {
             building:buildings ( id, name, address, year_completed, main_image_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )
             `)
             .eq("user_id", targetUserId)
-            .order("edited_at", { ascending: false });
+            .order("edited_at", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: false });
 
         // Apply status filter in the query
         if (activeFilter === 'visited') {
@@ -518,11 +519,17 @@ export default function Profile() {
 
   // Computed: Partitioned Content for Kanban
   const kanbanData = useMemo(() => {
+    const sortByDate = (a: FeedReview, b: FeedReview) => {
+      const dateA = new Date(a.edited_at || a.created_at).getTime();
+      const dateB = new Date(b.edited_at || b.created_at).getTime();
+      return dateB - dateA;
+    };
+
     return {
-      saved: filteredContent.filter(item => item.rating === null || item.rating === 0),
-      onePoint: filteredContent.filter(item => item.rating === 1),
-      twoPoints: filteredContent.filter(item => item.rating === 2),
-      threePoints: filteredContent.filter(item => item.rating === 3),
+      saved: filteredContent.filter(item => item.rating === null || item.rating === 0).sort(sortByDate),
+      onePoint: filteredContent.filter(item => item.rating === 1).sort(sortByDate),
+      twoPoints: filteredContent.filter(item => item.rating === 2).sort(sortByDate),
+      threePoints: filteredContent.filter(item => item.rating === 3).sort(sortByDate),
     };
   }, [filteredContent]);
 
