@@ -14,7 +14,7 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { 
   Settings, LogOut, Building2, Bookmark, Loader2,
-  MoreVertical, Heart, Filter, Star, ArrowRight,
+  MoreVertical, Heart, Map as MapIcon, Star, ArrowRight,
   Search, X, Share2, Edit2, LayoutGrid, Columns
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -775,9 +775,10 @@ export default function Profile() {
                   size="icon"
                   className="shrink-0"
                   onClick={() => navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true`)}
-                  title="Filter by rated buildings"
+                  title="View on a map"
+                  aria-label="View on a map"
                   >
-                  <Filter className="h-4 w-4" />
+                  <MapIcon className="h-4 w-4" />
                   </Button>
               </div>
             </div>
