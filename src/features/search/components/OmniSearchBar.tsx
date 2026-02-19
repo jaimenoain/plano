@@ -4,6 +4,7 @@ import usePlacesAutocomplete, {
   getLatLng,
 } from "use-places-autocomplete";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
+import { config } from "@/config";
 import { useQuery } from "@tanstack/react-query";
 import {
   Command,
@@ -45,7 +46,7 @@ export function OmniSearchBar({
         setScriptLoaded(true);
         return;
       }
-      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      const apiKey = config.googleMaps.apiKey;
       if (!apiKey) return;
 
       try {

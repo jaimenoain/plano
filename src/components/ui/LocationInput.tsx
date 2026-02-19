@@ -4,6 +4,7 @@ import usePlacesAutocomplete, {
 } from "use-places-autocomplete";
 // CHANGED: Import new functional API instead of the removed Loader class
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader"; 
+import { config } from "@/config";
 import { Command as CommandPrimitive } from "cmdk";
 import {
   Command,
@@ -51,7 +52,7 @@ export function LocationInput({
         return;
       }
 
-      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      const apiKey = config.googleMaps.apiKey;
       if (!apiKey) {
         console.error("VITE_GOOGLE_MAPS_API_KEY is missing");
         setHasError(true);

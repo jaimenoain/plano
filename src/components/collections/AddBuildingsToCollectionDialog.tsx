@@ -17,6 +17,7 @@ import { DiscoveryBuilding } from "@/features/search/components/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
+import { config } from "@/config";
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
@@ -69,7 +70,7 @@ function OtherMarkersSearch({ collectionId, userId }: { collectionId: string, us
         return;
       }
 
-      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      const apiKey = config.googleMaps.apiKey;
       if (!apiKey) {
         console.error("VITE_GOOGLE_MAPS_API_KEY is missing");
         setHasError(true);
