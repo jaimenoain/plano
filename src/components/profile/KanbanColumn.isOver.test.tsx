@@ -13,6 +13,10 @@ vi.mock('@dnd-kit/core', async () => {
       setNodeRef: vi.fn(),
       isOver: true,
     }),
+    useDndContext: () => ({
+      active: null,
+      over: null,
+    }),
   };
 });
 

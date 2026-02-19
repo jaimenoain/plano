@@ -1,5 +1,5 @@
 import React from "react";
-import { useDroppable } from "@dnd-kit/core";
+import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Bookmark, Plus, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,9 @@ export function KanbanColumn({
     id,
   });
 
+  const { over } = useDndContext();
+  const isOverContainer = isOver || (!!over && items.includes(over.id));
+
   const getGhostLabel = () => {
     switch(ratingValue) {
         case 0:
@@ -44,7 +47,7 @@ export function KanbanColumn({
       ref={setNodeRef}
       className={cn(
         "flex-shrink-0 w-[280px] rounded-xl flex flex-col h-full overflow-hidden snap-center border transition-all duration-200 min-h-[500px]",
-        isOver
+        isOverContainer
             ? "bg-secondary/80 border-primary ring-2 ring-primary/40 shadow-md"
             : "bg-secondary/20 border-border/60"
       )}
@@ -52,7 +55,7 @@ export function KanbanColumn({
       {/* Header */}
       <div className={cn(
         "p-4 font-medium sticky top-0 backdrop-blur-sm z-10 border-b flex items-center justify-between transition-colors duration-200",
-        isOver ? "bg-background/90 border-primary/40" : "bg-background/80 border-border/40"
+        isOverContainer ? "bg-background/90 border-primary/40" : "bg-background/80 border-border/40"
       )}>
         <div className="flex items-center gap-2">
             {ratingValue === 0 || ratingValue === null ? (
@@ -87,7 +90,7 @@ export function KanbanColumn({
         {items.length === 0 && (
             <div className={cn(
                 "flex flex-col items-center justify-center text-center p-6 border-2 border-dashed rounded-lg transition-all duration-200 flex-1 min-h-[200px]",
-                isOver
+                isOverContainer
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border/40 text-muted-foreground/60 hover:border-border/60 hover:bg-secondary/30"
             )}>
