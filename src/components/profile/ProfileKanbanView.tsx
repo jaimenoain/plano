@@ -1,5 +1,6 @@
 import { FeedReview } from "@/types/feed";
-import { Bookmark } from "lucide-react";
+import { KanbanColumn } from "./KanbanColumn";
+import { DraggableReviewCard } from "./DraggableReviewCard";
 
 interface ProfileKanbanViewProps {
   items: FeedReview[];
@@ -17,63 +18,49 @@ export function ProfileKanbanView({ items }: ProfileKanbanViewProps) {
       id: "saved",
       title: "Saved",
       items: savedItems,
-      icon: <Bookmark className="w-4 h-4" />
+      ratingValue: 0
     },
     {
       id: "1-point",
       title: "1 Point",
       items: onePointItems,
-      icon: <span className="text-foreground text-sm">●</span>
+      ratingValue: 1
     },
     {
       id: "2-points",
       title: "2 Points",
       items: twoPointItems,
-      icon: <span className="text-foreground text-sm tracking-tighter">●●</span>
+      ratingValue: 2
     },
     {
       id: "3-points",
       title: "3 Points",
       items: threePointItems,
-      icon: <span className="text-foreground text-sm tracking-tighter">●●●</span>
+      ratingValue: 3
     },
   ];
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] min-h-[500px] snap-x snap-mandatory px-1">
       {columns.map((col) => (
-        <div
+        <KanbanColumn
           key={col.id}
-          className="flex-shrink-0 w-[280px] bg-secondary/30 rounded-xl flex flex-col h-full overflow-hidden snap-center border border-border/40"
+          id={col.id}
+          title={col.title}
+          ratingValue={col.ratingValue}
+          items={col.items.map(i => i.id)}
         >
-          {/* Sticky Header */}
-          <div className="p-4 font-medium sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border/40 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-foreground flex items-center justify-center w-6 h-6 rounded-full bg-secondary/50">
-                {col.icon}
-              </span>
-              <span className="text-sm font-semibold">{col.title}</span>
-            </div>
-            <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-              {col.items.length}
-            </span>
-          </div>
-
-          {/* Column Body */}
-          <div className="flex-1 overflow-y-auto p-3">
-            {/* Empty state placeholder */}
-            {col.items.length === 0 && (
-                <div className="h-32 flex items-center justify-center text-muted-foreground/40 text-sm italic">
+            <div className="space-y-3 min-h-[50px]">
+             {col.items.map((item) => (
+               <DraggableReviewCard key={item.id} review={item} />
+             ))}
+             {col.items.length === 0 && (
+                <div className="h-32 flex items-center justify-center text-muted-foreground/40 text-sm italic border-2 border-dashed border-border/30 rounded-lg">
                     Empty
                 </div>
             )}
-
-            {/* Verification: Just listing IDs for now if any exist to prove partitioning logic works, hidden or minimal */}
-             <div className="space-y-2">
-                {/* Eventually cards will go here. For now just empty shells as requested. */}
-             </div>
           </div>
-        </div>
+        </KanbanColumn>
       ))}
     </div>
   );
