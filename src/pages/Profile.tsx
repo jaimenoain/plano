@@ -51,6 +51,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { ProfileKanbanView } from "@/components/profile/ProfileKanbanView";
 import { handleDragEndLogic } from "@/utils/kanbanLogic";
+import { ProfileListView } from "@/components/profile/ProfileListView";
 
 // --- Types ---
 interface Profile {
@@ -306,7 +307,7 @@ export default function Profile() {
             .from("user_buildings")
             .select(`
             id, content, rating, created_at, edited_at, user_id, building_id, status,
-            building:buildings ( id, name, address, year_completed, main_image_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )
+            building:buildings ( id, name, address, city, country, year_completed, main_image_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )
             `)
             .eq("user_id", targetUserId)
             .order("edited_at", { ascending: false, nullsFirst: false })
@@ -395,6 +396,8 @@ export default function Profile() {
                 id: item.building?.id || item.building_id,
                 name: item.building?.name || "Unknown Building",
                 address: item.building?.address || null,
+                city: item.building?.city || null,
+                country: item.building?.country || null,
                 year_completed: item.building?.year_completed || null,
                 main_image_url: item.building?.main_image_url || null,
                 slug: item.building?.slug || null,
@@ -818,7 +821,7 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : viewMode === 'list' ? (
-                    <div className="py-8 text-center text-muted-foreground">List View Placeholder</div>
+                    <ProfileListView data={filteredContent} />
                   ) : (
                     <div className="-mx-4">
                       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
