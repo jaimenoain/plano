@@ -33,7 +33,7 @@ export function DraggableReviewCard({ review, className }: DraggableReviewCardPr
       {...listeners}
       className={cn(
         "transition-all duration-200 outline-none",
-        isDragging ? "scale-105 shadow-xl z-50 opacity-90 cursor-grabbing" : "cursor-grab",
+        isDragging ? "opacity-0" : "cursor-grab",
         className
       )}
     >
