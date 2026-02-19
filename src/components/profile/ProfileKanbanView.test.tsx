@@ -83,6 +83,9 @@ describe('ProfileKanbanView', () => {
 
     expect(screen.getByText('Saved')).toBeTruthy();
     // Empty state should be visible
-    expect(screen.getAllByText('Empty').length).toBe(4);
+    expect(screen.getByText('No saved buildings')).toBeTruthy();
+    expect(screen.getByText('No 1-point buildings')).toBeTruthy();
+    expect(screen.getByText('No 2-point buildings')).toBeTruthy();
+    expect(screen.getByText('No 3-point buildings')).toBeTruthy();
   });
 });
