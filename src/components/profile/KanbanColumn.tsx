@@ -45,14 +45,14 @@ export function KanbanColumn({
       className={cn(
         "flex-shrink-0 w-[280px] rounded-xl flex flex-col h-full overflow-hidden snap-center border transition-all duration-200 min-h-[500px]",
         isOver
-            ? "bg-secondary/40 border-primary/30 ring-1 ring-primary/20 shadow-sm"
+            ? "bg-secondary/80 border-primary ring-2 ring-primary/40 shadow-md"
             : "bg-secondary/20 border-border/60"
       )}
     >
       {/* Header */}
       <div className={cn(
         "p-4 font-medium sticky top-0 backdrop-blur-sm z-10 border-b flex items-center justify-between transition-colors duration-200",
-        isOver ? "bg-background/90 border-primary/20" : "bg-background/80 border-border/40"
+        isOver ? "bg-background/90 border-primary/40" : "bg-background/80 border-border/40"
       )}>
         <div className="flex items-center gap-2">
           <span className="text-foreground flex items-center justify-center w-6 h-6 rounded-full bg-secondary/50">
@@ -81,7 +81,7 @@ export function KanbanColumn({
             <div className={cn(
                 "flex flex-col items-center justify-center text-center p-6 border-2 border-dashed rounded-lg transition-all duration-200 flex-1 min-h-[200px]",
                 isOver
-                    ? "border-primary/40 bg-primary/5 text-primary"
+                    ? "border-primary bg-primary/10 text-primary"
                     : "border-border/40 text-muted-foreground/60 hover:border-border/60 hover:bg-secondary/30"
             )}>
                 <div className="mb-2 p-3 rounded-full bg-background/50">
