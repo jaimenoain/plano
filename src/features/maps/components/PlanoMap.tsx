@@ -49,10 +49,25 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Context for sharing state with Sidebar
-  const { methods: { setBounds, setHighlightedId }, state: { highlightedId, filters, bounds, mode } } = useMapContext();
+  const { methods: { setBounds, setHighlightedId, fitMapBounds }, state: { highlightedId, filters, bounds, mode, fitBounds } } = useMapContext();
 
   // Reference to Map instance
   const mapRef = useRef<MapRef>(null);
+
+  // Handle programmatic fitBounds
+  useEffect(() => {
+    if (fitBounds && mapRef.current) {
+        mapRef.current.fitBounds(
+            [
+                [fitBounds.west, fitBounds.south],
+                [fitBounds.east, fitBounds.north]
+            ],
+            { padding: 50, duration: 1000 }
+        );
+        // Reset the trigger so we don't refit on re-renders unless requested again
+        fitMapBounds(null);
+    }
+  }, [fitBounds, fitMapBounds]);
 
   // Reference to GeolocateControl to trigger it programmatically
   // We use `any` to avoid complex type matching between react-map-gl wrapper and maplibre-gl instance,
