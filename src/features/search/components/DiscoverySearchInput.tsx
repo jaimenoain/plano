@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Bounds } from "@/utils/map";
 
 export interface Suggestion {
   place_id: string;
@@ -23,7 +24,7 @@ export interface Suggestion {
 interface DiscoverySearchInputProps {
   value: string;
   onSearchChange: (value: string) => void;
-  onLocationSelect: (location: { lat: number; lng: number }) => void;
+  onLocationSelect: (location: { lat: number; lng: number }, bounds?: Bounds) => void;
   placeholder?: string;
   className?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -154,7 +155,19 @@ export function DiscoverySearchInput({
     try {
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
-      onLocationSelect({ lat, lng });
+
+      let bounds: Bounds | undefined;
+      const viewport = results[0].geometry.viewport;
+      if (viewport && typeof viewport.getNorthEast === 'function') {
+        bounds = {
+          north: viewport.getNorthEast().lat(),
+          south: viewport.getSouthWest().lat(),
+          east: viewport.getNorthEast().lng(),
+          west: viewport.getSouthWest().lng()
+        };
+      }
+
+      onLocationSelect({ lat, lng }, bounds);
       onPlaceDetails?.(results[0]);
     } catch (error) {
       console.error("Geocoding error: ", error);

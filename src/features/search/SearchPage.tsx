@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Map as MapIcon, List as ListIcon } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
+import { Bounds } from "@/utils/map";
 
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
@@ -20,7 +21,7 @@ function SearchPageContent() {
 
   const {
     state: { filters },
-    methods: { setFilter, moveMap }
+    methods: { setFilter, moveMap, fitMapBounds }
   } = useMapContext();
 
   // Local search state
@@ -56,8 +57,12 @@ function SearchPageContent() {
     setSearchValue(value);
   };
 
-  const handleLocationSelect = (location: { lat: number; lng: number }) => {
-    moveMap(location.lat, location.lng, 14); // Zoom to 14 on select
+  const handleLocationSelect = (location: { lat: number; lng: number }, bounds?: Bounds) => {
+    if (bounds) {
+        fitMapBounds(bounds);
+    } else {
+        moveMap(location.lat, location.lng, 14); // Zoom to 14 on select
+    }
     if (isMobile) {
         setViewMode('map');
     }
@@ -67,7 +72,19 @@ function SearchPageContent() {
     try {
       const results = await getGeocode({ placeId });
       const { lat, lng } = await getLatLng(results[0]);
-      handleLocationSelect({ lat, lng });
+
+      let bounds: Bounds | undefined;
+      const viewport = results[0].geometry.viewport;
+      if (viewport && typeof viewport.getNorthEast === 'function') {
+        bounds = {
+          north: viewport.getNorthEast().lat(),
+          south: viewport.getSouthWest().lat(),
+          east: viewport.getNorthEast().lng(),
+          west: viewport.getSouthWest().lng()
+        };
+      }
+
+      handleLocationSelect({ lat, lng }, bounds);
       setSearchValue(""); // Clear search value
     } catch (error) {
       console.error("Geocoding error: ", error);

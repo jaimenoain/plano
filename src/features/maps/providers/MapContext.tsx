@@ -13,6 +13,7 @@ interface Contact {
 
 interface MapContextMethods {
   moveMap: (lat: number, lng: number, zoom: number) => void;
+  fitMapBounds: (bounds: Bounds | null) => void;
   setMode: (mode: MapMode) => void;
   setFilter: <K extends keyof MapFilters>(key: K, value: MapFilters[K]) => void;
   setMapState: (state: Partial<MapState>) => void;
@@ -28,6 +29,7 @@ interface MapContextValue {
     mode: MapMode;
     filters: MapFilters;
     bounds: Bounds | null;
+    fitBounds: Bounds | null;
     highlightedId: string | null;
   };
   methods: MapContextMethods;
@@ -40,6 +42,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   const { updateMapState } = useStableMapUpdate(setMapURL);
 
   const [bounds, setBounds] = useState<Bounds | null>(null);
+  const [fitBounds, setFitBounds] = useState<Bounds | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [hydratedContacts, setHydratedContacts] = useState<Record<string, Contact>>({});
 
@@ -93,6 +96,13 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
       updateMapState({ lat, lng, zoom }, true);
     },
     [updateMapState]
+  );
+
+  const fitMapBounds = useCallback(
+    (bounds: Bounds | null) => {
+        setFitBounds(bounds);
+    },
+    []
   );
 
   const setMode = useCallback(
@@ -170,10 +180,12 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         mode,
         filters: mergedFilters,
         bounds,
+        fitBounds,
         highlightedId,
       },
       methods: {
         moveMap,
+        fitMapBounds,
         setMode,
         setFilter,
         setMapState,
@@ -181,7 +193,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         setHighlightedId,
       },
     }),
-    [lat, lng, zoom, mode, mergedFilters, bounds, highlightedId, moveMap, setMode, setFilter, setMapState]
+    [lat, lng, zoom, mode, mergedFilters, bounds, fitBounds, highlightedId, moveMap, fitMapBounds, setMode, setFilter, setMapState]
   );
 
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
