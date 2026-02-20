@@ -438,7 +438,7 @@ export function ReviewCard({
             <img
               src={posterUrl}
               alt={mainTitle || ""}
-              className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${!isCompact ? 'md:absolute md:inset-0' : ''}`}
+              className={`w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 ${!isCompact ? 'md:absolute md:inset-0' : ''}`}
             />
           </div>
         ) : null
@@ -521,7 +521,7 @@ export function ReviewCard({
     <article
       onClick={handleCardClick}
       // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-      className={`group relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
+      className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
     >
       {isCompact ? (
         // COMPACT LAYOUT: Header -> Text -> Media -> Footer
