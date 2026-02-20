@@ -82,7 +82,7 @@ function calculateTierRank(item: any): number {
 export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapDataProps) {
   const fetchBox = useMemo(() => calculateFetchBox(bounds), [bounds]);
 
-  const { data: clusters, isLoading, error } = useQuery({
+  const { data: clusters, isLoading, isFetching, error } = useQuery({
     queryKey: ['map-clusters', fetchBox, filters, mode],
     queryFn: async () => {
       // Combine all attribute-related filters
@@ -153,5 +153,5 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 
-  return { clusters, isLoading, error };
+  return { clusters, isLoading, isFetching, error };
 }

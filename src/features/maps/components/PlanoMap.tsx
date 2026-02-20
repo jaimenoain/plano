@@ -197,7 +197,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
   }, [updateBounds, lat, lng, zoom, updateMapState]);
 
   // Fetch data based on bounds
-  const { clusters, isLoading } = useMapData({
+  const { clusters, isLoading, isFetching } = useMapData({
       bounds: bounds || { north: 0, south: 0, east: 0, west: 0 }, // fallback
       zoom: viewState.zoom,
       filters: filters,
@@ -238,7 +238,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
         </Map>
 
         {/* Empty State Overlay */}
-        {showEmptyMessage && !isLoading && bounds && visibleClustersCount === 0 && (
+        {showEmptyMessage && !isLoading && !isFetching && bounds && visibleClustersCount === 0 && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-background/80 backdrop-blur-md border rounded-lg shadow-lg p-4 text-center max-w-xs animate-in fade-in zoom-in duration-300">
               <p className="text-sm font-medium mb-2">No buildings in this location.</p>
               <button
