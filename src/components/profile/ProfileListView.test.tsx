@@ -71,12 +71,19 @@ describe('ProfileListView', () => {
       </TooltipProvider>
     );
 
+    // Check Headers
     expect(screen.getByText('Name')).toBeTruthy();
     expect(screen.getByText('Status')).toBeTruthy();
     expect(screen.getByText('Rating')).toBeTruthy();
     expect(screen.getByText('Review')).toBeTruthy();
     expect(screen.getByText('Architect')).toBeTruthy();
     expect(screen.getByText('Test Building')).toBeTruthy();
+
+    // Check Data Content
+    expect(screen.getByText('Architect 1')).toBeTruthy();
+    expect(screen.getByText('2020')).toBeTruthy();
+    expect(screen.getByText('Test City')).toBeTruthy();
+    expect(screen.getByText('Test Country')).toBeTruthy();
 
     const reviewsText = screen.getAllByText('Reviews');
     expect(reviewsText.length).toBeGreaterThan(0);
@@ -140,5 +147,32 @@ describe('ProfileListView', () => {
       fireEvent.click(statusButton);
 
       expect(onUpdate).toHaveBeenCalledWith('1', { status: 'pending' });
+  });
+
+  it('calls onUpdate when rating is changed', () => {
+    mocks.useSidebar.mockReturnValue({ isMobile: false });
+    const onUpdate = vi.fn();
+    render(
+      <TooltipProvider>
+        <BrowserRouter>
+          <ProfileListView
+            data={mockData}
+            isOwnProfile={true}
+            onUpdate={onUpdate}
+          />
+        </BrowserRouter>
+      </TooltipProvider>
+    );
+
+    // InlineRating renders 3 buttons, each with a star inside.
+    const starButtons = screen.getAllByRole('button').filter(button => button.querySelector('svg'));
+
+    // We expect 3 star buttons
+    expect(starButtons.length).toBeGreaterThanOrEqual(3);
+
+    // Click the 3rd star
+    fireEvent.click(starButtons[2]);
+
+    expect(onUpdate).toHaveBeenCalledWith('1', { rating: 3 });
   });
 });
