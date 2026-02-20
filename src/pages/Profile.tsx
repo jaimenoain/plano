@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo, ReactNode, useCallback } from "react";
 import {
   DndContext,
@@ -79,6 +80,12 @@ interface UserListItem {
   is_following: boolean;
   is_follower: boolean;
 }
+
+const variants = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, scale: 0.98, transition: { duration: 0.2 } }
+};
 
 const ITEMS_PER_PAGE = 15;
 
@@ -884,50 +891,79 @@ export default function Profile() {
                 <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : filteredContent.length > 0 ? (
                   <>
-                  {viewMode === 'grid' ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 pb-20">
-                      {filteredContent.map((item) => (
-                        <ReviewCard
-                          key={item.id}
-                          entry={item}
-                          onLike={handleLike}
-                          hideUser
-                          variant="compact"
-                          showCommunityImages={showCommunityImages}
+                  <AnimatePresence mode="wait">
+                    {viewMode === 'grid' ? (
+                      <motion.div
+                        key="grid"
+                        variants={variants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={{ duration: 0.25 }}
+                      >
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 pb-20">
+                          {filteredContent.map((item) => (
+                            <ReviewCard
+                              key={item.id}
+                              entry={item}
+                              onLike={handleLike}
+                              hideUser
+                              variant="compact"
+                              showCommunityImages={showCommunityImages}
+                            />
+                          ))}
+                        </div>
+                      </motion.div>
+                    ) : viewMode === 'list' ? (
+                      <motion.div
+                        key="list"
+                        variants={variants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={{ duration: 0.25 }}
+                      >
+                        <ProfileListView
+                            data={filteredContent}
+                            isOwnProfile={isOwnProfile}
+                            onUpdate={handleUpdate}
                         />
-                      ))}
-                    </div>
-                  ) : viewMode === 'list' ? (
-                    <ProfileListView
-                        data={filteredContent}
-                        isOwnProfile={isOwnProfile}
-                        onUpdate={handleUpdate}
-                    />
-                  ) : (
-                    <div className="-mx-4">
-                      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                        <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} />
-                        <DragOverlay dropAnimation={null}>
-                          {activeId ? (
-                            <div className="w-[280px] scale-105 shadow-xl z-50 cursor-grabbing rounded-xl bg-card border overflow-hidden opacity-90">
-                              {(() => {
-                                const activeItem = content.find((i) => i.id === activeId);
-                                return activeItem ? (
-                                  <ReviewCard
-                                    entry={activeItem}
-                                    variant="compact"
-                                    hideUser
-                                    imagePosition="left"
-                                    showCommunityImages={showCommunityImages}
-                                  />
-                                ) : null;
-                              })()}
-                            </div>
-                          ) : null}
-                        </DragOverlay>
-                      </DndContext>
-                    </div>
-                  )}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="kanban"
+                        variants={variants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={{ duration: 0.25 }}
+                      >
+                        <div className="-mx-4">
+                          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                            <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} />
+                            <DragOverlay dropAnimation={null}>
+                              {activeId ? (
+                                <div className="w-[280px] scale-105 shadow-xl z-50 cursor-grabbing rounded-xl bg-card border overflow-hidden opacity-90">
+                                  {(() => {
+                                    const activeItem = content.find((i) => i.id === activeId);
+                                    return activeItem ? (
+                                      <ReviewCard
+                                        entry={activeItem}
+                                        variant="compact"
+                                        hideUser
+                                        imagePosition="left"
+                                        showCommunityImages={showCommunityImages}
+                                      />
+                                    ) : null;
+                                  })()}
+                                </div>
+                              ) : null}
+                            </DragOverlay>
+                          </DndContext>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   <div ref={containerRef} className="h-4 w-full" />
                   </>
               ) : (
