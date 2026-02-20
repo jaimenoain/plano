@@ -16,11 +16,13 @@ import {
 } from "@/components/ui/tooltip";
 import { getBuildingImageUrl } from "@/utils/image";
 import { StatusBadge } from "./StatusBadge";
+import { InlineRating } from "./InlineRating";
 
 interface ProfileListViewProps {
   data: FeedReview[];
   isOwnProfile: boolean;
   onStatusChange: (id: string, currentStatus: string) => void;
+  onRate: (id: string, rating: number | null) => void;
 }
 
 function getCityFromAddress(address: string | null | undefined): string {
@@ -32,7 +34,7 @@ function getCityFromAddress(address: string | null | undefined): string {
   return parts[0];
 }
 
-export function ProfileListView({ data, isOwnProfile, onStatusChange }: ProfileListViewProps) {
+export function ProfileListView({ data, isOwnProfile, onStatusChange, onRate }: ProfileListViewProps) {
   const navigate = useNavigate();
 
   const handleRowClick = (review: FeedReview) => {
@@ -49,6 +51,7 @@ export function ProfileListView({ data, isOwnProfile, onStatusChange }: ProfileL
             <TableHead className="w-[50px] pl-4 text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Photo</TableHead>
             <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Name</TableHead>
             <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Status</TableHead>
+            <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Rating</TableHead>
             <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Review</TableHead>
             <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Architect</TableHead>
             <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Year</TableHead>
@@ -104,6 +107,13 @@ export function ProfileListView({ data, isOwnProfile, onStatusChange }: ProfileL
                     status={review.status}
                     isOwnProfile={isOwnProfile}
                     onClick={() => onStatusChange(review.id, review.status || 'visited')}
+                  />
+                </TableCell>
+                <TableCell className="py-1">
+                  <InlineRating
+                    rating={review.rating}
+                    onRate={(rating) => onRate(review.id, rating)}
+                    readOnly={!isOwnProfile}
                   />
                 </TableCell>
                 <TableCell className="text-muted-foreground py-1 truncate">
