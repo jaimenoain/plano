@@ -556,68 +556,80 @@ export default function Profile() {
     setIsFollowing(!isFollowing);
   };
 
-  const handleStatusToggle = async (reviewId: string, currentStatus: string) => {
+  const handleUpdate = async (id: string, updates: { status?: string, rating?: number | null }) => {
     if (!currentUser || !isOwnProfile) return;
 
-    const newStatus = currentStatus === 'pending' ? 'visited' : 'pending';
     const previousContent = [...content];
+    const itemIndex = content.findIndex(i => i.id === id);
+    if (itemIndex === -1) return;
+    const currentItem = content[itemIndex];
 
-    // Optimistic update
-    setContent(prev => prev.map(item =>
-      item.id === reviewId ? { ...item, status: newStatus } : item
-    ));
+    // Calculate new item state
+    const newItem = { ...currentItem, ...updates, edited_at: new Date().toISOString() };
 
-    // Optimistic Stats update
-    setStats(prev => ({
-        ...prev,
-        pending: newStatus === 'pending' ? prev.pending + 1 : prev.pending - 1,
-        reviews: newStatus === 'visited' ? prev.reviews + 1 : prev.reviews - 1
-    }));
+    // Optimistic Update Content
+    setContent(prev => prev.map(item => item.id === id ? newItem : item));
 
-    try {
-      const { error } = await supabase
-        .from('user_buildings')
-        .update({ status: newStatus, edited_at: new Date().toISOString() })
-        .eq('id', reviewId);
+    // Optimistic Stats Update (if status changed)
+    if (updates.status && updates.status !== currentItem.status) {
+        setStats(prev => {
+            const newStats = { ...prev };
 
-      if (error) throw error;
+            // If current was 'pending', we decrement pending.
+            // If current was NOT 'pending', we decrement 'reviews'.
+            if (currentItem.status === 'pending') {
+                newStats.pending = Math.max(0, newStats.pending - 1);
+            } else {
+                newStats.reviews = Math.max(0, newStats.reviews - 1);
+            }
 
-      toast({ description: "Status updated" });
-
-    } catch (error) {
-      console.error(error);
-      // Revert
-      setContent(previousContent);
-       setStats(prev => ({
-        ...prev,
-        pending: currentStatus === 'pending' ? prev.pending + 1 : prev.pending - 1,
-        reviews: currentStatus === 'visited' ? prev.reviews + 1 : prev.reviews - 1
-      }));
-      toast({ variant: "destructive", description: "Failed to update status" });
+            // If new is 'pending', increment pending.
+            // If new is NOT 'pending' (i.e. 'visited'), increment reviews.
+            if (updates.status === 'pending') {
+                newStats.pending++;
+            } else {
+                newStats.reviews++;
+            }
+            return newStats;
+        });
     }
-  };
-
-  const handleRate = async (reviewId: string, rating: number | null) => {
-    if (!currentUser || !isOwnProfile) return;
-
-    const previousContent = [...content];
-
-    // Optimistic update
-    setContent(prev => prev.map(item =>
-      item.id === reviewId ? { ...item, rating } : item
-    ));
 
     try {
-      const { error } = await supabase
-        .from('user_buildings')
-        .update({ rating, edited_at: new Date().toISOString() })
-        .eq('id', reviewId);
+        const { error } = await supabase
+           .from('user_buildings')
+           .update({ ...updates, edited_at: new Date().toISOString() })
+           .eq('id', id);
 
-      if (error) throw error;
+        if (error) throw error;
+
+        if (updates.status) {
+            toast({ description: "Status updated" });
+        }
+
     } catch (error) {
-       console.error(error);
-       setContent(previousContent);
-       toast({ variant: "destructive", description: "Failed to update rating" });
+        console.error(error);
+        // Revert content
+        setContent(previousContent);
+        // Revert stats if needed
+        if (updates.status && updates.status !== currentItem.status) {
+             setStats(prev => {
+                  const newStats = { ...prev };
+                  // Simply reverse the operations
+                  if (updates.status === 'pending') {
+                      newStats.pending--;
+                  } else {
+                      newStats.reviews--;
+                  }
+
+                  if (currentItem.status === 'pending') {
+                      newStats.pending++;
+                  } else {
+                      newStats.reviews++;
+                  }
+                  return newStats;
+             });
+        }
+        toast({ variant: "destructive", description: "Failed to update" });
     }
   };
 
@@ -889,8 +901,7 @@ export default function Profile() {
                     <ProfileListView
                         data={filteredContent}
                         isOwnProfile={isOwnProfile}
-                        onStatusChange={handleStatusToggle}
-                        onRate={handleRate}
+                        onUpdate={handleUpdate}
                     />
                   ) : (
                     <div className="-mx-4">

@@ -21,8 +21,7 @@ import { InlineRating } from "./InlineRating";
 interface ProfileListViewProps {
   data: FeedReview[];
   isOwnProfile: boolean;
-  onStatusChange: (id: string, currentStatus: string) => void;
-  onRate: (id: string, rating: number | null) => void;
+  onUpdate: (id: string, updates: { status?: string; rating?: number | null }) => void;
 }
 
 function getCityFromAddress(address: string | null | undefined): string {
@@ -34,7 +33,7 @@ function getCityFromAddress(address: string | null | undefined): string {
   return parts[0];
 }
 
-export function ProfileListView({ data, isOwnProfile, onStatusChange, onRate }: ProfileListViewProps) {
+export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListViewProps) {
   const navigate = useNavigate();
 
   const handleRowClick = (review: FeedReview) => {
@@ -106,13 +105,17 @@ export function ProfileListView({ data, isOwnProfile, onStatusChange, onRate }: 
                   <StatusBadge
                     status={review.status}
                     isOwnProfile={isOwnProfile}
-                    onClick={() => onStatusChange(review.id, review.status || 'visited')}
+                    onClick={() => {
+                      const currentStatus = review.status || 'visited';
+                      const newStatus = currentStatus === 'visited' ? 'pending' : 'visited';
+                      onUpdate(review.id, { status: newStatus });
+                    }}
                   />
                 </TableCell>
                 <TableCell className="py-1">
                   <InlineRating
                     rating={review.rating}
-                    onRate={(rating) => onRate(review.id, rating)}
+                    onRate={(rating) => onUpdate(review.id, { rating })}
                     readOnly={!isOwnProfile}
                   />
                 </TableCell>
