@@ -597,6 +597,30 @@ export default function Profile() {
     }
   };
 
+  const handleRate = async (reviewId: string, rating: number | null) => {
+    if (!currentUser || !isOwnProfile) return;
+
+    const previousContent = [...content];
+
+    // Optimistic update
+    setContent(prev => prev.map(item =>
+      item.id === reviewId ? { ...item, rating } : item
+    ));
+
+    try {
+      const { error } = await supabase
+        .from('user_buildings')
+        .update({ rating, edited_at: new Date().toISOString() })
+        .eq('id', reviewId);
+
+      if (error) throw error;
+    } catch (error) {
+       console.error(error);
+       setContent(previousContent);
+       toast({ variant: "destructive", description: "Failed to update rating" });
+    }
+  };
+
   // --- Favorites Handlers ---
 
   const handleSignOut = async () => {
@@ -866,6 +890,7 @@ export default function Profile() {
                         data={filteredContent}
                         isOwnProfile={isOwnProfile}
                         onStatusChange={handleStatusToggle}
+                        onRate={handleRate}
                     />
                   ) : (
                     <div className="-mx-4">
