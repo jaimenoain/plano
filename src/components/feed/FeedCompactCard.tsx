@@ -42,14 +42,14 @@ export function FeedCompactCard({
   return (
     <div
       onClick={handleCardClick}
-      className="flex items-center gap-3 py-1.5 px-2 w-full max-w-full overflow-hidden group cursor-pointer hover:bg-muted/50 rounded-lg transition-colors"
+      className="flex items-start gap-3 py-2 px-2 w-full max-w-full overflow-hidden group cursor-pointer hover:bg-muted/50 rounded-lg transition-colors"
     >
-      <Avatar className="h-6 w-6 border border-border/50 shrink-0">
+      <Avatar className="h-6 w-6 border border-border/50 shrink-0 mt-0.5">
         <AvatarImage src={avatarUrl} />
         <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
       </Avatar>
 
-      <div className="text-sm text-foreground/90 flex-1 truncate leading-none min-w-0">
+      <div className="text-sm text-foreground/90 flex-1 min-w-0 break-words leading-tight">
         <span className="font-semibold">{username}</span>
         <span className="text-muted-foreground/60 font-normal"> {actionText} </span>
         <span className="font-semibold">{mainTitle}</span>
