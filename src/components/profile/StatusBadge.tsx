@@ -35,7 +35,7 @@ export function StatusBadge({ status, isOwnProfile, onClick }: StatusBadgeProps)
           transition={{ duration: 0.2 }}
           className="block"
         >
-          {isVisited ? "Reviews" : "Bucket List"}
+          {isVisited ? "Visited" : "Bucket List"}
         </motion.span>
       </AnimatePresence>
     </motion.button>

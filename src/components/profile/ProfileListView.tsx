@@ -49,7 +49,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
       <Table className="min-w-full table-fixed text-xs">
         <TableHeader>
           <TableRow className="border-b border-border/40 hover:bg-transparent h-8">
-            <TableHead className="w-[50px] pl-4 text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">
+            <TableHead className="w-[70px] pl-4 text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">
               {isMobile ? "" : "Photo"}
             </TableHead>
             <TableHead className={cn(
@@ -57,7 +57,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
               isMobile ? "w-auto" : "w-[15%]"
             )}>Name</TableHead>
             {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Status</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Rating</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Points</TableHead>}
             {!isMobile && <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Review</TableHead>}
             {!isMobile && <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Architect</TableHead>}
             {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Year</TableHead>}
@@ -92,7 +92,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                           <img
                             src={imageUrl}
                             alt={review.building.name}
-                            className="w-8 h-8 rounded-full object-cover border border-border/50"
+                            className="w-8 h-8 rounded-md object-cover border border-border/50"
                           />
                         </div>
                       </HoverCardTrigger>
@@ -105,7 +105,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                       </HoverCardContent>
                     </HoverCard>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-secondary/50" />
+                    <div className="w-8 h-8 rounded-md bg-secondary/50" />
                   )}
                 </TableCell>
                 <TableCell className={cn("font-medium text-foreground py-1", !isMobile && "truncate")}>
