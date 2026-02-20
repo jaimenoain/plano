@@ -47,4 +47,6 @@ export interface FeedReview {
   images?: ReviewImage[];
   video_url?: string | null;
   watch_with_users?: WatchWithUser[];
+  is_suggested?: boolean;
+  suggestion_reason?: string;
 }

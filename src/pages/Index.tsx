@@ -160,6 +160,8 @@ export default function Index() {
                 is_liked: img.is_liked
             };
         }),
+        is_suggested: review.is_suggested,
+        suggestion_reason: review.suggestion_reason,
       }));
     },
     initialPageParam: 0,
