@@ -13,6 +13,8 @@ import { FeedReview } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
+import { SuggestedContentBlock } from "./SuggestedContentBlock";
+import { FollowButton } from "@/components/FollowButton";
 
 function getCityFromAddress(address: string | null | undefined): string {
   if (!address) return "";
@@ -327,6 +329,14 @@ export function ReviewCard({
           </Avatar>
           <div className="text-sm md:text-base text-foreground leading-snug min-w-0 flex-1 break-words">
             <span className="font-semibold">{username}</span>
+            {entry.is_suggested && entry.user_id && (
+              <FollowButton
+                userId={entry.user_id}
+                hideIfFollowing
+                className="ml-2 h-5 text-[10px] px-2"
+                variant="secondary"
+              />
+            )}
             <span className="text-muted-foreground/60 font-normal"> {action} </span>
             <span className="font-semibold text-foreground">{mainTitle}</span>
             {city && <span className="text-muted-foreground"> in {city}</span>}
@@ -518,34 +528,39 @@ export function ReviewCard({
   );
 
   return (
-    <article
-      onClick={handleCardClick}
-      // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-      className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
+    <SuggestedContentBlock
+      isSuggested={entry.is_suggested}
+      suggestionReason={entry.suggestion_reason}
     >
-      {isCompact ? (
-        // COMPACT LAYOUT: Header -> Text -> Media -> Footer
-        <>
-            {Header}
-            <div className={`flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2`}>
-                {ContentBody}
-            </div>
-            {Media}
-            {Footer}
-        </>
-      ) : (
-        // DEFAULT LAYOUT: Header -> Media -> (Text + Footer)
-        <>
-            <div className="flex flex-col flex-1 min-w-0">
-               {Header}
-               <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
-                   {ContentBody}
-                   {Footer}
-               </div>
-            </div>
-            {Media}
-        </>
-      )}
-    </article>
+      <article
+        onClick={handleCardClick}
+        // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
+        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
+      >
+        {isCompact ? (
+          // COMPACT LAYOUT: Header -> Text -> Media -> Footer
+          <>
+              {Header}
+              <div className={`flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2`}>
+                  {ContentBody}
+              </div>
+              {Media}
+              {Footer}
+          </>
+        ) : (
+          // DEFAULT LAYOUT: Header -> Media -> (Text + Footer)
+          <>
+              <div className="flex flex-col flex-1 min-w-0">
+                 {Header}
+                 <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
+                     {ContentBody}
+                     {Footer}
+                 </div>
+              </div>
+              {Media}
+          </>
+        )}
+      </article>
+    </SuggestedContentBlock>
   );
 }

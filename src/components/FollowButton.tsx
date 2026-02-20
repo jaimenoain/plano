@@ -10,9 +10,10 @@ interface FollowButtonProps {
   initialIsFollowing?: boolean;
   isFollower?: boolean;
   className?: string;
+  hideIfFollowing?: boolean;
 }
 
-export function FollowButton({ userId, initialIsFollowing, isFollower, className }: FollowButtonProps) {
+export function FollowButton({ userId, initialIsFollowing, isFollower, className, hideIfFollowing }: FollowButtonProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing ?? false);
@@ -89,6 +90,7 @@ export function FollowButton({ userId, initialIsFollowing, isFollower, className
   };
 
   if (!user || user.id === userId) return null;
+  if (isFollowing && hideIfFollowing) return null;
 
   return (
     <Button
