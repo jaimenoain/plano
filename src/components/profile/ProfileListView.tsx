@@ -9,6 +9,11 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getBuildingImageUrl } from "@/utils/image";
 
 interface ProfileListViewProps {
@@ -39,12 +44,13 @@ export function ProfileListView({ data }: ProfileListViewProps) {
         <TableHeader>
           <TableRow className="border-b border-border/40 hover:bg-transparent h-8">
             <TableHead className="w-[50px] pl-4 text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Photo</TableHead>
-            <TableHead className="w-[20%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Name</TableHead>
-            <TableHead className="w-[20%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Architect</TableHead>
+            <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Name</TableHead>
+            <TableHead className="w-[20%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Review</TableHead>
+            <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Architect</TableHead>
             <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Year</TableHead>
-            <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Location</TableHead>
-            <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Country</TableHead>
-            <TableHead className="w-[15%] pr-4 text-right text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Likes</TableHead>
+            <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Location</TableHead>
+            <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Country</TableHead>
+            <TableHead className="w-[10%] pr-4 text-right text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Likes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -88,6 +94,18 @@ export function ProfileListView({ data }: ProfileListViewProps) {
                 </TableCell>
                 <TableCell className="font-medium text-foreground py-1 truncate">
                   {review.building.name}
+                </TableCell>
+                <TableCell className="text-muted-foreground py-1 truncate">
+                  {review.content ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="truncate block">{review.content}</span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm text-xs">
+                        <p className="whitespace-normal break-words">{review.content}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : "—"}
                 </TableCell>
                 <TableCell className="text-muted-foreground py-1 truncate">
                   {architectNames}
