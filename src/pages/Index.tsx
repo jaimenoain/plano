@@ -166,8 +166,8 @@ export default function Index() {
                     return (
                         <React.Fragment key={key}>
                             {card}
-                            {/* Interruptor after 10th item (index 9) */}
-                            {index === 9 && (
+                            {/* Interruptor every 10 items */}
+                            {(index + 1) % 10 === 0 && (
                                 <div className="py-2">
                                     <ExploreTeaserBlock />
                                 </div>
