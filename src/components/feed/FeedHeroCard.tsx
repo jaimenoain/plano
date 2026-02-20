@@ -214,7 +214,7 @@ export function FeedHeroCard({
 
     if (count === 1) {
       return (
-        <div className="relative w-full aspect-[4/5] max-h-[500px]">
+        <div className="relative w-full aspect-[7/8] max-h-[500px]">
           <img
             src={images[0].url}
             onError={() => handleImageError(images[0].id)}
