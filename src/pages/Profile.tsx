@@ -556,6 +556,47 @@ export default function Profile() {
     setIsFollowing(!isFollowing);
   };
 
+  const handleStatusToggle = async (reviewId: string, currentStatus: string) => {
+    if (!currentUser || !isOwnProfile) return;
+
+    const newStatus = currentStatus === 'pending' ? 'visited' : 'pending';
+    const previousContent = [...content];
+
+    // Optimistic update
+    setContent(prev => prev.map(item =>
+      item.id === reviewId ? { ...item, status: newStatus } : item
+    ));
+
+    // Optimistic Stats update
+    setStats(prev => ({
+        ...prev,
+        pending: newStatus === 'pending' ? prev.pending + 1 : prev.pending - 1,
+        reviews: newStatus === 'visited' ? prev.reviews + 1 : prev.reviews - 1
+    }));
+
+    try {
+      const { error } = await supabase
+        .from('user_buildings')
+        .update({ status: newStatus, edited_at: new Date().toISOString() })
+        .eq('id', reviewId);
+
+      if (error) throw error;
+
+      toast({ description: "Status updated" });
+
+    } catch (error) {
+      console.error(error);
+      // Revert
+      setContent(previousContent);
+       setStats(prev => ({
+        ...prev,
+        pending: currentStatus === 'pending' ? prev.pending + 1 : prev.pending - 1,
+        reviews: currentStatus === 'visited' ? prev.reviews + 1 : prev.reviews - 1
+      }));
+      toast({ variant: "destructive", description: "Failed to update status" });
+    }
+  };
+
   // --- Favorites Handlers ---
 
   const handleSignOut = async () => {
@@ -821,7 +862,11 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : viewMode === 'list' ? (
-                    <ProfileListView data={filteredContent} />
+                    <ProfileListView
+                        data={filteredContent}
+                        isOwnProfile={isOwnProfile}
+                        onStatusChange={handleStatusToggle}
+                    />
                   ) : (
                     <div className="-mx-4">
                       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>

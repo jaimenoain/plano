@@ -15,6 +15,7 @@ const mockData: FeedReview[] = [
     is_liked: false,
     comments_count: 2,
     created_at: '2023-01-01',
+    status: 'visited',
     building: {
       id: 'b1',
       name: 'Test Building',
@@ -43,18 +44,21 @@ vi.mock('react-router-dom', async () => {
 
 describe('ProfileListView', () => {
   it('renders correctly with required columns', () => {
+    const onStatusChange = vi.fn();
     render(
       <TooltipProvider>
         <BrowserRouter>
-          <ProfileListView data={mockData} />
+          <ProfileListView data={mockData} isOwnProfile={true} onStatusChange={onStatusChange} />
         </BrowserRouter>
       </TooltipProvider>
     );
 
     expect(screen.getByText('Name')).toBeTruthy();
+    expect(screen.getByText('Status')).toBeTruthy();
     expect(screen.getByText('Review')).toBeTruthy();
     expect(screen.getByText('Architect')).toBeTruthy();
     expect(screen.getByText('Test Building')).toBeTruthy();
+    expect(screen.getByText('Reviews')).toBeTruthy();
     expect(screen.getByText('This is a long review that should be truncated.')).toBeTruthy();
   });
 });
