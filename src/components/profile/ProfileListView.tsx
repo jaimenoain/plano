@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FeedReview } from "@/types/feed";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ function getCityFromAddress(address: string | null | undefined): string {
 
 export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListViewProps) {
   const navigate = useNavigate();
+  const { isMobile } = useSidebar();
 
   const handleRowClick = (review: FeedReview) => {
     if (review.building.id) {
@@ -47,16 +49,21 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
       <Table className="min-w-full table-fixed text-xs">
         <TableHeader>
           <TableRow className="border-b border-border/40 hover:bg-transparent h-8">
-            <TableHead className="w-[50px] pl-4 text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Photo</TableHead>
-            <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Name</TableHead>
-            <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Status</TableHead>
-            <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Rating</TableHead>
-            <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Review</TableHead>
-            <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Architect</TableHead>
-            <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Year</TableHead>
-            <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Location</TableHead>
-            <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Country</TableHead>
-            <TableHead className="w-[10%] pr-4 text-right text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Likes</TableHead>
+            <TableHead className="w-[50px] pl-4 text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">
+              {isMobile ? "" : "Photo"}
+            </TableHead>
+            <TableHead className={cn(
+              "text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0",
+              isMobile ? "w-auto" : "w-[15%]"
+            )}>Name</TableHead>
+            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Status</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Rating</TableHead>}
+            {!isMobile && <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Review</TableHead>}
+            {!isMobile && <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Architect</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Year</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Location</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Country</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] pr-4 text-right text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Likes</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -72,7 +79,10 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
               <TableRow
                 key={review.id}
                 onClick={() => handleRowClick(review)}
-                className="cursor-pointer hover:bg-muted/30 border-b border-border/30 transition-colors group h-8"
+                className={cn(
+                  "cursor-pointer hover:bg-muted/30 border-b border-border/30 transition-colors group",
+                  isMobile ? "h-auto" : "h-8"
+                )}
               >
                 <TableCell className="pl-4 py-1">
                   {imageUrl ? (
@@ -98,57 +108,81 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                     <div className="w-8 h-8 rounded-full bg-secondary/50" />
                   )}
                 </TableCell>
-                <TableCell className="font-medium text-foreground py-1 truncate">
-                  {review.building.name}
+                <TableCell className={cn("font-medium text-foreground py-1", !isMobile && "truncate")}>
+                  <div className="flex flex-col gap-1">
+                    <span className="truncate">{review.building.name}</span>
+                    {isMobile && (
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <StatusBadge
+                          status={review.status}
+                          isOwnProfile={isOwnProfile}
+                          onClick={() => {
+                            const currentStatus = review.status || 'visited';
+                            const newStatus = currentStatus === 'visited' ? 'pending' : 'visited';
+                            onUpdate(review.id, { status: newStatus });
+                          }}
+                        />
+                        <InlineRating
+                          rating={review.rating}
+                          onRate={(rating) => onUpdate(review.id, { rating })}
+                          readOnly={!isOwnProfile}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
-                <TableCell className="py-1">
-                  <StatusBadge
-                    status={review.status}
-                    isOwnProfile={isOwnProfile}
-                    onClick={() => {
-                      const currentStatus = review.status || 'visited';
-                      const newStatus = currentStatus === 'visited' ? 'pending' : 'visited';
-                      onUpdate(review.id, { status: newStatus });
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="py-1">
-                  <InlineRating
-                    rating={review.rating}
-                    onRate={(rating) => onUpdate(review.id, { rating })}
-                    readOnly={!isOwnProfile}
-                  />
-                </TableCell>
-                <TableCell className="text-muted-foreground py-1 truncate">
-                  {review.content ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="truncate block">{review.content}</span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm text-xs">
-                        <p className="whitespace-normal break-words">{review.content}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : "—"}
-                </TableCell>
-                <TableCell className="text-muted-foreground py-1 truncate">
-                  {architectNames}
-                </TableCell>
-                <TableCell className="text-muted-foreground py-1">
-                  {review.building.year_completed || "—"}
-                </TableCell>
-                <TableCell className="text-muted-foreground py-1 truncate">
-                  {location}
-                </TableCell>
-                <TableCell className="text-muted-foreground py-1 truncate">
-                  {review.building.country || "—"}
-                </TableCell>
-                <TableCell className="pr-4 text-right py-1">
-                    <div className="flex items-center justify-end gap-1 text-muted-foreground">
-                        <Heart className={cn("w-3 h-3", review.is_liked && "fill-primary text-primary")} />
-                        <span>{review.likes_count}</span>
-                    </div>
-                </TableCell>
+                {!isMobile && (
+                  <>
+                    <TableCell className="py-1">
+                      <StatusBadge
+                        status={review.status}
+                        isOwnProfile={isOwnProfile}
+                        onClick={() => {
+                          const currentStatus = review.status || 'visited';
+                          const newStatus = currentStatus === 'visited' ? 'pending' : 'visited';
+                          onUpdate(review.id, { status: newStatus });
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell className="py-1">
+                      <InlineRating
+                        rating={review.rating}
+                        onRate={(rating) => onUpdate(review.id, { rating })}
+                        readOnly={!isOwnProfile}
+                      />
+                    </TableCell>
+                    <TableCell className="text-muted-foreground py-1 truncate">
+                      {review.content ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="truncate block">{review.content}</span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm text-xs">
+                            <p className="whitespace-normal break-words">{review.content}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground py-1 truncate">
+                      {architectNames}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground py-1">
+                      {review.building.year_completed || "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground py-1 truncate">
+                      {location}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground py-1 truncate">
+                      {review.building.country || "—"}
+                    </TableCell>
+                    <TableCell className="pr-4 text-right py-1">
+                        <div className="flex items-center justify-end gap-1 text-muted-foreground">
+                            <Heart className={cn("w-3 h-3", review.is_liked && "fill-primary text-primary")} />
+                            <span>{review.likes_count}</span>
+                        </div>
+                    </TableCell>
+                  </>
+                )}
               </TableRow>
             );
           })}

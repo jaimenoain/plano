@@ -6,6 +6,14 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { BrowserRouter } from 'react-router-dom';
 import { FeedReview } from '@/types/feed';
 
+const mocks = vi.hoisted(() => ({
+  useSidebar: vi.fn(),
+}));
+
+vi.mock('@/components/ui/sidebar', () => ({
+  useSidebar: mocks.useSidebar,
+}));
+
 const mockData: FeedReview[] = [
   {
     id: '1',
@@ -45,9 +53,11 @@ vi.mock('react-router-dom', async () => {
 describe('ProfileListView', () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
   });
 
-  it('renders correctly with required columns', () => {
+  it('renders correctly with required columns (desktop)', () => {
+    mocks.useSidebar.mockReturnValue({ isMobile: false });
     const onUpdate = vi.fn();
     render(
       <TooltipProvider>
@@ -67,15 +77,52 @@ describe('ProfileListView', () => {
     expect(screen.getByText('Review')).toBeTruthy();
     expect(screen.getByText('Architect')).toBeTruthy();
     expect(screen.getByText('Test Building')).toBeTruthy();
-    // Use getAllByText for 'Reviews' if it appears multiple times (header vs content or duplication)
-    // The header is "Review", not "Reviews".
-    // The StatusBadge is "Reviews".
+
     const reviewsText = screen.getAllByText('Reviews');
     expect(reviewsText.length).toBeGreaterThan(0);
     expect(screen.getByText('This is a long review that should be truncated.')).toBeTruthy();
   });
 
+  it('renders stacked layout on mobile', () => {
+    mocks.useSidebar.mockReturnValue({ isMobile: true });
+    const onUpdate = vi.fn();
+    render(
+      <TooltipProvider>
+        <BrowserRouter>
+          <ProfileListView
+            data={mockData}
+            isOwnProfile={true}
+            onUpdate={onUpdate}
+          />
+        </BrowserRouter>
+      </TooltipProvider>
+    );
+
+    // Visible columns headers
+    expect(screen.getByText('Name')).toBeTruthy();
+    expect(screen.queryByText('Photo')).toBeNull();
+
+    // Hidden columns headers
+    expect(screen.queryByText('Status')).toBeNull();
+    expect(screen.queryByText('Rating')).toBeNull();
+    expect(screen.queryByText('Review')).toBeNull();
+    expect(screen.queryByText('Architect')).toBeNull();
+    expect(screen.queryByText('Year')).toBeNull();
+    expect(screen.queryByText('Country')).toBeNull();
+
+    // Stacked content
+    expect(screen.getByText('Test Building')).toBeTruthy();
+
+    // StatusBadge should be visible
+    expect(screen.getByRole('button', { name: 'Reviews' })).toBeTruthy();
+
+    // Hidden column content
+    expect(screen.queryByText('Architect 1')).toBeNull();
+    expect(screen.queryByText('Test Country')).toBeNull();
+  });
+
   it('calls onUpdate when status is changed', () => {
+      mocks.useSidebar.mockReturnValue({ isMobile: false });
       const onUpdate = vi.fn();
       render(
         <TooltipProvider>
@@ -89,7 +136,6 @@ describe('ProfileListView', () => {
         </TooltipProvider>
       );
 
-      // Use getByRole to be more specific
       const statusButton = screen.getByRole('button', { name: 'Reviews' });
       fireEvent.click(statusButton);
 
