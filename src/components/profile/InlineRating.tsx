@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star } from "lucide-react";
+import { Circle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -43,11 +43,11 @@ export function InlineRating({ rating, onRate, readOnly = false }: InlineRatingP
                animate={isFilled ? { scale: [1, 1.2, 1] } : { scale: 1 }}
                transition={{ duration: 0.2 }}
              >
-              <Star
+              <Circle
                 className={cn(
                   "w-4 h-4 transition-colors",
                   isFilled
-                    ? "fill-yellow-400 text-yellow-400"
+                    ? "fill-black text-black"
                     : "text-muted-foreground/20 fill-transparent"
                 )}
               />

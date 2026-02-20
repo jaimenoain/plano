@@ -74,7 +74,7 @@ describe('ProfileListView', () => {
     // Check Headers
     expect(screen.getByText('Name')).toBeTruthy();
     expect(screen.getByText('Status')).toBeTruthy();
-    expect(screen.getByText('Rating')).toBeTruthy();
+    expect(screen.getByText('Points')).toBeTruthy();
     expect(screen.getByText('Review')).toBeTruthy();
     expect(screen.getByText('Architect')).toBeTruthy();
     expect(screen.getByText('Test Building')).toBeTruthy();
@@ -85,7 +85,7 @@ describe('ProfileListView', () => {
     expect(screen.getByText('Test City')).toBeTruthy();
     expect(screen.getByText('Test Country')).toBeTruthy();
 
-    const reviewsText = screen.getAllByText('Reviews');
+    const reviewsText = screen.getAllByText('Visited');
     expect(reviewsText.length).toBeGreaterThan(0);
     expect(screen.getByText('This is a long review that should be truncated.')).toBeTruthy();
   });
@@ -111,7 +111,7 @@ describe('ProfileListView', () => {
 
     // Hidden columns headers
     expect(screen.queryByText('Status')).toBeNull();
-    expect(screen.queryByText('Rating')).toBeNull();
+    expect(screen.queryByText('Points')).toBeNull();
     expect(screen.queryByText('Review')).toBeNull();
     expect(screen.queryByText('Architect')).toBeNull();
     expect(screen.queryByText('Year')).toBeNull();
@@ -121,7 +121,7 @@ describe('ProfileListView', () => {
     expect(screen.getByText('Test Building')).toBeTruthy();
 
     // StatusBadge should be visible
-    expect(screen.getByRole('button', { name: 'Reviews' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Visited' })).toBeTruthy();
 
     // Hidden column content
     expect(screen.queryByText('Architect 1')).toBeNull();
@@ -143,7 +143,7 @@ describe('ProfileListView', () => {
         </TooltipProvider>
       );
 
-      const statusButton = screen.getByRole('button', { name: 'Reviews' });
+      const statusButton = screen.getByRole('button', { name: 'Visited' });
       fireEvent.click(statusButton);
 
       expect(onUpdate).toHaveBeenCalledWith('1', { status: 'pending' });
@@ -164,7 +164,7 @@ describe('ProfileListView', () => {
       </TooltipProvider>
     );
 
-    // InlineRating renders 3 buttons, each with a star inside.
+    // InlineRating renders 3 buttons, each with a circle inside.
     const starButtons = screen.getAllByRole('button').filter(button => button.querySelector('svg'));
 
     // We expect 3 star buttons
