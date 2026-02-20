@@ -1,121 +1,89 @@
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { FeedReview } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
 
-interface UseSuggestedFeedOptions {
-  enabled?: boolean;
+const INITIAL_PAGE_SIZE = 10;
+const SUBSEQUENT_PAGE_SIZE = 36;
+
+interface UseFeedOptions {
+  showGroupActivity: boolean;
 }
 
-export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
+export function useFeed({ showGroupActivity }: UseFeedOptions) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const LIMIT = 10;
-  const { enabled = true } = options;
 
-  const queryKey = ["suggested_feed", user?.id];
+  const queryKey = ["feed", user?.id, showGroupActivity];
 
   const query = useInfiniteQuery({
     queryKey,
     queryFn: async ({ pageParam = 0 }) => {
       if (!user) return [];
 
-      const { data, error } = await supabase.rpc("get_suggested_posts", {
-        p_limit: LIMIT,
-        p_offset: pageParam,
-      });
+      const isFirstPage = pageParam === 0;
+      const limit = isFirstPage ? INITIAL_PAGE_SIZE : SUBSEQUENT_PAGE_SIZE;
+      const from = isFirstPage ? 0 : INITIAL_PAGE_SIZE + (pageParam - 1) * SUBSEQUENT_PAGE_SIZE;
+
+      const { data, error } = await supabase
+        .rpc("get_feed", {
+          p_limit: limit,
+          p_offset: from
+        });
 
       if (error) throw error;
 
-      const posts = data || [];
+      const feedData = data || [];
 
-      if (posts.length === 0) return [];
-
-      // Extract review IDs to fetch images
-      const reviewIds = posts.map((p: any) => p.id);
-
-      // Fetch images
-      const { data: imagesData, error: imagesError } = await supabase
-        .from('review_images')
-        .select('*')
-        .in('review_id', reviewIds);
-
-      if (imagesError) console.error("Error fetching review images:", imagesError);
-
-      // Fetch image likes for current user to determine is_liked status for images
-      let likedImageIds: Set<string> = new Set();
-      if (imagesData && imagesData.length > 0) {
-        const imageIds = imagesData.map((img: any) => img.id);
-        const { data: likesData } = await supabase
-          .from('image_likes')
-          .select('image_id')
-          .eq('user_id', user.id)
-          .in('image_id', imageIds);
-
-        if (likesData) {
-          likedImageIds = new Set(likesData.map((l: any) => l.image_id));
-        }
-      }
-
-      const imagesMap = (imagesData || []).reduce((acc: any, img: any) => {
-        if (!acc[img.review_id]) {
-          acc[img.review_id] = [];
-        }
-        acc[img.review_id].push({
-          id: img.id,
-          url: getBuildingImageUrl(img.storage_path) || "",
-          likes_count: img.likes_count || 0,
-          is_liked: likedImageIds.has(img.id)
-        });
-        return acc;
-      }, {});
-
-      return posts.map((post: any) => {
-        const buildingData = post.building_data;
-        const userData = post.user_data;
-
-        return {
-          id: post.id,
-          content: post.content,
-          rating: post.rating,
-          tags: post.tags,
-          created_at: post.created_at,
-          edited_at: post.edited_at,
-          status: post.status,
-          user_id: post.user_id,
-          group_id: post.group_id,
-          user: {
-            username: userData?.username || null,
-            avatar_url: userData?.avatar_url || null,
-          },
-          building: {
-            id: buildingData?.id,
-            short_id: buildingData?.short_id,
-            slug: buildingData?.slug,
-            name: buildingData?.name || "Unknown Building",
-            address: buildingData?.address || null,
-            city: buildingData?.city || null,
-            country: buildingData?.country || null,
-            main_image_url: buildingData?.main_image_url || null,
-            architects: buildingData?.architects || null,
-            year_completed: buildingData?.year_completed || null,
-          },
-          likes_count: post.likes_count || 0,
-          comments_count: post.comments_count || 0,
-          is_liked: post.is_liked,
-          images: imagesMap[post.id] || [],
-          is_suggested: post.is_suggested,
-          suggestion_reason: post.suggestion_reason,
-        } as FeedReview;
-      });
+      return feedData.filter((r: any) => r.status !== 'ignored').map((review: any) => ({
+        id: review.id,
+        content: review.content,
+        rating: review.rating,
+        tags: review.tags,
+        created_at: review.created_at,
+        edited_at: review.edited_at,
+        status: review.status,
+        user_id: review.user_id,
+        group_id: review.group_id,
+        user: {
+          username: review.user_data?.username || null,
+          avatar_url: review.user_data?.avatar_url || null,
+        },
+        building: {
+          id: review.building_data?.id,
+          short_id: review.building_data?.short_id,
+          slug: review.building_data?.slug,
+          name: review.building_data?.name || "Unknown Building",
+          address: review.building_data?.address || null,
+          city: review.building_data?.city || null,
+          country: review.building_data?.country || null,
+          main_image_url: review.building_data?.main_image_url || null,
+          architects: review.building_data?.architects || null,
+          year_completed: review.building_data?.year_completed || null,
+        },
+        likes_count: review.likes_count || 0,
+        comments_count: review.comments_count || 0,
+        is_liked: review.is_liked,
+        images: (review.review_images || []).map((img: any) => {
+            return {
+                id: img.id,
+                url: getBuildingImageUrl(img.storage_path),
+                likes_count: img.likes_count || 0,
+                is_liked: img.is_liked
+            };
+        }),
+        is_suggested: review.is_suggested,
+        suggestion_reason: review.suggestion_reason,
+      })) as FeedReview[];
     },
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length < LIMIT) return undefined;
-      return allPages.length * LIMIT;
-    },
-    enabled: !!user && enabled,
     initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const isFirstPage = allPages.length === 1;
+      const expectedSize = isFirstPage ? INITIAL_PAGE_SIZE : SUBSEQUENT_PAGE_SIZE;
+      return lastPage.length === expectedSize ? allPages.length : undefined;
+    },
+    enabled: !!user,
   });
 
   const toggleLike = async (reviewId: string) => {

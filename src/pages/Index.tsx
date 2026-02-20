@@ -5,23 +5,25 @@ import { EmptyFeed } from "@/components/feed/EmptyFeed";
 import { PeopleYouMayKnow } from "@/components/feed/PeopleYouMayKnow";
 import { useAuth } from "@/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
-import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { MetaHead } from "@/components/common/MetaHead";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
-import { FeedReview } from "@/types/feed";
 import { aggregateFeed } from "@/lib/feed-aggregation";
 import { FeedHeroCard } from "@/components/feed/FeedHeroCard";
 import { FeedClusterCard } from "@/components/feed/FeedClusterCard";
 import { FeedCompactCard } from "@/components/feed/FeedCompactCard";
-import { getBuildingImageUrl } from "@/utils/image";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingMarquee } from "@/components/landing/LandingMarquee";
 import { LandingFeatureGrid } from "@/components/landing/LandingFeatureGrid";
+import { useFeed } from "@/hooks/useFeed";
+import { useSuggestedFeed } from "@/hooks/useSuggestedFeed";
+import { AllCaughtUpDivider } from "@/components/feed/AllCaughtUpDivider";
+import { ExploreTeaserBlock } from "@/components/feed/ExploreTeaserBlock";
+import { ReviewCard } from "@/components/feed/ReviewCard";
+import React from "react";
 
 // --- New Landing Page Component ---
 function Landing() {
@@ -68,14 +70,10 @@ function Landing() {
 
 // --- Main Index Component ---
 
-const INITIAL_PAGE_SIZE = 10;
-const SUBSEQUENT_PAGE_SIZE = 36;
-
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const queryClient = useQueryClient();
   const { isMobile } = useSidebar();
   const [showGroupActivity, setShowGroupActivity] = useState(true);
   const { containerRef: loadMoreRef, isVisible: isLoadMoreVisible } = useIntersectionObserver({
@@ -96,221 +94,34 @@ export default function Index() {
     }
   }, [user, authLoading, navigate]);
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError
-  } = useInfiniteQuery({
-    queryKey: ["feed", user?.id, showGroupActivity],
-    queryFn: async ({ pageParam = 0 }) => {
-      if (!user) return [];
+  // Social Feed
+  const socialFeed = useFeed({ showGroupActivity });
 
-      const isFirstPage = pageParam === 0;
-      const limit = isFirstPage ? INITIAL_PAGE_SIZE : SUBSEQUENT_PAGE_SIZE;
-      const from = isFirstPage ? 0 : INITIAL_PAGE_SIZE + (pageParam - 1) * SUBSEQUENT_PAGE_SIZE;
+  // Discovery Feed (Suggested)
+  // Enable fetching only when social feed is exhausted or empty (though EmptyFeed handles empty case)
+  // We want to append discovery content after social content.
+  const shouldFetchDiscovery = !!user && (!socialFeed.hasNextPage && !socialFeed.isLoading);
+  const discoveryFeed = useSuggestedFeed({ enabled: shouldFetchDiscovery });
 
-      // Use optimized RPC to fetch feed with all necessary data in one request
-      const { data, error } = await supabase
-        .rpc("get_feed", {
-          p_limit: limit,
-          p_offset: from
-        });
-
-      if (error) throw error;
-
-      const feedData = data || [];
-
-      return feedData.filter((r: any) => r.status !== 'ignored').map((review: any) => ({
-        id: review.id,
-        content: review.content,
-        rating: review.rating,
-        tags: review.tags,
-        created_at: review.created_at,
-        edited_at: review.edited_at,
-        status: review.status,
-        user_id: review.user_id,
-        group_id: review.group_id,
-        user: {
-          username: review.user_data?.username || null,
-          avatar_url: review.user_data?.avatar_url || null,
-        },
-        building: {
-          id: review.building_data?.id,
-          short_id: review.building_data?.short_id,
-          slug: review.building_data?.slug,
-          name: review.building_data?.name || "Unknown Building",
-          address: review.building_data?.address || null,
-          city: review.building_data?.city || null,
-          country: review.building_data?.country || null,
-          main_image_url: review.building_data?.main_image_url || null,
-          architects: review.building_data?.architects || null,
-          year_completed: review.building_data?.year_completed || null,
-        },
-        likes_count: review.likes_count || 0,
-        comments_count: review.comments_count || 0,
-        is_liked: review.is_liked,
-        images: (review.review_images || []).map((img: any) => {
-            return {
-                id: img.id,
-                url: getBuildingImageUrl(img.storage_path),
-                likes_count: img.likes_count || 0,
-                is_liked: img.is_liked
-            };
-        }),
-        is_suggested: review.is_suggested,
-        suggestion_reason: review.suggestion_reason,
-      }));
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      const isFirstPage = allPages.length === 1;
-      const expectedSize = isFirstPage ? INITIAL_PAGE_SIZE : SUBSEQUENT_PAGE_SIZE;
-      return lastPage.length === expectedSize ? allPages.length : undefined;
-    },
-    enabled: !!user,
-  });
-
+  // Load More Logic
   useEffect(() => {
-    if (isLoadMoreVisible && hasNextPage && !isFetchingNextPage && !isError) {
-      fetchNextPage();
-    }
-  }, [isLoadMoreVisible, hasNextPage, isFetchingNextPage, fetchNextPage, isError]);
-
-  const reviews = useMemo(() => data?.pages.flatMap((page) => page) || [], [data]);
-  const aggregatedReviews = useMemo(() => aggregateFeed(reviews), [reviews]);
-
-  const handleLike = async (reviewId: string) => {
-    if (!user) return;
-
-    const review = reviews.find((r) => r.id === reviewId);
-    if (!review) return;
-
-    queryClient.setQueryData<InfiniteData<FeedReview[]>>(["feed", user.id, showGroupActivity], (oldData) => {
-      if (!oldData) return undefined;
-      return {
-        ...oldData,
-        pages: oldData.pages.map((page) =>
-          page.map((r) =>
-            r.id === reviewId
-              ? {
-                  ...r,
-                  is_liked: !r.is_liked,
-                  likes_count: r.is_liked ? r.likes_count - 1 : r.likes_count + 1,
-                }
-              : r
-          )
-        ),
-      };
-    });
-
-    try {
-      if (review.is_liked) {
-        await supabase
-          .from("likes")
-          .delete()
-          .eq("interaction_id", reviewId)
-          .eq("user_id", user.id);
-      } else {
-        await supabase
-          .from("likes")
-          .insert({ interaction_id: reviewId, user_id: user.id });
+    if (isLoadMoreVisible) {
+      if (socialFeed.hasNextPage && !socialFeed.isFetchingNextPage && !socialFeed.isError) {
+        socialFeed.fetchNextPage();
+      } else if (!socialFeed.hasNextPage && discoveryFeed.hasNextPage && !discoveryFeed.isFetchingNextPage && !discoveryFeed.isError) {
+        discoveryFeed.fetchNextPage();
       }
-    } catch (error) {
-      queryClient.setQueryData<InfiniteData<FeedReview[]>>(["feed", user.id, showGroupActivity], (oldData) => {
-        if (!oldData) return undefined;
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page) =>
-            page.map((r) =>
-              r.id === reviewId
-                ? {
-                    ...r,
-                    is_liked: review.is_liked,
-                    likes_count: review.likes_count, // revert
-                  }
-                : r
-            )
-          ),
-        };
-      });
     }
-  };
+  }, [
+    isLoadMoreVisible,
+    socialFeed.hasNextPage, socialFeed.isFetchingNextPage, socialFeed.isError, socialFeed.fetchNextPage,
+    discoveryFeed.hasNextPage, discoveryFeed.isFetchingNextPage, discoveryFeed.isError, discoveryFeed.fetchNextPage
+  ]);
 
-  const handleImageLike = async (reviewId: string, imageId: string) => {
-    if (!user) return;
+  const socialReviews = useMemo(() => socialFeed.data?.pages.flatMap((page) => page) || [], [socialFeed.data]);
+  const aggregatedReviews = useMemo(() => aggregateFeed(socialReviews), [socialReviews]);
 
-    const review = reviews.find(r => r.id === reviewId);
-    if (!review) return;
-    const image = review.images?.find(i => i.id === imageId);
-    if (!image) return;
-
-    // Optimistic Update
-    queryClient.setQueryData<InfiniteData<FeedReview[]>>(["feed", user.id, showGroupActivity], (oldData) => {
-      if (!oldData) return undefined;
-      return {
-        ...oldData,
-        pages: oldData.pages.map((page) =>
-          page.map((r) => {
-            if (r.id === reviewId) {
-                return {
-                    ...r,
-                    images: r.images?.map(img => {
-                        if (img.id === imageId) {
-                            return {
-                                ...img,
-                                is_liked: !img.is_liked,
-                                likes_count: img.is_liked ? img.likes_count - 1 : img.likes_count + 1
-                            };
-                        }
-                        return img;
-                    })
-                };
-            }
-            return r;
-          })
-        ),
-      };
-    });
-
-    try {
-        if (image.is_liked) {
-            await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
-        } else {
-            await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
-        }
-    } catch (error) {
-        // Revert
-        queryClient.setQueryData<InfiniteData<FeedReview[]>>(["feed", user.id, showGroupActivity], (oldData) => {
-            if (!oldData) return undefined;
-            return {
-                ...oldData,
-                pages: oldData.pages.map((page) =>
-                page.map((r) => {
-                    if (r.id === reviewId) {
-                        return {
-                            ...r,
-                            images: r.images?.map(img => {
-                                if (img.id === imageId) {
-                                    return {
-                                        ...img,
-                                        is_liked: image.is_liked,
-                                        likes_count: image.likes_count
-                                    };
-                                }
-                                return img;
-                            })
-                        };
-                    }
-                    return r;
-                })
-                ),
-            };
-        });
-    }
-  };
+  const discoveryReviews = useMemo(() => discoveryFeed.data?.pages.flatMap((page) => page) || [], [discoveryFeed.data]);
 
   if (authLoading) {
     return (
@@ -327,50 +138,87 @@ export default function Index() {
   return (
     <AppLayout variant="home">
         <MetaHead title="Home" />
-        {isLoading ? (
+        {socialFeed.isLoading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
           </div>
         ) : (
           <div className="px-2 md:px-6 pt-6 md:pt-8 pb-24 mx-auto w-full">
-            {reviews.length === 0 ? (
+            {socialReviews.length === 0 ? (
               <EmptyFeed />
             ) : (
               <div className="flex flex-col lg:flex-row gap-8 items-start">
                 {/* Feed Column */}
                 <div className="w-full lg:w-2/3 flex flex-col gap-3 min-w-0 max-w-full">
-                  {aggregatedReviews.map((item) => {
+                  {/* Social Feed Items */}
+                  {aggregatedReviews.map((item, index) => {
                     const key = item.type === 'cluster' ? `cluster-${item.entries[0].id}` : item.entry.id;
 
+                    let card = null;
                     if (item.type === 'hero') {
-                        return <FeedHeroCard key={key} entry={item.entry} onLike={handleLike} onImageLike={handleImageLike} />;
+                        card = <FeedHeroCard key={key} entry={item.entry} onLike={socialFeed.toggleLike} onImageLike={socialFeed.toggleImageLike} />;
+                    } else if (item.type === 'compact') {
+                        card = <FeedCompactCard key={key} entry={item.entry} onLike={socialFeed.toggleLike} />;
+                    } else if (item.type === 'cluster') {
+                        card = <FeedClusterCard key={key} entries={item.entries} user={item.user} location={item.location} timestamp={item.timestamp} />;
                     }
-                    if (item.type === 'compact') {
-                        return <FeedCompactCard key={key} entry={item.entry} onLike={handleLike} />;
-                    }
-                    if (item.type === 'cluster') {
-                        return <FeedClusterCard key={key} entries={item.entries} user={item.user} location={item.location} timestamp={item.timestamp} />;
-                    }
-                    return null;
+
+                    return (
+                        <React.Fragment key={key}>
+                            {card}
+                            {/* Interruptor after 10th item (index 9) */}
+                            {index === 9 && (
+                                <div className="py-2">
+                                    <ExploreTeaserBlock />
+                                </div>
+                            )}
+                        </React.Fragment>
+                    );
                   })}
 
-                  {hasNextPage && (
+                  {/* Transition to Discovery */}
+                  {!socialFeed.hasNextPage && (
+                      <>
+                        <AllCaughtUpDivider />
+
+                        {/* Discovery Feed Items */}
+                        <div className="flex flex-col gap-6 mt-6">
+                            {discoveryReviews.map((post) => (
+                                <ReviewCard
+                                    key={`discovery-${post.id}`}
+                                    entry={post}
+                                    onLike={discoveryFeed.toggleLike}
+                                    onImageLike={discoveryFeed.toggleImageLike}
+                                    showCommunityImages={true}
+                                />
+                            ))}
+                            {/* Loader for initial fetch of discovery feed */}
+                            {discoveryFeed.isLoading && (
+                                <div className="flex items-center justify-center py-8">
+                                    <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+                                </div>
+                            )}
+                        </div>
+                      </>
+                  )}
+
+                  {/* Load More Trigger / Loader */}
+                  {(socialFeed.hasNextPage || discoveryFeed.hasNextPage) && (
                     <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
-                      {isFetchingNextPage ? (
+                      {(socialFeed.isFetchingNextPage || discoveryFeed.isFetchingNextPage) ? (
                         <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
-                      ) : isError ? (
-                        <Button
+                      ) : (socialFeed.isError || discoveryFeed.isError) ? (
+                         <Button
                           variant="ghost"
-                          onClick={() => fetchNextPage()}
+                          onClick={() => socialFeed.hasNextPage ? socialFeed.fetchNextPage() : discoveryFeed.fetchNextPage()}
                           className="text-muted-foreground hover:text-foreground"
                         >
                           Error loading more. Click to retry.
                         </Button>
                       ) : (
-                        <Button
+                         <Button
                           variant="ghost"
-                          onClick={() => fetchNextPage()}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="text-muted-foreground hover:text-foreground opacity-0"
                         >
                           Load More
                         </Button>
