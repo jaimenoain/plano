@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { ProfileListView } from './ProfileListView';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { BrowserRouter } from 'react-router-dom';
@@ -43,17 +43,19 @@ vi.mock('react-router-dom', async () => {
 });
 
 describe('ProfileListView', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('renders correctly with required columns', () => {
-    const onStatusChange = vi.fn();
-    const onRate = vi.fn();
+    const onUpdate = vi.fn();
     render(
       <TooltipProvider>
         <BrowserRouter>
           <ProfileListView
             data={mockData}
             isOwnProfile={true}
-            onStatusChange={onStatusChange}
-            onRate={onRate}
+            onUpdate={onUpdate}
           />
         </BrowserRouter>
       </TooltipProvider>
@@ -65,7 +67,32 @@ describe('ProfileListView', () => {
     expect(screen.getByText('Review')).toBeTruthy();
     expect(screen.getByText('Architect')).toBeTruthy();
     expect(screen.getByText('Test Building')).toBeTruthy();
-    expect(screen.getByText('Reviews')).toBeTruthy();
+    // Use getAllByText for 'Reviews' if it appears multiple times (header vs content or duplication)
+    // The header is "Review", not "Reviews".
+    // The StatusBadge is "Reviews".
+    const reviewsText = screen.getAllByText('Reviews');
+    expect(reviewsText.length).toBeGreaterThan(0);
     expect(screen.getByText('This is a long review that should be truncated.')).toBeTruthy();
+  });
+
+  it('calls onUpdate when status is changed', () => {
+      const onUpdate = vi.fn();
+      render(
+        <TooltipProvider>
+          <BrowserRouter>
+            <ProfileListView
+              data={mockData}
+              isOwnProfile={true}
+              onUpdate={onUpdate}
+            />
+          </BrowserRouter>
+        </TooltipProvider>
+      );
+
+      // Use getByRole to be more specific
+      const statusButton = screen.getByRole('button', { name: 'Reviews' });
+      fireEvent.click(statusButton);
+
+      expect(onUpdate).toHaveBeenCalledWith('1', { status: 'pending' });
   });
 });
