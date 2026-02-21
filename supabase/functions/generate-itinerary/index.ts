@@ -193,16 +193,14 @@ serve(async (req) => {
                                   transportMode === 'walking' ? 'walking' : 'driving';
 
             // Construct coordinates string: "lng,lat;lng,lat"
-            // Ensure we visit in a reasonable order?
-            // For now, let's trust the cluster order or maybe implement a simple TSP heuristic if needed later.
-            // But simple nearest neighbor sort inside cluster helps avoid zigzag
-            const sortedCluster = sortClusterByNearestNeighbor(cluster);
-
-            const coordinates = sortedCluster
+            // Use Optimization API which handles sorting (TSP)
+            const coordinates = cluster
                 .map(b => `${b.lng},${b.lat}`)
                 .join(';');
 
-            const url = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?geometries=geojson&access_token=${mapboxAccessToken}`;
+            // roundtrip=false: open-ended path
+            // source=any, destination=any: find best start/end
+            const url = `https://api.mapbox.com/optimized-trips/v1/mapbox/${mapboxProfile}/${coordinates}?roundtrip=false&source=any&destination=any&geometries=geojson&access_token=${mapboxAccessToken}`;
 
             const response = await fetch(url);
 
@@ -213,14 +211,21 @@ serve(async (req) => {
 
             const data = await response.json();
 
-            if (!data.routes || data.routes.length === 0) {
-                throw new Error('No route found');
+            if (!data.trips || data.trips.length === 0) {
+                throw new Error('No optimized route found');
             }
+
+            // Reorder cluster based on optimization result
+            // data.waypoints has { waypoint_index, trips_index }
+            // waypoint_index refers to the index in our 'coordinates' string (which matches 'cluster' array)
+            // trips_index is the order in the output route
+            const sortedWaypoints = data.waypoints.sort((a: any, b: any) => a.trips_index - b.trips_index);
+            const sortedCluster = sortedWaypoints.map((wp: any) => cluster[wp.waypoint_index]);
 
             return {
                 dayNumber,
-                buildingIds: sortedCluster.map(b => b.id), // Return IDs in visited order
-                routeGeometry: data.routes[0].geometry,
+                buildingIds: sortedCluster.map((b: any) => b.id), // Return IDs in visited order
+                routeGeometry: data.trips[0].geometry,
                 isFallback: false
             };
 
