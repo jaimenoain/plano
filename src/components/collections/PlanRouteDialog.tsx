@@ -156,10 +156,10 @@ export function PlanRouteDialog({
             {hasItinerary && (
               <Button
                 type="button"
-                variant="destructive"
+                variant="link"
                 onClick={handleDelete}
                 disabled={isLoading}
-                className="mb-2 sm:mb-0"
+                className="mb-2 sm:mb-0 text-destructive hover:text-destructive/90"
               >
                 Remove Itinerary
               </Button>
