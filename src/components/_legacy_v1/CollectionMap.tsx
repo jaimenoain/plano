@@ -872,8 +872,8 @@ export default function CollectionMap() {
                 )}
             </div>
 
-            <div className="flex-1 overflow-hidden flex flex-col">
-                <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="w-full flex-1 flex flex-col min-h-0">
+            <div className="flex-1 overflow-hidden flex flex-col justify-start">
+                <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="w-full h-full flex-1 flex flex-col min-h-0 justify-start">
                     {collection.itinerary && (
                         <div className="px-4 pt-2 shrink-0">
                             <TabsList className="w-full grid grid-cols-2">
@@ -883,7 +883,7 @@ export default function CollectionMap() {
                         </div>
                     )}
 
-                    <TabsContent value="items" className="flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col">
+                    <TabsContent value="items" className="mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start">
                         <ScrollArea className="flex-1">
                             <div className="p-4 space-y-3 pb-24 lg:pb-4">
                                 {items && items.filter(i => !i.is_hidden).length > 0 && (
@@ -954,7 +954,7 @@ export default function CollectionMap() {
                         </ScrollArea>
                     </TabsContent>
 
-                    <TabsContent value="itinerary" className="flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col">
+                    <TabsContent value="itinerary" className="mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start">
                          <ScrollArea className="flex-1">
                             <div className="p-4 pb-24 lg:pb-4">
                                 <ItineraryList
