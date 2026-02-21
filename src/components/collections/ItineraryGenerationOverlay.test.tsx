@@ -42,30 +42,30 @@ describe("ItineraryGenerationOverlay", () => {
 
   it("renders the first message initially", () => {
     render(<ItineraryGenerationOverlay open={true} />);
-    expect(screen.getByText("Analizando zonas geográficas...")).toBeInTheDocument();
+    expect(screen.getByText("Analyzing geographical zones...")).toBeInTheDocument();
   });
 
   it("cycles through messages over time", () => {
     render(<ItineraryGenerationOverlay open={true} />);
 
-    expect(screen.getByText("Analizando zonas geográficas...")).toBeInTheDocument();
+    expect(screen.getByText("Analyzing geographical zones...")).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(2000);
     });
 
-    expect(screen.getByText("Trazando la ruta perfecta...")).toBeInTheDocument();
+    expect(screen.getByText("Charting the perfect route...")).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(2000);
     });
 
-    expect(screen.getByText("Optimizando tiempos...")).toBeInTheDocument();
+    expect(screen.getByText("Optimizing travel times...")).toBeInTheDocument();
   });
 
   it("does not render content when closed", () => {
     render(<ItineraryGenerationOverlay open={false} />);
-    expect(screen.queryByText("Analizando zonas geográficas...")).not.toBeInTheDocument();
+    expect(screen.queryByText("Analyzing geographical zones...")).not.toBeInTheDocument();
   });
 
   it("resets message index when closed and reopened", () => {
@@ -74,12 +74,12 @@ describe("ItineraryGenerationOverlay", () => {
       act(() => {
           vi.advanceTimersByTime(2000);
       });
-      expect(screen.getByText("Trazando la ruta perfecta...")).toBeInTheDocument();
+      expect(screen.getByText("Charting the perfect route...")).toBeInTheDocument();
 
       rerender(<ItineraryGenerationOverlay open={false} />);
-      expect(screen.queryByText("Trazando la ruta perfecta...")).not.toBeInTheDocument();
+      expect(screen.queryByText("Charting the perfect route...")).not.toBeInTheDocument();
 
       rerender(<ItineraryGenerationOverlay open={true} />);
-      expect(screen.getByText("Analizando zonas geográficas...")).toBeInTheDocument();
+      expect(screen.getByText("Analyzing geographical zones...")).toBeInTheDocument();
   });
 });
