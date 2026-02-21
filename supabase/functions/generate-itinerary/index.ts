@@ -114,55 +114,35 @@ serve(async (req) => {
       );
     }
 
-    // 4. Fetch Collection Items
-    const { data: items, error: fetchError } = await supabaseAdmin
-      .from('collection_items')
-      .select(`
-        building_id,
-        buildings (
-          id,
-          name,
-          location
-        )
-      `)
-      .eq('collection_id', collection_id);
+    // 4. Fetch Collection Buildings with Locations
+    // Use RPC to get clean coordinates from PostGIS geography column
+    const { data: rawBuildings, error: fetchError } = await supabaseAdmin
+      .rpc('get_collection_buildings', { p_collection_id: collection_id });
 
     if (fetchError) {
-      console.error('Error fetching items:', fetchError);
+      console.error('Error fetching buildings via RPC:', fetchError);
       throw fetchError;
     }
 
-    if (!items || items.length === 0) {
+    // Log raw data for debugging
+    console.log(`Fetched ${rawBuildings?.length || 0} buildings for collection ${collection_id}`, rawBuildings);
+
+    if (!rawBuildings || rawBuildings.length === 0) {
       return new Response(
         JSON.stringify({ error: 'No items found in collection' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
 
-    // 5. Extract Locations
-    const buildings: BuildingLocation[] = items
-      .map((item: any) => {
-        const b = item.buildings;
-        let lat, lng;
-
-        if (b.location && typeof b.location === 'object') {
-          // Handle both simple {lat, lng} object and GeoJSON Point
-          if ('lat' in b.location && 'lng' in b.location) {
-            lat = b.location.lat;
-            lng = b.location.lng;
-          } else if ('coordinates' in b.location && Array.isArray(b.location.coordinates)) {
-             // GeoJSON is [lng, lat]
-            lng = b.location.coordinates[0];
-            lat = b.location.coordinates[1];
-          }
-        }
-
-        if (lat !== undefined && lng !== undefined) {
-          return { id: b.id, lat, lng, name: b.name };
-        }
-        return null;
-      })
-      .filter((b: any): b is BuildingLocation => b !== null);
+    // 5. Filter Valid Locations
+    const buildings: BuildingLocation[] = rawBuildings
+      .filter((b: any) => b.lat !== null && b.lng !== null)
+      .map((b: any) => ({
+        id: b.id,
+        lat: b.lat,
+        lng: b.lng,
+        name: b.name
+      }));
 
     if (buildings.length === 0) {
         return new Response(
