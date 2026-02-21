@@ -12,6 +12,7 @@ export interface ItineraryBuilding {
   city?: string | null;
   country?: string | null;
   location_precision?: "exact" | "approximate";
+  building_architects?: CollectionItemWithBuilding['building']['building_architects'];
 }
 
 export interface DaySchedule {
@@ -67,7 +68,8 @@ export const useItineraryStore = create<ItineraryState>((set) => ({
           hero_image_url: item.building.hero_image_url,
           city: item.building.city,
           country: item.building.country,
-          location_precision: item.building.location_precision
+          location_precision: item.building.location_precision,
+          building_architects: item.building.building_architects
         });
       }
     });
