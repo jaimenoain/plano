@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { kMeans, BuildingLocation } from '../supabase/functions/_shared/clustering';
+import { kMeans, BuildingLocation } from '../../supabase/functions/_shared/clustering';
 
 describe('kMeans Clustering', () => {
   it('should cluster buildings into k groups', () => {
