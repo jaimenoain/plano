@@ -875,12 +875,14 @@ export default function CollectionMap() {
 
             <div className="flex-1 overflow-hidden flex flex-col">
                 <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="w-full flex-1 flex flex-col">
-                    <div className="px-4 pt-2">
-                        <TabsList className={cn("w-full grid", collection.itinerary ? "grid-cols-2" : "grid-cols-1")}>
-                            <TabsTrigger value="items">All Items</TabsTrigger>
-                            {collection.itinerary && <TabsTrigger value="itinerary">Itinerary</TabsTrigger>}
-                        </TabsList>
-                    </div>
+                    {collection.itinerary && (
+                        <div className="px-4 pt-2">
+                            <TabsList className="w-full grid grid-cols-2">
+                                <TabsTrigger value="items">All Items</TabsTrigger>
+                                <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+                            </TabsList>
+                        </div>
+                    )}
 
                     <TabsContent value="items" className="flex-1 overflow-hidden m-0">
                         <ScrollArea className="h-full">
