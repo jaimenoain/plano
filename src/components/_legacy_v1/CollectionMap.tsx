@@ -846,16 +846,6 @@ export default function CollectionMap() {
                 </div>
                 {canEdit && (
                     <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => setShowPlanRoute(true)}
-                            className="hidden sm:flex"
-                        >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Plan Route
-                        </Button>
-
                         <Button variant="ghost" size="icon" onClick={() => setShowAddBuildings(true)}>
                             <Plus className="h-5 w-5 text-muted-foreground" />
                         </Button>
@@ -886,9 +876,9 @@ export default function CollectionMap() {
             <div className="flex-1 overflow-hidden flex flex-col">
                 <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="w-full flex-1 flex flex-col">
                     <div className="px-4 pt-2">
-                        <TabsList className="w-full grid grid-cols-2">
+                        <TabsList className={cn("w-full grid", collection.itinerary ? "grid-cols-2" : "grid-cols-1")}>
                             <TabsTrigger value="items">All Items</TabsTrigger>
-                            <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+                            {collection.itinerary && <TabsTrigger value="itinerary">Itinerary</TabsTrigger>}
                         </TabsList>
                     </div>
 
@@ -1015,6 +1005,7 @@ export default function CollectionMap() {
             </Suspense>
 
             {/* Mobile Itinerary Drawer */}
+            {collection.itinerary && (
             <div className="lg:hidden">
                  {activeTab !== 'itinerary' && viewMode === 'map' && (
                     <div className="absolute top-4 right-4 z-[50]">
@@ -1048,6 +1039,7 @@ export default function CollectionMap() {
                     </DrawerContent>
                  </Drawer>
             </div>
+            )}
         </div>
       </div>
 
@@ -1077,6 +1069,7 @@ export default function CollectionMap() {
               isOwner={isOwner}
               canEdit={canEdit}
               currentUserId={user?.id}
+              onPlanRoute={() => setShowPlanRoute(true)}
               onSaveAll={() => {
                   setShowSettings(false);
                   setShowSaveAllConfirm(true);

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut } from "lucide-react";
+import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/components/groups/UserSearch";
@@ -40,6 +40,7 @@ interface CollectionSettingsDialogProps {
   canEdit?: boolean;
   onSaveAll?: () => void;
   currentUserId?: string;
+  onPlanRoute?: () => void;
 }
 
 interface Contributor {
@@ -59,7 +60,7 @@ const METHOD_DESCRIPTIONS = {
   custom: "Create custom categories with your own colors to organize locations."
 };
 
-export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange, isOwner = false, canEdit = true, onSaveAll, currentUserId }: CollectionSettingsDialogProps) {
+export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange, isOwner = false, canEdit = true, onSaveAll, currentUserId, onPlanRoute }: CollectionSettingsDialogProps) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<{
     name: string;
@@ -448,6 +449,23 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
             </Button>
 
             <Separator className="my-6" />
+
+            {onPlanRoute && (
+              <>
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" /> Plan Route
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Generate an optimized route for visiting buildings in this collection.
+                  </p>
+                  <Button onClick={() => { onPlanRoute(); onOpenChange(false); }} className="w-full sm:w-auto">
+                    Open Itinerary Planner
+                  </Button>
+                </div>
+                <Separator className="my-6" />
+              </>
+            )}
 
             <div className="space-y-4">
               <h3 className="text-sm font-medium">Export Data</h3>
