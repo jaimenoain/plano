@@ -20,7 +20,7 @@ interface PlanRouteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   collectionId: string;
-  onPlanGenerated?: () => void;
+  onPlanGenerated?: (action: 'created' | 'removed') => void;
   hasItinerary?: boolean;
 }
 
@@ -55,7 +55,7 @@ export function PlanRouteDialog({
 
       onOpenChange(false);
       if (onPlanGenerated) {
-        onPlanGenerated();
+        onPlanGenerated('removed');
       }
     } catch (error) {
       console.error("Error removing itinerary:", error);
@@ -98,7 +98,7 @@ export function PlanRouteDialog({
 
       onOpenChange(false);
       if (onPlanGenerated) {
-        onPlanGenerated();
+        onPlanGenerated('created');
       }
     } catch (error) {
       console.error("Error generating itinerary:", error);

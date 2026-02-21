@@ -1031,9 +1031,12 @@ export default function CollectionMap() {
             onOpenChange={setShowPlanRoute}
             collectionId={collection.id}
             hasItinerary={!!collection.itinerary}
-            onPlanGenerated={() => {
+            onPlanGenerated={(action) => {
                 refetchItems();
                 queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
+                if (action === 'created') {
+                  setActiveTab('itinerary');
+                }
             }}
           />
       </Suspense>

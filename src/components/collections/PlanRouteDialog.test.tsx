@@ -99,7 +99,30 @@ describe('PlanRouteDialog', () => {
       expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
         title: 'Itinerary Removed'
       }));
-      expect(defaultProps.onPlanGenerated).toHaveBeenCalled();
+      expect(defaultProps.onPlanGenerated).toHaveBeenCalledWith('removed');
+      expect(defaultProps.onOpenChange).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('calls generation logic when form is submitted', async () => {
+    mockInvoke.mockResolvedValue({ data: {}, error: null });
+    render(<PlanRouteDialog {...defaultProps} />);
+
+    const generateButton = screen.getByText('Generate Itinerary');
+    fireEvent.click(generateButton);
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith('generate-itinerary', expect.objectContaining({
+        body: expect.objectContaining({
+          collection_id: '123',
+          days: 3, // default value
+          transportMode: 'walking' // default value
+        })
+      }));
+      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Itinerary Generated'
+      }));
+      expect(defaultProps.onPlanGenerated).toHaveBeenCalledWith('created');
       expect(defaultProps.onOpenChange).toHaveBeenCalledWith(false);
     });
   });
