@@ -2,7 +2,7 @@ import { forwardRef, useState, useRef, useEffect } from "react";
 import { CollectionItemWithBuilding } from "@/types/collection";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, MessageSquarePlus, Check } from "lucide-react";
+import { Save, MessageSquarePlus, Check, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,10 +25,29 @@ interface CollectionBuildingCardProps {
   onUpdateCategory?: (categoryId: string) => void;
   showImages?: boolean;
   onRemove?: () => void;
+  // Itinerary specific props
+  isDraggable?: boolean;
+  dragHandleProps?: any;
+  badgeIndex?: number;
 }
 
 export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuildingCardProps>(
-  ({ item, isHighlighted, setHighlightedId, canEdit, onUpdateNote, onNavigate, categorizationMethod, customCategories, onUpdateCategory, showImages = true, onRemove }, ref) => {
+  ({
+    item,
+    isHighlighted,
+    setHighlightedId,
+    canEdit,
+    onUpdateNote,
+    onNavigate,
+    categorizationMethod,
+    customCategories,
+    onUpdateCategory,
+    showImages = true,
+    onRemove,
+    isDraggable,
+    dragHandleProps,
+    badgeIndex
+  }, ref) => {
     const [isEditingNote, setIsEditingNote] = useState(false);
     const [noteValue, setNoteValue] = useState(item.note || "");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -86,13 +105,31 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                 </div>
             )}
             <div className="flex flex-row min-h-[7rem]">
+                {/* Drag Handle */}
+                {isDraggable && (
+                    <div
+                        className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r"
+                        {...dragHandleProps}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <GripVertical className="h-4 w-4" />
+                    </div>
+                )}
+
                 {/* Content Section */}
-                <div className="flex flex-col flex-1 p-3 min-w-0 justify-between">
+                <div className="flex flex-col flex-1 p-3 min-w-0 justify-between relative pl-3">
                     <div>
                         <div className="flex justify-between items-start gap-2">
-                             <h3 className="font-semibold text-sm leading-tight line-clamp-2">
-                                {item.building.name}
-                             </h3>
+                             <div className="flex items-start gap-2">
+                                {badgeIndex !== undefined && (
+                                    <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm mt-0.5">
+                                        {badgeIndex}
+                                    </div>
+                                )}
+                                <h3 className="font-semibold text-sm leading-tight line-clamp-2">
+                                    {item.building.name}
+                                </h3>
+                             </div>
                         </div>
 
                         <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
