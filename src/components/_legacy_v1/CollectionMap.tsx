@@ -883,8 +883,8 @@ export default function CollectionMap() {
                         </div>
                     )}
 
-                    <TabsContent value="items" className="flex-1 h-full overflow-hidden m-0 p-0 min-h-0 flex flex-col">
-                        <ScrollArea className="flex-1 h-full">
+                    <TabsContent value="items" className="flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col">
+                        <ScrollArea className="flex-1">
                             <div className="p-4 space-y-3 pb-24 lg:pb-4">
                                 {items && items.filter(i => !i.is_hidden).length > 0 && (
                                     <Suspense fallback={
@@ -954,8 +954,8 @@ export default function CollectionMap() {
                         </ScrollArea>
                     </TabsContent>
 
-                    <TabsContent value="itinerary" className="flex-1 h-full overflow-hidden m-0 p-0 min-h-0 flex flex-col">
-                         <ScrollArea className="flex-1 h-full">
+                    <TabsContent value="itinerary" className="flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col">
+                         <ScrollArea className="flex-1">
                             <div className="p-4 pb-24 lg:pb-4">
                                 <ItineraryList
                                     highlightedId={highlightedId}
