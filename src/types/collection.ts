@@ -10,6 +10,21 @@ export interface Collection {
   categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
   custom_categories: { id: string; label: string; color: string }[] | null;
   categorization_selected_members: string[] | null;
+  itinerary: Itinerary | null;
+}
+
+export type TransportMode = 'walking' | 'driving' | 'cycling' | 'transit';
+
+export interface ItineraryRoute {
+  dayNumber: number;
+  buildingIds: string[];
+  routeGeometry?: any; // GeoJSON LineString
+}
+
+export interface Itinerary {
+  days: number;
+  transportMode: TransportMode;
+  routes: ItineraryRoute[];
 }
 
 export interface CollectionItemWithBuilding {
