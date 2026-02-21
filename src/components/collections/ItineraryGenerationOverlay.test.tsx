@@ -12,6 +12,7 @@ vi.mock("@/components/ui/dialog", () => ({
     open ? <div data-testid="dialog-root">{children}</div> : null
   ),
   DialogContent: ({ children }: { children: React.ReactNode }) => <div data-testid="dialog-content">{children}</div>,
+  DialogTitle: ({ children }: { children: React.ReactNode }) => <div data-testid="dialog-title">{children}</div>,
   DialogOverlay: () => <div data-testid="dialog-overlay" />,
   DialogPortal: ({ children }: { children: React.ReactNode }) => <div data-testid="dialog-portal">{children}</div>,
 }));
