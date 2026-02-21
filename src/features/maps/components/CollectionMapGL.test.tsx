@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, screen, cleanup } from '@testing-library/react';
 import { CollectionMapGL } from './CollectionMapGL';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+
+expect.extend(matchers);
 
 // Define hoisted mocks
 const {
@@ -72,7 +75,7 @@ vi.mock('react-map-gl', async () => {
     // Assign ref
     React.useImperativeHandle(ref, () => mockMapRef.current);
 
-    return React.createElement('div', { 'data-testid': 'map-gl-mock' }, 'MapGL Mock');
+    return React.createElement('div', { 'data-testid': 'map-gl-mock' }, props.children);
   });
 
   return {
@@ -103,6 +106,14 @@ vi.mock('./MapMarkers', async () => {
     }
 });
 
+// Mock ItineraryRoutes
+vi.mock('./ItineraryRoutes', async () => {
+  const React = await import('react');
+  return {
+    ItineraryRoutes: () => React.createElement('div', { 'data-testid': 'itinerary-routes' }, 'ItineraryRoutes')
+  };
+});
+
 // Mock useStableMapUpdate
 vi.mock('@/features/maps/hooks/useStableMapUpdate', () => ({
   useStableMapUpdate: () => ({
@@ -118,6 +129,10 @@ describe('CollectionMapGL - Viewport Fitting Logic', () => {
     getMapMock.mockClear();
     mockUpdateMapState.mockClear();
     mockSetSearchParams.mockClear();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   const mockBuildings = [
@@ -166,5 +181,16 @@ describe('CollectionMapGL - Viewport Fitting Logic', () => {
             true // immediate = true
         );
     });
+  });
+
+  it('should render itinerary routes', () => {
+    const { getByTestId } = render(
+      <CollectionMapGL
+        buildings={mockBuildings}
+        highlightedId={null}
+        setHighlightedId={vi.fn()}
+      />
+    );
+    expect(getByTestId('itinerary-routes')).toBeInTheDocument();
   });
 });

@@ -9,6 +9,7 @@ import { useURLMapState, DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/featur
 import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { MapMarkers } from './MapMarkers';
+import { ItineraryRoutes } from './ItineraryRoutes';
 import { DiscoveryBuilding } from '@/features/search/components/types';
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBoundsFromBuildings } from '@/utils/map';
@@ -211,6 +212,8 @@ function CollectionMapGLContent({
                 showUserLocation={true}
             />
             <NavigationControl position="bottom-right" />
+
+            <ItineraryRoutes />
 
             <MapMarkers
                 clusters={clusters}

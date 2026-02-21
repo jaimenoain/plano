@@ -19,6 +19,7 @@ export interface ItineraryRoute {
   dayNumber: number;
   buildingIds: string[];
   routeGeometry?: any; // GeoJSON LineString
+  isFallback?: boolean;
 }
 
 export interface Itinerary {

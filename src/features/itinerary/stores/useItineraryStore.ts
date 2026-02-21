@@ -18,6 +18,7 @@ export interface DaySchedule {
   dayNumber: number; // 1-based index
   buildings: ItineraryBuilding[];
   routeGeometry?: any;
+  isFallback?: boolean;
 }
 
 interface ItineraryState {
@@ -87,7 +88,8 @@ export const useItineraryStore = create<ItineraryState>((set) => ({
         days.push({
             dayNumber: i,
             buildings,
-            routeGeometry: route?.routeGeometry
+            routeGeometry: route?.routeGeometry,
+            isFallback: route?.isFallback
         });
     }
 
