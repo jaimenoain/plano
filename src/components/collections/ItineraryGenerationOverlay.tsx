@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 
 const loadingMessages = [
@@ -32,6 +32,7 @@ export function ItineraryGenerationOverlay({ open }: { open: boolean }) {
           // Prevent focusing trap issues if multiple dialogs are open, though Radix handles this usually.
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
+          <DialogTitle className="sr-only">Generando Itinerario</DialogTitle>
           <div className="relative w-64 h-64 flex items-center justify-center">
             <motion.svg
               viewBox="0 0 100 100"
