@@ -41,7 +41,7 @@ describe('KanbanColumn isOver state', () => {
 
     // Check empty state styling
     // The empty state renders because items is empty array
-    const emptyState = screen.getByText('No 1-point buildings').closest('div');
+    const emptyState = screen.getByText('No Drag Over buildings').closest('div');
     expect(emptyState).toBeTruthy();
     expect(emptyState?.className).toContain('border-primary');
     expect(emptyState?.className).toContain('bg-primary/10');
