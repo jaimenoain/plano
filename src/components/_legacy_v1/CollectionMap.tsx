@@ -10,7 +10,6 @@ import { getBuildingUrl } from "@/utils/url";
 import { Loader2, Settings, Plus, ExternalLink, Bookmark, Star, ListFilter, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
 import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
@@ -884,7 +883,7 @@ export default function CollectionMap() {
                     )}
 
                     <TabsContent value="items" className="mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start">
-                        <ScrollArea className="flex-1">
+                        <div className="flex-1 overflow-y-auto">
                             <div className="p-4 space-y-3 pb-24 lg:pb-4">
                                 {items && items.filter(i => !i.is_hidden).length > 0 && (
                                     <Suspense fallback={
@@ -951,11 +950,11 @@ export default function CollectionMap() {
                                     </div>
                                 )}
                             </div>
-                        </ScrollArea>
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="itinerary" className="mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start">
-                         <ScrollArea className="flex-1">
+                         <div className="flex-1 overflow-y-auto">
                             <div className="p-4 pb-24 lg:pb-4">
                                 <ItineraryList
                                     highlightedId={highlightedId}
@@ -976,7 +975,7 @@ export default function CollectionMap() {
                                     </div>
                                 )}
                             </div>
-                         </ScrollArea>
+                         </div>
                     </TabsContent>
                 </Tabs>
             </div>
