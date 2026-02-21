@@ -3,6 +3,7 @@ import { render, waitFor, screen, cleanup } from '@testing-library/react';
 import { CollectionMapGL } from './CollectionMapGL';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
+import React from 'react';
 
 expect.extend(matchers);
 
@@ -13,7 +14,9 @@ const {
   cameraForBoundsMock,
   getMapMock,
   mockUpdateMapState,
-  mockSetSearchParams
+  mockSetSearchParams,
+  MockMapMarkers,
+  MockItineraryRoutes
 } = vi.hoisted(() => {
   const fitBounds = vi.fn();
   const cameraForBounds = vi.fn(() => ({
@@ -35,6 +38,8 @@ const {
 
   const updateMapState = vi.fn();
   const setSearchParams = vi.fn();
+  const MockMapMarkers = vi.fn();
+  const MockItineraryRoutes = vi.fn();
 
   return {
     mockMapRef: mapRef,
@@ -42,9 +47,15 @@ const {
     cameraForBoundsMock: cameraForBounds,
     getMapMock: getMap,
     mockUpdateMapState: updateMapState,
-    mockSetSearchParams: setSearchParams
+    mockSetSearchParams: setSearchParams,
+    MockMapMarkers,
+    MockItineraryRoutes
   };
 });
+
+// Set implementations for the hoisted mocks
+MockMapMarkers.mockImplementation(() => <div data-testid="map-markers">MapMarkers</div>);
+MockItineraryRoutes.mockImplementation(() => <div data-testid="itinerary-routes">ItineraryRoutes</div>);
 
 // Mock react-router-dom
 vi.mock('react-router-dom', () => ({
@@ -100,17 +111,15 @@ vi.mock('@/utils/map', () => ({
 
 // Mock MapMarkers
 vi.mock('./MapMarkers', async () => {
-    const React = await import('react');
     return {
-        MapMarkers: () => React.createElement('div', { 'data-testid': 'map-markers' }, 'MapMarkers')
+        MapMarkers: MockMapMarkers
     }
 });
 
 // Mock ItineraryRoutes
 vi.mock('./ItineraryRoutes', async () => {
-  const React = await import('react');
   return {
-    ItineraryRoutes: () => React.createElement('div', { 'data-testid': 'itinerary-routes' }, 'ItineraryRoutes')
+    ItineraryRoutes: MockItineraryRoutes
   };
 });
 
@@ -124,7 +133,14 @@ vi.mock('@/features/maps/hooks/useStableMapUpdate', () => ({
 // Mock useItineraryStore
 vi.mock('@/features/itinerary/stores/useItineraryStore', () => ({
   useItineraryStore: (selector: any) => selector({
-    days: []
+    days: [
+        {
+            dayNumber: 1,
+            buildings: [
+                { id: '1', name: 'Building 1', location_lat: 40.7, location_lng: -74.0 }
+            ]
+        }
+    ]
   })
 }));
 
@@ -136,6 +152,8 @@ describe('CollectionMapGL - Viewport Fitting Logic', () => {
     getMapMock.mockClear();
     mockUpdateMapState.mockClear();
     mockSetSearchParams.mockClear();
+    MockMapMarkers.mockClear();
+    MockItineraryRoutes.mockClear();
   });
 
   afterEach(() => {
@@ -190,7 +208,7 @@ describe('CollectionMapGL - Viewport Fitting Logic', () => {
     });
   });
 
-  it('should render itinerary routes', () => {
+  it('should render itinerary routes when showItinerary is true', () => {
     const { getByTestId } = render(
       <CollectionMapGL
         buildings={mockBuildings}
@@ -200,5 +218,64 @@ describe('CollectionMapGL - Viewport Fitting Logic', () => {
       />
     );
     expect(getByTestId('itinerary-routes')).toBeInTheDocument();
+    expect(MockItineraryRoutes).toHaveBeenCalled();
+  });
+
+  it('should NOT render itinerary routes when showItinerary is false', () => {
+    const { queryByTestId } = render(
+      <CollectionMapGL
+        buildings={mockBuildings}
+        highlightedId={null}
+        setHighlightedId={vi.fn()}
+        showItinerary={false}
+      />
+    );
+    expect(queryByTestId('itinerary-routes')).not.toBeInTheDocument();
+    expect(MockItineraryRoutes).not.toHaveBeenCalled();
+  });
+
+  it('should render standard markers (undefined sequence) when showItinerary is false', () => {
+     render(
+        <CollectionMapGL
+          buildings={mockBuildings}
+          highlightedId={null}
+          setHighlightedId={vi.fn()}
+          showItinerary={false}
+        />
+     );
+
+     expect(MockMapMarkers).toHaveBeenCalled();
+     const calls = MockMapMarkers.mock.calls;
+     const lastCall = calls[calls.length - 1];
+     const props = lastCall[0];
+     const clusters = props.clusters;
+
+     expect(clusters).toHaveLength(1);
+     expect(clusters[0].itinerary_sequence).toBeUndefined();
+     expect(clusters[0].itinerary_day_index).toBeUndefined();
+  });
+
+  it('should render itinerary markers (with sequence) when showItinerary is true', () => {
+     // Note: Mocked useItineraryStore returns days with building id '1'
+     render(
+        <CollectionMapGL
+          buildings={mockBuildings}
+          highlightedId={null}
+          setHighlightedId={vi.fn()}
+          showItinerary={true}
+        />
+     );
+
+     expect(MockMapMarkers).toHaveBeenCalled();
+     const calls = MockMapMarkers.mock.calls;
+     const lastCall = calls[calls.length - 1];
+     const props = lastCall[0];
+     const clusters = props.clusters;
+
+     expect(clusters).toHaveLength(1);
+     // Since dayNumber is 1-based, index is 0.
+     // Sequence is 1-based (index + 1) -> 1.
+     expect(clusters[0].itinerary_sequence).toBe(1);
+     expect(clusters[0].itinerary_day_index).toBe(0);
   });
 });
