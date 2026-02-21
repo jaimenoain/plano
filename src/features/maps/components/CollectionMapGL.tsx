@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from "react-dom";
 import { useSearchParams } from 'react-router-dom';
-import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl';
+import MapGL, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Layers, Maximize2, Minimize2 } from "lucide-react";
@@ -13,6 +13,7 @@ import { ItineraryRoutes } from './ItineraryRoutes';
 import { DiscoveryBuilding } from '@/features/search/components/types';
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBoundsFromBuildings } from '@/utils/map';
+import { useItineraryStore } from '@/features/itinerary/stores/useItineraryStore';
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
@@ -63,6 +64,24 @@ function CollectionMapGLContent({
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
   const mapRef = useRef<MapRef>(null);
+
+  const days = useItineraryStore((state) => state.days);
+
+  // Map building IDs to their itinerary sequence and day index
+  const itineraryMap = useMemo(() => {
+    const map = new Map<string, { dayIndex: number; sequence: number }>();
+    days.forEach((day, dayIndex) => {
+        day.buildings.forEach((building, index) => {
+            if (!map.has(building.id)) {
+                map.set(building.id, {
+                    dayIndex: dayIndex,
+                    sequence: index + 1
+                });
+            }
+        });
+    });
+    return map;
+  }, [days]);
 
   const [searchParams] = useSearchParams();
   // Determine if we should auto-fit bounds on mount (only if no explicit URL params provided)
@@ -154,26 +173,34 @@ function CollectionMapGLContent({
 
   // Transform DiscoveryBuilding[] to ClusterResponse[]
   const clusters = useMemo<ClusterResponse[]>(() => {
-    return buildings.map(b => ({
-        id: b.id,
-        lat: b.location_lat,
-        lng: b.location_lng,
-        is_cluster: false,
-        count: 1,
-        rating: b.personal_rating || null,
-        status: b.personal_status || null,
-        color: b.color || null,
-        name: b.name,
-        slug: b.slug || undefined,
-        image_url: b.main_image_url || undefined,
+    return buildings.map(b => {
+        const itineraryInfo = itineraryMap.get(b.id);
 
-        // Custom fields
-        is_custom_marker: (b as any).isMarker,
-        notes: (b as any).notes,
-        is_candidate: (b as any).isCandidate,
-        address: (b as any).address,
-    }));
-  }, [buildings]);
+        return {
+            id: b.id,
+            lat: b.location_lat,
+            lng: b.location_lng,
+            is_cluster: false,
+            count: 1,
+            rating: b.personal_rating || null,
+            status: b.personal_status || null,
+            color: b.color || null,
+            name: b.name,
+            slug: b.slug || undefined,
+            image_url: b.main_image_url || undefined,
+
+            // Custom fields
+            is_custom_marker: (b as any).isMarker,
+            notes: (b as any).notes,
+            is_candidate: (b as any).isCandidate,
+            address: (b as any).address,
+
+            // Itinerary fields
+            itinerary_sequence: itineraryInfo?.sequence,
+            itinerary_day_index: itineraryInfo?.dayIndex,
+        };
+    });
+  }, [buildings, itineraryMap]);
 
   const handleAddCandidate = useCallback((id: string) => {
       if (onAddCandidate) {
@@ -193,7 +220,7 @@ function CollectionMapGLContent({
 
   const mapContent = (
     <div className={`relative h-full w-full overflow-hidden bg-background ${isExpanded ? "fixed inset-0 z-[9999]" : ""}`}>
-        <Map
+        <MapGL
             ref={mapRef}
             {...viewState}
             onMove={onMove}
@@ -222,7 +249,7 @@ function CollectionMapGLContent({
                 onRemoveFromCollection={handleRemove}
                 onAddCandidate={handleAddCandidate}
             />
-        </Map>
+        </MapGL>
 
         {/* Top Left: Satellite Toggle */}
         <div className="absolute top-2 left-2 flex flex-col gap-2 z-10">

@@ -24,6 +24,8 @@ export interface ClusterResponse {
   location_approximate?: boolean;
   max_tier?: number;
   color?: string | null;
+  itinerary_sequence?: number;
+  itinerary_day_index?: number;
 }
 
 export interface UseMapDataProps {
