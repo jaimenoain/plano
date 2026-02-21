@@ -121,6 +121,13 @@ vi.mock('@/features/maps/hooks/useStableMapUpdate', () => ({
   })
 }));
 
+// Mock useItineraryStore
+vi.mock('@/features/itinerary/stores/useItineraryStore', () => ({
+  useItineraryStore: (selector: any) => selector({
+    days: []
+  })
+}));
+
 describe('CollectionMapGL - Viewport Fitting Logic', () => {
   beforeEach(() => {
     vi.clearAllMocks();

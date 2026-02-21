@@ -4,6 +4,7 @@ import { ClusterResponse } from '../hooks/useMapData';
 import { BuildingPopupContent } from './BuildingPopupContent';
 import { getPinStyle } from '../utils/pinStyling';
 import { MapPin } from './MapPin';
+import { DAY_COLORS } from '@/features/maps/constants';
 import '../../../App.css';
 
 interface MapMarkersProps {
@@ -74,7 +75,24 @@ export function MapMarkers({
         const isCluster = cluster.is_cluster;
         const buildingUrl = !isCluster ? (cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`) : '#';
 
-        const pinStyle = getPinStyle(cluster);
+        let pinStyle = getPinStyle(cluster);
+
+        // Itinerary overrides
+        const itinerarySequence = cluster.itinerary_sequence;
+        const itineraryDayIndex = cluster.itinerary_day_index;
+
+        if (itinerarySequence !== undefined && itineraryDayIndex !== undefined) {
+             const color = DAY_COLORS[itineraryDayIndex % DAY_COLORS.length];
+             pinStyle = {
+                 ...pinStyle,
+                 backgroundColor: color,
+                 showContent: true,
+                 classes: `${pinStyle.classes} text-white font-bold text-sm shadow-sm`,
+                 zIndex: 100, // High priority but below hover
+                 showDot: false // Hide dot if showing number
+             };
+        }
+
         const isHovered = String(highlightedId) === String(cluster.id);
 
         // Boost Z-Index if hovered
@@ -89,14 +107,18 @@ export function MapMarkers({
               {cluster.is_cluster ? (
                   <span>{cluster.count}</span>
               ) : (
-                  pinStyle.showContent && (
-                     /* Keep existing Rating or fallback dot logic here if needed,
-                        or leave empty if the Pin Style handles the visuals (e.g. dots)
-                     */
-                    // If it's a candidate, show a yellow dot inside
-                    cluster.is_candidate ? (
-                        <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                    ) : null
+                  itinerarySequence !== undefined ? (
+                      <span>{itinerarySequence}</span>
+                  ) : (
+                      pinStyle.showContent && (
+                        /* Keep existing Rating or fallback dot logic here if needed,
+                            or leave empty if the Pin Style handles the visuals (e.g. dots)
+                        */
+                        // If it's a candidate, show a yellow dot inside
+                        cluster.is_candidate ? (
+                            <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                        ) : null
+                      )
                   )
               )}
           </MapPin>
