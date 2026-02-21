@@ -12,6 +12,64 @@ import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
+interface FeedHeroSingleImageProps {
+  image: { id: string; url: string };
+  onError: (id: string) => void;
+}
+
+function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+
+  const handleLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.naturalHeight > 0) {
+      setAspectRatio(img.naturalWidth / img.naturalHeight);
+    }
+  };
+
+  // 4:5 aspect ratio = 0.8
+  const MAX_ASPECT_RATIO = 0.8;
+
+  // While loading, use a placeholder aspect ratio (e.g., 4:5)
+  if (aspectRatio === null) {
+    return (
+      <div className="relative w-full aspect-[4/5] bg-secondary animate-pulse">
+        <img
+          src={image.url}
+          className="opacity-0 absolute inset-0 w-full h-full"
+          onLoad={handleLoad}
+          onError={() => onError(image.id)}
+          alt="Building"
+        />
+      </div>
+    );
+  }
+
+  const isTall = aspectRatio < MAX_ASPECT_RATIO;
+
+  return (
+    <div
+      className={cn(
+        "relative w-full overflow-hidden flex justify-center items-center transition-all duration-300",
+        isTall ? "bg-black" : "bg-secondary"
+      )}
+      style={{
+        aspectRatio: isTall ? `${MAX_ASPECT_RATIO}` : `${aspectRatio}`,
+      }}
+    >
+      <img
+        src={image.url}
+        onError={() => onError(image.id)}
+        className={cn(
+          "w-full h-full transition-opacity duration-300",
+          isTall ? "object-contain" : "object-cover"
+        )}
+        alt="Building"
+      />
+    </div>
+  );
+}
+
 interface FeedHeroCardProps {
   entry: FeedReview;
   onLike?: (reviewId: string) => void;
@@ -214,14 +272,11 @@ export function FeedHeroCard({
 
     if (count === 1) {
       return (
-        <div className="relative w-full aspect-[7/8] max-h-[500px]">
-          <img
-            src={images[0].url}
-            onError={() => handleImageError(images[0].id)}
-            className="w-full h-full object-cover object-center"
-            alt="Building"
-          />
-        </div>
+        <FeedHeroSingleImage
+          key={images[0].id}
+          image={images[0]}
+          onError={handleImageError}
+        />
       );
     }
 
