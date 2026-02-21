@@ -196,9 +196,24 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
                 : overContainer.buildings.findIndex(b => b.id === over.id);
 
             if (activeDayIndex === overDayIndex) {
-                 if (activeIndex !== overIndex && activeIndex !== -1 && overIndex !== -1) {
+                 const movedFromDifferentDay = previousDayNumber !== activeContainer.dayNumber;
+
+                 // Recalculate source if moved from different day
+                 if (movedFromDifferentDay && previousDayNumber !== null) {
+                      const sourceDayIndex = days.findIndex(d => d.dayNumber === previousDayNumber);
+                      if (sourceDayIndex !== -1) {
+                          calculateRouteForDay(sourceDayIndex);
+                      }
+                 }
+
+                 const orderChanged = activeIndex !== overIndex;
+                 if (orderChanged && activeIndex !== -1 && overIndex !== -1) {
                      const newOrder = arrayMove(activeContainer.buildings, activeIndex, overIndex);
                      reorderBuildings(activeDayIndex, newOrder);
+                 }
+
+                 // Always recalculate destination if we moved days or reordered
+                 if (movedFromDifferentDay || orderChanged) {
                      calculateRouteForDay(activeDayIndex);
                  }
             } else {
