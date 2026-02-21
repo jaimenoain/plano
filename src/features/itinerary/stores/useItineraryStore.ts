@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { supabase } from "@/integrations/supabase/client";
 import { TransportMode, Itinerary, CollectionItemWithBuilding } from '@/types/collection';
 
 // Define ItineraryBuilding interface
@@ -19,6 +20,7 @@ export interface DaySchedule {
   buildings: ItineraryBuilding[];
   routeGeometry?: any;
   isFallback?: boolean;
+  distance?: number; // meters
 }
 
 interface ItineraryState {
@@ -35,9 +37,10 @@ interface ItineraryState {
   setTransportMode: (mode: TransportMode) => void;
   updateRouteGeometry: (dayIndex: number, geometry: any) => void;
   setDaysCount: (count: number) => void;
+  calculateRouteForDay: (dayIndex: number) => Promise<void>;
 }
 
-export const useItineraryStore = create<ItineraryState>((set) => ({
+export const useItineraryStore = create<ItineraryState>((set, get) => ({
   daysCount: 0,
   transportMode: 'walking',
   days: [],
@@ -180,4 +183,54 @@ export const useItineraryStore = create<ItineraryState>((set) => ({
 
       return { daysCount: count, days: newDays };
   }),
+
+  calculateRouteForDay: async (dayIndex: number) => {
+      const state = get();
+      const day = state.days[dayIndex];
+      if (!day) return;
+
+      // If less than 2 buildings, clear route
+      if (day.buildings.length < 2) {
+          set((state) => {
+              const newDays = [...state.days];
+              if (newDays[dayIndex]) {
+                  newDays[dayIndex] = { ...newDays[dayIndex], routeGeometry: null, distance: 0 };
+              }
+              return { days: newDays };
+          });
+          return;
+      }
+
+      const coordinates = day.buildings.map(b => ({
+          lat: b.location_lat,
+          lng: b.location_lng
+      }));
+
+      try {
+          const { data, error } = await supabase.functions.invoke('calculate-route', {
+              body: {
+                  coordinates,
+                  transportMode: state.transportMode
+              }
+          });
+
+          if (error) throw error;
+          if (data && data.error) throw new Error(data.error);
+
+          set((state) => {
+              const newDays = [...state.days];
+              if (newDays[dayIndex]) {
+                  newDays[dayIndex] = {
+                      ...newDays[dayIndex],
+                      routeGeometry: data.geometry,
+                      distance: data.distance
+                  };
+              }
+              return { days: newDays };
+          });
+
+      } catch (err) {
+          console.error("Failed to calculate route:", err);
+      }
+  },
 }));

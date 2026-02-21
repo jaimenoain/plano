@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { AlertTriangle } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
@@ -33,9 +34,11 @@ interface ItineraryDayColumnProps {
   buildings: ItineraryBuilding[];
   highlightedId: string | null;
   setHighlightedId: (id: string | null) => void;
+  distance?: number;
+  transportMode: string;
 }
 
-function ItineraryDayColumn({ dayNumber, buildings, highlightedId, setHighlightedId }: ItineraryDayColumnProps) {
+function ItineraryDayColumn({ dayNumber, buildings, highlightedId, setHighlightedId, distance, transportMode }: ItineraryDayColumnProps) {
   const { setNodeRef } = useDroppable({
     id: `day-${dayNumber}`,
     data: { dayNumber }
@@ -44,10 +47,20 @@ function ItineraryDayColumn({ dayNumber, buildings, highlightedId, setHighlighte
   return (
     <AccordionItem value={`day-${dayNumber}`} className="border-b-0 mb-4 bg-muted/30 rounded-lg overflow-hidden border">
         <AccordionTrigger className="px-4 py-2 hover:no-underline bg-muted/50 hover:bg-muted/80 transition-colors">
-            <span className="font-semibold">Day {dayNumber}</span>
-            <span className="text-xs text-muted-foreground ml-2 font-normal">
-                {buildings.length} stop{buildings.length !== 1 ? 's' : ''}
-            </span>
+            <div className="flex flex-col w-full items-start text-left">
+                <div className="flex items-center w-full">
+                    <span className="font-semibold">Day {dayNumber}</span>
+                    <span className="text-xs text-muted-foreground ml-2 font-normal">
+                        {buildings.length} stop{buildings.length !== 1 ? 's' : ''}
+                    </span>
+                </div>
+                {transportMode === 'walking' && distance && distance > 15000 && (
+                    <div className="text-amber-600 text-xs flex items-center font-normal mt-1">
+                        <AlertTriangle className="w-3 h-3 mr-1" />
+                        Día muy intenso. Considera añadir un día extra o cambiar a coche.
+                    </div>
+                )}
+            </div>
         </AccordionTrigger>
         <AccordionContent className="p-0">
              <div ref={setNodeRef} className="p-2 min-h-[50px] space-y-2">
@@ -85,10 +98,13 @@ interface ItineraryListProps {
 
 export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryListProps) {
     const days = useItineraryStore((state) => state.days);
+    const transportMode = useItineraryStore((state) => state.transportMode);
     const reorderBuildings = useItineraryStore((state) => state.reorderBuildings);
     const moveBuildingToDay = useItineraryStore((state) => state.moveBuildingToDay);
+    const calculateRouteForDay = useItineraryStore((state) => state.calculateRouteForDay);
 
     const [activeId, setActiveId] = useState<string | null>(null);
+    const dragStartDayRef = useRef<number | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -110,6 +126,10 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
 
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as string);
+        const container = findDayContainer(event.active.id as string);
+        if (container) {
+            dragStartDayRef.current = container.dayNumber;
+        }
     };
 
     const handleDragOver = (event: DragOverEvent) => {
@@ -157,7 +177,9 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
+        const previousDayNumber = dragStartDayRef.current;
         setActiveId(null);
+        dragStartDayRef.current = null;
 
         if (!over) return;
 
@@ -177,7 +199,19 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
                  if (activeIndex !== overIndex && activeIndex !== -1 && overIndex !== -1) {
                      const newOrder = arrayMove(activeContainer.buildings, activeIndex, overIndex);
                      reorderBuildings(activeDayIndex, newOrder);
+                     calculateRouteForDay(activeDayIndex);
                  }
+            } else {
+                // Trigger recalculation for destination day
+                calculateRouteForDay(activeDayIndex);
+
+                // Trigger recalculation for source day if different
+                if (previousDayNumber !== null && previousDayNumber !== activeContainer.dayNumber) {
+                     const previousDayIndex = days.findIndex(d => d.dayNumber === previousDayNumber);
+                     if (previousDayIndex !== -1) {
+                         calculateRouteForDay(previousDayIndex);
+                     }
+                }
             }
         }
     };
@@ -224,6 +258,8 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
                         buildings={day.buildings}
                         highlightedId={highlightedId}
                         setHighlightedId={setHighlightedId}
+                        distance={day.distance}
+                        transportMode={transportMode}
                     />
                 ))}
             </Accordion>
