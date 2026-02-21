@@ -202,7 +202,7 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
           hero_image_url: activeBuilding.hero_image_url || null,
           community_preview_url: null,
           location_precision: activeBuilding.location_precision || "approximate",
-          building_architects: []
+          building_architects: activeBuilding.building_architects || []
         }
     } : null;
 
@@ -230,7 +230,7 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
 
             <DragOverlay dropAnimation={dropAnimationConfig}>
                 {activeDisplayItem ? (
-                     <div className="opacity-90 rotate-2 cursor-grabbing">
+                     <div className="opacity-90 rotate-2 cursor-grabbing shadow-xl scale-105 rounded-lg">
                          <CollectionBuildingCard
                             item={activeDisplayItem}
                             isHighlighted={false}
