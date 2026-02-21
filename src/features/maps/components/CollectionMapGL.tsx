@@ -49,6 +49,7 @@ interface CollectionMapGLProps {
   onUpdateMarkerNote?: (id: string, note: string) => void;
   onRemoveMarker?: (id: string) => void;
   showSavedCandidates?: boolean;
+  showItinerary?: boolean;
 }
 
 function CollectionMapGLContent({
@@ -59,7 +60,8 @@ function CollectionMapGLContent({
   onAddCandidate,
   onUpdateMarkerNote,
   onRemoveMarker,
-  showSavedCandidates
+  showSavedCandidates,
+  showItinerary
 }: CollectionMapGLProps) {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
@@ -69,6 +71,8 @@ function CollectionMapGLContent({
 
   // Map building IDs to their itinerary sequence and day index
   const itineraryMap = useMemo(() => {
+    if (!showItinerary) return new Map();
+
     const map = new Map<string, { dayIndex: number; sequence: number }>();
     days.forEach((day, dayIndex) => {
         day.buildings.forEach((building, index) => {
@@ -81,7 +85,7 @@ function CollectionMapGLContent({
         });
     });
     return map;
-  }, [days]);
+  }, [days, showItinerary]);
 
   const [searchParams] = useSearchParams();
   // Determine if we should auto-fit bounds on mount (only if no explicit URL params provided)
@@ -240,7 +244,7 @@ function CollectionMapGLContent({
             />
             <NavigationControl position="bottom-right" />
 
-            <ItineraryRoutes />
+            {showItinerary && <ItineraryRoutes />}
 
             <MapMarkers
                 clusters={clusters}

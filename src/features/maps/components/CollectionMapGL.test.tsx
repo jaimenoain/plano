@@ -196,6 +196,7 @@ describe('CollectionMapGL - Viewport Fitting Logic', () => {
         buildings={mockBuildings}
         highlightedId={null}
         setHighlightedId={vi.fn()}
+        showItinerary={true}
       />
     );
     expect(getByTestId('itinerary-routes')).toBeInTheDocument();

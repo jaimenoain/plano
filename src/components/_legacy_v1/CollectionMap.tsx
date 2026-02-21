@@ -14,6 +14,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
 import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from "@/components/ui/drawer";
+import { ItineraryList } from "@/components/collections/ItineraryList";
+import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
 
 import { DiscoveryBuilding } from "@/features/search/components/types";
 import {
@@ -98,6 +102,7 @@ export default function CollectionMap() {
   const [showAddBuildings, setShowAddBuildings] = useState(false);
   const [showPlanRoute, setShowPlanRoute] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [activeTab, setActiveTab] = useState<'items' | 'itinerary'>('items');
 
   // New States
   const [showSavedCandidates, setShowSavedCandidates] = useState(false);
@@ -114,6 +119,8 @@ export default function CollectionMap() {
 
   // Map Bounds State
   const [initialBounds, setInitialBounds] = useState<Bounds | null>(null);
+
+  const initializeItinerary = useItineraryStore((state) => state.initializeItinerary);
 
   // 1. Resolve User (Owner)
   const { data: ownerProfile, isLoading: loadingProfile } = useQuery({
@@ -240,6 +247,14 @@ export default function CollectionMap() {
 
   const items = collectionData?.items || [];
   const markers = collectionData?.markers || [];
+
+  useEffect(() => {
+      if (collection && items) {
+          initializeItinerary(collection.itinerary, items);
+          // If itinerary exists, maybe default to itinerary tab?
+          // For now, let's keep it manual or based on URL logic (not implemented)
+      }
+  }, [collection, items, initializeItinerary]);
 
   const existingBuildingIds = useMemo(() => {
     return new Set(items.map(item => item.building.id) || []);
@@ -838,15 +853,7 @@ export default function CollectionMap() {
                             className="hidden sm:flex"
                         >
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Planificar Ruta
-                        </Button>
-                        <Button
-                            variant="default"
-                            size="icon"
-                            onClick={() => setShowPlanRoute(true)}
-                            className="sm:hidden"
-                        >
-                            <Sparkles className="w-4 h-4" />
+                            Plan Route
                         </Button>
 
                         <Button variant="ghost" size="icon" onClick={() => setShowAddBuildings(true)}>
@@ -876,74 +883,112 @@ export default function CollectionMap() {
                 )}
             </div>
 
-            <ScrollArea className="flex-1">
-                <div className="p-4 space-y-3 pb-24">
-                    {items && items.filter(i => !i.is_hidden).length > 0 && (
-                        <Suspense fallback={
-                            <div className="flex items-center justify-center p-8">
-                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                            </div>
-                        }>
-                            {items.filter(i => !i.is_hidden).map(item => (
-                                <CollectionBuildingCard
-                                    key={item.id}
-                                    item={item}
-                                    isHighlighted={highlightedId === item.building.id}
-                                    setHighlightedId={setHighlightedId}
-                                    canEdit={canEdit}
-                                    onUpdateNote={(note) => handleUpdateNote(item.id, note)}
-                                    onNavigate={() => {
-                                        window.open(getBuildingUrl(item.building.id, item.building.slug, item.building.short_id), '_blank');
-                                    }}
-                                    categorizationMethod={collection.categorization_method}
-                                    customCategories={collection.custom_categories}
-                                    onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
-                                    showImages={collection.show_community_images ?? true}
-                                    onRemove={() => handleRemoveItem(item.building.id)}
-                                />
-                            ))}
-                        </Suspense>
-                    )}
+            <div className="flex-1 overflow-hidden flex flex-col">
+                <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="w-full flex-1 flex flex-col">
+                    <div className="px-4 pt-2">
+                        <TabsList className="w-full grid grid-cols-2">
+                            <TabsTrigger value="items">All Items</TabsTrigger>
+                            <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+                        </TabsList>
+                    </div>
 
-                    {markers && markers.length > 0 && (
-                        <div className="mt-4 border-t pt-2">
-                            <Accordion type="single" collapsible defaultValue="markers">
-                                <AccordionItem value="markers" className="border-none">
-                                    <AccordionTrigger className="py-2 hover:no-underline text-sm font-semibold text-muted-foreground">
-                                        Trip Logistics
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                        <div className="space-y-3 pt-2">
-                                            <Suspense fallback={<div className="p-2 text-center text-xs text-muted-foreground">Loading markers...</div>}>
-                                                {markers.map(marker => (
-                                                    <CollectionMarkerCard
-                                                        key={marker.id}
-                                                        marker={marker}
-                                                        isHighlighted={highlightedId === marker.id}
-                                                        setHighlightedId={setHighlightedId}
-                                                        canEdit={canEdit}
-                                                        onRemove={() => handleRemoveItem(marker.id)}
-                                                        onNavigate={() => {
-                                                            // Just highlight
-                                                            setHighlightedId(marker.id);
-                                                        }}
-                                                    />
-                                                ))}
-                                            </Suspense>
+                    <TabsContent value="items" className="flex-1 overflow-hidden m-0">
+                        <ScrollArea className="h-full">
+                            <div className="p-4 space-y-3 pb-24">
+                                {items && items.filter(i => !i.is_hidden).length > 0 && (
+                                    <Suspense fallback={
+                                        <div className="flex items-center justify-center p-8">
+                                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                                         </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                        </div>
-                    )}
+                                    }>
+                                        {items.filter(i => !i.is_hidden).map(item => (
+                                            <CollectionBuildingCard
+                                                key={item.id}
+                                                item={item}
+                                                isHighlighted={highlightedId === item.building.id}
+                                                setHighlightedId={setHighlightedId}
+                                                canEdit={canEdit}
+                                                onUpdateNote={(note) => handleUpdateNote(item.id, note)}
+                                                onNavigate={() => {
+                                                    window.open(getBuildingUrl(item.building.id, item.building.slug, item.building.short_id), '_blank');
+                                                }}
+                                                categorizationMethod={collection.categorization_method}
+                                                customCategories={collection.custom_categories}
+                                                onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
+                                                showImages={collection.show_community_images ?? true}
+                                                onRemove={() => handleRemoveItem(item.building.id)}
+                                            />
+                                        ))}
+                                    </Suspense>
+                                )}
 
-                    {(!items || items.filter(i => !i.is_hidden).length === 0) && (!markers || markers.length === 0) && (
-                        <div className="text-center py-8 text-muted-foreground text-sm">
-                            No places in this collection yet.
-                        </div>
-                    )}
-                </div>
-            </ScrollArea>
+                                {markers && markers.length > 0 && (
+                                    <div className="mt-4 border-t pt-2">
+                                        <Accordion type="single" collapsible defaultValue="markers">
+                                            <AccordionItem value="markers" className="border-none">
+                                                <AccordionTrigger className="py-2 hover:no-underline text-sm font-semibold text-muted-foreground">
+                                                    Trip Logistics
+                                                </AccordionTrigger>
+                                                <AccordionContent>
+                                                    <div className="space-y-3 pt-2">
+                                                        <Suspense fallback={<div className="p-2 text-center text-xs text-muted-foreground">Loading markers...</div>}>
+                                                            {markers.map(marker => (
+                                                                <CollectionMarkerCard
+                                                                    key={marker.id}
+                                                                    marker={marker}
+                                                                    isHighlighted={highlightedId === marker.id}
+                                                                    setHighlightedId={setHighlightedId}
+                                                                    canEdit={canEdit}
+                                                                    onRemove={() => handleRemoveItem(marker.id)}
+                                                                    onNavigate={() => {
+                                                                        // Just highlight
+                                                                        setHighlightedId(marker.id);
+                                                                    }}
+                                                                />
+                                                            ))}
+                                                        </Suspense>
+                                                    </div>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        </Accordion>
+                                    </div>
+                                )}
+
+                                {(!items || items.filter(i => !i.is_hidden).length === 0) && (!markers || markers.length === 0) && (
+                                    <div className="text-center py-8 text-muted-foreground text-sm">
+                                        No places in this collection yet.
+                                    </div>
+                                )}
+                            </div>
+                        </ScrollArea>
+                    </TabsContent>
+
+                    <TabsContent value="itinerary" className="flex-1 overflow-hidden m-0">
+                         <ScrollArea className="h-full">
+                            <div className="p-4 pb-24">
+                                <ItineraryList
+                                    highlightedId={highlightedId}
+                                    setHighlightedId={setHighlightedId}
+                                />
+                                {!collection.itinerary && (
+                                    <div className="text-center py-8 text-muted-foreground">
+                                        <p>No itinerary generated yet.</p>
+                                        {canEdit && (
+                                            <Button
+                                                variant="outline"
+                                                className="mt-4"
+                                                onClick={() => setShowPlanRoute(true)}
+                                            >
+                                                Generate Itinerary
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                         </ScrollArea>
+                    </TabsContent>
+                </Tabs>
+            </div>
         </div>
 
         {/* Map */}
@@ -965,8 +1010,44 @@ export default function CollectionMap() {
                     onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
                     onRemoveMarker={canEdit ? handleRemoveItem : undefined}
                     showSavedCandidates={showSavedCandidates}
+                    showItinerary={activeTab === 'itinerary'}
                 />
             </Suspense>
+
+            {/* Mobile Itinerary Drawer */}
+            <div className="lg:hidden">
+                 {activeTab !== 'itinerary' && viewMode === 'map' && (
+                    <div className="absolute top-4 right-4 z-[50]">
+                        <Button
+                            variant="secondary"
+                            className="shadow-md rounded-full"
+                            onClick={() => setActiveTab('itinerary')}
+                        >
+                            <ListFilter className="w-4 h-4 mr-2" />
+                            Itinerary
+                        </Button>
+                    </div>
+                 )}
+                 <Drawer
+                    open={activeTab === 'itinerary' && viewMode === 'map'}
+                    onOpenChange={(open) => {
+                        if (!open) setActiveTab('items');
+                    }}
+                 >
+                    <DrawerContent className="h-[80vh]">
+                        <DrawerHeader>
+                            <DrawerTitle>Itinerary</DrawerTitle>
+                            <DrawerDescription>Drag and drop to reorder.</DrawerDescription>
+                        </DrawerHeader>
+                        <div className="p-4 overflow-y-auto flex-1">
+                             <ItineraryList
+                                highlightedId={highlightedId}
+                                setHighlightedId={setHighlightedId}
+                            />
+                        </div>
+                    </DrawerContent>
+                 </Drawer>
+            </div>
         </div>
       </div>
 
