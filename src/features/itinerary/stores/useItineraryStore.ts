@@ -201,6 +201,28 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
           return;
       }
 
+      // Optimistically set fallback straight-line geometry while loading
+      set((state) => {
+          const newDays = [...state.days];
+          if (newDays[dayIndex]) {
+              const fallbackGeometry = {
+                  type: "Feature",
+                  geometry: {
+                      type: "LineString",
+                      coordinates: newDays[dayIndex].buildings.map(b => [b.location_lng, b.location_lat])
+                  },
+                  properties: {}
+              };
+
+              newDays[dayIndex] = {
+                  ...newDays[dayIndex],
+                  routeGeometry: fallbackGeometry,
+                  isFallback: true
+              };
+          }
+          return { days: newDays };
+      });
+
       const coordinates = day.buildings.map(b => ({
           lat: b.location_lat,
           lng: b.location_lng
@@ -223,7 +245,8 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
                   newDays[dayIndex] = {
                       ...newDays[dayIndex],
                       routeGeometry: data.geometry,
-                      distance: data.distance
+                      distance: data.distance,
+                      isFallback: false
                   };
               }
               return { days: newDays };
