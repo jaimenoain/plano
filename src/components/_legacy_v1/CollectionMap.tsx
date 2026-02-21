@@ -15,7 +15,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
 import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from "@/components/ui/drawer";
 import { ItineraryList } from "@/components/collections/ItineraryList";
 import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
 
@@ -1006,7 +1005,7 @@ export default function CollectionMap() {
                 />
             </Suspense>
 
-            {/* Mobile Itinerary Drawer */}
+            {/* Mobile Itinerary Toggle */}
             {collection.itinerary && (
             <div className="lg:hidden">
                  {activeTab !== 'itinerary' && viewMode === 'map' && (
@@ -1021,25 +1020,6 @@ export default function CollectionMap() {
                         </Button>
                     </div>
                  )}
-                 <Drawer
-                    open={activeTab === 'itinerary' && viewMode === 'map'}
-                    onOpenChange={(open) => {
-                        if (!open) setActiveTab('items');
-                    }}
-                 >
-                    <DrawerContent className="h-[80vh]">
-                        <DrawerHeader>
-                            <DrawerTitle>Itinerary</DrawerTitle>
-                            <DrawerDescription>Drag and drop to reorder.</DrawerDescription>
-                        </DrawerHeader>
-                        <div className="p-4 overflow-y-auto flex-1">
-                             <ItineraryList
-                                highlightedId={highlightedId}
-                                setHighlightedId={setHighlightedId}
-                            />
-                        </div>
-                    </DrawerContent>
-                 </Drawer>
             </div>
             )}
         </div>
