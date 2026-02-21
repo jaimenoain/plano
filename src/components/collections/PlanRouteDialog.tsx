@@ -21,6 +21,7 @@ interface PlanRouteDialogProps {
   onOpenChange: (open: boolean) => void;
   collectionId: string;
   onPlanGenerated?: () => void;
+  hasItinerary?: boolean;
 }
 
 export function PlanRouteDialog({
@@ -28,11 +29,45 @@ export function PlanRouteDialog({
   onOpenChange,
   collectionId,
   onPlanGenerated,
+  hasItinerary,
 }: PlanRouteDialogProps) {
   const { toast } = useToast();
   const [days, setDays] = useState<number>(3);
   const [transportMode, setTransportMode] = useState<string>("walking");
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!collectionId) return;
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from("collections")
+        .update({ itinerary: null })
+        .eq("id", collectionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Itinerary Removed",
+        description: "The itinerary has been successfully removed.",
+      });
+
+      onOpenChange(false);
+      if (onPlanGenerated) {
+        onPlanGenerated();
+      }
+    } catch (error) {
+      console.error("Error removing itinerary:", error);
+      toast({
+        title: "Error",
+        description: (error as Error).message || "Failed to remove itinerary.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,11 +100,11 @@ export function PlanRouteDialog({
       if (onPlanGenerated) {
         onPlanGenerated();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error generating itinerary:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to generate itinerary. Please try again.",
+        description: (error as Error).message || "Failed to generate itinerary. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -117,25 +152,38 @@ export function PlanRouteDialog({
             />
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                "Generate Itinerary"
-              )}
-            </Button>
+          <DialogFooter className="flex-col sm:justify-between sm:space-x-0">
+            {hasItinerary && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isLoading}
+                className="mb-2 sm:mb-0"
+              >
+                Remove Itinerary
+              </Button>
+            )}
+            <div className="flex gap-2 justify-end w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  "Generate Itinerary"
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
