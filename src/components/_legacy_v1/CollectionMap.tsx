@@ -7,7 +7,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
-import { Loader2, Settings, Plus, ExternalLink, Bookmark, Star, ListFilter } from "lucide-react";
+import { Loader2, Settings, Plus, ExternalLink, Bookmark, Star, ListFilter, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,6 +30,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const CollectionSettingsDialog = lazy(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazy(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
+const PlanRouteDialog = lazy(() => import("@/components/collections/PlanRouteDialog").then(module => ({ default: module.PlanRouteDialog })));
 const CollectionMapGL = lazy(() => import("@/features/maps/components/CollectionMapGL").then(module => ({ default: module.CollectionMapGL })));
 const CollectionBuildingCard = lazy(() => import("@/components/collections/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
 const CollectionMarkerCard = lazy(() => import("@/components/collections/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
@@ -95,6 +96,7 @@ export default function CollectionMap() {
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showAddBuildings, setShowAddBuildings] = useState(false);
+  const [showPlanRoute, setShowPlanRoute] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
 
   // New States
@@ -829,6 +831,24 @@ export default function CollectionMap() {
                 </div>
                 {canEdit && (
                     <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => setShowPlanRoute(true)}
+                            className="hidden sm:flex"
+                        >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Planificar Ruta
+                        </Button>
+                        <Button
+                            variant="default"
+                            size="icon"
+                            onClick={() => setShowPlanRoute(true)}
+                            className="sm:hidden"
+                        >
+                            <Sparkles className="w-4 h-4" />
+                        </Button>
+
                         <Button variant="ghost" size="icon" onClick={() => setShowAddBuildings(true)}>
                             <Plus className="h-5 w-5 text-muted-foreground" />
                         </Button>
@@ -949,6 +969,18 @@ export default function CollectionMap() {
             </Suspense>
         </div>
       </div>
+
+      <Suspense fallback={null}>
+          <PlanRouteDialog
+            open={showPlanRoute}
+            onOpenChange={setShowPlanRoute}
+            collectionId={collection.id}
+            onPlanGenerated={() => {
+                refetchItems();
+                queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
+            }}
+          />
+      </Suspense>
 
       <Suspense fallback={null}>
           <CollectionSettingsDialog
