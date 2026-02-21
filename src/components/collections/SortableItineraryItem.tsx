@@ -49,11 +49,13 @@ export function SortableItineraryItem({
       location_lng: building.location_lng,
       city: building.city || null,
       country: building.country || null,
-      year_completed: null,
+      year_completed: building.year_completed || null,
       hero_image_url: building.hero_image_url || null,
-      community_preview_url: null,
+      community_preview_url: building.community_preview_url || null,
       location_precision: building.location_precision || "approximate",
-      building_architects: []
+      building_architects: building.building_architects || [],
+      slug: building.slug || null,
+      short_id: building.short_id || null
     }
   };
 

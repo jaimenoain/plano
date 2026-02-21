@@ -13,6 +13,11 @@ export interface ItineraryBuilding {
   city?: string | null;
   country?: string | null;
   location_precision?: "exact" | "approximate";
+  building_architects?: { architects: { id: string; name: string } | null }[];
+  year_completed?: number | null;
+  slug?: string | null;
+  short_id?: number | null;
+  community_preview_url?: string | null;
 }
 
 export interface DaySchedule {
@@ -70,7 +75,12 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
           hero_image_url: item.building.hero_image_url,
           city: item.building.city,
           country: item.building.country,
-          location_precision: item.building.location_precision
+          location_precision: item.building.location_precision,
+          building_architects: item.building.building_architects,
+          year_completed: item.building.year_completed,
+          slug: item.building.slug,
+          short_id: item.building.short_id,
+          community_preview_url: item.building.community_preview_url
         });
       }
     });

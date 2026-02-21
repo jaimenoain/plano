@@ -247,11 +247,13 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
           location_lng: activeBuilding.location_lng,
           city: activeBuilding.city || null,
           country: activeBuilding.country || null,
-          year_completed: null,
+          year_completed: activeBuilding.year_completed || null,
           hero_image_url: activeBuilding.hero_image_url || null,
-          community_preview_url: null,
+          community_preview_url: activeBuilding.community_preview_url || null,
           location_precision: activeBuilding.location_precision || "approximate",
-          building_architects: []
+          building_architects: activeBuilding.building_architects || [],
+          slug: activeBuilding.slug || null,
+          short_id: activeBuilding.short_id || null
         }
     } : null;
 
