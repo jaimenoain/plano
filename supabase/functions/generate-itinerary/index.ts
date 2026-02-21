@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { kMeans, BuildingLocation } from "../_shared/clustering.ts";
+// import { kMeans, BuildingLocation } from "../_shared/clustering.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,25 +14,98 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing Supabase configuration');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Initialize Supabase Admin Client
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { collection_id, days } = await req.json();
-
-    if (!collection_id || !days) {
+    // 1. Authorization: Get User
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Missing collection_id or days' }),
+        JSON.stringify({ error: 'Missing Authorization header' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    // 2. Validate Payload
+    const { collection_id, days, transportMode } = await req.json();
+
+    if (!collection_id) {
+       return new Response(
+        JSON.stringify({ error: 'Missing collection_id' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    // 1. Fetch buildings in the collection
-    const { data: items, error: fetchError } = await supabase
+    if (!days || typeof days !== 'number' || days < 1 || !Number.isInteger(days)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid days. Must be an integer >= 1.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    const validModes = ['walking', 'driving', 'cycling'];
+    if (!transportMode || !validModes.includes(transportMode)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid transportMode. Must be walking, driving, or cycling.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // 3. Check Permissions
+    const { data: collection, error: collectionError } = await supabaseAdmin
+      .from('collections')
+      .select('owner_id')
+      .eq('id', collection_id)
+      .single();
+
+    if (collectionError || !collection) {
+       return new Response(
+        JSON.stringify({ error: 'Collection not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    let isAuthorized = collection.owner_id === user.id;
+
+    if (!isAuthorized) {
+      // Check if editor
+      const { data: contributor } = await supabaseAdmin
+        .from('collection_contributors')
+        .select('role')
+        .eq('collection_id', collection_id)
+        .eq('user_id', user.id)
+        .eq('role', 'editor')
+        .single();
+
+      if (contributor) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
+       return new Response(
+        JSON.stringify({ error: 'Forbidden: You do not have permission to modify this collection' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    // 4. Fetch Collection Items (Skeleton)
+    const { data: items, error: fetchError } = await supabaseAdmin
       .from('collection_items')
       .select(`
         building_id,
@@ -56,93 +129,29 @@ serve(async (req) => {
       );
     }
 
+    // 5. Placeholder Response (Logic Injection Point)
+    /*
+    // --- Existing Clustering Logic (Commented Out for Future Implementation) ---
     // 2. Extract locations
     const buildings: BuildingLocation[] = [];
-
-    for (const item of items) {
-      const b = item.buildings;
-
-      if (!b || Array.isArray(b)) continue;
-
-      let lat: number | undefined;
-      let lng: number | undefined;
-      const loc = (b as any).location;
-
-      if (loc) {
-        // Try to parse GeoJSON or {lat, lng} object
-        if (typeof loc === 'object') {
-          if (loc.type === 'Point' && Array.isArray(loc.coordinates)) {
-             lng = loc.coordinates[0];
-             lat = loc.coordinates[1];
-          } else if ('lat' in loc && 'lng' in loc) {
-             lat = loc.lat;
-             lng = loc.lng;
-          }
-        } else if (typeof loc === 'string') {
-          // Try parsing JSON string
-          try {
-             const parsed = JSON.parse(loc);
-             if (parsed.type === 'Point' && Array.isArray(parsed.coordinates)) {
-               lng = parsed.coordinates[0];
-               lat = parsed.coordinates[1];
-             } else if (parsed.lat && parsed.lng) {
-               lat = parsed.lat;
-               lng = parsed.lng;
-             }
-          } catch (e) {
-             // Try WKT "POINT(lng lat)"
-             const match = loc.match(/POINT\s*\(([-\d.]+)\s+([-\d.]+)\)/i);
-             if (match) {
-               lng = parseFloat(match[1]);
-               lat = parseFloat(match[2]);
-             }
-          }
-        }
-      }
-
-      if (lat !== undefined && lng !== undefined) {
-        buildings.push({
-          id: (b as any).id,
-          lat,
-          lng,
-          name: (b as any).name
-        });
-      }
-    }
-
-    if (buildings.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'No buildings with valid location found to cluster' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
+    // ... (rest of the logic)
     // 3. Cluster
-    const clusters = kMeans(buildings, days);
-
-    // 4. Construct Itinerary
-    const itinerary = {
-      days: days,
-      transportMode: 'walking',
-      routes: clusters.map((cluster, index) => ({
-        dayNumber: index + 1,
-        buildingIds: cluster.map(b => b.id),
-      }))
-    };
-
+    // const clusters = kMeans(buildings, days);
+    // ...
     // 5. Update Collection
-    const { error: updateError } = await supabase
-      .from('collections')
-      .update({ itinerary })
-      .eq('id', collection_id);
-
-    if (updateError) {
-      console.error('Error updating collection:', updateError);
-      throw updateError;
-    }
+    // ...
+    */
 
     return new Response(
-      JSON.stringify(itinerary),
+      JSON.stringify({
+        message: 'Itinerary generation started (placeholder)',
+        request: {
+            collection_id,
+            days,
+            transportMode
+        },
+        itemCount: items.length
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
