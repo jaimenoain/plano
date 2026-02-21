@@ -284,14 +284,11 @@ export function FeedHeroCard({
       return (
         <div className="flex flex-col gap-0.5">
           {images.map((img) => (
-            <div key={img.id} className="relative w-full aspect-[4/3]">
-              <img
-                src={img.url}
-                onError={() => handleImageError(img.id)}
-                className="w-full h-full object-cover"
-                alt="Building"
-              />
-            </div>
+            <FeedHeroSingleImage
+              key={img.id}
+              image={img}
+              onError={handleImageError}
+            />
           ))}
         </div>
       );
