@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// import { kMeans, BuildingLocation } from "../_shared/clustering.ts";
+import { kMeans, BuildingLocation } from "../_shared/clustering.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +15,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const mapboxAccessToken = Deno.env.get('MAPBOX_ACCESS_TOKEN');
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing Supabase configuration');
@@ -104,7 +105,7 @@ serve(async (req) => {
       );
     }
 
-    // 4. Fetch Collection Items (Skeleton)
+    // 4. Fetch Collection Items
     const { data: items, error: fetchError } = await supabaseAdmin
       .from('collection_items')
       .select(`
@@ -129,28 +130,140 @@ serve(async (req) => {
       );
     }
 
-    // 5. Placeholder Response (Logic Injection Point)
-    /*
-    // --- Existing Clustering Logic (Commented Out for Future Implementation) ---
-    // 2. Extract locations
-    const buildings: BuildingLocation[] = [];
-    // ... (rest of the logic)
-    // 3. Cluster
-    // const clusters = kMeans(buildings, days);
-    // ...
-    // 5. Update Collection
-    // ...
-    */
+    // 5. Extract Locations
+    const buildings: BuildingLocation[] = items
+      .map((item: any) => {
+        const b = item.buildings;
+        let lat, lng;
+
+        if (b.location && typeof b.location === 'object') {
+          // Handle both simple {lat, lng} object and GeoJSON Point
+          if ('lat' in b.location && 'lng' in b.location) {
+            lat = b.location.lat;
+            lng = b.location.lng;
+          } else if ('coordinates' in b.location && Array.isArray(b.location.coordinates)) {
+             // GeoJSON is [lng, lat]
+            lng = b.location.coordinates[0];
+            lat = b.location.coordinates[1];
+          }
+        }
+
+        if (lat !== undefined && lng !== undefined) {
+          return { id: b.id, lat, lng, name: b.name };
+        }
+        return null;
+      })
+      .filter((b: any): b is BuildingLocation => b !== null);
+
+    if (buildings.length === 0) {
+        return new Response(
+            JSON.stringify({ error: 'No buildings with valid locations found.' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+    }
+
+    // 6. Cluster Buildings
+    // Use kMeans to group buildings into 'days' clusters
+    // Note: If buildings.length < days, kMeans handles it gracefully (returns fewer clusters)
+    const clusters = kMeans(buildings, days);
+
+    // 7. Generate Routes per Day (Cluster)
+    const routes = await Promise.all(clusters.map(async (cluster, index) => {
+        const dayNumber = index + 1;
+        const buildingIds = cluster.map(b => b.id);
+
+        if (cluster.length < 2) {
+            // Only one building, no route needed really, but we can return a point or null route
+            return {
+                dayNumber,
+                buildingIds,
+                routeGeometry: null,
+                isFallback: false
+            };
+        }
+
+        // Try to get route from external API
+        try {
+            if (!mapboxAccessToken) {
+                throw new Error('Mapbox token missing');
+            }
+
+            // Map transportMode to Mapbox profile
+            const mapboxProfile = transportMode === 'cycling' ? 'cycling' :
+                                  transportMode === 'walking' ? 'walking' : 'driving';
+
+            // Construct coordinates string: "lng,lat;lng,lat"
+            // Ensure we visit in a reasonable order?
+            // For now, let's trust the cluster order or maybe implement a simple TSP heuristic if needed later.
+            // But simple nearest neighbor sort inside cluster helps avoid zigzag
+            const sortedCluster = sortClusterByNearestNeighbor(cluster);
+
+            const coordinates = sortedCluster
+                .map(b => `${b.lng},${b.lat}`)
+                .join(';');
+
+            const url = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?geometries=geojson&access_token=${mapboxAccessToken}`;
+
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Mapbox API error: ${response.status} ${errText}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.routes || data.routes.length === 0) {
+                throw new Error('No route found');
+            }
+
+            return {
+                dayNumber,
+                buildingIds: sortedCluster.map(b => b.id), // Return IDs in visited order
+                routeGeometry: data.routes[0].geometry,
+                isFallback: false
+            };
+
+        } catch (error) {
+            console.warn(`Routing failed for day ${dayNumber}:`, error);
+
+            // Fallback Logic: Create a simple LineString
+            const sortedCluster = sortClusterByNearestNeighbor(cluster);
+
+            const fallbackGeometry = {
+                type: "LineString",
+                coordinates: sortedCluster.map(b => [b.lng, b.lat])
+            };
+
+            return {
+                dayNumber,
+                buildingIds: sortedCluster.map(b => b.id),
+                routeGeometry: fallbackGeometry,
+                isFallback: true
+            };
+        }
+    }));
+
+    // 8. Update Collection with Itinerary
+    const itinerary = {
+        days,
+        transportMode,
+        routes
+    };
+
+    const { error: updateError } = await supabaseAdmin
+        .from('collections')
+        .update({ itinerary })
+        .eq('id', collection_id);
+
+    if (updateError) {
+        throw updateError;
+    }
 
     return new Response(
       JSON.stringify({
-        message: 'Itinerary generation started (placeholder)',
-        request: {
-            collection_id,
-            days,
-            transportMode
-        },
-        itemCount: items.length
+        message: 'Itinerary generated successfully',
+        itinerary
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
@@ -163,3 +276,33 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper: Simple nearest neighbor sort to make the path less chaotic
+function sortClusterByNearestNeighbor(buildings: BuildingLocation[]): BuildingLocation[] {
+    if (buildings.length <= 2) return buildings;
+
+    const sorted: BuildingLocation[] = [buildings[0]];
+    const remaining = new Set(buildings.slice(1));
+
+    while (remaining.size > 0) {
+        const current = sorted[sorted.length - 1];
+        let nearest: BuildingLocation | null = null;
+        let minDist = Infinity;
+
+        for (const candidate of remaining) {
+            const d = Math.sqrt(Math.pow(candidate.lat - current.lat, 2) + Math.pow(candidate.lng - current.lng, 2));
+            if (d < minDist) {
+                minDist = d;
+                nearest = candidate;
+            }
+        }
+
+        if (nearest) {
+            sorted.push(nearest);
+            remaining.delete(nearest);
+        } else {
+            break; // Should not happen
+        }
+    }
+    return sorted;
+}
