@@ -875,7 +875,7 @@ export default function CollectionMap() {
             <div className="flex-1 overflow-hidden flex flex-col">
                 <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="w-full flex-1 flex flex-col min-h-0">
                     {collection.itinerary && (
-                        <div className="px-4 pt-2">
+                        <div className="px-4 pt-2 shrink-0">
                             <TabsList className="w-full grid grid-cols-2">
                                 <TabsTrigger value="items">All Items</TabsTrigger>
                                 <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
@@ -883,9 +883,9 @@ export default function CollectionMap() {
                         </div>
                     )}
 
-                    <TabsContent value="items" className="flex-1 overflow-hidden m-0 min-h-0 flex flex-col">
-                        <ScrollArea className="flex-1">
-                            <div className="p-4 space-y-3 pb-24">
+                    <TabsContent value="items" className="flex-1 h-full overflow-hidden m-0 p-0 min-h-0 flex flex-col">
+                        <ScrollArea className="flex-1 h-full">
+                            <div className="p-4 space-y-3 pb-24 lg:pb-4">
                                 {items && items.filter(i => !i.is_hidden).length > 0 && (
                                     <Suspense fallback={
                                         <div className="flex items-center justify-center p-8">
@@ -954,9 +954,9 @@ export default function CollectionMap() {
                         </ScrollArea>
                     </TabsContent>
 
-                    <TabsContent value="itinerary" className="flex-1 overflow-hidden m-0 min-h-0 flex flex-col">
-                         <ScrollArea className="flex-1">
-                            <div className="p-4 pb-24">
+                    <TabsContent value="itinerary" className="flex-1 h-full overflow-hidden m-0 p-0 min-h-0 flex flex-col">
+                         <ScrollArea className="flex-1 h-full">
+                            <div className="p-4 pb-24 lg:pb-4">
                                 <ItineraryList
                                     highlightedId={highlightedId}
                                     setHighlightedId={setHighlightedId}
