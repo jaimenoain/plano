@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Loader2 } from "lucide-react";
+import { ItineraryGenerationOverlay } from "./ItineraryGenerationOverlay";
 
 interface PlanRouteDialogProps {
   open: boolean;
@@ -78,6 +79,7 @@ export function PlanRouteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <ItineraryGenerationOverlay open={isLoading} />
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>✨ Plan Route</DialogTitle>
