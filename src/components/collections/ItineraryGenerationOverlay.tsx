@@ -3,9 +3,9 @@ import { Dialog, DialogContent, DialogOverlay, DialogPortal, DialogTitle } from 
 import { motion, AnimatePresence } from "framer-motion";
 
 const loadingMessages = [
-  "Analizando zonas geográficas...",
-  "Trazando la ruta perfecta...",
-  "Optimizando tiempos...",
+  "Analyzing geographical zones...",
+  "Charting the perfect route...",
+  "Optimizing travel times...",
 ];
 
 export function ItineraryGenerationOverlay({ open }: { open: boolean }) {
@@ -32,7 +32,7 @@ export function ItineraryGenerationOverlay({ open }: { open: boolean }) {
           // Prevent focusing trap issues if multiple dialogs are open, though Radix handles this usually.
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <DialogTitle className="sr-only">Generando Itinerario</DialogTitle>
+          <DialogTitle className="sr-only">Generating Itinerary</DialogTitle>
           <div className="relative w-64 h-64 flex items-center justify-center">
             <motion.svg
               viewBox="0 0 100 100"
