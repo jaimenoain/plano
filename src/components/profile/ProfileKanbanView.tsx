@@ -12,9 +12,10 @@ interface ProfileKanbanViewProps {
   };
   showCommunityImages?: boolean;
   updatingItemId?: string | null;
+  isDragEnabled?: boolean;
 }
 
-export function ProfileKanbanView({ kanbanData, showCommunityImages, updatingItemId }: ProfileKanbanViewProps) {
+export function ProfileKanbanView({ kanbanData, showCommunityImages, updatingItemId, isDragEnabled = true }: ProfileKanbanViewProps) {
   const columns = [
     {
       id: "saved",
@@ -60,6 +61,7 @@ export function ProfileKanbanView({ kanbanData, showCommunityImages, updatingIte
                     review={item}
                     showCommunityImages={showCommunityImages}
                     isUpdating={item.id === updatingItemId}
+                    isDragEnabled={isDragEnabled}
                  />
                ))}
             </div>

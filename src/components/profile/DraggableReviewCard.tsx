@@ -12,9 +12,10 @@ interface DraggableReviewCardProps {
   className?: string;
   showCommunityImages?: boolean;
   isUpdating?: boolean;
+  isDragEnabled?: boolean;
 }
 
-export function DraggableReviewCard({ review, className, showCommunityImages, isUpdating }: DraggableReviewCardProps) {
+export function DraggableReviewCard({ review, className, showCommunityImages, isUpdating, isDragEnabled = true }: DraggableReviewCardProps) {
   const {
     attributes,
     listeners,
@@ -22,7 +23,10 @@ export function DraggableReviewCard({ review, className, showCommunityImages, is
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: review.id });
+  } = useSortable({
+    id: review.id,
+    disabled: !isDragEnabled
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -39,7 +43,7 @@ export function DraggableReviewCard({ review, className, showCommunityImages, is
       {...listeners}
       className={cn(
         "relative outline-none",
-        isDragging ? "opacity-0" : "cursor-grab",
+        isDragging ? "opacity-0" : (isDragEnabled ? "cursor-grab" : ""),
         className
       )}
     >
