@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
 import { ArchitectSearchResult } from '@/features/search/hooks/useArchitectSearch';
 import { getBoundsFromBuildings } from '@/utils/map';
+import { cn } from '@/lib/utils';
 
 interface Building {
   id: string;
@@ -33,11 +34,12 @@ interface BuildingSidebarProps {
   onLocationClick?: (placeId: string) => void;
   suggestions?: Suggestion[];
   architects?: ArchitectSearchResult[];
+  className?: string;
 }
 
 const PAGE_SIZE = 20;
 
-export function BuildingSidebar({ topLocation, onLocationClick, suggestions, architects }: BuildingSidebarProps = {}) {
+export function BuildingSidebar({ topLocation, onLocationClick, suggestions, architects, className }: BuildingSidebarProps = {}) {
   const { state: { bounds, filters }, methods: { setHighlightedId, fitMapBounds } } = useMapContext();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -168,7 +170,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
 
   return (
     <ScrollArea className="h-full w-full">
-      <div className="space-y-4 p-4">
+      <div className={cn("space-y-4 p-4", className)}>
         {/* Architect Results */}
         {architects && architects.length > 0 && (
           <div className="space-y-2">
