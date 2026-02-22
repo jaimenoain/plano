@@ -36,7 +36,7 @@ function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
       <div className="relative w-full aspect-[4/5] bg-secondary animate-pulse">
         <img
           src={image.url}
-          className="opacity-0 absolute inset-0 w-full h-full"
+          className="opacity-0 absolute inset-0 w-full h-full max-w-full"
           onLoad={handleLoad}
           onError={() => onError(image.id)}
           alt="Building"
@@ -61,7 +61,7 @@ function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
         src={image.url}
         onError={() => onError(image.id)}
         className={cn(
-          "w-full h-full transition-opacity duration-300",
+          "w-full h-full transition-opacity duration-300 max-w-full",
           isTall ? "object-contain" : "object-cover"
         )}
         alt="Building"
@@ -302,7 +302,7 @@ export function FeedHeroCard({
             <img
               src={images[0].url}
               onError={() => handleImageError(images[0].id)}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover max-w-full"
               alt="Building"
             />
           </div>
@@ -320,7 +320,7 @@ export function FeedHeroCard({
                 <img
                   src={img.url}
                   onError={() => handleImageError(img.id)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover max-w-full"
                   alt="Building"
                 />
               </div>
@@ -339,7 +339,7 @@ export function FeedHeroCard({
             <img
               src={images[0].url}
               onError={() => handleImageError(images[0].id)}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover max-w-full"
               alt="Building"
             />
           </div>
@@ -350,7 +350,7 @@ export function FeedHeroCard({
                 <img
                   src={img.url}
                   onError={() => handleImageError(img.id)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover max-w-full"
                   alt="Building"
                 />
               </div>
@@ -409,7 +409,7 @@ export function FeedHeroCard({
           <AvatarImage src={avatarUrl} />
           <AvatarFallback>{userInitial}</AvatarFallback>
         </Avatar>
-        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+        <div className="flex flex-col gap-0.5 flex-1 min-w-0 max-w-full overflow-hidden">
           {/* Line 1: User Action Building */}
           <div className="text-sm md:text-base text-foreground leading-snug break-words w-full">
             <span className="font-bold text-foreground">{username}</span>
@@ -441,7 +441,7 @@ export function FeedHeroCard({
 
       {/* Content Body (Review Text) */}
       {entry.content && (
-        <div className="px-4 pt-3 pb-2 flex flex-col gap-2">
+        <div className="px-4 pt-3 pb-2 flex flex-col gap-2 max-w-full overflow-hidden">
            <p className="text-sm text-foreground leading-relaxed break-words w-full">
              {entry.content}
            </p>
