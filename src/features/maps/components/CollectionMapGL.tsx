@@ -192,6 +192,7 @@ function CollectionMapGLContent({
             name: b.name,
             slug: b.slug || undefined,
             image_url: b.main_image_url || undefined,
+            image_attribution: b.image_attribution || undefined,
 
             // Custom fields
             is_custom_marker: (b as any).isMarker,

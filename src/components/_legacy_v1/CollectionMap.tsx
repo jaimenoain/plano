@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
+import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
 
 const CollectionSettingsDialog = lazyWithRetry(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
@@ -261,6 +262,8 @@ export default function CollectionMap() {
 
   const items = collectionData?.items || [];
   const markers = collectionData?.markers || [];
+
+  const { photos } = useGooglePlacePhotos(markers);
 
   useEffect(() => {
       if (collection && items) {
@@ -551,13 +554,15 @@ export default function CollectionMap() {
             notes: marker.notes,
             address: marker.address,
             // Use a default marker color if needed, or rely on icon in Map
-            color: "#6B7280"
+            color: "#6B7280",
+            main_image_url: photos[marker.id]?.url || null,
+            image_attribution: photos[marker.id]?.attribution || null
         } as DiscoveryBuilding));
         buildingNodes.push(...mappedMarkers);
     }
 
     return buildingNodes;
-  }, [items, markers, collection, statsData, memberIds, shouldFetchStats, userInteractionMap]);
+  }, [items, markers, collection, statsData, memberIds, shouldFetchStats, userInteractionMap, photos]);
 
   const allMapBuildings = useMemo(() => {
     if (showSavedCandidates && savedCandidates) {
