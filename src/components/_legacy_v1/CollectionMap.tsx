@@ -553,6 +553,8 @@ export default function CollectionMap() {
             markerCategory: marker.category,
             notes: marker.notes,
             address: marker.address,
+            google_place_id: marker.google_place_id,
+            website: marker.website,
             // Use a default marker color if needed, or rely on icon in Map
             color: "#6B7280",
             main_image_url: photos[marker.id]?.url || null,

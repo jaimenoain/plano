@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin } from 'lucide-react';
+import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin, Map, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -241,22 +241,59 @@ export function BuildingPopupContent({
                     </p>
                 )}
 
-                {onRemoveFromCollection && (
-                    <div
-                        className="flex justify-end pt-2 border-t"
-                        onTouchStart={(e) => e.stopPropagation()}
+                <div className="flex flex-col gap-2 pt-2 border-t">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-8 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const url = cluster.google_place_id
+                          ? `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${cluster.google_place_id}`
+                          : `https://www.google.com/maps/search/?api=1&query=${cluster.lat},${cluster.lng}`;
+                        window.open(url, '_blank');
+                      }}
                     >
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={handleRemove}
-                        >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Remove
-                        </Button>
-                    </div>
-                )}
+                      <Map className="h-3 w-3 mr-1" />
+                      Google Maps
+                    </Button>
+
+                    {cluster.website && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          let url = cluster.website!;
+                          if (!url.startsWith('http')) url = `https://${url}`;
+                          window.open(url, '_blank');
+                        }}
+                        title="Visit Website"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {onRemoveFromCollection && (
+                      <div
+                          className="flex justify-end"
+                          onTouchStart={(e) => e.stopPropagation()}
+                      >
+                          <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10 w-full"
+                              onClick={handleRemove}
+                          >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remove Marker
+                          </Button>
+                      </div>
+                  )}
+                </div>
             </div>
         </div>
       );
