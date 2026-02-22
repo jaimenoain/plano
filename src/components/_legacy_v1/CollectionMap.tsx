@@ -1035,6 +1035,8 @@ export default function CollectionMap() {
                 queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
                 if (action === 'created') {
                   setActiveTab('itinerary');
+                } else if (action === 'removed') {
+                  setActiveTab('items');
                 }
             }}
           />
