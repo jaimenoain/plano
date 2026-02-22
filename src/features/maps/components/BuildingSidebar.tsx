@@ -10,6 +10,7 @@ import { getBuildingImageUrl } from '@/utils/image';
 import { Button } from '@/components/ui/button';
 import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
 import { ArchitectSearchResult } from '@/features/search/hooks/useArchitectSearch';
+import { getBoundsFromBuildings } from '@/utils/map';
 
 interface Building {
   id: string;
@@ -37,8 +38,11 @@ interface BuildingSidebarProps {
 const PAGE_SIZE = 20;
 
 export function BuildingSidebar({ topLocation, onLocationClick, suggestions, architects }: BuildingSidebarProps = {}) {
-  const { state: { bounds, filters }, methods: { setHighlightedId } } = useMapContext();
+  const { state: { bounds, filters }, methods: { setHighlightedId, fitMapBounds } } = useMapContext();
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Keep track of the last query processed for zooming
+  const lastZoomedQuery = useRef<string | null>(null);
 
   const {
     data,
@@ -46,6 +50,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    isFetching,
     isError,
   } = useInfiniteQuery({
     queryKey: ['buildings-list', bounds, filters],
@@ -120,6 +125,33 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
       if (currentTarget) observer.unobserve(currentTarget);
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Handle auto-zoom on search
+  useEffect(() => {
+    // Only proceed if we have a query, data is fresh (!isFetching), and we have results
+    if (filters.query && !isFetching && data?.pages?.[0]?.length > 0) {
+      // If query changed since last zoom
+      if (filters.query !== lastZoomedQuery.current) {
+        const allBuildings = data.pages.flat();
+
+        // Map to format expected by getBoundsFromBuildings
+        const mappedBuildings = allBuildings.map(b => ({
+            location_lat: b.lat,
+            location_lng: b.lng
+        }));
+
+        const newBounds = getBoundsFromBuildings(mappedBuildings);
+
+        if (newBounds) {
+            fitMapBounds(newBounds);
+            lastZoomedQuery.current = filters.query;
+        }
+      }
+    } else if (!filters.query) {
+      // Reset if query is cleared so we can zoom again if typed again
+      lastZoomedQuery.current = null;
+    }
+  }, [filters.query, isFetching, data, fitMapBounds]);
 
   // Sort buildings: Hidden (ignored) items go to the bottom
   const buildings = useMemo(() => {
