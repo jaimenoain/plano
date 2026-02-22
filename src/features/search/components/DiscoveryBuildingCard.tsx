@@ -48,7 +48,7 @@ export function DiscoveryBuildingCard({
   const actionPositionClass = imagePosition === 'left' ? 'bottom-2 right-2' : 'top-2 right-2';
 
   const Content = (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow group relative">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow group relative min-w-0">
       {action && (
         <div
           className={cn("absolute z-10", actionPositionClass)}
@@ -64,7 +64,7 @@ export function DiscoveryBuildingCard({
         {imagePosition === 'left' && ImageComponent}
 
         {/* Content */}
-        <div className="flex flex-col flex-1 p-3 justify-center">
+        <div className="flex flex-col flex-1 p-3 justify-center min-w-0">
           <div className="flex flex-col pr-6">
             <h3 className="font-semibold text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
               {building.name}
@@ -95,7 +95,7 @@ export function DiscoveryBuildingCard({
           {/* Badges */}
           <div className="flex flex-wrap gap-2 mt-2">
             {(userStatus === 'visited' || userStatus === 'pending') && (
-              <Badge variant="secondary" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 border">
+              <Badge variant="secondary" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 border max-w-full truncate">
                 {userStatus === 'visited' ? "Visited" : "Saved"}
                 {userRating && userRating > 0 && (
                    <div className="flex gap-0.5 ml-1">
@@ -107,12 +107,12 @@ export function DiscoveryBuildingCard({
               </Badge>
             )}
             {(building.status === 'Demolished' || building.status === 'Unbuilt') && (
-              <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-muted-foreground border-muted-foreground/30">
+              <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-muted-foreground border-muted-foreground/30 max-w-full truncate">
                 {building.status}
               </Badge>
             )}
             {isHidden && (
-              <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-muted-foreground border-dashed">
+              <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-muted-foreground border-dashed max-w-full truncate">
                 <EyeOff className="h-3 w-3" />
                 Hidden
               </Badge>
