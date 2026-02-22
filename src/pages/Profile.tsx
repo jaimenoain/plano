@@ -391,6 +391,10 @@ export default function Profile() {
         });
 
         const formattedContent: FeedReview[] = entriesData.map((item: any) => {
+            const reviewLikes = likesCount.get(item.id) || 0;
+            const itemImages = imagesByReviewId.get(item.id) || [];
+            const imageLikes = itemImages.reduce((sum: number, img: any) => sum + (img.likes_count || 0), 0);
+
             return {
             id: item.id,
             content: item.content,
@@ -412,11 +416,11 @@ export default function Profile() {
                 architects: item.building?.architects?.map((a: any) => a.architect).filter(Boolean) || [],
             },
             tags: [],
-            likes_count: likesCount.get(item.id) || 0,
+            likes_count: reviewLikes + imageLikes,
             comments_count: commentsCount.get(item.id) || 0,
             is_liked: userLikes.has(item.id),
             watch_with_users: [],
-            images: imagesByReviewId.get(item.id) || [],
+            images: itemImages,
             };
         });
 
