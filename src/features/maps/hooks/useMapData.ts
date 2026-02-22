@@ -17,6 +17,7 @@ export interface ClusterResponse {
   image_url?: string;
   image_attribution?: string[];
   is_custom_marker?: boolean;
+  marker_category?: string;
   notes?: string | null;
   is_candidate?: boolean;
   address?: string | null;
