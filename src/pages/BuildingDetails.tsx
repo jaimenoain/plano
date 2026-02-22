@@ -1107,7 +1107,7 @@ export default function BuildingDetails() {
                                         onClick={() => setShowCollections(!showCollections)}
                                      >
                                         <Plus className="w-3 h-3" />
-                                        Add to my maps
+                                        Add to collection
                                      </Button>
 
                                      <Button
