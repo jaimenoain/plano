@@ -17,6 +17,7 @@ interface DiscoveryListProps {
   imagePosition?: 'left' | 'right';
   itemTarget?: string;
   searchQuery?: string;
+  footer?: React.ReactNode;
 }
 
 export function DiscoveryList({
@@ -30,6 +31,7 @@ export function DiscoveryList({
   imagePosition,
   itemTarget,
   searchQuery,
+  footer,
 }: DiscoveryListProps) {
   if (isLoading) {
     return (
@@ -93,7 +95,9 @@ export function DiscoveryList({
         />
       ))}
 
-      {searchQuery && (
+      {footer}
+
+      {searchQuery && !footer && (
         <div className="flex flex-col items-center justify-center py-8 gap-3 border-t mt-4">
           <h3 className="text-sm font-medium text-muted-foreground">
             Not what you are looking for?

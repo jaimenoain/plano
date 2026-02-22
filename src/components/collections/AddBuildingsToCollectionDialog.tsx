@@ -467,6 +467,23 @@ export function AddBuildingsToCollectionDialog({
     return buildings.find((b) => b.id === selectedBuildingId);
   }, [selectedBuildingId, buildings]);
 
+  const searchFooter = searchQuery ? (
+    <div className="flex flex-col items-center justify-center py-8 gap-4 border-t mt-4">
+      <p className="text-center text-muted-foreground">
+        Not finding what you are looking for?
+      </p>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate(`/add-building?name=${encodeURIComponent(searchQuery)}`)}
+        className="gap-2"
+      >
+        <PlusCircle className="h-4 w-4" />
+        Create new building
+      </Button>
+    </div>
+  ) : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
@@ -532,6 +549,7 @@ export function AddBuildingsToCollectionDialog({
                   }
                   onBuildingClick={(building) => setSelectedBuildingId(building.id)}
                   imagePosition="left"
+                  footer={searchFooter}
                   renderAction={(building) => {
                     const isAdded = existingBuildingIds.has(building.id);
                     return (
