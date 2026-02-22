@@ -488,7 +488,7 @@ export function ReviewCard({
   );
 
   const Footer = (
-        <div className={`flex items-center gap-4 flex-wrap ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border/50' : 'mt-auto pt-3 border-t border-border/50'}`}>
+        <div className={`flex items-center gap-2 md:gap-4 flex-wrap ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border/50' : 'mt-auto pt-3 border-t border-border/50'}`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -535,7 +535,7 @@ export function ReviewCard({
       <article
         onClick={handleCardClick}
         // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer`}
+        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer min-w-0 w-full`}
       >
         {isCompact ? (
           // COMPACT LAYOUT: Header -> Text -> Media -> Footer
