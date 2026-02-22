@@ -128,24 +128,10 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
   });
 
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const commandRef = useRef<HTMLDivElement>(null);
-
-  // Handle click outside to close suggestions
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (commandRef.current && !commandRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleSelect = async (address: string, placeId: string, mainText: string) => {
     setValue(address, false);
     clearSuggestions();
-    setOpen(false);
 
     try {
       const results = await getGeocode({ placeId });
@@ -178,17 +164,15 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
   };
 
   return (
-    <div className="p-4 relative" ref={commandRef}>
-      <Command shouldFilter={false} className="overflow-visible bg-transparent border rounded-md">
+    <Command shouldFilter={false} className="h-full flex flex-col overflow-hidden bg-transparent">
+      <div className="p-4 border-b shrink-0">
         <div className="relative">
           <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
           <CommandPrimitive.Input
             value={value}
             onValueChange={(val) => {
               setValue(val);
-              setOpen(!!val);
             }}
-            onFocus={() => setOpen(!!value)}
             disabled={!ready}
             placeholder="Search for a place (e.g. 'Central Station')..."
             autoComplete="off"
@@ -197,36 +181,37 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
             )}
           />
         </div>
+      </div>
 
-        {open && (status === "OK" || status === "ZERO_RESULTS") && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
-            <CommandList>
-              <CommandGroup>
-                {status === "OK" &&
-                  data.map(({ place_id, description, structured_formatting }) => (
-                    <CommandItem
-                      key={place_id}
-                      value={description}
-                      onSelect={() => handleSelect(description, place_id, structured_formatting?.main_text || description)}
-                      className="cursor-pointer"
-                    >
-                      <MapPin className="mr-2 h-4 w-4 shrink-0" />
-                      <span>{description}</span>
-                    </CommandItem>
-                  ))}
-              </CommandGroup>
-              {status === "ZERO_RESULTS" && (
-                <CommandEmpty>No results found.</CommandEmpty>
-              )}
-            </CommandList>
+      <div className="flex-1 overflow-y-auto">
+        {(status === "OK" || status === "ZERO_RESULTS") ? (
+          <CommandList className="max-h-full overflow-visible p-2">
+            <CommandGroup heading="Suggestions">
+              {status === "OK" &&
+                data.map(({ place_id, description, structured_formatting }) => (
+                  <CommandItem
+                    key={place_id}
+                    value={description}
+                    onSelect={() => handleSelect(description, place_id, structured_formatting?.main_text || description)}
+                    className="cursor-pointer"
+                  >
+                    <MapPin className="mr-2 h-4 w-4 shrink-0" />
+                    <span>{description}</span>
+                  </CommandItem>
+                ))}
+            </CommandGroup>
+            {status === "ZERO_RESULTS" && (
+              <CommandEmpty>No results found.</CommandEmpty>
+            )}
+          </CommandList>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 text-center">
+            <p>Search for real-world locations like restaurants, hotels, or transit stations to add them to your collection map.</p>
+            <p className="mt-2">Selected locations are saved immediately.</p>
           </div>
         )}
-      </Command>
-      <div className="mt-4 text-sm text-muted-foreground">
-        <p>Search for real-world locations like restaurants, hotels, or transit stations to add them to your collection map.</p>
-        <p className="mt-2">Selected locations are saved immediately.</p>
       </div>
-    </div>
+    </Command>
   );
 }
 
