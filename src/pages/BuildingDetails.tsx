@@ -1024,6 +1024,15 @@ export default function BuildingDetails() {
                         <div className="flex flex-col gap-4">
                             {/* Toggle Status */}
                             <div className="flex items-center gap-2 w-full py-4 border-y border-dashed border-border/60">
+                                {userStatus && (
+                                    <Button
+                                        variant="link"
+                                        className="text-muted-foreground hover:text-destructive h-auto p-0 text-xs shrink-0"
+                                        onClick={() => setShowDeleteAlert(true)}
+                                    >
+                                        Remove from my list
+                                    </Button>
+                                )}
                                 <Button
                                     variant={userStatus === 'pending' ? "default" : "secondary"}
                                     size="sm"
@@ -1220,17 +1229,6 @@ export default function BuildingDetails() {
                             </div>
                         )}
 
-                        {userStatus && (
-                            <div className="flex justify-center mt-4 border-t border-dashed pt-4">
-                                <Button
-                                    variant="link"
-                                    className="text-muted-foreground hover:text-destructive h-auto p-0 text-xs"
-                                    onClick={() => setShowDeleteAlert(true)}
-                                >
-                                    Remove from my list
-                                </Button>
-                            </div>
-                        )}
                     </>
                 )}
 
