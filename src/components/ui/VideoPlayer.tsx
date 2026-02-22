@@ -8,6 +8,7 @@ interface VideoPlayerProps {
   className?: string;
   autoPlayOnVisible?: boolean;
   muted?: boolean;
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
 }
 
 export function VideoPlayer({
@@ -16,6 +17,7 @@ export function VideoPlayer({
   className,
   autoPlayOnVisible = false,
   muted = true,
+  objectFit = 'contain',
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -104,7 +106,7 @@ export function VideoPlayer({
         ref={videoRef}
         src={src}
         poster={poster}
-        className="w-full h-full object-contain"
+        className={cn("w-full h-full max-w-full", `object-${objectFit}`)}
         playsInline
         loop
         muted={isMuted}
