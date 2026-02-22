@@ -42,7 +42,7 @@ export function FeedCompactCard({
   return (
     <div
       onClick={handleCardClick}
-      className="flex items-start gap-3 py-2 px-2 w-full max-w-full overflow-hidden group cursor-pointer hover:bg-muted/50 rounded-lg transition-colors"
+      className="flex items-start gap-3 py-2 px-2 w-full max-w-full overflow-hidden min-w-0 group cursor-pointer hover:bg-muted/50 rounded-lg transition-colors"
     >
       <Avatar className="h-6 w-6 border border-border/50 shrink-0 mt-0.5">
         <AvatarImage src={avatarUrl} />

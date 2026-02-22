@@ -208,7 +208,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   return (
     <motion.div
       ref={containerRef as any}
-      className="relative w-full h-full overflow-hidden bg-black snap-start touch-pan-y"
+      className="relative w-full h-full overflow-hidden min-w-0 bg-black snap-start touch-pan-y"
       style={{ x, rotate, opacity }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}

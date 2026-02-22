@@ -401,7 +401,7 @@ export function FeedHeroCard({
   return (
     <article
       onClick={handleCardClick}
-      className="group relative flex flex-col w-full max-w-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer mb-6"
+      className="group relative flex flex-col w-full max-w-full min-w-0 bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer mb-6"
     >
       {/* Header */}
       <div className="p-4 flex items-start gap-3 border-b border-border/40">
