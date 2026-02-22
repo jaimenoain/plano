@@ -29,7 +29,7 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
   }
 
   return (
-    <div className={cn("py-6 space-y-4", className)}>
+    <div className={cn("py-6 space-y-4 w-full max-w-full min-w-0", className)}>
       <div className="flex items-center justify-between px-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight">Trending Architecture</h2>
