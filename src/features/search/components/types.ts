@@ -21,6 +21,7 @@ export interface DiscoveryBuildingMapPin {
   // Optional for map pins
   name?: string;
   main_image_url?: string | null;
+  image_attribution?: string[] | null;
   location_precision?: 'exact' | 'approximate';
   isDimmed?: boolean;
   isMarker?: boolean;
