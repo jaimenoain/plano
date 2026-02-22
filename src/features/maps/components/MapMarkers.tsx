@@ -5,6 +5,7 @@ import { BuildingPopupContent } from './BuildingPopupContent';
 import { getPinStyle } from '../utils/pinStyling';
 import { MapPin } from './MapPin';
 import { DAY_COLORS } from '@/features/maps/constants';
+import { Bed, Utensils, Bus, Camera, MapPin as MapPinIcon } from 'lucide-react';
 import '../../../App.css';
 
 interface MapMarkersProps {
@@ -98,6 +99,19 @@ export function MapMarkers({
         // Boost Z-Index if hovered
         const finalZIndex = isHovered ? 999 : pinStyle.zIndex;
 
+        // Icon logic for custom markers
+        let MarkerIcon = null;
+        if (cluster.is_custom_marker && cluster.marker_category) {
+             switch (cluster.marker_category) {
+                case 'accommodation': MarkerIcon = Bed; break;
+                case 'dining': MarkerIcon = Utensils; break;
+                case 'transport': MarkerIcon = Bus; break;
+                case 'attraction': MarkerIcon = Camera; break;
+                case 'other': MarkerIcon = MapPinIcon; break;
+                default: MarkerIcon = MapPinIcon;
+            }
+        }
+
         const content = (
           <MapPin
               style={pinStyle}
@@ -107,7 +121,9 @@ export function MapMarkers({
               {cluster.is_cluster ? (
                   <span>{cluster.count}</span>
               ) : (
-                  itinerarySequence !== undefined ? (
+                  MarkerIcon ? (
+                     <MarkerIcon className="w-3.5 h-3.5 text-white" />
+                  ) : itinerarySequence !== undefined ? (
                       <span>{itinerarySequence}</span>
                   ) : (
                       pinStyle.showContent && (

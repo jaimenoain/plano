@@ -195,6 +195,7 @@ function CollectionMapGLContent({
 
             // Custom fields
             is_custom_marker: (b as any).isMarker,
+            marker_category: (b as any).markerCategory,
             notes: (b as any).notes,
             is_candidate: (b as any).isCandidate,
             address: (b as any).address,
