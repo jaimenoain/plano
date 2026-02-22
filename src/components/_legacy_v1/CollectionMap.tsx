@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, Suspense, lazy } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,13 +29,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { lazyWithRetry } from "@/utils/lazyWithRetry";
 
-const CollectionSettingsDialog = lazy(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
-const AddBuildingsToCollectionDialog = lazy(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
-const PlanRouteDialog = lazy(() => import("@/components/collections/PlanRouteDialog").then(module => ({ default: module.PlanRouteDialog })));
-const CollectionMapGL = lazy(() => import("@/features/maps/components/CollectionMapGL").then(module => ({ default: module.CollectionMapGL })));
-const CollectionBuildingCard = lazy(() => import("@/components/collections/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
-const CollectionMarkerCard = lazy(() => import("@/components/collections/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
+const CollectionSettingsDialog = lazyWithRetry(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
+const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
+const PlanRouteDialog = lazyWithRetry(() => import("@/components/collections/PlanRouteDialog").then(module => ({ default: module.PlanRouteDialog })));
+const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/CollectionMapGL").then(module => ({ default: module.CollectionMapGL })));
+const CollectionBuildingCard = lazyWithRetry(() => import("@/components/collections/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
+const CollectionMarkerCard = lazyWithRetry(() => import("@/components/collections/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 
 interface CollectionItemResponse {
   id: string;
@@ -97,8 +98,11 @@ export default function CollectionMap() {
 
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [hasSettingsOpened, setHasSettingsOpened] = useState(false);
   const [showAddBuildings, setShowAddBuildings] = useState(false);
+  const [hasAddBuildingsOpened, setHasAddBuildingsOpened] = useState(false);
   const [showPlanRoute, setShowPlanRoute] = useState(false);
+  const [hasPlanRouteOpened, setHasPlanRouteOpened] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [activeTab, setActiveTab] = useState<'items' | 'itinerary'>('items');
 
@@ -119,6 +123,18 @@ export default function CollectionMap() {
   const [initialBounds, setInitialBounds] = useState<Bounds | null>(null);
 
   const initializeItinerary = useItineraryStore((state) => state.initializeItinerary);
+
+  useEffect(() => {
+    if (showSettings) setHasSettingsOpened(true);
+  }, [showSettings]);
+
+  useEffect(() => {
+    if (showAddBuildings) setHasAddBuildingsOpened(true);
+  }, [showAddBuildings]);
+
+  useEffect(() => {
+    if (showPlanRoute) setHasPlanRouteOpened(true);
+  }, [showPlanRoute]);
 
   // 1. Resolve User (Owner)
   const { data: ownerProfile, isLoading: loadingProfile } = useQuery({
@@ -1024,58 +1040,64 @@ export default function CollectionMap() {
         </div>
       </div>
 
-      <Suspense fallback={null}>
-          <PlanRouteDialog
-            open={showPlanRoute}
-            onOpenChange={setShowPlanRoute}
-            collectionId={collection.id}
-            hasItinerary={!!collection.itinerary}
-            onPlanGenerated={(action) => {
-                refetchItems();
-                queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
-                if (action === 'created') {
-                  setActiveTab('itinerary');
-                } else if (action === 'removed') {
-                  setActiveTab('items');
-                }
-            }}
-          />
-      </Suspense>
-
-      <Suspense fallback={null}>
-          <CollectionSettingsDialog
-              open={showSettings}
-              onOpenChange={setShowSettings}
-              collection={collection}
-              onUpdate={() => {
+      {(showPlanRoute || hasPlanRouteOpened) && (
+        <Suspense fallback={null}>
+            <PlanRouteDialog
+              open={showPlanRoute}
+              onOpenChange={setShowPlanRoute}
+              collectionId={collection.id}
+              hasItinerary={!!collection.itinerary}
+              onPlanGenerated={(action) => {
                   refetchItems();
-                  window.location.reload();
+                  queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
+                  if (action === 'created') {
+                    setActiveTab('itinerary');
+                  } else if (action === 'removed') {
+                    setActiveTab('items');
+                  }
               }}
-              showSavedCandidates={showSavedCandidates}
-              onShowSavedCandidatesChange={setShowSavedCandidates}
-              isOwner={isOwner}
-              canEdit={canEdit}
-              currentUserId={user?.id}
-              onPlanRoute={() => setShowPlanRoute(true)}
-              onSaveAll={() => {
-                  setShowSettings(false);
-                  setShowSaveAllConfirm(true);
-              }}
-          />
-      </Suspense>
+            />
+        </Suspense>
+      )}
+
+      {(showSettings || hasSettingsOpened) && (
+        <Suspense fallback={null}>
+            <CollectionSettingsDialog
+                open={showSettings}
+                onOpenChange={setShowSettings}
+                collection={collection}
+                onUpdate={() => {
+                    refetchItems();
+                    window.location.reload();
+                }}
+                showSavedCandidates={showSavedCandidates}
+                onShowSavedCandidatesChange={setShowSavedCandidates}
+                isOwner={isOwner}
+                canEdit={canEdit}
+                currentUserId={user?.id}
+                onPlanRoute={() => setShowPlanRoute(true)}
+                onSaveAll={() => {
+                    setShowSettings(false);
+                    setShowSaveAllConfirm(true);
+                }}
+            />
+        </Suspense>
+      )}
 
       {canEdit && (
         <>
-            <Suspense fallback={null}>
-                <AddBuildingsToCollectionDialog
-                    collectionId={collection.id}
-                    existingBuildingIds={existingBuildingIds}
-                    existingBuildings={mapBuildings.filter(b => !b.isMarker)}
-                    hiddenBuildingIds={hiddenBuildingIds}
-                    open={showAddBuildings}
-                    onOpenChange={setShowAddBuildings}
-                />
-            </Suspense>
+            {(showAddBuildings || hasAddBuildingsOpened) && (
+              <Suspense fallback={null}>
+                  <AddBuildingsToCollectionDialog
+                      collectionId={collection.id}
+                      existingBuildingIds={existingBuildingIds}
+                      existingBuildings={mapBuildings.filter(b => !b.isMarker)}
+                      hiddenBuildingIds={hiddenBuildingIds}
+                      open={showAddBuildings}
+                      onOpenChange={setShowAddBuildings}
+                  />
+              </Suspense>
+            )}
 
             <AlertDialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
                 <AlertDialogContent>
