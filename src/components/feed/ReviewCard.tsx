@@ -328,7 +328,7 @@ export function ReviewCard({
             <AvatarImage src={avatarUrl} />
             <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
-          <div className="text-sm md:text-base text-foreground leading-snug min-w-0 flex-1 break-words">
+          <div className="text-sm md:text-base text-foreground leading-snug min-w-0 max-w-full flex-1 break-words">
             <span className="font-semibold">{username}</span>
             {entry.is_suggested && entry.user_id && (
               <FollowButton
@@ -363,7 +363,7 @@ export function ReviewCard({
         mediaItems.length > 0 ? (
           isCompact && mediaItems.length > 1 ? (
              // COMPACT GRID LAYOUT for MEDIA
-             <div className={`relative w-full aspect-[4/3] bg-secondary overflow-hidden grid grid-cols-2 gap-0.5`}>
+             <div className={`relative w-full max-w-full min-w-0 aspect-[4/3] bg-secondary overflow-hidden grid grid-cols-2 gap-0.5`}>
                 {mediaItems.slice(0, 4).map((item, index) => (
                     <div key={item.id} className="relative w-full h-full min-w-0 overflow-hidden">
                        <div className="absolute inset-0 w-full h-full">
@@ -405,8 +405,8 @@ export function ReviewCard({
              </div>
           ) : (
             // OPTION A: Media Gallery (Carousel)
-            <div className={`relative w-full overflow-hidden bg-secondary ${!isCompact ? 'md:w-[280px] md:shrink-0' : 'aspect-[4/3]'}`}>
-               <div className={`flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full ${!isCompact ? 'md:absolute md:inset-0' : ''}`}>
+            <div className={`relative w-full max-w-full min-w-0 overflow-hidden bg-secondary ${!isCompact ? 'md:w-[280px] md:shrink-0' : 'aspect-[4/3]'}`}>
+               <div className={`flex w-full overflow-x-auto snap-x snap-mandatory no-scrollbar h-full ${!isCompact ? 'md:absolute md:inset-0' : ''}`}>
                   {mediaItems.map((item) => (
                     <div key={item.id} className={`relative flex-none w-full aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} snap-center bg-secondary min-w-0 overflow-hidden`}>
                        <div className="absolute inset-0 w-full h-full">
@@ -451,7 +451,7 @@ export function ReviewCard({
           )
         ) : (posterUrl && showCommunityImages) ? (
           // OPTION B: Building Poster (Fallback)
-          <div className={`relative bg-secondary overflow-hidden aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:w-[280px] md:shrink-0' : ''}`}>
+          <div className={`relative w-full max-w-full min-w-0 bg-secondary overflow-hidden aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:w-[280px] md:shrink-0' : ''}`}>
             <img
               src={posterUrl}
               alt={mainTitle || ""}
@@ -495,7 +495,7 @@ export function ReviewCard({
   );
 
   const Footer = (
-        <div className={`flex items-center gap-2 md:gap-4 flex-wrap ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border/50' : 'mt-auto pt-3 border-t border-border/50'}`}>
+        <div className={`flex w-full max-w-full min-w-0 items-center gap-2 md:gap-4 flex-wrap ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border/50' : 'mt-auto pt-3 border-t border-border/50'}`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -542,13 +542,13 @@ export function ReviewCard({
       <article
         onClick={handleCardClick}
         // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer min-w-0 w-full`}
+        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer min-w-0 w-full max-w-full`}
       >
         {isCompact ? (
           // COMPACT LAYOUT: Header -> Text -> Media -> Footer
           <>
               {Header}
-              <div className={`flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2`}>
+              <div className={`flex flex-col flex-1 min-w-0 p-2.5 md:p-4 md:pt-3 gap-2`}>
                   {ContentBody}
               </div>
               {Media}
