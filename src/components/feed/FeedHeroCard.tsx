@@ -298,7 +298,7 @@ export function FeedHeroCard({
       return (
         <div className="flex flex-col gap-0.5">
           {/* First Image - Full Width */}
-          <div className="relative w-full aspect-[4/3]">
+          <div className="relative w-full aspect-[4/3] min-w-0 overflow-hidden">
             <img
               src={images[0].url}
               onError={() => handleImageError(images[0].id)}
@@ -316,7 +316,7 @@ export function FeedHeroCard({
             )}
           >
             {images.slice(1).map((img) => (
-              <div key={img.id} className="relative w-full aspect-square">
+              <div key={img.id} className="relative w-full aspect-square min-w-0 overflow-hidden">
                 <img
                   src={img.url}
                   onError={() => handleImageError(img.id)}
@@ -335,7 +335,7 @@ export function FeedHeroCard({
       return (
         <div className="flex flex-col gap-0.5">
           {/* First Image - Full Width */}
-          <div className="relative w-full aspect-[4/3]">
+          <div className="relative w-full aspect-[4/3] min-w-0 overflow-hidden">
             <img
               src={images[0].url}
               onError={() => handleImageError(images[0].id)}
@@ -346,7 +346,7 @@ export function FeedHeroCard({
           {/* Row 2: 4 images + box = 5 columns */}
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-0.5">
             {images.slice(1, 5).map((img) => (
-              <div key={img.id} className="relative w-full aspect-square">
+              <div key={img.id} className="relative w-full aspect-square min-w-0 overflow-hidden">
                 <img
                   src={img.url}
                   onError={() => handleImageError(img.id)}
@@ -361,7 +361,7 @@ export function FeedHeroCard({
                 e.stopPropagation();
                 navigate(`/review/${entry.id}`);
               }}
-              className="relative w-full aspect-square bg-muted flex items-center justify-center text-muted-foreground font-medium text-sm border-l border-background cursor-pointer hover:bg-muted/80 transition-colors"
+              className="relative w-full aspect-square bg-muted flex items-center justify-center text-muted-foreground font-medium text-sm border-l border-background cursor-pointer hover:bg-muted/80 transition-colors min-w-0 overflow-hidden"
             >
               +{remaining}
             </div>
