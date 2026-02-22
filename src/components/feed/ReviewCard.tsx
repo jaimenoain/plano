@@ -233,6 +233,7 @@ export function ReviewCard({
                         className="w-full h-full"
                         autoPlayOnVisible={false}
                         muted={true}
+                        objectFit="cover"
                     />
                 </div>
             ) : mediaItems.length > 0 ? (
@@ -364,31 +365,34 @@ export function ReviewCard({
              // COMPACT GRID LAYOUT for MEDIA
              <div className={`relative w-full aspect-[4/3] bg-secondary overflow-hidden grid grid-cols-2 gap-0.5`}>
                 {mediaItems.slice(0, 4).map((item, index) => (
-                    <div key={item.id} className="relative w-full h-full">
-                       {item.type === 'video' ? (
-                          <div className="w-full h-full video-container">
-                             <VideoPlayer
-                                src={item.url}
-                                poster={item.poster}
-                                className="w-full h-full"
-                                autoPlayOnVisible={true}
-                                muted={true}
-                             />
-                          </div>
-                       ) : (
-                           !failedImages.has(item.id) ? (
-                               <img
-                                 src={item.url}
-                                 alt="Review photo"
-                                 className="w-full h-full object-cover"
-                                 onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
+                    <div key={item.id} className="relative w-full h-full min-w-0 overflow-hidden">
+                       <div className="absolute inset-0 w-full h-full">
+                         {item.type === 'video' ? (
+                            <div className="w-full h-full video-container">
+                               <VideoPlayer
+                                  src={item.url}
+                                  poster={item.poster}
+                                  className="w-full h-full"
+                                  autoPlayOnVisible={true}
+                                  muted={true}
+                                  objectFit="cover"
                                />
-                           ) : (
-                               <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
-                                 <ImageIcon className="w-4 h-4 opacity-50" />
-                               </div>
-                           )
-                       )}
+                            </div>
+                         ) : (
+                             !failedImages.has(item.id) ? (
+                                 <img
+                                   src={item.url}
+                                   alt="Review photo"
+                                   className="w-full h-full object-cover"
+                                   onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
+                                 />
+                             ) : (
+                                 <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
+                                   <ImageIcon className="w-4 h-4 opacity-50" />
+                                 </div>
+                             )
+                         )}
+                       </div>
 
                        {/* Overlay for 4th item if more */}
                        {index === 3 && mediaItems.length > 4 && (
@@ -404,31 +408,34 @@ export function ReviewCard({
             <div className={`relative w-full overflow-hidden bg-secondary ${!isCompact ? 'md:w-[280px] md:shrink-0' : 'aspect-[4/3]'}`}>
                <div className={`flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full ${!isCompact ? 'md:absolute md:inset-0' : ''}`}>
                   {mediaItems.map((item) => (
-                    <div key={item.id} className={`relative flex-none w-full aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} snap-center bg-secondary`}>
-                       {item.type === 'video' ? (
-                           <div className="w-full h-full video-container">
-                               <VideoPlayer
-                                   src={item.url}
-                                   poster={item.poster}
-                                   className="w-full h-full"
-                                   autoPlayOnVisible={true}
-                                   muted={true}
-                               />
-                           </div>
-                       ) : (
-                           !failedImages.has(item.id) ? (
-                             <img
-                               src={item.url}
-                               alt="Review photo"
-                               className="w-full h-full object-cover"
-                               onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
-                             />
-                           ) : (
-                             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                               <ImageIcon className="w-8 h-8 opacity-50" />
+                    <div key={item.id} className={`relative flex-none w-full aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} snap-center bg-secondary min-w-0 overflow-hidden`}>
+                       <div className="absolute inset-0 w-full h-full">
+                         {item.type === 'video' ? (
+                             <div className="w-full h-full video-container">
+                                 <VideoPlayer
+                                     src={item.url}
+                                     poster={item.poster}
+                                     className="w-full h-full"
+                                     autoPlayOnVisible={true}
+                                     muted={true}
+                                     objectFit="cover"
+                                 />
                              </div>
-                           )
-                       )}
+                         ) : (
+                             !failedImages.has(item.id) ? (
+                               <img
+                                 src={item.url}
+                                 alt="Review photo"
+                                 className="w-full h-full object-cover"
+                                 onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
+                               />
+                             ) : (
+                               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                 <ImageIcon className="w-8 h-8 opacity-50" />
+                               </div>
+                             )
+                         )}
+                       </div>
                     </div>
                   ))}
                </div>
