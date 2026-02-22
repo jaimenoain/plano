@@ -186,11 +186,12 @@ function SearchPageContent() {
         {/* Mobile List Overlay */}
         {isMobile && viewMode === 'list' && (
            <div className="absolute inset-0 bg-background z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
-              <div className="flex-1 overflow-hidden relative pb-20">
+              <div className="flex-1 overflow-hidden relative">
                  <BuildingSidebar
                     suggestions={suggestions}
                     onLocationClick={handleLocationResultClick}
                     architects={architects}
+                    className="pb-24"
                  />
               </div>
            </div>
