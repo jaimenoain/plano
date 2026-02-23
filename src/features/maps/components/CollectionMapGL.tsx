@@ -200,6 +200,8 @@ function CollectionMapGLContent({
             notes: (b as any).notes,
             is_candidate: (b as any).isCandidate,
             address: (b as any).address,
+            google_place_id: b.google_place_id,
+            website: b.website,
 
             // Itinerary fields
             itinerary_sequence: itineraryInfo?.sequence,

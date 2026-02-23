@@ -21,6 +21,8 @@ export interface ClusterResponse {
   notes?: string | null;
   is_candidate?: boolean;
   address?: string | null;
+  google_place_id?: string | null;
+  website?: string | null;
   tier_rank_label?: string | null;
   tier_rank?: number;
   location_approximate?: boolean;

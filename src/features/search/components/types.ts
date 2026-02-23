@@ -56,6 +56,8 @@ export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
   markerCategory?: CollectionMarkerCategory;
   notes?: string | null;
   address?: string | null;
+  google_place_id?: string | null;
+  website?: string | null;
 }
 
 export interface ContactRater {
