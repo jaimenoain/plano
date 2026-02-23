@@ -219,11 +219,7 @@ function CollectionMapGLContent({
       }
   }, [onAddCandidate, buildings]);
 
-  const handleRemove = useCallback((id: string) => {
-      // In CollectionMap, handleRemoveItem checks both items and markers by ID.
-      // So passing ID is sufficient for parent to distinguish.
-      if (onRemoveItem) onRemoveItem(id);
-  }, [onRemoveItem]);
+  const handleRemove = onRemoveItem;
 
 
   const mapContent = (
