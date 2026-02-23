@@ -44,7 +44,7 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
         </Button>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto px-4 pb-4 snap-x snap-mandatory no-scrollbar -mx-4 md:mx-0 scroll-pl-4">
+      <div className="flex gap-4 overflow-x-auto px-4 pb-4 snap-x snap-mandatory no-scrollbar -mx-4 md:mx-0 scroll-pl-4 w-screen max-w-[100vw] md:w-full md:max-w-full">
         {buildings.map((building) => (
           <Link
             key={building.id}

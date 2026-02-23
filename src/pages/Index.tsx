@@ -143,7 +143,7 @@ export default function Index() {
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="px-2 md:px-6 pt-6 md:pt-8 pb-24 mx-auto w-full">
+          <div className="px-4 md:px-6 pt-6 md:pt-8 pb-24 mx-auto w-full">
             {socialReviews.length === 0 ? (
               <EmptyFeed />
             ) : (
