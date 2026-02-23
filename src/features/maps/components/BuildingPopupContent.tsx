@@ -216,12 +216,6 @@ export function BuildingPopupContent({
                         alt={cluster.name || 'Marker'}
                         className="h-full w-full object-cover"
                     />
-                    {cluster.image_attribution && cluster.image_attribution.length > 0 && (
-                        <div
-                            className="absolute bottom-0 right-0 left-0 bg-black/60 text-white text-[10px] px-2 py-0.5 truncate text-right pointer-events-none"
-                            dangerouslySetInnerHTML={{ __html: cluster.image_attribution[0] }}
-                        />
-                    )}
                 </>
                 ) : (
                    <MapPin className="h-10 w-10 text-muted-foreground/50" />

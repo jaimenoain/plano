@@ -207,4 +207,45 @@ describe('BuildingPopupContent', () => {
     // The content itself should still be visible
     expect(screen.getByText('Test Building')).toBeTruthy();
   });
+
+  describe('Custom Marker Logic', () => {
+    const mockCustomMarker: ClusterResponse = {
+      id: 123,
+      slug: 'test-building',
+      name: 'Test Building',
+      lat: 0,
+      lng: 0,
+      count: 1,
+      is_cluster: false,
+      rating: 0,
+      is_custom_marker: true,
+      marker_category: 'other',
+      image_url: 'test.jpg',
+      image_attribution: ['<span>Attribution</span>']
+    };
+
+    it('shows "Remove Marker" button when onRemoveFromCollection is provided', () => {
+      const onRemove = vi.fn();
+      render(<BuildingPopupContent cluster={mockCustomMarker} onRemoveFromCollection={onRemove} />);
+
+      const removeBtn = screen.getByText('Remove Marker');
+      expect(removeBtn).toBeDefined();
+
+      fireEvent.click(removeBtn);
+      expect(onRemove).toHaveBeenCalledWith('123');
+    });
+
+    it('does NOT show "Remove Marker" button when onRemoveFromCollection is undefined', () => {
+      render(<BuildingPopupContent cluster={mockCustomMarker} />); // onRemoveFromCollection is undefined
+
+      const removeBtn = screen.queryByText('Remove Marker');
+      expect(removeBtn).toBeNull();
+    });
+
+    it('does NOT show attribution overlay even if present in data', () => {
+      render(<BuildingPopupContent cluster={mockCustomMarker} />);
+      // The attribution text "Attribution" should not be visible
+      expect(screen.queryByText('Attribution')).toBeNull();
+    });
+  });
 });
