@@ -709,12 +709,7 @@ export default function Profile() {
 
   if (!profile && !loading) {
       return (
-        <div
-          className={cn(
-            "transition-[margin-left] duration-200 ease-linear w-auto",
-            state === "collapsed" ? "md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]" : "md:ml-0"
-          )}
-        >
+        <>
           <AppLayout title="User Not Found" showLogo={false} showBack>
               <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
                   <div className="bg-secondary/50 p-6 rounded-full mb-6">
@@ -727,7 +722,7 @@ export default function Profile() {
                   <Button onClick={() => navigate("/")}>Go Home</Button>
               </div>
           </AppLayout>
-        </div>
+        </>
       )
   }
 
@@ -741,12 +736,7 @@ export default function Profile() {
     : undefined;
 
   return (
-    <div
-      className={cn(
-        "transition-[margin-left] duration-200 ease-linear w-auto",
-        "md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]"
-      )}
-    >
+    <>
       <AppLayout title="Profile" showLogo={false} showBack={!isOwnProfile} fullWidth>
         <MetaHead
           title={`${profile?.username} (@${profile?.username})`}
@@ -817,7 +807,7 @@ export default function Profile() {
 
         {/* 5. Filter & Content Section */}
         <div className="px-4 mt-2 scroll-mt-20 min-h-screen" id="profile-content-start">
-            <div className="sticky top-14 md:top-0 bg-background z-40 pt-2 pb-4 space-y-3 shadow-sm border-b border-border/40 -mx-4 px-4 mb-4">
+            <div className="sticky top-16 md:top-0 bg-background z-40 pt-2 pb-4 space-y-3 shadow-sm border-b border-border/40 -mx-4 px-4 mb-4">
               <div className="flex items-center justify-between">
 
                 <div className="flex items-center gap-4">
@@ -1057,7 +1047,7 @@ export default function Profile() {
           />
         )}
       </AppLayout>
-    </div>
+    </>
   );
 }
 
