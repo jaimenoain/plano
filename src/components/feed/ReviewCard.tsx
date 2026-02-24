@@ -329,32 +329,47 @@ export function ReviewCard({
             <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
           <div className="text-sm md:text-base text-foreground leading-snug min-w-0 max-w-full flex-1 break-words">
-            <span className="font-semibold">{username}</span>
-            {entry.is_suggested && entry.user_id && (
-              <FollowButton
-                userId={entry.user_id}
-                hideIfFollowing
-                className="ml-2 h-5 text-[10px] px-2"
-                variant="secondary"
-              />
-            )}
-            <span className="text-muted-foreground/60 font-normal"> {action} </span>
-            <span className="font-semibold text-foreground">{mainTitle}</span>
-            {city && <span className="text-muted-foreground"> in {city}</span>}
-            {entry.rating && entry.rating > 0 && (
-                 <span className="inline-flex items-center ml-2 gap-0.5 align-middle">
-                     {Array.from({ length: 3 }).map((_, i) => (
-                        <Circle
-                           key={i}
-                           className={`w-3.5 h-3.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
-                        />
-                     ))}
-                 </span>
-            )}
-            <span className="text-muted-foreground text-xs ml-2">
-              {!(entry.rating && entry.rating > 0) && "• "}
-              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-            </span>
+            <div className="flex flex-col gap-0.5 md:block">
+                {/* Row 1: User + Follow */}
+                <div className="flex items-center gap-2 min-w-0 md:inline md:gap-0">
+                    <span className="font-semibold truncate md:text-clip">{username}</span>
+                    {entry.is_suggested && entry.user_id && (
+                      <span className="md:inline-block md:ml-2">
+                          <FollowButton
+                            userId={entry.user_id}
+                            hideIfFollowing
+                            className="h-5 text-[10px] px-2"
+                            variant="secondary"
+                          />
+                      </span>
+                    )}
+                </div>
+
+                {/* Row 2: Action + Building */}
+                <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
+                    <span className="text-muted-foreground/60 font-normal md:ml-1 shrink-0"> {action} </span>
+                    <span className="font-semibold text-foreground truncate block md:inline md:w-auto md:max-w-none min-w-0 flex-1 md:flex-none">{mainTitle}</span>
+                    {city && <span className="text-muted-foreground hidden md:inline"> in {city}</span>}
+                </div>
+
+                {/* Row 3: Rating + Time */}
+                <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
+                    {entry.rating && entry.rating > 0 && (
+                         <span className="inline-flex items-center gap-0.5 align-middle md:ml-2 shrink-0">
+                             {Array.from({ length: 3 }).map((_, i) => (
+                                <Circle
+                                   key={i}
+                                   className={`w-3.5 h-3.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
+                                />
+                             ))}
+                         </span>
+                    )}
+                    <span className="text-muted-foreground text-xs md:ml-2 shrink min-w-0 truncate">
+                      {!(entry.rating && entry.rating > 0) && <span className="hidden md:inline">• </span>}
+                      {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
+                    </span>
+                </div>
+            </div>
           </div>
         </div>
   );
