@@ -141,7 +141,7 @@ export function UserCard({
                     )}
 
                     {/* Stats Row */}
-                    <div className="flex items-center justify-between md:justify-start md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border/40">
+                    <div className="flex flex-wrap items-center justify-start gap-x-6 gap-y-2 md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border/40">
                         <StatItem label="edificios" value={totalBuildings} onClick={() => onTabChange("all")} />
                         <StatItem
                             label="photos"

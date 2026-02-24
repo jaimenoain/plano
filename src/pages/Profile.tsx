@@ -808,9 +808,9 @@ export default function Profile() {
         {/* 5. Filter & Content Section */}
         <div className="px-4 mt-2 scroll-mt-20 min-h-screen" id="profile-content-start">
             <div className="sticky top-16 md:top-0 bg-background z-40 pt-2 pb-4 space-y-3 shadow-sm border-b border-border/40 -mx-4 px-4 mb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-y-2">
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4 overflow-x-auto max-w-full pb-1 -mb-1 hide-scrollbar">
                   {/* Filter Toggle */}
                   <ToggleGroup type="single" value={activeFilter} onValueChange={handleFilterChange} className="justify-start">
                       <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
