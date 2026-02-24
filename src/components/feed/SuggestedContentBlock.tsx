@@ -24,7 +24,7 @@ export function SuggestedContentBlock({
           Suggested {suggestionReason && `• ${suggestionReason}`}
         </span>
       </div>
-      <div className="relative">
+      <div className="relative min-w-0 w-full">
         {children}
       </div>
     </div>
