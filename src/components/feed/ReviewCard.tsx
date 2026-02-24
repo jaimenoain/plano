@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, MessageCircle, Circle, Image as ImageIcon, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Star, Image as ImageIcon, Bookmark } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -269,16 +269,24 @@ export function ReviewCard({
              
             {entry.rating && (
               <div className="flex items-center gap-1 mb-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Circle
-                    key={i}
-                    className={`w-3 h-3 ${
-                      i < entry.rating!
-                        ? "fill-[#595959] text-[#595959]"
-                        : "fill-transparent text-muted-foreground/20"
-                    }`}
-                  />
-                ))}
+                {/* Mobile: Single Star + Number */}
+                <div className="flex items-center gap-1 md:hidden">
+                  <Star className="w-3 h-3 fill-[#595959] text-[#595959]" />
+                  <span className="text-sm font-medium">{entry.rating}</span>
+                </div>
+                {/* Desktop: 10 Stars */}
+                <div className="hidden md:flex items-center gap-0.5">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-3 h-3 ${
+                        i < entry.rating!
+                          ? "fill-[#595959] text-[#595959]"
+                          : "fill-transparent text-muted-foreground/20"
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
@@ -356,12 +364,20 @@ export function ReviewCard({
                 <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
                     {entry.rating && entry.rating > 0 && (
                          <span className="inline-flex items-center gap-0.5 align-middle md:ml-2 shrink-0">
-                             {Array.from({ length: 3 }).map((_, i) => (
-                                <Circle
-                                   key={i}
-                                   className={`w-3.5 h-3.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
-                                />
-                             ))}
+                             {/* Mobile: Single Star + Number */}
+                             <span className="flex items-center gap-1 md:hidden">
+                                <Star className="w-3.5 h-3.5 fill-[#595959] text-[#595959]" />
+                                <span className="text-xs font-medium">{entry.rating}</span>
+                             </span>
+                             {/* Desktop: 10 Stars */}
+                             <span className="hidden md:flex items-center gap-0.5">
+                                 {Array.from({ length: 10 }).map((_, i) => (
+                                    <Star
+                                       key={i}
+                                       className={`w-3.5 h-3.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
+                                    />
+                                 ))}
+                             </span>
                          </span>
                     )}
                     <span className="text-muted-foreground text-xs md:ml-2 shrink min-w-0 truncate">
@@ -488,6 +504,29 @@ export function ReviewCard({
               <p className="text-xs text-muted-foreground line-clamp-1 truncate">
                 {subTitle}
               </p>
+            )}
+
+            {hideUser && entry.rating && entry.rating > 0 && (
+                <div className="flex items-center gap-1 mt-1">
+                    {/* Mobile: Single Star + Number */}
+                    <div className="flex items-center gap-1 md:hidden">
+                        <Star className="w-3 h-3 fill-[#595959] text-[#595959]" />
+                        <span className="text-sm font-medium">{entry.rating}</span>
+                    </div>
+                    {/* Desktop: 10 Stars */}
+                    <div className="hidden md:flex items-center gap-0.5">
+                        {Array.from({ length: 10 }).map((_, i) => (
+                        <Star
+                            key={i}
+                            className={`w-3 h-3 ${
+                            i < entry.rating!
+                                ? "fill-[#595959] text-[#595959]"
+                                : "fill-transparent text-muted-foreground/20"
+                            }`}
+                        />
+                        ))}
+                    </div>
+                </div>
             )}
           </div>
         )}

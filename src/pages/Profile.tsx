@@ -895,7 +895,7 @@ export default function Profile() {
                         exit="exit"
                         transition={{ duration: 0.25 }}
                       >
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 pb-20">
+                        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 pb-20">
                           {filteredContent.map((item) => (
                             <ReviewCard
                               key={item.id}
