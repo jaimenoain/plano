@@ -329,12 +329,12 @@ export function ReviewCard({
             <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
           <div className="text-sm md:text-base text-foreground leading-snug min-w-0 max-w-full flex-1 break-words">
-            <div className="flex flex-col gap-0.5 md:block">
+            <div className="flex flex-col gap-0.5 md:block min-w-0">
                 {/* Row 1: User + Follow */}
                 <div className="flex items-center gap-2 min-w-0 md:inline md:gap-0">
-                    <span className="font-semibold truncate md:text-clip">{username}</span>
+                    <span className="font-semibold truncate md:text-clip min-w-0">{username}</span>
                     {entry.is_suggested && entry.user_id && (
-                      <span className="md:inline-block md:ml-2">
+                      <span className="md:inline-block md:ml-2 min-w-0">
                           <FollowButton
                             userId={entry.user_id}
                             hideIfFollowing
