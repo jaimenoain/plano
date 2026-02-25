@@ -80,7 +80,7 @@ export function UserCard({
                 <div className="flex-1 min-w-0 w-full">
                     {/* Top Row: Name + Actions */}
                     <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-4 md:mb-6">
-                        <h1 className="text-xl md:text-2xl font-bold truncate max-w-[200px] md:max-w-none">
+                        <h1 className="text-xl md:text-2xl font-bold truncate min-w-0 max-w-[200px] md:max-w-none">
                             {profile?.username}
                         </h1>
 

@@ -119,8 +119,8 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                 {/* Content Section */}
                 <div className="flex flex-col flex-1 p-3 min-w-0 justify-between relative pl-3">
                     <div>
-                        <div className="flex justify-between items-start gap-2">
-                             <div className="flex items-start gap-2">
+                        <div className="flex justify-between items-start gap-2 min-w-0">
+                             <div className="flex items-start gap-2 min-w-0">
                                 {badgeIndex !== undefined && (
                                     <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm mt-0.5">
                                         {badgeIndex}

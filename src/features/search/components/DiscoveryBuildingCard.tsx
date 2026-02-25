@@ -130,8 +130,8 @@ export function DiscoveryBuildingCard({
             });
 
             return (
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex -space-x-2">
+              <div className="flex items-center gap-2 mt-2 min-w-0">
+                <div className="flex -space-x-2 shrink-0">
                   {sortedInteractions.slice(0, 3).map((interaction) => (
                     <Avatar key={interaction.user.id} className="w-5 h-5 border border-background">
                       <AvatarImage src={interaction.user.avatar_url || undefined} />
@@ -139,7 +139,7 @@ export function DiscoveryBuildingCard({
                     </Avatar>
                   ))}
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground truncate">
                   {getInteractionText(sortedInteractions)}
                 </span>
               </div>
