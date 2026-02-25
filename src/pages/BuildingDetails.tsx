@@ -74,6 +74,9 @@ interface BuildingDetails {
   access_type?: string | null;
   typology?: string[] | null;
   materials?: string[] | null;
+  context?: string | null;
+  intervention?: string | null;
+  category?: string | null;
 }
 
 interface TopLink {
@@ -789,7 +792,7 @@ export default function BuildingDetails() {
       <BuildingHeader building={building} showEditLink={!!user} className="lg:hidden p-4 pb-0" />
 
       <BuildingAttributes
-        accessType={building.access_type}
+        building={building}
         className="lg:hidden px-4 mt-4 mb-2"
       />
 
@@ -946,7 +949,7 @@ export default function BuildingDetails() {
       <BuildingHeader building={building} showEditLink={!!user} className="hidden lg:block" />
 
             <BuildingAttributes
-                accessType={building.access_type}
+                building={building}
                 className="hidden lg:grid mt-6"
             />
 

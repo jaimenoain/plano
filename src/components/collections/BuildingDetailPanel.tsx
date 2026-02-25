@@ -17,6 +17,11 @@ interface BuildingDetailPanelProps {
     access_type?: string | null;
     materials?: string[] | null;
     status?: string | null;
+    styles?: string[] | { name: string }[] | null;
+    context?: string | null;
+    intervention?: string | null;
+    category?: string | null;
+    year_completed?: number | null;
   };
 }
 
@@ -93,10 +98,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
         )}
 
         <BuildingAttributes
-            accessType={building.access_type}
-            typologies={building.typology}
-            materials={building.materials}
-            status={building.status}
+            building={building}
             className="grid-cols-2"
         />
       </div>
