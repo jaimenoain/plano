@@ -32,6 +32,7 @@ import AddBuilding from "./pages/AddBuilding";
 import EditBuilding from "./pages/EditBuilding";
 import WriteReview from "./pages/WriteReview";
 import CollectionMap from "@/components/_legacy_v1/CollectionMap";
+import FolderView from "./pages/FolderView";
 
 import GroupLayout from "./pages/groups/GroupLayout";
 import GroupSessions from "./pages/groups/GroupSessions";
@@ -170,6 +171,7 @@ const router = createBrowserRouter(
         <Route path="/settings" element={<Settings />} />
 
         <Route path="/:username/map/:slug" element={<CollectionMap />} />
+        <Route path="/:username/folders/:slug" element={<FolderView />} />
 
         <Route path="/building/:id/:slug" element={<BuildingDetails />} />
         <Route path="/building/:id" element={<BuildingDetails />} />

@@ -27,6 +27,7 @@ interface ManageFoldersDialogProps {
   onOpenChange: (open: boolean) => void;
   userId: string;
   onUpdate?: () => void;
+  initialFolder?: UserFolder;
 }
 
 interface AvailableCollection {
@@ -36,7 +37,7 @@ interface AvailableCollection {
   source: 'owned' | 'contributed' | 'favorite';
 }
 
-export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate }: ManageFoldersDialogProps) {
+export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, initialFolder }: ManageFoldersDialogProps) {
   const { toast } = useToast();
   const [view, setView] = useState<"list" | "create" | "edit" | "manage_items">("list");
   const [folders, setFolders] = useState<UserFolder[]>([]);
@@ -62,8 +63,12 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate }: Ma
   useEffect(() => {
     if (open) {
       fetchFolders();
-      setView("list");
-      setActiveFolder(null);
+      if (initialFolder) {
+        handleManageContents(initialFolder);
+      } else {
+        setView("list");
+        setActiveFolder(null);
+      }
     }
   }, [open]);
 
