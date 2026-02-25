@@ -145,6 +145,7 @@ export default function BuildingDetails() {
   const [userImages, setUserImages] = useState<{id: string, storage_path: string, is_generated?: boolean}[]>([]);
   const [selectedImage, setSelectedImage] = useState<DisplayImage | null>(null);
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
+  const [likedLinkIds, setLikedLinkIds] = useState<Set<string>>(new Set());
   const [linksLoading, setLinksLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [socialContext, setSocialContext] = useState<string | null>(null);
@@ -454,8 +455,63 @@ export default function BuildingDetails() {
           console.warn("Error fetching top links:", linksError);
       } else if (linksData) {
           setTopLinks(linksData);
+
+          if (user && linksData.length > 0) {
+              const linkIds = linksData.map(l => l.link_id);
+              const { data: likes } = await supabase
+                  .from('link_likes')
+                  .select('link_id')
+                  .eq('user_id', user.id)
+                  .in('link_id', linkIds);
+
+              if (likes) {
+                  setLikedLinkIds(new Set(likes.map(l => l.link_id)));
+              }
+          }
       }
       setLinksLoading(false);
+  };
+
+  const handleLinkLike = async (linkId: string) => {
+    if (!user) {
+      toast({ title: "Please sign in to like links" });
+      return;
+    }
+
+    const isLiked = likedLinkIds.has(linkId);
+    const newLiked = new Set(likedLinkIds);
+    if (isLiked) {
+      newLiked.delete(linkId);
+    } else {
+      newLiked.add(linkId);
+    }
+    setLikedLinkIds(newLiked);
+
+    setTopLinks(prev => prev.map(l => {
+      if (l.link_id === linkId) {
+        return { ...l, like_count: l.like_count + (isLiked ? -1 : 1) };
+      }
+      return l;
+    }));
+
+    try {
+      if (isLiked) {
+        await supabase.from("link_likes").delete().eq("link_id", linkId).eq("user_id", user.id);
+      } else {
+        await supabase.from("link_likes").insert({ link_id: linkId, user_id: user.id });
+      }
+    } catch (error) {
+      console.error("Link like failed", error);
+      toast({ variant: "destructive", title: "Failed to like link" });
+      // Revert
+      setLikedLinkIds(likedLinkIds);
+      setTopLinks(prev => prev.map(l => {
+        if (l.link_id === linkId) {
+          return { ...l, like_count: l.like_count + (isLiked ? 1 : -1) };
+        }
+        return l;
+      }));
+    }
   };
 
   const handleStatusChange = async (newStatus: 'visited' | 'pending' | 'ignored') => {
@@ -1337,15 +1393,19 @@ export default function BuildingDetails() {
                                 const displayDomain = domain || link.url;
                                 const hasTitle = !!link.title;
 
+                                const isLiked = likedLinkIds.has(link.link_id);
+
                                 return (
-                                    <a
+                                    <div
                                         key={link.link_id}
-                                        href={link.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
                                         className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border group"
                                     >
-                                        <div className="flex flex-col gap-0.5 overflow-hidden">
+                                        <a
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-1 flex flex-col gap-0.5 overflow-hidden cursor-pointer"
+                                        >
                                             <span className="font-medium truncate pr-2 text-sm group-hover:text-primary transition-colors">
                                                 {hasTitle ? link.title : displayDomain}
                                             </span>
@@ -1358,17 +1418,31 @@ export default function BuildingDetails() {
                                                     <span>shared by @{link.user_username}</span>
                                                 )}
                                             </div>
+                                        </a>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className={`h-8 px-2 gap-1.5 text-xs hover:bg-transparent ${isLiked ? 'text-pink-500 hover:text-pink-600' : 'text-muted-foreground hover:text-pink-500'}`}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleLinkLike(link.link_id);
+                                                }}
+                                            >
+                                                <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-current" : ""}`} />
+                                                <span>{link.like_count}</span>
+                                            </Button>
+
+                                            <a
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-1.5 rounded-md hover:bg-background text-muted-foreground/50 hover:text-foreground transition-colors"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                            </a>
                                         </div>
-                                        <div className="flex items-center gap-3 shrink-0">
-                                            {link.like_count > 0 && (
-                                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                    <Heart className="w-3 h-3 fill-muted-foreground/30" />
-                                                    <span>{link.like_count}</span>
-                                                </div>
-                                            )}
-                                            <ExternalLink className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground" />
-                                        </div>
-                                    </a>
+                                    </div>
                                 );
                             })
                         )}
