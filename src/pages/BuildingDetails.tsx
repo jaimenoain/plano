@@ -958,7 +958,7 @@ export default function BuildingDetails() {
             <div className="space-y-6">
                 {!isEditing && userStatus ? (
                     // Summary View
-                    <div className="bg-white rounded-2xl p-5 border border-transparent space-y-4">
+                    <div className="bg-white rounded-2xl p-5 border border-transparent space-y-4 group">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                                 Your Activity
@@ -992,7 +992,7 @@ export default function BuildingDetails() {
 
                             {(userStatus === 'visited' || userStatus === 'pending') && (
                                 <div
-                                    className="flex items-center gap-0.5"
+                                    className={`flex items-center gap-0.5 ${myRating === 0 ? "opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto" : ""}`}
                                     onMouseLeave={() => setHoverRating(null)}
                                 >
                                     {[...Array(3)].map((_, i) => {
