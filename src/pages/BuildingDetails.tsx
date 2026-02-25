@@ -4,7 +4,8 @@ import {
   Loader2, MapPin, Calendar, Send,
   Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
-  MessageCircle, EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon, Users, X
+  MessageCircle, EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon, Users, X,
+  Pencil
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -796,7 +797,7 @@ export default function BuildingDetails() {
         
         {/* LEFT: Visuals & Map (Map-First Experience ) */}
         <div className="space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-2 group">
                 {/* Map Integration */}
                 {building.location_precision === 'approximate' && (
                     <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-500 dark:text-amber-400">
@@ -832,6 +833,15 @@ export default function BuildingDetails() {
                         <span className="text-sm font-medium">
                             {[building.city, building.country].filter(Boolean).join(", ") || building.address}
                         </span>
+                        {user && (
+                            <Link
+                                to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}
+                                className="hidden group-hover:inline-flex items-center justify-center p-1 rounded hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors ml-1"
+                                title="Edit building"
+                            >
+                                <Pencil className="w-3 h-3" />
+                            </Link>
+                        )}
                     </div>
                     {coordinates && (
                         <>
