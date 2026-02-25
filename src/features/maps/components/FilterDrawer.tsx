@@ -399,15 +399,17 @@ export function FilterDrawer() {
             />
           </div>
 
-          {/* Curators & Friends */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium leading-none">Curators & Friends</h3>
-            <ContactPicker
-              selectedContacts={currentContacts}
-              setSelectedContacts={handleContactsChange}
-              placeholder="Search people..."
-            />
-          </div>
+          {/* Curators & Friends - Only visible in Discover mode */}
+          {mode === 'discover' && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium leading-none">Curators & Friends</h3>
+              <ContactPicker
+                selectedContacts={currentContacts}
+                setSelectedContacts={handleContactsChange}
+                placeholder="Search people..."
+              />
+            </div>
+          )}
 
           {effectiveMode === 'discover' ? (
             /* Discover Mode Section */
