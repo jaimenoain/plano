@@ -78,6 +78,12 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
             sideOffset={4}
           >
             <DropdownMenuItem asChild>
+              <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                <UserIcon className="size-4" />
+                Your profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
               <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
                 <Settings className="size-4" />
                 Edit profile

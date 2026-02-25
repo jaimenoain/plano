@@ -66,6 +66,20 @@ describe('AppSidebar', () => {
     expect(notificationLink).toBeTruthy();
   });
 
+  it('should render Your profile link', () => {
+    render(
+      <BrowserRouter>
+        <SidebarProvider>
+          <AppSidebar />
+        </SidebarProvider>
+      </BrowserRouter>
+    );
+
+    const links = screen.getAllByRole('link');
+    const profileLink = links.find(link => link.getAttribute('href') === '/profile' && link.textContent === 'Your profile');
+    expect(profileLink).toBeTruthy();
+  });
+
   // it('should call signOut and navigate to / when sign out is clicked', async () => {
   //   render(
   //     <BrowserRouter>
