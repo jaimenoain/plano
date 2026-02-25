@@ -146,8 +146,8 @@ export function Header({
 
         {/* Center Slot */}
         <div className={cn(
-          "flex items-center justify-center",
-          effectiveVariant === 'map' ? "flex-1 min-w-0" : "w-full"
+          "flex items-center justify-center min-w-0",
+          effectiveVariant === 'map' ? "flex-1" : "w-full"
         )}>
           {centerContent}
         </div>
