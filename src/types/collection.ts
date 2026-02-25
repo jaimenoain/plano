@@ -72,3 +72,22 @@ export interface CollectionMarker {
   created_at: string;
   created_by: string;
 }
+
+export interface UserFolder {
+  id: string;
+  owner_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_public: boolean;
+  created_at: string;
+  items_count?: number;
+  preview_images?: string[];
+}
+
+export interface UserFolderItem {
+  folder_id: string;
+  collection_id: string;
+  created_at: string;
+  collection?: Collection;
+}
