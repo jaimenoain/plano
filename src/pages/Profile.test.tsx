@@ -205,8 +205,8 @@ describe('Profile Integration', () => {
         expect(screen.getByText('Test Building')).toBeTruthy();
     });
 
-    // Initial state: "Reviews" (visited)
-    const statusBadges = screen.getAllByText('Reviews');
+    // Initial state: "Visited"
+    const statusBadges = screen.getAllByText('Visited');
     const badgeSpan = statusBadges.find(el => el.closest('button'));
     expect(badgeSpan).toBeTruthy();
     const badgeButton = badgeSpan!.closest('button');
@@ -214,9 +214,9 @@ describe('Profile Integration', () => {
     // Click to toggle
     fireEvent.click(badgeButton!);
 
-    // Expect Optimistic Update: "Bucket List" (pending)
+    // Expect Optimistic Update: "Saved" (pending)
     await waitFor(() => {
-        expect(screen.getByText('Bucket List')).toBeTruthy();
+        expect(screen.getByText('Saved')).toBeTruthy();
     });
 
     // TODO: Verify Supabase update call and Toast.
