@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { UserFolder } from "@/types/collection";
 import { ManageFoldersDialog } from "@/components/profile/ManageFoldersDialog";
+import { FolderCard } from "@/components/profile/FolderCard";
 
 interface Collection {
   id: string;
@@ -229,44 +230,14 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
             </button>
           )}
 
-          {/* Render Folders First (Optional, but good for structure) */}
+          {/* Render Folders First */}
           {folders.map((folder) => (
-             <Link
-               key={folder.id}
-               to={`/${username || 'user'}/folders/${folder.slug}`} // Hypothetical route
-               className="block flex-shrink-0 w-[180px] group select-none"
-             >
-               <Card className="h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative border-dashed border-primary/20 bg-primary/5">
-                 <CardContent className="p-4 h-full flex flex-col justify-between">
-                   <div className="flex justify-between items-start">
-                      <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors pr-4 whitespace-normal">
-                        {folder.name}
-                      </h4>
-                       {folder.is_public ? (
-                        <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
-                      ) : (
-                        <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
-                      )}
-                   </div>
-                   <div className="flex items-center justify-between mt-auto">
-                     <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                       <Folder className="h-3 w-3" />
-                       {folder.items_count || 0} collections
-                     </span>
-                   </div>
-                   {/* Preview Images Visualization (Simple Stack) */}
-                    {folder.preview_images && folder.preview_images.length > 0 && (
-                        <div className="absolute bottom-2 right-2 flex -space-x-2">
-                            {folder.preview_images.slice(0, 3).map((img, i) => (
-                                <div key={i} className="w-6 h-6 rounded-full border border-background overflow-hidden relative z-[1]">
-                                    <img src={img} alt="" className="w-full h-full object-cover" />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                 </CardContent>
-               </Card>
-             </Link>
+            <FolderCard
+              key={folder.id}
+              folder={folder}
+              to={`/${username || "user"}/folders/${folder.slug}`}
+              className="flex-shrink-0"
+            />
           ))}
 
           {collections.map((collection) => (
