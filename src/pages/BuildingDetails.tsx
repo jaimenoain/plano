@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,6 +53,7 @@ import { PopularityBadge } from "@/components/PopularityBadge";
 import { BuildingImageCard } from "@/components/BuildingImageCard";
 import { BuildingHeader } from "@/components/BuildingHeader";
 import { ArchitectStatement } from "@/components/ArchitectStatement";
+import { BuildingHero } from "@/components/BuildingHero";
 
 // --- Types ---
 interface BuildingDetails {
@@ -79,6 +81,7 @@ interface BuildingDetails {
   intervention?: string | null;
   category?: string | null;
   architect_statement?: string | null;
+  hero_image_id: string | null;
 }
 
 interface TopLink {
@@ -121,6 +124,7 @@ interface DisplayImage {
         avatar_url: string | null;
     } | null;
     is_generated?: boolean;
+    is_official?: boolean;
 }
 
 
@@ -135,14 +139,6 @@ export default function BuildingDetails() {
   const [building, setBuilding] = useState<BuildingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
-  
-  const isVerifiedArchitect = useMemo(() => {
-       if (!building?.architects || verifiedClaims.length === 0) return false;
-       return building.architects.some(a => verifiedClaims.includes(a.id));
-  }, [building, verifiedClaims]);
-
-  const canEdit = isCreator || profile?.role === 'admin';
-  const canEditOfficialData = isCreator || profile?.role === 'admin' || isVerifiedArchitect;
 
   // User Interaction State
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
@@ -161,6 +157,14 @@ export default function BuildingDetails() {
   // Official Data Editing State
   const [isOfficialEditing, setIsOfficialEditing] = useState(false);
   const [verifiedClaims, setVerifiedClaims] = useState<string[]>([]);
+
+  const isVerifiedArchitect = useMemo(() => {
+       if (!building?.architects || verifiedClaims.length === 0) return false;
+       return building.architects.some(a => verifiedClaims.includes(a.id));
+  }, [building, verifiedClaims]);
+
+  const canEdit = isCreator || profile?.role === 'admin';
+  const canEditOfficialData = isCreator || profile?.role === 'admin' || isVerifiedArchitect;
   const [draftOfficialData, setDraftOfficialData] = useState({
       name: "",
       year_completed: 0,
@@ -169,6 +173,7 @@ export default function BuildingDetails() {
       architect_statement: ""
   });
   const [isSavingOfficial, setIsSavingOfficial] = useState(false);
+  const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
 
   // New State for Edit View Enhancement
   const [userLinks, setUserLinks] = useState<{id: string, url: string, title: string}[]>([]);
@@ -266,6 +271,18 @@ export default function BuildingDetails() {
 
       setBuilding(sanitizedBuilding as unknown as BuildingDetails);
 
+      if (data.hero_image_id) {
+          const { data: heroImageData } = await supabase
+            .from("review_images")
+            .select("storage_path")
+            .eq("id", data.hero_image_id)
+            .single();
+
+          if (heroImageData) {
+             setHeroImageUrl(getBuildingImageUrl(heroImageData.storage_path));
+          }
+      }
+
       if (user && data.created_by === user.id) {
           setIsCreator(true);
       }
@@ -287,7 +304,7 @@ export default function BuildingDetails() {
 
           const { data: userEntry, error: userEntryError } = await supabase
               .from("user_buildings")
-              .select("*, images:review_images(id, storage_path, is_generated)")
+              .select("*, images:review_images(id, storage_path, is_generated, is_official)")
               .eq("user_id", user.id)
               .eq("building_id", resolvedBuildingId)
               .maybeSingle();
@@ -359,7 +376,7 @@ export default function BuildingDetails() {
           .select(`
             id, user_id, content, rating, status, tags, created_at, video_url,
             user:profiles(username, avatar_url),
-            images:review_images(id, storage_path, likes_count, created_at, is_generated)
+            images:review_images(id, storage_path, likes_count, created_at, is_generated, is_official)
           `)
           .eq("building_id", resolvedBuildingId)
           .order("created_at", { ascending: false });
@@ -414,7 +431,8 @@ export default function BuildingDetails() {
                                   likes_count: img.likes_count || 0,
                                   created_at: img.created_at || entry.created_at,
                                   user: entry.user,
-                                  is_generated: img.is_generated
+                                  is_generated: img.is_generated,
+                                  is_official: img.is_official
                               });
                           }
                     });
@@ -894,6 +912,64 @@ export default function BuildingDetails() {
       }
   };
 
+  const handleSetHeroImage = async () => {
+      if (!selectedImage || !building) return;
+
+      const newHeroId = selectedImage.id;
+      const newHeroUrl = selectedImage.url;
+
+      // Optimistic Update
+      setHeroImageUrl(newHeroUrl);
+      setBuilding(prev => prev ? { ...prev, hero_image_id: newHeroId } : null);
+
+      try {
+          const { error } = await supabase
+              .from('buildings')
+              .update({ hero_image_id: newHeroId })
+              .eq('id', building.id);
+
+          if (error) throw error;
+
+          toast({ title: "Hero image updated" });
+      } catch (error) {
+          console.error("Error setting hero image:", error);
+          toast({ variant: "destructive", title: "Failed to set hero image" });
+          // Revert is handled by fetchBuildingData refetch or just simple error message,
+          // strict revert would require storing previous state but image transition covers visual glitch
+      }
+  };
+
+  const handleToggleOfficial = async () => {
+      if (!selectedImage) return;
+
+      const newStatus = !selectedImage.is_official;
+
+      // Optimistic Update
+      setSelectedImage(prev => prev ? { ...prev, is_official: newStatus } : null);
+      setDisplayImages(prev => prev.map(img =>
+          img.id === selectedImage.id ? { ...img, is_official: newStatus } : img
+      ));
+
+      try {
+          const { error } = await supabase
+              .from('review_images')
+              .update({ is_official: newStatus })
+              .eq('id', selectedImage.id);
+
+          if (error) throw error;
+
+          toast({ title: newStatus ? "Added to Official Lookbook" : "Removed from Official Lookbook" });
+      } catch (error) {
+          console.error("Error toggling official status:", error);
+          toast({ variant: "destructive", title: "Failed to update lookbook status" });
+          // Revert
+          setSelectedImage(prev => prev ? { ...prev, is_official: !newStatus } : null);
+          setDisplayImages(prev => prev.map(img =>
+              img.id === selectedImage.id ? { ...img, is_official: !newStatus } : img
+          ));
+      }
+  };
+
   const googleSearchUrl = useMemo(() => {
     if (!building) return "";
     const query = [
@@ -912,6 +988,8 @@ export default function BuildingDetails() {
   return (
     <AppLayout title={building.name} showBack>
       <MetaHead title={building.name} />
+
+      <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
 
       {/* Building Header - Mobile Only */}
       <BuildingHeader
@@ -1082,16 +1160,39 @@ export default function BuildingDetails() {
             </div>
 
             {displayImages.length > 0 ? (
-                <div className="space-y-6">
-                    {displayImages.map((img) => (
-                        <BuildingImageCard
-                            key={img.id}
-                            image={img}
-                            initialIsLiked={likedImageIds.has(img.id)}
-                            onOpen={() => setSelectedImage(img)}
-                        />
-                    ))}
-                </div>
+                <Tabs defaultValue="all" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                        <TabsTrigger value="all">All Photos</TabsTrigger>
+                        <TabsTrigger value="official">Official Lookbook</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="all" className="space-y-6 mt-0">
+                        {displayImages.map((img) => (
+                            <BuildingImageCard
+                                key={img.id}
+                                image={img}
+                                initialIsLiked={likedImageIds.has(img.id)}
+                                onOpen={() => setSelectedImage(img)}
+                            />
+                        ))}
+                    </TabsContent>
+                    <TabsContent value="official" className="space-y-6 mt-0">
+                        {displayImages.some(img => img.is_official) ? (
+                            displayImages.filter(img => img.is_official).map((img) => (
+                                <BuildingImageCard
+                                    key={img.id}
+                                    image={img}
+                                    initialIsLiked={likedImageIds.has(img.id)}
+                                    onOpen={() => setSelectedImage(img)}
+                                />
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground bg-muted/10 rounded-xl border border-dashed border-white/10">
+                                <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                                <p className="text-sm">No official photos yet.</p>
+                            </div>
+                        )}
+                    </TabsContent>
+                </Tabs>
             ) : (
                 <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
                     <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground text-center p-6">
@@ -1255,7 +1356,8 @@ export default function BuildingDetails() {
                                             username: profile?.username || user?.email || "Me",
                                             avatar_url: profile?.avatar_url || null
                                         },
-                                        is_generated: img.is_generated
+                                        is_generated: img.is_generated,
+                                        is_official: img.is_official
                                     };
 
                                     return (
@@ -1702,6 +1804,11 @@ export default function BuildingDetails() {
         hasNext={selectedIndex < displayImages.length - 1}
         hasPrev={selectedIndex > 0}
         isGenerated={selectedImage?.is_generated}
+        isOfficial={selectedImage?.is_official}
+        isHero={selectedImage?.id === building?.hero_image_id}
+        canEdit={canEditOfficialData}
+        onToggleOfficial={handleToggleOfficial}
+        onSetHero={handleSetHeroImage}
       />
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
