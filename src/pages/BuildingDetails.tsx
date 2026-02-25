@@ -958,11 +958,22 @@ export default function BuildingDetails() {
 
                         <div className="flex flex-wrap gap-4 items-center">
                             {userStatus === 'visited' ? (
-                                <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">Visited</Badge>
+                                <Badge
+                                    className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                                    onClick={() => handleStatusChange('pending')}
+                                >
+                                    Visited
+                                </Badge>
                             ) : userStatus === 'ignored' ? (
                                 <Badge variant="outline" className="text-muted-foreground border-dashed">Hidden</Badge>
                             ) : (
-                                <Badge variant="secondary">Saved</Badge>
+                                <Badge
+                                    variant="secondary"
+                                    className="cursor-pointer hover:bg-secondary/80"
+                                    onClick={() => handleStatusChange('visited')}
+                                >
+                                    Saved
+                                </Badge>
                             )}
 
                             {myRating > 0 && (
