@@ -138,6 +138,7 @@ export interface Database {
           functional_category_id: string | null
           location_precision: Database["public"]["Enums"]["location_precision"]
           merged_into_id: string | null
+          hero_image_id: string | null
         }
         Insert: {
           created_at?: string
@@ -154,6 +155,7 @@ export interface Database {
           functional_category_id?: string | null
           location_precision?: Database["public"]["Enums"]["location_precision"]
           merged_into_id?: string | null
+          hero_image_id?: string | null
         }
         Update: {
           created_at?: string
@@ -170,6 +172,7 @@ export interface Database {
           functional_category_id?: string | null
           location_precision?: Database["public"]["Enums"]["location_precision"]
           merged_into_id?: string | null
+          hero_image_id?: string | null
         }
         Relationships: [
           {
@@ -1240,6 +1243,7 @@ export interface Database {
           storage_path: string
           user_id: string
           is_generated: boolean
+          is_official: boolean
         }
         Insert: {
           created_at?: string
@@ -1249,6 +1253,7 @@ export interface Database {
           storage_path: string
           user_id: string
           is_generated?: boolean
+          is_official?: boolean
         }
         Update: {
           created_at?: string
@@ -1258,6 +1263,7 @@ export interface Database {
           storage_path?: string
           user_id?: string
           is_generated?: boolean
+          is_official?: boolean
         }
         Relationships: [
           {
