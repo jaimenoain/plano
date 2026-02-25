@@ -136,6 +136,7 @@ export default function BuildingDetails() {
   // User Interaction State
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
   const [myRating, setMyRating] = useState<number>(0); // Scale 1-3
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [displayImages, setDisplayImages] = useState<DisplayImage[]>([]);
   const [userImages, setUserImages] = useState<{id: string, storage_path: string, is_generated?: boolean}[]>([]);
@@ -987,13 +988,19 @@ export default function BuildingDetails() {
                             )}
 
                             {(userStatus === 'visited' || userStatus === 'pending') && (
-                                <div className="flex items-center gap-0.5">
+                                <div
+                                    className="flex items-center gap-0.5"
+                                    onMouseLeave={() => setHoverRating(null)}
+                                >
                                     {[...Array(3)].map((_, i) => {
                                         const ratingValue = i + 1;
+                                        const isFilled = hoverRating !== null ? ratingValue <= hoverRating : ratingValue <= myRating;
+
                                         return (
                                             <Circle
                                               key={i}
-                                              className={`w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity ${i < myRating ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
+                                              className={`w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity ${isFilled ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
+                                              onMouseEnter={() => setHoverRating(ratingValue)}
                                               onClick={() => handleRate(building.id, ratingValue === myRating ? 0 : ratingValue)}
                                             />
                                         );
