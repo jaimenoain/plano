@@ -36,7 +36,7 @@ describe('FeedClusterCard', () => {
     },
   ] as any; // Partial mock
 
-  it('renders with min-w-0 class for text container', () => {
+  it('renders with wrapping text container (no truncate)', () => {
     render(
       <BrowserRouter>
         <FeedClusterCard
@@ -48,12 +48,16 @@ describe('FeedClusterCard', () => {
     );
 
     const usernameElement = screen.getByText('testuser');
-    // The structure is: <div> <Avatar/> <div className="text-sm ..."> ... </div> </div>
-    const container = usernameElement.closest('div.truncate');
+    const textContainer = usernameElement.closest('div.break-words');
 
-    expect(container).not.toBeNull();
-    expect(container?.className).toContain('min-w-0');
-    expect(container?.className).toContain('text-sm');
-    expect(container?.className).toContain('flex-1');
+    expect(textContainer).not.toBeNull();
+    expect(textContainer?.className).toContain('min-w-0');
+    expect(textContainer?.className).toContain('text-sm');
+    expect(textContainer?.className).toContain('flex-1');
+    expect(textContainer?.className).toContain('leading-tight');
+    expect(textContainer?.className).not.toContain('truncate');
+
+    const parentContainer = textContainer?.parentElement;
+    expect(parentContainer?.className).toContain('items-start');
   });
 });
