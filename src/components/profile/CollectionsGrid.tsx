@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Lock, Globe, Plus, Map as MapIcon, Folder } from "lucide-react";
+import { Plus, Map as MapIcon, Folder } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { UserFolder } from "@/types/collection";
 import { ManageFoldersDialog } from "@/components/profile/ManageFoldersDialog";
 import { FolderCard } from "@/components/profile/FolderCard";
+import { CollectionCard } from "@/components/CollectionCard";
 
 interface Collection {
   id: string;
@@ -248,31 +247,11 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
             )}
 
             {collections.map((collection) => (
-              <Link
+              <CollectionCard
                 key={collection.id}
-                to={`/${collection.owner?.username || username || 'user'}/map/${collection.slug}`}
-                className="block flex-shrink-0 w-[180px] group select-none"
-              >
-                <Card className="h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative">
-                  <CardContent className="p-4 h-full flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                       <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors pr-4 whitespace-normal">
-                         {collection.name}
-                       </h4>
-                       {collection.is_public ? (
-                         <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
-                       ) : (
-                         <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
-                       )}
-                    </div>
-                    <div className="flex items-center justify-between mt-auto">
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {collection.collection_items?.[0]?.count || 0} places
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                collection={collection}
+                username={username}
+              />
             ))}
           </div>
           <ScrollBar orientation="horizontal" />
