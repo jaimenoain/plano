@@ -944,7 +944,7 @@ export default function BuildingDetails() {
             <div className="space-y-6">
                 {!isEditing && userStatus ? (
                     // Summary View
-                    <div className="bg-muted/30 rounded-2xl p-5 border border-transparent space-y-4">
+                    <div className="bg-white rounded-2xl p-5 border border-transparent space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                                 Your Activity
