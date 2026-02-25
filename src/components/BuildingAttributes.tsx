@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Building2,
   Layers,
@@ -8,9 +9,14 @@ import {
   Calendar,
   Map as MapIcon,
   Wrench,
-  Tag
+  Tag,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+const THRESHOLD = 4;
 
 export interface BuildingAttributesData {
   access_type?: string | null;
@@ -33,6 +39,8 @@ export const BuildingAttributes = ({
   building,
   className,
 }: BuildingAttributesProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   // Helper to check if a value is effectively empty
   const isEmpty = (val: unknown) => {
     if (val === null || val === undefined) return true;
@@ -79,12 +87,18 @@ export const BuildingAttributes = ({
 
   if (activeFields.length === 0) return null;
 
+  const visibleFields = isExpanded ? activeFields : activeFields.slice(0, THRESHOLD);
+
   return (
     <div className={cn("grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3", className)}>
-      {activeFields.map((field) => (
+      {visibleFields.map((field, index) => (
         <div
           key={field.key}
-          className="flex flex-col p-3 rounded-xl bg-muted/10 border border-dashed border-border/60 hover:bg-muted/20 transition-colors"
+          className={cn(
+            "flex flex-col p-3 rounded-xl bg-muted/10 border border-dashed border-border/60 hover:bg-muted/20 transition-colors",
+            // Add animation only for items beyond threshold when expanded
+            isExpanded && index >= THRESHOLD && "animate-in fade-in slide-in-from-top-1 duration-300"
+          )}
         >
           <div className="flex items-center gap-2 text-muted-foreground mb-1.5">
             <field.icon className="w-3.5 h-3.5 opacity-70" />
@@ -100,6 +114,27 @@ export const BuildingAttributes = ({
           </div>
         </div>
       ))}
+
+      {activeFields.length > THRESHOLD && (
+        <div className="col-span-full flex justify-center mt-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full h-auto py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          >
+            {isExpanded ? (
+              <>
+                Show less <ChevronUp className="ml-1.5 h-3 w-3" />
+              </>
+            ) : (
+              <>
+                Show all details <ChevronDown className="ml-1.5 h-3 w-3" />
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
