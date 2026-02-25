@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useArchitect } from "@/hooks/useArchitect";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,14 +9,41 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { MetaHead } from "@/components/common/MetaHead";
-import { MapPin, Globe, Edit, Map as MapIcon } from "lucide-react";
+import { MapPin, Globe, Edit, Map as MapIcon, BadgeCheck } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
+import { supabase } from "@/integrations/supabase/client";
+import { ClaimProfileDialog } from "@/components/architect/ClaimProfileDialog";
 
 export default function ArchitectDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { architect, buildings, loading, error } = useArchitect(id);
+
+  const [claimStatus, setClaimStatus] = useState<{
+    is_verified: boolean;
+    my_claim_status: string | null;
+  }>({ is_verified: false, my_claim_status: null });
+  const [claimDialogOpen, setClaimDialogOpen] = useState(false);
+
+  const fetchClaimStatus = useCallback(async () => {
+    if (!id) return;
+    try {
+      const { data, error } = await supabase.rpc('get_architect_claim_status', {
+        p_architect_id: id
+      });
+      if (error) throw error;
+      if (data) {
+        setClaimStatus(data as unknown as { is_verified: boolean; my_claim_status: string | null });
+      }
+    } catch (err) {
+      console.error("Error fetching claim status:", err);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchClaimStatus();
+  }, [fetchClaimStatus, user]);
 
   if (loading) {
     return (
@@ -67,19 +95,43 @@ export default function ArchitectDetails() {
       <div className="px-4 py-6 md:px-6 space-y-8 animate-fade-in">
         <div className="flex justify-between items-start">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">{architect.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight">{architect.name}</h1>
+              {claimStatus.is_verified && (
+                <Badge variant="outline" className="gap-1.5 border-black text-black py-1 px-2.5">
+                  <BadgeCheck className="h-4 w-4 fill-black text-white" />
+                  Verified Architect
+                </Badge>
+              )}
+            </div>
             <Badge variant="secondary" className="capitalize">
               {architect.type}
             </Badge>
           </div>
-          {user && (
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/architect/${id}/edit`}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Link>
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {user && !claimStatus.is_verified && claimStatus.my_claim_status !== 'pending' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setClaimDialogOpen(true)}
+              >
+                Claim this Profile
+              </Button>
+            )}
+            {user && claimStatus.my_claim_status === 'pending' && (
+              <Badge variant="secondary" className="h-9 px-4 text-sm font-medium">
+                Claim Pending
+              </Badge>
+            )}
+            {user && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/architect/${id}/edit`}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4 max-w-3xl">
@@ -165,6 +217,14 @@ export default function ArchitectDetails() {
           </div>
         )}
       </div>
+
+      <ClaimProfileDialog
+        architectId={id || ""}
+        architectName={architect.name}
+        open={claimDialogOpen}
+        onOpenChange={setClaimDialogOpen}
+        onSuccess={fetchClaimStatus}
+      />
     </AppLayout>
   );
 }
