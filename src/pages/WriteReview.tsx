@@ -103,6 +103,7 @@ export default function WriteReview() {
   const [links, setLinks] = useState<{ id: string, url: string, title: string }[]>([]);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newLinkTitle, setNewLinkTitle] = useState("");
+  const [isFetchingTitle, setIsFetchingTitle] = useState(false);
 
   const isProcessingVideo = video.status === 'compressing' || video.status === 'uploading';
 
@@ -453,6 +454,40 @@ export default function WriteReview() {
       }
       return newImages;
     });
+  };
+
+  const fetchTitle = async (url: string) => {
+    if (!url.trim()) return;
+
+    let urlToValidate = url.trim();
+    if (!/^https?:\/\//i.test(urlToValidate)) {
+      urlToValidate = "https://" + urlToValidate;
+    }
+
+    try {
+      new URL(urlToValidate);
+      setNewLinkUrl(urlToValidate);
+    } catch {
+      return;
+    }
+
+    if (newLinkTitle.trim()) return;
+
+    setIsFetchingTitle(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-url-metadata', {
+        body: { url: urlToValidate }
+      });
+
+      if (error) throw error;
+      if (data?.title && !newLinkTitle.trim()) {
+        setNewLinkTitle(data.title);
+      }
+    } catch (error) {
+      console.error("Error fetching title:", error);
+    } finally {
+      setIsFetchingTitle(false);
+    }
   };
 
   const addLink = () => {
@@ -932,19 +967,27 @@ export default function WriteReview() {
             <Label className="text-sm font-medium uppercase text-muted-foreground">Resources & Links</Label>
 
             <div className="flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 items-center">
                 <Input
                   placeholder="https://..."
                   value={newLinkUrl}
                   onChange={(e) => setNewLinkUrl(e.target.value)}
+                  onBlur={(e) => fetchTitle(e.target.value)}
                   className="flex-[2]"
                 />
-                <Input
-                  placeholder="Title (optional)"
-                  value={newLinkTitle}
-                  onChange={(e) => setNewLinkTitle(e.target.value)}
-                  className="flex-1"
-                />
+                <div className="flex-1 relative w-full">
+                  <Input
+                    placeholder="Title (optional)"
+                    value={newLinkTitle}
+                    onChange={(e) => setNewLinkTitle(e.target.value)}
+                    className="w-full pr-8"
+                  />
+                  {isFetchingTitle && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
               </div>
               <Button
                 type="button"
