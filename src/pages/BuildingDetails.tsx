@@ -528,7 +528,7 @@ export default function BuildingDetails() {
                user_id: user.id,
                building_id: building.id,
                status: statusToUse,
-               rating: rating,
+               rating: rating > 0 ? rating : null,
                edited_at: new Date().toISOString()
            }, { onConflict: 'user_id, building_id' });
 
@@ -986,14 +986,18 @@ export default function BuildingDetails() {
                                 </Badge>
                             )}
 
-                            {myRating > 0 && (
+                            {(userStatus === 'visited' || userStatus === 'pending') && (
                                 <div className="flex items-center gap-0.5">
-                                    {[...Array(3)].map((_, i) => (
-                                        <Circle
-                                          key={i}
-                                          className={`w-4 h-4 ${i < myRating ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
-                                        />
-                                    ))}
+                                    {[...Array(3)].map((_, i) => {
+                                        const ratingValue = i + 1;
+                                        return (
+                                            <Circle
+                                              key={i}
+                                              className={`w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity ${i < myRating ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
+                                              onClick={() => handleRate(building.id, ratingValue === myRating ? 0 : ratingValue)}
+                                            />
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
