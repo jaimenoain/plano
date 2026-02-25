@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { UserFolder } from "@/types/collection";
+import { ManageFoldersDialog } from "@/components/profile/ManageFoldersDialog";
 
 interface Collection {
   id: string;
@@ -30,6 +31,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
   const [collections, setCollections] = useState<Collection[]>([]);
   const [folders, setFolders] = useState<UserFolder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showManageFolders, setShowManageFolders] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -191,12 +193,26 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
            <MapIcon className="h-4 w-4 text-muted-foreground" />
            Collections
         </h3>
-        {isOwnProfile && onCreate && (
-             <Button variant="ghost" size="sm" onClick={onCreate} className="h-8 text-xs text-muted-foreground hover:text-primary">
-                 <Plus className="h-3 w-3 mr-1" /> New
-             </Button>
+        {isOwnProfile && (
+            <div className="flex items-center gap-1">
+                 <Button variant="ghost" size="sm" onClick={() => setShowManageFolders(true)} className="h-8 text-xs text-muted-foreground hover:text-primary">
+                     <Folder className="h-3 w-3 mr-1" /> Organize
+                 </Button>
+                 {onCreate && (
+                     <Button variant="ghost" size="sm" onClick={onCreate} className="h-8 text-xs text-muted-foreground hover:text-primary">
+                         <Plus className="h-3 w-3 mr-1" /> New
+                     </Button>
+                 )}
+            </div>
         )}
       </div>
+
+      <ManageFoldersDialog
+        open={showManageFolders}
+        onOpenChange={setShowManageFolders}
+        userId={userId}
+        onUpdate={fetchData}
+      />
 
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex space-x-3 px-4 pb-4">
