@@ -7,7 +7,7 @@ export function MainLayout() {
     <SidebarProvider defaultOpen={false}>
       <div data-testid="main-layout" style={{ display: 'contents' }}>
         <AppSidebar />
-        <SidebarInset>
+        <SidebarInset className="min-w-0">
           <Outlet />
         </SidebarInset>
       </div>
