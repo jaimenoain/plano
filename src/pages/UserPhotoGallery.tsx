@@ -6,6 +6,7 @@ import { Loader2, Image as ImageIcon, Heart } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import {
   Select,
   SelectContent,
@@ -34,14 +35,20 @@ export default function UserPhotoGallery() {
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchingMore, setFetchingMore] = useState(false);
   const [profileUsername, setProfileUsername] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'recent' | 'popular'>('recent');
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [targetUserId, setTargetUserId] = useState<string | null>(null);
+
+  const { containerRef, isVisible } = useIntersectionObserver();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const resolveUser = async () => {
       setLoading(true);
-      let targetUserId: string | null = null;
-      let targetUsername: string | null = null;
+      let resolvedUserId: string | null = null;
+      let resolvedUsername: string | null = null;
 
       // 1. Resolve User
       if (routeUsername) {
@@ -57,25 +64,44 @@ export default function UserPhotoGallery() {
 
         const { data } = await query.maybeSingle();
         if (data) {
-          targetUserId = data.id;
-          targetUsername = data.username;
+          resolvedUserId = data.id;
+          resolvedUsername = data.username;
         }
       } else if (currentUser) {
-        targetUserId = currentUser.id;
+        resolvedUserId = currentUser.id;
         // Fetch username for display
-         const { data } = await supabase.from("profiles").select("username").eq("id", targetUserId).single();
-         targetUsername = data?.username || "Me";
+        const { data } = await supabase.from("profiles").select("username").eq("id", resolvedUserId).single();
+        resolvedUsername = data?.username || "Me";
       }
 
-      if (!targetUserId) {
-        setLoading(false);
-        return;
-      }
+      setTargetUserId(resolvedUserId);
+      setProfileUsername(resolvedUsername);
 
-      setProfileUsername(targetUsername);
+      // If no user found, we stop loading
+      if (!resolvedUserId) {
+         setLoading(false);
+      } else {
+         // Reset photos/page when user changes
+         setPhotos([]);
+         setPage(0);
+         setHasMore(true);
+      }
+    };
+
+    resolveUser();
+  }, [routeUsername, currentUser]);
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      if (!targetUserId) return;
+
+      if (page === 0) setLoading(true);
+      else setFetchingMore(true);
+
+      const from = page * 24;
+      const to = from + 24 - 1;
 
       // 2. Fetch Photos
-      // Join review_images -> user_buildings (as review_id) -> buildings
       const { data, error } = await supabase
         .from("review_images")
         .select(`
@@ -92,24 +118,29 @@ export default function UserPhotoGallery() {
           )
         `)
         .eq("user_id", targetUserId)
-        .order(sortOrder === 'popular' ? "likes_count" : "created_at", { ascending: false });
+        .order(sortOrder === 'popular' ? "likes_count" : "created_at", { ascending: false })
+        .range(from, to);
 
       if (error) {
         console.error("Error fetching photos:", error);
       } else if (data) {
+        if (data.length < 24) {
+          setHasMore(false);
+        }
+
         const photoIds = data.map((p) => p.id);
         let likedIds = new Set<string>();
 
         if (currentUser && photoIds.length > 0) {
-           const { data: likesData } = await supabase
-             .from("image_likes")
-             .select("image_id")
-             .eq("user_id", currentUser.id)
-             .in("image_id", photoIds);
+          const { data: likesData } = await supabase
+            .from("image_likes")
+            .select("image_id")
+            .eq("user_id", currentUser.id)
+            .in("image_id", photoIds);
 
-           if (likesData) {
-             likesData.forEach((l) => likedIds.add(l.image_id));
-           }
+          if (likesData) {
+            likesData.forEach((l) => likedIds.add(l.image_id));
+          }
         }
 
         const mappedPhotos = data.map((item: any) => ({
@@ -120,14 +151,31 @@ export default function UserPhotoGallery() {
           review_id: item.review_id,
           building: item.user_buildings?.building || null
         }));
-        setPhotos(mappedPhotos);
+
+        setPhotos(prev => page === 0 ? mappedPhotos : [...prev, ...mappedPhotos]);
       }
 
       setLoading(false);
+      setFetchingMore(false);
     };
 
-    fetchData();
-  }, [routeUsername, currentUser, sortOrder]);
+    fetchPhotos();
+  }, [targetUserId, page, sortOrder, currentUser]);
+
+  useEffect(() => {
+    if (isVisible && hasMore && !loading && !fetchingMore) {
+      setPage(prev => prev + 1);
+    }
+  }, [isVisible, hasMore, loading, fetchingMore]);
+
+  const handleSortChange = (val: string) => {
+    if (val === 'recent' || val === 'popular') {
+      setSortOrder(val);
+      setPage(0);
+      setPhotos([]);
+      setHasMore(true);
+    }
+  };
 
   const handleLike = async (e: React.MouseEvent, photoId: string) => {
     e.preventDefault();
@@ -208,7 +256,7 @@ export default function UserPhotoGallery() {
       <div className="p-4">
         {photos.length > 0 && (
           <div className="flex justify-end mb-4">
-            <Select value={sortOrder} onValueChange={(val: 'recent' | 'popular') => setSortOrder(val)}>
+            <Select value={sortOrder} onValueChange={handleSortChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -271,6 +319,18 @@ export default function UserPhotoGallery() {
                  </Link>
                );
             })}
+
+            {hasMore && (
+              <div
+                data-testid="sentinel"
+                ref={containerRef}
+                className="col-span-full flex items-center justify-center p-4 min-h-[50px]"
+              >
+                {fetchingMore && (
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
