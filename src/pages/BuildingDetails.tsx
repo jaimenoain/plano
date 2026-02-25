@@ -5,7 +5,7 @@ import {
   Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
   MessageCircle, EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon, Users, X,
-  Pencil
+  Pencil, Save
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +77,7 @@ interface BuildingDetails {
   context?: string | null;
   intervention?: string | null;
   category?: string | null;
+  architect_statement?: string | null;
 }
 
 interface TopLink {
@@ -134,7 +135,14 @@ export default function BuildingDetails() {
   const [loading, setLoading] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
   
-  const canEdit = isCreator || profile?.role === 'admin';
+  // Official Editing State
+  const [isEditingOfficial, setIsEditingOfficial] = useState(false);
+  const [editedName, setEditedName] = useState("");
+  const [editedYear, setEditedYear] = useState("");
+  const [editedCity, setEditedCity] = useState("");
+  const [editedCountry, setEditedCountry] = useState("");
+  const [editedStatement, setEditedStatement] = useState("");
+  const [isSavingOfficial, setIsSavingOfficial] = useState(false);
 
   // User Interaction State
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
@@ -178,6 +186,14 @@ export default function BuildingDetails() {
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
 
+  // Determine permissions
+  const verifiedArchitectId = user?.app_metadata?.verified_architect_id as string | undefined;
+  const isVerifiedArchitect = useMemo(() => {
+      return building?.architects?.some(a => a.id === verifiedArchitectId);
+  }, [building, verifiedArchitectId]);
+
+  const canEdit = isCreator || profile?.role === 'admin' || isVerifiedArchitect;
+
   // Navigation Logic
   const selectedIndex = useMemo(() => {
     if (!selectedImage) return -1;
@@ -217,6 +233,16 @@ export default function BuildingDetails() {
   useEffect(() => {
     if (id) fetchBuildingData();
   }, [id, user]);
+
+  useEffect(() => {
+      if (building) {
+          setEditedName(building.name);
+          setEditedYear(building.year_completed?.toString() || "");
+          setEditedCity(building.city || "");
+          setEditedCountry(building.country || "");
+          setEditedStatement(building.architect_statement || "");
+      }
+  }, [building]);
 
   const fetchBuildingData = async () => {
     setLoading(true);
@@ -758,6 +784,37 @@ export default function BuildingDetails() {
       }
   };
 
+  const handleSaveOfficialData = async () => {
+    if (!building) return;
+    setIsSavingOfficial(true);
+
+    try {
+        const updates = {
+            name: editedName,
+            year_completed: editedYear ? parseInt(editedYear) : null,
+            city: editedCity || null,
+            country: editedCountry || null,
+            architect_statement: editedStatement || null
+        };
+
+        const { error } = await supabase
+            .from('buildings')
+            .update(updates)
+            .eq('id', building.id);
+
+        if (error) throw error;
+
+        setBuilding(prev => prev ? ({ ...prev, ...updates }) : null);
+        setIsEditingOfficial(false);
+        toast({ title: "Official data updated" });
+    } catch (error) {
+        console.error("Error updating building:", error);
+        toast({ variant: "destructive", title: "Failed to update" });
+    } finally {
+        setIsSavingOfficial(false);
+    }
+  };
+
   const handleDelete = async () => {
       if (!user || !building) return;
 
@@ -845,8 +902,39 @@ export default function BuildingDetails() {
     <AppLayout title={building.name} showBack>
       <MetaHead title={building.name} />
 
+      {/* Mobile Top Bar (Edit Toggle) */}
+      {canEdit && !isEditingOfficial && (
+        <div className="lg:hidden p-4 pb-0 flex justify-end">
+           <Button variant="ghost" size="sm" onClick={() => setIsEditingOfficial(true)} className="text-muted-foreground">
+             Edit Official Data
+           </Button>
+        </div>
+      )}
+
       {/* Building Header - Mobile Only */}
-      <BuildingHeader building={building} showEditLink={!!user} className="lg:hidden p-4 pb-0" />
+      <BuildingHeader
+        building={building}
+        showEditLink={!!user && !isEditingOfficial}
+        className="lg:hidden p-4 pb-0"
+        isEditing={isEditingOfficial}
+        editedName={editedName}
+        onNameChange={setEditedName}
+        editedYear={editedYear}
+        onYearChange={setEditedYear}
+      />
+
+      {/* Mobile Actions for Editing */}
+      {isEditingOfficial && (
+          <div className="lg:hidden px-4 flex gap-2">
+              <Button size="sm" onClick={handleSaveOfficialData} disabled={isSavingOfficial}>
+                  {isSavingOfficial && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Save
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setIsEditingOfficial(false)} disabled={isSavingOfficial}>
+                  Cancel
+              </Button>
+          </div>
+      )}
 
       <BuildingAttributes
         building={building}
@@ -888,12 +976,30 @@ export default function BuildingDetails() {
                 )}
 
                 <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-muted-foreground w-full">
                         <MapPin className="w-4 h-4 shrink-0" />
-                        <span className="text-sm font-medium">
-                            {[building.city, building.country].filter(Boolean).join(", ") || building.address}
-                        </span>
-                        {user && (
+                        {isEditingOfficial ? (
+                            <div className="flex gap-2 w-full max-w-sm">
+                                <Input
+                                    value={editedCity}
+                                    onChange={e => setEditedCity(e.target.value)}
+                                    placeholder="City"
+                                    className="h-8 text-sm"
+                                />
+                                <Input
+                                    value={editedCountry}
+                                    onChange={e => setEditedCountry(e.target.value)}
+                                    placeholder="Country"
+                                    className="h-8 text-sm"
+                                />
+                            </div>
+                        ) : (
+                            <span className="text-sm font-medium">
+                                {[building.city, building.country].filter(Boolean).join(", ") || building.address}
+                            </span>
+                        )}
+
+                        {user && !isEditingOfficial && (
                             <Link
                                 to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}
                                 className="hidden group-hover:inline-flex items-center justify-center p-1 rounded hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors ml-1"
@@ -1003,12 +1109,64 @@ export default function BuildingDetails() {
         <div className="space-y-8 mt-6 lg:mt-0">
             
             {/* Header Info - Desktop Only */}
-      <BuildingHeader building={building} showEditLink={!!user} className="hidden lg:block" />
+            <div className="hidden lg:block">
+                 {canEdit && !isEditingOfficial && (
+                     <div className="flex justify-end mb-2">
+                        <Button variant="ghost" size="sm" onClick={() => setIsEditingOfficial(true)} className="text-muted-foreground">
+                            Edit Official Data
+                        </Button>
+                     </div>
+                 )}
+                 <BuildingHeader
+                    building={building}
+                    showEditLink={!!user && !isEditingOfficial}
+                    isEditing={isEditingOfficial}
+                    editedName={editedName}
+                    onNameChange={setEditedName}
+                    editedYear={editedYear}
+                    onYearChange={setEditedYear}
+                />
+                 {isEditingOfficial && (
+                     <div className="flex gap-2 mt-4">
+                         <Button size="sm" onClick={handleSaveOfficialData} disabled={isSavingOfficial}>
+                            {isSavingOfficial && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            Save Changes
+                         </Button>
+                         <Button size="sm" variant="ghost" onClick={() => setIsEditingOfficial(false)} disabled={isSavingOfficial}>
+                            Cancel
+                         </Button>
+                     </div>
+                 )}
+            </div>
 
             <BuildingAttributes
                 building={building}
                 className="hidden lg:grid mt-6"
             />
+
+            {/* Architect's Statement Block */}
+            {(building.architect_statement || isEditingOfficial) && (
+                <div className="animate-in fade-in slide-in-from-top-4">
+                    {isEditingOfficial ? (
+                        <div className="space-y-2">
+                            <Label htmlFor="statement" className="text-xs uppercase text-muted-foreground tracking-widest font-bold">Architect's Statement</Label>
+                            <Textarea
+                                id="statement"
+                                value={editedStatement}
+                                onChange={(e) => setEditedStatement(e.target.value)}
+                                placeholder="Add an architectural statement..."
+                                className="min-h-[150px] text-lg font-light"
+                            />
+                        </div>
+                    ) : (
+                         <div className="pl-6 border-l-4 border-foreground/80 my-8">
+                             <p className="text-xl font-light tracking-tight leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                                 {building.architect_statement}
+                             </p>
+                         </div>
+                    )}
+                </div>
+            )}
 
             {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
             <div className="space-y-6">
@@ -1025,7 +1183,7 @@ export default function BuildingDetails() {
                                 </Link>
                             </Button>
                         </div>
-
+                        {/* ... Rest of existing code ... */}
                         <div className="flex flex-wrap gap-4 items-center">
                             {userStatus === 'visited' ? (
                                 <Badge
@@ -1179,8 +1337,7 @@ export default function BuildingDetails() {
                                         className="resize-none"
                                     />
                                 </div>
-
-                                {/* Action Buttons Row */}
+                                {/* ... Rest of existing editor ... */}
                                 <div className="flex flex-wrap gap-2">
                                      <Button
                                         variant={pendingImages.length > 0 ? "secondary" : "outline"}
@@ -1322,8 +1479,7 @@ export default function BuildingDetails() {
 
                     </>
                 )}
-
-                {/* Visit With Feature - Only visible when status is 'pending' */}
+                {/* ... Visit With Feature ... */}
                 {userStatus === 'pending' && (
                     <div className="pt-4 border-t border-dashed">
                         {!showVisitWith ? (
