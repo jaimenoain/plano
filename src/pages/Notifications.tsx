@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Heart, MessageCircle, UserPlus, Loader2, Bell, Calendar, Sparkles, Clock, LogOut, Settings, Users } from "lucide-react";
+import { Heart, MessageCircle, UserPlus, Loader2, Bell, Calendar, Sparkles, Clock, LogOut, Settings, Users, ShieldCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { NotificationSettingsDialog } from "@/components/notifications/NotificationSettingsDialog";
@@ -14,14 +14,18 @@ import { Button } from "@/components/ui/button";
 interface Notification {
   id: string;
   created_at: string;
-  type: 'follow' | 'like' | 'comment' | 'new_session'| 'group_invitation' | 'friend_joined' | 'suggest_follow' | 'session_reminder' | 'group_activity' | 'recommendation' | 'join_request' | 'visit_request';
+  type: 'follow' | 'like' | 'comment' | 'new_session'| 'group_invitation' | 'friend_joined' | 'suggest_follow' | 'session_reminder' | 'group_activity' | 'recommendation' | 'join_request' | 'visit_request' | 'architect_verification';
   is_read: boolean;
   actor_id: string;
   group_id: string | null;
   recommendation_id?: string | null;
+  architect_id?: string | null;
   actor: {
     username: string | null;
     avatar_url: string | null;
+  };
+  architect?: {
+    name: string | null;
   };
   resource?: {
     id: string;
@@ -52,6 +56,7 @@ const NOTIFICATION_QUERY = `
   *,
   actor:notifications_actor_id_fkey(username, avatar_url),
   group:notifications_group_id_fkey(name),
+  architect:architects(name),
   resource:notifications_resource_id_fkey(
     id,
     user_id,
@@ -192,6 +197,8 @@ export default function Notifications() {
        if (notification.group_id) navigate(`/groups/${notification.group_id}/members`);
     } else if (notification.type === 'recommendation' || notification.type === 'visit_request') {
       navigate(`/profile?tab=foryou`);
+    } else if (notification.type === 'architect_verification' && notification.metadata?.status === 'approved' && notification.architect_id) {
+      navigate(`/architect/${notification.architect_id}`);
     } else if (notification.resource?.id) {
         navigate(`/review/${notification.resource.id}`);
     }
@@ -211,6 +218,7 @@ export default function Notifications() {
       case 'group_activity': return <LogOut className="h-4 w-4 text-orange-500" />;
       case 'recommendation': return <Sparkles className="h-4 w-4 text-primary fill-primary" />;
       case 'visit_request': return <Users className="h-4 w-4 text-primary" />;
+      case 'architect_verification': return <ShieldCheck className="h-4 w-4 text-green-600" />;
       default: return <Bell className="h-4 w-4" />;
     }
   };
@@ -220,6 +228,10 @@ export default function Notifications() {
     const buildingName = n.resource?.building?.name || (n as any).recommendation?.building?.name;
 
     switch (n.type) {
+      case 'architect_verification':
+        const architectName = n.architect?.name || "an architect";
+        const isApproved = n.metadata?.status === 'approved';
+        return <span>Your request to be verified as <span className="font-semibold">{architectName}</span> was <span className={isApproved ? "text-green-600 font-medium" : "text-destructive font-medium"}>{isApproved ? "approved" : "declined"}</span></span>;
       case 'like': return <span><span className="font-semibold">{actorName}</span> liked your review of <span className="italic">{buildingName || "a building"}</span></span>;
       case 'comment': return <span><span className="font-semibold">{actorName}</span> commented on your review of <span className="italic">{buildingName || "a building"}</span></span>;
       case 'group_invitation': 
