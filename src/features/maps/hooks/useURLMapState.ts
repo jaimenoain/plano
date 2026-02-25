@@ -155,17 +155,17 @@ export const useURLMapState = () => {
 
              let hasSetRatedBy = false;
 
-             if (contacts && Array.isArray(contacts) && contacts.length > 0) {
+             if (contacts && Array.isArray(contacts)) {
                  const names = contacts.map((c) => c.name).filter(Boolean);
                  if (names.length > 0) {
                      newParams.set('rated_by', names.join(','));
-                     // If we set rated_by from contacts, we can remove contacts from JSON
-                     // to avoid duplication and "weird characters" (large JSON)
-                     delete filtersForJson.contacts;
                      hasSetRatedBy = true;
                  } else {
                      newParams.delete('rated_by');
                  }
+                 // If we set rated_by from contacts, we can remove contacts from JSON
+                 // to avoid duplication and "weird characters" (large JSON)
+                 delete filtersForJson.contacts;
              } else if (ratedBy && Array.isArray(ratedBy) && ratedBy.length > 0) {
                  // Fallback: If no rich contacts, use simple ratedBy list
                  newParams.set('rated_by', ratedBy.join(','));

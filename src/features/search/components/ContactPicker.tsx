@@ -83,8 +83,11 @@ export function ContactPicker({
               <button
                 type="button"
                 className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                onClick={(e) => {
+                onMouseDown={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
                   e.stopPropagation();
                   handleUnselect(contact.id);
                 }}
