@@ -698,6 +698,42 @@ export interface Database {
             referencedColumns: ["id"]
           }
         ]
+      },
+      link_likes: {
+        Row: {
+          created_at: string
+          id: string
+          link_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_likes_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "review_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "link_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       likes: {
         Row: {
@@ -1233,6 +1269,48 @@ export interface Database {
           },
           {
             foreignKeyName: "review_images_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
+      review_links: {
+        Row: {
+          created_at: string
+          id: string
+          review_id: string
+          title: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          review_id: string
+          title?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_id?: string
+          title?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_links_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "user_buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_links_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
