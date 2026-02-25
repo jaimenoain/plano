@@ -1,6 +1,7 @@
 import { Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { PopularityBadge } from "@/components/PopularityBadge";
 import { getBuildingUrl } from "@/utils/url";
 import { Architect } from "@/types/architect";
@@ -32,25 +33,60 @@ interface BuildingHeaderProps {
   building: BuildingDetails;
   showEditLink: boolean;
   className?: string;
+  isEditing?: boolean;
+  nameValue?: string;
+  yearValue?: number | string;
+  onNameChange?: (val: string) => void;
+  onYearChange?: (val: number) => void;
 }
 
-export const BuildingHeader = ({ building, showEditLink, className }: BuildingHeaderProps) => {
+export const BuildingHeader = ({
+  building,
+  showEditLink,
+  className,
+  isEditing,
+  nameValue,
+  yearValue,
+  onNameChange,
+  onYearChange
+}: BuildingHeaderProps) => {
     return (
         <div className={`${className || ""} group`}>
             <div className="flex justify-between items-start">
-                <div className="flex flex-col items-start gap-2 mb-2">
+                <div className="flex flex-col items-start gap-2 mb-2 w-full">
                     <PopularityBadge rank={building.tier_rank} city={building.city} />
-                    <h1 className="text-4xl font-extrabold tracking-tight">{building.name}</h1>
-                    {building.alt_name && building.alt_name !== building.name && (
+
+                    {isEditing ? (
+                        <Input
+                            value={nameValue}
+                            onChange={(e) => onNameChange?.(e.target.value)}
+                            className="text-3xl sm:text-4xl font-extrabold tracking-tight h-auto px-3 py-2 w-full"
+                            placeholder="Official Building Name"
+                        />
+                    ) : (
+                        <h1 className="text-4xl font-extrabold tracking-tight">{building.name}</h1>
+                    )}
+
+                    {building.alt_name && building.alt_name !== building.name && !isEditing && (
                         <h2 className="text-xl text-muted-foreground font-medium">{building.alt_name}</h2>
                     )}
                 </div>
             </div>
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                {building.year_completed && (
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground items-center">
+                {(building.year_completed || isEditing) && (
                     <div className="flex items-center gap-1.5">
                         <Calendar className="w-4 h-4" />
-                        <span>{building.year_completed}</span>
+                        {isEditing ? (
+                             <Input
+                                type="number"
+                                value={yearValue}
+                                onChange={(e) => onYearChange?.(parseInt(e.target.value))}
+                                className="w-24 h-8 text-sm"
+                                placeholder="Year"
+                            />
+                        ) : (
+                            <span>{building.year_completed}</span>
+                        )}
                     </div>
                 )}
                 {(building.architects && building.architects.length > 0) && (
@@ -83,7 +119,7 @@ export const BuildingHeader = ({ building, showEditLink, className }: BuildingHe
                 </div>
             )}
 
-            {showEditLink && (
+            {showEditLink && !isEditing && (
                 <div className="mt-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
                     <Link
                         to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}

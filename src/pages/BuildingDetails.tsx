@@ -51,6 +51,7 @@ import { BuildingLocationMap } from "@/features/maps/components/BuildingLocation
 import { PopularityBadge } from "@/components/PopularityBadge";
 import { BuildingImageCard } from "@/components/BuildingImageCard";
 import { BuildingHeader } from "@/components/BuildingHeader";
+import { ArchitectStatement } from "@/components/ArchitectStatement";
 
 // --- Types ---
 interface BuildingDetails {
@@ -77,6 +78,7 @@ interface BuildingDetails {
   context?: string | null;
   intervention?: string | null;
   category?: string | null;
+  architect_statement?: string | null;
 }
 
 interface TopLink {
@@ -134,7 +136,13 @@ export default function BuildingDetails() {
   const [loading, setLoading] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
   
+  const isVerifiedArchitect = useMemo(() => {
+       if (!building?.architects || verifiedClaims.length === 0) return false;
+       return building.architects.some(a => verifiedClaims.includes(a.id));
+  }, [building, verifiedClaims]);
+
   const canEdit = isCreator || profile?.role === 'admin';
+  const canEditOfficialData = isCreator || profile?.role === 'admin' || isVerifiedArchitect;
 
   // User Interaction State
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
@@ -149,6 +157,18 @@ export default function BuildingDetails() {
   const [linksLoading, setLinksLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [socialContext, setSocialContext] = useState<string | null>(null);
+
+  // Official Data Editing State
+  const [isOfficialEditing, setIsOfficialEditing] = useState(false);
+  const [verifiedClaims, setVerifiedClaims] = useState<string[]>([]);
+  const [draftOfficialData, setDraftOfficialData] = useState({
+      name: "",
+      year_completed: 0,
+      city: "",
+      country: "",
+      architect_statement: ""
+  });
+  const [isSavingOfficial, setIsSavingOfficial] = useState(false);
 
   // New State for Edit View Enhancement
   const [userLinks, setUserLinks] = useState<{id: string, url: string, title: string}[]>([]);
@@ -202,6 +222,18 @@ export default function BuildingDetails() {
   }, [building]);
 
   useEffect(() => {
+      if (building) {
+          setDraftOfficialData({
+              name: building.name,
+              year_completed: building.year_completed,
+              city: building.city || "",
+              country: building.country || "",
+              architect_statement: building.architect_statement || ""
+          });
+      }
+  }, [building]);
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isMapExpanded) {
         setIsMapExpanded(false);
@@ -246,6 +278,13 @@ export default function BuildingDetails() {
       // Task 2: Fetch User Entry (if logged in)
       if (user) {
         tasks.push((async () => {
+           // Fetch architect claims
+           const { data: claims } = await supabase.from('architect_claims')
+               .select('architect_id')
+               .eq('user_id', user.id)
+               .eq('status', 'verified');
+           if (claims) setVerifiedClaims(claims.map(c => c.architect_id));
+
           const { data: userEntry, error: userEntryError } = await supabase
               .from("user_buildings")
               .select("*, images:review_images(id, storage_path, is_generated)")
@@ -826,6 +865,35 @@ export default function BuildingDetails() {
     }
   };
 
+  const handleSaveOfficialData = async () => {
+      if (!building) return;
+      setIsSavingOfficial(true);
+
+      try {
+          const { error } = await supabase
+              .from('buildings')
+              .update({
+                  name: draftOfficialData.name,
+                  year_completed: draftOfficialData.year_completed,
+                  city: draftOfficialData.city,
+                  country: draftOfficialData.country,
+                  architect_statement: draftOfficialData.architect_statement
+              })
+              .eq('id', building.id);
+
+          if (error) throw error;
+
+          toast({ title: "Building updated successfully" });
+          setIsOfficialEditing(false);
+          fetchBuildingData();
+      } catch (error) {
+          console.error("Error updating building:", error);
+          toast({ variant: "destructive", title: "Failed to update building" });
+      } finally {
+          setIsSavingOfficial(false);
+      }
+  };
+
   const googleSearchUrl = useMemo(() => {
     if (!building) return "";
     const query = [
@@ -846,11 +914,48 @@ export default function BuildingDetails() {
       <MetaHead title={building.name} />
 
       {/* Building Header - Mobile Only */}
-      <BuildingHeader building={building} showEditLink={!!user} className="lg:hidden p-4 pb-0" />
+      <BuildingHeader
+        building={building}
+        showEditLink={!!user}
+        className="lg:hidden p-4 pb-0"
+        isEditing={isOfficialEditing}
+        nameValue={draftOfficialData.name}
+        yearValue={draftOfficialData.year_completed}
+        onNameChange={(val) => setDraftOfficialData(prev => ({ ...prev, name: val }))}
+        onYearChange={(val) => setDraftOfficialData(prev => ({ ...prev, year_completed: val }))}
+      />
+
+      {canEditOfficialData && (
+        <div className="lg:hidden px-4 mt-2 mb-2 flex justify-end">
+            {isOfficialEditing ? (
+                <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setIsOfficialEditing(false)} disabled={isSavingOfficial}>
+                        Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveOfficialData} disabled={isSavingOfficial}>
+                        {isSavingOfficial && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Save Changes
+                    </Button>
+                </div>
+            ) : (
+                <Button variant="outline" size="sm" onClick={() => setIsOfficialEditing(true)} className="gap-2 w-full">
+                    <Pencil className="w-4 h-4" />
+                    Edit Official Data
+                </Button>
+            )}
+        </div>
+      )}
 
       <BuildingAttributes
         building={building}
         className="lg:hidden px-4 mt-4 mb-2"
+      />
+
+      <ArchitectStatement
+        statement={draftOfficialData.architect_statement}
+        isEditing={isOfficialEditing}
+        onChange={(val) => setDraftOfficialData(prev => ({ ...prev, architect_statement: val }))}
+        className="lg:hidden px-4 mt-4"
       />
 
       <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto p-4 lg:p-8 pt-4">
@@ -888,12 +993,30 @@ export default function BuildingDetails() {
                 )}
 
                 <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-muted-foreground w-full">
                         <MapPin className="w-4 h-4 shrink-0" />
-                        <span className="text-sm font-medium">
-                            {[building.city, building.country].filter(Boolean).join(", ") || building.address}
-                        </span>
-                        {user && (
+                        {isOfficialEditing ? (
+                            <div className="flex gap-2 w-full max-w-sm">
+                                <Input
+                                    value={draftOfficialData.city}
+                                    onChange={(e) => setDraftOfficialData(prev => ({ ...prev, city: e.target.value }))}
+                                    placeholder="City"
+                                    className="h-8 text-sm"
+                                />
+                                <Input
+                                    value={draftOfficialData.country}
+                                    onChange={(e) => setDraftOfficialData(prev => ({ ...prev, country: e.target.value }))}
+                                    placeholder="Country"
+                                    className="h-8 text-sm"
+                                />
+                            </div>
+                        ) : (
+                            <span className="text-sm font-medium">
+                                {[building.city, building.country].filter(Boolean).join(", ") || building.address}
+                            </span>
+                        )}
+
+                        {user && !isOfficialEditing && (
                             <Link
                                 to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}
                                 className="hidden group-hover:inline-flex items-center justify-center p-1 rounded hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors ml-1"
@@ -1003,7 +1126,46 @@ export default function BuildingDetails() {
         <div className="space-y-8 mt-6 lg:mt-0">
             
             {/* Header Info - Desktop Only */}
-      <BuildingHeader building={building} showEditLink={!!user} className="hidden lg:block" />
+      <div className="hidden lg:block space-y-4">
+        <BuildingHeader
+            building={building}
+            showEditLink={!!user}
+            isEditing={isOfficialEditing}
+            nameValue={draftOfficialData.name}
+            yearValue={draftOfficialData.year_completed}
+            onNameChange={(val) => setDraftOfficialData(prev => ({ ...prev, name: val }))}
+            onYearChange={(val) => setDraftOfficialData(prev => ({ ...prev, year_completed: val }))}
+        />
+
+        {canEditOfficialData && (
+             <div className="flex justify-end">
+                {isOfficialEditing ? (
+                    <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setIsOfficialEditing(false)} disabled={isSavingOfficial}>
+                            Cancel
+                        </Button>
+                        <Button size="sm" onClick={handleSaveOfficialData} disabled={isSavingOfficial}>
+                            {isSavingOfficial && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            Save Changes
+                        </Button>
+                    </div>
+                ) : (
+                    <Button variant="outline" size="sm" onClick={() => setIsOfficialEditing(true)} className="gap-2">
+                        <Pencil className="w-4 h-4" />
+                        Edit Official Data
+                    </Button>
+                )}
+             </div>
+        )}
+
+        <ArchitectStatement
+            statement={draftOfficialData.architect_statement}
+            isEditing={isOfficialEditing}
+            onChange={(val) => setDraftOfficialData(prev => ({ ...prev, architect_statement: val }))}
+            className="mt-6"
+        />
+
+      </div>
 
             <BuildingAttributes
                 building={building}
