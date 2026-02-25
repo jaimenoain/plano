@@ -10,6 +10,7 @@ import {
   Map,
   History,
   Trash2,
+  FileCheck,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -47,6 +48,11 @@ const items = [
     title: "Users",
     url: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Pending Claims",
+    url: "/admin/claims",
+    icon: FileCheck,
   },
   {
     title: "Moderation",
