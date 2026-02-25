@@ -19,10 +19,9 @@ export function StatusBadge({ status, isOwnProfile, onClick }: StatusBadgeProps)
         if (isOwnProfile) onClick();
       }}
       className={cn(
-        "relative px-2 py-0.5 rounded-md text-[10px] uppercase tracking-wider font-medium transition-colors duration-300 select-none overflow-hidden min-w-[80px]",
-        "border border-transparent",
-        isOwnProfile ? "cursor-pointer hover:border-border/40 hover:bg-secondary/40" : "cursor-default opacity-80",
-        isVisited ? "text-green-600" : "text-orange-500"
+        "relative px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-300 select-none overflow-hidden flex items-center justify-center",
+        "border border-transparent bg-secondary text-secondary-foreground",
+        isOwnProfile ? "cursor-pointer hover:bg-secondary/80" : "cursor-default opacity-80"
       )}
       whileTap={isOwnProfile ? { scale: 0.95 } : {}}
     >
@@ -35,7 +34,7 @@ export function StatusBadge({ status, isOwnProfile, onClick }: StatusBadgeProps)
           transition={{ duration: 0.2 }}
           className="block"
         >
-          {isVisited ? "Visited" : "Bucket List"}
+          {isVisited ? "Visited" : "Saved"}
         </motion.span>
       </AnimatePresence>
     </motion.button>
