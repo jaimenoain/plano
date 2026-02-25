@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Lock, Globe, Plus, Map as MapIcon } from "lucide-react";
+import { Lock, Globe, Plus, Map as MapIcon, Folder } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { UserFolder } from "@/types/collection";
 
 interface Collection {
   id: string;
@@ -27,13 +28,89 @@ interface CollectionsGridProps {
 
 export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refreshKey }: CollectionsGridProps) {
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [folders, setFolders] = useState<UserFolder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (userId) {
-      fetchCollections();
+      fetchData();
     }
   }, [userId, refreshKey]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    await Promise.all([fetchCollections(), fetchFolders()]);
+    setLoading(false);
+  };
+
+  const fetchFolders = async () => {
+    try {
+      let query = supabase
+        .from("user_folders")
+        .select(`
+          id,
+          name,
+          slug,
+          description,
+          is_public,
+          created_at,
+          items_count:user_folder_items(count),
+          user_folder_items (
+             collection:collections (
+               collection_items (
+                 building:buildings (
+                   main_image_url
+                 )
+               )
+             )
+          )
+        `)
+        .eq("owner_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(5, { foreignTable: 'user_folder_items' });
+
+      if (!isOwnProfile) {
+        query = query.eq("is_public", true);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching folders:", error);
+        return;
+      }
+
+      const processedFolders: UserFolder[] = (data || []).map((folder: any) => {
+        // extract images
+        const images: string[] = [];
+        folder.user_folder_items?.forEach((item: any) => {
+            item.collection?.collection_items?.forEach((ci: any) => {
+                const url = ci.building?.main_image_url;
+                if (url && !images.includes(url)) {
+                    images.push(url);
+                }
+            });
+        });
+
+        return {
+          id: folder.id,
+          owner_id: userId,
+          name: folder.name,
+          slug: folder.slug,
+          description: folder.description,
+          is_public: folder.is_public,
+          created_at: folder.created_at,
+          items_count: folder.items_count?.[0]?.count || 0,
+          preview_images: images.slice(0, 4)
+        };
+      });
+
+      setFolders(processedFolders);
+
+    } catch (err) {
+      console.error("Error in fetchFolders:", err);
+    }
+  };
 
   const fetchCollections = async () => {
     try {
@@ -72,13 +149,11 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
       setCollections(sorted);
     } catch (error) {
       console.error("Error fetching collections:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
   if (loading) return <div className="h-32 w-full animate-pulse bg-secondary/20 rounded-lg mx-4" />;
-  if (collections.length === 0 && !isOwnProfile) return null;
+  if (collections.length === 0 && folders.length === 0 && !isOwnProfile) return null;
 
   return (
     <div className="w-full mb-6">
@@ -96,8 +171,8 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
 
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex space-x-3 px-4 pb-4">
-          {/* New Collection Card (Alternate placement, maybe redundent with header button but good for visibility if empty) */}
-          {isOwnProfile && collections.length === 0 && onCreate && (
+          {/* New Collection Card */}
+          {isOwnProfile && collections.length === 0 && folders.length === 0 && onCreate && (
             <button
               onClick={onCreate}
               className="flex-shrink-0 w-[160px] h-[100px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-secondary/50 transition-colors group"
@@ -108,6 +183,46 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
               <span className="text-sm font-medium text-muted-foreground">Create New</span>
             </button>
           )}
+
+          {/* Render Folders First (Optional, but good for structure) */}
+          {folders.map((folder) => (
+             <Link
+               key={folder.id}
+               to={`/${username || 'user'}/folders/${folder.slug}`} // Hypothetical route
+               className="block flex-shrink-0 w-[180px] group select-none"
+             >
+               <Card className="h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative border-dashed border-primary/20 bg-primary/5">
+                 <CardContent className="p-4 h-full flex flex-col justify-between">
+                   <div className="flex justify-between items-start">
+                      <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors pr-4 whitespace-normal">
+                        {folder.name}
+                      </h4>
+                       {folder.is_public ? (
+                        <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
+                      ) : (
+                        <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
+                      )}
+                   </div>
+                   <div className="flex items-center justify-between mt-auto">
+                     <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                       <Folder className="h-3 w-3" />
+                       {folder.items_count || 0} collections
+                     </span>
+                   </div>
+                   {/* Preview Images Visualization (Simple Stack) */}
+                    {folder.preview_images && folder.preview_images.length > 0 && (
+                        <div className="absolute bottom-2 right-2 flex -space-x-2">
+                            {folder.preview_images.slice(0, 3).map((img, i) => (
+                                <div key={i} className="w-6 h-6 rounded-full border border-background overflow-hidden relative z-[1]">
+                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                 </CardContent>
+               </Card>
+             </Link>
+          ))}
 
           {collections.map((collection) => (
             <Link
