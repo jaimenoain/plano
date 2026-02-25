@@ -184,7 +184,7 @@ describe('BuildingDetails Interaction', () => {
         year_completed: 2000,
         slug: 'test-building',
         short_id: 'tb',
-        architects: [{ architect: { name: 'Arch One', id: 'a1' } }],
+        architects: [{ name: 'Arch One', id: 'a1' }],
         location: { type: 'Point', coordinates: [0, 0] },
         created_by: 'other-user',
         styles: [],
