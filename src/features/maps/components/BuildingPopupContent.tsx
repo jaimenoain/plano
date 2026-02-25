@@ -35,10 +35,14 @@ export function BuildingPopupContent({
   onAddCandidate
 }: BuildingPopupContentProps) {
   const { user } = useAuth();
-  const { statuses } = useUserBuildingStatuses();
+  const { statuses, ratings } = useUserBuildingStatuses();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
+
+  // Interaction State
+  const [justInteracted, setJustInteracted] = useState<'saved' | 'visited' | null>(null);
+  const [optimisticRating, setOptimisticRating] = useState<number | null>(null);
 
   // Confirmation State
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -72,6 +76,7 @@ export function BuildingPopupContent({
 
         if (error) throw error;
         toast({ title: removeMessage });
+        setJustInteracted(null);
       } else {
         // Set new status
         const { error } = await supabase.from("user_buildings").upsert({
@@ -83,6 +88,7 @@ export function BuildingPopupContent({
 
         if (error) throw error;
         toast({ title: successMessage });
+        setJustInteracted(status === 'pending' ? 'saved' : (status === 'visited' ? 'visited' : null));
       }
 
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
@@ -194,6 +200,26 @@ export function BuildingPopupContent({
     e.preventDefault();
     if (onAddCandidate) {
         onAddCandidate(buildingId);
+    }
+  };
+
+  const handleRate = async (rating: number) => {
+    if (!user) return;
+    setOptimisticRating(rating);
+    try {
+      const { error } = await supabase
+        .from("user_buildings")
+        .update({ rating: rating })
+        .eq("user_id", user.id)
+        .eq("building_id", buildingId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+    } catch (error) {
+      console.error("Failed to rate", error);
+      toast({ variant: "destructive", title: "Failed to update rating" });
+      setOptimisticRating(null); // Revert on error
     }
   };
 
@@ -445,6 +471,49 @@ export function BuildingPopupContent({
                 </div>
             )}
           </div>
+        )}
+
+        {/* Post-Interaction Rating UI */}
+        {justInteracted && (
+           <div
+             className="flex justify-center items-center gap-3 pt-3 pb-1 border-t animate-in fade-in slide-in-from-top-1 duration-300"
+             onClick={(e) => e.stopPropagation()}
+           >
+              {/* Status Indicator Circle */}
+              <div className="h-8 w-8 rounded-full bg-green-600 flex items-center justify-center text-white shadow-sm">
+                  {justInteracted === 'saved' ? (
+                      <Bookmark className="h-4 w-4 fill-current" />
+                  ) : (
+                      <Check className="h-5 w-5 stroke-[3px]" />
+                  )}
+              </div>
+
+              {/* Rating Circles */}
+              {[1, 2, 3].map((rating) => {
+                  const currentRating = optimisticRating !== null ? optimisticRating : (ratings[buildingId] || 0);
+                  const isFilled = currentRating >= rating;
+
+                  return (
+                      <div
+                          key={rating}
+                          className={`
+                              h-8 w-8 rounded-full cursor-pointer transition-all duration-200
+                              flex items-center justify-center border
+                              ${isFilled
+                                  ? "bg-black border-black"
+                                  : "bg-transparent border-gray-300 hover:border-gray-400"
+                              }
+                          `}
+                          onClick={(e) => {
+                              e.stopPropagation();
+                              handleRate(rating);
+                          }}
+                      >
+                          {/* Inner dot logic if needed, or just fill. Requirement says "fill into black". */}
+                      </div>
+                  );
+              })}
+           </div>
         )}
       </div>
 
