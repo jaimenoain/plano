@@ -18,11 +18,12 @@ import {
 import { getBuildingImageUrl } from "@/utils/image";
 import { StatusBadge } from "./StatusBadge";
 import { InlineRating } from "./InlineRating";
+import { InlineReviewEditor } from "./InlineReviewEditor";
 
 interface ProfileListViewProps {
   data: FeedReview[];
   isOwnProfile: boolean;
-  onUpdate: (id: string, updates: { status?: string; rating?: number | null }) => void;
+  onUpdate: (id: string, updates: { status?: string; rating?: number | null; content?: string }) => void;
 }
 
 function getCityFromAddress(address: string | null | undefined): string {
@@ -151,17 +152,12 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                         readOnly={!isOwnProfile}
                       />
                     </TableCell>
-                    <TableCell className="text-muted-foreground py-1 truncate">
-                      {review.content ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="truncate block">{review.content}</span>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm text-xs">
-                            <p className="whitespace-normal break-words">{review.content}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : "—"}
+                    <TableCell className="text-muted-foreground py-1">
+                      <InlineReviewEditor
+                        initialContent={review.content}
+                        isOwnProfile={isOwnProfile}
+                        onSave={(content) => onUpdate(review.id, { content })}
+                      />
                     </TableCell>
                     <TableCell className="text-muted-foreground py-1 truncate">
                       {architectNames}

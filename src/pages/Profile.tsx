@@ -567,7 +567,7 @@ export default function Profile() {
     setIsFollowing(!isFollowing);
   };
 
-  const handleUpdate = async (id: string, updates: { status?: string, rating?: number | null }) => {
+  const handleUpdate = async (id: string, updates: { status?: string; rating?: number | null; content?: string }) => {
     if (!currentUser || !isOwnProfile) return;
 
     const previousContent = [...content];
