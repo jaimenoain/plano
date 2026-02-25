@@ -90,7 +90,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   // Format architect names (handle if architects is undefined, e.g. from FeedItem)
   const architectNames = building.architects?.map((a: any) => a.name).join(", ");
 
-  const saveToSupabase = async (status: 'pending' | 'ignored', ratingValue?: number) => {
+  const saveToSupabase = async (status: 'pending' | 'ignored', ratingValue?: number | null) => {
       if (!user) return;
       try {
         const updateData: any = {
@@ -131,7 +131,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
     saveToSupabase('pending');
   };
 
-  const handleRate = async (value: number, e: React.MouseEvent) => {
+  const handleRate = async (value: number | null, e: React.MouseEvent) => {
       e.stopPropagation();
       setRating(value);
 
@@ -280,17 +280,19 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
           >
               <h3 className="text-white text-2xl font-bold mb-8">Add points? (Optional)</h3>
               <div className="flex gap-6">
-                  {[1, 2, 3].map((val) => (
+                  {([null, 1, 2, 3] as const).map((val) => (
                       <button
-                        key={val}
+                        key={val ?? 'bookmark'}
                         onClick={(e) => handleRate(val, e)}
                         className={`w-16 h-16 rounded-full border-2 border-white flex items-center justify-center text-2xl font-bold transition-all duration-300 ${
                             rating === val
-                                ? "bg-primary-foreground text-primary border-primary-foreground scale-110 shadow-[0_0_20px_hsl(var(--primary-foreground))]"
+                                ? (val === null
+                                    ? "bg-green-500 text-white border-green-500 scale-110 shadow-[0_0_20px_theme(colors.green.500)]"
+                                    : "bg-primary-foreground text-primary border-primary-foreground scale-110 shadow-[0_0_20px_hsl(var(--primary-foreground))]")
                                 : "text-white hover:bg-white/20 hover:scale-105"
                         }`}
                       >
-                          {val}
+                          {val === null ? <Bookmark className="w-8 h-8" /> : val}
                       </button>
                   ))}
               </div>
