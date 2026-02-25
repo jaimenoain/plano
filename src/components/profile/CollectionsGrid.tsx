@@ -126,20 +126,49 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
         .select("id, name, slug, is_public, created_at, collection_items(count), collection_contributors!inner(user_id), owner:profiles!collections_owner_id_fkey(username)")
         .eq("collection_contributors.user_id", userId);
 
-      const [ownedRes, contributedRes] = await Promise.all([ownedPromise, contributedPromise]);
+      // 3. Fetch organized collection IDs (to exclude)
+      let organizedQuery = supabase
+        .from("user_folder_items")
+        .select("collection_id, user_folders!inner(id, owner_id, is_public)")
+        .eq("user_folders.owner_id", userId);
+
+      if (!isOwnProfile) {
+        organizedQuery = organizedQuery.eq("user_folders.is_public", true);
+      }
+
+      const [ownedRes, contributedRes, organizedRes] = await Promise.all([
+        ownedPromise,
+        contributedPromise,
+        organizedQuery
+      ]);
 
       if (ownedRes.error) throw ownedRes.error;
       if (contributedRes.error) throw contributedRes.error;
+      if (organizedRes.error) throw organizedRes.error;
 
       // Cast to unknown first to handle the extra collection_contributors field in the second query
       const owned = (ownedRes.data || []) as unknown as Collection[];
       const contributed = (contributedRes.data || []) as unknown as Collection[];
 
+      // Extract organized collection IDs
+      const organizedIds = new Set(
+        (organizedRes.data || []).map((item: any) => item.collection_id)
+      );
+
       // Merge and deduplicate by ID
       const allCollections = new Map<string, Collection>();
 
-      owned.forEach(c => allCollections.set(c.id, c));
-      contributed.forEach(c => allCollections.set(c.id, c));
+      owned.forEach(c => {
+        if (!organizedIds.has(c.id)) {
+          allCollections.set(c.id, c);
+        }
+      });
+
+      contributed.forEach(c => {
+        if (!organizedIds.has(c.id)) {
+          allCollections.set(c.id, c);
+        }
+      });
 
       // Sort by created_at desc
       const sorted = Array.from(allCollections.values()).sort((a, b) =>
