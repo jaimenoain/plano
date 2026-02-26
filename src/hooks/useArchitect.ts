@@ -72,7 +72,7 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
               city,
               country,
               year_completed,
-              hero_image_url
+              hero_image:review_images!hero_image_id(storage_path)
             )
           `)
           .eq("architect_id", architectId);
@@ -82,7 +82,23 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
         if (isMounted) {
             // Transform data to extract the nested building object
             const formattedBuildings = (buildingsData || [])
-            .map((item: any) => item.building)
+            .map((item: any) => {
+              const b = item.building;
+              if (!b) return null;
+
+              // Extract storage_path from the joined hero_image object if it exists
+              // The query returns an object because of the !hero_image_id foreign key relationship
+              const heroImage = b.hero_image as { storage_path: string } | null;
+
+              return {
+                id: b.id,
+                name: b.name,
+                city: b.city,
+                country: b.country,
+                year_completed: b.year_completed,
+                hero_image_url: heroImage?.storage_path || null
+              };
+            })
             .filter((b: any) => b !== null) as ArchitectBuilding[];
 
             setBuildings(formattedBuildings);
