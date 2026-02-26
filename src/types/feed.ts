@@ -8,6 +8,7 @@ export interface ReviewImage {
 export interface ReviewUser {
   username: string | null;
   avatar_url: string | null;
+  is_verified_architect?: boolean;
 }
 
 export interface ReviewBuilding {
