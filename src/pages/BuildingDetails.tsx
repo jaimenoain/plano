@@ -1154,39 +1154,54 @@ export default function BuildingDetails() {
             </div>
 
             {displayImages.length > 0 ? (
-                <Tabs defaultValue="all" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-4">
-                        <TabsTrigger value="all">All Photos</TabsTrigger>
-                        <TabsTrigger value="official">Official Lookbook</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="all" className="space-y-6 mt-0">
-                        {displayImages.map((img) => (
-                            <BuildingImageCard
-                                key={img.id}
-                                image={img}
-                                initialIsLiked={likedImageIds.has(img.id)}
-                                onOpen={() => setSelectedImage(img)}
-                            />
-                        ))}
-                    </TabsContent>
-                    <TabsContent value="official" className="space-y-6 mt-0">
-                        {displayImages.some(img => img.is_official) ? (
-                            displayImages.filter(img => img.is_official).map((img) => (
-                                <BuildingImageCard
-                                    key={img.id}
-                                    image={img}
-                                    initialIsLiked={likedImageIds.has(img.id)}
-                                    onOpen={() => setSelectedImage(img)}
-                                />
-                            ))
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground bg-muted/10 rounded-xl border border-dashed border-white/10">
-                                <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-                                <p className="text-sm">No official photos yet.</p>
+                (() => {
+                    const officialCount = displayImages.filter(img => img.is_official).length;
+                    const showTabs = officialCount > 0 && officialCount < displayImages.length;
+
+                    if (showTabs) {
+                        return (
+                            <Tabs defaultValue="all" className="w-full">
+                                <TabsList className="grid w-full grid-cols-2 mb-4">
+                                    <TabsTrigger value="all">All Photos</TabsTrigger>
+                                    <TabsTrigger value="official">Official Lookbook</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="all" className="space-y-6 mt-0">
+                                    {displayImages.map((img) => (
+                                        <BuildingImageCard
+                                            key={img.id}
+                                            image={img}
+                                            initialIsLiked={likedImageIds.has(img.id)}
+                                            onOpen={() => setSelectedImage(img)}
+                                        />
+                                    ))}
+                                </TabsContent>
+                                <TabsContent value="official" className="space-y-6 mt-0">
+                                    {displayImages.filter(img => img.is_official).map((img) => (
+                                        <BuildingImageCard
+                                            key={img.id}
+                                            image={img}
+                                            initialIsLiked={likedImageIds.has(img.id)}
+                                            onOpen={() => setSelectedImage(img)}
+                                        />
+                                    ))}
+                                </TabsContent>
+                            </Tabs>
+                        );
+                    } else {
+                        return (
+                            <div className="space-y-6">
+                                {displayImages.map((img) => (
+                                    <BuildingImageCard
+                                        key={img.id}
+                                        image={img}
+                                        initialIsLiked={likedImageIds.has(img.id)}
+                                        onOpen={() => setSelectedImage(img)}
+                                    />
+                                ))}
                             </div>
-                        )}
-                    </TabsContent>
-                </Tabs>
+                        );
+                    }
+                })()
             ) : (
                 <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
                     <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground text-center p-6">
