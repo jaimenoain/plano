@@ -5,7 +5,7 @@ import {
   Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
   MessageCircle, EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon, Users, X,
-  Pencil
+  Pencil, BadgeCheck
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,6 +104,7 @@ interface FeedEntry {
   user: {
     username: string | null;
     avatar_url: string | null;
+    is_verified_architect?: boolean;
   };
   images: {
     id: string;
@@ -372,14 +373,7 @@ export default function BuildingDetails() {
         }
 
         const { data: entriesData, error: entriesError } = await supabase
-          .from("user_buildings")
-          .select(`
-            id, user_id, content, rating, status, tags, created_at, video_url,
-            user:profiles(username, avatar_url),
-            images:review_images(id, storage_path, likes_count, created_at, is_generated, is_official)
-          `)
-          .eq("building_id", resolvedBuildingId)
-          .order("created_at", { ascending: false });
+          .rpc("get_building_reviews", { p_building_id: resolvedBuildingId });
 
         const communityImages: DisplayImage[] = [];
 
@@ -415,7 +409,7 @@ export default function BuildingDetails() {
                         type: 'video',
                         likes_count: 0, // Videos typically share likes with the review, which isn't separately tracked per image currently in this view
                         created_at: entry.created_at,
-                        user: entry.user
+                        user: entry.user_data // Use user_data from RPC
                     });
                 }
 
@@ -430,7 +424,7 @@ export default function BuildingDetails() {
                                   type: 'image',
                                   likes_count: img.likes_count || 0,
                                   created_at: img.created_at || entry.created_at,
-                                  user: entry.user,
+                                  user: entry.user_data, // Use user_data from RPC
                                   is_generated: img.is_generated,
                                   is_official: img.is_official
                               });
@@ -449,8 +443,8 @@ export default function BuildingDetails() {
             let sanitizedEntries = entriesData.map((e: any) => ({
                 ...e,
                 user: {
-                    ...e.user,
-                    avatar_url: e.user.avatar_url || null
+                    ...e.user_data,
+                    avatar_url: e.user_data?.avatar_url || null
                 },
                 images: e.images || []
             }));
@@ -1723,16 +1717,22 @@ export default function BuildingDetails() {
                         <p className="text-muted-foreground text-sm">No one has visited this building yet.</p>
                     ) : (
                         entries.map(entry => (
-                            <div key={entry.id} className="flex gap-4 p-4 bg-muted/10 rounded-lg">
+                            <div key={entry.id} className={`flex gap-4 p-4 bg-muted/10 rounded-lg ${entry.user.is_verified_architect ? 'border-l-2 border-l-[#eeff41ff] bg-background border-t border-r border-b border-border/50' : ''}`}>
                                 <Avatar>
                                     <AvatarImage src={entry.user.avatar_url || undefined} />
                                     <AvatarFallback>{entry.user.username?.[0]}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <Link to={`/profile/${entry.user.username || entry.user_id}`} className="font-bold text-sm hover:underline">
                                             {entry.user.username}
                                         </Link>
+                                        {entry.user.is_verified_architect && (
+                                            <div className="inline-flex items-center gap-1 bg-black text-[#eeff41ff] text-[10px] px-1.5 py-0.5 rounded align-middle">
+                                                <BadgeCheck className="w-3 h-3" />
+                                                <span className="font-bold uppercase tracking-wider">Verified Architect</span>
+                                            </div>
+                                        )}
                                         {entry.status === 'visited' && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">Visited</Badge>}
                                         {entry.status === 'pending' && <Badge variant="outline" className="text-[10px] h-5 px-1.5">Saved</Badge>}
                                         <Link to={`/review/${entry.id}`} className="text-xs text-muted-foreground hover:underline">
