@@ -6,6 +6,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuBadge,
   SidebarHeader,
   SidebarFooter,
   SidebarRail,
@@ -17,6 +18,7 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import {
   DropdownMenu,
@@ -103,6 +105,7 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
 
 export function AppSidebar() {
   const { user } = useAuth();
+  const { count: notificationCount } = useNotifications();
   const location = useLocation();
   const { state, setOpen, isMobile } = useSidebar();
   const isHoveringRef = useRef(false);
@@ -179,9 +182,19 @@ export function AppSidebar() {
                         "before:absolute before:left-0 before:top-0 before:w-[2px] before:h-full before:bg-primary before:hidden data-[active=true]:before:block before:rounded-none"
                       )}
                     >
-                      <Link to={item.path}>
+                      <Link to={item.path} className="relative">
                         <item.icon strokeWidth={isActive ? 2.5 : 2} />
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                        {item.label === "Notifications" && notificationCount > 0 && (
+                          <>
+                            <SidebarMenuBadge className="bg-destructive text-destructive-foreground hover:bg-destructive rounded-full w-5 h-5 flex items-center justify-center text-[10px]">
+                              {notificationCount > 99 ? "99+" : notificationCount}
+                            </SidebarMenuBadge>
+                            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-destructive text-[9px] font-medium text-destructive-foreground absolute top-2 right-2 hidden group-data-[collapsible=icon]:flex pointer-events-none z-10 border border-sidebar-accent shadow-sm">
+                              {notificationCount > 9 ? "9+" : notificationCount}
+                            </span>
+                          </>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
