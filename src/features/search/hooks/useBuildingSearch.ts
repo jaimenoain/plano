@@ -40,6 +40,7 @@ interface ContactInteractionData {
 const EARTH_RADIUS_METERS = 6371000; // Earth's radius in meters
 const VALID_LOCATION_THRESHOLD = 0.0001; // Threshold for filtering invalid (0,0) coordinates
 const DEFAULT_SEARCH_RADIUS = 20000000; // 20,000 km in meters
+const QUERY_LIMIT = 100000; // Large limit to bypass default 1000 row limit
 
 // Helper to calculate Haversine distance in meters
 function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -156,7 +157,8 @@ async function enrichBuildings(
       const { data: fetchedData, error } = await supabase
         .from('buildings')
         .select('id, status, main_image_url')
-        .in('id', idsToFetch);
+        .in('id', idsToFetch)
+        .limit(QUERY_LIMIT);
 
       if (error) {
         console.error('Error fetching building data:', error);
@@ -198,7 +200,8 @@ async function enrichBuildings(
       const { data: follows, error: followsError } = await supabase
         .from('follows')
         .select('following_id')
-        .eq('follower_id', userId);
+        .eq('follower_id', userId)
+        .limit(QUERY_LIMIT);
 
       if (followsError) {
         console.error('Error fetching follows:', followsError);
@@ -218,7 +221,8 @@ async function enrichBuildings(
           `)
           .in('building_id', buildingIds)
           .in('user_id', contactIds)
-          .or('status.eq.visited,status.eq.pending,rating.not.is.null');
+          .or('status.eq.visited,status.eq.pending,rating.not.is.null')
+          .limit(QUERY_LIMIT);
 
         if (interactionsError) {
           console.error('Error fetching contact interactions:', interactionsError);
@@ -387,7 +391,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         const { data, error } = await supabase
           .from('profiles')
           .select('id, username, avatar_url, first_name, last_name')
-          .in('username', usernames);
+          .in('username', usernames)
+          .limit(QUERY_LIMIT);
 
         if (error) {
           console.error('Error fetching rated_by profiles:', error);
@@ -533,7 +538,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
           .from('collections')
           .select('id, name')
           .eq('owner_id', user.id)
-          .order('name');
+          .order('name')
+          .limit(QUERY_LIMIT);
 
         if (error) {
           console.error('Error fetching collections:', error);
@@ -622,6 +628,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                 query = query.gte('rating', effectiveMinRating);
               }
 
+              query = query.limit(QUERY_LIMIT);
+
               const { data: userBuildings, error: ubError } = await query;
               if (ubError) {
                 console.error('Error fetching user buildings:', ubError);
@@ -646,7 +654,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               const { data: follows, error: followsError } = await supabase
                 .from('follows')
                 .select('following_id')
-                .eq('follower_id', user.id);
+                .eq('follower_id', user.id)
+                .limit(QUERY_LIMIT);
 
               if (followsError) {
                 console.error('Error fetching follows for filter:', followsError);
@@ -663,6 +672,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                   if (contactMinRating > 0) {
                     query = query.gte('rating', contactMinRating);
                   }
+
+                  query = query.limit(QUERY_LIMIT);
 
                   const { data: contactBuildings, error: cbError } = await query;
                   if (cbError) {
@@ -683,7 +694,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               const { data: collectionItems, error: cError } = await supabase
                 .from('collection_items')
                 .select('building_id')
-                .in('collection_id', selectedCollections.map(c => c.id));
+                .in('collection_id', selectedCollections.map(c => c.id))
+                .limit(QUERY_LIMIT);
 
               if (cError) {
                 console.error('Error fetching collection items:', cError);
@@ -719,6 +731,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
             if (cleanQuery) {
               query = query.ilike('name', `%${cleanQuery}%`);
             }
+
+            query = query.limit(QUERY_LIMIT);
 
             const { data: buildingsData, error: bError } = await query;
             if (bError) {
