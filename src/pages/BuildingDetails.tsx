@@ -1743,9 +1743,12 @@ export default function BuildingDetails() {
                                             {entry.user.username}
                                         </Link>
                                         {entry.user.is_verified_architect && (
-                                            <div className="inline-flex items-center gap-1 bg-black text-[#eeff41ff] text-[10px] px-1.5 py-0.5 rounded align-middle">
+                                            <div
+                                                className="inline-flex items-center gap-1 bg-black text-[#eeff41ff] text-[10px] p-1 rounded align-middle"
+                                                data-testid="verified-badge-icon"
+                                                title="Verified Architect"
+                                            >
                                                 <BadgeCheck className="w-3 h-3" />
-                                                <span className="font-bold uppercase tracking-wider">Verified Architect</span>
                                             </div>
                                         )}
                                         {entry.status === 'visited' && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">Visited</Badge>}
