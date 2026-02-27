@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles } from "lucide-react";
+import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/components/groups/UserSearch";
@@ -28,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AddToFolderDialog } from "./AddToFolderDialog";
 
 interface CollectionSettingsDialogProps {
   collection: Collection;
@@ -86,6 +87,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [loadingContributors, setLoadingContributors] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [showAddToFolder, setShowAddToFolder] = useState(false);
 
   // New Category Input State
   const [newCategory, setNewCategory] = useState({ label: "", color: "#EEFF41" });
@@ -450,6 +452,20 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
 
             <Separator className="my-6" />
 
+            <div className="space-y-4">
+               <h3 className="text-sm font-medium flex items-center gap-2">
+                 <FolderPlus className="h-4 w-4" /> Folders
+               </h3>
+               <p className="text-sm text-muted-foreground">
+                 Add this collection to one or more of your folders.
+               </p>
+               <Button onClick={() => setShowAddToFolder(true)} className="w-full sm:w-auto" variant="outline">
+                 Manage Folders
+               </Button>
+            </div>
+
+            <Separator className="my-6" />
+
             {onPlanRoute && (
               <>
                 <div className="space-y-4">
@@ -740,6 +756,15 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {showAddToFolder && currentUserId && (
+          <AddToFolderDialog
+            open={showAddToFolder}
+            onOpenChange={setShowAddToFolder}
+            collectionId={collection.id}
+            userId={currentUserId}
+          />
+      )}
     </Sheet>
   );
 }
