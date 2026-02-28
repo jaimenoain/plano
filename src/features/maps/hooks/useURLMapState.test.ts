@@ -18,50 +18,8 @@ describe('MapStateSchema', () => {
       lng: -74.0060,
       zoom: 12,
       mode: 'library',
-      filters: { minRating: 2 }
+      filters: {} // MapStateSchema always returns an empty object for filters now
     });
-  });
-
-  it('should parse new filter fields correctly', () => {
-    const filters = {
-      collectionIds: ['1', '2'],
-      personalMinRating: 2,
-      typologies: ['t1'],
-      materials: ['m1'],
-      styles: ['s1'],
-      contexts: ['c1']
-    };
-
-    const input = {
-      filters: JSON.stringify(filters)
-    };
-
-    const result = MapStateSchema.parse(input);
-
-    expect(result.filters).toEqual(expect.objectContaining(filters));
-  });
-
-  it('should clamp invalid ratings', () => {
-    // Input rating > 3, expect 3
-    const inputHigh = {
-      filters: '{"minRating": 5, "personalMinRating": 5}'
-    };
-    const resultHigh = MapStateSchema.parse(inputHigh);
-    expect(resultHigh.filters).toEqual(expect.objectContaining({ minRating: 3, personalMinRating: 3 }));
-
-    // Input rating < 0, expect 0
-    const inputLow = {
-      filters: '{"minRating": -1}'
-    };
-    const resultLow = MapStateSchema.parse(inputLow);
-    expect(resultLow.filters).toEqual(expect.objectContaining({ minRating: 0 }));
-
-    // Test legacy min_rating if applicable (based on schema)
-    const inputLegacy = {
-      filters: '{"min_rating": 4}'
-    };
-    const resultLegacy = MapStateSchema.parse(inputLegacy);
-    expect(resultLegacy.filters).toEqual(expect.objectContaining({ min_rating: 3 }));
   });
 
   it('should use default values for missing params', () => {
@@ -80,29 +38,21 @@ describe('MapStateSchema', () => {
     expect(result.filters).toEqual({});
   });
 
-  it('should handle malformed JSON in filters', () => {
-    const input = {
-      filters: '{badjson'
-    };
+  it('should ignore any input in filters and return empty object', () => {
+    const input1 = { filters: '{badjson' };
+    const result1 = MapStateSchema.parse(input1);
+    expect(result1.filters).toEqual({});
 
-    const result = MapStateSchema.parse(input);
+    const input2 = { filters: '123' };
+    const result2 = MapStateSchema.parse(input2);
+    expect(result2.filters).toEqual({});
 
-    expect(result.filters).toEqual({});
-  });
+    const input3 = { filters: 'null' };
+    const result3 = MapStateSchema.parse(input3);
+    expect(result3.filters).toEqual({});
 
-  it('should handle non-object JSON in filters', () => {
-      const input = {
-          filters: '123'
-      };
-      const result = MapStateSchema.parse(input);
-      expect(result.filters).toEqual({});
-  });
-
-  it('should handle null JSON in filters', () => {
-      const input = {
-          filters: 'null'
-      };
-      const result = MapStateSchema.parse(input);
-      expect(result.filters).toEqual({});
+    const input4 = { filters: '{"valid":"json"}' };
+    const result4 = MapStateSchema.parse(input4);
+    expect(result4.filters).toEqual({});
   });
 });

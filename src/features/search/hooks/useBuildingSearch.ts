@@ -336,15 +336,8 @@ const getBoolParam = (param: string | null, defaultVal: boolean): boolean =>
   param !== null ? param === "true" : defaultVal;
 const getNumParam = (param: string | null, defaultVal: number): number => 
   param ? parseInt(param, 10) : defaultVal;
-const getJsonParam = <T>(param: string | null, defaultVal: T): T => {
-  if (!param) return defaultVal;
-  try {
-    return JSON.parse(param);
-  } catch (e) {
-    console.error("Failed to parse JSON param:", param, e);
-    return defaultVal;
-  }
-};
+const getIdListParam = (param: string | null): { id: string; name: string }[] =>
+  param ? param.split(",").map(id => ({ id, name: id })) : []; // Name to be hydrated later
 
 export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: { searchTriggerVersion?: number, bounds?: Bounds | null, zoom?: number } = {}) {
   const { user } = useAuth();
@@ -365,13 +358,13 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [contactMinRating, setContactMinRating] = useState<number>(getNumParam(searchParams.get("contactMinRating"), 0));
 
   const [selectedArchitects, setSelectedArchitects] = useState<{ id: string; name: string }[]>(
-    getJsonParam(searchParams.get("architects"), [])
+    getIdListParam(searchParams.get("architects"))
   );
   const [selectedCollections, setSelectedCollections] = useState<{ id: string; name: string }[]>(
-    getJsonParam(searchParams.get("collections"), [])
+    getIdListParam(searchParams.get("collections"))
   );
   const [selectedFolders, setSelectedFolders] = useState<{ id: string; name: string }[]>(
-    getJsonParam(searchParams.get("folders"), [])
+    getIdListParam(searchParams.get("folders"))
   );
   const [viewMode, setViewMode] = useState<'list' | 'map'>((searchParams.get("view") as 'list' | 'map') || 'map');
 
@@ -429,6 +422,26 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     }
   }, [ratedByProfiles, user, ratedByParam]);
 
+  // Hydrate object lists from raw IDs in URL on mount
+  useEffect(() => {
+    const hydrateMetadata = async () => {
+      if (selectedArchitects.length > 0 && selectedArchitects.some(a => a.id === a.name)) {
+         const { data } = await supabase.from('architects').select('id, name').in('id', selectedArchitects.map(a => a.id));
+         if (data && data.length > 0) setSelectedArchitects(data);
+      }
+      if (selectedCollections.length > 0 && selectedCollections.some(c => c.id === c.name)) {
+         const { data } = await supabase.from('collections').select('id, name').in('id', selectedCollections.map(c => c.id));
+         if (data && data.length > 0) setSelectedCollections(data);
+      }
+      if (selectedFolders.length > 0 && selectedFolders.some(f => f.id === f.name)) {
+         const { data } = await supabase.from('user_folders').select('id, name').in('id', selectedFolders.map(f => f.id));
+         if (data && data.length > 0) setSelectedFolders(data);
+      }
+    };
+    hydrateMetadata();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount to hydrate if initialized from URL
+
   // Default to London or URL params
   const [userLocation, setUserLocation] = useState({
     lat: parseFloat(searchParams.get("lat") || "51.5074"),
@@ -479,9 +492,25 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     if (selectedTypologies.length > 0) params.set("typologies", selectedTypologies.join(","));
     if (selectedAttributes.length > 0) params.set("attributes", selectedAttributes.join(","));
 
-    if (selectedArchitects.length > 0) params.set("architects", JSON.stringify(selectedArchitects));
-    if (selectedCollections.length > 0) params.set("collections", JSON.stringify(selectedCollections));
-    if (selectedFolders.length > 0) params.set("folders", JSON.stringify(selectedFolders));
+    if (selectedArchitects.length > 0) params.set("architects", selectedArchitects.map(a => a.id).join(","));
+    if (selectedCollections.length > 0) params.set("collections", selectedCollections.map(c => c.id).join(","));
+    if (selectedFolders.length > 0) params.set("folders", selectedFolders.map(f => f.id).join(","));
+
+    // Explicitly delete empty/default arrays to keep URL clean (strict omission)
+    if (statusFilters.length === 0) params.delete("status");
+    if (!hideVisited) params.delete("hideVisited");
+    if (!hideSaved) params.delete("hideSaved");
+    if (hideHidden) params.delete("hideHidden"); // Default is true, omit if true
+    if (!hideWithoutImages) params.delete("hideWithoutImages");
+    if (!filterContacts) params.delete("filterContacts");
+    if (personalMinRating === 0) params.delete("minRating");
+    if (contactMinRating === 0) params.delete("contactMinRating");
+    if (!selectedCategory) params.delete("category");
+    if (selectedTypologies.length === 0) params.delete("typologies");
+    if (selectedAttributes.length === 0) params.delete("attributes");
+    if (selectedArchitects.length === 0) params.delete("architects");
+    if (selectedCollections.length === 0) params.delete("collections");
+    if (selectedFolders.length === 0) params.delete("folders");
 
     // Construct rated_by param
     const ratedByUsers = new Set<string>();
