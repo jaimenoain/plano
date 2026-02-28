@@ -148,6 +148,7 @@ const handleModeChange = (newMode: string) => {
   const handleContactsChange = (newContacts: UserSearchResult[]) => {
       setSelectedContacts(newContacts);
 
+      // Auto-Selection UX: If contacts selected and no status set, default to visited/saved
       if (newContacts.length > 0 && currentStatus.length === 0) {
           setStatusFilters(['visited', 'saved']);
           setHideSaved(false);
@@ -214,6 +215,7 @@ const handleModeChange = (newMode: string) => {
     setSelectedTypologies(ids);
   };
 
+  // Map materiality, style, context to attributes
   const currentMaterials = currentMaterialsAndStylesAndContexts.filter(id => materialityAttributes.some(a => a.id === id));
   const currentStyles = currentMaterialsAndStylesAndContexts.filter(id => styleAttributes.some(a => a.id === id));
   const currentContexts = currentMaterialsAndStylesAndContexts.filter(id => contextAttributes.some(a => a.id === id));

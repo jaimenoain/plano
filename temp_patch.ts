@@ -15,7 +15,6 @@ import { ArchitectSelect } from '@/features/search/components/ArchitectSelect';
 import { ContactPicker } from '@/features/search/components/ContactPicker';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useMapContext } from '../providers/MapContext';
-import { useBuildingSearch } from '@/features/search/hooks/useBuildingSearch';
 import { MapMode, MichelinRating } from '@/types/plano-map';
 import { QualityRatingFilter } from './filters/QualityRatingFilter';
 import { FolderAndCollectionMultiSelect } from './filters/FolderAndCollectionMultiSelect';
@@ -38,6 +37,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { UserSearchResult } from '@/features/search/hooks/useUserSearch';
+import { useBuildingSearch } from '@/features/search/hooks/useBuildingSearch';
 
 interface MultiSelectCheckboxListProps {
   items: { id: string; name: string }[];
@@ -84,38 +84,9 @@ function MultiSelectCheckboxList({ items, selectedIds, onChange, className }: Mu
 
 export function FilterDrawer() {
   const {
-    state: { mode },
-    methods: { setMode },
+    state: { mode, filters },
+    methods: { setFilter, setMapState },
   } = useMapContext();
-
-  const {
-    statusFilters: currentStatus,
-    setStatusFilters,
-    hideVisited,
-    setHideVisited,
-    hideSaved,
-    setHideSaved,
-    filterContacts,
-    setFilterContacts,
-    personalMinRating: currentPersonalMinRating,
-    setPersonalMinRating,
-    contactMinRating,
-    setContactMinRating,
-    selectedArchitects: currentArchitects,
-    setSelectedArchitects,
-    selectedCollections: currentCollectionIds,
-    setSelectedCollections,
-    selectedFolders: currentFolderIds,
-    setSelectedFolders,
-    selectedCategory: currentCategory,
-    setSelectedCategory,
-    selectedTypologies: currentTypologies,
-    setSelectedTypologies,
-    selectedAttributes: currentMaterialsAndStylesAndContexts,
-    setSelectedAttributes,
-    selectedContacts: currentContacts,
-    setSelectedContacts,
-  } = useBuildingSearch();
 
   const {
     functionalCategories,
@@ -125,138 +96,204 @@ export function FilterDrawer() {
     styleAttributes,
   } = useTaxonomy();
 
-const handleModeChange = (newMode: string) => {
+  const handleModeChange = (newMode: string) => {
     const typedMode = newMode as MapMode;
 
     if (typedMode === 'discover') {
-      setMode(typedMode);
-      setStatusFilters([]);
-      setHideSaved(true);
-      setHideVisited(true);
+      // Switch to Discover mode:
+      // - Clear status (so we see everything relevant to discovery)
+      // - Hide saved items by default
+      // - Keep other filters (architects, rating, etc.)
+
+      setMapState({
+        mode: typedMode,
+        filters: {
+          ...filters,
+          status: undefined,
+          hideSaved: true,
+          hideVisited: true,
+        },
+      });
     } else {
-      setMode(typedMode);
-      setStatusFilters(['visited', 'saved']);
-      setHideSaved(false);
-      setHideVisited(false);
+      // Switch to Library mode:
+      // - Set status to ['visited', 'saved'] to show user's collection
+      // - Ensure we show saved/visited items by disabling hide flags
+
+      setMapState({
+        mode: typedMode,
+        filters: {
+          ...filters,
+          status: ['visited', 'saved'],
+          hideSaved: false,
+          hideVisited: false,
+        },
+      });
     }
   };
 
   const handleArchitectsChange = (architects: { id: string; name: string }[]) => {
-    setSelectedArchitects(architects);
+    setFilter('architects', architects);
   };
 
   const handleContactsChange = (newContacts: UserSearchResult[]) => {
-      setSelectedContacts(newContacts);
+      const mapped = newContacts.map(c => ({
+          id: c.id,
+          name: c.username || '',
+          avatar_url: c.avatar_url || null
+      }));
 
-      if (newContacts.length > 0 && currentStatus.length === 0) {
-          setStatusFilters(['visited', 'saved']);
-          setHideSaved(false);
-          setHideVisited(false);
+      const newFilters = { ...filters, contacts: mapped };
+
+      // Auto-Selection UX: If contacts selected and no status set, default to visited/saved
+      if (mapped.length > 0 && (!filters.status || filters.status.length === 0)) {
+          newFilters.status = ['visited', 'saved'];
+          // Also ensure visibility is enabled
+          newFilters.hideSaved = false;
+          newFilters.hideVisited = false;
       }
+
+      setMapState({ filters: newFilters });
   };
 
   const handleMinRatingChange = (value: number) => {
-    setPersonalMinRating(value);
+    setFilter('minRating', value as MichelinRating);
   };
 
   const handlePersonalRatingChange = (value: number) => {
-    setPersonalMinRating(value);
+    setFilter('personalMinRating', value);
   };
 
   const handleCollectionsChange = (ids: string[]) => {
-    const collections = ids.map(id => ({ id, name: id }));
-    setSelectedCollections(collections);
+    setFilter('collectionIds', ids);
   };
 
   const handleFoldersChange = (ids: string[]) => {
-    const folders = ids.map(id => ({ id, name: id }));
-    setSelectedFolders(folders);
+    setFilter('folderIds', ids);
   };
 
   const handleHideSavedChange = (checked: boolean) => {
-    setHideSaved(checked);
-    setHideVisited(checked);
+    setMapState({
+      filters: {
+        ...filters,
+        hideSaved: checked,
+        hideVisited: checked,
+      },
+    });
   };
 
   const handleStatusChange = (value: string) => {
+    let statusArray: string[] = [];
+    let hideSaved = false;
+    let hideVisited = false;
+
     if (value === 'all') {
-      setStatusFilters(['visited', 'saved', 'pending']);
-      setHideSaved(false);
-      setHideVisited(false);
+      statusArray = ['visited', 'saved', 'pending'];
+      hideSaved = false;
+      hideVisited = false;
     } else if (value === 'visited') {
-      setStatusFilters(['visited']);
-      setHideSaved(true);
-      setHideVisited(false);
+      statusArray = ['visited'];
+      hideSaved = true;
+      hideVisited = false;
     } else if (value === 'saved') {
-      setStatusFilters(['saved', 'pending']);
-      setHideSaved(false);
-      setHideVisited(true);
+      statusArray = ['saved', 'pending'];
+      hideSaved = false;
+      hideVisited = true;
     }
+
+    setMapState({
+        filters: {
+            ...filters,
+            status: statusArray,
+            hideSaved,
+            hideVisited
+        }
+    });
   };
 
+  // Taxonomy Handlers
   const handleCategoryChange = (categoryId: string) => {
-      const value = categoryId === "all" ? null : categoryId;
-      setSelectedCategory(value);
+      // If "all" or empty string is passed, clear the category
+      const value = categoryId === "all" ? undefined : categoryId;
 
+      // When category changes, we should verify if selected typologies still belong to this category
+      // For simplicity, we might want to clear typologies or filter them.
+      // Let's filter them to keep only valid ones for the new category.
       const validTypologies = value
         ? currentTypologies.filter(typId => {
             const typ = functionalTypologies.find(t => t.id === typId);
             return typ && typ.parent_category_id === value;
           })
-        : currentTypologies;
+        : currentTypologies; // If no category selected, all typologies are technically valid (or invalid depending on logic, but usually we allow searching across all)
 
-      if (validTypologies.length !== currentTypologies.length) {
-          setSelectedTypologies(validTypologies);
-      }
+      setMapState({
+          filters: {
+              ...filters,
+              category: value,
+              typologies: validTypologies.length !== currentTypologies.length ? validTypologies : currentTypologies
+          }
+      });
   };
 
   const handleTypologiesChange = (ids: string[]) => {
-    setSelectedTypologies(ids);
+    setFilter('typologies', ids);
   };
 
-  const currentMaterials = currentMaterialsAndStylesAndContexts.filter(id => materialityAttributes.some(a => a.id === id));
-  const currentStyles = currentMaterialsAndStylesAndContexts.filter(id => styleAttributes.some(a => a.id === id));
-  const currentContexts = currentMaterialsAndStylesAndContexts.filter(id => contextAttributes.some(a => a.id === id));
-
   const handleMaterialsChange = (ids: string[]) => {
-    const otherAttributes = currentMaterialsAndStylesAndContexts.filter(id => !materialityAttributes.some(a => a.id === id));
-    setSelectedAttributes([...otherAttributes, ...ids]);
+    setFilter('materials', ids);
   };
 
   const handleContextsChange = (ids: string[]) => {
-    const otherAttributes = currentMaterialsAndStylesAndContexts.filter(id => !contextAttributes.some(a => a.id === id));
-    setSelectedAttributes([...otherAttributes, ...ids]);
+    setFilter('contexts', ids);
   };
 
   const handleStylesChange = (ids: string[]) => {
-    const otherAttributes = currentMaterialsAndStylesAndContexts.filter(id => !styleAttributes.some(a => a.id === id));
-    setSelectedAttributes([...otherAttributes, ...ids]);
+    setFilter('styles', ids);
   };
 
   const handleResetGlobalFilters = () => {
-      setSelectedArchitects([]);
-      setSelectedContacts([]);
-      setSelectedCategory(null);
-      setSelectedTypologies([]);
-      setSelectedAttributes([]);
+      setMapState({
+          filters: {
+              ...filters,
+              // Explicitly clear global filters including Contacts, but preserve View Mode settings (status, hideSaved, etc.)
+              architects: undefined,
+              contacts: undefined,
+              category: undefined,
+              typologies: undefined,
+              materials: undefined,
+              contexts: undefined,
+              styles: undefined
+          }
+      });
   };
 
   const handleClearAll = () => {
-    setSelectedArchitects([]);
-    setSelectedContacts([]);
-    setSelectedCategory(null);
-    setSelectedTypologies([]);
-    setSelectedAttributes([]);
-    setPersonalMinRating(0);
-    setContactMinRating(0);
-    setStatusFilters([]);
-    setSelectedCollections([]);
-    setSelectedFolders([]);
-    setHideSaved(false);
-    setHideVisited(false);
+    setMapState({
+      filters: {
+        ...filters,
+        // Global Taxonomy
+        architects: undefined,
+        contacts: undefined,
+        category: undefined,
+        typologies: undefined,
+        materials: undefined,
+        contexts: undefined,
+        styles: undefined,
+        // Mode-Specific
+        minRating: undefined,
+        personalMinRating: undefined,
+        status: undefined,
+        collectionIds: undefined,
+        folderIds: undefined,
+        hideSaved: false,
+        hideVisited: false,
+      }
+    });
   };
 
-  const currentMinRating = currentPersonalMinRating;
+  // Safe defaults
+  const currentMinRating = filters.minRating ?? 0;
+  const currentPersonalMinRating = filters.personalMinRating ?? 0;
+  const currentStatus = filters.status ?? [];
   const currentSegmentedStatus = currentStatus.includes('visited') && (currentStatus.includes('saved') || currentStatus.includes('pending'))
     ? 'all'
     : currentStatus.includes('visited')
@@ -264,9 +301,23 @@ const handleModeChange = (newMode: string) => {
       : (currentStatus.includes('saved') || currentStatus.includes('pending'))
         ? 'saved'
         : 'all';
+  const currentArchitects = filters.architects ?? [];
+  const currentContacts = useMemo(() => {
+    return (filters.contacts || []).map(c => ({
+        id: c.id,
+        username: c.name,
+        avatar_url: c.avatar_url || null
+    } as UserSearchResult));
+  }, [filters.contacts]);
+  const currentCollectionIds = filters.collectionIds ?? [];
+  const currentFolderIds = filters.folderIds ?? [];
+  const hideSaved = filters.hideSaved ?? false;
 
-
-
+  const currentCategory = filters.category;
+  const currentTypologies = filters.typologies ?? [];
+  const currentMaterials = filters.materials ?? [];
+  const currentContexts = filters.contexts ?? [];
+  const currentStyles = filters.styles ?? [];
 
   const activeFilterCount = useMemo(() => {
     let count = 0;

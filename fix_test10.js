@@ -1,4 +1,11 @@
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import fs from 'fs';
+
+const FILE_PATH = 'src/features/maps/components/FilterDrawer.test.tsx';
+let content = fs.readFileSync(FILE_PATH, 'utf8');
+
+// There's a problem with my multiline string, let's use a normal string and avoid template literal shenanigans that might be breaking it.
+
+content = `import * as AccordionPrimitive from "@radix-ui/react-accordion";
 
 vi.mock("@radix-ui/react-accordion", () => ({
   Root: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -153,3 +160,6 @@ describe('FilterDrawer', () => {
     expect(screen.queryByTestId('contact-picker')).toBeNull();
   });
 });
+`;
+
+fs.writeFileSync(FILE_PATH, content);
