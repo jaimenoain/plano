@@ -4,6 +4,10 @@ import { TierRank } from './plano-map';
 
 export type BuildingRow = Database['public']['Tables']['buildings']['Row'];
 
+export type AccessLevel = Database['public']['Enums']['access_level'];
+export type AccessLogistics = Database['public']['Enums']['access_logistics'];
+export type AccessCost = Database['public']['Enums']['access_cost'];
+
 // Extend the existing Building type to include the new admin columns
 // These columns are added via migration `update_buildings_schema.sql`
 export interface AdminBuilding extends Omit<BuildingRow, 'architects'> {
