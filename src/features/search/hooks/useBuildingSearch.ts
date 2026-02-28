@@ -370,6 +370,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [selectedCollections, setSelectedCollections] = useState<{ id: string; name: string }[]>(
     getJsonParam(searchParams.get("collections"), [])
   );
+  const [selectedFolders, setSelectedFolders] = useState<{ id: string; name: string }[]>(
+    getJsonParam(searchParams.get("folders"), [])
+  );
   const [viewMode, setViewMode] = useState<'list' | 'map'>((searchParams.get("view") as 'list' | 'map') || 'map');
 
   // New Filters
@@ -478,6 +481,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
     if (selectedArchitects.length > 0) params.set("architects", JSON.stringify(selectedArchitects));
     if (selectedCollections.length > 0) params.set("collections", JSON.stringify(selectedCollections));
+    if (selectedFolders.length > 0) params.set("folders", JSON.stringify(selectedFolders));
 
     // Construct rated_by param
     const ratedByUsers = new Set<string>();
@@ -514,6 +518,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     selectedAttributes,
     selectedArchitects,
     selectedCollections,
+    selectedFolders,
     selectedContacts,
     setSearchParams,
     user
@@ -570,6 +575,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       contactMinRating,
       selectedArchitects,
       selectedCollections,
+      selectedFolders,
       selectedCategory,
       selectedTypologies,
       selectedAttributes,
@@ -584,7 +590,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       try {
         // Local filtering mode (My Buildings or Contacts)
         const hasSpecificContacts = selectedContacts.length > 0;
-        const hasCollections = selectedCollections.length > 0;
+        const hasCollections = selectedCollections.length > 0 || selectedFolders.length > 0;
         const hasPersonalRating = personalMinRating > 0;
         const hasStatusFilters = statusFilters.length > 0;
         const ratedByMe = hasStatusFilters || hasPersonalRating;
@@ -688,22 +694,41 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
             }
           }
 
-          // 3. Collections
+          // 3. Collections and Folders
           if (hasCollections) {
             try {
-              const { data: collectionItems, error: cError } = await supabase
-                .from('collection_items')
-                .select('building_id')
-                .in('collection_id', selectedCollections.map(c => c.id))
-                .limit(QUERY_LIMIT);
+              let allCollectionIds = selectedCollections.map(c => c.id);
 
-              if (cError) {
-                console.error('Error fetching collection items:', cError);
-              } else {
-                collectionItems?.forEach(item => buildingIds.add(item.building_id));
+              if (selectedFolders.length > 0) {
+                 const { data: folderItems, error: fError } = await supabase
+                    .from('user_folder_items')
+                    .select('collection_id')
+                    .in('folder_id', selectedFolders.map(f => f.id))
+                    .limit(QUERY_LIMIT);
+
+                 if (fError) {
+                    console.error('Error fetching folder items:', fError);
+                 } else if (folderItems) {
+                    const folderCollectionIds = folderItems.map(item => item.collection_id);
+                    allCollectionIds = Array.from(new Set([...allCollectionIds, ...folderCollectionIds]));
+                 }
+              }
+
+              if (allCollectionIds.length > 0) {
+                 const { data: collectionItems, error: cError } = await supabase
+                   .from('collection_items')
+                   .select('building_id')
+                   .in('collection_id', allCollectionIds)
+                   .limit(QUERY_LIMIT);
+
+                 if (cError) {
+                   console.error('Error fetching collection items:', cError);
+                 } else {
+                   collectionItems?.forEach(item => buildingIds.add(item.building_id));
+                 }
               }
             } catch (error) {
-              console.error('Exception fetching collection items:', error);
+              console.error('Exception fetching collection/folder items:', error);
             }
           }
 
@@ -957,6 +982,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setSelectedArchitects,
     selectedCollections,
     setSelectedCollections,
+    selectedFolders,
+    setSelectedFolders,
     availableCollections,
     selectedCategory,
     setSelectedCategory,

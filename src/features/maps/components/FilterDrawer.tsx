@@ -18,7 +18,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useMapContext } from '../providers/MapContext';
 import { MapMode, MichelinRating } from '@/types/plano-map';
 import { QualityRatingFilter } from './filters/QualityRatingFilter';
-import { CollectionMultiSelect } from './filters/CollectionMultiSelect';
+import { FolderAndCollectionMultiSelect } from './filters/FolderAndCollectionMultiSelect';
 import { useTaxonomy } from '@/hooks/useTaxonomy';
 import { Slider } from '@/components/ui/slider';
 import {
@@ -167,6 +167,10 @@ export function FilterDrawer() {
     setFilter('collectionIds', ids);
   };
 
+  const handleFoldersChange = (ids: string[]) => {
+    setFilter('folderIds', ids);
+  };
+
   const handleHideSavedChange = (checked: boolean) => {
     setMapState({
       filters: {
@@ -272,6 +276,7 @@ export function FilterDrawer() {
         personalMinRating: undefined,
         status: undefined,
         collectionIds: undefined,
+        folderIds: undefined,
         hideSaved: false,
         hideVisited: false,
       }
@@ -291,6 +296,7 @@ export function FilterDrawer() {
     } as UserSearchResult));
   }, [filters.contacts]);
   const currentCollectionIds = filters.collectionIds ?? [];
+  const currentFolderIds = filters.folderIds ?? [];
   const hideSaved = filters.hideSaved ?? false;
 
   const currentCategory = filters.category;
@@ -319,6 +325,7 @@ export function FilterDrawer() {
       // Library mode
       if (currentPersonalMinRating > 0) count++;
       if (currentCollectionIds.length > 0) count++;
+      if (currentFolderIds.length > 0) count++;
       if (currentStatus.length > 0) count++;
     }
     return count;
@@ -330,6 +337,7 @@ export function FilterDrawer() {
       hideSaved,
       currentPersonalMinRating,
       currentCollectionIds,
+      currentFolderIds,
       currentStatus,
       currentCategory,
       currentTypologies,
@@ -507,16 +515,18 @@ export function FilterDrawer() {
                   />
                 </div>
 
-                {/* Collections - Only show in My Library mode, maybe irrelevant for contact mode?
+                {/* Folders & Collections - Only show in My Library mode, maybe irrelevant for contact mode?
                     Unless we support 'Friend's Collections' later. For now, hide in contact mode to reduce clutter/confusion. */}
                 {!isContactMode && (
                     <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="collections" className="border-none">
-                        <AccordionTrigger className="text-sm font-medium py-2 hover:no-underline">Collections</AccordionTrigger>
+                        <AccordionTrigger className="text-sm font-medium py-2 hover:no-underline">Folders & Collections</AccordionTrigger>
                         <AccordionContent>
-                        <CollectionMultiSelect
-                            selectedIds={currentCollectionIds}
-                            onChange={handleCollectionsChange}
+                        <FolderAndCollectionMultiSelect
+                            selectedCollectionIds={currentCollectionIds}
+                            selectedFolderIds={currentFolderIds}
+                            onCollectionChange={handleCollectionsChange}
+                            onFolderChange={handleFoldersChange}
                         />
                         </AccordionContent>
                     </AccordionItem>

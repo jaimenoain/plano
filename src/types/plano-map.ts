@@ -62,6 +62,9 @@ export interface MapFilters {
   // Collections
   collections?: { id: string; name: string }[];
   collectionIds?: string[];
+
+  // Folders
+  folderIds?: string[];
 }
 
 export interface MapState {
