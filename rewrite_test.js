@@ -1,4 +1,11 @@
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import fs from 'fs';
+
+const FILE_PATH = 'src/features/maps/components/FilterDrawer.test.tsx';
+let content = fs.readFileSync(FILE_PATH, 'utf8');
+
+// The reason it breaks every time is that `beforeEach(() => { ... });` is somehow duplicated or we miss deleting the original.
+// Let's manually reconstruct the file.
+const newContent = `import * as AccordionPrimitive from "@radix-ui/react-accordion";
 
 vi.mock("@radix-ui/react-accordion", () => ({
   Root: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -153,3 +160,6 @@ describe('FilterDrawer', () => {
     expect(screen.queryByTestId('contact-picker')).toBeNull();
   });
 });
+`;
+
+fs.writeFileSync(FILE_PATH, newContent);
