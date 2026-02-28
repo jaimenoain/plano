@@ -2,6 +2,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ContactPicker } from './ContactPicker';
 import { vi, describe, it, expect } from 'vitest';
 
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 vi.mock('../hooks/useUserSearch', () => ({
   useUserSearch: () => ({
     users: [],
