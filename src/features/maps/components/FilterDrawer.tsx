@@ -407,18 +407,6 @@ export function FilterDrawer() {
             />
           </div>
 
-          {/* Curators & Friends - Only visible in Discover mode */}
-          {mode === 'discover' && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium leading-none">Curators & Friends</h3>
-              <ContactPicker
-                selectedContacts={currentContacts}
-                setSelectedContacts={handleContactsChange}
-                placeholder="Search people..."
-              />
-            </div>
-          )}
-
           {effectiveMode === 'discover' ? (
             /* Discover Mode Section */
             <>
@@ -555,6 +543,20 @@ export function FilterDrawer() {
             </div>
 
             <Accordion type="single" collapsible className="w-full">
+                {/* Item 0: Curators & Friends */}
+                {mode === 'discover' && (
+                  <AccordionItem value="curators">
+                      <AccordionTrigger className="text-sm">Curators & Friends</AccordionTrigger>
+                      <AccordionContent>
+                          <ContactPicker
+                              selectedContacts={currentContacts}
+                              setSelectedContacts={handleContactsChange}
+                              placeholder="Search people..."
+                          />
+                      </AccordionContent>
+                  </AccordionItem>
+                )}
+
                 {/* Item 1: Architects */}
                 <AccordionItem value="architects">
                     <AccordionTrigger className="text-sm">Architects</AccordionTrigger>
