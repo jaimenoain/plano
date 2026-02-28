@@ -6,6 +6,7 @@ import { Command as CommandPrimitive } from "cmdk"
 import { cn } from "@/lib/utils"
 import { useUserSearch, UserSearchResult } from "../hooks/useUserSearch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover"
 
 interface ContactPickerProps {
   selectedContacts: UserSearchResult[]
@@ -23,12 +24,29 @@ export function ContactPicker({
   const [open, setOpen] = React.useState(false)
   const [inputValue, setInputValue] = React.useState("")
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = React.useState(0)
 
   const { users, isLoading } = useUserSearch({
       searchQuery: inputValue,
       limit: 5,
       enabled: open
   });
+
+  React.useLayoutEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.offsetWidth)
+      const observer = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+             if (entry.target instanceof HTMLElement) {
+                 setContainerWidth(entry.target.offsetWidth)
+             }
+          }
+      })
+      observer.observe(containerRef.current)
+      return () => observer.disconnect()
+    }
+  }, [])
 
   const handleSelect = (user: UserSearchResult) => {
     setInputValue("")
@@ -55,6 +73,7 @@ export function ContactPicker({
       }
       if (e.key === "Escape") {
         input.blur()
+        setOpen(false)
       }
     }
   }
@@ -63,16 +82,21 @@ export function ContactPicker({
       !selectedContacts.some(sel => sel.id === s.id)
   );
 
+  const showPopover = open && (filteredSuggestions.length > 0 || inputValue.length > 0);
+
   return (
-    <Command
-        onKeyDown={handleKeyDown}
-        className={cn("overflow-visible bg-transparent", className)}
-        shouldFilter={false}
-    >
-      <div
-        className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background"
-      >
-        <div className="flex flex-wrap gap-1">
+    <Popover open={showPopover} onOpenChange={setOpen}>
+        <Command
+            onKeyDown={handleKeyDown}
+            className={cn("overflow-visible bg-transparent", className)}
+            shouldFilter={false}
+        >
+          <PopoverAnchor asChild>
+              <div
+                ref={containerRef}
+                className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background relative"
+              >
+                <div className="flex flex-wrap gap-1">
           {selectedContacts.map((contact) => (
             <Badge key={contact.id} variant="secondary" className="pl-1">
               <Avatar className="h-4 w-4 mr-1">
@@ -96,21 +120,30 @@ export function ContactPicker({
               </button>
             </Badge>
           ))}
-          <CommandPrimitive.Input
-            ref={inputRef}
-            value={inputValue}
-            onValueChange={setInputValue}
-            onBlur={() => setTimeout(() => setOpen(false), 200)}
-            onFocus={() => setOpen(true)}
-            placeholder={placeholder}
-            autoComplete="off"
-            className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px]"
-          />
-        </div>
-      </div>
-      <div className="relative mt-2">
-        {open && (filteredSuggestions.length > 0 || inputValue.length > 0) && (
-          <div className="absolute top-0 z-50 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
+                  <CommandPrimitive.Input
+                    ref={inputRef}
+                    value={inputValue}
+                    onValueChange={setInputValue}
+                    onFocus={() => setOpen(true)}
+                    onBlur={() => {
+                        if (!showPopover) {
+                            setOpen(false)
+                        }
+                    }}
+                    placeholder={placeholder}
+                    autoComplete="off"
+                    className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px]"
+                  />
+                </div>
+              </div>
+          </PopoverAnchor>
+
+          <PopoverContent
+             className="p-0"
+             align="start"
+             onOpenAutoFocus={(e) => e.preventDefault()}
+             style={{ width: containerWidth > 0 ? containerWidth : "auto" }}
+          >
             <CommandList>
               {isLoading && (
                   <CommandItem disabled>
@@ -140,9 +173,8 @@ export function ContactPicker({
                 )}
               </CommandGroup>
             </CommandList>
-          </div>
-        )}
-      </div>
-    </Command>
+          </PopoverContent>
+        </Command>
+    </Popover>
   )
 }
