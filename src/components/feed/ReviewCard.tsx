@@ -384,96 +384,90 @@ export function ReviewCard({
         </div>
   );
 
-  const Media = !hideBuildingInfo && (
-        mediaItems.length > 0 ? (
-          isCompact && mediaItems.length > 1 ? (
-             // COMPACT GRID LAYOUT for MEDIA
-             <div className={`relative w-full max-w-full min-w-0 aspect-[4/3] bg-secondary overflow-hidden grid grid-cols-2 gap-0.5`}>
-                {mediaItems.slice(0, 4).map((item, index) => (
-                    <div key={item.id} className="relative w-full h-full min-w-0 overflow-hidden">
-                       <div className="absolute inset-0 w-full h-full">
-                         {item.type === 'video' ? (
-                            <div className="w-full h-full video-container">
-                               <VideoPlayer
-                                  src={item.url}
-                                  poster={item.poster}
-                                  className="w-full h-full"
-                                  autoPlayOnVisible={true}
-                                  muted={true}
-                                  objectFit="cover"
-                               />
-                            </div>
-                         ) : (
-                             !failedImages.has(item.id) ? (
-                                 <img
-                                   src={item.url}
-                                   alt="Review photo"
-                                   className="w-full h-full object-cover"
-                                   onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
-                                 />
-                             ) : (
-                                 <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
-                                   <ImageIcon className="w-4 h-4 opacity-50" />
-                                 </div>
-                             )
-                         )}
-                       </div>
-
-                       {/* Overlay for 4th item if more */}
-                       {index === 3 && mediaItems.length > 4 && (
-                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
-                               <span className="text-white font-bold text-sm">+{mediaItems.length - 3}</span>
-                           </div>
-                       )}
-                    </div>
-                ))}
-             </div>
+  const renderMediaItem = (item: MediaItem, className?: string) => (
+    <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden ${className || ''}`}>
+      <div className="absolute inset-0 w-full h-full">
+        {item.type === 'video' ? (
+          <div className="w-full h-full video-container">
+            <VideoPlayer
+              src={item.url}
+              poster={item.poster}
+              className="w-full h-full"
+              autoPlayOnVisible={true}
+              muted={true}
+              objectFit="cover"
+            />
+          </div>
+        ) : (
+          !failedImages.has(item.id) ? (
+            <img
+              src={item.url}
+              alt="Review photo"
+              className="w-full h-full object-cover"
+              onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
+            />
           ) : (
-            // OPTION A: Media Gallery (Carousel)
-            <div className={`relative w-full max-w-full min-w-0 overflow-hidden bg-secondary ${!isCompact ? 'md:w-[280px] md:shrink-0' : 'aspect-[4/3]'}`}>
-               <div className={`flex w-full overflow-x-auto snap-x snap-mandatory no-scrollbar h-full ${!isCompact ? 'md:absolute md:inset-0' : ''}`}>
-                  {mediaItems.map((item) => (
-                    <div key={item.id} className={`relative flex-none w-full aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:h-full' : ''} snap-center bg-secondary min-w-0 overflow-hidden`}>
-                       <div className="absolute inset-0 w-full h-full">
-                         {item.type === 'video' ? (
-                             <div className="w-full h-full video-container">
-                                 <VideoPlayer
-                                     src={item.url}
-                                     poster={item.poster}
-                                     className="w-full h-full"
-                                     autoPlayOnVisible={true}
-                                     muted={true}
-                                     objectFit="cover"
-                                 />
-                             </div>
-                         ) : (
-                             !failedImages.has(item.id) ? (
-                               <img
-                                 src={item.url}
-                                 alt="Review photo"
-                                 className="w-full h-full object-cover"
-                                 onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
-                               />
-                             ) : (
-                               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                 <ImageIcon className="w-8 h-8 opacity-50" />
-                               </div>
-                             )
-                         )}
-                       </div>
-                    </div>
-                  ))}
-               </div>
-               {/* Pagination Dots (if multiple) */}
-               {mediaItems.length > 1 && (
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10 pointer-events-none">
-                     {mediaItems.map((_, i) => (
-                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/50" />
-                     ))}
-                  </div>
-               )}
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
+              <ImageIcon className="w-4 h-4 opacity-50" />
             </div>
           )
+        )}
+      </div>
+    </div>
+  );
+
+  const renderMediaGrid = () => {
+    if (mediaItems.length === 0) return null;
+
+    if (mediaItems.length === 1) {
+      return renderMediaItem(mediaItems[0]);
+    }
+
+    if (mediaItems.length === 2) {
+      return (
+        <div className="w-full h-full grid grid-cols-2 gap-0.5">
+          {mediaItems.map(item => renderMediaItem(item))}
+        </div>
+      );
+    }
+
+    if (mediaItems.length === 3) {
+      return (
+        <div className="w-full h-full flex flex-col gap-0.5">
+          <div className="flex-1 min-h-0">
+            {renderMediaItem(mediaItems[0])}
+          </div>
+          <div className="flex-1 min-h-0 grid grid-cols-2 gap-0.5">
+            {mediaItems.slice(1, 3).map(item => renderMediaItem(item))}
+          </div>
+        </div>
+      );
+    }
+
+    // 4+ Items
+    return (
+      <div className="w-full h-full flex flex-col gap-0.5">
+        <div className="flex-[2] min-h-0">
+          {renderMediaItem(mediaItems[0])}
+        </div>
+        <div className="flex-1 min-h-0 grid grid-cols-3 md:grid-cols-4 gap-0.5">
+          {mediaItems.slice(1, 5).map((item, index) => {
+            // Hide the 4th thumbnail (index 3) on mobile to maintain strictly 3 columns
+            const isFourthThumbnail = index === 3;
+            return renderMediaItem(item, isFourthThumbnail ? 'hidden md:block' : undefined);
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const Media = !hideBuildingInfo && (
+        mediaItems.length > 0 ? (
+          <div className={`relative w-full max-w-full min-w-0 overflow-hidden bg-secondary ${!isCompact ? 'md:w-[280px] md:shrink-0 aspect-[4/3] md:aspect-auto' : 'aspect-[4/3]'}`}>
+             <div className="absolute inset-0 w-full h-full">
+               {renderMediaGrid()}
+             </div>
+          </div>
         ) : (posterUrl && showCommunityImages) ? (
           // OPTION B: Building Poster (Fallback)
           <div className={`relative w-full max-w-full min-w-0 bg-secondary overflow-hidden aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:w-[280px] md:shrink-0' : ''}`}>
