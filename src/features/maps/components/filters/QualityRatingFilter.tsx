@@ -1,5 +1,5 @@
 import React from 'react';
-import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Slider } from '@/components/ui/slider';
 
 interface QualityRatingFilterProps {
   value: number;
@@ -7,26 +7,22 @@ interface QualityRatingFilterProps {
 }
 
 export function QualityRatingFilter({ value, onChange }: QualityRatingFilterProps) {
-  // Convert numeric value to string for SegmentedControl
-  const stringValue = value.toString();
-
-  const handleValueChange = (newValue: string) => {
-    onChange(parseInt(newValue, 10));
-  };
-
-  const options = [
-    { label: 'All', value: '0' },
-    { label: 'Impressive', value: '1' },
-    { label: 'Essential', value: '2' },
-    { label: 'Masterpiece', value: '3' },
-  ];
-
   return (
-    <SegmentedControl
-      options={options}
-      value={stringValue}
-      onValueChange={handleValueChange}
-      className="w-full"
-    />
+    <div className="w-full space-y-3">
+      <Slider
+        defaultValue={[0]}
+        max={3}
+        step={1}
+        value={[value]}
+        onValueChange={(values) => onChange(values[0])}
+        className="w-full"
+      />
+      <div className="flex justify-between text-xs text-muted-foreground px-1">
+        <span>All</span>
+        <span>●</span>
+        <span>●●</span>
+        <span>●●●</span>
+      </div>
+    </div>
   );
 }
