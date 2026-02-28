@@ -105,6 +105,7 @@ interface FeedEntry {
     username: string | null;
     avatar_url: string | null;
     is_verified_architect?: boolean;
+    is_architect_of_building?: boolean;
   };
   images: {
     id: string;
@@ -1732,7 +1733,7 @@ export default function BuildingDetails() {
                         <p className="text-muted-foreground text-sm">No one has visited this building yet.</p>
                     ) : (
                         entries.map(entry => (
-                            <div key={entry.id} className={`flex gap-4 p-4 bg-muted/10 rounded-lg ${entry.user.is_verified_architect ? 'border-l-2 border-l-[#eeff41ff] bg-background border-t border-r border-b border-border/50' : ''}`}>
+                            <div key={entry.id} className={`flex gap-4 p-4 bg-muted/10 rounded-lg ${entry.user.is_architect_of_building ? 'border-l-2 border-l-[#eeff41ff] bg-background border-t border-r border-b border-border/50' : ''}`}>
                                 <Avatar>
                                     <AvatarImage src={entry.user.avatar_url || undefined} />
                                     <AvatarFallback>{entry.user.username?.[0]}</AvatarFallback>
@@ -1744,11 +1745,11 @@ export default function BuildingDetails() {
                                         </Link>
                                         {entry.user.is_verified_architect && (
                                             <div
-                                                className="inline-flex items-center gap-1 bg-black text-[#eeff41ff] text-[10px] p-1 rounded align-middle"
+                                                className="inline-flex items-center text-foreground ml-1 align-middle"
                                                 data-testid="verified-badge-icon"
                                                 title="Verified Architect"
                                             >
-                                                <BadgeCheck className="w-3 h-3" />
+                                                <BadgeCheck className="w-4 h-4" />
                                             </div>
                                         )}
                                         {entry.status === 'visited' && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">Visited</Badge>}

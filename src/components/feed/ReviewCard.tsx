@@ -132,6 +132,7 @@ export function ReviewCard({
   const username = entry.user?.username || "Unknown User";
   const avatarUrl = entry.user?.avatar_url || undefined;
   const isVerifiedArchitect = entry.user?.is_verified_architect || false;
+  const isArchitectOfBuilding = entry.user?.is_architect_of_building || false;
   const userInitial = username.charAt(0).toUpperCase();
 
   // Title Logic
@@ -343,9 +344,8 @@ export function ReviewCard({
                 <div className="flex items-center gap-2 min-w-0 md:inline md:gap-0">
                     <span className="font-semibold truncate md:text-clip min-w-0">{username}</span>
                     {isVerifiedArchitect && (
-                      <div className="inline-flex items-center gap-1 bg-black text-[#eeff41ff] text-[10px] px-1.5 py-0.5 rounded ml-2 align-middle">
-                        <BadgeCheck className="w-3 h-3" />
-                        <span className="font-bold uppercase tracking-wider">Verified Architect</span>
+                      <div className="inline-flex items-center text-foreground ml-1 align-middle" title="Verified Architect">
+                        <BadgeCheck className="w-4 h-4" />
                       </div>
                     )}
                     {entry.is_suggested && entry.user_id && (
@@ -573,7 +573,7 @@ export function ReviewCard({
       <article
         onClick={handleCardClick}
         // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer min-w-0 w-full max-w-full ${isVerifiedArchitect ? 'border-l-2 border-l-[#eeff41ff]' : ''}`}
+        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer min-w-0 w-full max-w-full ${isArchitectOfBuilding ? 'border-l-2 border-l-[#eeff41ff]' : ''}`}
       >
         {isCompact ? (
           // COMPACT LAYOUT: Header -> Text -> Media -> Footer

@@ -9,6 +9,7 @@ export interface ReviewUser {
   username: string | null;
   avatar_url: string | null;
   is_verified_architect?: boolean;
+  is_architect_of_building?: boolean;
 }
 
 export interface ReviewBuilding {

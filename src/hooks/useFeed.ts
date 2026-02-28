@@ -50,6 +50,7 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
           username: review.user_data?.username || null,
           avatar_url: review.user_data?.avatar_url || null,
           is_verified_architect: review.user_data?.is_verified_architect || false,
+          is_architect_of_building: review.user_data?.is_architect_of_building || false,
         },
         building: {
           id: review.building_data?.id,
