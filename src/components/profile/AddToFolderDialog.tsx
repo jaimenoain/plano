@@ -12,13 +12,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UserFolder } from "@/types/collection";
 
 interface AddToFolderDialogProps {
+  onSuccess?: () => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   collectionId: string;
   userId: string;
 }
 
-export function AddToFolderDialog({ open, onOpenChange, collectionId, userId }: AddToFolderDialogProps) {
+export function AddToFolderDialog({ open, onOpenChange, collectionId, userId, onSuccess }: AddToFolderDialogProps) {
   const { toast } = useToast();
   const [view, setView] = useState<"list" | "create">("list");
   const [folders, setFolders] = useState<UserFolder[]>([]);
@@ -109,6 +110,7 @@ export function AddToFolderDialog({ open, onOpenChange, collectionId, userId }: 
 
       toast({ description: "Collection updated in folders." });
       onOpenChange(false);
+      if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Error saving to folders:", error);
       toast({ variant: "destructive", description: "Failed to save changes." });
