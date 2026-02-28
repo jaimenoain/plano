@@ -139,6 +139,10 @@ export interface Database {
           location_precision: Database["public"]["Enums"]["location_precision"]
           merged_into_id: string | null
           hero_image_id: string | null
+          access_level: Database["public"]["Enums"]["access_level"] | null
+          access_logistics: Database["public"]["Enums"]["access_logistics"] | null
+          access_cost: Database["public"]["Enums"]["access_cost"] | null
+          access_notes: string | null
         }
         Insert: {
           created_at?: string
@@ -156,6 +160,10 @@ export interface Database {
           location_precision?: Database["public"]["Enums"]["location_precision"]
           merged_into_id?: string | null
           hero_image_id?: string | null
+          access_level?: Database["public"]["Enums"]["access_level"] | null
+          access_logistics?: Database["public"]["Enums"]["access_logistics"] | null
+          access_cost?: Database["public"]["Enums"]["access_cost"] | null
+          access_notes?: string | null
         }
         Update: {
           created_at?: string
@@ -173,6 +181,10 @@ export interface Database {
           location_precision?: Database["public"]["Enums"]["location_precision"]
           merged_into_id?: string | null
           hero_image_id?: string | null
+          access_level?: Database["public"]["Enums"]["access_level"] | null
+          access_logistics?: Database["public"]["Enums"]["access_logistics"] | null
+          access_cost?: Database["public"]["Enums"]["access_cost"] | null
+          access_notes?: string | null
         }
         Relationships: [
           {
@@ -1641,6 +1653,9 @@ export interface Database {
       }
     }
     Enums: {
+      access_level: "public" | "private" | "restricted" | "commercial"
+      access_logistics: "walk-in" | "booking_required" | "tour_only" | "exterior_only"
+      access_cost: "free" | "paid" | "customers_only"
       location_precision: "exact" | "approximate"
     }
     CompositeTypes: {

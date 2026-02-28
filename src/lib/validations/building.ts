@@ -16,7 +16,10 @@ export const buildingSchema = z.object({
     .max(new Date().getFullYear() + 10, "Year cannot be in the far future")
     .nullable()),
   status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary']).nullable().optional(),
-  access: z.enum(['Open Access', 'Admission Fee', 'Customers Only', 'Appointment Only', 'Exterior View Only', 'No Access']).nullable().optional(),
+  access_level: z.enum(['public', 'private', 'restricted', 'commercial']).nullable().optional(),
+  access_logistics: z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only']).nullable().optional(),
+  access_cost: z.enum(['free', 'paid', 'customers_only']).nullable().optional(),
+  access_notes: z.string().nullable().optional(),
   // Updated to accept Architect objects
   architects: z.array(
     z.object({
@@ -57,7 +60,10 @@ export const editBuildingSchema = z.object({
     .max(new Date().getFullYear() + 10, "Year cannot be in the far future")
     .nullable()),
   status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary']).nullable().optional(),
-  access: z.enum(['Open Access', 'Admission Fee', 'Customers Only', 'Appointment Only', 'Exterior View Only', 'No Access']).nullable().optional(),
+  access_level: z.enum(['public', 'private', 'restricted', 'commercial']).nullable().optional(),
+  access_logistics: z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only']).nullable().optional(),
+  access_cost: z.enum(['free', 'paid', 'customers_only']).nullable().optional(),
+  access_notes: z.string().nullable().optional(),
   architects: z.array(
     z.object({
       id: z.string(),
