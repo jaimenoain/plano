@@ -53,6 +53,7 @@ export const MapFiltersObjectSchema = z.object({
     z.number().optional()
   ),
   collectionIds: z.array(z.string()).optional(),
+  folderIds: z.array(z.string()).optional(),
   typologies: z.array(z.string()).optional(),
   materials: z.array(z.string()).optional(),
   styles: z.array(z.string()).optional(),

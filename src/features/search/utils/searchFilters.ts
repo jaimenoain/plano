@@ -14,6 +14,7 @@ export interface FilterCriteria {
   attributeIds: string[];
   selectedArchitects: string[]; // IDs
   collectionIds?: string[];
+  folderIds?: string[];
   personalMinRating?: number;
   materials?: string[];
   styles?: string[];
