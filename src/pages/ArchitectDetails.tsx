@@ -188,9 +188,9 @@ export default function ArchitectDetails() {
               >
                 <CardContent className="p-0">
                   <AspectRatio ratio={4 / 3}>
-                    {getBuildingImageUrl(building.hero_image_url) ? (
+                    {getBuildingImageUrl(building.main_image_url) ? (
                       <img
-                        src={getBuildingImageUrl(building.hero_image_url)}
+                        src={getBuildingImageUrl(building.main_image_url)}
                         alt={building.name}
                         className="w-full h-full object-cover"
                       />
