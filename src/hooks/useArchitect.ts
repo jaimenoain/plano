@@ -16,7 +16,7 @@ export interface ArchitectBuilding {
   city: string | null;
   country: string | null;
   year_completed: number | null;
-  hero_image_url: string | null;
+  main_image_url: string | null;
 }
 
 interface UseArchitectResult {
@@ -72,7 +72,7 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
               city,
               country,
               year_completed,
-              hero_image:review_images!hero_image_id(storage_path)
+              main_image_url
             )
           `)
           .eq("architect_id", architectId);
@@ -86,17 +86,13 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
               const b = item.building;
               if (!b) return null;
 
-              // Extract storage_path from the joined hero_image object if it exists
-              // The query returns an object because of the !hero_image_id foreign key relationship
-              const heroImage = b.hero_image as { storage_path: string } | null;
-
               return {
                 id: b.id,
                 name: b.name,
                 city: b.city,
                 country: b.country,
                 year_completed: b.year_completed,
-                hero_image_url: heroImage?.storage_path || null
+                main_image_url: b.main_image_url || null
               };
             })
             .filter((b: any) => b !== null) as ArchitectBuilding[];

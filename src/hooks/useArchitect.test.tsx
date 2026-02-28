@@ -27,7 +27,7 @@ describe('useArchitect', () => {
     vi.clearAllMocks();
   });
 
-  it('correctly maps building hero_image storage_path to hero_image_url', async () => {
+  it('correctly maps building main_image_url', async () => {
     const architectId = 'arch-123';
 
     // Mock Architect Data Response
@@ -37,7 +37,7 @@ describe('useArchitect', () => {
       type: 'individual',
     };
 
-    // Mock Buildings Data Response with nested hero_image
+    // Mock Buildings Data Response
     const mockBuildingsData = [
       {
         building: {
@@ -46,9 +46,7 @@ describe('useArchitect', () => {
           city: 'City A',
           country: 'Country A',
           year_completed: 2020,
-          hero_image: {
-            storage_path: 'path/to/image.jpg'
-          }
+          main_image_url: 'path/to/image.jpg'
         }
       },
       {
@@ -58,7 +56,7 @@ describe('useArchitect', () => {
           city: 'City B',
           country: 'Country B',
           year_completed: 2021,
-          hero_image: null // No image
+          main_image_url: null // No image
         }
       }
     ];
@@ -120,10 +118,10 @@ describe('useArchitect', () => {
     // Verify mapping
     const buildingOne = result.current.buildings.find(b => b.id === 'build-1');
     expect(buildingOne).toBeDefined();
-    expect(buildingOne?.hero_image_url).toBe('path/to/image.jpg');
+    expect(buildingOne?.main_image_url).toBe('path/to/image.jpg');
 
     const buildingTwo = result.current.buildings.find(b => b.id === 'build-2');
     expect(buildingTwo).toBeDefined();
-    expect(buildingTwo?.hero_image_url).toBeNull();
+    expect(buildingTwo?.main_image_url).toBeNull();
   });
 });
