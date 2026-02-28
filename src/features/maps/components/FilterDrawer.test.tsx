@@ -1,3 +1,13 @@
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
+
+vi.mock("@radix-ui/react-accordion", () => ({
+  Root: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Item: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Header: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Trigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Content: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
@@ -36,6 +46,10 @@ vi.mock('./filters/QualityRatingFilter', () => ({
 
 vi.mock('./filters/CollectionMultiSelect', () => ({
     CollectionMultiSelect: () => <div data-testid="collection-multi-select"></div>
+}));
+
+vi.mock('./filters/FolderAndCollectionMultiSelect', () => ({
+    FolderAndCollectionMultiSelect: () => <div data-testid="folder-collection-multi-select"></div>
 }));
 
 vi.mock('@/features/search/components/ArchitectSelect', () => ({
