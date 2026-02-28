@@ -26,6 +26,10 @@ export function MapMarkers({
   const { current: map } = useMap();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Ref to retain the currently highlighted cluster even if it disappears from the backend clusters array
+  // (e.g., when a filter hides it instantly upon saving)
+  const retainedClusterRef = useRef<ClusterResponse | null>(null);
+
   // Clear timeout on unmount
   useEffect(() => {
     return () => {
@@ -55,19 +59,38 @@ export function MapMarkers({
 
   // Find the active cluster based on the highlightedId
   const activeCluster = useMemo(() => {
-    if (!highlightedId || !clusters.length) return null;
+    if (!highlightedId) {
+        retainedClusterRef.current = null;
+        return null;
+    }
 
     const found = clusters.find(c =>
       !c.is_cluster && // Only single items
       String(c.id) === String(highlightedId) // Match the ID directly (ensure string comparison)
     );
 
-    return found || null;
+    if (found) {
+        retainedClusterRef.current = found;
+        return found;
+    }
+
+    // If not found in current clusters, but we have it in memory for this highlightedId
+    return retainedClusterRef.current;
   }, [clusters, highlightedId]);
+
+  // Create a display array that includes the retained cluster if it's missing
+  const displayClusters = useMemo(() => {
+      if (!activeCluster) return clusters;
+      const isStillInClusters = clusters.some(c => String(c.id) === String(activeCluster.id));
+      if (!isStillInClusters) {
+          return [...clusters, activeCluster];
+      }
+      return clusters;
+  }, [clusters, activeCluster]);
 
   const markers = useMemo(
     () =>
-      clusters.map((cluster) => {
+      displayClusters.map((cluster) => {
         // Determine the unique key for the marker
         const key = cluster.is_cluster
           ? `cluster-${cluster.id}-${cluster.count}`
@@ -205,7 +228,7 @@ export function MapMarkers({
           </Marker>
         );
       }),
-    [clusters, map, handleMouseEnter, handleMouseLeave, highlightedId]
+    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId]
   );
 
   return (
