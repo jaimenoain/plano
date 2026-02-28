@@ -2,7 +2,14 @@
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 -- Unschedule the job if it exists to avoid conflicts
-SELECT cron.unschedule('update-building-tiers-daily');
+DO $$
+BEGIN
+  PERFORM cron.unschedule('update-building-tiers-daily');
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Ignore error if job does not exist yet
+END
+$$;
 
 -- Schedule the job to run every day at midnight (UTC)
 SELECT cron.schedule(
