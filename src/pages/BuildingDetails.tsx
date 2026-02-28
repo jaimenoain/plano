@@ -1398,15 +1398,6 @@ export default function BuildingDetails() {
                                     </Button>
                                 )}
                                 <Button
-                                    variant={userStatus === 'pending' ? "default" : "secondary"}
-                                    size="sm"
-                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-muted-foreground/10 data-[state=active]:bg-primary"
-                                    onClick={() => handleStatusChange('pending')}
-                                >
-                                    <Bookmark className={`w-4 h-4 mr-2 ${userStatus === 'pending' ? "fill-current" : ""}`} />
-                                    {userStatus === 'pending' ? "Saved" : "Save"}
-                                </Button>
-                                <Button
                                     variant={userStatus === 'visited' ? "default" : "secondary"}
                                     size="sm"
                                     className="flex-1 rounded-full h-10 shadow-none hover:bg-muted-foreground/10"
@@ -1414,6 +1405,15 @@ export default function BuildingDetails() {
                                 >
                                     <Check className="w-4 h-4 mr-2" />
                                     Visited
+                                </Button>
+                                <Button
+                                    variant={userStatus === 'pending' ? "default" : "secondary"}
+                                    size="sm"
+                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-muted-foreground/10 data-[state=active]:bg-primary"
+                                    onClick={() => handleStatusChange('pending')}
+                                >
+                                    <Bookmark className={`w-4 h-4 mr-2 ${userStatus === 'pending' ? "fill-current" : ""}`} />
+                                    {userStatus === 'pending' ? "Saved" : "Save"}
                                 </Button>
                                 <Button
                                     variant={userStatus === 'ignored' ? "default" : "secondary"}
