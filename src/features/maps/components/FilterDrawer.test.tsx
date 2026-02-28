@@ -12,6 +12,11 @@ vi.mock("@radix-ui/react-accordion", () => ({
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { FilterDrawer } from './FilterDrawer';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/hooks/useAuth';
+import { MemoryRouter } from 'react-router-dom';
+
+
 import * as MapContext from '../providers/MapContext';
 import * as Taxonomy from '@/hooks/useTaxonomy';
 import { useUserSearch } from '@/features/search/hooks/useUserSearch';
@@ -94,7 +99,24 @@ describe('FilterDrawer', () => {
   it('renders "Curators & Friends" section in Discover mode', () => {
     (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
 
-    render(<FilterDrawer />);
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AuthProvider>
+            <FilterDrawer />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
 
     expect(screen.getByText('Curators & Friends')).toBeDefined();
     expect(screen.getByTestId('contact-picker')).toBeDefined();
@@ -109,7 +131,24 @@ describe('FilterDrawer', () => {
       },
     });
 
-    render(<FilterDrawer />);
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AuthProvider>
+            <FilterDrawer />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
 
     expect(screen.queryByText('Curators & Friends')).toBeNull();
     expect(screen.queryByTestId('contact-picker')).toBeNull();

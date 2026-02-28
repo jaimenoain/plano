@@ -16,6 +16,8 @@ import { ArchitectSelect } from '@/features/search/components/ArchitectSelect';
 import { ContactPicker } from '@/features/search/components/ContactPicker';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useMapContext } from '../providers/MapContext';
+import { useBuildingSearch } from '@/features/search/hooks/useBuildingSearch';
+
 import { MapMode, MichelinRating } from '@/types/plano-map';
 import { QualityRatingFilter } from './filters/QualityRatingFilter';
 import { FolderAndCollectionMultiSelect } from './filters/FolderAndCollectionMultiSelect';
@@ -84,9 +86,42 @@ function MultiSelectCheckboxList({ items, selectedIds, onChange, className }: Mu
 
 export function FilterDrawer() {
   const {
-    state: { mode, filters },
-    methods: { setFilter, setMapState },
+    state: { mode },
+    methods: { setMapState },
   } = useMapContext();
+
+  const {
+    statusFilters: currentStatus,
+    setStatusFilters: setStatus,
+    hideSaved,
+    setHideSaved,
+    hideVisited,
+    setHideVisited,
+    hideHidden,
+    setHideHidden,
+    hideWithoutImages,
+    setHideWithoutImages,
+    filterContacts,
+    setFilterContacts,
+    personalMinRating: currentPersonalMinRating,
+    setPersonalMinRating: setPersonalRating,
+    contactMinRating: currentMinRating,
+    setContactMinRating: setMinRating,
+    selectedCategory: currentCategory,
+    setSelectedCategory: setCategory,
+    selectedTypologies: currentTypologies,
+    setSelectedTypologies: setTypologies,
+    selectedAttributes: currentAttributes,
+    setSelectedAttributes: setAttributes,
+    selectedArchitects: currentArchitects,
+    setSelectedArchitects: setArchitects,
+    selectedCollections: currentCollections,
+    setSelectedCollections: setCollections,
+    selectedFolders: currentFolders,
+    setSelectedFolders: setFolders,
+    selectedContacts: currentContacts,
+    setSelectedContacts: setContacts,
+  } = useBuildingSearch();
 
   const {
     functionalCategories,
@@ -98,41 +133,21 @@ export function FilterDrawer() {
 
   const handleModeChange = (newMode: string) => {
     const typedMode = newMode as MapMode;
+    setMapState({ mode: typedMode });
 
     if (typedMode === 'discover') {
-      // Switch to Discover mode:
-      // - Clear status (so we see everything relevant to discovery)
-      // - Hide saved items by default
-      // - Keep other filters (architects, rating, etc.)
-
-      setMapState({
-        mode: typedMode,
-        filters: {
-          ...filters,
-          status: undefined,
-          hideSaved: true,
-          hideVisited: true,
-        },
-      });
+      setStatus([]);
+      setHideSaved(true);
+      setHideVisited(true);
     } else {
-      // Switch to Library mode:
-      // - Set status to ['visited', 'saved'] to show user's collection
-      // - Ensure we show saved/visited items by disabling hide flags
-
-      setMapState({
-        mode: typedMode,
-        filters: {
-          ...filters,
-          status: ['visited', 'saved'],
-          hideSaved: false,
-          hideVisited: false,
-        },
-      });
+      setStatus(['visited', 'saved']);
+      setHideSaved(false);
+      setHideVisited(false);
     }
   };
 
   const handleArchitectsChange = (architects: { id: string; name: string }[]) => {
-    setFilter('architects', architects);
+    setArchitects(architects);
   };
 
   const handleContactsChange = (newContacts: UserSearchResult[]) => {
@@ -142,65 +157,43 @@ export function FilterDrawer() {
           avatar_url: c.avatar_url || null
       }));
 
-      const newFilters = { ...filters, contacts: mapped };
+      setContacts(mapped);
 
       // Auto-Selection UX: If contacts selected and no status set, default to visited/saved
-      if (mapped.length > 0 && (!filters.status || filters.status.length === 0)) {
-          newFilters.status = ['visited', 'saved'];
-          // Also ensure visibility is enabled
-          newFilters.hideSaved = false;
-          newFilters.hideVisited = false;
+      if (mapped.length > 0 && currentStatus.length === 0) {
+          setStatus(['visited', 'saved']);
+          setHideSaved(false);
+          setHideVisited(false);
       }
-
-      setMapState({ filters: newFilters });
   };
 
   const handleMinRatingChange = (value: number) => {
-    setFilter('minRating', value as MichelinRating);
+    setMinRating(value as MichelinRating);
   };
 
   const handlePersonalRatingChange = (value: number) => {
-    setFilter('personalMinRating', value);
+    setPersonalRating(value);
   };
 
   const handleCollectionsChange = (ids: string[]) => {
-    setFilter('collectionIds', ids);
+    const collections = ids.map(id => ({ id, name: id })); setCollections(collections);
   };
 
   const handleFoldersChange = (ids: string[]) => {
-    setFilter('folderIds', ids);
+    const folders = ids.map(id => ({ id, name: id })); setFolders(folders);
   };
 
   const handleHideSavedChange = (checked: boolean) => {
-    setMapState({
-      filters: {
-        ...filters,
-        hideSaved: checked,
-        hideVisited: checked,
-      },
-    });
+    setHideSaved(checked);
+    setHideVisited(checked);
   };
 
   const handleStatusChange = (value: string[]) => {
     // value is array of strings: "visited", "saved"
 
-    const updates: Partial<typeof filters> = { status: value };
-
-    // If "saved" is selected, ensure hideSaved is false
-    if (value.includes('saved')) {
-       updates.hideSaved = false;
-    }
-    // If "visited" is selected, ensure hideVisited is false
-    if (value.includes('visited')) {
-       updates.hideVisited = false;
-    }
-
-    setMapState({
-        filters: {
-            ...filters,
-            ...updates
-        }
-    });
+    setStatus(value);
+    if (value.includes('saved')) setHideSaved(false);
+    if (value.includes('visited')) setHideVisited(false);
   };
 
   // Taxonomy Handlers
@@ -218,92 +211,54 @@ export function FilterDrawer() {
           })
         : currentTypologies; // If no category selected, all typologies are technically valid (or invalid depending on logic, but usually we allow searching across all)
 
-      setMapState({
-          filters: {
-              ...filters,
-              category: value,
-              typologies: validTypologies.length !== currentTypologies.length ? validTypologies : currentTypologies
-          }
-      });
+      setCategory(value || null);
+      if (validTypologies.length !== currentTypologies.length) setTypologies(validTypologies);
   };
 
   const handleTypologiesChange = (ids: string[]) => {
-    setFilter('typologies', ids);
+    setTypologies(ids);
   };
 
   const handleMaterialsChange = (ids: string[]) => {
-    setFilter('materials', ids);
+    setAttributes([...currentAttributes.filter(id => !materialityAttributes.map(a => a.id).includes(id)), ...ids]);
   };
 
   const handleContextsChange = (ids: string[]) => {
-    setFilter('contexts', ids);
+    setAttributes([...currentAttributes.filter(id => !contextAttributes.map(a => a.id).includes(id)), ...ids]);
   };
 
   const handleStylesChange = (ids: string[]) => {
-    setFilter('styles', ids);
+    setAttributes([...currentAttributes.filter(id => !styleAttributes.map(a => a.id).includes(id)), ...ids]);
   };
 
   const handleResetGlobalFilters = () => {
-      setMapState({
-          filters: {
-              ...filters,
-              // Explicitly clear global filters including Contacts, but preserve View Mode settings (status, hideSaved, etc.)
-              architects: undefined,
-              contacts: undefined,
-              category: undefined,
-              typologies: undefined,
-              materials: undefined,
-              contexts: undefined,
-              styles: undefined
-          }
-      });
+      setArchitects([]);
+      setContacts([]);
+      setCategory(null);
+      setTypologies([]);
+      setAttributes([]);
   };
 
   const handleClearAll = () => {
-    setMapState({
-      filters: {
-        ...filters,
-        // Global Taxonomy
-        architects: undefined,
-        contacts: undefined,
-        category: undefined,
-        typologies: undefined,
-        materials: undefined,
-        contexts: undefined,
-        styles: undefined,
-        // Mode-Specific
-        minRating: undefined,
-        personalMinRating: undefined,
-        status: undefined,
-        collectionIds: undefined,
-        folderIds: undefined,
-        hideSaved: false,
-        hideVisited: false,
-      }
-    });
+    setArchitects([]);
+    setContacts([]);
+    setCategory(null);
+    setTypologies([]);
+    setAttributes([]);
+    setMinRating(0);
+    setPersonalRating(0);
+    setStatus([]);
+    setCollections([]);
+    setFolders([]);
+    setHideSaved(false);
+    setHideVisited(false);
   };
 
-  // Safe defaults
-  const currentMinRating = filters.minRating ?? 0;
-  const currentPersonalMinRating = filters.personalMinRating ?? 0;
-  const currentStatus = filters.status ?? [];
-  const currentArchitects = filters.architects ?? [];
-  const currentContacts = useMemo(() => {
-    return (filters.contacts || []).map(c => ({
-        id: c.id,
-        username: c.name,
-        avatar_url: c.avatar_url || null
-    } as UserSearchResult));
-  }, [filters.contacts]);
-  const currentCollectionIds = filters.collectionIds ?? [];
-  const currentFolderIds = filters.folderIds ?? [];
-  const hideSaved = filters.hideSaved ?? false;
 
-  const currentCategory = filters.category;
-  const currentTypologies = filters.typologies ?? [];
-  const currentMaterials = filters.materials ?? [];
-  const currentContexts = filters.contexts ?? [];
-  const currentStyles = filters.styles ?? [];
+
+  const currentMaterials = currentAttributes.filter(id => materialityAttributes.map(a => a.id).includes(id));
+  const currentContexts = currentAttributes.filter(id => contextAttributes.map(a => a.id).includes(id));
+  const currentStyles = currentAttributes.filter(id => styleAttributes.map(a => a.id).includes(id));
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -324,8 +279,8 @@ export function FilterDrawer() {
     } else {
       // Library mode
       if (currentPersonalMinRating > 0) count++;
-      if (currentCollectionIds.length > 0) count++;
-      if (currentFolderIds.length > 0) count++;
+      if (currentCollections.length > 0) count++;
+      if (currentFolders.length > 0) count++;
       if (currentStatus.length > 0) count++;
     }
     return count;
@@ -336,8 +291,9 @@ export function FilterDrawer() {
       currentMinRating,
       hideSaved,
       currentPersonalMinRating,
-      currentCollectionIds,
-      currentFolderIds,
+      currentCollections,
+      currentFolders,
+
       currentStatus,
       currentCategory,
       currentTypologies,
@@ -511,8 +467,8 @@ export function FilterDrawer() {
                         <AccordionTrigger className="text-sm font-medium py-2 hover:no-underline">Folders & Collections</AccordionTrigger>
                         <AccordionContent>
                         <FolderAndCollectionMultiSelect
-                            selectedCollectionIds={currentCollectionIds}
-                            selectedFolderIds={currentFolderIds}
+                            selectedCollectionIds={currentCollections.map(c => c.id)}
+                            selectedFolderIds={currentFolders.map(c => c.id)}
                             onCollectionChange={handleCollectionsChange}
                             onFolderChange={handleFoldersChange}
                         />
