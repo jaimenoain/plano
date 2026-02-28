@@ -11,7 +11,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ArchitectSelect } from '@/features/search/components/ArchitectSelect';
 import { ContactPicker } from '@/features/search/components/ContactPicker';
 import { SegmentedControl } from '@/components/ui/segmented-control';
@@ -181,24 +180,31 @@ export function FilterDrawer() {
     });
   };
 
-  const handleStatusChange = (value: string[]) => {
-    // value is array of strings: "visited", "saved"
+  const handleStatusChange = (value: string) => {
+    let statusArray: string[] = [];
+    let hideSaved = false;
+    let hideVisited = false;
 
-    const updates: Partial<typeof filters> = { status: value };
-
-    // If "saved" is selected, ensure hideSaved is false
-    if (value.includes('saved')) {
-       updates.hideSaved = false;
-    }
-    // If "visited" is selected, ensure hideVisited is false
-    if (value.includes('visited')) {
-       updates.hideVisited = false;
+    if (value === 'all') {
+      statusArray = ['visited', 'saved', 'pending'];
+      hideSaved = false;
+      hideVisited = false;
+    } else if (value === 'visited') {
+      statusArray = ['visited'];
+      hideSaved = true;
+      hideVisited = false;
+    } else if (value === 'saved') {
+      statusArray = ['saved', 'pending'];
+      hideSaved = false;
+      hideVisited = true;
     }
 
     setMapState({
         filters: {
             ...filters,
-            ...updates
+            status: statusArray,
+            hideSaved,
+            hideVisited
         }
     });
   };
@@ -287,6 +293,13 @@ export function FilterDrawer() {
   const currentMinRating = filters.minRating ?? 0;
   const currentPersonalMinRating = filters.personalMinRating ?? 0;
   const currentStatus = filters.status ?? [];
+  const currentSegmentedStatus = currentStatus.includes('visited') && (currentStatus.includes('saved') || currentStatus.includes('pending'))
+    ? 'all'
+    : currentStatus.includes('visited')
+      ? 'visited'
+      : (currentStatus.includes('saved') || currentStatus.includes('pending'))
+        ? 'saved'
+        : 'all';
   const currentArchitects = filters.architects ?? [];
   const currentContacts = useMemo(() => {
     return (filters.contacts || []).map(c => ({
@@ -457,34 +470,16 @@ export function FilterDrawer() {
                   <Label className="text-sm font-medium">
                       {isContactMode ? 'Curator Status' : 'Status'}
                   </Label>
-                  <ToggleGroup
-                    type="multiple"
-                    value={currentStatus}
+                  <SegmentedControl
+                    options={[
+                      { label: 'All', value: 'all' },
+                      { label: 'Visited', value: 'visited' },
+                      { label: 'Bucket List', value: 'saved' },
+                    ]}
+                    value={currentSegmentedStatus}
                     onValueChange={handleStatusChange}
-                    className="justify-start flex-wrap gap-2"
-                  >
-                    <ToggleGroupItem
-                      value="visited"
-                      aria-label="Toggle visited"
-                      className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                    >
-                      Visited
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="saved"
-                      aria-label="Toggle saved"
-                      className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                    >
-                      Saved
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="pending"
-                      aria-label="Toggle pending"
-                      className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                    >
-                      Pending
-                    </ToggleGroupItem>
-                  </ToggleGroup>
+                    className="w-full"
+                  />
                 </div>
 
                 {/* Personal Rating */}
