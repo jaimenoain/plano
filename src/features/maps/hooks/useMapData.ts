@@ -70,8 +70,8 @@ function calculateTierRank(item: any): number {
 
   if (isLibraryItem) {
     if (userRating >= 3) return 3;
-    if (userRating === 2) return 2;
-    // Rating 1, 0, or just saved -> Standard (Rank 1)
+    if (userRating >= 1) return 2;
+    // Rating 0, or just saved -> Standard (Rank 1)
     return 1;
   }
 
@@ -79,9 +79,9 @@ function calculateTierRank(item: any): number {
   const label = item.tier_rank; // This comes from DB as string
 
   if (label === 'Top 1%') return 3;
-  if (label === 'Top 5%' || label === 'Top 10%') return 2;
+  if (label === 'Top 5%' || label === 'Top 10%' || label === 'Top 20%') return 2;
 
-  // "Top 20%", "Standard", or anything else -> 1
+  // "Standard", or anything else -> 1
   return 1;
 }
 
