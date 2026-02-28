@@ -89,17 +89,7 @@ export const MapStateSchema = z.object({
   lng: z.preprocess(preprocessNumber, z.coerce.number().catch(DEFAULT_LNG)),
   zoom: z.preprocess(preprocessNumber, z.coerce.number().catch(DEFAULT_ZOOM)),
   mode: z.preprocess((val) => val === null ? undefined : val, MapModeSchema),
-  filters: z.string().optional().transform((str) => {
-    if (!str) return {};
-    try {
-      const parsed = JSON.parse(str);
-      if (typeof parsed !== 'object' || parsed === null) return {};
-      // Validate/Clamp the parsed object
-      return MapFiltersObjectSchema.parse(parsed);
-    } catch {
-      return {};
-    }
-  }).catch({})
+  filters: z.any().transform(() => ({})).catch({}) // filters are now managed by useBuildingSearch
 });
 
 export type MapState = z.infer<typeof MapStateSchema>;
@@ -114,20 +104,8 @@ export const useURLMapState = () => {
       lng: searchParams.get('lng'),
       zoom: searchParams.get('zoom'),
       mode: searchParams.get('mode'),
-      filters: searchParams.get('filters'),
     };
     const parsed = MapStateSchema.parse(raw);
-
-    // Deep-link support: populate ratedBy from URL if present
-    const ratedByParam = searchParams.get('rated_by');
-    if (ratedByParam) {
-      const ratedByList = ratedByParam.split(',').map(s => s.trim()).filter(Boolean);
-      if (ratedByList.length > 0) {
-        // We inject it into the filters object.
-        // MapFiltersObjectSchema includes ratedBy now, so TS should be happy if we typed it, but parsed.filters is loosely typed via transform.
-        (parsed.filters as unknown as MapFilters).ratedBy = ratedByList;
-      }
-    }
 
     return parsed;
   }, [searchParams]);
@@ -141,43 +119,15 @@ export const useURLMapState = () => {
       if (updates.zoom !== undefined) newParams.set('zoom', updates.zoom.toString());
       if (updates.mode !== undefined) newParams.set('mode', updates.mode);
 
-      if (updates.filters !== undefined) {
-         if (Object.keys(updates.filters).length === 0) {
-             newParams.delete('filters');
-             newParams.delete('rated_by');
-         } else {
-             // Prepare clean filters object for JSON (excluding ratedBy to avoid redundancy)
-             const filtersForJson = { ...updates.filters } as unknown as MapFilters;
-             delete filtersForJson.ratedBy;
-
-             // Sync contacts OR ratedBy to rated_by param
-             const contacts = (updates.filters as unknown as MapFilters).contacts;
-             const ratedBy = (updates.filters as unknown as MapFilters).ratedBy;
-
-             let hasSetRatedBy = false;
-
-             if (contacts && Array.isArray(contacts)) {
-                 const names = contacts.map((c) => c.name).filter(Boolean);
-                 if (names.length > 0) {
-                     newParams.set('rated_by', names.join(','));
-                     hasSetRatedBy = true;
-                 } else {
-                     newParams.delete('rated_by');
-                 }
-                 // If we set rated_by from contacts, we can remove contacts from JSON
-                 // to avoid duplication and "weird characters" (large JSON)
-                 delete filtersForJson.contacts;
-             } else if (ratedBy && Array.isArray(ratedBy) && ratedBy.length > 0) {
-                 // Fallback: If no rich contacts, use simple ratedBy list
-                 newParams.set('rated_by', ratedBy.join(','));
-                 hasSetRatedBy = true;
-             } else {
-                 newParams.delete('rated_by');
-             }
-
-             newParams.set('filters', JSON.stringify(filtersForJson));
-         }
-      }
+      // We explicitly ignore updates.filters here to let useBuildingSearch handle it
+      // and prevent dual-writes or overwriting flat params.
+      // But MapContext currently expects `setMapURL({ filters })` to work, which is
+      // now handled internally by Context/Search instead of useURLMapState for the URL part.
+      // Actually wait, MapContext uses setMapURL to set URL state. If we drop it here,
+      // MapContext's filters state will NOT be in the URL unless MapContext passes it down
+      // to useBuildingSearch, OR MapContext just keeps it in local state.
+      // The instructions state: "URL parameter synchronization must be handled by a single layer
+      // (preferably within useBuildingSearch.ts which already possesses the foundation for flat params)."
 
       return newParams;
     }, { replace: true });
