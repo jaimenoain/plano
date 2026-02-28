@@ -19,7 +19,7 @@ export const buildingSchema = z.object({
   access_level: z.enum(['public', 'private', 'restricted', 'commercial']).nullable().optional(),
   access_logistics: z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only']).nullable().optional(),
   access_cost: z.enum(['free', 'paid', 'customers_only']).nullable().optional(),
-  access_notes: z.string().nullable().optional(),
+  access_notes: z.string().max(500, "Notes must be less than 500 characters").nullable().optional(),
   // Updated to accept Architect objects
   architects: z.array(
     z.object({
@@ -63,7 +63,7 @@ export const editBuildingSchema = z.object({
   access_level: z.enum(['public', 'private', 'restricted', 'commercial']).nullable().optional(),
   access_logistics: z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only']).nullable().optional(),
   access_cost: z.enum(['free', 'paid', 'customers_only']).nullable().optional(),
-  access_notes: z.string().nullable().optional(),
+  access_notes: z.string().max(500, "Notes must be less than 500 characters").nullable().optional(),
   architects: z.array(
     z.object({
       id: z.string(),

@@ -20,9 +20,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { TagInput } from "@/components/ui/tag-input";
+import { Textarea } from "@/components/ui/textarea";
 
 const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary'];
-const ACCESS_OPTIONS = ['Open Access', 'Admission Fee', 'Customers Only', 'Appointment Only', 'Exterior View Only', 'No Access'];
+const ACCESS_LEVEL_OPTIONS = ['public', 'private', 'restricted', 'commercial'];
+const ACCESS_LOGISTICS_OPTIONS = ['walk-in', 'booking_required', 'tour_only', 'exterior_only'];
+const ACCESS_COST_OPTIONS = ['free', 'paid', 'customers_only'];
 
 export interface BuildingFormData {
   name: string;
@@ -31,7 +34,10 @@ export interface BuildingFormData {
   hero_image_url?: string | null;
   year_completed: number | null;
   status?: string | null;
-  access?: string | null;
+  access_level?: string | null;
+  access_logistics?: string | null;
+  access_cost?: string | null;
+  access_notes?: string | null;
   architects: Architect[];
   functional_category_id: string | null;
   functional_typology_ids: string[];
@@ -52,7 +58,10 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [aliases, setAliases] = useState<string[]>(initialValues.aliases || []);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
   const [status, setStatus] = useState<string>(initialValues.status || "");
-  const [access, setAccess] = useState<string>(initialValues.access || "");
+  const [access_level, setAccessLevel] = useState<string>(initialValues.access_level || "");
+  const [access_logistics, setAccessLogistics] = useState<string>(initialValues.access_logistics || "");
+  const [access_cost, setAccessCost] = useState<string>(initialValues.access_cost || "");
+  const [access_notes, setAccessNotes] = useState<string>(initialValues.access_notes || "");
   const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
   const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id || "");
   const [functional_typology_ids, setTypologyIds] = useState<string[]>(initialValues.functional_typology_ids);
@@ -228,7 +237,10 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         // hero_image_url removed
         year_completed,
         status: status || null,
-        access: access || null,
+        access_level: access_level || null,
+        access_logistics: access_logistics || null,
+        access_cost: access_cost || null,
+        access_notes: access_notes || null,
         architects,
         functional_category_id,
         functional_typology_ids,
@@ -272,32 +284,80 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         </div>
 
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-4 border rounded-md p-4 bg-muted/5">
+          <h3 className="text-sm font-semibold">Access Details</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Level</Label>
+              <Select value={access_level} onValueChange={setAccessLevel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACCESS_LEVEL_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Logistics</Label>
+              <Select value={access_logistics} onValueChange={setAccessLogistics}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select logistics" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACCESS_LOGISTICS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cost</Label>
+              <Select value={access_cost} onValueChange={setAccessCost}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select cost" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACCESS_COST_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
           <div className="space-y-2">
-            <Label>Access</Label>
-             <Select value={access} onValueChange={setAccess}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select access" />
-              </SelectTrigger>
-              <SelectContent>
-                {ACCESS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Access Notes</Label>
+            <Textarea
+              value={access_notes}
+              onChange={(e) => setAccessNotes(e.target.value)}
+              placeholder="e.g. Open to public during daylight hours. Guided tours available on weekends."
+              maxLength={500}
+              className="resize-none"
+              rows={2}
+            />
+            <div className="text-xs text-muted-foreground text-right">
+              {access_notes.length}/500
+            </div>
           </div>
         </div>
 
