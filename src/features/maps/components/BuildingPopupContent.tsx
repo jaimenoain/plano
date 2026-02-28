@@ -420,14 +420,13 @@ export function BuildingPopupContent({
         {/* Action Bar */}
         {user && (
           <div
-            className="flex items-center justify-between border-t pt-2 relative z-20"
+            className="flex items-center w-full border-t relative z-20"
             onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
           >
             <Button
                 variant={isVisited ? "default" : "ghost"}
-                size="icon"
-                className={`h-8 w-8 ${isVisited ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-muted-foreground hover:bg-primary/10'}`}
+                className={`flex-1 h-12 rounded-none ${isVisited ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-muted-foreground hover:bg-primary/10'}`}
                 onClick={handleVisit}
                 title="Mark as visited"
                 disabled={isSaving}
@@ -437,8 +436,7 @@ export function BuildingPopupContent({
 
             <Button
                 variant={isSaved ? "default" : "ghost"}
-                size="icon"
-                className={`h-8 w-8 ${isSaved ? '' : 'text-muted-foreground hover:bg-primary/10'}`}
+                className={`flex-1 h-12 rounded-none border-x ${isSaved ? '' : 'text-muted-foreground hover:bg-primary/10'}`}
                 onClick={handleSave}
                 title="Save"
                 disabled={isSaving}
@@ -448,8 +446,7 @@ export function BuildingPopupContent({
 
             <Button
                 variant={isIgnored ? "destructive" : "ghost"}
-                size="icon"
-                className={`h-8 w-8 ${isIgnored ? '' : 'text-muted-foreground hover:bg-destructive/10'}`}
+                className={`flex-1 h-12 rounded-none ${isIgnored ? '' : 'text-muted-foreground hover:bg-destructive/10'}`}
                 onClick={handleHide}
                 title="Hide"
                 disabled={isSaving}
@@ -458,11 +455,10 @@ export function BuildingPopupContent({
             </Button>
 
             {onRemoveFromCollection && (
-                <div className="ml-1 pl-1 border-l">
+                <div className="border-l flex flex-1">
                     <Button
                         variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="flex-1 h-12 rounded-none text-destructive hover:text-destructive hover:bg-destructive/10"
                         onClick={handleRemove}
                         title="Remove from map"
                     >
