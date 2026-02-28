@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -23,9 +24,23 @@ import { TagInput } from "@/components/ui/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 
 const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary'];
-const ACCESS_LEVEL_OPTIONS = ['public', 'private', 'restricted', 'commercial'];
-const ACCESS_LOGISTICS_OPTIONS = ['walk-in', 'booking_required', 'tour_only', 'exterior_only'];
-const ACCESS_COST_OPTIONS = ['free', 'paid', 'customers_only'];
+const ACCESS_LEVEL_OPTIONS = [
+  { label: 'Public', value: 'public' },
+  { label: 'Private', value: 'private' },
+  { label: 'Restricted', value: 'restricted' },
+  { label: 'Commercial', value: 'commercial' }
+];
+const ACCESS_LOGISTICS_OPTIONS = [
+  { label: 'Walk-in', value: 'walk-in' },
+  { label: 'Booking Required', value: 'booking_required' },
+  { label: 'Tour Only', value: 'tour_only' },
+  { label: 'Exterior Only', value: 'exterior_only' }
+];
+const ACCESS_COST_OPTIONS = [
+  { label: 'Free', value: 'free' },
+  { label: 'Paid', value: 'paid' },
+  { label: 'Customers Only', value: 'customers_only' }
+];
 
 export interface BuildingFormData {
   name: string;
@@ -299,49 +314,37 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         </div>
 
         <div className="space-y-4 border rounded-md p-4 bg-muted/5">
-          <h3 className="text-sm font-semibold">Access Details</h3>
+          <h3 className="text-sm font-semibold">Access & Entry Logistics</h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-6">
             <div className="space-y-2">
               <Label>Level</Label>
-              <Select value={access_level} onValueChange={setAccessLevel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ACCESS_LEVEL_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SegmentedControl
+                options={ACCESS_LEVEL_OPTIONS}
+                value={access_level || ""}
+                onValueChange={setAccessLevel}
+                className="w-full flex-wrap h-auto min-h-[36px]"
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Logistics</Label>
-              <Select value={access_logistics} onValueChange={setAccessLogistics}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select logistics" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ACCESS_LOGISTICS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SegmentedControl
+                options={ACCESS_LOGISTICS_OPTIONS}
+                value={access_logistics || ""}
+                onValueChange={setAccessLogistics}
+                className="w-full flex-wrap h-auto min-h-[36px]"
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Cost</Label>
-              <Select value={access_cost} onValueChange={setAccessCost}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select cost" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ACCESS_COST_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SegmentedControl
+                options={ACCESS_COST_OPTIONS}
+                value={access_cost || ""}
+                onValueChange={setAccessCost}
+                className="w-full flex-wrap h-auto min-h-[36px]"
+              />
             </div>
           </div>
 
