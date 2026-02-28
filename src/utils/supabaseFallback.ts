@@ -132,7 +132,16 @@ export const fetchUserBuildingsMap = async (userId: string): Promise<Map<string,
 };
 
 export const fetchBuildingDetails = async (id: string) => {
-    let query = supabase.from("buildings").select("*, alt_name, aliases, styles:building_styles(style:architectural_styles(id, name)), architects:building_architects(architect:architects(id, name))");
+    let query = supabase.from("buildings").select(`
+      *,
+      alt_name,
+      aliases,
+      styles:building_styles(style:architectural_styles(id, name)),
+      architects:building_architects(architect:architects(id, name)),
+      category:functional_categories(name),
+      typologies:building_functional_typologies(typology:functional_typologies(name, id)),
+      attributes:building_attributes(attribute:attributes(name, id, group_id, group:attribute_groups(slug)))
+    `);
 
     // Check if id is UUID
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -157,7 +166,37 @@ export const fetchBuildingDetails = async (id: string) => {
     const styles = (data.styles as any)?.map((s: any) => s.style) || [];
     const architects = (data.architects as any)?.map((a: any) => a.architect) || [];
 
-    return { ...data, styles, architects };
+    // Transform taxonomy structures
+    const categoryName = (data.category as any)?.name || null;
+    const typologies = (data.typologies as any)?.map((t: any) => t.typology?.name).filter(Boolean) || [];
+
+    // Transform attributes based on group
+    const attributesRaw = (data.attributes as any)?.map((a: any) => a.attribute).filter(Boolean) || [];
+
+    const materials = attributesRaw
+        .filter((a: any) => a.group?.slug === 'materiality' || a.group?.slug === 'materials')
+        .map((a: any) => a.name);
+
+    const context = attributesRaw
+        .filter((a: any) => a.group?.slug === 'context')
+        .map((a: any) => a.name)
+        .join(', ') || null; // usually context is displayed as a string
+
+    const intervention = attributesRaw
+        .filter((a: any) => a.group?.slug === 'intervention' || a.group?.slug === 'interventions')
+        .map((a: any) => a.name)
+        .join(', ') || null;
+
+    return {
+        ...data,
+        styles,
+        architects,
+        category: categoryName,
+        typology: typologies,
+        materials: materials.length > 0 ? materials : null,
+        context: context,
+        intervention: intervention
+    };
 };
 
 export const fetchUserBuildingStatus = async (userId: string, buildingId: string) => {
