@@ -158,8 +158,11 @@ export function ArchitectSelect({
                      </div>
                   </CommandItem>
                 ))}
-                {!isLoading && inputValue.length > 0 && filteredSuggestions.length === 0 && (
+                {!isLoading && inputValue.length >= 3 && filteredSuggestions.length === 0 && (
                      <CommandItem disabled>No architects found</CommandItem>
+                )}
+                {!isLoading && inputValue.length > 0 && inputValue.length < 3 && filteredSuggestions.length === 0 && (
+                     <CommandItem disabled>Type at least 3 characters to search</CommandItem>
                 )}
               </CommandGroup>
             </CommandList>
