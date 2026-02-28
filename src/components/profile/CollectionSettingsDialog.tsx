@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -92,6 +93,25 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
   // New Category Input State
   const [newCategory, setNewCategory] = useState({ label: "", color: "#EEFF41" });
 
+  const [collectionFolders, setCollectionFolders] = useState<{id: string, name: string}[]>([]);
+
+  const fetchCollectionFolders = async () => {
+    const { data, error } = await supabase
+      .from("user_folder_items")
+      .select("folder_id, user_folders(id, name)")
+      .eq("collection_id", collection.id);
+
+    if (!error && data) {
+      const mapped = data
+        .filter((item: any) => item.user_folders)
+        .map((item: any) => ({
+          id: item.user_folders.id,
+          name: item.user_folders.name
+        }));
+      setCollectionFolders(mapped);
+    }
+  };
+
   useEffect(() => {
     if (open) {
       setFormData({
@@ -104,7 +124,8 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
         custom_categories: collection.custom_categories || [],
         categorization_selected_members: collection.categorization_selected_members || null
       });
-      fetchContributors();
+            fetchContributors();
+      fetchCollectionFolders();
     }
   }, [open, collection]);
 
@@ -459,6 +480,16 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                <p className="text-sm text-muted-foreground">
                  Add this collection to one or more of your folders.
                </p>
+               {collectionFolders.length > 0 && (
+                 <div className="flex flex-wrap gap-2">
+                   {collectionFolders.map(folder => (
+                     <Badge key={folder.id} variant="secondary">
+                       <Folder className="h-3 w-3 mr-1" />
+                       {folder.name}
+                     </Badge>
+                   ))}
+                 </div>
+               )}
                <Button onClick={() => setShowAddToFolder(true)} className="w-full sm:w-auto" variant="outline">
                  Manage Folders
                </Button>
@@ -763,6 +794,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
             onOpenChange={setShowAddToFolder}
             collectionId={collection.id}
             userId={currentUserId}
+            onSuccess={fetchCollectionFolders}
           />
       )}
     </Sheet>
