@@ -384,15 +384,15 @@ export function ReviewCard({
         </div>
   );
 
-  const renderMediaItem = (item: MediaItem, className?: string) => (
+  const renderMediaItem = (item: MediaItem, className?: string, overlay?: React.ReactNode) => (
     <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden ${className || ''}`}>
       <div className="absolute inset-0 w-full h-full">
         {item.type === 'video' ? (
-          <div className="w-full h-full video-container">
+          <div className="w-full h-full video-container overflow-hidden">
             <VideoPlayer
               src={item.url}
               poster={item.poster}
-              className="w-full h-full"
+              className="w-full h-full transition-transform duration-500 hover:scale-105"
               autoPlayOnVisible={true}
               muted={true}
               objectFit="cover"
@@ -403,7 +403,7 @@ export function ReviewCard({
             <img
               src={item.url}
               alt="Review photo"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
               onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
             />
           ) : (
@@ -413,6 +413,11 @@ export function ReviewCard({
           )
         )}
       </div>
+      {overlay && (
+        <div className="absolute inset-0 z-10">
+          {overlay}
+        </div>
+      )}
     </div>
   );
 
@@ -446,7 +451,7 @@ export function ReviewCard({
 
     // 4+ Items
     return (
-      <div className="w-full h-full flex flex-col gap-0.5">
+      <div className="w-full h-full flex flex-col gap-0.5 rounded-xl overflow-hidden">
         <div className="flex-[2] min-h-0">
           {renderMediaItem(mediaItems[0])}
         </div>
@@ -454,7 +459,25 @@ export function ReviewCard({
           {mediaItems.slice(1, 5).map((item, index) => {
             // Hide the 4th thumbnail (index 3) on mobile to maintain strictly 3 columns
             const isFourthThumbnail = index === 3;
-            return renderMediaItem(item, isFourthThumbnail ? 'hidden md:block' : undefined);
+
+            let overlay: React.ReactNode = undefined;
+            if (index === 2 && mediaItems.length > 4) {
+              // 3rd thumbnail on mobile
+              overlay = (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-white font-semibold text-lg pointer-events-none md:hidden">
+                  +{mediaItems.length - 4}
+                </div>
+              );
+            } else if (index === 3 && mediaItems.length > 5) {
+              // 4th thumbnail on desktop
+              overlay = (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm hidden md:flex items-center justify-center text-white font-semibold text-lg pointer-events-none">
+                  +{mediaItems.length - 5}
+                </div>
+              );
+            }
+
+            return renderMediaItem(item, isFourthThumbnail ? 'hidden md:block' : undefined, overlay);
           })}
         </div>
       </div>
