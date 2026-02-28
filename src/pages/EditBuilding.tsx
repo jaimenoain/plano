@@ -122,7 +122,10 @@ export default function EditBuilding() {
         aliases: (data as any).aliases || [],
         year_completed: data.year_completed,
         status: (data as any).status || "",
-        access: (data as any).access || "",
+        access_level: (data as any).access_level || "",
+        access_logistics: (data as any).access_logistics || "",
+        access_cost: (data as any).access_cost || "",
+        access_notes: (data as any).access_notes || "",
         architects: finalArchitects,
         functional_category_id: (data as any).functional_category_id || "",
         functional_typology_ids: typologyIds,
@@ -202,7 +205,10 @@ export default function EditBuilding() {
           aliases: formData.aliases || [],
           year_completed: formData.year_completed,
           status: formData.status as any,
-          access: formData.access as any,
+          access_level: formData.access_level as any,
+          access_logistics: formData.access_logistics as any,
+          access_cost: formData.access_cost as any,
+          access_notes: formData.access_notes as any,
           // @ts-ignore
           functional_category_id: formData.functional_category_id,
           // Removed legacy column updates for typologies/attributes

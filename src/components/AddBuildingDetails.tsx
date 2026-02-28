@@ -45,7 +45,10 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           aliases: data.aliases || [],
           year_completed: data.year_completed,
           status: data.status as any,
-          access: data.access as any,
+          access_level: data.access_level as any,
+          access_logistics: data.access_logistics as any,
+          access_cost: data.access_cost as any,
+          access_notes: data.access_notes as any,
 
           // Location Data (Merged from Main & Feature branches)
           address: locationData.address,
@@ -162,7 +165,10 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     aliases: [],
     year_completed: null,
     status: null,
-    access: null,
+    access_level: null,
+    access_logistics: null,
+    access_cost: null,
+    access_notes: null,
     architects: [],
     functional_category_id: "",
     functional_typology_ids: [],
