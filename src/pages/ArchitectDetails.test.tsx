@@ -179,7 +179,6 @@ describe('ArchitectDetails', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Verified Architect')).toBeInTheDocument();
       expect(screen.getByTestId('icon-badge-check')).toBeInTheDocument();
     });
     expect(screen.queryByRole('button', { name: /claim this profile/i })).not.toBeInTheDocument();

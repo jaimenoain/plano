@@ -98,10 +98,9 @@ export default function ArchitectDetails() {
             <div className="flex items-center gap-2">
               <h1 className="text-3xl font-bold tracking-tight">{architect.name}</h1>
               {claimStatus.is_verified && (
-                <Badge variant="outline" className="gap-1.5 border-black text-black py-1 px-2.5">
-                  <BadgeCheck className="h-4 w-4 fill-black text-white" />
-                  Verified Architect
-                </Badge>
+                <div className="inline-flex items-center text-foreground ml-1 align-middle" title="Verified Architect">
+                  <BadgeCheck className="w-6 h-6" />
+                </div>
               )}
             </div>
             <Badge variant="secondary" className="capitalize">
