@@ -43,6 +43,7 @@ export function BuildingPopupContent({
   // Interaction State
   const [justInteracted, setJustInteracted] = useState<'saved' | 'visited' | null>(null);
   const [optimisticRating, setOptimisticRating] = useState<number | null>(null);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
 
   // Confirmation State
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -487,25 +488,32 @@ export function BuildingPopupContent({
               {/* Rating Circles */}
               {[1, 2, 3].map((rating) => {
                   const currentRating = optimisticRating !== null ? optimisticRating : (ratings[buildingId] || 0);
-                  const isFilled = currentRating >= rating;
+                  const activeRating = hoverRating !== null ? hoverRating : currentRating;
+                  const isFilled = activeRating >= rating;
 
                   return (
                       <div
                           key={rating}
-                          className={`
-                              h-8 w-8 rounded-full cursor-pointer transition-all duration-200
-                              flex items-center justify-center border
-                              ${isFilled
-                                  ? "bg-black border-black"
-                                  : "bg-transparent border-gray-300 hover:border-gray-400"
-                              }
-                          `}
+                          className="p-1 -m-1 cursor-pointer"
                           onClick={(e) => {
                               e.stopPropagation();
                               handleRate(rating);
                           }}
+                          onMouseEnter={() => setHoverRating(rating)}
+                          onMouseLeave={() => setHoverRating(null)}
                       >
-                          {/* Inner dot logic if needed, or just fill. Requirement says "fill into black". */}
+                          <div
+                              className={`
+                                  h-8 w-8 rounded-full transition-all duration-200
+                                  flex items-center justify-center border
+                                  ${isFilled
+                                      ? "bg-black border-black"
+                                      : "bg-transparent border-gray-300 hover:border-gray-400"
+                                  }
+                              `}
+                          >
+                              {/* Inner dot logic if needed, or just fill. Requirement says "fill into black". */}
+                          </div>
                       </div>
                   );
               })}
