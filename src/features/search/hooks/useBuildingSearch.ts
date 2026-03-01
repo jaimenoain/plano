@@ -367,6 +367,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     getIdListParam(searchParams.get("folders"))
   );
   const [viewMode, setViewMode] = useState<'list' | 'map'>((searchParams.get("view") as 'list' | 'map') || 'map');
+  const [mode, setMode] = useState<'discover' | 'library'>((searchParams.get("mode") as 'discover' | 'library') || 'discover');
 
   // New Filters
   const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get("category") || null);
@@ -484,6 +485,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (viewMode !== 'map') params.set("view", viewMode);
       else params.delete("view");
 
+      // Map Mode
+      if (mode !== 'discover') params.set("mode", mode);
+      else params.delete("mode");
+
       // Filters
       if (statusFilters.length > 0) params.set("status", statusFilters.join(","));
       else params.delete("status");
@@ -561,6 +566,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     debouncedQuery,
     userLocation,
     viewMode,
+    mode,
     statusFilters,
     hideVisited,
     hideSaved,
@@ -1069,6 +1075,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setAccessCosts,
     viewMode,
     setViewMode,
+    mode,
+    setMode,
     userLocation,
     updateLocation,
     requestLocation,

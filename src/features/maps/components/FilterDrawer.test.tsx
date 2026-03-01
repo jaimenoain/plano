@@ -90,39 +90,43 @@ describe('FilterDrawer', () => {
     styleAttributes: [],
   };
 
+  const defaultBuildingSearch = {
+    statusFilters: [],
+    setStatusFilters: vi.fn(),
+    hideVisited: false,
+    setHideVisited: vi.fn(),
+    hideSaved: false,
+    setHideSaved: vi.fn(),
+    filterContacts: false,
+    setFilterContacts: vi.fn(),
+    personalMinRating: 0,
+    setPersonalMinRating: vi.fn(),
+    contactMinRating: 0,
+    setContactMinRating: vi.fn(),
+    selectedArchitects: [],
+    setSelectedArchitects: vi.fn(),
+    selectedCollections: [],
+    setSelectedCollections: vi.fn(),
+    selectedFolders: [],
+    setSelectedFolders: vi.fn(),
+    selectedCategory: null,
+    setSelectedCategory: vi.fn(),
+    selectedTypologies: [],
+    setSelectedTypologies: vi.fn(),
+    selectedAttributes: [],
+    setSelectedAttributes: vi.fn(),
+    selectedContacts: [],
+    setSelectedContacts: vi.fn(),
+    mode: 'discover',
+    setMode: vi.fn(),
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     (Taxonomy.useTaxonomy as Mock).mockReturnValue(defaultTaxonomy);
     (useUserSearch as Mock).mockReturnValue({ users: [], isLoading: false });
 
-    (BuildingSearch.useBuildingSearch as Mock).mockReturnValue({
-      statusFilters: [],
-      setStatusFilters: vi.fn(),
-      hideVisited: false,
-      setHideVisited: vi.fn(),
-      hideSaved: false,
-      setHideSaved: vi.fn(),
-      filterContacts: false,
-      setFilterContacts: vi.fn(),
-      personalMinRating: 0,
-      setPersonalMinRating: vi.fn(),
-      contactMinRating: 0,
-      setContactMinRating: vi.fn(),
-      selectedArchitects: [],
-      setSelectedArchitects: vi.fn(),
-      selectedCollections: [],
-      setSelectedCollections: vi.fn(),
-      selectedFolders: [],
-      setSelectedFolders: vi.fn(),
-      selectedCategory: null,
-      setSelectedCategory: vi.fn(),
-      selectedTypologies: [],
-      setSelectedTypologies: vi.fn(),
-      selectedAttributes: [],
-      setSelectedAttributes: vi.fn(),
-      selectedContacts: [],
-      setSelectedContacts: vi.fn(),
-    });
+    (BuildingSearch.useBuildingSearch as Mock).mockReturnValue(defaultBuildingSearch);
   });
 
   afterEach(() => {
@@ -139,12 +143,11 @@ describe('FilterDrawer', () => {
   });
 
   it('hides "Curators & Friends" section in Library mode', () => {
-    (MapContext.useMapContext as Mock).mockReturnValue({
-      ...defaultMapContext,
-      state: {
-        ...defaultMapContext.state,
-        mode: 'library',
-      },
+    (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
+
+    (BuildingSearch.useBuildingSearch as Mock).mockReturnValue({
+      ...defaultBuildingSearch,
+      mode: 'library',
     });
 
     render(<FilterDrawer />);
