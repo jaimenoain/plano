@@ -218,49 +218,40 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
         onUpdate={fetchData}
       />
 
-      {folders.length > 0 && (
-        <ScrollArea className={cn("w-full whitespace-nowrap", (collections.length > 0 || folders.length === 0) ? "mb-6" : "")}>
-          <div className="flex space-x-3 px-4 pb-4">
-            {folders.map((folder) => (
-              <FolderCard
-                key={folder.id}
-                folder={folder}
-                to={`/${username || "user"}/folders/${folder.slug}`}
-                className="flex-shrink-0"
-              />
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      )}
+      <ScrollArea className="w-full whitespace-nowrap mb-6">
+        <div className="flex space-x-3 px-4 pb-4">
+          {folders.length > 0 && folders.map((folder) => (
+            <FolderCard
+              key={folder.id}
+              folder={folder}
+              to={`/${username || "user"}/folders/${folder.slug}`}
+              className="flex-shrink-0"
+            />
+          ))}
 
-      {(collections.length > 0 || folders.length === 0) && (
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex space-x-3 px-4 pb-4">
-            {/* New Collection Card */}
-            {isOwnProfile && collections.length === 0 && folders.length === 0 && onCreate && (
-              <button
-                onClick={onCreate}
-                className="flex-shrink-0 w-[160px] h-[100px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-secondary/50 transition-colors group"
-              >
-                <div className="h-8 w-8 rounded-full bg-secondary/50 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                   <Plus className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-medium text-muted-foreground">Create New</span>
-              </button>
-            )}
+          {/* New Collection Card */}
+          {isOwnProfile && collections.length === 0 && folders.length === 0 && onCreate && (
+            <button
+              onClick={onCreate}
+              className="flex-shrink-0 w-[160px] h-[100px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-secondary/50 transition-colors group"
+            >
+              <div className="h-8 w-8 rounded-full bg-secondary/50 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                 <Plus className="h-4 w-4" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">Create New</span>
+            </button>
+          )}
 
-            {collections.map((collection) => (
-              <CollectionCard
-                key={collection.id}
-                collection={collection}
-                username={username}
-              />
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      )}
+          {collections.map((collection) => (
+            <CollectionCard
+              key={collection.id}
+              collection={collection}
+              username={username}
+            />
+          ))}
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   );
 }
