@@ -45,7 +45,7 @@ function DraggableFavoriteCollectionCard({ collection, isDragEnabled }: { collec
         className="block"
         onClick={(e) => { if (isDragging) e.preventDefault(); }}
       >
-        <Card className="h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative">
+        <Card className="h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative border-dashed border-primary/20">
           <CardContent className="p-4 h-full flex flex-col justify-between pointer-events-none">
             <div className="flex justify-between items-start">
                <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors pr-4 whitespace-normal">
