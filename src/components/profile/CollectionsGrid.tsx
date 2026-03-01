@@ -8,6 +8,7 @@ import { UserFolder } from "@/types/collection";
 import { ManageFoldersDialog } from "@/components/profile/ManageFoldersDialog";
 import { FolderCard } from "@/components/profile/FolderCard";
 import { CollectionCard } from "@/components/CollectionCard";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface Collection {
   id: string;
@@ -87,9 +88,12 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
         const images: string[] = [];
         folder.user_folder_items?.forEach((item: any) => {
             item.collection?.collection_items?.forEach((ci: any) => {
-                const url = ci.building?.main_image_url;
-                if (url && !images.includes(url)) {
-                    images.push(url);
+                const rawUrl = ci.building?.main_image_url;
+                if (rawUrl) {
+                  const resolvedUrl = getBuildingImageUrl(rawUrl);
+                  if (resolvedUrl && !images.includes(resolvedUrl)) {
+                      images.push(resolvedUrl);
+                  }
                 }
             });
         });
