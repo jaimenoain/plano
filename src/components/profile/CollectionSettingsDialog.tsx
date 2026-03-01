@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -414,17 +414,6 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
               </div>
             )}
 
-            {canEdit ? (
-              <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
-              </Button>
-            ) : onSaveAll ? (
-              <Button onClick={() => { onSaveAll(); onOpenChange(false); }} className="w-full" variant="outline">
-                <Bookmark className="w-4 h-4 mr-2" />
-                Save All
-              </Button>
-            ) : null}
           </TabsContent>
 
           <TabsContent value="general" className="space-y-4 py-4 overflow-y-auto flex-1">
@@ -465,11 +454,6 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                 onCheckedChange={(c) => setFormData({...formData, is_public: c})}
               />
             </div>
-
-            <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
-            </Button>
 
             <Separator className="my-6" />
 
@@ -687,12 +671,6 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
                     </div>
                 )}
 
-                <div className="pt-4">
-                     <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
-                          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          Save Changes
-                     </Button>
-                </div>
             </div>
           </TabsContent>
 
@@ -765,6 +743,22 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
              </div>
           </TabsContent>
         </Tabs>
+
+        <div className="mt-auto pt-4 border-t">
+          <SheetFooter>
+            {canEdit ? (
+              <Button onClick={handleSaveGeneral} disabled={saving} className="w-full">
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            ) : onSaveAll ? (
+              <Button onClick={() => { onSaveAll(); onOpenChange(false); }} className="w-full" variant="outline">
+                <Bookmark className="w-4 h-4 mr-2" />
+                Save All
+              </Button>
+            ) : null}
+          </SheetFooter>
+        </div>
       </SheetContent>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
