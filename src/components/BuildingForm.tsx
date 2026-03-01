@@ -353,7 +353,9 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             <Textarea
               value={access_notes}
               onChange={(e) => setAccessNotes(e.target.value)}
-              placeholder="e.g. Open to public during daylight hours. Guided tours available on weekends."
+              placeholder={(access_cost === 'paid' || access_logistics === 'booking_required')
+                ? "e.g., Add ticket link, entry prices, or booking instructions..."
+                : "e.g., Closed on public holidays, enter through the east gate..."}
               maxLength={500}
               className="resize-none"
               rows={2}
