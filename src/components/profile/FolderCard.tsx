@@ -15,8 +15,8 @@ export function FolderCard({ folder, to, onClick, className }: FolderCardProps) 
   const content = (
     <>
       {/* Stacked background layers */}
-      <div className="absolute inset-0 bg-muted/20 border border-muted-foreground/10 rounded-lg transform rotate-6 translate-x-2 translate-y-1 transition-transform group-hover:rotate-12 group-hover:translate-x-3 -z-20" />
-      <div className="absolute inset-0 bg-muted/40 border border-muted-foreground/10 rounded-lg transform rotate-3 translate-x-1 translate-y-0.5 transition-transform group-hover:rotate-6 group-hover:translate-x-1.5 -z-10" />
+      <div className="absolute inset-0 bg-card border border-dashed border-primary/20 rounded-lg transform -rotate-2 translate-x-0.5 translate-y-1.5 transition-transform group-hover:-rotate-3 group-hover:translate-x-1 group-hover:translate-y-2 -z-20" />
+      <div className="absolute inset-0 bg-card border border-dashed border-primary/20 rounded-lg transform rotate-2 translate-x-1 translate-y-1 transition-transform group-hover:rotate-3 group-hover:translate-x-1.5 group-hover:translate-y-1.5 -z-10" />
 
       {/* Main Card */}
       <Card className="h-[100px] bg-card hover:border-primary/50 transition-all border-dashed border-primary/20 relative overflow-hidden shadow-sm group-hover:shadow-md">
@@ -60,7 +60,7 @@ export function FolderCard({ folder, to, onClick, className }: FolderCardProps) 
     </>
   );
 
-  const containerClasses = cn("block group relative select-none w-[180px]", className);
+  const containerClasses = cn("block group relative select-none w-[180px] isolate", className);
 
   if (to) {
     return (
