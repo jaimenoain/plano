@@ -23,14 +23,14 @@ export function FolderCard({ folder, to, onClick, className, isDroppable = false
   const content = (
     <>
       {/* Stacked background layers */}
-      <div className="absolute inset-0 bg-card border border-dashed border-primary/20 rounded-lg transform -rotate-2 translate-x-0.5 translate-y-1.5 transition-transform group-hover:-rotate-3 group-hover:translate-x-1 group-hover:translate-y-2 -z-20" />
-      <div className="absolute inset-0 bg-card border border-dashed border-primary/20 rounded-lg transform rotate-2 translate-x-1 translate-y-1 transition-transform group-hover:rotate-3 group-hover:translate-x-1.5 group-hover:translate-y-1.5 -z-10" />
+      <div className="absolute inset-0 bg-card border rounded-lg transform -rotate-2 translate-x-0.5 translate-y-1.5 transition-transform group-hover:-rotate-3 group-hover:translate-x-1 group-hover:translate-y-2 -z-20" />
+      <div className="absolute inset-0 bg-card border rounded-lg transform rotate-2 translate-x-1 translate-y-1 transition-transform group-hover:rotate-3 group-hover:translate-x-1.5 group-hover:translate-y-1.5 -z-10" />
 
       {/* Main Card */}
       <Card
         ref={setNodeRef}
         className={cn(
-          "h-[100px] bg-card hover:border-primary/50 transition-all border-dashed border-primary/20 relative overflow-hidden shadow-sm group-hover:shadow-md",
+          "h-[100px] bg-card hover:border-primary/50 transition-all relative overflow-hidden shadow-sm group-hover:shadow-md",
           isOver && "border-primary ring-2 ring-primary/40 bg-secondary/80 scale-105 z-20"
         )}
       >
