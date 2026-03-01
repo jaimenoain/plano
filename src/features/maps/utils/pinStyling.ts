@@ -117,8 +117,8 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
       return {
         tier,
         shape,
-        zIndex: 50,
-        size: 36,
+        zIndex: 100,
+        size: 44,
         classes: 'bg-white border-foreground border-2',
         showDot: false,
         showContent: true
@@ -129,7 +129,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 20,
         size: 28,
-        classes: 'bg-muted/80 border-gray-600 border',
+        classes: 'bg-white border-gray-600 border',
         showDot: false,
         showContent: true
       };

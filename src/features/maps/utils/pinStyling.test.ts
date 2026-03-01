@@ -40,7 +40,7 @@ describe('getPinStyle', () => {
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
       expect(style.size).toBe(28);
-      expect(style.classes).toContain('bg-muted/80');
+      expect(style.classes).toContain('bg-white');
       expect(style.classes).toContain('border-gray-600');
     });
 

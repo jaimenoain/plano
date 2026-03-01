@@ -1,10 +1,47 @@
 $ vite
 
-  VITE v5.4.21  ready in 397 ms
+  VITE v5.4.21  ready in 441 ms
 
   ➜  Local:   http://localhost:8080/
   ➜  Network: http://192.168.0.2:8080/
-9:29:38 PM [vite] hmr update /src/pages/ArchitectDashboard.tsx, /src/index.css
-9:29:38 PM [vite] hmr update /src/pages/ArchitectDashboard.tsx, /src/index.css
-9:30:55 PM [vite] hmr update /src/pages/ArchitectDashboard.tsx, /src/index.css
-9:32:16 PM [vite] hmr update /src/pages/ArchitectDashboard.tsx, /src/index.css
+5:27:22 AM [vite] Pre-transform error: Failed to resolve import "./src/features/maps/components/BuildingLocationMap" from "src/main_verification.tsx". Does the file exist?
+5:27:22 AM [vite] Internal server error: Failed to resolve import "./src/features/maps/components/BuildingLocationMap" from "src/main_verification.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/src/main_verification.tsx:1:36
+  19 |
+  20 |  import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
+  21 |  import { BuildingLocationMap } from './src/features/maps/components/BuildingLocationMap';
+     |                                       ^
+  22 |  import React from 'react';
+  23 |  import { createRoot } from 'react-dom/client';
+      at TransformPluginContext._formatError (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at async file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 3)
+      at async TransformPluginContext.transform (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+5:27:45 AM [vite] Pre-transform error: Failed to resolve import "./src/features/maps/components/BuildingLocationMap" from "src/main_verification.tsx". Does the file exist?
+5:27:45 AM [vite] Internal server error: Failed to resolve import "./src/features/maps/components/BuildingLocationMap" from "src/main_verification.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/src/main_verification.tsx:1:36
+  19 |
+  20 |  import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
+  21 |  import { BuildingLocationMap } from './src/features/maps/components/BuildingLocationMap';
+     |                                       ^
+  22 |  import React from 'react';
+  23 |  import { createRoot } from 'react-dom/client';
+      at TransformPluginContext._formatError (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at async file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 3)
+      at async TransformPluginContext.transform (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///app/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+5:27:57 AM [vite] page reload src/main_verification.tsx
+5:28:12 AM [vite] ✨ new dependencies optimized: react-map-gl, maplibre-gl, lucide-react
+5:28:12 AM [vite] ✨ optimized dependencies changed. reloading
