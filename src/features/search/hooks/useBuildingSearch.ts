@@ -374,6 +374,24 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>(getArrayParam(searchParams.get("attributes")));
   const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>([]);
 
+  const [accessLevels, setAccessLevels] = useSyncQueryParam<string[]>('accessLevels', {
+    serialize: (val) => val.join(','),
+    deserialize: (val) => val.split(',').filter(Boolean),
+    defaultValue: [],
+  });
+
+  const [accessLogistics, setAccessLogistics] = useSyncQueryParam<string[]>('accessLogistics', {
+    serialize: (val) => val.join(','),
+    deserialize: (val) => val.split(',').filter(Boolean),
+    defaultValue: [],
+  });
+
+  const [accessCosts, setAccessCosts] = useSyncQueryParam<string[]>('accessCosts', {
+    serialize: (val) => val.join(','),
+    deserialize: (val) => val.split(',').filter(Boolean),
+    defaultValue: [],
+  });
+
   // Resolve rated_by profiles from URL
   const ratedByParam = searchParams.get("rated_by");
   const { data: ratedByProfiles, isLoading: isLoadingRatedBy } = useQuery({
@@ -778,7 +796,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                 architects:building_architects(architect_id),
                 functional_category_id,
                 typologies:building_functional_typologies(typology_id),
-                attributes:building_attributes(attribute_id)
+                attributes:building_attributes(attribute_id),
+                access_level,
+                access_logistics,
+                access_cost
               `)
               .in('id', Array.from(buildingIds));
 
@@ -804,7 +825,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               categoryId: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : null,
               typologyIds: selectedTypologies,
               attributeIds: selectedAttributes,
-              selectedArchitects: selectedArchitects.map(a => a.id)
+              selectedArchitects: selectedArchitects.map(a => a.id),
+              accessLevels,
+              accessLogistics,
+              accessCosts,
             });
 
             // 6. Map to MapItem (BuildingPoint)
@@ -859,7 +883,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               architect_ids: selectedArchitects.length > 0 ? selectedArchitects.map(a => a.id) : undefined,
               category_id: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : undefined,
               typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
-              attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined
+              attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined,
+              access_levels: accessLevels.length > 0 ? accessLevels : undefined,
+              access_logistics: accessLogistics.length > 0 ? accessLogistics : undefined,
+              access_costs: accessCosts.length > 0 ? accessCosts : undefined
             }
           });
 
@@ -1022,6 +1049,12 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setSelectedAttributes,
     selectedContacts,
     setSelectedContacts,
+    accessLevels,
+    setAccessLevels,
+    accessLogistics,
+    setAccessLogistics,
+    accessCosts,
+    setAccessCosts,
     viewMode,
     setViewMode,
     userLocation,
