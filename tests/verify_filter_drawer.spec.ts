@@ -130,23 +130,18 @@ test.describe('Filter Drawer & Taxonomy', () => {
     await page.getByLabel('Brutalist').click();
 
     // Verify URL
-    await expect(page).toHaveURL(/filters=/);
+    await expect(page).toHaveURL(/attributes=attr-brutalist/);
     const url = new URL(page.url());
-    const filtersParam = url.searchParams.get('filters');
-    expect(filtersParam).toBeTruthy();
-
-    const filters = JSON.parse(filtersParam!);
-    expect(filters.styles).toContain('attr-brutalist');
+    const attributesParam = url.searchParams.get('attributes');
+    expect(attributesParam).toContain('attr-brutalist');
   });
 
   test('Clear All: Removes filters from URL', async ({ page }) => {
     // Navigate with existing filters
-    const initialFilters = { minRating: 2 };
-    const encodedFilters = encodeURIComponent(JSON.stringify(initialFilters));
-    await page.goto(`/search?filters=${encodedFilters}`);
+    await page.goto(`/search?minRating=2`);
 
     // Verify initial state (URL has filters)
-    await expect(page).toHaveURL(/minRating/);
+    await expect(page).toHaveURL(/minRating=2/);
 
     // Open Filter Drawer
     const filtersButton = page.getByRole('button', { name: 'Filters' });
