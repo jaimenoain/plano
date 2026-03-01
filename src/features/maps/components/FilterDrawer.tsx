@@ -135,7 +135,7 @@ const handleModeChange = (newMode: string) => {
       setHideVisited(true);
     } else {
       setMode(typedMode);
-      setStatusFilters(['visited', 'saved']);
+      setStatusFilters(['visited', 'saved', 'pending']);
       setHideSaved(false);
       setHideVisited(false);
     }
@@ -149,7 +149,7 @@ const handleModeChange = (newMode: string) => {
       setSelectedContacts(newContacts);
 
       if (newContacts.length > 0 && currentStatus.length === 0) {
-          setStatusFilters(['visited', 'saved']);
+          setStatusFilters(['visited', 'saved', 'pending']);
           setHideSaved(false);
           setHideVisited(false);
       }
