@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Lock, Globe, Star, Map as MapIcon } from "lucide-react";
+import { Lock, Star, Map as MapIcon } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,7 +88,7 @@ export function FavoriteCollectionsGrid({ userId }: FavoriteCollectionsGridProps
                        {collection.name}
                      </h4>
                      {collection.is_public ? (
-                       <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
+                       <Star className="h-3 w-3 text-muted-foreground shrink-0" />
                      ) : (
                        <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
                      )}
