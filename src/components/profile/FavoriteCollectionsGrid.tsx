@@ -4,6 +4,8 @@ import { Lock, Star, Map as MapIcon } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useDraggable } from "@dnd-kit/core";
+import { cn } from "@/lib/utils";
 
 interface Collection {
   id: string;
@@ -17,9 +19,62 @@ interface Collection {
 
 interface FavoriteCollectionsGridProps {
   userId: string;
+  isDragEnabled?: boolean;
 }
 
-export function FavoriteCollectionsGrid({ userId }: FavoriteCollectionsGridProps) {
+function DraggableFavoriteCollectionCard({ collection, isDragEnabled }: { collection: Collection, isDragEnabled: boolean }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `collection-${collection.id}`,
+    data: { type: "collection", collection },
+    disabled: !isDragEnabled,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ opacity: isDragging ? 0.4 : 1 }}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "block flex-shrink-0 w-[180px] group select-none outline-none",
+        isDragEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+      )}
+    >
+      <Link
+        to={`/${collection.owner?.username || 'user'}/map/${collection.slug}`}
+        className="block"
+        onClick={(e) => { if (isDragging) e.preventDefault(); }}
+      >
+        <Card className="h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative">
+          <CardContent className="p-4 h-full flex flex-col justify-between pointer-events-none">
+            <div className="flex justify-between items-start">
+               <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors pr-4 whitespace-normal">
+                 {collection.name}
+               </h4>
+               {collection.is_public ? (
+                 <Star className="h-3 w-3 text-muted-foreground shrink-0" />
+               ) : (
+                 <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
+               )}
+            </div>
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-xs text-muted-foreground font-medium">
+                {collection.collection_items?.[0]?.count || 0} places
+              </span>
+              {collection.owner?.username && (
+                  <span className="text-[10px] text-muted-foreground">
+                      by {collection.owner.username}
+                  </span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    </div>
+  );
+}
+
+export function FavoriteCollectionsGrid({ userId, isDragEnabled = false }: FavoriteCollectionsGridProps) {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -76,36 +131,11 @@ export function FavoriteCollectionsGrid({ userId }: FavoriteCollectionsGridProps
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex space-x-3 px-4 pb-4">
           {collections.map((collection) => (
-            <Link
+            <DraggableFavoriteCollectionCard
               key={collection.id}
-              to={`/${collection.owner?.username || 'user'}/map/${collection.slug}`}
-              className="block flex-shrink-0 w-[180px] group select-none"
-            >
-              <Card className="h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative">
-                <CardContent className="p-4 h-full flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                     <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors pr-4 whitespace-normal">
-                       {collection.name}
-                     </h4>
-                     {collection.is_public ? (
-                       <Star className="h-3 w-3 text-muted-foreground shrink-0" />
-                     ) : (
-                       <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
-                     )}
-                  </div>
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {collection.collection_items?.[0]?.count || 0} places
-                    </span>
-                    {collection.owner?.username && (
-                        <span className="text-[10px] text-muted-foreground">
-                            by {collection.owner.username}
-                        </span>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+              collection={collection}
+              isDragEnabled={isDragEnabled}
+            />
           ))}
         </div>
         <ScrollBar orientation="horizontal" />

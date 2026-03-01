@@ -3,15 +3,23 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Folder, Globe, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useDroppable } from "@dnd-kit/core";
 
 interface FolderCardProps {
   folder: UserFolder;
   to?: string;
   onClick?: () => void;
   className?: string;
+  isDroppable?: boolean;
 }
 
-export function FolderCard({ folder, to, onClick, className }: FolderCardProps) {
+export function FolderCard({ folder, to, onClick, className, isDroppable = false }: FolderCardProps) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `folder-${folder.id}`,
+    data: { type: "folder", folder },
+    disabled: !isDroppable,
+  });
+
   const content = (
     <>
       {/* Stacked background layers */}
@@ -19,8 +27,14 @@ export function FolderCard({ folder, to, onClick, className }: FolderCardProps) 
       <div className="absolute inset-0 bg-card border border-dashed border-primary/20 rounded-lg transform rotate-2 translate-x-1 translate-y-1 transition-transform group-hover:rotate-3 group-hover:translate-x-1.5 group-hover:translate-y-1.5 -z-10" />
 
       {/* Main Card */}
-      <Card className="h-[100px] bg-card hover:border-primary/50 transition-all border-dashed border-primary/20 relative overflow-hidden shadow-sm group-hover:shadow-md">
-        <CardContent className="p-3 h-full flex flex-col justify-between relative z-10">
+      <Card
+        ref={setNodeRef}
+        className={cn(
+          "h-[100px] bg-card hover:border-primary/50 transition-all border-dashed border-primary/20 relative overflow-hidden shadow-sm group-hover:shadow-md",
+          isOver && "border-primary ring-2 ring-primary/40 bg-secondary/80 scale-105 z-20"
+        )}
+      >
+        <CardContent className="p-3 h-full flex flex-col justify-between relative z-10 pointer-events-none">
           <div className="flex justify-between items-start gap-2">
              <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors whitespace-normal flex-1">
                {folder.name}

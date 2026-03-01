@@ -319,9 +319,9 @@ describe('Profile Verification', () => {
       fireEvent.click(kanbanToggle);
       await screen.findByTestId('kanban-view');
 
-      // Trigger Drop
-      const trigger = screen.getByTestId('trigger-drag-end');
-      fireEvent.click(trigger);
+      // Trigger Drop (get the second trigger button, since first one is Collections section now)
+      const triggers = screen.getAllByTestId('trigger-drag-end');
+      fireEvent.click(triggers[1]);
 
       await waitFor(() => {
           expect(handleDragEndLogic).toHaveBeenCalledWith(expect.objectContaining({

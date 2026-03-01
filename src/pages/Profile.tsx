@@ -132,6 +132,9 @@ export default function Profile() {
   const [showCreateCollection, setShowCreateCollection] = useState(false);
   const [collectionsRefreshKey, setCollectionsRefreshKey] = useState(0);
 
+  // Collections Drag State
+  const [activeCollectionData, setActiveCollectionData] = useState<any>(null);
+
   // Drag and Drop Sensors
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -155,6 +158,50 @@ export default function Profile() {
       toast,
       setUpdatingItemId
     });
+  };
+
+  const handleCollectionDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    if (active.data.current?.type === "collection") {
+      setActiveCollectionData(active.data.current.collection);
+    }
+  };
+
+  const handleCollectionDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveCollectionData(null);
+
+    if (!over || active.data.current?.type !== "collection" || over.data.current?.type !== "folder") {
+      return;
+    }
+
+    const collectionId = active.id.toString().replace("collection-", "");
+    const folderId = over.id.toString().replace("folder-", "");
+
+    try {
+      // Check if already in folder
+      const { data: existing } = await supabase
+        .from("user_folder_items")
+        .select("folder_id")
+        .eq("folder_id", folderId)
+        .eq("collection_id", collectionId)
+        .maybeSingle();
+
+      if (!existing) {
+        const { error } = await supabase
+          .from("user_folder_items")
+          .insert({ folder_id: folderId, collection_id: collectionId });
+
+        if (error) throw error;
+        toast({ description: "Added to folder" });
+        setCollectionsRefreshKey(prev => prev + 1);
+      } else {
+        toast({ description: "Already in folder" });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ variant: "destructive", description: "Failed to add to folder" });
+    }
   };
 
   // New Profile Features
@@ -794,14 +841,28 @@ export default function Profile() {
         {/* 4. Collections Grid */}
         {targetUserId && (
             <div id="collections-section" className="scroll-mt-24 max-w-7xl mx-auto">
-                <CollectionsGrid
-                  userId={targetUserId}
-                  username={profile?.username || null}
-                  isOwnProfile={isOwnProfile}
-                  onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
-                  refreshKey={collectionsRefreshKey}
-                />
-                <FavoriteCollectionsGrid userId={targetUserId} />
+              <DndContext sensors={sensors} onDragStart={handleCollectionDragStart} onDragEnd={handleCollectionDragEnd}>
+                  <CollectionsGrid
+                    userId={targetUserId}
+                    username={profile?.username || null}
+                    isOwnProfile={isOwnProfile}
+                    onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
+                    refreshKey={collectionsRefreshKey}
+                  />
+                  <FavoriteCollectionsGrid userId={targetUserId} isDragEnabled={isOwnProfile} />
+
+                  <DragOverlay dropAnimation={null}>
+                    {activeCollectionData ? (
+                      <div className="scale-105 shadow-xl cursor-grabbing rounded-xl bg-card border overflow-hidden opacity-90 inline-block">
+                        <div className="p-4 h-[100px] w-[180px] flex flex-col justify-between">
+                          <h4 className="font-medium text-sm line-clamp-2 leading-tight">
+                            {activeCollectionData.name}
+                          </h4>
+                        </div>
+                      </div>
+                    ) : null}
+                  </DragOverlay>
+              </DndContext>
             </div>
         )}
 
