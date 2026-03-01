@@ -1024,7 +1024,7 @@ export default function BuildingDetails() {
 
       <BuildingAttributes
         building={building}
-        className="lg:hidden px-4 mt-4 mb-2"
+        className="lg:hidden px-4 mt-4 mb-2 flex flex-wrap"
       />
 
       <ArchitectStatement
@@ -1283,7 +1283,7 @@ export default function BuildingDetails() {
 
             <BuildingAttributes
                 building={building}
-                className="hidden lg:grid mt-6"
+                className="hidden lg:flex mt-6"
             />
 
             {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
