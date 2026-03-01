@@ -65,6 +65,11 @@ export interface MapFilters {
 
   // Folders
   folderIds?: string[];
+
+  // Access
+  accessLevels?: string[];
+  accessLogistics?: string[];
+  accessCosts?: string[];
 }
 
 export interface MapState {

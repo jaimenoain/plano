@@ -5,6 +5,9 @@ export interface BuildingFilterData {
   typologies?: { typology_id: string }[];
   attributes?: { attribute_id: string }[];
   architects?: { architect: { name: string; id: string } }[];
+  access_level?: string | null;
+  access_logistics?: string | null;
+  access_cost?: string | null;
   [key: string]: any; // Allow passing through other fields like id, location, etc.
 }
 
@@ -19,6 +22,9 @@ export interface FilterCriteria {
   materials?: string[];
   styles?: string[];
   contexts?: string[];
+  accessLevels?: string[];
+  accessLogistics?: string[];
+  accessCosts?: string[];
   userCollectionMap?: Record<string, Set<string>>;
   userRatings?: Record<string, number>;
 }
@@ -101,6 +107,27 @@ export function filterLocalBuildings(
         architectIds.includes(id)
       );
       if (!hasMatch) return false;
+    }
+
+    // Access Level
+    if (filters.accessLevels && filters.accessLevels.length > 0) {
+        if (!b.access_level || !filters.accessLevels.includes(b.access_level)) {
+            return false;
+        }
+    }
+
+    // Entry Logistics
+    if (filters.accessLogistics && filters.accessLogistics.length > 0) {
+        if (!b.access_logistics || !filters.accessLogistics.includes(b.access_logistics)) {
+            return false;
+        }
+    }
+
+    // Cost
+    if (filters.accessCosts && filters.accessCosts.length > 0) {
+        if (!b.access_cost || !filters.accessCosts.includes(b.access_cost)) {
+            return false;
+        }
     }
 
     return true;
