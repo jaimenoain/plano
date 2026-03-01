@@ -69,10 +69,10 @@ describe('getPinStyle', () => {
       expect(style.classes).toContain('bg-lime-high');
     });
 
-    it("returns Tier A for 'Top 10%'", () => {
+    it("returns Tier B for 'Top 10%'", () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 10%' });
       const style = getPinStyle(item);
-      expect(style.tier).toBe('A');
+      expect(style.tier).toBe('B');
     });
 
     it("returns Tier B for 'Top 20%'", () => {
