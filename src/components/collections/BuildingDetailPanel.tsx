@@ -14,7 +14,6 @@ interface BuildingDetailPanelProps {
     slug: string;
     hero_image_url: string | null;
     typology?: string[] | null;
-    access_type?: string | null;
     materials?: string[] | null;
     status?: string | null;
     styles?: string[] | { name: string }[] | null;
