@@ -74,7 +74,10 @@ interface BuildingDetails {
   styles: { id: string, name: string }[];
   created_by: string;
   status?: string | null;
-  access_type?: string | null;
+  access_level?: "public" | "private" | "restricted" | "commercial" | null;
+  access_logistics?: "walk-in" | "booking_required" | "tour_only" | "exterior_only" | null;
+  access_cost?: "free" | "paid" | "customers_only" | null;
+  access_notes?: string | null;
   typology?: string[] | null;
   materials?: string[] | null;
   context?: string | null;
