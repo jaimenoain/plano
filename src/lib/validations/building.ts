@@ -1,7 +1,10 @@
 import * as z from "zod";
 
+import { supabase } from "@/integrations/supabase/client";
+
 export const buildingSchema = z.object({
   name: z.string(),
+  slug: z.string().optional(),
   alt_name: z.string().nullable().optional(),
   aliases: z.array(z.string()).optional().default([]),
   hero_image_url: z.string().nullable().optional(),
@@ -43,10 +46,28 @@ export const buildingSchema = z.object({
     .refine((items) => !items || new Set(items).size === items.length, {
       message: "Duplicate attributes are not allowed",
     }),
+}).refine(async (data) => {
+  if (!data.slug) return true;
+
+  const { data: isAvailable, error } = await supabase.rpc('check_slug_availability', {
+    target_slug: data.slug,
+    exclude_id: null,
+  });
+
+  if (error) {
+    console.error("Error checking slug availability in validation:", error);
+    return true; // Don't block submission on DB error
+  }
+
+  return isAvailable;
+}, {
+  message: "This name generates a URL that is already taken. Please add a numerical suffix to your intended URL slug or change the name.",
+  path: ["name"]
 });
 
 export const editBuildingSchema = z.object({
   name: z.string().optional(),
+  slug: z.string().optional(),
   alt_name: z.string().nullable().optional(),
   aliases: z.array(z.string()).optional().default([]),
   hero_image_url: z.string().nullable().optional(),
@@ -82,11 +103,29 @@ export const editBuildingSchema = z.object({
     .refine((items) => !items || new Set(items).size === items.length, {
       message: "Duplicate typologies are not allowed",
     }),
+  id: z.string().optional(),
   selected_attribute_ids: z.array(z.string().uuid())
     .optional()
     .refine((items) => !items || new Set(items).size === items.length, {
       message: "Duplicate attributes are not allowed",
     }),
+}).refine(async (data) => {
+  if (!data.slug) return true;
+
+  const { data: isAvailable, error } = await supabase.rpc('check_slug_availability', {
+    target_slug: data.slug,
+    exclude_id: data.id || null,
+  });
+
+  if (error) {
+    console.error("Error checking slug availability in validation:", error);
+    return true;
+  }
+
+  return isAvailable;
+}, {
+  message: "This name generates a URL that is already taken. Please add a numerical suffix to your intended URL slug or change the name.",
+  path: ["name"]
 });
 
 export type BuildingSchema = z.infer<typeof buildingSchema>;

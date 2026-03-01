@@ -282,7 +282,9 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
     try {
       const rawData = {
+        ...(mode === 'edit' && buildingId ? { id: buildingId } : {}),
         name,
+        slug: finalSlug || undefined,
         alt_name: alt_name || null,
         aliases,
         // hero_image_url removed
@@ -299,7 +301,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
       };
 
       const schema = mode === 'edit' ? editBuildingSchema : buildingSchema;
-      const validationResult = schema.safeParse(rawData);
+      const validationResult = await schema.safeParseAsync(rawData);
 
       if (!validationResult.success) {
         validationResult.error.errors.forEach((err) => {
