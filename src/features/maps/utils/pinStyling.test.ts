@@ -31,6 +31,8 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ rating: 2 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('A');
+      expect(style.size).toBe(44);
+      expect(style.zIndex).toBe(100);
       expect(style.classes).toContain('bg-white');
       expect(style.showDot).toBe(false);
     });
@@ -73,12 +75,16 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 10%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
+      expect(style.size).toBe(28);
+      expect(style.classes).toContain('bg-white');
     });
 
     it("returns Tier B for 'Top 20%'", () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 20%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
+      expect(style.size).toBe(28);
+      expect(style.classes).toContain('bg-white');
     });
 
     it('returns Tier C for other ranks', () => {
