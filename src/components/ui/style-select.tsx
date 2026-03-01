@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { supabase } from "@/integrations/supabase/client"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { slugify } from "@/utils/url"
 
 export interface StyleSummary {
   id: string
@@ -85,7 +86,7 @@ export function StyleSelect({
       try {
           const name = inputValue.trim();
           // Simple slug generation
-          const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          const slug = slugify(name);
 
           // @ts-ignore
           const { data, error } = await supabase

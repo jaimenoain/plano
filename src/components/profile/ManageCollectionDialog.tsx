@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { slugify } from "@/utils/url";
 
 interface Collection {
   id: string;
@@ -87,7 +88,7 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
     setProcessing(true);
     try {
       // Generate slug
-      let slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      let slug = slugify(formData.name);
       if (!slug) slug = "collection";
 
       // Ensure uniqueness (simple append)

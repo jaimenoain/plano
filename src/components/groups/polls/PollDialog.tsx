@@ -15,6 +15,7 @@ import { Plus, Trash2, Check, Image as ImageIcon, X, Edit2, ArrowUp, ArrowDown }
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { slugify } from "@/utils/url";
 
 const pollSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -193,7 +194,7 @@ export function PollDialog({ groupId, userId, pollToEdit, trigger, onPollCreated
   };
 
   const generateSlug = (title: string): string => {
-      return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return slugify(title);
   };
 
   const onSubmit = async (values: PollFormValues) => {

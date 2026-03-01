@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { slugify } from "@/utils/url";
 import { FunctionalCategory, FunctionalTypology, AttributeGroup, Attribute } from "@/types/classification";
 import {
   Select,
@@ -174,7 +175,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
     try {
       setIsAddingTypologyLoading(true);
-      const slug = newTypologyName.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const slug = slugify(newTypologyName);
 
       const { data, error } = await supabase
         .from("functional_typologies")
@@ -210,7 +211,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
     try {
       setIsAddingAttributeLoading(true);
-      const slug = newAttributeName.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const slug = slugify(newAttributeName);
 
       const { data, error } = await supabase
         .from("attributes")
