@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { UserFolder } from "@/types/collection";
+import { slugify } from "@/utils/url";
 
 interface ManageFoldersDialogProps {
   open: boolean;
@@ -240,7 +241,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
     setProcessing(true);
     try {
       // Generate slug
-      let slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      let slug = slugify(formData.name);
       if (!slug) slug = "folder";
 
       // Ensure uniqueness (simple append)

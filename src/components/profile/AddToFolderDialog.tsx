@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UserFolder } from "@/types/collection";
+import { slugify } from "@/utils/url";
 
 interface AddToFolderDialogProps {
   onSuccess?: () => void;
@@ -124,7 +125,7 @@ export function AddToFolderDialog({ open, onOpenChange, collectionId, userId, on
     setProcessing(true);
     try {
        // Generate slug
-      let slug = newFolderName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      let slug = slugify(newFolderName);
       if (!slug) slug = "folder";
       const { data: existing } = await supabase.from("user_folders").select("slug").eq("slug", slug).maybeSingle();
       if (existing) {

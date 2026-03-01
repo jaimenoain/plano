@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
+import { slugify } from "@/utils/url";
 
 interface Collection {
   id: string;
@@ -79,7 +80,7 @@ export function CollectionSelector({ userId, selectedCollectionIds, onChange, cl
       setCreating(true);
 
       // Generate slug
-      let slug = newCollectionName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      let slug = slugify(newCollectionName);
       if (!slug) slug = "collection";
 
       // Ensure uniqueness (simple append)
