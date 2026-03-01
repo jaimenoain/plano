@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Trash2, Edit2, ArrowLeft, Save } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Plus, Trash2, Edit2, ArrowLeft, Folder } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -20,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { slugify } from "@/utils/url";
+import { UserFolder } from "@/types/collection";
 
 interface Collection {
   id: string;
@@ -42,6 +44,9 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [loadingFolders, setLoadingFolders] = useState(false);
+  const [folders, setFolders] = useState<UserFolder[]>([]);
+  const [selectedFolderIds, setSelectedFolderIds] = useState<Set<string>>(new Set());
 
   // Form state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -56,9 +61,40 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
   useEffect(() => {
     if (open) {
       fetchCollections();
+      fetchFolders();
       setView("list");
+    } else {
+      setSelectedFolderIds(new Set());
     }
   }, [open]);
+
+  const fetchFolders = async () => {
+    setLoadingFolders(true);
+    try {
+      const { data: userFolders, error } = await supabase
+        .from("user_folders")
+        .select("*")
+        .eq("owner_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setFolders((userFolders as any[]) || []);
+    } catch (error) {
+      console.error("Error fetching folders:", error);
+    } finally {
+      setLoadingFolders(false);
+    }
+  };
+
+  const handleToggleFolder = (folderId: string) => {
+    const newSet = new Set(selectedFolderIds);
+    if (newSet.has(folderId)) {
+      newSet.delete(folderId);
+    } else {
+      newSet.add(folderId);
+    }
+    setSelectedFolderIds(newSet);
+  };
 
   const fetchCollections = async () => {
     setLoading(true);
@@ -97,19 +133,37 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
         slug = `${slug}-${Date.now()}`;
       }
 
-      const { error } = await supabase.from("collections").insert({
+      const { data: newCollection, error } = await supabase.from("collections").insert({
         owner_id: userId,
         name: formData.name,
         description: formData.description || null,
         is_public: formData.is_public,
         slug: slug
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // Add to selected folders
+      if (selectedFolderIds.size > 0 && newCollection) {
+        const folderItemsToInsert = Array.from(selectedFolderIds).map((folderId) => ({
+          folder_id: folderId,
+          collection_id: newCollection.id,
+        }));
+
+        const { error: folderError } = await supabase
+          .from("user_folder_items")
+          .insert(folderItemsToInsert);
+
+        if (folderError) {
+          console.error("Error adding to folders:", folderError);
+          toast({ variant: "destructive", description: "Collection created, but failed to add to some folders." });
+        }
+      }
 
       toast({ description: "Collection created." });
       setView("list");
       fetchCollections();
+      setSelectedFolderIds(new Set());
       onUpdate?.();
     } catch (error) {
       console.error("Error creating collection:", error);
@@ -264,6 +318,42 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
                   onCheckedChange={(c) => setFormData({...formData, is_public: c})}
                 />
               </div>
+
+              {view === "create" && (
+                <div className="space-y-3 pt-2">
+                  <Label>Add to Folders (Optional)</Label>
+                  {loadingFolders ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : folders.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-2">No folders found.</p>
+                  ) : (
+                    <ScrollArea className="h-[120px] rounded-md border p-2">
+                      <div className="space-y-2">
+                        {folders.map(folder => (
+                          <div key={folder.id} className="flex items-center space-x-3 p-1 rounded hover:bg-secondary/30">
+                            <Checkbox
+                              id={`folder-${folder.id}`}
+                              checked={selectedFolderIds.has(folder.id)}
+                              onCheckedChange={() => handleToggleFolder(folder.id)}
+                            />
+                            <div className="grid gap-1.5 leading-none flex-1">
+                              <label
+                                htmlFor={`folder-${folder.id}`}
+                                className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
+                              >
+                                <Folder className="h-4 w-4 text-muted-foreground" />
+                                {folder.name}
+                              </label>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </div>
+              )}
 
               <DialogFooter className="gap-2 sm:gap-0 mt-4">
                  <Button variant="outline" onClick={() => setView("list")} disabled={processing}>
