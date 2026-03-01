@@ -89,10 +89,10 @@ export const MapStateSchema = z.object({
   lng: z.preprocess(preprocessNumber, z.coerce.number().catch(DEFAULT_LNG)),
   zoom: z.preprocess(preprocessNumber, z.coerce.number().catch(DEFAULT_ZOOM)),
   mode: z.preprocess((val) => val === null ? undefined : val, MapModeSchema),
-  filters: z.any().transform(() => ({})).catch({}) // filters are now managed by useBuildingSearch
+  filters: z.any().transform(() => ({})).catch({}) // Default schema clears filters, but we inject them below
 });
 
-export type MapState = z.infer<typeof MapStateSchema>;
+export type MapState = Omit<z.infer<typeof MapStateSchema>, 'filters'> & { filters: MapFilters };
 
 export const useURLMapState = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -107,7 +107,35 @@ export const useURLMapState = () => {
     };
     const parsed = MapStateSchema.parse(raw);
 
-    return parsed;
+    // Parse filters from URL for map consumption
+    const getArrayParam = (param: string | null) => param ? param.split(",") : undefined;
+    const getBoolParam = (param: string | null) => param === "true" ? true : undefined;
+    const getNumParam = (param: string | null) => param ? parseInt(param, 10) : undefined;
+    const getIdListParam = (param: string | null) => param ? param.split(",").map(id => ({ id, name: id })) : undefined;
+
+    const filters: MapFilters = {
+       query: searchParams.get("q") || undefined,
+       status: getArrayParam(searchParams.get("status")),
+       hideVisited: getBoolParam(searchParams.get("hideVisited")),
+       hideSaved: getBoolParam(searchParams.get("hideSaved")),
+       hideHidden: searchParams.get("hideHidden") === "false" ? false : true,
+       hideWithoutImages: getBoolParam(searchParams.get("hideWithoutImages")),
+       personalMinRating: getNumParam(searchParams.get("minRating")),
+       contactMinRating: getNumParam(searchParams.get("contactMinRating")),
+       category: searchParams.get("category") || undefined,
+       typologies: getArrayParam(searchParams.get("typologies")),
+       attributes: getArrayParam(searchParams.get("attributes")),
+       architects: getIdListParam(searchParams.get("architects")),
+       collections: getIdListParam(searchParams.get("collections")),
+       folderIds: getArrayParam(searchParams.get("folders")),
+       accessLevels: getArrayParam(searchParams.get("accessLevels")),
+       accessLogistics: getArrayParam(searchParams.get("accessLogistics")),
+       accessCosts: getArrayParam(searchParams.get("accessCosts")),
+       ratedBy: getArrayParam(searchParams.get("rated_by")),
+       filterContacts: getBoolParam(searchParams.get("filterContacts")),
+    };
+
+    return { ...parsed, filters } as MapState;
   }, [searchParams]);
 
   const setMapURL = useCallback((updates: Partial<MapState>) => {
