@@ -1022,11 +1022,6 @@ export default function BuildingDetails() {
         </div>
       )}
 
-      <BuildingAttributes
-        building={building}
-        className="lg:hidden px-4 mt-4 mb-2 flex flex-wrap"
-      />
-
       <ArchitectStatement
         statement={draftOfficialData.architect_statement}
         isEditing={isOfficialEditing}
@@ -1280,11 +1275,6 @@ export default function BuildingDetails() {
         />
 
       </div>
-
-            <BuildingAttributes
-                building={building}
-                className="hidden lg:flex mt-6"
-            />
 
             {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
             <div className="space-y-6">

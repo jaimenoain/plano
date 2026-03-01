@@ -6,6 +6,7 @@ import { PopularityBadge } from "@/components/PopularityBadge";
 import { getBuildingUrl } from "@/utils/url";
 import { Architect } from "@/types/architect";
 import { synthesizeAccess } from "@/utils/accessSynthesis";
+import { BuildingAttributes } from "@/components/BuildingAttributes";
 
 interface BuildingDetails {
   id: string;
@@ -81,20 +82,16 @@ export const BuildingHeader = ({
                 </div>
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground items-center">
-                {(building.year_completed || isEditing) && (
+                {isEditing && (
                     <div className="flex items-center gap-1.5">
                         <Calendar className="w-4 h-4" />
-                        {isEditing ? (
-                             <Input
-                                type="number"
-                                value={yearValue}
-                                onChange={(e) => onYearChange?.(parseInt(e.target.value))}
-                                className="w-24 h-8 text-sm"
-                                placeholder="Year"
-                            />
-                        ) : (
-                            <span>{building.year_completed}</span>
-                        )}
+                        <Input
+                            type="number"
+                            value={yearValue}
+                            onChange={(e) => onYearChange?.(parseInt(e.target.value))}
+                            className="w-24 h-8 text-sm"
+                            placeholder="Year"
+                        />
                     </div>
                 )}
                 {(building.architects && building.architects.length > 0) && (
@@ -111,12 +108,7 @@ export const BuildingHeader = ({
                 )}
             </div>
 
-            <div className="text-sm text-muted-foreground mt-2">
-                {[
-                    building.typology?.join(", "),
-                    building.materials?.join(", ")
-                ].filter(Boolean).join(" • ")}
-            </div>
+            {!isEditing && <BuildingAttributes building={building} className="mt-4" />}
 
             {/* Access Synthesis Display */}
             {(accessSynthesis || building.access_notes) && (
@@ -134,15 +126,6 @@ export const BuildingHeader = ({
                             {building.access_notes}
                         </div>
                     )}
-                </div>
-            )}
-
-            {/* Styles Tags */}
-            {building.styles && building.styles.length > 0 && (
-                <div className="flex gap-2 mt-4">
-                    {building.styles.map(style => (
-                        <Badge key={style.id} variant="outline" className="border-white/20">{style.name}</Badge>
-                    ))}
                 </div>
             )}
 
