@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus } from "lucide-react";
+import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus, Folder } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/components/groups/UserSearch";
