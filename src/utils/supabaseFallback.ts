@@ -19,18 +19,68 @@ export const searchBuildingsRpc = async (params: {
   p_access_logistics?: string[];
   p_access_costs?: string[];
 }): Promise<DiscoveryBuilding[]> => {
-  const { location_coordinates, ...rest } = params;
+  let query = supabase.from('buildings').select(`
+    id,
+    name,
+    address,
+    location,
+    city,
+    country,
+    slug,
+    short_id,
+    main_image_url,
+    year_completed,
+    popularity_score,
+    access_level,
+    access_logistics,
+    access_cost,
+    status,
+    architects:building_architects(architect:architects(id, name)),
+    styles:building_styles(style:architectural_styles(id, name)),
+    typologies:building_functional_typologies(typology:functional_typologies(name, id))
+  `);
 
-  // Map parameters to match new RPC signature
-  const rpcParams = {
-    ...rest,
-    p_lat: location_coordinates?.lat,
-    p_lng: location_coordinates?.lng,
-  };
+  if (params.query_text && params.query_text.trim().length > 0) {
+    const qt = params.query_text.trim();
+    query = query.or(`name.ilike.%${qt}%,alt_name.ilike.%${qt}%,address.ilike.%${qt}%`);
+  }
 
-  const { data, error } = await supabase.rpc('search_buildings', rpcParams);
-  if (error) throw error;
-  return data as DiscoveryBuilding[];
+  if (params.filters) {
+    if (params.filters.cities && params.filters.cities.length > 0) {
+      query = query.in('city', params.filters.cities);
+    }
+    if (params.filters.category_id) {
+      query = query.eq('functional_category_id', params.filters.category_id);
+    }
+  }
+
+  if (params.p_access_levels && params.p_access_levels.length > 0) {
+    query = query.in('access_level', params.p_access_levels);
+  }
+  if (params.p_access_logistics && params.p_access_logistics.length > 0) {
+    query = query.in('access_logistics', params.p_access_logistics);
+  }
+  if (params.p_access_costs && params.p_access_costs.length > 0) {
+    query = query.in('access_cost', params.p_access_costs);
+  }
+
+  // To prevent errors and as we don't have all PostGIS distance features easy without RPC
+  // we just limit the results.
+  query = query.limit(params.p_limit || 50);
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('searchBuildingsRpc direct query error:', error);
+    throw error;
+  }
+
+  return (data || []).map((b: any) => ({
+    ...b,
+    architects: (b.architects || []).map((ba: any) => ba.architect),
+    styles: (b.styles || []).map((s: any) => s.style),
+    typologies: (b.typologies || []).map((t: any) => t.typology?.name).filter(Boolean),
+  })) as DiscoveryBuilding[];
 };
 
 export const getMapPinsRpc = async (params: {
