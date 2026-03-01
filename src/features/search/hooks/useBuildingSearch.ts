@@ -374,23 +374,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>(getArrayParam(searchParams.get("attributes")));
   const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>([]);
 
-  const [accessLevels, setAccessLevels] = useSyncQueryParam<string[]>('accessLevels', {
-    serialize: (val) => val.join(','),
-    deserialize: (val) => val.split(',').filter(Boolean),
-    defaultValue: [],
-  });
-
-  const [accessLogistics, setAccessLogistics] = useSyncQueryParam<string[]>('accessLogistics', {
-    serialize: (val) => val.join(','),
-    deserialize: (val) => val.split(',').filter(Boolean),
-    defaultValue: [],
-  });
-
-  const [accessCosts, setAccessCosts] = useSyncQueryParam<string[]>('accessCosts', {
-    serialize: (val) => val.join(','),
-    deserialize: (val) => val.split(',').filter(Boolean),
-    defaultValue: [],
-  });
+  const [accessLevels, setAccessLevels] = useState<string[]>(getArrayParam(searchParams.get("accessLevels")));
+  const [accessLogistics, setAccessLogistics] = useState<string[]>(getArrayParam(searchParams.get("accessLogistics")));
+  const [accessCosts, setAccessCosts] = useState<string[]>(getArrayParam(searchParams.get("accessCosts")));
 
   // Resolve rated_by profiles from URL
   const ratedByParam = searchParams.get("rated_by");
@@ -513,6 +499,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     if (selectedArchitects.length > 0) params.set("architects", selectedArchitects.map(a => a.id).join(","));
     if (selectedCollections.length > 0) params.set("collections", selectedCollections.map(c => c.id).join(","));
     if (selectedFolders.length > 0) params.set("folders", selectedFolders.map(f => f.id).join(","));
+    if (accessLevels.length > 0) params.set("accessLevels", accessLevels.join(","));
+    if (accessLogistics.length > 0) params.set("accessLogistics", accessLogistics.join(","));
+    if (accessCosts.length > 0) params.set("accessCosts", accessCosts.join(","));
 
     // Explicitly delete empty/default arrays to keep URL clean (strict omission)
     if (statusFilters.length === 0) params.delete("status");
@@ -529,6 +518,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     if (selectedArchitects.length === 0) params.delete("architects");
     if (selectedCollections.length === 0) params.delete("collections");
     if (selectedFolders.length === 0) params.delete("folders");
+    if (accessLevels.length === 0) params.delete("accessLevels");
+    if (accessLogistics.length === 0) params.delete("accessLogistics");
+    if (accessCosts.length === 0) params.delete("accessCosts");
 
     // Construct rated_by param
     const ratedByUsers = new Set<string>();
@@ -567,6 +559,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     selectedCollections,
     selectedFolders,
     selectedContacts,
+    accessLevels,
+    accessLogistics,
+    accessCosts,
     setSearchParams,
     user
   ]);
