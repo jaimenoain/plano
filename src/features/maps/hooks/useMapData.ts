@@ -66,7 +66,7 @@ function calculateTierRank(item: any): number {
   const userRating = item.rating ?? 0;
   const status = item.status;
   // Check if item is in library (rated > 0, or explicitly saved/visited)
-  const isLibraryItem = userRating > 0 || status === 'visited' || status === 'saved';
+  const isLibraryItem = userRating > 0 || status === 'visited' || status === 'saved' || status === 'pending';
 
   if (isLibraryItem) {
     if (userRating >= 3) return 3;

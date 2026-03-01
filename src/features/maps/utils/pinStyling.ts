@@ -72,7 +72,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
   // Determine context: Library (User Rating/Status) vs Discover (Global Rank)
   const userRating = item.rating ?? 0;
   // Check if item is in library (rated > 0, or explicitly saved/visited)
-  const isLibraryItem = userRating > 0 || item.status === 'visited' || item.status === 'saved';
+  const isLibraryItem = userRating > 0 || item.status === 'visited' || item.status === 'saved' || item.status === 'pending';
 
   if (isLibraryItem) {
     // Context 1: My Library
