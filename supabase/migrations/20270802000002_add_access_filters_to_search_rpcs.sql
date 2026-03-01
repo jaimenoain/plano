@@ -270,11 +270,11 @@ BEGIN
     AND
     (b.is_deleted IS FALSE OR b.is_deleted IS NULL)
     AND
-    (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level = ANY(v_access_levels))
+    (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
     AND
-    (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics = ANY(v_access_logistics))
+    (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
     AND
-    (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost = ANY(v_access_costs))
+    (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))
 
     AND
     (
@@ -488,9 +488,9 @@ BEGIN
             )
         )
         AND (v_year IS NULL OR b.year_completed = v_year)
-        AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level = ANY(v_access_levels))
-        AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics = ANY(v_access_logistics))
-        AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost = ANY(v_access_costs))
+        AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
+        AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
+        AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))
 
         AND (
           v_query IS NULL OR v_query = '' OR
@@ -574,9 +574,9 @@ BEGIN
             )
         )
         AND (v_year IS NULL OR b.year_completed = v_year)
-        AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level = ANY(v_access_levels))
-        AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics = ANY(v_access_logistics))
-        AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost = ANY(v_access_costs))
+        AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
+        AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
+        AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))
 
         AND (
           v_query IS NULL OR v_query = '' OR
@@ -907,9 +907,9 @@ BEGIN
           )
       )
       AND (v_year IS NULL OR b.year_completed = v_year)
-        AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level = ANY(v_access_levels))
-        AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics = ANY(v_access_logistics))
-        AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost = ANY(v_access_costs))
+        AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
+        AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
+        AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))
 
       AND (
         v_query IS NULL OR v_query = '' OR
@@ -1288,9 +1288,9 @@ BEGIN
         )
     )
     AND (v_year IS NULL OR b.year_completed = v_year)
-        AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level = ANY(v_access_levels))
-        AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics = ANY(v_access_logistics))
-        AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost = ANY(v_access_costs))
+        AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
+        AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
+        AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))
 
     AND (
       v_query IS NULL OR v_query = '' OR
