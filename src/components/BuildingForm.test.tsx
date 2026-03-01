@@ -101,4 +101,66 @@ describe('BuildingForm', () => {
     expect(getByLabelText(/Alternative Name \(English\)/i)).toBeTruthy();
     expect(queryByRole('button', { name: /Add Aliases/i })).toBeNull();
   });
+
+  describe('Access Notes Placeholder', () => {
+    it('shows default placeholder when cost is free and logistics is walk-in', () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BuildingForm
+            initialValues={{
+              ...initialValues,
+              access_cost: 'free',
+              access_logistics: 'walk-in',
+            }}
+            onSubmit={async () => {}}
+            isSubmitting={false}
+            submitLabel="Save"
+          />
+        </QueryClientProvider>
+      );
+
+      const textarea = screen.getByPlaceholderText("e.g., Closed on public holidays, enter through the east gate...");
+      expect(textarea).toBeTruthy();
+    });
+
+    it('shows dynamic placeholder when cost is paid', () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BuildingForm
+            initialValues={{
+              ...initialValues,
+              access_cost: 'paid',
+              access_logistics: 'walk-in',
+            }}
+            onSubmit={async () => {}}
+            isSubmitting={false}
+            submitLabel="Save"
+          />
+        </QueryClientProvider>
+      );
+
+      const textarea = screen.getByPlaceholderText("e.g., Add ticket link, entry prices, or booking instructions...");
+      expect(textarea).toBeTruthy();
+    });
+
+    it('shows dynamic placeholder when logistics is booking_required', () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BuildingForm
+            initialValues={{
+              ...initialValues,
+              access_cost: 'free',
+              access_logistics: 'booking_required',
+            }}
+            onSubmit={async () => {}}
+            isSubmitting={false}
+            submitLabel="Save"
+          />
+        </QueryClientProvider>
+      );
+
+      const textarea = screen.getByPlaceholderText("e.g., Add ticket link, entry prices, or booking instructions...");
+      expect(textarea).toBeTruthy();
+    });
+  });
 });
