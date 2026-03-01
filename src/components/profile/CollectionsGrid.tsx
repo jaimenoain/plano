@@ -226,6 +226,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
               folder={folder}
               to={`/${username || "user"}/folders/${folder.slug}`}
               className="flex-shrink-0"
+              isDroppable={isOwnProfile}
             />
           ))}
 
@@ -247,6 +248,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
               key={collection.id}
               collection={collection}
               username={username}
+              isDragEnabled={isOwnProfile}
             />
           ))}
         </div>
