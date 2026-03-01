@@ -15,6 +15,9 @@ export const searchBuildingsRpc = async (params: {
   };
   sort_by?: 'distance' | 'relevance';
   p_limit?: number;
+  p_access_levels?: string[];
+  p_access_logistics?: string[];
+  p_access_costs?: string[];
 }): Promise<DiscoveryBuilding[]> => {
   const { location_coordinates, ...rest } = params;
 

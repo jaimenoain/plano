@@ -122,6 +122,9 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         contact_min_rating: filters.contactMinRating,
         personal_min_rating: filters.personalMinRating,
         ranking_preference: mode === 'library' ? 'personal' : 'global',
+        access_levels: filters.accessLevels && filters.accessLevels.length > 0 ? filters.accessLevels : undefined,
+        access_logistics: filters.accessLogistics && filters.accessLogistics.length > 0 ? filters.accessLogistics : undefined,
+        access_costs: filters.accessCosts && filters.accessCosts.length > 0 ? filters.accessCosts : undefined,
       };
 
       const { data, error } = await supabase.rpc('get_map_clusters_v2', {
