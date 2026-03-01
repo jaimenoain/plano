@@ -353,6 +353,8 @@ export default function EditBuilding() {
               isSubmitting={isSubmitting}
               submitLabel="Update Building"
               mode="edit"
+              buildingId={buildingId}
+              shortId={buildingShortId}
             />
           </CardContent>
         </Card>

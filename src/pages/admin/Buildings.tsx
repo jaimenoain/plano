@@ -408,6 +408,8 @@ export default function Buildings() {
                             onSubmit={handleSaveBuilding}
                             isSubmitting={false}
                             submitLabel="Save Changes"
+                            buildingId={editingBuilding.id}
+                            shortId={editingBuilding.short_id}
                         />
                     </TabsContent>
 
