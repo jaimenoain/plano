@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
-import { Loader2, Plus, X, Check } from "lucide-react";
+import { Loader2, Plus, X, Check, Info } from "lucide-react";
 import { toast } from "sonner";
 import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -66,9 +66,11 @@ interface BuildingFormProps {
   isSubmitting: boolean;
   submitLabel: string;
   mode?: 'create' | 'edit';
+  buildingId?: string;
+  shortId?: number | null;
 }
 
-export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create' }: BuildingFormProps) {
+export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId }: BuildingFormProps) {
   const [name, setName] = useState(initialValues.name);
   const [alt_name, setAltName] = useState(initialValues.alt_name || "");
   const [aliases, setAliases] = useState<string[]>(initialValues.aliases || []);
@@ -90,6 +92,39 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [addingAttributeGroupId, setAddingAttributeGroupId] = useState<string | null>(null);
   const [newAttributeName, setNewAttributeName] = useState("");
   const [isAddingAttributeLoading, setIsAddingAttributeLoading] = useState(false);
+
+  const [debouncedName, setDebouncedName] = useState(name);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedName(name);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [name]);
+
+  const { data: isSlugAvailable, isLoading: isCheckingSlug } = useQuery({
+    queryKey: ['slug_availability', debouncedName, buildingId],
+    queryFn: async () => {
+      const baseSlug = slugify(debouncedName);
+      if (!baseSlug) return true;
+
+      const { data, error } = await supabase.rpc('check_slug_availability', {
+        target_slug: baseSlug,
+        exclude_id: buildingId || null,
+      });
+
+      if (error) {
+        console.error("Error checking slug availability:", error);
+        return true; // Fallback to true on error to avoid blocking UX unnecessarily
+      }
+      return data;
+    },
+    enabled: !!debouncedName,
+  });
+
+  const baseSlug = slugify(debouncedName);
+  const isSlugCollision = isSlugAvailable === false;
+  const finalSlug = isSlugCollision ? `${baseSlug}-${shortId || '1'}` : baseSlug;
 
   const queryClient = useQueryClient();
 
@@ -297,6 +332,15 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
             placeholder="e.g. Sydney Opera House"
             autoComplete="off"
           />
+          {finalSlug && (
+            <div className={`flex items-center gap-1.5 mt-1 text-xs transition-colors duration-300 ${isSlugCollision ? 'text-amber-600 dark:text-amber-500' : 'text-muted-foreground'}`}>
+              {isSlugCollision && <Info className="h-3.5 w-3.5" />}
+              <span>
+                plano.com/b/{finalSlug}
+                {isCheckingSlug && <span className="ml-2 animate-pulse opacity-50">...</span>}
+              </span>
+            </div>
+          )}
         </div>
 
 
