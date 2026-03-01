@@ -92,9 +92,9 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
     const rank = item.tier_rank_label;
     if (rank === 'Top 1%') {
       tier = 'S';
-    } else if (rank === 'Top 5%' || rank === 'Top 10%') {
+    } else if (rank === 'Top 5%') {
       tier = 'A';
-    } else if (rank === 'Top 20%') {
+    } else if (rank === 'Top 10%' || rank === 'Top 20%') {
       tier = 'B';
     } else {
       tier = 'C';
