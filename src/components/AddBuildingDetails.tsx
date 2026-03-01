@@ -41,6 +41,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         .from('buildings')
         .insert({
           name: data.name,
+          // @ts-ignore
+          slug: data.slug || undefined,
           alt_name: data.alt_name || null,
           aliases: data.aliases || [],
           year_completed: data.year_completed,
