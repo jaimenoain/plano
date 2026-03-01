@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Lock, Globe } from "lucide-react";
+import { Lock, Globe, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
@@ -10,6 +10,7 @@ export interface CollectionCardProps {
       name: string;
       slug: string;
       is_public: boolean;
+      isFavorite?: boolean;
       collection_items: { count: number }[];
       owner?: { username: string | null };
   };
@@ -49,7 +50,9 @@ export function CollectionCard({ collection, username, className, isDragEnabled 
                 <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors pr-4 whitespace-normal">
                     {collection.name}
                 </h4>
-                {collection.is_public ? (
+                {collection.isFavorite ? (
+                    <Star className="h-3 w-3 text-muted-foreground shrink-0" />
+                ) : collection.is_public ? (
                     <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
                 ) : (
                     <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -59,6 +62,11 @@ export function CollectionCard({ collection, username, className, isDragEnabled 
                 <span className="text-xs text-muted-foreground font-medium">
                     {collection.collection_items?.[0]?.count || 0} places
                 </span>
+                {collection.isFavorite && collection.owner?.username && (
+                  <span className="text-[10px] text-muted-foreground">
+                      by {collection.owner.username}
+                  </span>
+                )}
             </div>
             </CardContent>
         </Card>

@@ -15,6 +15,7 @@ interface Collection {
   name: string;
   slug: string;
   is_public: boolean;
+  isFavorite?: boolean;
   created_at: string;
   collection_items: { count: number }[];
   owner?: { username: string | null };
@@ -92,6 +93,7 @@ export default function FolderView() {
                 collection:collections (
                     id, name, slug, is_public, created_at, owner_id,
                     collection_items(count),
+                    collection_contributors(user_id),
                     owner:profiles!collections_owner_id_fkey(username)
                 )
             `)
@@ -100,7 +102,17 @@ export default function FolderView() {
         if (itemsError) throw itemsError;
 
         const fetchedCollections = (itemsData || [])
-            .map((item: any) => item.collection)
+            .map((item: any) => {
+                const c = item.collection;
+                if (!c) return null;
+
+                const isCreator = currentUser?.id === c.owner_id;
+                const isContributor = c.collection_contributors?.some((contrib: any) => contrib.user_id === currentUser?.id);
+
+                c.isFavorite = !isCreator && !isContributor;
+
+                return c;
+            })
             .filter((c: any) => c !== null);
 
         const visibleCollections = fetchedCollections.filter((c: any) => {
