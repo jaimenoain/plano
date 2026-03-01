@@ -51,4 +51,14 @@ describe("CollectionCard", () => {
       // Or just check that it renders without error.
       expect(screen.getByText("My Collection")).toBeDefined();
   });
+
+  it("renders star icon and username when favorite", () => {
+      const favoriteCollection = { ...mockCollection, isFavorite: true };
+      render(
+        <MemoryRouter>
+          <CollectionCard collection={favoriteCollection} />
+        </MemoryRouter>
+      );
+      expect(screen.getByText("by testuser")).toBeDefined();
+  });
 });
