@@ -470,74 +470,91 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
   // Sync state to URL params
   useEffect(() => {
-    const params = new URLSearchParams();
+    setSearchParams((prevParams) => {
+      const params = new URLSearchParams(prevParams);
 
-    if (debouncedQuery) params.set("q", debouncedQuery);
+      if (debouncedQuery) params.set("q", debouncedQuery);
+      else params.delete("q");
 
-    // Location
-    params.set("lat", userLocation.lat.toString());
-    params.set("lng", userLocation.lng.toString());
+      // Location
+      params.set("lat", userLocation.lat.toString());
+      params.set("lng", userLocation.lng.toString());
 
-    // View Mode
-    if (viewMode !== 'map') params.set("view", viewMode);
+      // View Mode
+      if (viewMode !== 'map') params.set("view", viewMode);
+      else params.delete("view");
 
-    // Filters
-    if (statusFilters.length > 0) params.set("status", statusFilters.join(","));
-    if (hideVisited) params.set("hideVisited", "true");
-    if (hideSaved) params.set("hideSaved", "true");
-    if (!hideHidden) params.set("hideHidden", "false");
-    if (hideWithoutImages) params.set("hideWithoutImages", "true");
+      // Filters
+      if (statusFilters.length > 0) params.set("status", statusFilters.join(","));
+      else params.delete("status");
 
-    if (filterContacts) params.set("filterContacts", "true");
-    if (personalMinRating > 0) params.set("minRating", personalMinRating.toString());
-    if (contactMinRating > 0) params.set("contactMinRating", contactMinRating.toString());
+      if (hideVisited) params.set("hideVisited", "true");
+      else params.delete("hideVisited");
 
-    if (selectedCategory) params.set("category", selectedCategory);
-    if (selectedTypologies.length > 0) params.set("typologies", selectedTypologies.join(","));
-    if (selectedAttributes.length > 0) params.set("attributes", selectedAttributes.join(","));
+      if (hideSaved) params.set("hideSaved", "true");
+      else params.delete("hideSaved");
 
-    if (selectedArchitects.length > 0) params.set("architects", selectedArchitects.map(a => a.id).join(","));
-    if (selectedCollections.length > 0) params.set("collections", selectedCollections.map(c => c.id).join(","));
-    if (selectedFolders.length > 0) params.set("folders", selectedFolders.map(f => f.id).join(","));
-    if (accessLevels.length > 0) params.set("accessLevels", accessLevels.join(","));
-    if (accessLogistics.length > 0) params.set("accessLogistics", accessLogistics.join(","));
-    if (accessCosts.length > 0) params.set("accessCosts", accessCosts.join(","));
+      if (!hideHidden) params.set("hideHidden", "false");
+      else params.delete("hideHidden");
 
-    // Explicitly delete empty/default arrays to keep URL clean (strict omission)
-    if (statusFilters.length === 0) params.delete("status");
-    if (!hideVisited) params.delete("hideVisited");
-    if (!hideSaved) params.delete("hideSaved");
-    if (hideHidden) params.delete("hideHidden"); // Default is true, omit if true
-    if (!hideWithoutImages) params.delete("hideWithoutImages");
-    if (!filterContacts) params.delete("filterContacts");
-    if (personalMinRating === 0) params.delete("minRating");
-    if (contactMinRating === 0) params.delete("contactMinRating");
-    if (!selectedCategory) params.delete("category");
-    if (selectedTypologies.length === 0) params.delete("typologies");
-    if (selectedAttributes.length === 0) params.delete("attributes");
-    if (selectedArchitects.length === 0) params.delete("architects");
-    if (selectedCollections.length === 0) params.delete("collections");
-    if (selectedFolders.length === 0) params.delete("folders");
-    if (accessLevels.length === 0) params.delete("accessLevels");
-    if (accessLogistics.length === 0) params.delete("accessLogistics");
-    if (accessCosts.length === 0) params.delete("accessCosts");
+      if (hideWithoutImages) params.set("hideWithoutImages", "true");
+      else params.delete("hideWithoutImages");
 
-    // Construct rated_by param
-    const ratedByUsers = new Set<string>();
-    if ((statusFilters.length > 0 || personalMinRating > 0) && user?.username) {
-      ratedByUsers.add(user.username);
-    }
-    selectedContacts.forEach(c => {
-      if (c.username) ratedByUsers.add(c.username);
-    });
+      if (filterContacts) params.set("filterContacts", "true");
+      else params.delete("filterContacts");
 
-    if (ratedByUsers.size > 0) {
-      params.set("rated_by", Array.from(ratedByUsers).join(","));
-    } else if (isLoadingRatedBy && ratedByParam) {
-      params.set("rated_by", ratedByParam);
-    }
+      if (personalMinRating > 0) params.set("minRating", personalMinRating.toString());
+      else params.delete("minRating");
 
-    setSearchParams(params, { replace: true });
+      if (contactMinRating > 0) params.set("contactMinRating", contactMinRating.toString());
+      else params.delete("contactMinRating");
+
+      if (selectedCategory) params.set("category", selectedCategory);
+      else params.delete("category");
+
+      if (selectedTypologies.length > 0) params.set("typologies", selectedTypologies.join(","));
+      else params.delete("typologies");
+
+      if (selectedAttributes.length > 0) params.set("attributes", selectedAttributes.join(","));
+      else params.delete("attributes");
+
+      if (selectedArchitects.length > 0) params.set("architects", selectedArchitects.map(a => a.id).join(","));
+      else params.delete("architects");
+
+      if (selectedCollections.length > 0) params.set("collections", selectedCollections.map(c => c.id).join(","));
+      else params.delete("collections");
+
+      if (selectedFolders.length > 0) params.set("folders", selectedFolders.map(f => f.id).join(","));
+      else params.delete("folders");
+
+      if (accessLevels.length > 0) params.set("accessLevels", accessLevels.join(","));
+      else params.delete("accessLevels");
+
+      if (accessLogistics.length > 0) params.set("accessLogistics", accessLogistics.join(","));
+      else params.delete("accessLogistics");
+
+      if (accessCosts.length > 0) params.set("accessCosts", accessCosts.join(","));
+      else params.delete("accessCosts");
+
+      // Construct rated_by param
+      const ratedByUsers = new Set<string>();
+      if ((statusFilters.length > 0 || personalMinRating > 0) && user?.username) {
+        ratedByUsers.add(user.username);
+      }
+      selectedContacts.forEach(c => {
+        if (c.username) ratedByUsers.add(c.username);
+      });
+
+      if (ratedByUsers.size > 0) {
+        params.set("rated_by", Array.from(ratedByUsers).join(","));
+      } else if (isLoadingRatedBy && ratedByParam) {
+        params.set("rated_by", ratedByParam);
+      } else {
+        params.delete("rated_by");
+      }
+
+      return params;
+    }, { replace: true });
   }, [
     isLoadingRatedBy,
     ratedByParam,
