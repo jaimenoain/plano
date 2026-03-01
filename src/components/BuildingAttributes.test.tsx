@@ -9,7 +9,6 @@ describe('BuildingAttributes Component', () => {
   });
 
   const emptyBuilding: BuildingAttributesData = {
-    access_type: null,
     typology: null,
     materials: null,
     styles: null,
@@ -21,7 +20,6 @@ describe('BuildingAttributes Component', () => {
   };
 
   const fullBuilding: BuildingAttributesData = {
-    access_type: 'Public',
     typology: ['Residential'],
     materials: ['Concrete', 'Glass'],
     styles: [{ name: 'Modern' }],
@@ -33,8 +31,7 @@ describe('BuildingAttributes Component', () => {
   };
 
   const minimalBuilding: BuildingAttributesData = {
-    access_type: 'Private',
-    typology: null,
+    typology: ['Private'],
     materials: null,
     styles: null,
     context: null,
@@ -52,7 +49,7 @@ describe('BuildingAttributes Component', () => {
   it('renders correctly with minimal data (under threshold)', () => {
     render(<BuildingAttributes building={minimalBuilding} />);
 
-    expect(screen.getByText('Access')).toBeInTheDocument();
+    expect(screen.getByText('Typology')).toBeInTheDocument();
     expect(screen.getByText('Private')).toBeInTheDocument();
 
     // Should not show "Show all details" button
@@ -63,16 +60,16 @@ describe('BuildingAttributes Component', () => {
     render(<BuildingAttributes building={fullBuilding} />);
 
     // Check initial visible fields (threshold is 4)
-    // The order in component is: access_type, typology, materials, styles, context, intervention, category, year_completed, status
-    // So visible: Access, Typology, Materials, Style
+    // The order in component is: typology, materials, styles, context, intervention, category, year_completed, status
+    // So visible: Typology, Materials, Style, Context
 
-    expect(screen.getByText('Access')).toBeInTheDocument();
     expect(screen.getByText('Typology')).toBeInTheDocument();
     expect(screen.getByText('Materials')).toBeInTheDocument();
     expect(screen.getByText('Style')).toBeInTheDocument();
+    expect(screen.getByText('Context')).toBeInTheDocument();
 
     // Hidden fields initially
-    expect(screen.queryByText('Context')).not.toBeInTheDocument();
+    expect(screen.queryByText('Intervention')).not.toBeInTheDocument();
 
     // Button should be present
     expect(screen.getByText('Show all details')).toBeInTheDocument();
@@ -85,8 +82,8 @@ describe('BuildingAttributes Component', () => {
     fireEvent.click(toggleButton);
 
     // Now all fields should be visible
-    expect(screen.getByText('Context')).toBeInTheDocument();
     expect(screen.getByText('Intervention')).toBeInTheDocument();
+    expect(screen.getByText('Category')).toBeInTheDocument();
 
     // Button text changes
     expect(screen.getByText('Show less')).toBeInTheDocument();
@@ -94,7 +91,7 @@ describe('BuildingAttributes Component', () => {
     // Toggle back
     fireEvent.click(screen.getByText('Show less'));
 
-    expect(screen.queryByText('Context')).not.toBeInTheDocument();
+    expect(screen.queryByText('Intervention')).not.toBeInTheDocument();
     expect(screen.getByText('Show all details')).toBeInTheDocument();
   });
 

@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 const THRESHOLD = 4;
 
 export interface BuildingAttributesData {
-  access_type?: string | null;
   typology?: string[] | null;
   materials?: string[] | null;
   styles?: string[] | { name: string }[] | null;
@@ -71,7 +70,6 @@ export const BuildingAttributes = ({
   };
 
   const fields = [
-    { key: 'access_type', label: 'Access', icon: Key, value: building.access_type },
     { key: 'typology', label: 'Typology', icon: Building2, value: building.typology, isArray: true },
     { key: 'materials', label: 'Materials', icon: Hammer, value: building.materials, isArray: true },
     { key: 'styles', label: 'Style', icon: Palette, value: building.styles, isArray: true },

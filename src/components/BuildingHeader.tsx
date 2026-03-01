@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PopularityBadge } from "@/components/PopularityBadge";
 import { getBuildingUrl } from "@/utils/url";
 import { Architect } from "@/types/architect";
+import { synthesizeAccess } from "@/utils/accessSynthesis";
 
 interface BuildingDetails {
   id: string;
@@ -24,7 +25,10 @@ interface BuildingDetails {
   styles: { id: string, name: string }[];
   created_by: string;
   status?: string | null;
-  access_type?: string | null;
+  access_level?: "public" | "private" | "restricted" | "commercial" | null;
+  access_logistics?: "walk-in" | "booking_required" | "tour_only" | "exterior_only" | null;
+  access_cost?: "free" | "paid" | "customers_only" | null;
+  access_notes?: string | null;
   typology?: string[] | null;
   materials?: string[] | null;
 }
@@ -50,6 +54,10 @@ export const BuildingHeader = ({
   onNameChange,
   onYearChange
 }: BuildingHeaderProps) => {
+    const accessSynthesis = building.access_level || building.access_logistics || building.access_cost
+      ? synthesizeAccess(building.access_level || null, building.access_logistics || null, building.access_cost || null)
+      : null;
+
     return (
         <div className={`${className || ""} group`}>
             <div className="flex justify-between items-start">
@@ -109,6 +117,25 @@ export const BuildingHeader = ({
                     building.materials?.join(", ")
                 ].filter(Boolean).join(" • ")}
             </div>
+
+            {/* Access Synthesis Display */}
+            {(accessSynthesis || building.access_notes) && (
+                <div className="flex flex-col gap-2 mt-4">
+                    {accessSynthesis && (
+                        <div className="flex items-center gap-2">
+                            <Badge variant={accessSynthesis.variant} className="flex items-center gap-1.5 w-fit">
+                                <accessSynthesis.icon className="w-3.5 h-3.5" />
+                                {accessSynthesis.label}
+                            </Badge>
+                        </div>
+                    )}
+                    {building.access_notes && (
+                        <div className="text-sm text-muted-foreground border-l-2 border-primary/20 pl-3 py-0.5 bg-muted/30 rounded-r-md">
+                            {building.access_notes}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Styles Tags */}
             {building.styles && building.styles.length > 0 && (
