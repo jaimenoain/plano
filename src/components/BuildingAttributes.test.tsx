@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { BuildingAttributes, BuildingAttributesData } from './BuildingAttributes';
 import { describe, it, expect, afterEach } from 'vitest';
 import '@testing-library/jest-dom/vitest'; // Import matchers
@@ -20,12 +20,12 @@ describe('BuildingAttributes Component', () => {
   };
 
   const fullBuilding: BuildingAttributesData = {
-    typology: ['Residential'],
+    typology: ['Residential', 'Commercial'],
     materials: ['Concrete', 'Glass'],
     styles: [{ name: 'Modern' }],
     context: 'Urban',
     intervention: 'New Build',
-    category: 'Apartment',
+    category: 'Mixed Use',
     year_completed: 2023,
     status: 'Built',
   };
@@ -46,60 +46,29 @@ describe('BuildingAttributes Component', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders correctly with minimal data (under threshold)', () => {
+  it('renders correctly with minimal data', () => {
     render(<BuildingAttributes building={minimalBuilding} />);
-
-    expect(screen.getByText('Typology')).toBeInTheDocument();
     expect(screen.getByText('Private')).toBeInTheDocument();
-
-    // Should not show "Show all details" button
-    expect(screen.queryByText('Show all details')).not.toBeInTheDocument();
   });
 
-  it('renders correctly with full data (over threshold)', () => {
+  it('renders correctly with full data', () => {
     render(<BuildingAttributes building={fullBuilding} />);
 
-    // Check initial visible fields (threshold is 4)
-    // The order in component is: typology, materials, styles, context, intervention, category, year_completed, status
-    // So visible: Typology, Materials, Style, Context
-
-    expect(screen.getByText('Typology')).toBeInTheDocument();
-    expect(screen.getByText('Materials')).toBeInTheDocument();
-    expect(screen.getByText('Style')).toBeInTheDocument();
-    expect(screen.getByText('Context')).toBeInTheDocument();
-
-    // Hidden fields initially
-    expect(screen.queryByText('Intervention')).not.toBeInTheDocument();
-
-    // Button should be present
-    expect(screen.getByText('Show all details')).toBeInTheDocument();
-  });
-
-  it('toggles "Show all details" button', () => {
-    render(<BuildingAttributes building={fullBuilding} />);
-
-    const toggleButton = screen.getByText('Show all details');
-    fireEvent.click(toggleButton);
-
-    // Now all fields should be visible
-    expect(screen.getByText('Intervention')).toBeInTheDocument();
-    expect(screen.getByText('Category')).toBeInTheDocument();
-
-    // Button text changes
-    expect(screen.getByText('Show less')).toBeInTheDocument();
-
-    // Toggle back
-    fireEvent.click(screen.getByText('Show less'));
-
-    expect(screen.queryByText('Intervention')).not.toBeInTheDocument();
-    expect(screen.getByText('Show all details')).toBeInTheDocument();
+    expect(screen.getByText('Residential, Commercial')).toBeInTheDocument();
+    expect(screen.getByText('Concrete, Glass')).toBeInTheDocument();
+    expect(screen.getByText('Modern')).toBeInTheDocument();
+    expect(screen.getByText('Urban')).toBeInTheDocument();
+    expect(screen.getByText('New Build')).toBeInTheDocument();
+    expect(screen.getByText('Mixed Use')).toBeInTheDocument();
+    expect(screen.getByText('2023')).toBeInTheDocument();
+    expect(screen.getByText('Built')).toBeInTheDocument();
   });
 
   it('handles array of strings and objects correctly', () => {
     render(<BuildingAttributes building={fullBuilding} />);
 
     // Typology (string array)
-    expect(screen.getByText('Residential')).toBeInTheDocument();
+    expect(screen.getByText('Residential, Commercial')).toBeInTheDocument();
 
     // Styles (object array)
     expect(screen.getByText('Modern')).toBeInTheDocument();
