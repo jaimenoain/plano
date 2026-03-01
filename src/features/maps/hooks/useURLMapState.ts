@@ -145,6 +145,11 @@ export const useURLMapState = () => {
       if (updates.lat !== undefined) newParams.set('lat', updates.lat.toString());
       if (updates.lng !== undefined) newParams.set('lng', updates.lng.toString());
       if (updates.zoom !== undefined) newParams.set('zoom', updates.zoom.toString());
+
+      // Mode is synced by useBuildingSearch primarily to avoid double URL updates.
+      // But map map update actions (like map move) might trigger setMapURL.
+      // Since map moves don't include mode, this is generally safe.
+      // If someone explicitly calls setMapURL({ mode }), we still handle it.
       if (updates.mode !== undefined) newParams.set('mode', updates.mode);
 
       // We explicitly ignore updates.filters here to let useBuildingSearch handle it

@@ -105,8 +105,13 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     []
   );
 
+  // We keep setMode as a no-op or proxy for backward compatibility if needed,
+  // but FilterDrawer and others should use `setMode` from `useBuildingSearch`
   const setMode = useCallback(
     (mode: MapMode) => {
+      // MapContext now relies on useBuildingSearch to set the mode URL param.
+      // We can leave this as a no-op or just update the map state directly if needed.
+      // But URL will be the source of truth anyway.
       setMapURL({ mode });
     },
     [setMapURL]

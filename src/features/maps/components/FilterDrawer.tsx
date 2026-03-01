@@ -84,11 +84,6 @@ function MultiSelectCheckboxList({ items, selectedIds, onChange, className }: Mu
 
 export function FilterDrawer() {
   const {
-    state: { mode },
-    methods: { setMode },
-  } = useMapContext();
-
-  const {
     statusFilters: currentStatus,
     setStatusFilters,
     hideVisited,
@@ -115,6 +110,8 @@ export function FilterDrawer() {
     setSelectedAttributes,
     selectedContacts: currentContacts,
     setSelectedContacts,
+    mode,
+    setMode,
   } = useBuildingSearch();
 
   const {
