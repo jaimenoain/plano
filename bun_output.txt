@@ -1,10 +1,6 @@
 $ vite
 
-  VITE v5.4.21  ready in 397 ms
+  VITE v5.4.21  ready in 368 ms
 
   ➜  Local:   http://localhost:8080/
   ➜  Network: http://192.168.0.2:8080/
-9:29:38 PM [vite] hmr update /src/pages/ArchitectDashboard.tsx, /src/index.css
-9:29:38 PM [vite] hmr update /src/pages/ArchitectDashboard.tsx, /src/index.css
-9:30:55 PM [vite] hmr update /src/pages/ArchitectDashboard.tsx, /src/index.css
-9:32:16 PM [vite] hmr update /src/pages/ArchitectDashboard.tsx, /src/index.css
