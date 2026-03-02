@@ -22,7 +22,7 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ rating: 3, status: 'visited' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
-      expect(style.size).toBe(44);
+      expect(style.size).toBe(30);
       expect(style.classes).toContain('bg-lime-high');
       expect(style.classes).toContain('text-black');
     });
@@ -31,7 +31,7 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ rating: 2 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('A');
-      expect(style.size).toBe(44);
+      expect(style.size).toBe(30);
       expect(style.zIndex).toBe(100);
       expect(style.classes).toContain('bg-white');
       expect(style.showDot).toBe(false);
@@ -41,7 +41,7 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ rating: 1 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
-      expect(style.size).toBe(28);
+      expect(style.size).toBe(20);
       expect(style.classes).toContain('bg-white');
       expect(style.classes).toContain('border-gray-600');
     });
@@ -75,7 +75,7 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 10%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
-      expect(style.size).toBe(28);
+      expect(style.size).toBe(20);
       expect(style.classes).toContain('bg-white');
     });
 
@@ -83,7 +83,7 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 20%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
-      expect(style.size).toBe(28);
+      expect(style.size).toBe(20);
       expect(style.classes).toContain('bg-white');
     });
 
