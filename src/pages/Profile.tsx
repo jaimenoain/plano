@@ -52,6 +52,7 @@ import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { ProfileKanbanView } from "@/components/profile/ProfileKanbanView";
 import { handleDragEndLogic } from "@/utils/kanbanLogic";
 import { ProfileListView } from "@/components/profile/ProfileListView";
+import { ArchitectPortfolio } from "@/components/profile/ArchitectPortfolio";
 
 // --- Types ---
 interface Profile {
@@ -205,6 +206,7 @@ export default function Profile() {
 
   // New Profile Features
   const [squad, setSquad] = useState<Profile[]>([]);
+  const [verifiedArchitectId, setVerifiedArchitectId] = useState<string | null>(null);
 
   const { profileComparison } = useProfileComparison(currentUser?.id, targetUserId);
 
@@ -341,8 +343,31 @@ export default function Profile() {
     if (targetUserId) {
       checkIfFollowing();
       fetchSquad();
+      fetchArchitectClaim();
     }
   }, [targetUserId, currentUser]);
+
+  const fetchArchitectClaim = async () => {
+    if (!targetUserId) return;
+    try {
+      const { data, error } = await supabase
+        .from('architect_claims')
+        .select('architect_id')
+        .eq('user_id', targetUserId)
+        .eq('status', 'approved')
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setVerifiedArchitectId(data.architect_id);
+      } else {
+        setVerifiedArchitectId(null);
+      }
+    } catch (err) {
+      console.error("Error fetching architect claim:", err);
+      setVerifiedArchitectId(null);
+    }
+  };
 
   // --- Logic ---
 
@@ -812,6 +837,13 @@ export default function Profile() {
               mutualAffinityUsers={profileComparison.mutualAffinityUsers}
               commonFollowers={profileComparison.commonFollowers}
             />
+          </div>
+        )}
+
+        {/* Architect Portfolio (Only visible if user is a verified architect) */}
+        {verifiedArchitectId && (
+          <div className="max-w-7xl mx-auto px-4 mt-8 mb-8">
+            <ArchitectPortfolio architectId={verifiedArchitectId} />
           </div>
         )}
 
