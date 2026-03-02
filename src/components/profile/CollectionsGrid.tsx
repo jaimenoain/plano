@@ -15,6 +15,7 @@ interface Collection {
   name: string;
   slug: string;
   is_public: boolean;
+  isFavorite?: boolean;
   created_at: string;
   collection_items: { count: number }[];
   owner?: { username: string | null };
@@ -142,19 +143,38 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
         organizedQuery = organizedQuery.eq("user_folders.is_public", true);
       }
 
-      const [ownedRes, contributedRes, organizedRes] = await Promise.all([
+      // 4. Fetch favorite collections
+      const favoritesPromise = supabase
+        .from("collection_favorites")
+        .select(`
+          collection:collections(
+            id, name, slug, is_public, created_at,
+            collection_items(count),
+            owner:profiles!collections_owner_id_fkey(username)
+          )
+        `)
+        .eq("user_id", userId);
+
+      const [ownedRes, contributedRes, organizedRes, favoritesRes] = await Promise.all([
         ownedPromise,
         contributedPromise,
-        organizedQuery
+        organizedQuery,
+        favoritesPromise
       ]);
 
       if (ownedRes.error) throw ownedRes.error;
       if (contributedRes.error) throw contributedRes.error;
       if (organizedRes.error) throw organizedRes.error;
+      if (favoritesRes.error) throw favoritesRes.error;
 
       // Cast to unknown first to handle the extra collection_contributors field in the second query
       const owned = (ownedRes.data || []) as unknown as Collection[];
       const contributed = (contributedRes.data || []) as unknown as Collection[];
+
+      const favorites = (favoritesRes.data || [])
+        .map((item: any) => item.collection)
+        .filter((c: any) => c !== null)
+        .map((c: any) => ({ ...c, isFavorite: true })) as Collection[];
 
       // Extract organized collection IDs
       const organizedIds = new Set(
@@ -165,6 +185,12 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
       const allCollections = new Map<string, Collection>();
 
       owned.forEach(c => {
+        if (!organizedIds.has(c.id)) {
+          allCollections.set(c.id, c);
+        }
+      });
+
+      favorites.forEach(c => {
         if (!organizedIds.has(c.id)) {
           allCollections.set(c.id, c);
         }
