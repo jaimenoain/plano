@@ -95,6 +95,29 @@ describe("useArchitectPortfolio", () => {
     expect(result.current.error).toBeNull();
   });
 
+  it("should return an empty array if no buildings are found", async () => {
+    const mockSelect = vi.fn().mockReturnThis();
+    const mockEq = vi.fn().mockResolvedValue({ data: [], error: null });
+
+    (supabase.from as any).mockReturnValue({
+      select: mockSelect,
+      eq: mockEq,
+    });
+
+    const { result } = renderHook(() => useArchitectPortfolio("arch-123"), { wrapper });
+
+    expect(result.current.isLoading).toBe(true);
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(supabase.from).toHaveBeenCalledWith("buildings");
+    expect(mockEq).toHaveBeenCalledWith("architect_id", "arch-123");
+    expect(result.current.buildings).toEqual([]);
+    expect(result.current.error).toBeNull();
+  });
+
   it("should return error if fetching fails", async () => {
     const mockError = new Error("Database error");
 

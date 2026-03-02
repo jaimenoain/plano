@@ -113,4 +113,24 @@ describe("ArchitectPortfolio", () => {
     expect(screen.getByText("Test Building 2")).toBeInTheDocument();
     expect(screen.queryByText("No buildings added to portfolio yet.")).not.toBeInTheDocument();
   });
+
+  it("does not crash when architectId is missing, though typescript should prevent this", () => {
+    // This is just to satisfy coverage or edge cases
+    vi.mocked(useArchitectPortfolio).mockReturnValue({
+      buildings: [],
+      isLoading: false,
+      error: null,
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          {/* @ts-ignore */}
+          <ArchitectPortfolio architectId={null} />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByText("Portfolio")).toBeInTheDocument();
+  });
 });
