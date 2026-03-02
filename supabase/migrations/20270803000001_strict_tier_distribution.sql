@@ -1,7 +1,4 @@
--- Migration ID: 20270803000000_strict_tier_distribution.sql
-
--- Alter ENUM type to support 'Top 25%' instead of 'Top 25%'
-ALTER TYPE public.building_tier_rank ADD VALUE IF NOT EXISTS 'Top 25%' AFTER 'Top 10%';
+-- Migration ID: 20270803000001_strict_tier_distribution.sql
 
 -- Redefine update_building_tiers function to use strict quotas with hierarchical tie-breaking
 CREATE OR REPLACE FUNCTION update_building_tiers()
