@@ -469,6 +469,43 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     }
   }, [gpsLocation]);
 
+  // Track filter interactions for auto-geolocation logic
+  useEffect(() => {
+     const hasActiveFilters =
+        debouncedQuery !== "" ||
+        statusFilters.length > 0 ||
+        hideVisited ||
+        hideSaved ||
+        !hideHidden ||
+        hideWithoutImages ||
+        filterContacts ||
+        personalMinRating > 0 ||
+        contactMinRating > 0 ||
+        selectedCategory !== null ||
+        selectedTypologies.length > 0 ||
+        selectedAttributes.length > 0 ||
+        selectedArchitects.length > 0 ||
+        selectedCollections.length > 0 ||
+        selectedFolders.length > 0 ||
+        selectedContacts.length > 0 ||
+        accessLevels.length > 0 ||
+        accessLogistics.length > 0 ||
+        accessCosts.length > 0;
+
+     if (hasActiveFilters) {
+         try {
+             sessionStorage.setItem('plano_map_interacted', 'true');
+         } catch (e) {
+             // Ignore
+         }
+     }
+  }, [
+    debouncedQuery, statusFilters, hideVisited, hideSaved, hideHidden, hideWithoutImages,
+    filterContacts, personalMinRating, contactMinRating, selectedCategory, selectedTypologies,
+    selectedAttributes, selectedArchitects, selectedCollections, selectedFolders, selectedContacts,
+    accessLevels, accessLogistics, accessCosts
+  ]);
+
   // Sync state to URL params
   useEffect(() => {
     setSearchParams((prevParams) => {
