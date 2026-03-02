@@ -91,6 +91,20 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
          Math.abs(prev.zoom - zoom) < 0.01;
 
        if (isSame) return prev;
+
+       // Prevent jumping to default coordinates if the user has already interacted
+       // or if there's a saved state, when the URL resets to default (e.g. clicking Search menu item)
+       if (lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM) {
+           try {
+               const hasInteracted = sessionStorage.getItem('plano_map_interacted');
+               if (hasInteracted) {
+                   return prev; // Maintain current view, don't jump to (20, 0, 2)
+               }
+           } catch (e) {
+               // ignore
+           }
+       }
+
        return { latitude: lat, longitude: lng, zoom: zoom };
     });
   }, [lat, lng, zoom]);
@@ -139,6 +153,13 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
       zoom: evt.viewState.zoom
     }, true); // Immediate URL update
 
+    // Record that the user has interacted with the map in this session
+    try {
+        sessionStorage.setItem('plano_map_interacted', 'true');
+    } catch (e) {
+        // Ignore session storage errors
+    }
+
     // Save view state to localStorage
     try {
         localStorage.setItem(LOCAL_STORAGE_MAP_KEY, JSON.stringify({
@@ -159,6 +180,11 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
 
       // Auto-geolocate if at default view (meaning user didn't specify a location)
       if (lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM) {
+          let hasInteracted = false;
+          try {
+              hasInteracted = sessionStorage.getItem('plano_map_interacted') === 'true';
+          } catch (e) {}
+
           // Try to restore from localStorage first
           let savedState = null;
           try {
@@ -183,6 +209,14 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
                           lng: longitude,
                           zoom: savedZoom
                       }, true);
+
+                      // Skip geolocation if we restored from local storage AND the user has interacted.
+                      // If they haven't interacted yet this session, we might still want to geolocate?
+                      // The requirement: "cuando no haya ninguna ubicación recordada o preferida o indicada por la actividad... la ubicación por defecto debe ser la ubicación actual"
+                      // Actually, if we have a saved state, that IS a remembered location.
+                      // But if we want to ensure we geolocate on first session load regardless of local storage?
+                      // No, the prompt says "no haya ninguna ubicación recordada". Local storage IS a remembered location.
+                      // BUT wait, the prompt says "en cuanto al usuario, interactúe... estará terminantemente prohibido volver a redirigir"
                       return; // Skip geolocation if restored
                   }
               } catch (e) {
@@ -191,8 +225,11 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
           }
 
           // Trigger the geolocation control to find the user
-          // This will ask for permission if not granted
-          geolocateControlRef.current?.trigger();
+          // This will ask for permission if not granted.
+          // We only trigger if they haven't interacted this session.
+          if (!hasInteracted) {
+              geolocateControlRef.current?.trigger();
+          }
       }
   }, [updateBounds, lat, lng, zoom, updateMapState]);
 
