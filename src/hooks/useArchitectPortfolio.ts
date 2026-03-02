@@ -25,16 +25,17 @@ export function useArchitectPortfolio(architectId: string | null | undefined) {
           building_images(
             id,
             storage_path
-          )
+          ),
+          building_architects!inner(architect_id)
         `)
-        .eq("architect_id", architectId);
+        .eq("building_architects.architect_id", architectId);
 
       if (error) {
         throw error;
       }
 
       const formattedBuildings = (data || [])
-        .map((item: any) => {
+        .map((item: { id: string; name: string; city: string | null; country: string | null; building_images: { id: string; storage_path: string }[] | null }) => {
           return {
             id: item.id,
             name: item.name,
@@ -43,7 +44,7 @@ export function useArchitectPortfolio(architectId: string | null | undefined) {
             building_images: item.building_images || null,
           };
         })
-        .filter((b: any) => b !== null) as PortfolioBuilding[];
+        .filter((b: PortfolioBuilding | null) => b !== null) as PortfolioBuilding[];
 
       return formattedBuildings;
     },

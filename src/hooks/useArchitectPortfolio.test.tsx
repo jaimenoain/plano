@@ -75,7 +75,8 @@ describe("useArchitectPortfolio", () => {
 
     expect(supabase.from).toHaveBeenCalledWith("buildings");
     expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining("building_images("));
-    expect(mockEq).toHaveBeenCalledWith("architect_id", "arch-123");
+    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining("building_architects!inner(architect_id)"));
+    expect(mockEq).toHaveBeenCalledWith("building_architects.architect_id", "arch-123");
 
     expect(result.current.buildings).toHaveLength(2);
     expect(result.current.buildings[0]).toEqual({
@@ -113,7 +114,7 @@ describe("useArchitectPortfolio", () => {
     });
 
     expect(supabase.from).toHaveBeenCalledWith("buildings");
-    expect(mockEq).toHaveBeenCalledWith("architect_id", "arch-123");
+    expect(mockEq).toHaveBeenCalledWith("building_architects.architect_id", "arch-123");
     expect(result.current.buildings).toEqual([]);
     expect(result.current.error).toBeNull();
   });
