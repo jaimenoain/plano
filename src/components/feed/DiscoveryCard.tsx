@@ -3,7 +3,6 @@ import { DiscoveryBuilding } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Bookmark, Check, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useBuildingImages } from "@/hooks/useBuildingImages";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -56,15 +55,15 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
     prevVisible.current = isViewVisible;
   }, [isViewVisible, hasBeenViewed, isSaved, onSkip]);
 
-  // Fetch additional images only when visible
-  const { data: additionalImages } = useBuildingImages(building.id, isVisible);
+  // Use batched images passed down from feed
+  const additionalImages = (building as DiscoveryFeedItem).images || [];
 
   const mainImageUrl = getBuildingImageUrl(building.main_image_url);
 
   // Combine images
   const galleryImages = useMemo(() => [
     mainImageUrl,
-    ...(additionalImages?.map(img => getBuildingImageUrl(img.storage_path)) || [])
+    ...(additionalImages.map(img => getBuildingImageUrl(img.storage_path)))
   ].filter((url): url is string => !!url), [mainImageUrl, additionalImages]);
 
   // De-duplicate images just in case
@@ -73,7 +72,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   // Determine current image owner
   const currentImageOwner = useMemo(() => {
       const currentUrl = uniqueImages[currentImageIndex];
-      if (!currentUrl || !additionalImages) return null;
+      if (!currentUrl || !additionalImages.length) return null;
 
       const matchingImage = additionalImages.find(img =>
         getBuildingImageUrl(img.storage_path) === currentUrl

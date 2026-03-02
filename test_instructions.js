@@ -1,1 +1,0 @@
-// Based on memory: To avoid state desynchronization, map and search filter UI components (such as FilterDrawer) should read and write filter states directly using the useBuildingSearch hook. Do not route filter updates through useMapContext and useURLMapState, as useURLMapState intentionally drops filter query parameters to prevent dual-writes.

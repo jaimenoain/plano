@@ -15,6 +15,7 @@ export interface DiscoveryFeedItem {
   save_count: number;
   architects: { id: string; name: string }[] | null;
   contact_interactions?: ContactInteraction[];
+  images?: any[];
 }
 
 export interface DiscoveryFilters {
@@ -59,14 +60,52 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
       if (buildings.length > 0) {
         const buildingIds = buildings.map(b => b.id);
 
-        const { data: architectsData } = await supabase
-          .from('building_architects')
-          .select('building_id, architects(id, name)')
-          .in('building_id', buildingIds);
 
+        // Fetch Architects, Follows, and Images in parallel
+        const [architectsRes, followsRes, ...imageResponses] = await Promise.all([
+          supabase
+            .from('building_architects')
+            .select('building_id, architects(id, name)')
+            .in('building_id', buildingIds),
+          supabase
+            .from('follows')
+            .select('following_id')
+            .eq('follower_id', user.id),
+          // Fetch up to 10 images for each building individually so one doesn't starve the rest
+          ...buildingIds.map(buildingId =>
+              supabase
+                .from('review_images')
+                .select(`
+                  id,
+                  storage_path,
+                  likes_count,
+                  created_at,
+                  user_buildings!review_images_review_id_fkey!inner(
+                    building_id,
+                    user:profiles(
+                      id,
+                      username,
+                      avatar_url,
+                      first_name,
+                      last_name
+                    )
+                  )
+                `)
+                .eq('user_buildings.building_id', buildingId)
+                .order('likes_count', { ascending: false })
+                .order('created_at', { ascending: false })
+                .limit(10)
+          )
+        ]);
+
+        const architectsData = architectsRes.data;
+        const followsData = followsRes.data;
+        // Merge all individual building image results
+        const imagesData = imageResponses.flatMap(res => res.data || []);
+
+        // --- Process Architects ---
         if (architectsData) {
           const architectsMap: Record<string, { id: string; name: string }[]> = {};
-
           architectsData.forEach((item: any) => {
             if (item.architects) {
               if (!architectsMap[item.building_id]) {
@@ -75,20 +114,31 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
               architectsMap[item.building_id].push(item.architects);
             }
           });
-
           buildings.forEach(building => {
             building.architects = architectsMap[building.id] || [];
           });
         }
 
-        // Fetch Contact Interactions
-        const { data: follows } = await supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', user.id);
+        // --- Process Images ---
+        if (imagesData) {
+          const imagesMap: Record<string, any[]> = {};
+          imagesData.forEach((item: any) => {
+             const buildingId = item.user_buildings?.building_id;
+             if (buildingId) {
+                 if (!imagesMap[buildingId]) imagesMap[buildingId] = [];
+                 // Keep max 10 images per building to match useBuildingImages behavior
+                 if (imagesMap[buildingId].length < 10) {
+                     imagesMap[buildingId].push(item);
+                 }
+             }
+          });
+          buildings.forEach(building => {
+              building.images = imagesMap[building.id] || [];
+          });
+        }
 
-        const followedIds = follows?.map(f => f.following_id) || [];
-
+        // --- Process Interactions ---
+        const followedIds = followsData?.map(f => f.following_id) || [];
         if (followedIds.length > 0) {
           const { data: interactions } = await supabase
             .from('user_buildings')
