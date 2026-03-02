@@ -181,6 +181,10 @@ export default function Index() {
                       <>
                         <AllCaughtUpDivider />
 
+                        <div className="py-2">
+                            <ExploreTeaserBlock />
+                        </div>
+
                         {/* Discovery Feed Items */}
                         <div className="flex flex-col gap-6 mt-6">
                             {discoveryReviews.map((post) => (
