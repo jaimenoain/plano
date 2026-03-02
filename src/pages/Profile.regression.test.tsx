@@ -113,6 +113,10 @@ vi.mock('@/components/feed/ReviewCard', () => ({
     )
 }));
 
+vi.mock('@/components/profile/ArchitectPortfolio', () => ({
+    ArchitectPortfolio: () => <div data-testid="architect-portfolio">Architect Portfolio</div>
+}));
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: mocks.mockSupabase,
 }));
@@ -272,5 +276,13 @@ describe('Profile Regression Tests', () => {
       await waitFor(() => expect(mocks.mockSupabase.from).toHaveBeenCalledWith('user_buildings'));
 
       expect(mocks.mockChain.eq).toHaveBeenCalledWith('status', 'pending');
+  });
+
+  it('should not render ArchitectPortfolio if user is not a verified architect', async () => {
+      renderProfileWithUrl();
+
+      await screen.findByTestId('review-card-review-1');
+
+      expect(screen.queryByTestId('architect-portfolio')).toBeNull();
   });
 });
