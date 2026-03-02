@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
-const supabase = createClient('http://127.0.0.1:54321', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cGFiYXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzQ3MzYwMDAsImV4cCI6MTk5MDMzNjAwMH0.1');
+
+const sbUrl = 'https://gyxspsuctbrxhwiyfvlj.supabase.co';
+const sbKey = 'dummy';
+
+const supabase = createClient(sbUrl, sbKey);
 
 async function test() {
   const { data, error } = await supabase.from('buildings').select('*').limit(1);
