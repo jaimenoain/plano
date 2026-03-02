@@ -371,7 +371,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
               ) : folders.length === 0 ? (
                 <p className="text-center py-8 text-muted-foreground">No folders found.</p>
               ) : (
-                <ScrollArea className="h-[40vh]">
+                <ScrollArea className="h-[40vh] [&>[data-radix-scroll-area-viewport]>div]:!block">
                   <div className="space-y-2 p-1">
                     {folders.map(f => (
                       <div
@@ -380,9 +380,9 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
                         onClick={() => handleManageContents(f)}
                       >
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate flex items-center gap-2">
-                             <Folder className="h-4 w-4 text-muted-foreground" />
-                             {f.name}
+                          <h4 className="font-medium flex items-center gap-2">
+                             <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
+                             <span className="truncate">{f.name}</span>
                           </h4>
                           <p className="text-xs text-muted-foreground truncate ml-6">
                             {f.is_public ? "Public" : "Private"} • {f.description || "No description"}
@@ -409,7 +409,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                      </div>
                  ) : (
-                     <ScrollArea className="h-[50vh] pr-4">
+                     <ScrollArea className="h-[50vh] pr-4 [&>[data-radix-scroll-area-viewport]>div]:!block">
                          <div className="space-y-2">
                              {availableCollections.length === 0 ? (
                                  <p className="text-center text-muted-foreground py-4">No collections found.</p>
