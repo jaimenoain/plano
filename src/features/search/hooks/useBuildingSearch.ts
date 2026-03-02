@@ -355,6 +355,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
   const [filterContacts, setFilterContacts] = useState(getBoolParam(searchParams.get("filterContacts"), false));
   const [personalMinRating, setPersonalMinRating] = useState<number>(getNumParam(searchParams.get("minRating"), 0));
+  const [globalMinRating, setGlobalMinRating] = useState<number>(getNumParam(searchParams.get("globalMinRating"), 0));
   const [contactMinRating, setContactMinRating] = useState<number>(getNumParam(searchParams.get("contactMinRating"), 0));
 
   const [selectedArchitects, setSelectedArchitects] = useState<{ id: string; name: string }[]>(
@@ -480,6 +481,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         hideWithoutImages ||
         filterContacts ||
         personalMinRating > 0 ||
+        globalMinRating > 0 ||
         contactMinRating > 0 ||
         selectedCategory !== null ||
         selectedTypologies.length > 0 ||
@@ -501,7 +503,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
      }
   }, [
     debouncedQuery, statusFilters, hideVisited, hideSaved, hideHidden, hideWithoutImages,
-    filterContacts, personalMinRating, contactMinRating, selectedCategory, selectedTypologies,
+    filterContacts, personalMinRating, globalMinRating, contactMinRating, selectedCategory, selectedTypologies,
     selectedAttributes, selectedArchitects, selectedCollections, selectedFolders, selectedContacts,
     accessLevels, accessLogistics, accessCosts
   ]);
@@ -547,6 +549,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
       if (personalMinRating > 0) params.set("minRating", personalMinRating.toString());
       else params.delete("minRating");
+
+      if (globalMinRating > 0) params.set("globalMinRating", globalMinRating.toString());
+      else params.delete("globalMinRating");
 
       if (contactMinRating > 0) params.set("contactMinRating", contactMinRating.toString());
       else params.delete("contactMinRating");
@@ -611,6 +616,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     hideWithoutImages,
     filterContacts,
     personalMinRating,
+    globalMinRating,
     contactMinRating,
     selectedCategory,
     selectedTypologies,
@@ -1087,6 +1093,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setFilterContacts,
     personalMinRating,
     setPersonalMinRating,
+    globalMinRating,
+    setGlobalMinRating,
     contactMinRating,
     setContactMinRating,
     selectedArchitects,

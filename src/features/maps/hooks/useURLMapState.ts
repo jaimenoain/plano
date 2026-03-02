@@ -42,6 +42,16 @@ export const MapFiltersObjectSchema = z.object({
     },
     z.number().optional()
   ),
+  globalMinRating: z.preprocess(
+    (val) => {
+      if (typeof val === 'string' && val.trim() !== '') {
+        const num = Number(val);
+        return isNaN(num) ? undefined : num;
+      }
+      return val;
+    },
+    z.number().optional()
+  ),
   personalMinRating: z.preprocess(
     (val) => {
       if (typeof val === 'string' && val.trim() !== '') {
@@ -74,6 +84,10 @@ export const MapFiltersObjectSchema = z.object({
     // Clamp min_rating if present and valid number (legacy support)
     if (typeof newObj.min_rating === 'number') {
         newObj.min_rating = Math.max(0, Math.min(3, newObj.min_rating));
+    }
+    // Clamp globalMinRating if present and valid number
+    if (typeof newObj.globalMinRating === 'number') {
+        newObj.globalMinRating = Math.max(0, Math.min(3, newObj.globalMinRating));
     }
     // Clamp personalMinRating if present and valid number
     if (typeof newObj.personalMinRating === 'number') {
@@ -121,6 +135,7 @@ export const useURLMapState = () => {
        hideHidden: searchParams.get("hideHidden") === "false" ? false : true,
        hideWithoutImages: getBoolParam(searchParams.get("hideWithoutImages")),
        personalMinRating: getNumParam(searchParams.get("minRating")),
+       minRating: getNumParam(searchParams.get("globalMinRating")) || getNumParam(searchParams.get("min_rating")),
        contactMinRating: getNumParam(searchParams.get("contactMinRating")),
        category: searchParams.get("category") || undefined,
        typologies: getArrayParam(searchParams.get("typologies")),
