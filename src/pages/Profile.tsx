@@ -929,7 +929,13 @@ export default function Profile() {
                   variant="secondary"
                   size="icon"
                   className="shrink-0"
-                  onClick={() => navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true`)}
+                  onClick={() => {
+                      if (activeFilter === 'pending') {
+                          navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending`);
+                      } else {
+                          navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true`);
+                      }
+                  }}
                   title="View on a map"
                   aria-label="View on a map"
                   >
