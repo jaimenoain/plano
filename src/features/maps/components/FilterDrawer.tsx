@@ -94,6 +94,8 @@ export function FilterDrawer() {
     setFilterContacts,
     personalMinRating: currentPersonalMinRating,
     setPersonalMinRating,
+    globalMinRating: currentGlobalMinRating,
+    setGlobalMinRating,
     contactMinRating,
     setContactMinRating,
     selectedArchitects: currentArchitects,
@@ -153,7 +155,7 @@ const handleModeChange = (newMode: string) => {
   };
 
   const handleMinRatingChange = (value: number) => {
-    setPersonalMinRating(value);
+    setGlobalMinRating(value);
   };
 
   const handlePersonalRatingChange = (value: number) => {
@@ -245,6 +247,7 @@ const handleModeChange = (newMode: string) => {
     setSelectedTypologies([]);
     setSelectedAttributes([]);
     setPersonalMinRating(0);
+    setGlobalMinRating(0);
     setContactMinRating(0);
     setStatusFilters([]);
     setSelectedCollections([]);
@@ -253,7 +256,7 @@ const handleModeChange = (newMode: string) => {
     setHideVisited(false);
   };
 
-  const currentMinRating = currentPersonalMinRating;
+  const currentMinRating = currentGlobalMinRating;
   const currentSegmentedStatus = currentStatus.includes('visited') && (currentStatus.includes('saved') || currentStatus.includes('pending'))
     ? 'all'
     : currentStatus.includes('visited')
