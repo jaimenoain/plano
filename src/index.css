@@ -129,3 +129,11 @@
     scrollbar-width: none;
   }
 }
+
+/* Fix for map controls being covered by high z-index map pins */
+.maplibregl-ctrl-top-left,
+.maplibregl-ctrl-top-right,
+.maplibregl-ctrl-bottom-left,
+.maplibregl-ctrl-bottom-right {
+  z-index: 1000 !important;
+}
