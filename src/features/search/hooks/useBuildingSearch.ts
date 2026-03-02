@@ -478,8 +478,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       else params.delete("q");
 
       // Location
-      params.set("lat", userLocation.lat.toString());
-      params.set("lng", userLocation.lng.toString());
+      if (!params.has("lat")) params.set("lat", userLocation.lat.toString());
+      if (!params.has("lng")) params.set("lng", userLocation.lng.toString());
 
       // View Mode
       if (viewMode !== 'map') params.set("view", viewMode);
