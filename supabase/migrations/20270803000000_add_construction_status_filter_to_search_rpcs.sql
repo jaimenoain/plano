@@ -220,9 +220,9 @@ BEGIN
     (
       (
         (v_construction_statuses IS NULL OR cardinality(v_construction_statuses) = 0)
-        AND (b.status IS DISTINCT FROM 'Demolished' AND b.status IS DISTINCT FROM 'Under Construction' AND b.status IS DISTINCT FROM 'Unbuilt')
+        AND (b.status::text IS DISTINCT FROM 'Demolished' AND b.status::text IS DISTINCT FROM 'Under Construction' AND b.status::text IS DISTINCT FROM 'Unbuilt')
       )
-      OR b.status = ANY(v_construction_statuses)
+      OR b.status::text = ANY(v_construction_statuses)
     )
     AND
     (
@@ -534,8 +534,8 @@ BEGIN
       b.popularity_score,
       b.tier_rank,
       CASE
-        WHEN ub.status = 'visited' THEN 'visited'
-        WHEN ub.status = 'pending' THEN 'saved'
+        WHEN ub.status::text = 'visited' THEN 'visited'
+        WHEN ub.status::text = 'pending' THEN 'saved'
         ELSE 'none'
       END as mapped_status,
       COALESCE(ub.rating, 0) as mapped_rating
@@ -547,12 +547,12 @@ BEGIN
       AND (
         (
           (v_construction_statuses IS NULL OR cardinality(v_construction_statuses) = 0)
-          AND (b.status IS DISTINCT FROM 'Demolished' AND b.status IS DISTINCT FROM 'Under Construction' AND b.status IS DISTINCT FROM 'Unbuilt')
+          AND (b.status::text IS DISTINCT FROM 'Demolished' AND b.status::text IS DISTINCT FROM 'Under Construction' AND b.status::text IS DISTINCT FROM 'Unbuilt')
         )
-        OR b.status = ANY(v_construction_statuses)
+        OR b.status::text = ANY(v_construction_statuses)
       )
       AND (COALESCE(b.popularity_score, 0) >= -50)
-      AND (ub.status IS DISTINCT FROM 'ignored')
+      AND (ub.status::text IS DISTINCT FROM 'ignored')
       AND (
           (
             (v_safe_max_lng - v_safe_min_lng) > 179
@@ -629,14 +629,14 @@ BEGIN
       AND (
         v_status_filter IS NULL OR cardinality(v_status_filter) = 0 OR
         (
-          ('visited' = ANY(v_status_filter) AND ub.status = 'visited') OR
-          ('saved' = ANY(v_status_filter) AND ub.status = 'pending') OR
-          ('none' = ANY(v_status_filter) AND (ub.status IS NULL OR ub.status = 'ignored'))
+          ('visited' = ANY(v_status_filter) AND ub.status::text = 'visited') OR
+          ('saved' = ANY(v_status_filter) AND ub.status::text = 'pending') OR
+          ('none' = ANY(v_status_filter) AND (ub.status IS NULL OR ub.status::text = 'ignored'))
         )
       )
       -- Hide Saved / Visited
-      AND (v_hide_saved IS FALSE OR ub.status IS DISTINCT FROM 'pending')
-      AND (v_hide_visited IS FALSE OR ub.status IS DISTINCT FROM 'visited')
+      AND (v_hide_saved IS FALSE OR ub.status::text IS DISTINCT FROM 'pending')
+      AND (v_hide_visited IS FALSE OR ub.status::text IS DISTINCT FROM 'visited')
 
       -- Personal Rating
       AND (
