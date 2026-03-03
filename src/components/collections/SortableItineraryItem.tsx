@@ -2,21 +2,23 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CollectionBuildingCard } from "./CollectionBuildingCard";
 import { ItineraryBuilding } from "@/features/itinerary/stores/useItineraryStore";
-import { CollectionItemWithBuilding } from "@/types/collection";
+import { CollectionItemWithBuilding, ItineraryStop } from "@/types/collection";
+import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
 
 interface SortableItineraryItemProps {
-  building: ItineraryBuilding;
+  stop: ItineraryStop;
   highlightedId: string | null;
   setHighlightedId: (id: string | null) => void;
   badgeIndex: number;
 }
 
 export function SortableItineraryItem({
-  building,
+  stop,
   highlightedId,
   setHighlightedId,
   badgeIndex
 }: SortableItineraryItemProps) {
+  const buildingDetails = useItineraryStore((state) => state.buildingDetails);
   const {
     attributes,
     listeners,
@@ -24,7 +26,7 @@ export function SortableItineraryItem({
     transform,
     transition,
     isDragging
-  } = useSortable({ id: building.id });
+  } = useSortable({ id: stop.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -34,8 +36,18 @@ export function SortableItineraryItem({
     position: 'relative' as const,
   };
 
-  // Adapt ItineraryBuilding to CollectionItemWithBuilding
+  // Only handle building stops for now (or fallback if marker)
   // We construct a minimal compatible object since we don't have all data in the store currently
+  const building = stop.type === 'building' ? buildingDetails[stop.referenceId] : null;
+
+  if (!building) {
+     return (
+        <div ref={setNodeRef} style={style} className="mb-2 p-4 bg-muted border rounded" {...attributes} {...listeners}>
+            Marker: {stop.referenceId}
+        </div>
+     );
+  }
+
   const item: CollectionItemWithBuilding = {
     id: "temp-id",
     building_id: building.id,

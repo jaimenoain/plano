@@ -29,16 +29,18 @@ import { CollectionItemWithBuilding } from "@/types/collection";
 
 // --- Helper Components ---
 
+import { ItineraryStop } from "@/types/collection";
+
 interface ItineraryDayColumnProps {
   dayNumber: number;
-  buildings: ItineraryBuilding[];
+  stops: ItineraryStop[];
   highlightedId: string | null;
   setHighlightedId: (id: string | null) => void;
   distance?: number;
   transportMode: string;
 }
 
-function ItineraryDayColumn({ dayNumber, buildings, highlightedId, setHighlightedId, distance, transportMode }: ItineraryDayColumnProps) {
+function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode }: ItineraryDayColumnProps) {
   const { setNodeRef } = useDroppable({
     id: `day-${dayNumber}`,
     data: { dayNumber }
@@ -51,7 +53,7 @@ function ItineraryDayColumn({ dayNumber, buildings, highlightedId, setHighlighte
                 <div className="flex items-center w-full">
                     <span className="font-semibold">Day {dayNumber}</span>
                     <span className="text-xs text-muted-foreground ml-2 font-normal">
-                        {buildings.length} stop{buildings.length !== 1 ? 's' : ''}
+                        {stops.length} stop{stops.length !== 1 ? 's' : ''}
                     </span>
                 </div>
                 {transportMode === 'walking' && distance && distance > 15000 && (
@@ -65,18 +67,18 @@ function ItineraryDayColumn({ dayNumber, buildings, highlightedId, setHighlighte
         <AccordionContent className="p-0">
              <div ref={setNodeRef} className="p-2 min-h-[50px] space-y-2">
                 <SortableContext
-                    items={buildings.map(b => b.id)}
+                    items={stops.map(s => s.id)}
                     strategy={verticalListSortingStrategy}
                 >
-                    {buildings.length === 0 && (
+                    {stops.length === 0 && (
                         <div className="text-xs text-center text-muted-foreground py-4 border-2 border-dashed rounded-md">
                             Drag places here
                         </div>
                     )}
-                    {buildings.map((building, index) => (
+                    {stops.map((stop, index) => (
                         <SortableItineraryItem
-                            key={building.id}
-                            building={building}
+                            key={stop.id}
+                            stop={stop} // Need to refactor SortableItineraryItem next
                             highlightedId={highlightedId}
                             setHighlightedId={setHighlightedId}
                             badgeIndex={index + 1}
@@ -99,8 +101,8 @@ interface ItineraryListProps {
 export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryListProps) {
     const days = useItineraryStore((state) => state.days);
     const transportMode = useItineraryStore((state) => state.transportMode);
-    const reorderBuildings = useItineraryStore((state) => state.reorderBuildings);
-    const moveBuildingToDay = useItineraryStore((state) => state.moveBuildingToDay);
+    const reorderStops = useItineraryStore((state) => state.reorderStops);
+    const moveStopToDay = useItineraryStore((state) => state.moveStopToDay);
     const calculateRouteForDay = useItineraryStore((state) => state.calculateRouteForDay);
 
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -121,7 +123,7 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
         if (id.startsWith('day-')) {
              return days.find(d => `day-${d.dayNumber}` === id);
         }
-        return days.find(day => day.buildings.some(b => b.id === id));
+        return days.find(day => day.stops.some(s => s.id === id));
     };
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -157,9 +159,9 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
         let overIndex;
 
         if (overId.startsWith('day-')) {
-             overIndex = overContainer.buildings.length;
+             overIndex = overContainer.stops.length;
         } else {
-             const overItemIndex = overContainer.buildings.findIndex(b => b.id === overId);
+             const overItemIndex = overContainer.stops.findIndex(s => s.id === overId);
 
              // If moving down, we want to go after. If up, before.
              // But simpler logic:
@@ -169,10 +171,10 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
                active.rect.current.translated.top > over.rect.top + over.rect.height;
 
              const modifier = isBelowOverItem ? 1 : 0;
-             overIndex = overItemIndex >= 0 ? overItemIndex + modifier : overContainer.buildings.length;
+             overIndex = overItemIndex >= 0 ? overItemIndex + modifier : overContainer.stops.length;
         }
 
-        moveBuildingToDay(activeId, activeDayIndex, overDayIndex, overIndex);
+        moveStopToDay(activeId, activeDayIndex, overDayIndex, overIndex);
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -190,10 +192,10 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
             const activeDayIndex = days.findIndex(d => d.dayNumber === activeContainer.dayNumber);
             const overDayIndex = days.findIndex(d => d.dayNumber === overContainer.dayNumber);
 
-            const activeIndex = activeContainer.buildings.findIndex(b => b.id === active.id);
+            const activeIndex = activeContainer.stops.findIndex(s => s.id === active.id);
             const overIndex = over.id.toString().startsWith('day-')
-                ? overContainer.buildings.length
-                : overContainer.buildings.findIndex(b => b.id === over.id);
+                ? overContainer.stops.length
+                : overContainer.stops.findIndex(s => s.id === over.id);
 
             if (activeDayIndex === overDayIndex) {
                  const movedFromDifferentDay = previousDayNumber !== activeContainer.dayNumber;
@@ -208,8 +210,8 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
 
                  const orderChanged = activeIndex !== overIndex;
                  if (orderChanged && activeIndex !== -1 && overIndex !== -1) {
-                     const newOrder = arrayMove(activeContainer.buildings, activeIndex, overIndex);
-                     reorderBuildings(activeDayIndex, newOrder);
+                     const newOrder = arrayMove(activeContainer.stops, activeIndex, overIndex);
+                     reorderStops(activeDayIndex, newOrder);
                  }
 
                  // Always recalculate destination if we moved days or reordered
@@ -231,7 +233,13 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
         }
     };
 
-    const activeBuilding = activeId ? days.flatMap(d => d.buildings).find(b => b.id === activeId) : null;
+    const activeStop = activeId ? days.flatMap(d => d.stops).find(s => s.id === activeId) : null;
+    const buildingDetails = useItineraryStore((state) => state.buildingDetails);
+
+    let activeBuilding = null;
+    if (activeStop && activeStop.type === 'building') {
+        activeBuilding = buildingDetails[activeStop.referenceId];
+    }
 
     // Construct active item for display
     const activeDisplayItem: CollectionItemWithBuilding | null = activeBuilding ? {
@@ -272,7 +280,7 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
                     <ItineraryDayColumn
                         key={day.dayNumber}
                         dayNumber={day.dayNumber}
-                        buildings={day.buildings}
+                        stops={day.stops}
                         highlightedId={highlightedId}
                         setHighlightedId={setHighlightedId}
                         distance={day.distance}
