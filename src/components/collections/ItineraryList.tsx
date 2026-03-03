@@ -102,10 +102,10 @@ function AddStopPopover({ dayIndex }: AddStopPopoverProps) {
                 {availableMarkers.map((marker) => (
                   <CommandItem
                     key={`m-${marker.id}`}
-                    value={`marker-${marker.id}-${marker.title}`}
+                    value={`marker-${marker.id}-${marker.name}`}
                     onSelect={() => handleSelect('marker', marker.id)}
                   >
-                    <span>{marker.title}</span>
+                    <span>{marker.name}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

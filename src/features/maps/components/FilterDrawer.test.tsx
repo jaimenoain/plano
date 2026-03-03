@@ -121,6 +121,8 @@ describe('FilterDrawer', () => {
     setConstructionStatuses: vi.fn(),
     mode: 'discover',
     setMode: vi.fn(),
+    constructionStatuses: [],
+    setConstructionStatuses: vi.fn(),
   };
 
   beforeEach(() => {
