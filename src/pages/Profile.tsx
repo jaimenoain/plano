@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ReviewCard } from "@/components/feed/ReviewCard";
@@ -62,6 +63,7 @@ interface Profile {
   bio: string | null;
   last_online?: string | null;
   role?: string;
+  verified_architect_id?: string | null;
 }
 
 interface Stats {
@@ -206,7 +208,6 @@ export default function Profile() {
 
   // New Profile Features
   const [squad, setSquad] = useState<Profile[]>([]);
-  const [verifiedArchitectId, setVerifiedArchitectId] = useState<string | null>(null);
 
   const { profileComparison } = useProfileComparison(currentUser?.id, targetUserId);
 
@@ -218,6 +219,9 @@ export default function Profile() {
   const [userListLoading, setUserListLoading] = useState(false);
 
   const isOwnProfile = currentUser?.id === targetUserId;
+
+  const { profile: currentUserProfile } = useUserProfile();
+  const verifiedArchitectId = isOwnProfile ? currentUserProfile?.verified_architect_id : profile?.verified_architect_id;
 
   // --- Handlers for URL State ---
 
@@ -324,7 +328,6 @@ export default function Profile() {
           uid = data.id;
           let favs = (data as any).favorites || [];
           setFavorites(favs);
-          setVerifiedArchitectId(data.verified_architect_id || null);
       }
 
       setTargetUserId(uid);
