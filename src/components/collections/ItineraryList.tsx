@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Plus } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
@@ -27,10 +27,90 @@ import { CollectionMarkerCard } from "./CollectionMarkerCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useDroppable } from "@dnd-kit/core";
 import { CollectionItemWithBuilding } from "@/types/collection";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
 
 // --- Helper Components ---
 
 import { ItineraryStop } from "@/types/collection";
+
+interface AddStopPopoverProps {
+  dayIndex: number; // 0-based index for the store
+}
+
+function AddStopPopover({ dayIndex }: AddStopPopoverProps) {
+  const [open, setOpen] = useState(false);
+  const buildingDetails = useItineraryStore((state) => state.buildingDetails);
+  const markerDetails = useItineraryStore((state) => state.markerDetails);
+  const reorderStops = useItineraryStore((state) => state.reorderStops);
+  const days = useItineraryStore((state) => state.days);
+  const calculateRouteForDay = useItineraryStore((state) => state.calculateRouteForDay);
+
+  const availableBuildings = Object.values(buildingDetails);
+  const availableMarkers = Object.values(markerDetails);
+
+  const handleSelect = (type: 'building' | 'marker', referenceId: string) => {
+    const dayStops = days[dayIndex]?.stops || [];
+
+    const newStop: ItineraryStop = {
+      id: crypto.randomUUID(),
+      referenceId,
+      type
+    };
+
+    const newStops = [...dayStops, newStop];
+    reorderStops(dayIndex, newStops);
+    calculateRouteForDay(dayIndex);
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-foreground mt-2 border border-transparent hover:border-border border-dashed">
+          <Plus className="mr-2 h-4 w-4" /> Add Stop
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search saved places..." />
+          <CommandList>
+            <CommandEmpty>No places found.</CommandEmpty>
+
+            {availableBuildings.length > 0 && (
+              <CommandGroup heading="Buildings">
+                {availableBuildings.map((building) => (
+                  <CommandItem
+                    key={`b-${building.id}`}
+                    value={`building-${building.id}-${building.name}`}
+                    onSelect={() => handleSelect('building', building.id)}
+                  >
+                    <span>{building.name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            {availableMarkers.length > 0 && (
+              <CommandGroup heading="Map Pins">
+                {availableMarkers.map((marker) => (
+                  <CommandItem
+                    key={`m-${marker.id}`}
+                    value={`marker-${marker.id}-${marker.title}`}
+                    onSelect={() => handleSelect('marker', marker.id)}
+                  >
+                    <span>{marker.title}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface ItineraryDayColumnProps {
   dayNumber: number;
@@ -72,8 +152,9 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                     strategy={verticalListSortingStrategy}
                 >
                     {stops.length === 0 && (
-                        <div className="text-xs text-center text-muted-foreground py-4 border-2 border-dashed rounded-md">
-                            Drag places here
+                        <div className="flex flex-col items-center justify-center text-xs text-center text-muted-foreground py-4 border-2 border-dashed rounded-md px-4">
+                            <span className="mb-2">Drag places here</span>
+                            <AddStopPopover dayIndex={dayNumber - 1} />
                         </div>
                     )}
                     {stops.map((stop, index) => (
@@ -86,6 +167,9 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                         />
                     ))}
                 </SortableContext>
+                {stops.length > 0 && (
+                    <AddStopPopover dayIndex={dayNumber - 1} />
+                )}
              </div>
         </AccordionContent>
     </AccordionItem>
