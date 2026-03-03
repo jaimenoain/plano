@@ -54,8 +54,8 @@ export function SortableItineraryItem({
           setHighlightedId={setHighlightedId}
           canEdit={false}
           onNavigate={() => {}}
-          isDraggable={true}
-          dragHandleProps={{ ...attributes, ...listeners }}
+          isDraggable={!!canEdit}
+          dragHandleProps={canEdit ? { ...attributes, ...listeners } : undefined}
           badgeIndex={badgeIndex}
         />
       </div>
@@ -112,8 +112,8 @@ export function SortableItineraryItem({
           }
         }}
         onNavigate={() => {}}
-        isDraggable={true}
-        dragHandleProps={{ ...attributes, ...listeners }}
+        isDraggable={!!canEdit}
+        dragHandleProps={canEdit ? { ...attributes, ...listeners } : undefined}
         badgeIndex={badgeIndex}
       />
     </div>
