@@ -181,33 +181,52 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
     return (
       <div className="relative flex items-center justify-center h-6 my-1 group">
         <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-primary/50 transition-colors" />
-        {instructions || transitToNext?.estimatedMinutes ? (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full p-1 shadow-sm cursor-help">
-                <Icon className="w-3 h-3 text-primary" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80" side="right" align="center">
-              <div className="space-y-2">
-                 <h4 className="font-medium leading-none flex items-center gap-2">
-                   <Icon className="w-4 h-4" /> Transport Note
-                 </h4>
-                 {transitToNext?.estimatedMinutes && (
-                   <p className="text-sm font-medium flex items-center gap-1.5 mt-1">
-                     <Clock className="w-3 h-3 text-muted-foreground" />
-                     {formatDuration(transitToNext.estimatedMinutes)}
-                   </p>
-                 )}
-                 {instructions && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{instructions}</p>}
-              </div>
-            </PopoverContent>
-          </Popover>
-        ) : (
-          <div className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full p-1 shadow-sm">
-            <Icon className="w-3 h-3 text-muted-foreground" />
+
+        <div className="relative z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity w-full px-4">
+          <div className="flex-1 flex justify-end pr-2">
+            {transitToNext?.estimatedMinutes ? (
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {formatDuration(transitToNext.estimatedMinutes)}
+              </span>
+            ) : null}
           </div>
-        )}
+
+          {instructions || transitToNext?.estimatedMinutes ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="shrink-0 bg-background border border-border rounded-full p-1 shadow-sm cursor-help">
+                  <Icon className="w-3 h-3 text-primary" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" side="right" align="center">
+                <div className="space-y-2">
+                   <h4 className="font-medium leading-none flex items-center gap-2">
+                     <Icon className="w-4 h-4" /> Transport Note
+                   </h4>
+                   {transitToNext?.estimatedMinutes && (
+                     <p className="text-sm font-medium flex items-center gap-1.5 mt-1">
+                       <Clock className="w-3 h-3 text-muted-foreground" />
+                       {formatDuration(transitToNext.estimatedMinutes)}
+                     </p>
+                   )}
+                   {instructions && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{instructions}</p>}
+                </div>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <div className="shrink-0 bg-background border border-border rounded-full p-1 shadow-sm">
+              <Icon className="w-3 h-3 text-muted-foreground" />
+            </div>
+          )}
+
+          <div className="flex-1 flex justify-start pl-2 overflow-hidden">
+            {instructions ? (
+              <span className="text-xs text-muted-foreground truncate" title={instructions}>
+                {instructions}
+              </span>
+            ) : null}
+          </div>
+        </div>
       </div>
     );
   }
@@ -218,14 +237,23 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
       <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-primary/50 transition-colors" />
 
       {/* The interactive pill containing the icon, visible on hover */}
-      <Popover open={isOpen} onOpenChange={handleOpenChange}>
-        <PopoverTrigger asChild>
-          <button className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full p-1 shadow-sm hover:bg-muted cursor-pointer">
-            <Icon className="w-3 h-3 text-muted-foreground" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80" side="right" align="center">
-          <div className="grid gap-4">
+      <div className="relative z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity w-full px-4">
+        <div className="flex-1 flex justify-end pr-2">
+          {transitToNext?.estimatedMinutes ? (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {formatDuration(transitToNext.estimatedMinutes)}
+            </span>
+          ) : null}
+        </div>
+
+        <Popover open={isOpen} onOpenChange={handleOpenChange}>
+          <PopoverTrigger asChild>
+            <button className="shrink-0 bg-background border border-border rounded-full p-1 shadow-sm hover:bg-muted cursor-pointer">
+              <Icon className="w-3 h-3 text-muted-foreground" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80" side="right" align="center">
+            <div className="grid gap-4">
             <div className="space-y-2">
               <h4 className="font-medium leading-none">Segment Options</h4>
               <p className="text-sm text-muted-foreground">
@@ -275,6 +303,15 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
           </div>
         </PopoverContent>
       </Popover>
+
+        <div className="flex-1 flex justify-start pl-2 overflow-hidden">
+          {instructions ? (
+            <span className="text-xs text-muted-foreground truncate" title={instructions}>
+              {instructions}
+            </span>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }
