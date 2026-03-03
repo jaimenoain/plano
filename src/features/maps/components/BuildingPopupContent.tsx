@@ -473,8 +473,9 @@ export function BuildingPopupContent({
         {/* Post-Interaction Rating UI */}
         {justInteracted && (
            <div
-             className="flex justify-center items-center gap-3 pt-3 pb-1 border-t animate-in fade-in slide-in-from-top-1 duration-300"
+             className="flex justify-center items-center gap-3 pt-3 pb-1 border-t animate-in fade-in slide-in-from-top-1 duration-300 relative z-20"
              onClick={(e) => e.stopPropagation()}
+             onTouchStart={(e) => e.stopPropagation()}
            >
               {/* Status Indicator Circle */}
               <div className="h-8 w-8 rounded-full bg-green-600 flex items-center justify-center text-white shadow-sm">
