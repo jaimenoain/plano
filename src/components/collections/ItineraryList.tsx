@@ -33,6 +33,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Clock } from "lucide-react";
+import { parseDuration, formatDuration } from "@/utils/duration";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -142,12 +144,14 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<string>(currentMode);
   const [instructions, setInstructions] = useState<string>(transitToNext?.customInstructions || "");
+  const [duration, setDuration] = useState<string>(formatDuration(transitToNext?.estimatedMinutes));
 
   // Update local state when popover opens
   const handleOpenChange = (open: boolean) => {
     if (open) {
       setMode(transitToNext?.mode || defaultTransportMode);
       setInstructions(transitToNext?.customInstructions || "");
+      setDuration(formatDuration(transitToNext?.estimatedMinutes));
     }
     setIsOpen(open);
   };
@@ -156,7 +160,7 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
     updateSegmentTransit(dayIndex, stopId, {
       mode: mode as 'walking' | 'driving' | 'cycling' | 'transit',
       customInstructions: instructions.trim() || null,
-      estimatedMinutes: transitToNext?.estimatedMinutes || null
+      estimatedMinutes: parseDuration(duration)
     });
 
     setTimeout(() => {
@@ -177,7 +181,7 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
     return (
       <div className="relative flex items-center justify-center h-6 my-1 group">
         <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-primary/50 transition-colors" />
-        {instructions ? (
+        {instructions || transitToNext?.estimatedMinutes ? (
           <Popover>
             <PopoverTrigger asChild>
               <button className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full p-1 shadow-sm cursor-help">
@@ -189,7 +193,13 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
                  <h4 className="font-medium leading-none flex items-center gap-2">
                    <Icon className="w-4 h-4" /> Transport Note
                  </h4>
-                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{instructions}</p>
+                 {transitToNext?.estimatedMinutes && (
+                   <p className="text-sm font-medium flex items-center gap-1.5 mt-1">
+                     <Clock className="w-3 h-3 text-muted-foreground" />
+                     {formatDuration(transitToNext.estimatedMinutes)}
+                   </p>
+                 )}
+                 {instructions && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{instructions}</p>}
               </div>
             </PopoverContent>
           </Popover>
@@ -248,6 +258,15 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
                 onChange={(e) => setInstructions(e.target.value)}
                 className="resize-none"
                 rows={3}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="duration">Estimated Duration</Label>
+              <Input
+                id="duration"
+                placeholder="e.g., 1h 20min"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
               />
             </div>
             <Button onClick={handleSave} className="w-full">
