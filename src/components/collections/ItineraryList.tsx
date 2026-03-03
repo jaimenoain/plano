@@ -1,4 +1,4 @@
-import { useState, useRef, Fragment } from "react";
+import { closestCenter, useState, useRef, Fragment } from "react";
 import { AlertTriangle, Plus, Pencil, Car, Footprints, Bike, Bus } from "lucide-react";
 import {
   DndContext,
@@ -499,6 +499,7 @@ export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinera
 
     const [activeId, setActiveId] = useState<string | null>(null);
     const dragStartDayRef = useRef<number | null>(null);
+    const recentlyMovedToNewContainerRef = useRef<number>(0);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -528,6 +529,8 @@ export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinera
     };
 
     const handleDragOver = (event: DragOverEvent) => {
+        // Prevent extremely rapid container switches (flickering/infinite loops causing Error 185)
+        if (Date.now() - recentlyMovedToNewContainerRef.current < 100) return;
         const { active, over } = event;
         if (!over) return;
 
@@ -567,6 +570,9 @@ export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinera
              overIndex = overItemIndex >= 0 ? overItemIndex + modifier : overContainer.stops.length;
         }
 
+        if (activeDayIndex !== overDayIndex) {
+            recentlyMovedToNewContainerRef.current = Date.now();
+        }
         moveStopToDay(activeId, activeDayIndex, overDayIndex, overIndex);
     };
 
@@ -676,7 +682,7 @@ export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinera
     return (
         <DndContext
             sensors={activeSensors}
-            collisionDetection={closestCorners}
+            collisionDetection={closestCenter}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
