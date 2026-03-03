@@ -982,6 +982,8 @@ export default function CollectionMap() {
                                 <ItineraryList
                                     highlightedId={highlightedId}
                                     setHighlightedId={setHighlightedId}
+                                    canEdit={canEdit}
+                                    onUpdateNote={handleUpdateNote}
                                 />
                                 {!collection.itinerary && (
                                     <div className="text-center py-8 text-muted-foreground">
