@@ -22,10 +22,31 @@ export interface ItineraryRoute {
   isFallback?: boolean;
 }
 
+export interface ItineraryStop {
+  id: string;
+  referenceId: string;
+  type: 'building' | 'marker';
+  transitToNext?: {
+    mode: TransportMode;
+    customInstructions: string | null;
+    estimatedMinutes: number | null;
+  };
+}
+
+export interface ItineraryDay {
+  dayNumber: number;
+  title?: string;
+  description?: string;
+  stops: ItineraryStop[];
+  defaultTransportMode: TransportMode;
+  routeGeometry?: any; // GeoJSON LineString
+  isFallback?: boolean;
+}
+
 export interface Itinerary {
   days: number;
-  transportMode: TransportMode;
-  routes: ItineraryRoute[];
+  defaultTransportMode: TransportMode;
+  routes: ItineraryDay[];
 }
 
 export interface CollectionItemWithBuilding {
