@@ -186,8 +186,25 @@ export default function CollectionMap() {
     enabled: !!collection?.id && !!user?.id
   });
 
+  // Fetch current user's profile to check for admin role
+  const { data: currentUserProfile } = useQuery({
+    queryKey: ["profile", "current", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id
+  });
+
+  const isAdmin = currentUserProfile?.role === "admin" || currentUserProfile?.role === "app_admin";
   const isOwner = user?.id === collection?.owner_id;
-  const canEdit = isOwner || !!isContributor;
+  const canEdit = isOwner || !!isContributor || isAdmin;
 
   // 3. Fetch Items and Markers
   const { data: collectionData, isLoading: loadingItems, refetch: refetchItems } = useQuery({

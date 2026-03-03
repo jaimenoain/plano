@@ -122,9 +122,10 @@ interface ItinerarySegmentProps {
   dayIndex: number;
   transitToNext?: ItineraryStop['transitToNext'];
   defaultTransportMode: string;
+  canEdit?: boolean;
 }
 
-function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMode }: ItinerarySegmentProps) {
+function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMode, canEdit }: ItinerarySegmentProps) {
   const currentMode = transitToNext?.mode || defaultTransportMode;
   const updateSegmentTransit = useItineraryStore((state) => state.updateSegmentTransit);
 
@@ -154,6 +155,35 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
   if (currentMode === "driving") Icon = Car;
   else if (currentMode === "cycling") Icon = Bike;
   else if (currentMode === "transit") Icon = Bus;
+
+  if (!canEdit) {
+    return (
+      <div className="relative flex items-center justify-center h-6 my-1 group">
+        <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-primary/50 transition-colors" />
+        {instructions ? (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full p-1 shadow-sm cursor-help">
+                <Icon className="w-3 h-3 text-primary" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" side="right" align="center">
+              <div className="space-y-2">
+                 <h4 className="font-medium leading-none flex items-center gap-2">
+                   <Icon className="w-4 h-4" /> Transport Note
+                 </h4>
+                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{instructions}</p>
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <div className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full p-1 shadow-sm">
+            <Icon className="w-3 h-3 text-muted-foreground" />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex items-center justify-center h-6 my-1 group">
@@ -254,17 +284,19 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
 
   return (
     <AccordionItem value={`day-${dayNumber}`} className="border-b-0 mb-4 bg-muted/30 rounded-lg overflow-hidden border relative group">
-        <div className="absolute top-2 right-4 z-10">
-            <Button
-                variant="ghost"
-                size="sm"
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 bg-muted/50 hover:bg-muted/80"
-                onClick={handleOpenEditDialog}
-            >
-                <Pencil className="h-4 w-4 text-muted-foreground" />
-                <span className="sr-only">Edit Day</span>
-            </Button>
-        </div>
+        {canEdit && (
+            <div className="absolute top-2 right-4 z-10">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 bg-muted/50 hover:bg-muted/80"
+                    onClick={handleOpenEditDialog}
+                >
+                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                    <span className="sr-only">Edit Day</span>
+                </Button>
+            </div>
+        )}
         <AccordionTrigger className="px-4 py-2 hover:no-underline bg-muted/50 hover:bg-muted/80 transition-colors">
             <div className="flex flex-col w-full items-start text-left pr-10">
                 <div className="flex items-center w-full justify-between">
@@ -294,7 +326,7 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                     items={stops.map(s => s.id)}
                     strategy={verticalListSortingStrategy}
                 >
-                    {stops.length === 0 && (
+                    {stops.length === 0 && canEdit && (
                         <div className="flex flex-col items-center justify-center text-xs text-center text-muted-foreground py-4 border-2 border-dashed rounded-md px-4">
                             <span className="mb-2">Drag places here</span>
                             <AddStopPopover dayIndex={dayNumber - 1} />
@@ -316,12 +348,13 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                                   dayIndex={dayNumber - 1}
                                   transitToNext={stop.transitToNext}
                                   defaultTransportMode={transportMode}
+                                  canEdit={canEdit}
                                 />
                             )}
                         </Fragment>
                     ))}
                 </SortableContext>
-                {stops.length > 0 && (
+                {canEdit && stops.length > 0 && (
                     <AddStopPopover dayIndex={dayNumber - 1} />
                 )}
              </div>
@@ -394,6 +427,7 @@ export function ItineraryList({ highlightedId, setHighlightedId, canEdit, onUpda
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+    const activeSensors = canEdit ? sensors : [];
 
     const findDayContainer = (id: string) => {
         if (id.startsWith('day-')) {
@@ -552,7 +586,7 @@ export function ItineraryList({ highlightedId, setHighlightedId, canEdit, onUpda
 
     return (
         <DndContext
-            sensors={sensors}
+            sensors={activeSensors}
             collisionDetection={closestCorners}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
