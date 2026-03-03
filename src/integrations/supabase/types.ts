@@ -1387,6 +1387,7 @@ export interface Database {
           role: string | null
           last_online: string | null
           subscribed_platforms: string[] | null
+          verified_architect_id: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1403,6 +1404,7 @@ export interface Database {
           role?: string | null
           last_online?: string | null
           subscribed_platforms?: string[] | null
+          verified_architect_id?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1419,6 +1421,7 @@ export interface Database {
           role?: string | null
           last_online?: string | null
           subscribed_platforms?: string[] | null
+          verified_architect_id?: string | null
         }
         Relationships: [
           {
