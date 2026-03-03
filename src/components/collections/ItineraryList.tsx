@@ -38,13 +38,14 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // --- Helper Components ---
 
-import { ItineraryStop } from "@/types/collection";
+import { ItineraryStop, Itinerary } from "@/types/collection";
 
 interface AddStopPopoverProps {
   dayIndex: number; // 0-based index for the store
+  onUpdateItinerary?: (itinerary: Itinerary) => void;
 }
 
-function AddStopPopover({ dayIndex }: AddStopPopoverProps) {
+function AddStopPopover({ dayIndex, onUpdateItinerary }: AddStopPopoverProps) {
   const [open, setOpen] = useState(false);
   const buildingDetails = useItineraryStore((state) => state.buildingDetails);
   const markerDetails = useItineraryStore((state) => state.markerDetails);
@@ -67,6 +68,14 @@ function AddStopPopover({ dayIndex }: AddStopPopoverProps) {
     const newStops = [...dayStops, newStop];
     reorderStops(dayIndex, newStops);
     calculateRouteForDay(dayIndex);
+
+    // Defer the save slightly so store state has updated from reorderStops
+    setTimeout(() => {
+        if (onUpdateItinerary) {
+            onUpdateItinerary(useItineraryStore.getState().getStoreAsItinerary());
+        }
+    }, 0);
+
     setOpen(false);
   };
 
@@ -122,10 +131,11 @@ interface ItinerarySegmentProps {
   dayIndex: number;
   transitToNext?: ItineraryStop['transitToNext'];
   defaultTransportMode: string;
+  onUpdateItinerary?: (itinerary: Itinerary) => void;
   canEdit?: boolean;
 }
 
-function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMode, canEdit }: ItinerarySegmentProps) {
+function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMode, onUpdateItinerary, canEdit }: ItinerarySegmentProps) {
   const currentMode = transitToNext?.mode || defaultTransportMode;
   const updateSegmentTransit = useItineraryStore((state) => state.updateSegmentTransit);
 
@@ -148,6 +158,13 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
       customInstructions: instructions.trim() || null,
       estimatedMinutes: transitToNext?.estimatedMinutes || null
     });
+
+    setTimeout(() => {
+        if (onUpdateItinerary) {
+             onUpdateItinerary(useItineraryStore.getState().getStoreAsItinerary());
+        }
+    }, 0);
+
     setIsOpen(false);
   };
 
@@ -252,11 +269,12 @@ interface ItineraryDayColumnProps {
   transportMode: string;
   title?: string;
   description?: string;
+  onUpdateItinerary?: (itinerary: Itinerary) => void;
   canEdit?: boolean;
   onUpdateNote?: (itemId: string, note: string) => void;
 }
 
-function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode, title, description, canEdit, onUpdateNote }: ItineraryDayColumnProps) {
+function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode, title, description, onUpdateItinerary, canEdit, onUpdateNote }: ItineraryDayColumnProps) {
   const { setNodeRef } = useDroppable({
     id: `day-${dayNumber}`,
     data: { dayNumber }
@@ -279,6 +297,13 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
       title: editedTitle.trim() || undefined,
       description: editedDescription.trim() || undefined
     });
+
+    setTimeout(() => {
+        if (onUpdateItinerary) {
+             onUpdateItinerary(useItineraryStore.getState().getStoreAsItinerary());
+        }
+    }, 0);
+
     setIsEditDialogOpen(false);
   };
 
@@ -329,7 +354,7 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                     {stops.length === 0 && canEdit && (
                         <div className="flex flex-col items-center justify-center text-xs text-center text-muted-foreground py-4 border-2 border-dashed rounded-md px-4">
                             <span className="mb-2">Drag places here</span>
-                            <AddStopPopover dayIndex={dayNumber - 1} />
+                            <AddStopPopover dayIndex={dayNumber - 1} onUpdateItinerary={onUpdateItinerary} />
                         </div>
                     )}
                     {stops.map((stop, index) => (
@@ -348,6 +373,7 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                                   dayIndex={dayNumber - 1}
                                   transitToNext={stop.transitToNext}
                                   defaultTransportMode={transportMode}
+                                  onUpdateItinerary={onUpdateItinerary}
                                   canEdit={canEdit}
                                 />
                             )}
@@ -355,7 +381,7 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                     ))}
                 </SortableContext>
                 {canEdit && stops.length > 0 && (
-                    <AddStopPopover dayIndex={dayNumber - 1} />
+                    <AddStopPopover dayIndex={dayNumber - 1} onUpdateItinerary={onUpdateItinerary} />
                 )}
              </div>
         </AccordionContent>
@@ -403,11 +429,12 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
 interface ItineraryListProps {
     highlightedId: string | null;
     setHighlightedId: (id: string | null) => void;
+    onUpdateItinerary?: (itinerary: Itinerary) => void;
     canEdit?: boolean;
     onUpdateNote?: (itemId: string, note: string) => void;
 }
 
-export function ItineraryList({ highlightedId, setHighlightedId, canEdit, onUpdateNote }: ItineraryListProps) {
+export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinerary, canEdit, onUpdateNote }: ItineraryListProps) {
     const days = useItineraryStore((state) => state.days);
     const transportMode = useItineraryStore((state) => state.transportMode);
     const reorderStops = useItineraryStore((state) => state.reorderStops);
@@ -540,6 +567,12 @@ export function ItineraryList({ highlightedId, setHighlightedId, canEdit, onUpda
                      }
                 }
             }
+
+            setTimeout(() => {
+                if (onUpdateItinerary) {
+                     onUpdateItinerary(useItineraryStore.getState().getStoreAsItinerary());
+                }
+            }, 0);
         }
     };
 
@@ -604,6 +637,7 @@ export function ItineraryList({ highlightedId, setHighlightedId, canEdit, onUpda
                         transportMode={transportMode}
                         title={day.title}
                         description={day.description}
+                        onUpdateItinerary={onUpdateItinerary}
                         canEdit={canEdit}
                         onUpdateNote={onUpdateNote}
                     />

@@ -52,6 +52,7 @@ interface ItineraryState {
   calculateRouteForDay: (dayIndex: number) => Promise<void>;
   updateDayContext: (dayIndex: number, context: { title?: string; description?: string }) => void;
   updateSegmentTransit: (dayIndex: number, stopId: string, transitData: ItineraryStop['transitToNext']) => void;
+  getStoreAsItinerary: () => Itinerary;
 }
 
 export const useItineraryStore = create<ItineraryState>((set, get) => ({
@@ -335,4 +336,13 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
           console.error("Failed to calculate route:", err);
       }
   },
+
+  getStoreAsItinerary: () => {
+    const state = get();
+    return {
+        days: state.daysCount,
+        defaultTransportMode: state.transportMode,
+        routes: state.days
+    };
+  }
 }));
