@@ -34,6 +34,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // --- Helper Components ---
 
@@ -116,11 +117,43 @@ function AddStopPopover({ dayIndex }: AddStopPopoverProps) {
   );
 }
 
-function ItinerarySegment({ mode }: { mode: string }) {
+interface ItinerarySegmentProps {
+  stopId: string;
+  dayIndex: number;
+  transitToNext?: ItineraryStop['transitToNext'];
+  defaultTransportMode: string;
+}
+
+function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMode }: ItinerarySegmentProps) {
+  const currentMode = transitToNext?.mode || defaultTransportMode;
+  const updateSegmentTransit = useItineraryStore((state) => state.updateSegmentTransit);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState<string>(currentMode);
+  const [instructions, setInstructions] = useState<string>(transitToNext?.customInstructions || "");
+
+  // Update local state when popover opens
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setMode(transitToNext?.mode || defaultTransportMode);
+      setInstructions(transitToNext?.customInstructions || "");
+    }
+    setIsOpen(open);
+  };
+
+  const handleSave = () => {
+    updateSegmentTransit(dayIndex, stopId, {
+      mode: mode as 'walking' | 'driving' | 'cycling' | 'transit',
+      customInstructions: instructions.trim() || null,
+      estimatedMinutes: transitToNext?.estimatedMinutes || null
+    });
+    setIsOpen(false);
+  };
+
   let Icon = Footprints;
-  if (mode === "driving") Icon = Car;
-  else if (mode === "cycling") Icon = Bike;
-  else if (mode === "transit") Icon = Bus;
+  if (currentMode === "driving") Icon = Car;
+  else if (currentMode === "cycling") Icon = Bike;
+  else if (currentMode === "transit") Icon = Bus;
 
   return (
     <div className="relative flex items-center justify-center h-6 my-1 group">
@@ -128,9 +161,54 @@ function ItinerarySegment({ mode }: { mode: string }) {
       <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-primary/50 transition-colors" />
 
       {/* The interactive pill containing the icon, visible on hover */}
-      <div className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full p-1 shadow-sm">
-        <Icon className="w-3 h-3 text-muted-foreground" />
-      </div>
+      <Popover open={isOpen} onOpenChange={handleOpenChange}>
+        <PopoverTrigger asChild>
+          <button className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full p-1 shadow-sm hover:bg-muted cursor-pointer">
+            <Icon className="w-3 h-3 text-muted-foreground" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80" side="right" align="center">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <h4 className="font-medium leading-none">Segment Options</h4>
+              <p className="text-sm text-muted-foreground">
+                Override default transport and add notes.
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="mode">Transport Mode</Label>
+              <ToggleGroup type="single" value={mode} onValueChange={(v) => v && setMode(v)} className="justify-start">
+                <ToggleGroupItem value="walking" aria-label="Walking">
+                  <Footprints className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="driving" aria-label="Driving">
+                  <Car className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="transit" aria-label="Transit">
+                  <Bus className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="cycling" aria-label="Cycling">
+                  <Bike className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="instructions">Custom Instructions</Label>
+              <Textarea
+                id="instructions"
+                placeholder="e.g., Take the north exit to avoid the crowd"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                className="resize-none"
+                rows={3}
+              />
+            </div>
+            <Button onClick={handleSave} className="w-full">
+              Save changes
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -229,7 +307,12 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                                 badgeIndex={index + 1}
                             />
                             {index < stops.length - 1 && (
-                                <ItinerarySegment mode={stop.transitToNext?.mode || transportMode} />
+                                <ItinerarySegment
+                                  stopId={stop.id}
+                                  dayIndex={dayNumber - 1}
+                                  transitToNext={stop.transitToNext}
+                                  defaultTransportMode={transportMode}
+                                />
                             )}
                         </Fragment>
                     ))}
