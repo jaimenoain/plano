@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { AlertTriangle, Plus, Pencil } from "lucide-react";
+import { useState, useRef, Fragment } from "react";
+import { AlertTriangle, Plus, Pencil, Car, Footprints, Bike, Bus } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
@@ -116,6 +116,25 @@ function AddStopPopover({ dayIndex }: AddStopPopoverProps) {
   );
 }
 
+function ItinerarySegment({ mode }: { mode: string }) {
+  let Icon = Footprints;
+  if (mode === "driving") Icon = Car;
+  else if (mode === "cycling") Icon = Bike;
+  else if (mode === "transit") Icon = Bus;
+
+  return (
+    <div className="relative flex items-center justify-center h-6 my-1 group">
+      {/* The subtle vertical line */}
+      <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-primary/50 transition-colors" />
+
+      {/* The interactive pill containing the icon, visible on hover */}
+      <div className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full p-1 shadow-sm">
+        <Icon className="w-3 h-3 text-muted-foreground" />
+      </div>
+    </div>
+  );
+}
+
 interface ItineraryDayColumnProps {
   dayNumber: number;
   stops: ItineraryStop[];
@@ -202,13 +221,17 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                         </div>
                     )}
                     {stops.map((stop, index) => (
-                        <SortableItineraryItem
-                            key={stop.id}
-                            stop={stop} // Need to refactor SortableItineraryItem next
-                            highlightedId={highlightedId}
-                            setHighlightedId={setHighlightedId}
-                            badgeIndex={index + 1}
-                        />
+                        <Fragment key={stop.id}>
+                            <SortableItineraryItem
+                                stop={stop} // Need to refactor SortableItineraryItem next
+                                highlightedId={highlightedId}
+                                setHighlightedId={setHighlightedId}
+                                badgeIndex={index + 1}
+                            />
+                            {index < stops.length - 1 && (
+                                <ItinerarySegment mode={stop.transitToNext?.mode || transportMode} />
+                            )}
+                        </Fragment>
                     ))}
                 </SortableContext>
                 {stops.length > 0 && (
