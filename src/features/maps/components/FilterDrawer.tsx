@@ -112,6 +112,8 @@ export function FilterDrawer() {
     setSelectedAttributes,
     selectedContacts: currentContacts,
     setSelectedContacts,
+    constructionStatuses,
+    setConstructionStatuses,
     mode,
     setMode,
   } = useBuildingSearch();
@@ -232,12 +234,17 @@ const handleModeChange = (newMode: string) => {
     setSelectedAttributes([...otherAttributes, ...ids]);
   };
 
+  const handleConstructionStatusesChange = (ids: string[]) => {
+    setConstructionStatuses(ids);
+  };
+
   const handleResetGlobalFilters = () => {
       setSelectedArchitects([]);
       setSelectedContacts([]);
       setSelectedCategory(null);
       setSelectedTypologies([]);
       setSelectedAttributes([]);
+      setConstructionStatuses([]);
   };
 
   const handleClearAll = () => {
@@ -246,6 +253,7 @@ const handleModeChange = (newMode: string) => {
     setSelectedCategory(null);
     setSelectedTypologies([]);
     setSelectedAttributes([]);
+    setConstructionStatuses([]);
     setPersonalMinRating(0);
     setGlobalMinRating(0);
     setContactMinRating(0);
@@ -279,6 +287,7 @@ const handleModeChange = (newMode: string) => {
     if (currentMaterials.length > 0) count++;
     if (currentContexts.length > 0) count++;
     if (currentStyles.length > 0) count++;
+    if (constructionStatuses.length > 0) count++;
 
     if (mode === 'discover') {
       if (currentMinRating > 0) count++;
@@ -306,7 +315,8 @@ const handleModeChange = (newMode: string) => {
       currentTypologies,
       currentMaterials,
       currentContexts,
-      currentStyles
+      currentStyles,
+      constructionStatuses
   ]);
 
   // Derived Data for Display
@@ -582,6 +592,24 @@ const handleModeChange = (newMode: string) => {
                             items={contextAttributes}
                             selectedIds={currentContexts}
                             onChange={handleContextsChange}
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+
+                 {/* Item 6: Status */}
+                 <AccordionItem value="construction_status">
+                    <AccordionTrigger className="text-sm">Global Status</AccordionTrigger>
+                    <AccordionContent className="pt-2">
+                        <MultiSelectCheckboxList
+                            items={[
+                                { id: 'Built', name: 'Built' },
+                                { id: 'Demolished', name: 'Demolished' },
+                                { id: 'Under Construction', name: 'Under Construction' },
+                                { id: 'Unbuilt', name: 'Unbuilt' },
+                            ]}
+                            selectedIds={constructionStatuses}
+                            onChange={handleConstructionStatusesChange}
+                            className="h-[150px]"
                         />
                     </AccordionContent>
                 </AccordionItem>

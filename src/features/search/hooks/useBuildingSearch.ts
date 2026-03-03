@@ -380,6 +380,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [accessLogistics, setAccessLogistics] = useState<string[]>(getArrayParam(searchParams.get("accessLogistics")));
   const [accessCosts, setAccessCosts] = useState<string[]>(getArrayParam(searchParams.get("accessCosts")));
 
+  const [constructionStatuses, setConstructionStatuses] = useState<string[]>(getArrayParam(searchParams.get("constructionStatuses")));
+
   // Resolve rated_by profiles from URL
   const ratedByParam = searchParams.get("rated_by");
   const { data: ratedByProfiles, isLoading: isLoadingRatedBy } = useQuery({
@@ -492,7 +494,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         selectedContacts.length > 0 ||
         accessLevels.length > 0 ||
         accessLogistics.length > 0 ||
-        accessCosts.length > 0;
+        accessCosts.length > 0 ||
+        constructionStatuses.length > 0;
 
      if (hasActiveFilters) {
          try {
@@ -505,7 +508,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     debouncedQuery, statusFilters, hideVisited, hideSaved, hideHidden, hideWithoutImages,
     filterContacts, personalMinRating, globalMinRating, contactMinRating, selectedCategory, selectedTypologies,
     selectedAttributes, selectedArchitects, selectedCollections, selectedFolders, selectedContacts,
-    accessLevels, accessLogistics, accessCosts
+    accessLevels, accessLogistics, accessCosts, constructionStatuses
   ]);
 
   // Sync state to URL params
@@ -583,6 +586,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (accessCosts.length > 0) params.set("accessCosts", accessCosts.join(","));
       else params.delete("accessCosts");
 
+      if (constructionStatuses.length > 0) params.set("constructionStatuses", constructionStatuses.join(","));
+      else params.delete("constructionStatuses");
+
       // Construct rated_by param
       const ratedByUsers = new Set<string>();
       if ((statusFilters.length > 0 || personalMinRating > 0) && user?.username) {
@@ -628,6 +634,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     accessLevels,
     accessLogistics,
     accessCosts,
+    constructionStatuses,
     setSearchParams,
     user
   ]);
@@ -688,6 +695,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       selectedTypologies,
       selectedAttributes,
       selectedContacts,
+      constructionStatuses,
       userLocation, // Keep tracking location for distance calculation in local mode? Yes.
       debouncedBounds, // Use debounced bounds
       zoom, // Use zoom level
@@ -890,6 +898,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               accessLevels,
               accessLogistics,
               accessCosts,
+              constructionStatuses,
             });
 
             // 6. Map to MapItem (BuildingPoint)
@@ -947,7 +956,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined,
               access_levels: accessLevels.length > 0 ? accessLevels : undefined,
               access_logistics: accessLogistics.length > 0 ? accessLogistics : undefined,
-              access_costs: accessCosts.length > 0 ? accessCosts : undefined
+              access_costs: accessCosts.length > 0 ? accessCosts : undefined,
+              construction_statuses: constructionStatuses.length > 0 ? constructionStatuses : undefined
             }
           });
 
@@ -1118,6 +1128,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setAccessLogistics,
     accessCosts,
     setAccessCosts,
+    constructionStatuses,
+    setConstructionStatuses,
     viewMode,
     setViewMode,
     mode,
