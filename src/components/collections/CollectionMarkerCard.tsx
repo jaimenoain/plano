@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { CollectionMarker } from "@/types/collection";
 import { cn } from "@/lib/utils";
-import { Check, MapPin, Bed, Utensils, Bus, Camera } from "lucide-react";
+import { Check, MapPin, Bed, Utensils, Bus, Camera, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -12,10 +12,13 @@ interface CollectionMarkerCardProps {
   canEdit: boolean;
   onRemove?: () => void;
   onNavigate: () => void;
+  isDraggable?: boolean;
+  dragHandleProps?: any;
+  badgeIndex?: number;
 }
 
 export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerCardProps>(
-  ({ marker, isHighlighted, setHighlightedId, canEdit, onRemove, onNavigate }, ref) => {
+  ({ marker, isHighlighted, setHighlightedId, canEdit, onRemove, onNavigate, isDraggable, dragHandleProps, badgeIndex }, ref) => {
 
     let Icon = MapPin;
     switch (marker.category) {
@@ -53,27 +56,48 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
                     </Button>
                 </div>
             )}
-            <div className="flex flex-row min-h-[3.5rem] items-start p-2 gap-3">
-                <div className="p-1.5 bg-secondary/50 rounded-full shrink-0">
-                    <Icon className="w-4 h-4 text-muted-foreground" />
-                </div>
+            <div className="flex flex-row min-h-[3.5rem]">
+                {/* Drag Handle */}
+                {isDraggable && (
+                    <div
+                        className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r"
+                        {...dragHandleProps}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <GripVertical className="h-4 w-4" />
+                    </div>
+                )}
 
-                <div className="flex flex-col flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm leading-tight line-clamp-2">
-                        {marker.name}
-                    </h3>
+                {/* Content Section */}
+                <div className="flex flex-1 items-start p-2 gap-3 min-w-0">
+                    <div className="p-1.5 bg-secondary/50 rounded-full shrink-0">
+                        <Icon className="w-4 h-4 text-muted-foreground" />
+                    </div>
 
-                    {marker.notes && (
+                    <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-start gap-2 min-w-0">
+                            {badgeIndex !== undefined && (
+                                <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm mt-0.5 shrink-0">
+                                    {badgeIndex}
+                                </div>
+                            )}
+                            <h3 className="font-semibold text-sm leading-tight line-clamp-2">
+                                {marker.name}
+                            </h3>
+                        </div>
+
+                        {marker.notes && (
                         <div className="text-xs text-muted-foreground mt-1 line-clamp-2 italic">
                             "{marker.notes}"
                         </div>
                     )}
 
-                    {marker.address && (
-                        <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                            {marker.address}
-                        </div>
-                    )}
+                        {marker.address && (
+                            <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                {marker.address}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </Card>

@@ -23,6 +23,7 @@ import {
 import { useItineraryStore, ItineraryBuilding } from "@/features/itinerary/stores/useItineraryStore";
 import { SortableItineraryItem } from "./SortableItineraryItem";
 import { CollectionBuildingCard } from "./CollectionBuildingCard";
+import { CollectionMarkerCard } from "./CollectionMarkerCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useDroppable } from "@dnd-kit/core";
 import { CollectionItemWithBuilding } from "@/types/collection";
@@ -235,10 +236,17 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
 
     const activeStop = activeId ? days.flatMap(d => d.stops).find(s => s.id === activeId) : null;
     const buildingDetails = useItineraryStore((state) => state.buildingDetails);
+    const markerDetails = useItineraryStore((state) => state.markerDetails);
 
     let activeBuilding = null;
-    if (activeStop && activeStop.type === 'building') {
-        activeBuilding = buildingDetails[activeStop.referenceId];
+    let activeMarker = null;
+
+    if (activeStop) {
+        if (activeStop.type === 'building') {
+            activeBuilding = buildingDetails[activeStop.referenceId];
+        } else if (activeStop.type === 'marker') {
+            activeMarker = markerDetails[activeStop.referenceId];
+        }
     }
 
     // Construct active item for display
@@ -298,6 +306,18 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
                             setHighlightedId={() => {}}
                             canEdit={false}
                             onUpdateNote={() => {}}
+                            onNavigate={() => {}}
+                            isDraggable={true}
+                            badgeIndex={0}
+                         />
+                     </div>
+                ) : activeMarker ? (
+                     <div className="opacity-90 rotate-2 cursor-grabbing">
+                         <CollectionMarkerCard
+                            marker={activeMarker}
+                            isHighlighted={false}
+                            setHighlightedId={() => {}}
+                            canEdit={false}
                             onNavigate={() => {}}
                             isDraggable={true}
                             badgeIndex={0}
