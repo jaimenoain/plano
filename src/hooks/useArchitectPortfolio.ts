@@ -16,32 +16,35 @@ export function useArchitectPortfolio(architectId: string | null | undefined) {
       if (!architectId) return [];
 
       const { data, error } = await supabase
-        .from("buildings")
+        .from("building_architects")
         .select(`
-          id,
-          name,
-          city,
-          country,
-          building_images(
+          building:buildings (
             id,
-            storage_path
-          ),
-          building_architects!inner(architect_id)
+            name,
+            city,
+            country,
+            building_images (
+              id,
+              storage_path
+            )
+          )
         `)
-        .eq("building_architects.architect_id", architectId);
+        .eq("architect_id", architectId);
 
       if (error) {
         throw error;
       }
 
       const formattedBuildings = (data || [])
-        .map((item: { id: string; name: string; city: string | null; country: string | null; building_images: { id: string; storage_path: string }[] | null }) => {
+        .map((item: any) => {
+          const b = item.building;
+          if (!b) return null;
           return {
-            id: item.id,
-            name: item.name,
-            city: item.city,
-            country: item.country,
-            building_images: item.building_images || null,
+            id: b.id,
+            name: b.name,
+            city: b.city,
+            country: b.country,
+            building_images: b.building_images || null,
           };
         })
         .filter((b: PortfolioBuilding | null) => b !== null) as PortfolioBuilding[];

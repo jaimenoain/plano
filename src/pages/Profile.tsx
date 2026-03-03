@@ -284,7 +284,7 @@ export default function Profile() {
       setLoading(true);
       let uid: string | null = null;
 
-      let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online");
+      let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id");
       let data: any = null;
 
       if (routeUsername) {
@@ -313,7 +313,7 @@ export default function Profile() {
         uid = currentUser.id;
         const res = await supabase
           .from("profiles")
-          .select("id, username, avatar_url, bio, favorites, last_online")
+          .select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id")
           .eq("id", uid)
           .maybeSingle();
         data = res.data;
@@ -324,6 +324,7 @@ export default function Profile() {
           uid = data.id;
           let favs = (data as any).favorites || [];
           setFavorites(favs);
+          setVerifiedArchitectId(data.verified_architect_id || null);
       }
 
       setTargetUserId(uid);
@@ -343,31 +344,8 @@ export default function Profile() {
     if (targetUserId) {
       checkIfFollowing();
       fetchSquad();
-      fetchArchitectClaim();
     }
   }, [targetUserId, currentUser]);
-
-  const fetchArchitectClaim = async () => {
-    if (!targetUserId) return;
-    try {
-      const { data, error } = await supabase
-        .from('architect_claims')
-        .select('architect_id')
-        .eq('user_id', targetUserId)
-        .eq('status', 'approved')
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data) {
-        setVerifiedArchitectId(data.architect_id);
-      } else {
-        setVerifiedArchitectId(null);
-      }
-    } catch (err) {
-      console.error("Error fetching architect claim:", err);
-      setVerifiedArchitectId(null);
-    }
-  };
 
   // --- Logic ---
 
