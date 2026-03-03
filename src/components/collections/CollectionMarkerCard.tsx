@@ -29,6 +29,15 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
         case 'other': Icon = MapPin; break;
     }
 
+    let displayAddress = marker.address;
+    if (displayAddress && marker.name) {
+        if (displayAddress.startsWith(`${marker.name}, `)) {
+            displayAddress = displayAddress.substring(marker.name.length + 2);
+        } else if (displayAddress.startsWith(`${marker.name},`)) {
+            displayAddress = displayAddress.substring(marker.name.length + 1).trim();
+        }
+    }
+
     return (
         <Card
             ref={ref}
@@ -92,9 +101,9 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
                         </div>
                     )}
 
-                        {marker.address && (
+                        {displayAddress && (
                             <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                                {marker.address}
+                                {displayAddress}
                             </div>
                         )}
                     </div>
