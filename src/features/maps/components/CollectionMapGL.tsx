@@ -74,17 +74,19 @@ function CollectionMapGLContent({
     if (!showItinerary) return new Map();
 
     const map = new Map<string, { dayIndex: number; sequence: number }>();
-    days.forEach((day, dayIndex) => {
-        day.stops?.forEach((stop, index) => {
-            const key = stop.referenceId || stop.id;
-            if (!map.has(key)) {
-                map.set(key, {
-                    dayIndex: dayIndex,
-                    sequence: index + 1
-                });
-            }
-        });
-    });
+    if (days) {
+      days.forEach((day, dayIndex) => {
+          day.stops?.forEach((stop, index) => {
+              const key = stop.referenceId || stop.id;
+              if (!map.has(key)) {
+                  map.set(key, {
+                      dayIndex: dayIndex,
+                      sequence: index + 1
+                  });
+              }
+          });
+      });
+    }
     return map;
   }, [days, showItinerary]);
 
