@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CollectionBuildingCard } from "./CollectionBuildingCard";
+import { CollectionMarkerCard } from "./CollectionMarkerCard";
 import { ItineraryBuilding } from "@/features/itinerary/stores/useItineraryStore";
 import { CollectionItemWithBuilding, ItineraryStop } from "@/types/collection";
 import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
@@ -19,6 +20,7 @@ export function SortableItineraryItem({
   badgeIndex
 }: SortableItineraryItemProps) {
   const buildingDetails = useItineraryStore((state) => state.buildingDetails);
+  const markerDetails = useItineraryStore((state) => state.markerDetails);
   const {
     attributes,
     listeners,
@@ -36,17 +38,29 @@ export function SortableItineraryItem({
     position: 'relative' as const,
   };
 
-  // Only handle building stops for now (or fallback if marker)
-  // We construct a minimal compatible object since we don't have all data in the store currently
-  const building = stop.type === 'building' ? buildingDetails[stop.referenceId] : null;
+  if (stop.type === 'marker') {
+    const marker = markerDetails[stop.referenceId];
+    if (!marker) return null;
 
-  if (!building) {
-     return (
-        <div ref={setNodeRef} style={style} className="mb-2 p-4 bg-muted border rounded" {...attributes} {...listeners}>
-            Marker: {stop.referenceId}
-        </div>
-     );
+    return (
+      <div ref={setNodeRef} style={style} className="mb-2">
+        <CollectionMarkerCard
+          marker={marker}
+          isHighlighted={highlightedId === marker.id}
+          setHighlightedId={setHighlightedId}
+          canEdit={false}
+          onNavigate={() => {}}
+          isDraggable={true}
+          dragHandleProps={{ ...attributes, ...listeners }}
+          badgeIndex={badgeIndex}
+        />
+      </div>
+    );
   }
+
+  // Handle building stops
+  const building = buildingDetails[stop.referenceId];
+  if (!building) return null;
 
   const item: CollectionItemWithBuilding = {
     id: "temp-id",
