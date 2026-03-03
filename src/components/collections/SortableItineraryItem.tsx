@@ -11,13 +11,17 @@ interface SortableItineraryItemProps {
   highlightedId: string | null;
   setHighlightedId: (id: string | null) => void;
   badgeIndex: number;
+  canEdit?: boolean;
+  onUpdateNote?: (itemId: string, note: string) => void;
 }
 
 export function SortableItineraryItem({
   stop,
   highlightedId,
   setHighlightedId,
-  badgeIndex
+  badgeIndex,
+  canEdit,
+  onUpdateNote
 }: SortableItineraryItemProps) {
   const buildingDetails = useItineraryStore((state) => state.buildingDetails);
   const markerDetails = useItineraryStore((state) => state.markerDetails);
@@ -63,9 +67,9 @@ export function SortableItineraryItem({
   if (!building) return null;
 
   const item: CollectionItemWithBuilding = {
-    id: "temp-id",
+    id: building.collection_item_id || "temp-id",
     building_id: building.id,
-    note: null,
+    note: building.note || null,
     custom_category_id: null,
     is_hidden: false,
     building: {
@@ -91,8 +95,22 @@ export function SortableItineraryItem({
         item={item}
         isHighlighted={highlightedId === building.id}
         setHighlightedId={setHighlightedId}
-        canEdit={false}
-        onUpdateNote={() => {}}
+        canEdit={!!canEdit}
+        onUpdateNote={(note) => {
+          if (onUpdateNote && building.collection_item_id) {
+            onUpdateNote(building.collection_item_id, note);
+            // Also update the store to immediately reflect locally
+            useItineraryStore.setState((state) => ({
+              buildingDetails: {
+                ...state.buildingDetails,
+                [building.id]: {
+                  ...state.buildingDetails[building.id],
+                  note: note
+                }
+              }
+            }));
+          }
+        }}
         onNavigate={() => {}}
         isDraggable={true}
         dragHandleProps={{ ...attributes, ...listeners }}

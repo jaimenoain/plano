@@ -222,9 +222,11 @@ interface ItineraryDayColumnProps {
   transportMode: string;
   title?: string;
   description?: string;
+  canEdit?: boolean;
+  onUpdateNote?: (itemId: string, note: string) => void;
 }
 
-function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode, title, description }: ItineraryDayColumnProps) {
+function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode, title, description, canEdit, onUpdateNote }: ItineraryDayColumnProps) {
   const { setNodeRef } = useDroppable({
     id: `day-${dayNumber}`,
     data: { dayNumber }
@@ -305,6 +307,8 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                                 highlightedId={highlightedId}
                                 setHighlightedId={setHighlightedId}
                                 badgeIndex={index + 1}
+                                canEdit={canEdit}
+                                onUpdateNote={onUpdateNote}
                             />
                             {index < stops.length - 1 && (
                                 <ItinerarySegment
@@ -366,9 +370,11 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
 interface ItineraryListProps {
     highlightedId: string | null;
     setHighlightedId: (id: string | null) => void;
+    canEdit?: boolean;
+    onUpdateNote?: (itemId: string, note: string) => void;
 }
 
-export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryListProps) {
+export function ItineraryList({ highlightedId, setHighlightedId, canEdit, onUpdateNote }: ItineraryListProps) {
     const days = useItineraryStore((state) => state.days);
     const transportMode = useItineraryStore((state) => state.transportMode);
     const reorderStops = useItineraryStore((state) => state.reorderStops);
@@ -520,9 +526,9 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
 
     // Construct active item for display
     const activeDisplayItem: CollectionItemWithBuilding | null = activeBuilding ? {
-        id: "temp-overlay-id",
+        id: activeBuilding.collection_item_id || "temp-overlay-id",
         building_id: activeBuilding.id,
-        note: null,
+        note: activeBuilding.note || null,
         custom_category_id: null,
         is_hidden: false,
         building: {
@@ -564,6 +570,8 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
                         transportMode={transportMode}
                         title={day.title}
                         description={day.description}
+                        canEdit={canEdit}
+                        onUpdateNote={onUpdateNote}
                     />
                 ))}
             </Accordion>
@@ -575,8 +583,12 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
                             item={activeDisplayItem}
                             isHighlighted={false}
                             setHighlightedId={() => {}}
-                            canEdit={false}
-                            onUpdateNote={() => {}}
+                            canEdit={!!canEdit}
+                            onUpdateNote={(note) => {
+                                if (onUpdateNote && activeDisplayItem.id !== "temp-overlay-id") {
+                                    onUpdateNote(activeDisplayItem.id, note);
+                                }
+                            }}
                             onNavigate={() => {}}
                             isDraggable={true}
                             badgeIndex={0}

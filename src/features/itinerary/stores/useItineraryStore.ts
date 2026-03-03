@@ -18,6 +18,8 @@ export interface ItineraryBuilding {
   slug?: string | null;
   short_id?: number | null;
   community_preview_url?: string | null;
+  collection_item_id?: string;
+  note?: string | null;
 }
 
 export interface DaySchedule {
@@ -89,7 +91,9 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
           year_completed: item.building.year_completed,
           slug: item.building.slug,
           short_id: item.building.short_id,
-          community_preview_url: item.building.community_preview_url
+          community_preview_url: item.building.community_preview_url,
+          collection_item_id: item.id,
+          note: item.note
         };
       }
     });
