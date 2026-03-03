@@ -288,7 +288,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
         )}
 
         {/* Top Left: Satellite Toggle */}
-        <div className="absolute top-2 left-2 flex flex-col gap-2 z-10">
+        <div className="absolute top-2 left-2 flex flex-col gap-2 z-[60]">
           <button
             onClick={(e) => {
                 e.stopPropagation();
@@ -308,7 +308,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
             }}
-            className="absolute top-2 right-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10"
+            className="absolute top-2 right-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-[60]"
             title={isExpanded ? "Collapse Map" : "Expand Map"}
         >
             {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
