@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from "@/integrations/supabase/client";
-import { TransportMode, Itinerary, CollectionItemWithBuilding } from '@/types/collection';
+import { TransportMode, Itinerary, CollectionItemWithBuilding, ItineraryStop, ItineraryDay, CollectionMarker } from '@/types/collection';
 
 // Define ItineraryBuilding interface
 export interface ItineraryBuilding {
@@ -22,7 +22,10 @@ export interface ItineraryBuilding {
 
 export interface DaySchedule {
   dayNumber: number; // 1-based index
-  buildings: ItineraryBuilding[];
+  title?: string;
+  description?: string;
+  stops: ItineraryStop[];
+  defaultTransportMode: TransportMode;
   routeGeometry?: any;
   isFallback?: boolean;
   distance?: number; // meters
@@ -34,11 +37,13 @@ interface ItineraryState {
   days: DaySchedule[];
   isLoading: boolean;
   error: string | null;
+  buildingDetails: Record<string, ItineraryBuilding>;
+  markerDetails: Record<string, CollectionMarker>;
 
   // Actions
-  initializeItinerary: (itinerary: Itinerary | null, availableBuildings: CollectionItemWithBuilding[]) => void;
-  reorderBuildings: (dayIndex: number, newBuildingOrder: ItineraryBuilding[]) => void;
-  moveBuildingToDay: (buildingId: string, fromDayIndex: number, toDayIndex: number, newIndex: number) => void;
+  initializeItinerary: (itinerary: Itinerary | null, availableBuildings: CollectionItemWithBuilding[], availableMarkers?: CollectionMarker[]) => void;
+  reorderStops: (dayIndex: number, newStopOrder: ItineraryStop[]) => void;
+  moveStopToDay: (stopId: string, fromDayIndex: number, toDayIndex: number, newIndex: number) => void;
   setTransportMode: (mode: TransportMode) => void;
   updateRouteGeometry: (dayIndex: number, geometry: any) => void;
   setDaysCount: (count: number) => void;
@@ -51,14 +56,16 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
   days: [],
   isLoading: false,
   error: null,
+  buildingDetails: {},
+  markerDetails: {},
 
-  initializeItinerary: (itinerary, availableBuildings) => {
+  initializeItinerary: (itinerary, availableBuildings, availableMarkers = []) => {
     if (!itinerary) {
-      set({ daysCount: 0, transportMode: 'walking', days: [] });
+      set({ daysCount: 0, transportMode: 'walking', days: [], buildingDetails: {}, markerDetails: {} });
       return;
     }
 
-    const buildingMap = new Map<string, ItineraryBuilding>();
+    const buildingRecord: Record<string, ItineraryBuilding> = {};
     availableBuildings.forEach(item => {
       if (item.building) {
         // Since CollectionItemWithBuilding['building'] doesn't explicitly list 'address' in the type definition file I read,
@@ -66,7 +73,7 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
         // We cast to any to avoid TS errors if the type definition is incomplete,
         // assuming the runtime object might have it.
         const b = item.building as any;
-        buildingMap.set(item.building.id, {
+        buildingRecord[item.building.id] = {
           id: item.building.id,
           name: item.building.name,
           location_lat: item.building.location_lat,
@@ -81,26 +88,25 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
           slug: item.building.slug,
           short_id: item.building.short_id,
           community_preview_url: item.building.community_preview_url
-        });
+        };
       }
+    });
+
+    const markerRecord: Record<string, CollectionMarker> = {};
+    availableMarkers.forEach(marker => {
+      markerRecord[marker.id] = marker;
     });
 
     const days: DaySchedule[] = [];
     // Initialize days array based on itinerary.days count
     for (let i = 1; i <= itinerary.days; i++) {
         const route = itinerary.routes.find(r => r.dayNumber === i);
-        const buildings: ItineraryBuilding[] = [];
-        if (route) {
-            route.buildingIds.forEach(id => {
-                const building = buildingMap.get(id);
-                if (building) {
-                    buildings.push(building);
-                }
-            });
-        }
         days.push({
             dayNumber: i,
-            buildings,
+            title: route?.title,
+            description: route?.description,
+            stops: route?.stops || [],
+            defaultTransportMode: route?.defaultTransportMode || itinerary.defaultTransportMode,
             routeGeometry: route?.routeGeometry,
             isFallback: route?.isFallback
         });
@@ -108,12 +114,14 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
 
     set({
       daysCount: itinerary.days,
-      transportMode: itinerary.transportMode,
-      days
+      transportMode: itinerary.defaultTransportMode,
+      days,
+      buildingDetails: buildingRecord,
+      markerDetails: markerRecord
     });
   },
 
-  reorderBuildings: (dayIndex, newBuildingOrder) => {
+  reorderStops: (dayIndex, newStopOrder) => {
     set((state) => {
       const newDays = [...state.days];
       // Note: dayIndex is 0-based for the array, matching how we'll access it.
@@ -121,26 +129,26 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
       if (newDays[dayIndex]) {
          newDays[dayIndex] = {
             ...newDays[dayIndex],
-            buildings: newBuildingOrder
+            stops: newStopOrder
          };
       }
       return { days: newDays };
     });
   },
 
-  moveBuildingToDay: (buildingId, fromDayIndex, toDayIndex, newIndex) => {
+  moveStopToDay: (stopId, fromDayIndex, toDayIndex, newIndex) => {
       set((state) => {
           const newDays = [...state.days];
 
           // If moving within the same day
           if (fromDayIndex === toDayIndex) {
-              const newFromDay = { ...newDays[fromDayIndex], buildings: [...newDays[fromDayIndex].buildings] };
+              const newFromDay = { ...newDays[fromDayIndex], stops: [...newDays[fromDayIndex].stops] };
 
-              const buildingIndex = newFromDay.buildings.findIndex(b => b.id === buildingId);
-              if (buildingIndex === -1) return state;
+              const stopIndex = newFromDay.stops.findIndex(s => s.id === stopId);
+              if (stopIndex === -1) return state;
 
-              const [building] = newFromDay.buildings.splice(buildingIndex, 1);
-              newFromDay.buildings.splice(newIndex, 0, building);
+              const [stop] = newFromDay.stops.splice(stopIndex, 1);
+              newFromDay.stops.splice(newIndex, 0, stop);
 
               newDays[fromDayIndex] = newFromDay;
               return { days: newDays };
@@ -148,14 +156,14 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
 
           // Moving between days
           // We need to copy both day objects
-          const newFromDay = { ...newDays[fromDayIndex], buildings: [...newDays[fromDayIndex].buildings] };
-          const newToDay = { ...newDays[toDayIndex], buildings: [...newDays[toDayIndex].buildings] };
+          const newFromDay = { ...newDays[fromDayIndex], stops: [...newDays[fromDayIndex].stops] };
+          const newToDay = { ...newDays[toDayIndex], stops: [...newDays[toDayIndex].stops] };
 
-          const buildingIndex = newFromDay.buildings.findIndex(b => b.id === buildingId);
-          if (buildingIndex === -1) return state;
+          const stopIndex = newFromDay.stops.findIndex(s => s.id === stopId);
+          if (stopIndex === -1) return state;
 
-          const [building] = newFromDay.buildings.splice(buildingIndex, 1);
-          newToDay.buildings.splice(newIndex, 0, building);
+          const [stop] = newFromDay.stops.splice(stopIndex, 1);
+          newToDay.stops.splice(newIndex, 0, stop);
 
           newDays[fromDayIndex] = newFromDay;
           newDays[toDayIndex] = newToDay;
@@ -184,7 +192,8 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
           for (let i = state.daysCount + 1; i <= count; i++) {
               newDays.push({
                   dayNumber: i,
-                  buildings: []
+                  stops: [],
+                  defaultTransportMode: state.transportMode || 'walking'
               });
           }
       } else if (count < state.daysCount) {
@@ -199,8 +208,8 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
       const day = state.days[dayIndex];
       if (!day) return;
 
-      // If less than 2 buildings, clear route
-      if (day.buildings.length < 2) {
+      // If less than 2 stops, clear route
+      if (day.stops.length < 2) {
           set((state) => {
               const newDays = [...state.days];
               if (newDays[dayIndex]) {
@@ -211,6 +220,19 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
           return;
       }
 
+      const coordinates = day.stops.map(stop => {
+          if (stop.type === 'building') {
+              const b = state.buildingDetails[stop.referenceId];
+              return b ? { lat: b.location_lat, lng: b.location_lng } : null;
+          } else if (stop.type === 'marker') {
+              const m = state.markerDetails[stop.referenceId];
+              return m ? { lat: m.lat, lng: m.lng } : null;
+          }
+          return null;
+      }).filter((c): c is { lat: number, lng: number } => c !== null);
+
+      if (coordinates.length < 2) return;
+
       // Optimistically set fallback straight-line geometry while loading
       set((state) => {
           const newDays = [...state.days];
@@ -219,7 +241,7 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
                   type: "Feature",
                   geometry: {
                       type: "LineString",
-                      coordinates: newDays[dayIndex].buildings.map(b => [b.location_lng, b.location_lat])
+                      coordinates: coordinates.map(c => [c.lng, c.lat])
                   },
                   properties: {}
               };
@@ -233,16 +255,11 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
           return { days: newDays };
       });
 
-      const coordinates = day.buildings.map(b => ({
-          lat: b.location_lat,
-          lng: b.location_lng
-      }));
-
       try {
           const { data, error } = await supabase.functions.invoke('calculate-route', {
               body: {
                   coordinates,
-                  transportMode: state.transportMode
+                  transportMode: day.defaultTransportMode || state.transportMode
               }
           });
 

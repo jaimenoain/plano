@@ -63,17 +63,19 @@ describe('useItineraryStore', () => {
     it('should initialize itinerary correctly', () => {
         const itinerary = {
             days: 2,
-            transportMode: 'walking' as const,
+            defaultTransportMode: 'walking' as const,
             routes: [
                 {
                     dayNumber: 1,
-                    buildingIds: ['b1'],
+                    stops: [{ id: 'stop1', referenceId: 'b1', type: 'building' as const }],
+                    defaultTransportMode: 'walking' as const,
                     routeGeometry: { type: 'LineString', coordinates: [] },
                     isFallback: false
                 },
                 {
                     dayNumber: 2,
-                    buildingIds: ['b2'],
+                    stops: [{ id: 'stop2', referenceId: 'b2', type: 'building' as const }],
+                    defaultTransportMode: 'walking' as const,
                     routeGeometry: null,
                     isFallback: false
                 }
@@ -87,41 +89,43 @@ describe('useItineraryStore', () => {
         expect(state.transportMode).toBe('walking');
         expect(state.days.length).toBe(2);
         expect(state.days[0].dayNumber).toBe(1);
-        expect(state.days[0].buildings[0].id).toBe('b1');
-        expect(state.days[1].buildings[0].id).toBe('b2');
+        expect(state.days[0].stops[0].referenceId).toBe('b1');
+        expect(state.days[1].stops[0].referenceId).toBe('b2');
     });
 
-    it('should handle optimistic reordering of buildings', () => {
+    it('should handle optimistic reordering of stops', () => {
         // Setup initial state
         useItineraryStore.setState({
             days: [{
                 dayNumber: 1,
-                buildings: [
-                    { id: 'b1', name: 'B1', location_lat: 0, location_lng: 0, address: null },
-                    { id: 'b2', name: 'B2', location_lat: 0, location_lng: 0, address: null }
+                stops: [
+                    { id: 'stop1', referenceId: 'b1', type: 'building' as const },
+                    { id: 'stop2', referenceId: 'b2', type: 'building' as const }
                 ],
+                defaultTransportMode: 'walking',
                 routeGeometry: null,
                 isFallback: false
             }]
         });
 
         const newOrder = [
-             { id: 'b2', name: 'B2', location_lat: 0, location_lng: 0, address: null },
-             { id: 'b1', name: 'B1', location_lat: 0, location_lng: 0, address: null }
+             { id: 'stop2', referenceId: 'b2', type: 'building' as const },
+             { id: 'stop1', referenceId: 'b1', type: 'building' as const }
         ];
 
-        useItineraryStore.getState().reorderBuildings(0, newOrder);
+        useItineraryStore.getState().reorderStops(0, newOrder);
 
         const state = useItineraryStore.getState();
-        expect(state.days[0].buildings[0].id).toBe('b2');
-        expect(state.days[0].buildings[1].id).toBe('b1');
+        expect(state.days[0].stops[0].id).toBe('stop2');
+        expect(state.days[0].stops[1].id).toBe('stop1');
     });
 
     it('should update route geometry', () => {
          useItineraryStore.setState({
             days: [{
                 dayNumber: 1,
-                buildings: [],
+                stops: [],
+                defaultTransportMode: 'walking',
                 routeGeometry: null,
                 isFallback: false
             }]
