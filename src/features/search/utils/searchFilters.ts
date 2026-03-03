@@ -25,6 +25,7 @@ export interface FilterCriteria {
   accessLevels?: string[];
   accessLogistics?: string[];
   accessCosts?: string[];
+  constructionStatuses?: string[];
   userCollectionMap?: Record<string, Set<string>>;
   userRatings?: Record<string, number>;
 }
@@ -128,6 +129,18 @@ export function filterLocalBuildings(
         if (!b.access_cost || !filters.accessCosts.includes(b.access_cost)) {
             return false;
         }
+    }
+
+    // Construction Status
+    if (filters.constructionStatuses && filters.constructionStatuses.length > 0) {
+      if (!b.status || !filters.constructionStatuses.includes(b.status)) {
+        return false;
+      }
+    } else {
+      // Default exclusion if no filter provided (match backend default)
+      if (b.status === 'Demolished' || b.status === 'Under Construction' || b.status === 'Unbuilt') {
+        return false;
+      }
     }
 
     return true;
