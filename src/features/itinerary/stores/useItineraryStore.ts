@@ -48,6 +48,8 @@ interface ItineraryState {
   updateRouteGeometry: (dayIndex: number, geometry: any) => void;
   setDaysCount: (count: number) => void;
   calculateRouteForDay: (dayIndex: number) => Promise<void>;
+  updateDayContext: (dayIndex: number, context: { title?: string; description?: string }) => void;
+  updateSegmentTransit: (dayIndex: number, stopId: string, transitData: ItineraryStop['transitToNext']) => void;
 }
 
 export const useItineraryStore = create<ItineraryState>((set, get) => ({
@@ -173,6 +175,40 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
   },
 
   setTransportMode: (mode) => set({ transportMode: mode }),
+
+  updateSegmentTransit: (dayIndex, stopId, transitData) => {
+    set((state) => {
+      const newDays = [...state.days];
+      if (newDays[dayIndex]) {
+        const newStops = [...newDays[dayIndex].stops];
+        const stopIndex = newStops.findIndex(s => s.id === stopId);
+        if (stopIndex !== -1) {
+          newStops[stopIndex] = {
+            ...newStops[stopIndex],
+            transitToNext: transitData
+          };
+          newDays[dayIndex] = {
+            ...newDays[dayIndex],
+            stops: newStops
+          };
+        }
+      }
+      return { days: newDays };
+    });
+  },
+
+  updateDayContext: (dayIndex, context) => {
+    set((state) => {
+      const newDays = [...state.days];
+      if (newDays[dayIndex]) {
+        newDays[dayIndex] = {
+          ...newDays[dayIndex],
+          ...context
+        };
+      }
+      return { days: newDays };
+    });
+  },
 
   updateRouteGeometry: (dayIndex, geometry) => {
     set((state) => {

@@ -120,6 +120,54 @@ describe('useItineraryStore', () => {
         expect(state.days[0].stops[1].id).toBe('stop1');
     });
 
+    it('should update day context (title and description)', () => {
+         useItineraryStore.setState({
+            days: [{
+                dayNumber: 1,
+                title: 'Old Title',
+                description: 'Old Description',
+                stops: [],
+                defaultTransportMode: 'walking',
+                routeGeometry: null,
+                isFallback: false
+            }]
+        });
+
+        useItineraryStore.getState().updateDayContext(0, { title: 'New Title', description: 'New Description' });
+
+        const state = useItineraryStore.getState();
+        expect(state.days[0].title).toBe('New Title');
+        expect(state.days[0].description).toBe('New Description');
+    });
+
+    it('should update segment transit for a specific stop', () => {
+         useItineraryStore.setState({
+            days: [{
+                dayNumber: 1,
+                stops: [
+                    { id: 'stop1', referenceId: 'b1', type: 'building' as const },
+                    { id: 'stop2', referenceId: 'b2', type: 'building' as const }
+                ],
+                defaultTransportMode: 'walking',
+                routeGeometry: null,
+                isFallback: false
+            }]
+        });
+
+        const transitData = {
+            mode: 'transit' as const,
+            customInstructions: 'Take the blue line',
+            estimatedMinutes: 15
+        };
+
+        useItineraryStore.getState().updateSegmentTransit(0, 'stop1', transitData);
+
+        const state = useItineraryStore.getState();
+        expect(state.days[0].stops[0].transitToNext).toEqual(transitData);
+        // Ensure other stops are unaffected
+        expect(state.days[0].stops[1].transitToNext).toBeUndefined();
+    });
+
     it('should update route geometry', () => {
          useItineraryStore.setState({
             days: [{
