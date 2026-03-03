@@ -102,12 +102,24 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
     const days: DaySchedule[] = [];
     // Initialize days array based on itinerary.days count
     for (let i = 1; i <= itinerary.days; i++) {
-        const route = itinerary.routes.find(r => r.dayNumber === i);
+        const route = itinerary.routes.find(r => r.dayNumber === i) as any;
+
+        let stops: ItineraryStop[] = [];
+        if (route?.stops) {
+          stops = route.stops;
+        } else if (route?.buildingIds) {
+          stops = route.buildingIds.map((buildingId: string) => ({
+            id: crypto.randomUUID(),
+            referenceId: buildingId,
+            type: 'building' as const
+          }));
+        }
+
         days.push({
             dayNumber: i,
             title: route?.title,
             description: route?.description,
-            stops: route?.stops || [],
+            stops: stops,
             defaultTransportMode: route?.defaultTransportMode || itinerary.defaultTransportMode,
             routeGeometry: route?.routeGeometry,
             isFallback: route?.isFallback
