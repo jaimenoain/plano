@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, Plus, Pencil } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
@@ -30,6 +30,10 @@ import { CollectionItemWithBuilding } from "@/types/collection";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 // --- Helper Components ---
 
@@ -119,23 +123,58 @@ interface ItineraryDayColumnProps {
   setHighlightedId: (id: string | null) => void;
   distance?: number;
   transportMode: string;
+  title?: string;
+  description?: string;
 }
 
-function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode }: ItineraryDayColumnProps) {
+function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode, title, description }: ItineraryDayColumnProps) {
   const { setNodeRef } = useDroppable({
     id: `day-${dayNumber}`,
     data: { dayNumber }
   });
 
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(title || "");
+  const [editedDescription, setEditedDescription] = useState(description || "");
+  const updateDayContext = useItineraryStore(state => state.updateDayContext);
+
+  const handleOpenEditDialog = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditedTitle(title || "");
+    setEditedDescription(description || "");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveContext = () => {
+    updateDayContext(dayNumber - 1, {
+      title: editedTitle.trim() || undefined,
+      description: editedDescription.trim() || undefined
+    });
+    setIsEditDialogOpen(false);
+  };
+
   return (
-    <AccordionItem value={`day-${dayNumber}`} className="border-b-0 mb-4 bg-muted/30 rounded-lg overflow-hidden border">
+    <AccordionItem value={`day-${dayNumber}`} className="border-b-0 mb-4 bg-muted/30 rounded-lg overflow-hidden border relative group">
+        <div className="absolute top-2 right-4 z-10">
+            <Button
+                variant="ghost"
+                size="sm"
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 bg-muted/50 hover:bg-muted/80"
+                onClick={handleOpenEditDialog}
+            >
+                <Pencil className="h-4 w-4 text-muted-foreground" />
+                <span className="sr-only">Edit Day</span>
+            </Button>
+        </div>
         <AccordionTrigger className="px-4 py-2 hover:no-underline bg-muted/50 hover:bg-muted/80 transition-colors">
-            <div className="flex flex-col w-full items-start text-left">
-                <div className="flex items-center w-full">
-                    <span className="font-semibold">Day {dayNumber}</span>
-                    <span className="text-xs text-muted-foreground ml-2 font-normal">
-                        {stops.length} stop{stops.length !== 1 ? 's' : ''}
-                    </span>
+            <div className="flex flex-col w-full items-start text-left pr-10">
+                <div className="flex items-center w-full justify-between">
+                    <div className="flex items-center">
+                        <span className="font-semibold">Day {dayNumber}{title ? `: ${title}` : ''}</span>
+                        <span className="text-xs text-muted-foreground ml-2 font-normal">
+                            {stops.length} stop{stops.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
                 </div>
                 {transportMode === 'walking' && distance && distance > 15000 && (
                     <div className="text-amber-600 text-xs flex items-center font-normal mt-1">
@@ -146,6 +185,11 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
             </div>
         </AccordionTrigger>
         <AccordionContent className="p-0">
+             {description && (
+                <div className="px-4 py-3 bg-muted/20 border-b text-sm text-muted-foreground">
+                    {description}
+                </div>
+             )}
              <div ref={setNodeRef} className="p-2 min-h-[50px] space-y-2">
                 <SortableContext
                     items={stops.map(s => s.id)}
@@ -172,6 +216,41 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                 )}
              </div>
         </AccordionContent>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Day {dayNumber}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor={`day-title-${dayNumber}`}>Title</Label>
+                <Input
+                  id={`day-title-${dayNumber}`}
+                  placeholder="e.g., Historic Center & Local Markets"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`day-description-${dayNumber}`}>Description</Label>
+                <Textarea
+                  id={`day-description-${dayNumber}`}
+                  placeholder="Add some context or advice for this day..."
+                  className="min-h-[100px]"
+                  value={editedDescription}
+                  onChange={(e) => setEditedDescription(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveContext}>Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </AccordionItem>
   );
 }
@@ -377,6 +456,8 @@ export function ItineraryList({ highlightedId, setHighlightedId }: ItineraryList
                         setHighlightedId={setHighlightedId}
                         distance={day.distance}
                         transportMode={transportMode}
+                        title={day.title}
+                        description={day.description}
                     />
                 ))}
             </Accordion>
