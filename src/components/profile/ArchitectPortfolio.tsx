@@ -1,6 +1,7 @@
 import { useArchitectPortfolio } from "@/hooks/useArchitectPortfolio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SmartBuildingCard, SmartBuilding } from "@/components/groups/watchlist/SmartBuildingCard";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface ArchitectPortfolioProps {
   architectId: string;
@@ -30,7 +31,7 @@ export function ArchitectPortfolio({ architectId }: ArchitectPortfolioProps) {
             const mappedBuilding: SmartBuilding = {
               id: building.id,
               name: building.name,
-              main_image_url: building.building_images?.[0]?.storage_path || null,
+              main_image_url: getBuildingImageUrl(building.building_images?.[0]?.storage_path) || "/placeholder.svg",
               year_completed: null,
               architects: null,
               overlap_count: 0,
