@@ -191,7 +191,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     {/* Note Section */}
                     <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                         {canEdit ? (
-                            isEditingNote || noteValue ? (
+                            isEditingNote ? (
                                 <div className="relative group/note">
                                     <Textarea
                                         ref={textareaRef}
@@ -199,18 +199,19 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                         value={noteValue}
                                         onChange={(e) => setNoteValue(e.target.value)}
                                         onBlur={handleNoteBlur}
-                                        onFocus={() => setIsEditingNote(true)}
-                                        className={cn(
-                                            "resize-none text-xs min-h-[40px] bg-secondary/30 border-transparent focus:border-input focus:bg-background transition-colors p-2",
-                                            !isEditingNote && "hover:bg-secondary/50 cursor-text truncate"
-                                        )}
-                                        rows={isEditingNote ? 3 : 1}
+                                        className="resize-none text-xs min-h-[40px] bg-secondary/30 border-transparent focus:border-input focus:bg-background transition-colors p-2"
+                                        rows={3}
                                     />
-                                     {isEditingNote && (
-                                        <div className="absolute bottom-1 right-1 opacity-50 pointer-events-none">
-                                            <Save className="h-3 w-3" />
-                                        </div>
-                                     )}
+                                    <div className="absolute bottom-1 right-1 opacity-50 pointer-events-none">
+                                        <Save className="h-3 w-3" />
+                                    </div>
+                                </div>
+                            ) : noteValue ? (
+                                <div
+                                    className="text-xs text-muted-foreground italic bg-secondary/30 p-2 rounded line-clamp-3 cursor-text hover:bg-secondary/50 transition-colors"
+                                    onClick={() => setIsEditingNote(true)}
+                                >
+                                    "{noteValue}"
                                 </div>
                             ) : (
                                <button
