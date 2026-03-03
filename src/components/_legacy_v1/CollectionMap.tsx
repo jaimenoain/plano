@@ -18,6 +18,7 @@ import { ItineraryList } from "@/components/collections/ItineraryList";
 import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
 
 import { DiscoveryBuilding } from "@/features/search/components/types";
+import { Itinerary } from "@/types/collection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -680,6 +681,28 @@ export default function CollectionMap() {
     }
   };
 
+  const handleUpdateItinerary = async (newItinerary: Itinerary) => {
+      if (!collection?.id) return;
+
+      const { error } = await supabase
+          .from("collections")
+          .update({ itinerary: newItinerary as any })
+          .eq("id", collection.id);
+
+      if (error) {
+          toast({
+              title: "Error",
+              description: "Failed to save itinerary changes.",
+              variant: "destructive"
+          });
+      } else {
+          // No toast for quiet saves
+          // We don't refetch the whole collection to avoid resetting the store unexpectedly,
+          // but we might want to invalidate queries eventually.
+          queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
+      }
+  };
+
   const handleRemoveItem = (buildingId: string) => {
     const item = items?.find(i => i.building.id === buildingId);
     if (item) {
@@ -982,6 +1005,7 @@ export default function CollectionMap() {
                                 <ItineraryList
                                     highlightedId={highlightedId}
                                     setHighlightedId={setHighlightedId}
+                                    onUpdateItinerary={canEdit ? handleUpdateItinerary : undefined}
                                 />
                                 {!collection.itinerary && (
                                     <div className="text-center py-8 text-muted-foreground">

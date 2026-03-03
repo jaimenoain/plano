@@ -287,7 +287,7 @@ const handleModeChange = (newMode: string) => {
     if (currentMaterials.length > 0) count++;
     if (currentContexts.length > 0) count++;
     if (currentStyles.length > 0) count++;
-    if (constructionStatuses.length > 0) count++;
+    if (constructionStatuses?.length > 0) count++;
 
     if (mode === 'discover') {
       if (currentMinRating > 0) count++;
@@ -607,7 +607,7 @@ const handleModeChange = (newMode: string) => {
                                 { id: 'Under Construction', name: 'Under Construction' },
                                 { id: 'Unbuilt', name: 'Unbuilt' },
                             ]}
-                            selectedIds={constructionStatuses}
+                            selectedIds={constructionStatuses || []}
                             onChange={handleConstructionStatusesChange}
                             className="h-[150px]"
                         />
