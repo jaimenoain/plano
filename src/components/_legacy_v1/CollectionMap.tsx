@@ -267,11 +267,11 @@ export default function CollectionMap() {
 
   useEffect(() => {
       if (collection && items) {
-          initializeItinerary(collection.itinerary, items);
+          initializeItinerary(collection.itinerary, items, markers);
           // If itinerary exists, maybe default to itinerary tab?
           // For now, let's keep it manual or based on URL logic (not implemented)
       }
-  }, [collection, items, initializeItinerary]);
+  }, [collection, items, markers, initializeItinerary]);
 
   const existingBuildingIds = useMemo(() => {
     return new Set(items.map(item => item.building.id) || []);

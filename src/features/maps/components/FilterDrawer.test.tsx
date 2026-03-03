@@ -119,6 +119,8 @@ describe('FilterDrawer', () => {
     setSelectedContacts: vi.fn(),
     mode: 'discover',
     setMode: vi.fn(),
+    constructionStatuses: [],
+    setConstructionStatuses: vi.fn(),
   };
 
   beforeEach(() => {
