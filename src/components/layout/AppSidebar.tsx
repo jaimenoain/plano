@@ -143,6 +143,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar
+      variant="inset"
       collapsible="icon"
       preventShift={true}
       className="border-r border-border bg-sidebar"
