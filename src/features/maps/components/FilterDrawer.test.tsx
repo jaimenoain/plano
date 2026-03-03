@@ -117,8 +117,12 @@ describe('FilterDrawer', () => {
     setSelectedAttributes: vi.fn(),
     selectedContacts: [],
     setSelectedContacts: vi.fn(),
+    constructionStatuses: [],
+    setConstructionStatuses: vi.fn(),
     mode: 'discover',
     setMode: vi.fn(),
+    constructionStatuses: [],
+    setConstructionStatuses: vi.fn(),
   };
 
   beforeEach(() => {
