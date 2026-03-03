@@ -11,6 +11,7 @@ export interface UserProfile {
   location: string | null;
   subscribed_platforms: string[] | null;
   role: string | null;
+  verified_architect_id?: string | null;
 }
 
 export function useUserProfile() {
@@ -29,7 +30,7 @@ export function useUserProfile() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role")
+          .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role, verified_architect_id")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -51,7 +52,7 @@ export function useUserProfile() {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role")
+      .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role, verified_architect_id")
       .eq("id", user.id)
       .maybeSingle();
     if (data) {
