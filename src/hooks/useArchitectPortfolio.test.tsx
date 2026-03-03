@@ -40,20 +40,24 @@ describe("useArchitectPortfolio", () => {
   it("should fetch and format buildings correctly", async () => {
     const mockData = [
       {
-        id: "b1",
-        name: "Building 1",
-        city: "New York",
-        country: "USA",
-        building_images: [
-          { id: "img1", storage_path: "path/to/img1.jpg" },
-        ],
+        building: {
+          id: "b1",
+          name: "Building 1",
+          city: "New York",
+          country: "USA",
+          building_images: [
+            { id: "img1", storage_path: "path/to/img1.jpg" },
+          ],
+        }
       },
       {
-        id: "b2",
-        name: "Building 2",
-        city: "London",
-        country: "UK",
-        building_images: null, // Test handling null images
+        building: {
+          id: "b2",
+          name: "Building 2",
+          city: "London",
+          country: "UK",
+          building_images: null, // Test handling null images
+        }
       },
     ];
 
@@ -73,10 +77,9 @@ describe("useArchitectPortfolio", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(supabase.from).toHaveBeenCalledWith("buildings");
-    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining("building_images("));
-    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining("building_architects!inner(architect_id)"));
-    expect(mockEq).toHaveBeenCalledWith("building_architects.architect_id", "arch-123");
+    expect(supabase.from).toHaveBeenCalledWith("building_architects");
+    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining("building:buildings ("));
+    expect(mockEq).toHaveBeenCalledWith("architect_id", "arch-123");
 
     expect(result.current.buildings).toHaveLength(2);
     expect(result.current.buildings[0]).toEqual({
@@ -113,8 +116,8 @@ describe("useArchitectPortfolio", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(supabase.from).toHaveBeenCalledWith("buildings");
-    expect(mockEq).toHaveBeenCalledWith("building_architects.architect_id", "arch-123");
+    expect(supabase.from).toHaveBeenCalledWith("building_architects");
+    expect(mockEq).toHaveBeenCalledWith("architect_id", "arch-123");
     expect(result.current.buildings).toEqual([]);
     expect(result.current.error).toBeNull();
   });
