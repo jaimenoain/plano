@@ -75,9 +75,10 @@ function CollectionMapGLContent({
 
     const map = new Map<string, { dayIndex: number; sequence: number }>();
     days.forEach((day, dayIndex) => {
-        day.buildings.forEach((building, index) => {
-            if (!map.has(building.id)) {
-                map.set(building.id, {
+        day.stops?.forEach((stop, index) => {
+            const key = stop.referenceId || stop.id;
+            if (!map.has(key)) {
+                map.set(key, {
                     dayIndex: dayIndex,
                     sequence: index + 1
                 });

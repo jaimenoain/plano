@@ -136,8 +136,9 @@ vi.mock('@/features/itinerary/stores/useItineraryStore', () => ({
     days: [
         {
             dayNumber: 1,
-            buildings: [
-                { id: '1', name: 'Building 1', location_lat: 40.7, location_lng: -74.0 }
+            stops: [
+                { id: 'stop1', referenceId: '1', type: 'building' },
+                { id: 'custom-marker-1', referenceId: undefined, type: 'marker' }
             ]
         }
     ]
