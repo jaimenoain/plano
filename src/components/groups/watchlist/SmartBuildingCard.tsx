@@ -31,9 +31,10 @@ export interface SmartBuilding {
 interface SmartBuildingCardProps {
   building: SmartBuilding;
   groupId: string;
+  hideBucketListButton?: boolean;
 }
 
-export function SmartBuildingCard({ building, groupId }: SmartBuildingCardProps) {
+export function SmartBuildingCard({ building, groupId, hideBucketListButton }: SmartBuildingCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -149,30 +150,32 @@ export function SmartBuildingCard({ building, groupId }: SmartBuildingCardProps)
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover:opacity-40" />
 
         {/* Watchlist Button */}
-        <div className="absolute top-2 right-2 z-10">
-          <Button
-            size="icon"
-            variant={isInWatchlist ? "secondary" : "default"}
-            className={`h-8 w-8 rounded-full shadow-lg transition-all ${
-              isInWatchlist
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                : "bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm"
-            }`}
-            onClick={handleToggleWatchlist}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isInWatchlist ? (
-              <Clock className="h-4 w-4" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            <span className="sr-only">
-              {isInWatchlist ? "Remove from bucket list" : "Add to bucket list"}
-            </span>
-          </Button>
-        </div>
+        {!hideBucketListButton && (
+          <div className="absolute top-2 right-2 z-10">
+            <Button
+              size="icon"
+              variant={isInWatchlist ? "secondary" : "default"}
+              className={`h-8 w-8 rounded-full shadow-lg transition-all ${
+                isInWatchlist
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm"
+              }`}
+              onClick={handleToggleWatchlist}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isInWatchlist ? (
+                <Clock className="h-4 w-4" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              <span className="sr-only">
+                {isInWatchlist ? "Remove from bucket list" : "Add to bucket list"}
+              </span>
+            </Button>
+          </div>
+        )}
 
         {/* Quick info on bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
@@ -208,27 +211,29 @@ export function SmartBuildingCard({ building, groupId }: SmartBuildingCardProps)
         </div>
 
         {/* Pipeline Button */}
-        <Button
-           size="sm"
-           variant={building.is_in_pipeline ? "ghost" : "outline"}
-           className={`h-7 px-2 text-xs ${building.is_in_pipeline ? "text-muted-foreground" : "gap-1.5"}`}
-           onClick={handleAddToPipeline}
-           disabled={building.is_in_pipeline || isAddingToPipeline}
-        >
-           {isAddingToPipeline ? (
-               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-           ) : building.is_in_pipeline ? (
-               <>
-                 <Check className="h-3.5 w-3.5" />
-                 In Pipeline
-               </>
-           ) : (
-               <>
-                 <ListPlus className="h-3.5 w-3.5" />
-                 Add
-               </>
-           )}
-        </Button>
+        {groupId && (
+          <Button
+             size="sm"
+             variant={building.is_in_pipeline ? "ghost" : "outline"}
+             className={`h-7 px-2 text-xs ${building.is_in_pipeline ? "text-muted-foreground" : "gap-1.5"}`}
+             onClick={handleAddToPipeline}
+             disabled={building.is_in_pipeline || isAddingToPipeline}
+          >
+             {isAddingToPipeline ? (
+                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
+             ) : building.is_in_pipeline ? (
+                 <>
+                   <Check className="h-3.5 w-3.5" />
+                   In Pipeline
+                 </>
+             ) : (
+                 <>
+                   <ListPlus className="h-3.5 w-3.5" />
+                   Add
+                 </>
+             )}
+          </Button>
+        )}
       </div>
     </div>
   );

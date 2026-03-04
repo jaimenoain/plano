@@ -825,7 +825,7 @@ export default function Profile() {
         {(() => {
           return verifiedArchitectId ? (
             <div className="max-w-7xl mx-auto px-4 mt-8 mb-8">
-              <ArchitectPortfolio architectId={verifiedArchitectId} />
+              <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
             </div>
           ) : null;
         })()}
