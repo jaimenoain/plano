@@ -40,24 +40,20 @@ describe("useArchitectPortfolio", () => {
   it("should fetch and format buildings correctly", async () => {
     const mockData = [
       {
-        building: {
-          id: "b1",
-          name: "Building 1",
-          city: "New York",
-          country: "USA",
-          building_images: [
-            { id: "img1", storage_path: "path/to/img1.jpg" },
-          ],
-        }
+        id: "b1",
+        name: "Building 1",
+        city: "New York",
+        country: "USA",
+        hero_image_url: "http://example.com/img1.jpg",
+        community_preview_url: null,
       },
       {
-        building: {
-          id: "b2",
-          name: "Building 2",
-          city: "London",
-          country: "UK",
-          building_images: null, // Test handling null images
-        }
+        id: "b2",
+        name: "Building 2",
+        city: "London",
+        country: "UK",
+        hero_image_url: null,
+        community_preview_url: "path/to/img2.jpg",
       },
     ];
 
@@ -77,9 +73,9 @@ describe("useArchitectPortfolio", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(supabase.from).toHaveBeenCalledWith("building_architects");
-    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining("building:buildings ("));
-    expect(mockEq).toHaveBeenCalledWith("architect_id", "arch-123");
+    expect(supabase.from).toHaveBeenCalledWith("buildings");
+    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining("hero_image_url"));
+    expect(mockEq).toHaveBeenCalledWith("building_architects.architect_id", "arch-123");
 
     expect(result.current.buildings).toHaveLength(2);
     expect(result.current.buildings[0]).toEqual({
@@ -87,14 +83,16 @@ describe("useArchitectPortfolio", () => {
       name: "Building 1",
       city: "New York",
       country: "USA",
-      building_images: [{ id: "img1", storage_path: "path/to/img1.jpg" }],
+      hero_image_url: "http://example.com/img1.jpg",
+      community_preview_url: null,
     });
     expect(result.current.buildings[1]).toEqual({
       id: "b2",
       name: "Building 2",
       city: "London",
       country: "UK",
-      building_images: null,
+      hero_image_url: null,
+      community_preview_url: "path/to/img2.jpg",
     });
     expect(result.current.error).toBeNull();
   });
@@ -116,8 +114,8 @@ describe("useArchitectPortfolio", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(supabase.from).toHaveBeenCalledWith("building_architects");
-    expect(mockEq).toHaveBeenCalledWith("architect_id", "arch-123");
+    expect(supabase.from).toHaveBeenCalledWith("buildings");
+    expect(mockEq).toHaveBeenCalledWith("building_architects.architect_id", "arch-123");
     expect(result.current.buildings).toEqual([]);
     expect(result.current.error).toBeNull();
   });

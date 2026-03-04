@@ -223,12 +223,6 @@ export default function Profile() {
   const { profile: currentUserProfile } = useUserProfile();
   const verifiedArchitectId = isOwnProfile ? currentUserProfile?.verified_architect_id : profile?.verified_architect_id;
 
-  // DEBUG LOGGING
-  useEffect(() => {
-    console.log("DEBUG: Entire profile object from useUserProfile:", currentUserProfile);
-    console.log("DEBUG: verifiedArchitectId from profile:", currentUserProfile?.verified_architect_id);
-  }, [currentUserProfile]);
-
   // --- Handlers for URL State ---
 
   const handleFilterChange = (value: string) => {
@@ -802,11 +796,6 @@ export default function Profile() {
           image={avatarUrl}
         />
 
-        {/* DEBUG VISUAL ELEMENT */}
-        <div className="bg-yellow-200 text-black p-2 text-center font-mono text-sm border-b border-yellow-400">
-          DEBUG: verifiedArchitectId is {verifiedArchitectId === null ? "null" : verifiedArchitectId === undefined ? "undefined" : `defined (${verifiedArchitectId})`}
-        </div>
-
         {/* 1. Header & User Card */}
         <UserCard
           profile={profile}
@@ -834,7 +823,6 @@ export default function Profile() {
 
         {/* Architect Portfolio (Only visible if user is a verified architect) */}
         {(() => {
-          console.log("DEBUG: Should render portfolio?", !!verifiedArchitectId);
           return verifiedArchitectId ? (
             <div className="max-w-7xl mx-auto px-4 mt-8 mb-8">
               <ArchitectPortfolio architectId={verifiedArchitectId} />

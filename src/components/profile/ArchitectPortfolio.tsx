@@ -28,10 +28,21 @@ export function ArchitectPortfolio({ architectId }: ArchitectPortfolioProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {buildings.map((building) => {
             // Map PortfolioBuilding to SmartBuilding expected format for a premium visual grid
+            let main_image_url = null;
+            const selectedImage = building.hero_image_url || building.community_preview_url;
+
+            if (selectedImage) {
+              if (selectedImage.startsWith('http')) {
+                main_image_url = selectedImage;
+              } else {
+                main_image_url = getBuildingImageUrl(selectedImage);
+              }
+            }
+
             const mappedBuilding: SmartBuilding = {
               id: building.id,
               name: building.name,
-              main_image_url: building.building_images?.[0]?.storage_path ? getBuildingImageUrl(building.building_images[0].storage_path) : null,
+              main_image_url,
               year_completed: null,
               architects: null,
               overlap_count: 0,
