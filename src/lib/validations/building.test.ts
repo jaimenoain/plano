@@ -84,4 +84,14 @@ describe('buildingSchema', () => {
         });
         expect(result.success).toBe(true);
     });
+
+    it('accepts Lost for status field', async () => {
+        const result = await buildingSchema.safeParseAsync({ ...validBaseData, status: 'Lost' });
+        expect(result.success).toBe(true);
+    });
+
+    it('rejects Demolished for status field', async () => {
+        const result = await buildingSchema.safeParseAsync({ ...validBaseData, status: 'Demolished' });
+        expect(result.success).toBe(false);
+    });
 });
