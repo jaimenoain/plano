@@ -1,9 +1,11 @@
 -- Add 'Lost' to building_status enum
--- ALTER TYPE ... ADD VALUE cannot be executed inside a transaction block in older postgres versions
--- but Supabase migrations run them.
+-- The error "unsafe use of new value 'Lost' of enum type building_status" means we cannot use the new enum value
+-- in the same transaction block as where it was created, if it wasn't committed first.
+-- In postgres we can either issue a COMMIT before we use it.
+COMMIT;
 ALTER TYPE public.building_status ADD VALUE IF NOT EXISTS 'Lost';
+COMMIT;
 
--- Migrate existing Demolished records to Lost
 UPDATE public.buildings SET status = 'Lost' WHERE status = 'Demolished';
 
 CREATE OR REPLACE FUNCTION get_map_clusters(
