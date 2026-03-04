@@ -142,7 +142,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      preventShift={true}
+      preventShift={false}
       className="border-r border-border bg-sidebar"
       {...sidebarProps}
     >
