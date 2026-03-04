@@ -38,6 +38,7 @@ END;
 $$;
 
 -- Create the new trigger with the requested name
+DROP TRIGGER IF EXISTS on_architect_claim_verified ON public.architect_claims;
 CREATE TRIGGER on_architect_claim_verified
 AFTER INSERT OR UPDATE OR DELETE ON public.architect_claims
 FOR EACH ROW
