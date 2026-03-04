@@ -139,8 +139,6 @@ export function AppSidebar() {
       }
     : {};
 
-  if (!user) return null;
-
   return (
     <Sidebar
       collapsible="icon"
