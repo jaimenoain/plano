@@ -1659,6 +1659,7 @@ export interface Database {
       access_level: "public" | "private" | "restricted" | "commercial"
       access_logistics: "walk-in" | "booking_required" | "tour_only" | "exterior_only"
       access_cost: "free" | "paid" | "customers_only"
+      building_status: "Built" | "Under Construction" | "Unbuilt" | "Lost" | "Temporary"
       location_precision: "exact" | "approximate"
     }
     CompositeTypes: {

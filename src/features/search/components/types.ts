@@ -52,7 +52,7 @@ export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
   contact_raters?: ContactRater[];
   contact_visitors?: ContactRater[];
   visitors?: ContactRater[]; // From RPC
-  status?: 'Built' | 'Under Construction' | 'Unbuilt' | 'Lost' | 'Demolished' | 'Temporary' | null;
+  status?: 'Built' | 'Under Construction' | 'Unbuilt' | 'Lost' | 'Temporary' | null;
   markerCategory?: CollectionMarkerCategory;
   notes?: string | null;
   address?: string | null;

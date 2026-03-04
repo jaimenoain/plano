@@ -37,7 +37,7 @@ describe('DiscoveryBuildingCard Overflow', () => {
     country: 'A very very very very long country name',
     location_lat: 0,
     location_lng: 0,
-    status: 'Demolished'
+    status: 'Lost'
   };
 
   it('applies min-w-0 to the content container', () => {
@@ -90,8 +90,8 @@ describe('DiscoveryBuildingCard Overflow', () => {
     expect(visitedBadge?.className).toContain('max-w-full');
     expect(visitedBadge?.className).toContain('truncate');
 
-    // 'Demolished' badge comes from building status
-    const statusText = screen.getByText('Demolished');
+    // 'Lost' badge comes from building status
+    const statusText = screen.getByText('Lost');
     const statusBadge = statusText.closest('div[class*="rounded-full"]');
 
     expect(statusBadge).not.toBeNull();
