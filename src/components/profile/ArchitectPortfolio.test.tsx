@@ -90,7 +90,7 @@ describe("ArchitectPortfolio", () => {
     );
 
     expect(screen.getByText("Portfolio")).toBeInTheDocument();
-    expect(screen.getByText("No buildings added to portfolio yet.")).toBeInTheDocument();
+    expect(screen.getByText("System recognizes you as a verified architect, but no buildings were found in your portfolio.")).toBeInTheDocument();
   });
 
   it("renders buildings in the populated state", () => {
@@ -111,7 +111,7 @@ describe("ArchitectPortfolio", () => {
     expect(screen.getByText("Portfolio")).toBeInTheDocument();
     expect(screen.getByText("Test Building 1")).toBeInTheDocument();
     expect(screen.getByText("Test Building 2")).toBeInTheDocument();
-    expect(screen.queryByText("No buildings added to portfolio yet.")).not.toBeInTheDocument();
+    expect(screen.queryByText("System recognizes you as a verified architect, but no buildings were found in your portfolio.")).not.toBeInTheDocument();
   });
 
   it("does not crash when architectId is missing, though typescript should prevent this", () => {
