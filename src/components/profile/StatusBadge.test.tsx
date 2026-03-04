@@ -31,6 +31,15 @@ describe('StatusBadge', () => {
 
   it('renders "Lost" when status is lost', () => {
     render(<StatusBadge status="lost" isOwnProfile={false} onClick={vi.fn()} />);
-    expect(screen.getByText('Lost')).toBeInTheDocument();
+    const badgeText = screen.getByText('Lost');
+    expect(badgeText).toBeInTheDocument();
+
+    // The styling is on the parent button
+    const button = badgeText.closest('button');
+    expect(button).not.toBeNull();
+
+    // Check for the appropriate styling defined in the component
+    expect(button?.className).toContain('bg-slate-100');
+    expect(button?.className).toContain('text-slate-700');
   });
 });

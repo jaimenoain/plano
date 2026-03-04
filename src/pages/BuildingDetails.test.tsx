@@ -249,4 +249,48 @@ describe('BuildingDetails Interaction', () => {
         expect(interactiveSaved).toBeTruthy();
     });
   });
+
+  it('renders lost to time message and Navigate to Site button when status is lost', async () => {
+    // Setup specific mock implementation for a Lost building
+    vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue({
+        id: 'b1',
+        name: 'Test Lost Building',
+        address: '123 Main St',
+        city: 'Metropolis',
+        country: 'USA',
+        year_completed: 2000,
+        slug: 'test-lost-building',
+        short_id: 'tb',
+        status: 'Lost',
+        architects: [{ name: 'Arch One', id: 'a1' }],
+        location: { type: 'Point', coordinates: [0, 0] },
+        created_by: 'other-user',
+        styles: [],
+    } as any);
+
+    render(
+      <HelmetProvider>
+        <TooltipProvider>
+            <QueryClientProvider client={queryClient}>
+                <BrowserRouter>
+                    <SidebarProvider>
+                        <BuildingDetails />
+                    </SidebarProvider>
+                </BrowserRouter>
+            </QueryClientProvider>
+        </TooltipProvider>
+      </HelmetProvider>
+    );
+
+    await waitFor(async () => {
+        const elements = await screen.findAllByText('Test Lost Building');
+        expect(elements.length).toBeGreaterThan(0);
+    }, { timeout: 3000 });
+
+    // Assert that the lost building message appears
+    expect(screen.getByText('This building is lost to time. It no longer stands at this location.')).toBeTruthy();
+
+    // Assert that the directions button says "Navigate to Site"
+    expect(screen.getByText('Navigate to Site')).toBeTruthy();
+  });
 });
