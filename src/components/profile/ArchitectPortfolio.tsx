@@ -31,7 +31,7 @@ export function ArchitectPortfolio({ architectId }: ArchitectPortfolioProps) {
             const mappedBuilding: SmartBuilding = {
               id: building.id,
               name: building.name,
-              main_image_url: getBuildingImageUrl(building.building_images?.[0]?.storage_path) || "/placeholder.svg",
+              main_image_url: building.building_images?.[0]?.storage_path ? getBuildingImageUrl(building.building_images[0].storage_path) : null,
               year_completed: null,
               architects: null,
               overlap_count: 0,
