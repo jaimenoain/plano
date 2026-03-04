@@ -116,8 +116,9 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                       <div className="flex items-center gap-2 mt-0.5">
                         <StatusBadge
                           status={review.status}
-                          isOwnProfile={isOwnProfile}
+                          isOwnProfile={isOwnProfile && review.status !== 'lost'}
                           onClick={() => {
+                            if (review.status === 'lost') return;
                             const currentStatus = review.status || 'visited';
                             const newStatus = currentStatus === 'visited' ? 'pending' : 'visited';
                             onUpdate(review.id, { status: newStatus });
@@ -137,8 +138,9 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                     <TableCell className="py-1">
                       <StatusBadge
                         status={review.status}
-                        isOwnProfile={isOwnProfile}
+                        isOwnProfile={isOwnProfile && review.status !== 'lost'}
                         onClick={() => {
+                          if (review.status === 'lost') return;
                           const currentStatus = review.status || 'visited';
                           const newStatus = currentStatus === 'visited' ? 'pending' : 'visited';
                           onUpdate(review.id, { status: newStatus });

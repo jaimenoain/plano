@@ -28,4 +28,9 @@ describe('StatusBadge', () => {
     fireEvent.click(button);
     expect(handleClick).toHaveBeenCalled();
   });
+
+  it('renders "Lost" when status is lost', () => {
+    render(<StatusBadge status="lost" isOwnProfile={false} onClick={vi.fn()} />);
+    expect(screen.getByText('Lost')).toBeInTheDocument();
+  });
 });
