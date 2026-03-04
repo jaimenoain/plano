@@ -18,7 +18,7 @@ export const buildingSchema = z.object({
     .min(0, "Year must be positive")
     .max(new Date().getFullYear() + 10, "Year cannot be in the far future")
     .nullable()),
-  status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary']).nullable().optional(),
+  status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Lost', 'Demolished', 'Temporary']).nullable().optional(),
   access_level: z.enum(['public', 'private', 'restricted', 'commercial']).nullable().optional(),
   access_logistics: z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only']).nullable().optional(),
   access_cost: z.enum(['free', 'paid', 'customers_only']).nullable().optional(),
@@ -80,7 +80,7 @@ export const editBuildingSchema = z.object({
     .min(0, "Year must be positive")
     .max(new Date().getFullYear() + 10, "Year cannot be in the far future")
     .nullable()),
-  status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary']).nullable().optional(),
+  status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Lost', 'Demolished', 'Temporary']).nullable().optional(),
   access_level: z.enum(['public', 'private', 'restricted', 'commercial']).nullable().optional(),
   access_logistics: z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only']).nullable().optional(),
   access_cost: z.enum(['free', 'paid', 'customers_only']).nullable().optional(),

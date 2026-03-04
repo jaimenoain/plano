@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { TagInput } from "@/components/ui/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 
-const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary'];
+const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Lost', 'Demolished', 'Temporary'];
 const ACCESS_LEVEL_OPTIONS = [
   { label: 'Public', value: 'public' },
   { label: 'Private', value: 'private' },

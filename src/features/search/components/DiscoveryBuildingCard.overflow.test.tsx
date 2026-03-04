@@ -98,4 +98,20 @@ describe('DiscoveryBuildingCard Overflow', () => {
     expect(statusBadge?.className).toContain('max-w-full');
     expect(statusBadge?.className).toContain('truncate');
   });
+
+  it('renders correctly when status is Lost', () => {
+    const lostBuilding = { ...mockBuilding, status: 'Lost' as any };
+    render(
+      <BrowserRouter>
+        <DiscoveryBuildingCard building={lostBuilding} />
+      </BrowserRouter>
+    );
+
+    const lostText = screen.getByText('Lost');
+    const lostBadge = lostText.closest('div[class*="rounded-full"]');
+
+    expect(lostBadge).not.toBeNull();
+    expect(lostBadge?.className).toContain('max-w-full');
+    expect(lostBadge?.className).toContain('truncate');
+  });
 });
