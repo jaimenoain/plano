@@ -10,6 +10,20 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, isOwnProfile, onClick }: StatusBadgeProps) {
   const currentStatus = status || 'visited';
   const isVisited = currentStatus === 'visited';
+  const isLost = currentStatus === 'lost';
+
+  const getStyles = () => {
+    if (isLost) {
+      return cn(
+        "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+        isOwnProfile ? "hover:bg-slate-200 dark:hover:bg-slate-700" : "opacity-80"
+      );
+    }
+    return cn(
+      "bg-secondary text-secondary-foreground",
+      isOwnProfile ? "hover:bg-secondary/80" : "opacity-80"
+    );
+  };
 
   return (
     <motion.button
@@ -19,9 +33,9 @@ export function StatusBadge({ status, isOwnProfile, onClick }: StatusBadgeProps)
         if (isOwnProfile) onClick();
       }}
       className={cn(
-        "relative px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-300 select-none overflow-hidden flex items-center justify-center",
-        "border border-transparent bg-secondary text-secondary-foreground",
-        isOwnProfile ? "cursor-pointer hover:bg-secondary/80" : "cursor-default opacity-80"
+        "relative px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-300 select-none overflow-hidden flex items-center justify-center border border-transparent",
+        isOwnProfile ? "cursor-pointer" : "cursor-default",
+        getStyles()
       )}
       whileTap={isOwnProfile ? { scale: 0.95 } : {}}
     >
@@ -34,7 +48,7 @@ export function StatusBadge({ status, isOwnProfile, onClick }: StatusBadgeProps)
           transition={{ duration: 0.2 }}
           className="block"
         >
-          {isVisited ? "Visited" : "Saved"}
+          {isLost ? "Lost" : isVisited ? "Visited" : "Saved"}
         </motion.span>
       </AnimatePresence>
     </motion.button>
