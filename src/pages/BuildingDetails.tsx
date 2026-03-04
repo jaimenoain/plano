@@ -1111,7 +1111,9 @@ export default function BuildingDetails() {
                                     }
                                 }}
                             >
-                                {building.location_precision === 'approximate' ? "Get Directions (Approximate)" : "Get Directions"}
+                                {building.status === 'Lost'
+                                    ? (building.location_precision === 'approximate' ? "Navigate to Site (Approximate)" : "Navigate to Site")
+                                    : (building.location_precision === 'approximate' ? "Get Directions (Approximate)" : "Get Directions")}
                             </Button>
 
                             <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
@@ -1129,7 +1131,7 @@ export default function BuildingDetails() {
                                         <AlertDialogAction onClick={() => {
                                             window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, '_blank');
                                         }}>
-                                            Get Directions
+                                            {building.status === 'Lost' ? "Navigate to Site" : "Get Directions"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -1143,7 +1145,7 @@ export default function BuildingDetails() {
                         <AlertTriangle className="h-4 w-4 stroke-destructive dark:stroke-red-400" />
                         <AlertDescription className="ml-2 font-medium">
                             {building.status === 'Lost'
-                                ? "This building has been lost or demolished."
+                                ? "This building is lost to time. It no longer stands at this location."
                                 : building.status === 'Unbuilt'
                                 ? "This project was never built."
                                 : "This building is under construction."}
