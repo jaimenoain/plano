@@ -297,13 +297,13 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
               </div>
               <Button
                 variant="ghost"
-                className="mt-12 text-white/50 hover:text-white"
+                className="mt-12 text-white/50 hover:text-black hover:bg-white"
                 onClick={(e) => {
                     e.stopPropagation();
                     if (onSwipeSave) onSwipeSave();
                 }}
               >
-                  Skip
+                  Next building
               </Button>
           </motion.div>
       )}
