@@ -833,11 +833,14 @@ export default function Profile() {
         )}
 
         {/* Architect Portfolio (Only visible if user is a verified architect) */}
-        {verifiedArchitectId && (
-          <div className="max-w-7xl mx-auto px-4 mt-8 mb-8">
-            <ArchitectPortfolio architectId={verifiedArchitectId} />
-          </div>
-        )}
+        {(() => {
+          console.log("DEBUG: Should render portfolio?", !!verifiedArchitectId);
+          return verifiedArchitectId ? (
+            <div className="max-w-7xl mx-auto px-4 mt-8 mb-8">
+              <ArchitectPortfolio architectId={verifiedArchitectId} />
+            </div>
+          ) : null;
+        })()}
 
         {/* 2. Favorite Buildings */}
         {!isOwnProfile && buildingFavorites.length > 0 && (
