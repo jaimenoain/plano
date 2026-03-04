@@ -5,9 +5,10 @@ import { getBuildingImageUrl } from "@/utils/image";
 
 interface ArchitectPortfolioProps {
   architectId: string;
+  isOwnProfile?: boolean;
 }
 
-export function ArchitectPortfolio({ architectId }: ArchitectPortfolioProps) {
+export function ArchitectPortfolio({ architectId, isOwnProfile }: ArchitectPortfolioProps) {
   const { buildings, isLoading } = useArchitectPortfolio(architectId);
 
   return (
@@ -56,6 +57,7 @@ export function ArchitectPortfolio({ architectId }: ArchitectPortfolioProps) {
                 <SmartBuildingCard
                   building={mappedBuilding}
                   groupId="" // Empty group ID as it's not used in this context but required by the prop type
+                  hideBucketListButton={isOwnProfile}
                 />
               </div>
             );
