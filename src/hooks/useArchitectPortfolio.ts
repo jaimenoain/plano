@@ -14,6 +14,7 @@ export function useArchitectPortfolio(architectId: string | null | undefined) {
     queryKey: ["architect_portfolio", architectId],
     queryFn: async () => {
       if (!architectId) return [];
+      console.log("DEBUG: fetchPortfolio architectId:", architectId);
 
       const { data, error } = await supabase
         .from("building_architects")
@@ -31,9 +32,14 @@ export function useArchitectPortfolio(architectId: string | null | undefined) {
         `)
         .eq("architect_id", architectId);
 
+      console.log("DEBUG: Portfolio query result:", { data, error });
+
       if (error) {
+        console.error("DEBUG: Portfolio query error:", error.message, error.details, error);
         throw error;
       }
+
+      console.log("DEBUG: Buildings count found:", data?.length);
 
       const formattedBuildings = (data || [])
         .map((item: any) => {
