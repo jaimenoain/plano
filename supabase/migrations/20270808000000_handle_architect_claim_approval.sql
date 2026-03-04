@@ -11,7 +11,7 @@ AS $$
 BEGIN
     -- Handle DELETE operation
     IF TG_OP = 'DELETE' THEN
-        IF OLD.status = 'approved' THEN
+        IF OLD.status = 'verified' THEN
             UPDATE public.profiles
             SET verified_architect_id = NULL
             WHERE id = OLD.user_id AND verified_architect_id = OLD.architect_id;
@@ -20,13 +20,13 @@ BEGIN
     END IF;
 
     -- Handle INSERT and UPDATE operations
-    IF NEW.status = 'approved' THEN
+    IF NEW.status = 'verified' THEN
         UPDATE public.profiles
         SET verified_architect_id = NEW.architect_id
         WHERE id = NEW.user_id;
     ELSE
-        -- If it was previously approved but now changed to something else
-        IF TG_OP = 'UPDATE' AND OLD.status = 'approved' THEN
+        -- If it was previously verified but now changed to something else
+        IF TG_OP = 'UPDATE' AND OLD.status = 'verified' THEN
             UPDATE public.profiles
             SET verified_architect_id = NULL
             WHERE id = NEW.user_id AND verified_architect_id = OLD.architect_id;
