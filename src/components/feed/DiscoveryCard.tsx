@@ -249,11 +249,11 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
 
       {/* Color Overlays */}
       <motion.div
-        className="absolute inset-0 bg-green-500 z-15 pointer-events-none"
+        className="absolute inset-0 bg-green-500 z-[15] pointer-events-none"
         style={{ opacity: likeOverlayOpacity }}
       />
       <motion.div
-        className="absolute inset-0 bg-red-500 z-15 pointer-events-none"
+        className="absolute inset-0 bg-red-500 z-[15] pointer-events-none"
         style={{ opacity: nopeOverlayOpacity }}
       />
 
