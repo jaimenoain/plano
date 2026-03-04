@@ -5,12 +5,10 @@ import { AppSidebar } from "./AppSidebar";
 export function MainLayout() {
   return (
     <SidebarProvider defaultOpen={false}>
-      <div data-testid="main-layout" style={{ display: 'contents' }}>
-        <AppSidebar />
-        <SidebarInset className="min-w-0">
-          <Outlet />
-        </SidebarInset>
-      </div>
+      <AppSidebar />
+      <SidebarInset className="min-w-0" data-testid="main-layout">
+        <Outlet />
+      </SidebarInset>
     </SidebarProvider>
   );
 }
