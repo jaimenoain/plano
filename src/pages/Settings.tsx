@@ -19,6 +19,7 @@ import { NavigationBlocker } from "@/components/common/NavigationBlocker";
 import { ManageFavoritesDialog } from "@/components/profile/ManageFavoritesDialog";
 import { ManageHighlightsDialog } from "@/components/profile/ManageHighlightsDialog";
 import { FavoriteItem } from "@/components/profile/types";
+import { DisconnectArchitectDialog } from "@/components/settings/DisconnectArchitectDialog";
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth();
@@ -43,6 +44,8 @@ export default function Settings() {
   const [showManageFavorites, setShowManageFavorites] = useState(false);
   const [showManageHighlights, setShowManageHighlights] = useState(false);
   
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
+
   const [exporting, setExporting] = useState(false);
   
   const [justSaved, setJustSaved] = useState(false);
@@ -542,6 +545,26 @@ export default function Settings() {
                 placeholder="Leave blank to keep current password"
               />
             </div>
+
+            {profile?.verified_architect_id && (
+              <div className="pt-4 mt-4 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-destructive">Disconnect Architect Profile</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Unlink your account from your verified architect or studio profile.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => setShowDisconnectDialog(true)}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <Separator />
@@ -598,6 +621,18 @@ export default function Settings() {
         favorites={favorites}
         onSave={handleSaveHighlights}
       />
+
+      {/* Disconnect Architect Profile Dialog */}
+      {profile?.verified_architect_id && (
+        <DisconnectArchitectDialog
+          open={showDisconnectDialog}
+          onOpenChange={setShowDisconnectDialog}
+          architectId={profile.verified_architect_id}
+          onSuccess={() => {
+            refetchProfile();
+          }}
+        />
+      )}
     </AppLayout>
   );
 }
