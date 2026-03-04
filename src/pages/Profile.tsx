@@ -223,6 +223,12 @@ export default function Profile() {
   const { profile: currentUserProfile } = useUserProfile();
   const verifiedArchitectId = isOwnProfile ? currentUserProfile?.verified_architect_id : profile?.verified_architect_id;
 
+  // DEBUG LOGGING
+  useEffect(() => {
+    console.log("DEBUG: Entire profile object from useUserProfile:", currentUserProfile);
+    console.log("DEBUG: verifiedArchitectId from profile:", currentUserProfile?.verified_architect_id);
+  }, [currentUserProfile]);
+
   // --- Handlers for URL State ---
 
   const handleFilterChange = (value: string) => {
@@ -795,6 +801,11 @@ export default function Profile() {
           description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Plano.`}
           image={avatarUrl}
         />
+
+        {/* DEBUG VISUAL ELEMENT */}
+        <div className="bg-yellow-200 text-black p-2 text-center font-mono text-sm border-b border-yellow-400">
+          DEBUG: verifiedArchitectId is {verifiedArchitectId === null ? "null" : verifiedArchitectId === undefined ? "undefined" : `defined (${verifiedArchitectId})`}
+        </div>
 
         {/* 1. Header & User Card */}
         <UserCard
