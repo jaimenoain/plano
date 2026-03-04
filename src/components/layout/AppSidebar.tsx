@@ -150,7 +150,7 @@ export function AppSidebar() {
         <div className="flex h-12 items-center group-data-[collapsible=icon]:px-4 group-data-[collapsible=icon]:justify-center">
           <PlanoLogo
             viewBox={state === "collapsed" ? "-30 0 85 85" : undefined}
-            className="h-8 w-auto -ml-2 group-data-[collapsible=icon]:ml-0"
+            className="h-8 w-auto ml-2 group-data-[collapsible=icon]:ml-0"
           />
         </div>
       </SidebarHeader>
