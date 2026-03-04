@@ -1753,4 +1753,5 @@ export interface UserProfile {
   id: string;
   // ... existing fields
   role?: string; // Add this
+  verified_architect_id?: string | null;
 }
