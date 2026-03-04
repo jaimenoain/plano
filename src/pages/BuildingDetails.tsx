@@ -162,6 +162,7 @@ export default function BuildingDetails() {
   // Official Data Editing State
   const [isOfficialEditing, setIsOfficialEditing] = useState(false);
   const [verifiedClaims, setVerifiedClaims] = useState<string[]>([]);
+  const [hasVerifiedArchitect, setHasVerifiedArchitect] = useState(false);
 
   const isVerifiedArchitect = useMemo(() => {
        if (!building?.architects || verifiedClaims.length === 0) return false;
@@ -169,7 +170,7 @@ export default function BuildingDetails() {
   }, [building, verifiedClaims]);
 
   const canEdit = isCreator || profile?.role === 'admin';
-  const canEditOfficialData = isCreator || profile?.role === 'admin' || isVerifiedArchitect;
+  const canEditOfficialData = profile?.role === 'admin' || isVerifiedArchitect || (isCreator && !hasVerifiedArchitect);
   const [draftOfficialData, setDraftOfficialData] = useState({
       name: "",
       year_completed: 0,
@@ -293,6 +294,24 @@ export default function BuildingDetails() {
       }
 
       const tasks: Promise<any>[] = [];
+
+      // Check if ANY architect of this building has been verified globally
+      if (sanitizedBuilding.architects && sanitizedBuilding.architects.length > 0) {
+          tasks.push((async () => {
+              const architectIds = sanitizedBuilding.architects.map((a: any) => a.id);
+              const { data: verifiedProfiles } = await supabase
+                  .from('profiles')
+                  .select('id')
+                  .in('verified_architect_id', architectIds)
+                  .limit(1);
+
+              if (verifiedProfiles && verifiedProfiles.length > 0) {
+                  setHasVerifiedArchitect(true);
+              } else {
+                  setHasVerifiedArchitect(false);
+              }
+          })());
+      }
 
       // Task 1: Fetch Top Links (RPC)
       tasks.push(fetchTopLinks(resolvedBuildingId));
