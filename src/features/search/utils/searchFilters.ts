@@ -138,7 +138,7 @@ export function filterLocalBuildings(
       }
     } else {
       // Default exclusion if no filter provided (match backend default)
-      if (b.status === 'Demolished' || b.status === 'Lost' || b.status === 'Under Construction' || b.status === 'Unbuilt') {
+      if (b.status === 'Lost' || b.status === 'Under Construction' || b.status === 'Unbuilt') {
         return false;
       }
     }

@@ -603,7 +603,6 @@ const handleModeChange = (newMode: string) => {
                         <MultiSelectCheckboxList
                             items={[
                                 { id: 'Built', name: 'Built' },
-                                { id: 'Demolished', name: 'Demolished' },
                                 { id: 'Lost', name: 'Lost' },
                                 { id: 'Under Construction', name: 'Under Construction' },
                                 { id: 'Unbuilt', name: 'Unbuilt' },
