@@ -44,7 +44,7 @@ export function ArchitectPortfolio({ architectId, isOwnProfile }: ArchitectPortf
               id: building.id,
               name: building.name,
               main_image_url,
-              year_completed: null,
+              year_completed: building.year_completed,
               architects: null,
               overlap_count: 0,
               interested_users: [],
