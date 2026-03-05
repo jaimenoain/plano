@@ -54,6 +54,7 @@ export interface BuildingFormData {
   access_logistics?: string | null;
   access_cost?: string | null;
   access_notes?: string | null;
+  architect_statement?: string | null;
   architects: Architect[];
   functional_category_id: string | null;
   functional_typology_ids: string[];
@@ -70,7 +71,12 @@ interface BuildingFormProps {
   shortId?: number | null;
 }
 
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { ArchitectStatement } from "@/components/ArchitectStatement";
+
 export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId }: BuildingFormProps) {
+  const { profile } = useUserProfile();
+
   const [name, setName] = useState(initialValues.name);
   const [alt_name, setAltName] = useState(initialValues.alt_name || "");
   const [aliases, setAliases] = useState<string[]>(initialValues.aliases || []);
@@ -80,6 +86,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [access_logistics, setAccessLogistics] = useState<string>(initialValues.access_logistics || "");
   const [access_cost, setAccessCost] = useState<string>(initialValues.access_cost || "");
   const [access_notes, setAccessNotes] = useState<string>(initialValues.access_notes || "");
+  const [architect_statement, setArchitectStatement] = useState<string>(initialValues.architect_statement || "");
   const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
   const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id || "");
   const [functional_typology_ids, setTypologyIds] = useState<string[]>(initialValues.functional_typology_ids);
@@ -167,6 +174,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
       return data as AttributeGroup[];
     },
   });
+
+  const isVerifiedArchitect = profile?.verified_architect_id && architects.some((a) => a.id === profile.verified_architect_id);
 
   const { data: attributes, isLoading: isLoadingAttributes } = useQuery({
     queryKey: ["attributes"],
@@ -294,6 +303,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         access_logistics: access_logistics || null,
         access_cost: access_cost || null,
         access_notes: access_notes || null,
+        architect_statement: architect_statement || null,
         architects,
         functional_category_id,
         functional_typology_ids,
@@ -460,17 +470,29 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         )}
 
         {/* Architects */}
-        {showArchitects && (
-          <div className="space-y-2">
-            <Label>Architects</Label>
-            <ArchitectSelect
-              selectedArchitects={architects}
-              setSelectedArchitects={setArchitects}
-              placeholder="Search architects or add new..."
-            />
-            <p className="text-xs text-muted-foreground">
-              Add multiple architects if applicable. If not found, you can create a new one.
-            </p>
+        {(showArchitects || isVerifiedArchitect) && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Architects</Label>
+              <ArchitectSelect
+                selectedArchitects={architects}
+                setSelectedArchitects={setArchitects}
+                placeholder="Search architects or add new..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Add multiple architects if applicable. If not found, you can create a new one.
+              </p>
+            </div>
+
+            {isVerifiedArchitect && (
+              <div className="space-y-2 border rounded-md p-4 bg-muted/5">
+                <ArchitectStatement
+                  statement={architect_statement}
+                  isEditing={true}
+                  onChange={setArchitectStatement}
+                />
+              </div>
+            )}
           </div>
         )}
 
