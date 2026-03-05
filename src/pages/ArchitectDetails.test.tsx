@@ -132,11 +132,11 @@ describe('ArchitectDetails', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /claim this profile/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /claim profile/i })).toBeInTheDocument();
     });
   });
 
-  it('does not show "Claim this Profile" button when not logged in', async () => {
+  it('does not show "Claim Profile" button when not logged in', async () => {
     mocks.useAuth.mockReturnValue({ user: null, loading: false });
     mocks.useArchitect.mockReturnValue({
       architect: mockArchitect,
@@ -157,7 +157,7 @@ describe('ArchitectDetails', () => {
       expect(screen.getByText('Test Architect')).toBeInTheDocument();
     });
 
-    expect(screen.queryByRole('button', { name: /claim this profile/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /claim profile/i })).not.toBeInTheDocument();
   });
 
   it('shows "Verified Architect" badge when verified', async () => {
@@ -181,7 +181,7 @@ describe('ArchitectDetails', () => {
     await waitFor(() => {
       expect(screen.getByTestId('icon-badge-check')).toBeInTheDocument();
     });
-    expect(screen.queryByRole('button', { name: /claim this profile/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /claim profile/i })).not.toBeInTheDocument();
   });
 
   it('shows "Claim Pending" badge when user has pending claim', async () => {
@@ -205,7 +205,7 @@ describe('ArchitectDetails', () => {
     await waitFor(() => {
       expect(screen.getByText('Claim Pending')).toBeInTheDocument();
     });
-    expect(screen.queryByRole('button', { name: /claim this profile/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /claim profile/i })).not.toBeInTheDocument();
   });
 
   it('opens claim dialog when clicking button', async () => {
@@ -227,10 +227,10 @@ describe('ArchitectDetails', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /claim this profile/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /claim profile/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /claim this profile/i }));
+    fireEvent.click(screen.getByRole('button', { name: /claim profile/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId('dialog')).toBeInTheDocument();
