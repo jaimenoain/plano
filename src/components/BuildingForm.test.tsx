@@ -8,6 +8,15 @@ afterEach(() => {
   cleanup();
 });
 
+// Mock useUserProfile
+vi.mock('@/hooks/useUserProfile', () => ({
+  useUserProfile: vi.fn(() => ({
+    profile: null,
+    loading: false,
+    refetch: vi.fn()
+  }))
+}));
+
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
