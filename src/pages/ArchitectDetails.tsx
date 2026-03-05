@@ -77,6 +77,9 @@ export default function ArchitectDetails() {
     return <Navigate to={`/profile/${linkedUser.username}`} replace />;
   }
 
+  const totalProjects = buildings.length;
+  const builtWorks = buildings.filter(b => b.status === 'Built').length;
+
   if (error || !architect) {
     return (
       <AppLayout showBack>
@@ -168,35 +171,30 @@ export default function ArchitectDetails() {
               </div>
             </div>
 
-            {/* Subtitle / Stats equivalent */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border/40 text-sm text-muted-foreground">
-               <div className="flex items-center gap-1 group">
-                 <span className="font-bold text-base md:text-md text-foreground group-hover:text-primary transition-colors">
-                   {buildings.length}
-                 </span>
-                 <span className="text-xs md:text-sm text-muted-foreground capitalize">
-                   edificios
-                 </span>
-               </div>
-               <div className="flex items-center gap-1 group">
-                 <span className="font-bold text-base md:text-md text-foreground group-hover:text-primary transition-colors capitalize">
-                   {architect.type}
-                 </span>
-               </div>
-               {architect.headquarters && (
-                 <div className="flex items-center gap-1 group">
-                   <MapPin className="h-4 w-4" />
-                   <span className="text-xs md:text-sm text-muted-foreground">
-                     {architect.headquarters}
-                   </span>
-                 </div>
-               )}
+            {/* Stats Row */}
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border/40">
+                <StatItem label="total projects" value={totalProjects} />
+                <StatItem label="built works" value={builtWorks} />
             </div>
 
-            {/* Bio */}
+            {/* Bio & Details */}
             <div className="text-center md:text-left px-2 md:px-0">
+               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-3 text-sm text-muted-foreground">
+                 <div className="flex items-center gap-1 group capitalize">
+                   {architect.type}
+                 </div>
+                 {architect.headquarters && (
+                   <div className="flex items-center gap-1 group">
+                     <MapPin className="h-4 w-4" />
+                     <span>
+                       {architect.headquarters}
+                     </span>
+                   </div>
+                 )}
+               </div>
+
                {architect.bio && (
-                 <p className="text-sm leading-relaxed whitespace-pre-wrap mb-2 text-muted-foreground line-clamp-3 md:line-clamp-none">
+                 <p className="text-sm leading-relaxed whitespace-pre-wrap mb-2 line-clamp-3 md:line-clamp-none">
                    {architect.bio}
                  </p>
                )}
@@ -263,4 +261,33 @@ export default function ArchitectDetails() {
       />
     </AppLayout>
   );
+}
+
+function StatItem({ label, value, onClick }: { label: string, value: number, onClick?: () => void }) {
+    const content = (
+        <>
+            <span className="font-bold text-base md:text-md text-foreground group-hover:text-primary transition-colors">
+                {formatStatValue(value)}
+            </span>
+            <span className="text-xs md:text-sm text-muted-foreground capitalize">
+                {label}
+            </span>
+        </>
+    );
+
+    if (onClick) {
+        return <button onClick={onClick} className="flex flex-col md:flex-row items-center gap-1 group">{content}</button>;
+    }
+
+    return <div className="flex flex-col md:flex-row items-center gap-1 group">{content}</div>;
+}
+
+function formatStatValue(value: number): string {
+    if (value >= 1000000) {
+        return (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
+    }
+    if (value >= 1000) {
+        return (value / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return value.toString();
 }
