@@ -3,21 +3,6 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useArchitect } from './useArchitect';
 
-// Mock Supabase client
-const mocks = vi.hoisted(() => ({
-  select: vi.fn(),
-  eq: vi.fn(),
-  single: vi.fn(),
-}));
-
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: mocks.select,
-    })),
-  },
-}));
-
 describe('useArchitect', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,25 +46,10 @@ describe('useArchitect', () => {
       }
     ];
 
-    // Setup mock chain
-    // First call is for 'architects' table
-    // Second call is for 'building_architects' table
+    const mockProfileData = {
+      username: 'testuser'
+    };
 
-    // We need to handle the chain calls carefully since we mock 'from' once
-    // But different 'from' calls return the same mock object in this simple setup
-    // So we can inspect the calls or just make the chain work for both.
-
-    // Let's make 'select' return an object with 'eq'
-    // 'eq' returns an object with 'single' (for first call) or is final (for second call promise)
-
-    // Implementation of the chain:
-    // supabase.from('architects').select('*').eq(...).single()
-    // supabase.from('building_architects').select(...).eq(...)
-
-    // We can use mockImplementation to return different things based on the table name if we mock 'from' properly
-    // OR we can just return a chain that resolves differently based on the order of calls (flaky)
-
-    // Better approach: mock 'from' implementation
     const fromMock = vi.fn((table: string) => {
       if (table === 'architects') {
         return {
@@ -94,6 +64,15 @@ describe('useArchitect', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn().mockResolvedValue({ data: mockBuildingsData, error: null })
+          }))
+        };
+      }
+      if (table === 'profiles') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: mockProfileData, error: null })
+            }))
           }))
         };
       }
@@ -114,6 +93,7 @@ describe('useArchitect', () => {
 
     expect(result.current.architect).toEqual(mockArchitectData);
     expect(result.current.buildings).toHaveLength(2);
+    expect(result.current.linkedUser).toEqual({ username: 'testuser' });
 
     // Verify mapping
     const buildingOne = result.current.buildings.find(b => b.id === 'build-1');
