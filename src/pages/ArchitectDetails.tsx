@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, Navigate } from "react-router-dom";
 import { useArchitect } from "@/hooks/useArchitect";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -18,7 +18,7 @@ export default function ArchitectDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { architect, buildings, loading, error } = useArchitect(id);
+  const { architect, buildings, linkedUser, loading, error } = useArchitect(id);
 
   const [claimStatus, setClaimStatus] = useState<{
     is_verified: boolean;
@@ -69,6 +69,11 @@ export default function ArchitectDetails() {
         </div>
       </AppLayout>
     );
+  }
+
+  // Redirect to user profile if linked
+  if (linkedUser?.username) {
+    return <Navigate to={`/profile/${linkedUser.username}`} replace />;
   }
 
   if (error || !architect) {

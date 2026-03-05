@@ -22,6 +22,7 @@ export interface ArchitectBuilding {
 interface UseArchitectResult {
   architect: Architect | null;
   buildings: ArchitectBuilding[];
+  linkedUser: { username: string | null } | null;
   loading: boolean;
   error: Error | null;
 }
@@ -29,6 +30,7 @@ interface UseArchitectResult {
 export function useArchitect(architectId: string | undefined | null): UseArchitectResult {
   const [architect, setArchitect] = useState<Architect | null>(null);
   const [buildings, setBuildings] = useState<ArchitectBuilding[]>([]);
+  const [linkedUser, setLinkedUser] = useState<{ username: string | null } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -37,6 +39,7 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
     if (!architectId) {
       setArchitect(null);
       setBuildings([]);
+      setLinkedUser(null);
       setLoading(false);
       return;
     }
@@ -59,6 +62,17 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
 
         if (isMounted) {
             setArchitect(architectData as Architect);
+        }
+
+        // Check if there is a linked user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("verified_architect_id", architectId)
+          .maybeSingle();
+
+        if (!profileError && profileData && isMounted) {
+            setLinkedUser({ username: profileData.username });
         }
 
         // Fetch associated buildings
@@ -112,6 +126,7 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
 
             setArchitect(null);
             setBuildings([]);
+            setLinkedUser(null);
         }
       } finally {
         if (isMounted) {
@@ -127,5 +142,5 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
     };
   }, [architectId]);
 
-  return { architect, buildings, loading, error };
+  return { architect, buildings, linkedUser, loading, error };
 }
