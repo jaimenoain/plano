@@ -6,6 +6,7 @@ export interface PortfolioBuilding {
   name: string;
   city: string | null;
   country: string | null;
+  year_completed: number | null;
   hero_image_url?: string | null;
   community_preview_url?: string | null;
 }
@@ -23,6 +24,7 @@ export function useArchitectPortfolio(architectId: string | null | undefined) {
           name,
           city,
           country,
+          year_completed,
           hero_image_url,
           community_preview_url,
           building_architects!inner(architect_id)
@@ -38,6 +40,7 @@ export function useArchitectPortfolio(architectId: string | null | undefined) {
         name: b.name,
         city: b.city,
         country: b.country,
+        year_completed: b.year_completed,
         hero_image_url: b.hero_image_url,
         community_preview_url: b.community_preview_url,
       })) as PortfolioBuilding[];
