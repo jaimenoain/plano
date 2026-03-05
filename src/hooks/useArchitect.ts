@@ -17,6 +17,7 @@ export interface ArchitectBuilding {
   country: string | null;
   year_completed: number | null;
   main_image_url: string | null;
+  status: string | null;
 }
 
 interface UseArchitectResult {
@@ -86,7 +87,8 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
               city,
               country,
               year_completed,
-              main_image_url
+              main_image_url,
+              status
             )
           `)
           .eq("architect_id", architectId);
@@ -106,7 +108,8 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
                 city: b.city,
                 country: b.country,
                 year_completed: b.year_completed,
-                main_image_url: b.main_image_url || null
+                main_image_url: b.main_image_url || null,
+                status: b.status || null
               };
             })
             .filter((b: any) => b !== null) as ArchitectBuilding[];
