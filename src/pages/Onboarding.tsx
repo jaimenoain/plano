@@ -177,7 +177,7 @@ export default function Onboarding() {
 
       const file = event.target.files[0];
       const fileExt = file.name.split(".").pop();
-      const filePath = `${user.id}/${Math.random()}.${fileExt}`;
+      const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
