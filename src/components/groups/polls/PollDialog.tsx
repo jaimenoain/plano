@@ -695,7 +695,7 @@ function QuestionAttachment({ nestIndex }: { nestIndex: number }) {
 
         const file = e.target.files[0];
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         setUploading(true);
@@ -879,7 +879,7 @@ function QuestionOptionItem({
 
         const file = e.target.files[0];
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `option_${fileName}`;
 
         setUploading(true);

@@ -176,7 +176,7 @@ export default function GroupSettings() {
 
       const file = event.target.files[0];
       const fileExt = file.name.split(".").pop();
-      const filePath = `${group!.id}/${Math.random()}.${fileExt}`;
+      const filePath = `${group!.id}/${crypto.randomUUID()}.${fileExt}`;
 
       if (group?.cover_url) {
         await supabase.storage
