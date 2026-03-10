@@ -63,7 +63,9 @@ export default function Onboarding() {
 
             if (existingUser) {
               // If taken, append a random number
-              const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+              const array = new Uint32Array(1);
+              crypto.getRandomValues(array);
+              const randomSuffix = 1000 + (array[0] % 9000);
               finalName = `${emailName}${randomSuffix}`;
             }
 

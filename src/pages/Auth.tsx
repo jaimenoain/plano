@@ -92,7 +92,9 @@ export default function Auth() {
   // Helper to generate a clean username from email
   const generateUsername = (email: string) => {
     const base = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000); // Adds 4 random digits
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const randomSuffix = 1000 + (array[0] % 9000); // Adds 4 random digits securely
     return `${base}_${randomSuffix}`;
   };
 
