@@ -7,7 +7,7 @@ interface MapPinProps {
   isHovered: boolean;
 }
 
-export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) => {
+export const MapPin = React.memo(function MapPin({ style, children, isHovered }: MapPinProps) {
   const isPinShape = style.shape === 'pin';
 
   // Apply rotation for pin shape (teardrop)
@@ -66,4 +66,23 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  if (prevProps.isHovered !== nextProps.isHovered) return false;
+  if (prevProps.children !== nextProps.children) return false;
+
+  // Shallow compare the style object
+  const prevStyleKeys = Object.keys(prevProps.style) as Array<keyof typeof prevProps.style>;
+  const nextStyleKeys = Object.keys(nextProps.style) as Array<keyof typeof nextProps.style>;
+
+  if (prevStyleKeys.length !== nextStyleKeys.length) return false;
+
+  for (const key of prevStyleKeys) {
+    if (prevProps.style[key] !== nextProps.style[key]) {
+      return false;
+    }
+  }
+
+  return true;
+});
+
+MapPin.displayName = 'MapPin';
