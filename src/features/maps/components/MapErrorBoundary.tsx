@@ -20,13 +20,7 @@ const MapErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
 
 export const MapErrorBoundary = ({ children }: { children: React.ReactNode }) => {
   return (
-    <ErrorBoundary
-      FallbackComponent={MapErrorFallback}
-      onReset={() => {
-        // Optional: Add logic to clear caches or similar if needed
-        console.log("Retrying map render...");
-      }}
-    >
+    <ErrorBoundary FallbackComponent={MapErrorFallback}>
       {children}
     </ErrorBoundary>
   );
