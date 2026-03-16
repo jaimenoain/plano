@@ -208,7 +208,7 @@ export function ReviewCard({
       });
   }
 
-  const hasMedia = !hideBuildingInfo && (mediaItems.length > 0 || !!posterUrl);
+  const hasMedia = !hideBuildingInfo && (mediaItems.length > 0 || (!!posterUrl && showCommunityImages));
   const isCompact = variant === 'compact';
 
   const flexDirection = imagePosition === 'right' ? 'md:flex-row' : 'md:flex-row-reverse';
@@ -261,9 +261,9 @@ export function ReviewCard({
                     alt={entry.building.name}
                     className="w-32 h-24 object-cover rounded-sm flex-shrink-0"
                 />
-            ) : posterUrl ? (
+            ) : hasMedia ? (
               <img
-                src={posterUrl}
+                src={posterUrl!}
                 alt={entry.building.name}
                 className="w-32 h-24 object-cover rounded-sm flex-shrink-0"
               />
@@ -491,11 +491,11 @@ export function ReviewCard({
                {renderMediaGrid()}
              </div>
           </div>
-        ) : (posterUrl && showCommunityImages) ? (
+        ) : hasMedia ? (
           // OPTION B: Building Poster (Fallback)
           <div className={`relative w-full max-w-full min-w-0 bg-secondary overflow-hidden aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:w-[280px] md:shrink-0' : ''}`}>
             <img
-              src={posterUrl}
+              src={posterUrl!}
               alt={mainTitle || ""}
               className={`w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 ${!isCompact ? 'md:absolute md:inset-0' : ''}`}
             />
