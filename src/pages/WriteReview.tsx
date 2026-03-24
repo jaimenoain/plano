@@ -688,39 +688,41 @@ export default function WriteReview() {
       // 4. Update Existing Images Metadata
       const existingImages = images.filter(img => img.storage_path && !deletedImages.some(d => d.id === img.id));
       if (existingImages.length > 0) {
-        const updatePromises = existingImages.map(async (img) => {
-             const { error: updateError } = await supabase
-              .from('review_images')
-              .update({ is_generated: img.is_generated })
-              .eq('id', img.id);
+        const { error: updateError } = await supabase
+          .from('review_images')
+          .upsert(
+            existingImages.map(img => ({
+              id: img.id,
+              review_id: reviewId,
+              user_id: user.id,
+              storage_path: img.storage_path!,
+              is_generated: img.is_generated
+            }))
+          );
 
-            if (updateError) throw updateError;
-        });
-        await Promise.all(updatePromises);
+        if (updateError) throw updateError;
       }
 
       // 5. Handle New Image Uploads
       const newImages = images.filter(img => img.file);
       if (newImages.length > 0) {
-        const uploadPromises = newImages.map(async (img) => {
-          if (!img.file) return;
-
-          const storagePath = await uploadFile(img.file, reviewId);
-
-          // Insert Image Record
-          const { error: insertError } = await supabase
-            .from('review_images')
-            .insert({
+        const uploadedImages = await Promise.all(
+          newImages.map(async (img) => {
+            const storagePath = await uploadFile(img.file!, reviewId);
+            return {
               review_id: reviewId,
               user_id: user.id,
               storage_path: storagePath,
               is_generated: img.is_generated
-            });
+            };
+          })
+        );
 
-          if (insertError) throw insertError;
-        });
+        const { error: insertError } = await supabase
+          .from('review_images')
+          .insert(uploadedImages);
 
-        await Promise.all(uploadPromises);
+        if (insertError) throw insertError;
       }
 
       toast({ title: "Review published!" });
