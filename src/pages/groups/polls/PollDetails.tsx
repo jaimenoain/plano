@@ -142,7 +142,6 @@ export default function PollDetails() {
   const isLive = poll.status === 'live';
   const isActive = poll.status === 'open';
   const isPublished = poll.status === 'published';
-  // const canVote = !hasVoted && !isClosed && !isLive; // Unused
   const activeQuestion = poll.questions?.find((q: any) => q.is_live_active);
 
   const getPollTypeHeader = (type: string) => {
