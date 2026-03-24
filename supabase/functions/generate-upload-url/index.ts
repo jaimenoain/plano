@@ -83,6 +83,22 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Security check: Prevent path traversal
+    const pathTraversalPattern = /[\\/]/
+    if (pathTraversalPattern.test(fileName) || (folderName && pathTraversalPattern.test(folderName))) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid characters in fileName or folderName' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (fileName.includes('..') || (folderName && folderName.includes('..'))) {
+      return new Response(
+        JSON.stringify({ error: 'Path traversal detected in fileName or folderName' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Validate extension against contentType
     const mimeToExt: Record<string, string[]> = {
       'video/mp4': ['.mp4'],
