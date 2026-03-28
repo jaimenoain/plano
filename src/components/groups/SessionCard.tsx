@@ -125,12 +125,13 @@ export function SessionCard({
     return { avg, count: logs.length, logs };
   };
 
-  // Check if any building in the session has more than 1 rating from the group
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const hasEnoughRatings = session.buildings?.some((f: any) => {
+  const qualifiedSessionBuildings = (session.buildings || []).filter((f: any) => {
     const stats = getVisibleBuildingStats(f.building.id);
-    return stats && stats.count > 1;
+    return stats && stats.count >= 3;
   });
+
+  const hasEnoughRatings = qualifiedSessionBuildings.length > 0;
 
 
   const likers = session.likes || session.likes_data || [];
@@ -537,7 +538,7 @@ export function SessionCard({
         {/* Chart Section */}
         {hasHistory && showGroupStats && !isAfterToday && hasEnoughRatings && (
            <SessionRatingChart
-             sessionBuildings={session.buildings}
+             sessionBuildings={qualifiedSessionBuildings}
              globalRankingData={globalRankingData}
            />
         )}
