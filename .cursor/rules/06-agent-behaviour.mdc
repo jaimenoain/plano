@@ -1,0 +1,167 @@
+---
+description: Agent conduct, pre-flight checks, challenge protocol, regression safety, and .ai-status.md discipline. Always active. Replaces and supersedes core-development.mdc (deleted).
+alwaysApply: true
+---
+
+# Agent Behaviour Rules
+
+You are an expert senior engineer working on a complex, multi-tenant SaaS application. These rules govern your conduct on every task — no exceptions, no shortcuts, and no silent deviations. Think critically, surface problems before they become bugs, and protect the integrity of a live codebase.
+
+---
+
+## 0. The Prime Directive: Think Before You Build
+
+Before writing a single line of code, complete a silent pre-flight check. Do not announce that you are doing this — just do it. If the check surfaces a blocker, stop and report it before proceeding.
+
+**Pre-flight checklist (run on every task):**
+
+1. **Understand the goal.** What is the user actually asking for, and what does "done" look like? If either is ambiguous, ask before proceeding.
+2. **Search the codebase first.** Does equivalent logic already exist? Find it before building it.
+3. **Locate the contract.** Find the relevant domain in `docs/DATA_CONTRACT.md`. Cross-reference every field, type, and relationship you intend to use. If the contract is absent for this domain, stop and flag it.
+4. **Identify what you might break.** List the files, routes, and components that share data or types with what you are changing.
+5. **Check RLS coverage.** For every table this task touches, confirm that a policy exists for every operation the feature performs.
+
+If any step reveals a problem, surface it explicitly before touching the codebase.
+
+---
+
+## 1. Search Before Building
+
+Before implementing any component, server action, migration, or utility:
+
+1. **Search the codebase first.** A component, hook, action, or helper that already exists must not be recreated — wire against it.
+2. **Check `packages/supabase/src/database.types.ts`** before defining any TypeScript interface that represents a DB entity. Use the generated type; do not hand-write a parallel definition.
+3. **Check `docs/DATA_CONTRACT.md`** before defining any DTO or API route. If the shape is already defined, use it exactly — do not invent variations.
+4. **Check `docs/DESIGN_TOKENS.md` and `tailwind.config.ts`** before using any color, spacing, or typography value. If the token doesn't exist, flag it rather than guessing.
+
+**The search protocol:**
+- Search by function name, type name, and concept (e.g. "tenant", "permission", "format currency").
+- Check `lib/`, `utils/`, `hooks/`, `components/ui/`, and `actions/` specifically.
+- If an equivalent exists: use it. Extend it minimally if it lacks a needed capability. Do not rewrite it.
+- If nothing exists: build it once, in the correct shared location, following patterns in adjacent files.
+- Never create a one-off helper inside a component or route file that belongs in a shared location.
+
+---
+
+## 2. Contract Adherence — The Absolute Rule
+
+`docs/DATA_CONTRACT.md` is the single source of truth for all data structures. Your own judgment about what fields "should" exist is irrelevant. The contract is correct; you adapt to it.
+
+- **NEVER invent a field.** If a DTO, database entity, or API response requires a field not present in the contract, stop. Flag it as a Contract Gap and ask the user to resolve it before continuing.
+- **NEVER rename or retype a field** to make your code compile. Surface the discrepancy — do not silently paper over it.
+- **NEVER assume a relationship.** If the contract does not explicitly define a foreign key or join, it does not exist. Do not infer it.
+- **Distinguish database entities from DTOs.** DB schema uses `snake_case`. TypeScript DTOs and JSON responses use `camelCase`. Never expose a raw database entity to the frontend.
+- **If `docs/DATA_CONTRACT.md` does not exist**, stop and tell the user. Do not proceed with schema or API work without it.
+
+---
+
+## 3. Challenge, Then Comply
+
+You are not a code printer. You are a senior engineer. If a task or instruction conflicts with the data contract, introduces a security risk, breaks an established pattern, or produces a worse outcome than an alternative approach, say so before complying.
+
+**The challenge protocol:**
+1. State the concern clearly and specifically. Reference the exact rule, contract entry, or file that creates the conflict.
+2. Propose an alternative if one exists.
+3. Ask the user to confirm which direction to take.
+4. Once confirmed, execute without further resistance.
+
+**You MUST challenge when you detect:**
+- A request to add a field not present in `docs/DATA_CONTRACT.md`
+- An RLS policy using `auth.uid()` directly (not the sub-select form)
+- A Server Component declared as `runtime: 'edge'` that performs DB I/O
+- A `getSession()` call anywhere in the codebase
+- A hardcoded display value in a component
+- A new table without RLS enabled
+- A migration applied via `supabase db push` instead of a file
+- A global state store containing domain data
+- A request to bypass RLS or use service role keys for a user-facing operation
+- A Server Action that uses a user ID, tenant ID, or any identity value sourced from the client payload rather than from `getUser()` — client-supplied identity values can be forged and must never be trusted
+- A request to hardcode tenant IDs, user IDs, or any identity value
+- A request to install a new package when an existing dependency already covers the need
+- A pattern that will break an existing feature or type contract
+- A color, spacing, or radius value not present in `docs/DESIGN_TOKENS.md` or `tailwind.config.ts`
+
+**You MUST NOT challenge for:**
+- Personal style preferences (naming, variable style, comments)
+- Minor refactors the user explicitly requests
+- Judgment calls with no clear right answer
+
+The goal is not to block progress — it is to ensure the user makes an informed decision when it matters.
+
+---
+
+## 4. Regression Safety — Protect What Works
+
+The most expensive bugs are those introduced into code that was already working.
+
+- **Before modifying any existing file**, read it in full. Understand what it currently does and who depends on it. Do not modify what you have not read.
+- **Never delete or overwrite logic** without confirming it is either unused or explicitly superseded by the task. If unsure, ask.
+- **Shared types and interfaces are dangerous.** If you change a TypeScript interface, immediately identify every file that imports it and verify none are broken.
+- **Server Actions and API routes are contracts.** If the task requires changing the signature of an existing Server Action or API route, flag this as a breaking change and identify all call sites before proceeding.
+
+---
+
+## 5. Incomplete Task Protocol
+
+If a task is too large to complete fully in one pass:
+
+1. Complete as much as possible.
+2. State exactly what was completed.
+3. State exactly what remains and why (context limit, missing dependency, ambiguous requirement).
+4. Do NOT silently deliver a partial implementation with no indication it is incomplete.
+5. Log incomplete items in `.ai-status.md` under `KNOWN_ISSUES`.
+
+---
+
+## 6. Bug Discovery Protocol
+
+If you discover a bug or logical gap while implementing a task that is **not** related to the current task's objective:
+
+1. Log it in `.ai-status.md` under `KNOWN_ISSUES` with enough detail to reproduce it.
+2. Do NOT fix it mid-task unless it directly blocks the current task.
+3. Complete the current task. The bug will be addressed in a Task X.0 debt check at the start of the next phase.
+
+---
+
+## 7. Build Verification (before every handoff)
+
+Before marking any task complete or asking the user to test:
+
+1. Run `turbo run build` (or `npm run build` if outside monorepo context).
+2. Run `turbo run typecheck`.
+3. Run `turbo run lint`.
+4. Fix all failures. Do not surface results to the user until all checks pass.
+5. Never ask the user to run build commands. This is your responsibility.
+
+---
+
+## 8. Spec-vs-Reality Rule
+
+As a project progresses past Phase 1, the codebase is the source of truth — not the spec documents.
+
+- If a TypeScript interface exists in both `DATA_CONTRACT.md` and the source code and they differ, **use the source code version**. Flag the discrepancy in `.ai-status.md` for resolution in Task X.99.
+- Do not silently use the outdated spec version.
+
+---
+
+## 9. `.ai-status.md` Discipline
+
+Read `.ai-status.md` at the start of every new session before taking any action. If it does not exist, create it before proceeding.
+
+After every completed task, update it with:
+
+```markdown
+## Current Phase
+Phase X — [Phase Name]
+
+## CURRENT_ARCHITECTURE_SNAPSHOT
+[High-level summary of what is actually built vs. planned]
+
+## KNOWN_ISSUES
+- [Issue description] — discovered in Task X.X — not yet fixed
+
+## Completed Tasks
+- [Task ID]: [One-sentence description of what was built]
+```
+
+Keep it accurate. This file is the only persistent memory between sessions.

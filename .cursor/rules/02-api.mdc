@@ -1,0 +1,143 @@
+---
+description: API routes, Server Actions, DTOs, and runtime declarations. Auto-attached for any API route or server action file.
+globs: ["**/app/api/**", "**/actions/**", "**/actions.ts", "**/route.ts"]
+alwaysApply: false
+---
+
+# API & Server Action Rules
+
+## Runtime Declaration (required on every route)
+
+```typescript
+// Every API route and Server Action file must declare runtime at the top.
+export const runtime = 'nodejs'; // Default. Required for any Supabase/DB access.
+export const runtime = 'edge';   // Only when: zero DB I/O, benefits from edge distribution.
+```
+
+A route with database access declared as `edge` is a **blocking error**. Prisma TCP and Supabase direct connections are incompatible with the Edge Runtime.
+
+## Supabase Edge Function Flag
+
+If a use case requires server-side logic triggered by a database event, or requires Supabase internals (`pg_net`, `pg_cron`, DB webhooks), it MUST be a Supabase Edge Function, not a Vercel API route. Flag these in the contract:
+
+```typescript
+// runtime: supabase-edge-function
+// Reason: triggered by INSERT webhook on messages table; requires pg_net.
+```
+
+## Zod Validation (mandatory on all write operations)
+
+Every `POST`, `PUT`, and `PATCH` request body MUST be validated with Zod before any business logic runs.
+
+```typescript
+import { z } from 'zod';
+
+const CreateProjectSchema = z.object({
+  name: z.string().min(2).max(100),
+  slug: z.string().regex(/^[a-z0-9-]+$/),
+  tierLevel: z.enum(['free', 'pro', 'enterprise']),
+});
+
+// Cross-field validation uses .superRefine() — not .refine()
+const CloseOpportunitySchema = z.object({
+  stage: z.enum(['open', 'closed_won', 'closed_lost']),
+  closeReason: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.stage === 'closed_won' && !data.closeReason) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'closeReason is required when stage is closed_won',
+      path: ['closeReason'],
+    });
+  }
+});
+```
+
+**Cross-field conditional validation MUST use `.superRefine()`** on the parent object. Field-level `.refine()` cannot access sibling values and is FORBIDDEN for cross-field rules.
+
+## Unauthenticated Guard (mandatory in every Server Action)
+
+Every Server Action MUST call `getUser()` and handle the null case with a typed return — never throw. Throwing an unhandled error from a Server Action surfaces a raw error boundary to the user; the typed result contract must be maintained across all code paths.
+
+```typescript
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return { success: false, error: 'Unauthenticated' };
+```
+
+This guard MUST appear before any database operation or business logic. There is no circumstance in which a Server Action proceeds without a verified user.
+
+## Never Trust Client-Supplied Identity
+
+A Server Action MUST NEVER use a user ID, tenant ID, or any identity value sourced from the client payload to identify the acting user. Always derive identity server-side from `getUser()`.
+
+```typescript
+// ❌ FORBIDDEN — trusts a value the client can forge
+export async function updateProfile(payload: { userId: string; name: string }) {
+  await supabase.from('profiles').update({ name: payload.name }).eq('id', payload.userId);
+}
+
+// ✅ REQUIRED — identity derived from the verified session
+export async function updateProfile(payload: { name: string }) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Unauthenticated' };
+  await supabase.from('profiles').update({ name: payload.name }).eq('id', user.id);
+}
+```
+
+This applies equally to `tenant_id`, `org_id`, and any other scoping identity. If the operation requires a tenant context, read it from the verified user's domain record — never from the request body.
+
+## DTO Rules
+
+- Strip all sensitive fields before returning: `password_hash`, `stripe_customer_id`, `internal_notes`, service-role tokens.
+- Flatten nested DB objects where it simplifies the frontend (e.g. combine `first_name` + `last_name` → `fullName`).
+- All DTO field names use `camelCase`.
+- Every DTO field must map 1:1 to a field in `DATA_CONTRACT.md`. No invented fields.
+
+## Environment Variables
+
+Any env var consumed by an API route MUST be declared in Vercel Dashboard → Project Settings → Environment Variables. Treat the Data Contract's env var list as the authoritative checklist. Never access `process.env` without a corresponding Vercel declaration.
+
+## Server Action Mutation Protocol
+
+Every Server Action that writes data MUST:
+
+1. Validate the input payload with Zod before any DB operation.
+2. Call `getUser()` and return `{ success: false, error: 'Unauthenticated' }` if the user is null — never trust client-supplied user IDs.
+3. Derive all identity values (user ID, tenant ID) from the verified session — never from the request payload.
+4. Use `(SELECT auth.uid())` in RLS predicates to identify the requesting user at the database level.
+5. Call `revalidatePath(path)` or `revalidateTag(tag)` after a successful write to invalidate the affected Vercel cache. The path must match the actual route consuming this data, as declared in `docs/DATA_CONTRACT.md`'s API Route Registry.
+6. Return a typed result object (`{ success: true, data }` or `{ success: false, error: string }`) — never throw raw errors to the client.
+
+```typescript
+'use server';
+
+export async function updateProfile(payload: unknown) {
+  const validated = UpdateProfileSchema.safeParse(payload);
+  if (!validated.success) {
+    return { success: false, error: validated.error.flatten() };
+  }
+
+  const supabase = createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Unauthenticated' };
+
+  // user.id comes from the verified session — never from payload
+  const { error } = await supabase
+    .from('profiles')
+    .update({ name: validated.data.name })
+    .eq('id', user.id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath('/settings/profile'); // matches the route in DATA_CONTRACT.md
+  return { success: true };
+}
+```
+
+## Secrets Placement
+
+| Secret type | Where it lives |
+|---|---|
+| Consumed by Next.js Server Actions / API Routes | Vercel Environment Variables |
+| Consumed by Supabase Edge Functions or pg functions | Supabase Vault + Vercel |
+| Never in `.ai-status.md`, never in chat, never committed | All secrets |

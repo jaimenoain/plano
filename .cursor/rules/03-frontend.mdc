@@ -1,0 +1,161 @@
+---
+description: Frontend component rules, data binding, state management, and UI constraints. Auto-attached for any TSX component file.
+globs: ["**/*.tsx", "**/*.jsx", "**/components/**", "**/app/**/*.tsx"]
+alwaysApply: false
+---
+
+# Frontend Rules
+
+## The "Real or Skeleton" Mandate (no exceptions)
+
+Every value rendered in a component comes from exactly one of two sources:
+
+1. **A real DTO field** — bound explicitly: `Component ← Mapped to → DTO.Field`
+2. **A Shadcn/UI `<Skeleton>`** — shown during loading state
+
+There is no third option. You are FORBIDDEN from rendering any hardcoded display value including but not limited to: user names, email addresses, avatar initials, record titles, counts, dates, or sample list items — anywhere, in any component, in any state. If a DTO field does not yet exist for a required UI element, annotate it as `[CONTRACT GAP — no source field defined]` and do not substitute a placeholder.
+
+## Contract-Driven UI
+
+Before designing or building the component tree for any route:
+
+1. List every DTO the route requires.
+2. Cross-reference each one against `docs/DATA_CONTRACT.md`.
+3. If a required DTO does not exist in the contract, **halt** and annotate: `[CONTRACT GAP — DTO undefined: <DTOName> not in DATA_CONTRACT.md]`.
+4. Do not build the component tree until the gap is resolved.
+
+Every dynamic prop in every component MUST trace back to a named field in a DTO.
+
+## Styling vs Structure — The Core Distinction
+
+There are two categories of Tailwind utility, and the rules for each are different:
+
+**Visual tokens** govern the aesthetic surface of a component — how it looks. This includes colour, typography, spacing (padding/gap/margin values), border radius, and shadow. These are strictly governed by `docs/DESIGN_TOKENS.md` and `docs/COMPONENT_SPEC.md`. You must never invent or improvise a visual token value.
+
+**Structural utilities** govern invisible spatial logic — how components are positioned, sized, and arranged on the page. This includes display mode (`flex`, `grid`, `inline-flex`), alignment (`items-center`, `justify-between`), dimensions (`w-full`, `max-w-md`, `min-h-screen`, `h-screen`), positioning (`relative`, `absolute`, `fixed`, `sticky`), overflow (`overflow-hidden`, `overflow-y-auto`), and responsive breakpoints (`sm:`, `md:`, `lg:`).
+
+**Structural utilities are unrestricted.** They are not design tokens and do not appear in `DESIGN_TOKENS.md` or `COMPONENT_SPEC.md`. You are expected and required to use them freely to compose well-architected page layouts, centre content, build responsive grids, and create proper component hierarchies. A page that has correct visual tokens but no structural composition (no flex containers, no centring, no max-width constraints) is a layout bug.
+
+**The line between them:** if a Tailwind class controls what something looks like (colour, size of text, rounding, shadow, internal padding), it is a visual token — use only the defined scale. If it controls where something sits or how its children are arranged, it is structural — use your full engineering judgment.
+
+## Tailwind & Design Token Rules
+
+All **visual** values come from `tailwind.config.ts` design tokens. The canonical token definitions are in `docs/DESIGN_TOKENS.md` — this is the authoritative reference for all color aliases, typography scale, spacing scale, border radius scale, and shadow values. The following are **hard rules**:
+
+| Constraint | Rule |
+|---|---|
+| Border radius | Token scale only — never `rounded-[Xpx]` |
+| Spacing | Token scale only — never `p-[14px]` or `mt-[6px]` |
+| Typography | Token scale only — never `text-[18px]` |
+| Colors | Token aliases only — never `bg-blue-500` or raw hex |
+| Interactive states | Must implement `hover:`, `focus-visible:`, and `disabled:` variants |
+| Inline styles | `style={{}}` is FORBIDDEN for any value expressible as Tailwind |
+| Typography application | Follow the matrix in `docs/DESIGN_TOKENS.md` §9 — the size/weight/letter-spacing combination is specified per UI context (page title, card title, label, badge, etc.) |
+| Component token assembly | Follow `docs/COMPONENT_SPEC.md` — token combinations for named component types are pre-specified and must not be derived independently |
+
+If a required **visual** token (colour, spacing value, radius, shadow, or typography step) is not present in `docs/DESIGN_TOKENS.md` or `tailwind.config.ts`, flag it as a design gap — do not guess or invent a value. This rule does not apply to structural utilities — you never need permission to use `flex`, `grid`, `items-center`, `max-w-lg`, or any other layout class.
+
+Use only Shadcn/UI components. "Artisanal" custom components that duplicate existing Shadcn primitives are forbidden.
+
+## Component Assembly Rules
+
+`docs/COMPONENT_SPEC.md` is the authoritative reference for how tokens are assembled into components. Before building any UI component, read the relevant entry in COMPONENT_SPEC.md and implement it exactly — do not derive token combinations from first principles.
+
+If you are building a component type that exists in COMPONENT_SPEC.md (Card, Button, Input, Badge, Table, Page layout, Heading hierarchy, Empty state, Loading skeleton), you are required to match its exact **visual** token assembly: background, border, radius, shadow, padding, gap, and typography — all specified, all followed. Deviating from a COMPONENT_SPEC.md entry is a spec defect, equivalent to using an arbitrary Tailwind value.
+
+COMPONENT_SPEC.md entries also include a **Layout Composition** section that describes the structural arrangement of each component — flex direction, alignment, centering, container widths, and responsive behaviour. Use the Layout Composition sections as reference patterns, not binding constraints. Where a specified layout conflicts with standard ShadCN/Radix conventions or produces an obviously wrong structure for the component type, prefer the conventional pattern and treat the spec entry as a starting point. Where a layout composition section does not prescribe a specific structural approach for a sub-element, use your engineering judgment with standard Tailwind structural utilities.
+
+If a component type is not covered in COMPONENT_SPEC.md, derive its **visual** token assembly from the semantic colour usage guide in `docs/DESIGN_TOKENS.md` §10 and the typography application matrix in §9. Do not invent visual token combinations that aren't grounded in either document. You remain fully responsible for composing the structural layout of unlisted components using standard Tailwind utilities.
+
+## Design Pre-flight (required before building any page or component)
+
+Before writing a single line of JSX, answer these questions in a code commentat the top of the file. Do not skip this step.
+
+1. **Content width**: Should this page's content fill the card, or be constrainedto a narrower max-width? Settings and management pages with forms or listsshould use `max-w-2xl` on the content container — not full card width. Datatables and dashboards may use full width. If in doubt, constrain.
+
+2. **Action density**: Are there repeated actions on each row (edit, delete,reorder)? If yes, use icon-only buttons (`size="icon"` variant) with`aria-label`. Text button labels ("Up", "Down", "Delete") are only appropriatewhen the action appears once on the page, not in a repeated list context.
+
+3. **Destructive action visibility**: Does this component contain an irreversibleaction (delete, remove, revoke)? If yes, it must be hover-revealed using`opacity-0 group-hover:opacity-100` on the parent row with `group` on thecontainer. Destructive actions must never be persistently visible at the samevisual weight as primary actions.
+
+4. **Input width discipline**: Every input's width should reflect the expectedcontent length. A "label" or "name" field is `max-w-sm`. A URL field is`max-w-lg`. A full-card-width input is only appropriate when the contentgenuinely benefits from maximum width (e.g. a rich text body). Stretchinginputs to fill available space is a layout bug.
+
+5. **Status signals in lists**: If a list item has a status (e.g. "default","active", "pending"), use a Badge component — but place it inline with thelabel (same row, trailing), not on a separate line or in a separate column.A floating, disconnected badge signals a layout decision was deferred.
+
+## State Management Rules
+
+- **Server state:** React Query for all caching and synchronisation. Never fetch inside `useEffect` for data that belongs in React Query.
+- **URL-first state:** Filters, sorts, pagination, and view toggles MUST live in URL Search Parameters. These states must be bookmarkable and shareable.
+- **Global state ban:** Zustand, Redux, and React Context are FORBIDDEN for domain data. Use them only for `theme` and `sidebarOpen`.
+
+## Finite State Machine (required for every component)
+
+Every component that fetches or mutates data MUST explicitly implement all non-ideal states:
+
+| State | Implementation |
+|---|---|
+| `loading` | Shadcn `<Skeleton>` wrappers — sized to match real content |
+| `pending` | Submit button disabled + loading indicator during in-flight Server Action — prevents double-submit |
+| `error` | Inline error message for field errors; `<Toast>` for action errors |
+| `empty` | An explicit empty state — never a blank screen |
+| `success` | Post-mutation confirmation (toast or redirect) |
+| `optimistic` | Immediate UI update before server confirms (where UX warrants it) |
+
+Skipping any state is a spec defect.
+
+## Supabase Realtime Components
+
+When a component subscribes to Supabase Realtime:
+
+- The component MUST be a Client Component.
+- The subscription MUST be established inside `useEffect` and MUST be torn down (unsubscribed) on unmount.
+- The containing route MUST be declared `runtime: nodejs` — Realtime WebSocket connections fail silently on Edge Runtime.
+- This pattern bypasses Next.js caching entirely. Do not call `revalidatePath` or `revalidateTag` for Realtime data flows.
+
+```typescript
+useEffect(() => {
+  const channel = supabase .channel('my-channel') .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' },   (payload) => setMessages(prev => [...prev, payload.new as Message])) .subscribe();
+
+  return () => { supabase.removeChannel(channel); }; // ← teardown is mandatory
+}, []);
+```
+
+## Component File Structure
+
+```
+app/
+  (marketing)/          # Public layout — no auth required page.tsx layout.tsx
+  (app)/                # Authenticated layout — protected by middleware dashboard/   page.tsx          # Server Component — fetches data   _components/      # Route-local components (underscore = private)     DashboardCard.tsx
+components/
+  ui/                   # Shadcn/UI primitives (auto-generated — do not edit)
+  [FeatureName]/        # Shared feature components
+```
+
+## Server vs Client Component Decision
+
+Default to **Server Components**. Reach for `'use client'` only when the component needs:
+- `useState` or `useReducer`
+- `useEffect`
+- Browser APIs
+- Event listeners
+- Supabase Realtime subscriptions
+
+A Server Component that contains a Client Component is fine. The reverse (Client Component importing a Server Component) is not — it downgrades the Server Component to client-side rendering.
+
+## Visual Consistency Checklist (for every UI task)
+
+Before marking any frontend task complete, verify every generated component satisfies:
+
+- [ ] Border radius uses only token scale values from `docs/DESIGN_TOKENS.md`
+- [ ] All spacing uses token scale (no arbitrary values)
+- [ ] All typography uses token scale
+- [ ] All colors reference `tailwind.config.ts` token aliases
+- [ ] Every interactive element implements `hover:`, `focus-visible:`, `disabled:` variants
+- [ ] No `style={{}}` props for Tailwind-expressible values
+- [ ] All dynamic values trace to named DTO fields (no hardcoded display data)
+- [ ] All non-ideal states (loading, pending, error, empty) are explicitly implemented
+- [ ] Submit buttons are disabled and show a loading indicator during in-flight mutations
+- [ ] Any component type defined in `docs/COMPONENT_SPEC.md` matches its specified token assembly exactly (background, shadow, radius, padding, gap)
+- [ ] Typography matches the application matrix in `docs/DESIGN_TOKENS.md` §9 for its UI context — page titles, section headings, card titles, body, labels, and badges are visually distinct levels
+- [ ] Surface tokens are applied per the usage guide in `docs/DESIGN_TOKENS.md` §10 — `surface-default` is page background only; `surface-card` is used for all contained components; `surface-muted` is secondary panels and inputs only
+- [ ] No two sibling cards or panels use different shadow levels or padding values — visual rhythm is consistent within a page
+- [ ] Page and component layouts use appropriate structural utilities (flex, grid, centering, max-width, responsive breakpoints) — correct tokens on a flat, unstructured page is a layout bug

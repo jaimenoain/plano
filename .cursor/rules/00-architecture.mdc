@@ -1,0 +1,76 @@
+---
+description: Core stack, monorepo structure, and forbidden patterns. Always active.
+alwaysApply: true
+---
+
+<!-- Companion rules: see also 06-agent-behaviour.mdc (alwaysApply — agent conduct,
+     challenge protocol, build verification, .ai-status.md discipline). All alwaysApply
+     files are loaded on every task. Combined token cost is intentional and reviewed. -->
+
+# Architecture Rules
+
+## Stack (non-negotiable — no substitutions permitted)
+
+- **Monorepo:** Turborepo (`apps/web`, `apps/mobile`, `packages/supabase`)
+- **Web:** Next.js 14+ App Router + TypeScript strict mode
+- **Mobile:** React Native + Expo (iOS & Android) via EAS
+- **Backend/Auth/DB:** Supabase (Postgres + Auth + Storage + Edge Functions)
+- **Hosting:** Vercel (web), EAS (mobile)
+- **Styling:** Tailwind CSS + Shadcn/UI (Radix primitives) — no raw CSS, no arbitrary values
+- **Data fetching:** React Query (client cache) + Next.js Server Actions (mutations)
+- **Validation:** Zod — always, for all API inputs and form payloads
+- **Email:** Resend (all transactional and auth emails)
+- **Shared types:** `packages/supabase/src/database.types.ts` (auto-generated; never hand-edit)
+
+## Forbidden Patterns (hard rules — never violate)
+
+- **No mock data, no dummy auth states.** Every feature connects to real Supabase from day one.
+- **No raw CSS.** No `style={{}}` props for values expressible as Tailwind utilities. No arbitrary `p-[14px]` values.
+- **No raw Tailwind palette colors** (e.g. `bg-blue-500`). Use only design token aliases from `tailwind.config.ts` (e.g. `bg-brand-primary`). Token values are defined in `docs/DESIGN_TOKENS.md` — if a token is not present there, flag it rather than guessing.
+- **No global state for domain data.** Zustand/Redux/Context are strictly reserved for ephemeral UI preferences (theme, sidebar open). Server state lives in React Query.
+- **No installing npm packages** without explicit user permission. Use only what is in `package.json`.
+- **No `console.log`** in production code.
+- **No direct schema changes** via Supabase Dashboard or `supabase db push`. All schema changes are migration files only.
+- **No `getSession()`** anywhere. Always `getUser()`. See `04-auth.mdc`.
+
+## State Management Rules
+
+- **Server state:** React Query for all caching and synchronisation.
+- **URL-first state:** URL Search Parameters are the primary driver for filters, sorts, pagination, and view toggles. If a UI state can be bookmarked, it belongs in the URL.
+- **Global state:** Only for `theme` and `sidebarOpen`. Nothing else.
+
+## Vercel Runtime Declaration
+
+Every Server Component, API Route, and Server Action MUST declare its runtime:
+
+```typescript
+export const runtime = 'nodejs'; // default — required for Prisma/Supabase TCP connections
+// or
+export const runtime = 'edge'; // only when: no DB I/O, benefits from global distribution
+```
+
+Declaring `edge` on any route that performs database I/O is a **blocking error**.
+
+## Caching Strategy
+
+Every data-fetching route MUST declare one of:
+
+| Strategy | When to use | Constraints |
+|---|---|---|
+| `cache: 'force-cache'` | Truly immutable data only | — |
+| `revalidate: N` | Infrequently changing data — specify N in seconds | — |
+| `cache: 'no-store'` | User-specific or real-time data | — |
+| `revalidatePath()` / `revalidateTag()` | Triggered from Server Action after every mutation | — |
+| `realtime: supabase-channel` | Live push via Supabase Realtime | **Client Components only. Route MUST be `runtime: nodejs`. Bypasses Next.js cache entirely — never call `revalidatePath`/`revalidateTag` for Realtime data flows. Subscription MUST be torn down on unmount.** See `03-frontend.mdc`. |
+
+Any authenticated layout MUST use `cache: 'no-store'`. Caching authenticated layouts is a critical security violation.
+
+## Memory Persistence
+
+`.ai-status.md` in the repo root is the single source of truth across sessions. After every task:
+
+1. Update `CURRENT_ARCHITECTURE_SNAPSHOT` with what was built.
+2. Log any bugs or loose ends in `KNOWN_ISSUES`.
+3. Never fix an unrelated bug mid-task — log it, finish the task.
+
+Read `.ai-status.md` at the start of every new session before doing anything else.

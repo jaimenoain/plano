@@ -1,0 +1,199 @@
+---
+description: Database schema, RLS, migrations, and naming conventions. Auto-attached for any file under supabase/ or when working on schema-related tasks.
+globs: ["supabase/**", "**/migrations/**", "**/schema*"]
+alwaysApply: false
+---
+
+# Database Rules
+
+## The Migration-as-Code Mandate
+
+ALL schema changes MUST be a new, timestamped SQL file in `supabase/migrations/`.
+
+```
+supabase/migrations/20240901120000_add_user_profiles.sql
+```
+
+- **Never** apply schema changes via the Supabase Dashboard directly.
+- **Never** run `supabase db push` autonomously.
+- **Write the migration file. Stop. The human operator applies it via the Supabase SQL Editor before UAT.**
+- If a subsequent task in the same Cursor batch only writes code files and doesn't query the live DB, the migration application may be deferred — annotate it as `[DEFERRABLE]`.
+- Migrations must be applied in chronological timestamp order when batching.
+
+## Naming Conventions
+
+| Layer | Convention | Example |
+|---|---|---|
+| DB tables & columns | `snake_case` | `user_profiles`, `created_at` |
+| Enums | `snake_case` | `user_role`, `subscription_status` |
+| TypeScript DTOs | `camelCase` | `UserProfileDTO`, `createdAt` |
+| Mapping comments | Required when computed | `fullName: string; // first_name + ' ' + last_name` |
+
+Never expose `password_hash`, `stripe_customer_id`, or any internal field in a DTO.
+
+## RLS: The Non-Negotiable Rules
+
+### 1. Default Deny
+Every table containing user or business data MUST have RLS enabled with no default-permissive policy. Access is denied unless an explicit policy grants it.
+
+```sql
+ALTER TABLE your_table ENABLE ROW LEVEL SECURITY;
+-- Do NOT add: ALTER TABLE your_table FORCE ROW LEVEL SECURITY;
+-- RLS is already enforced for non-superusers once enabled.
+```
+
+### 2. Predicate Distinction
+- `USING` — filters rows on **read** (SELECT, UPDATE row visibility, DELETE)
+- `WITH CHECK` — validates rows on **write** (INSERT, UPDATE new value)
+- Every write policy (INSERT, UPDATE) MUST declare both clauses.
+
+### 3. Optimised Auth Function Form (MANDATORY — no exceptions)
+
+```sql
+-- ❌ FORBIDDEN: re-evaluates auth.uid() on every row scanned
+CREATE POLICY "user_select" ON profiles
+  FOR SELECT USING (user_id = auth.uid());
+
+-- ✅ REQUIRED: evaluated once per query
+CREATE POLICY "user_select" ON profiles
+  FOR SELECT USING (user_id = (SELECT auth.uid()));
+```
+
+This applies to **every** RLS policy in the project without exception. A policy using the direct form is a performance bug that will degrade under load.
+
+### 4. RLS Completeness Checklist (run before writing any migration)
+
+Before writing a migration that creates or modifies a table, answer these:
+
+1. List every table this feature touches.
+2. For each table, list every operation (INSERT, SELECT, UPDATE, DELETE) the feature performs.
+3. Confirm a `CREATE POLICY` statement exists for every operation in that list.
+4. Every predicate uses `(SELECT auth.uid())`, never `auth.uid()`.
+5. Every write policy declares both `USING` and `WITH CHECK`.
+
+A missing policy for any operation the app performs is a **blocking error** — it causes silent permission denials for authenticated users at runtime.
+
+### 5. Index Everything in an RLS Predicate
+
+Any column referenced in an RLS predicate (typically `user_id`, `tenant_id`, `org_id`) MUST have a database index. An unindexed RLS column causes full table scans on every query.
+
+```sql
+CREATE INDEX idx_profiles_user_id ON profiles(user_id);
+CREATE INDEX idx_documents_tenant_id ON documents(tenant_id);
+```
+
+Note: primary key columns (`id`) are always indexed automatically and do not require an explicit index declaration.
+
+### 6. Tenant Isolation (mandatory for all tenant-scoped tables)
+
+For any table with a `tenant_id` column, the RLS policy predicate MUST include the tenant check. A `user_id` check alone is insufficient for multi-tenant data — it allows a user to access rows belonging to a different tenant.
+
+```sql
+-- ❌ INSUFFICIENT for multi-tenant data
+CREATE POLICY "user_select" ON documents
+  FOR SELECT USING (user_id = (SELECT auth.uid()));
+
+-- ✅ REQUIRED for tenant-scoped tables
+CREATE POLICY "tenant_select" ON documents
+  FOR SELECT USING (
+    tenant_id = (
+      SELECT tenant_id FROM public.users WHERE id = (SELECT auth.uid())
+    )
+  );
+```
+
+The sub-query joining through `public.users` is the canonical pattern and assumes each user belongs to exactly one tenant. **If the data model supports multi-tenant membership** (a user belonging to more than one tenant simultaneously, e.g. via a `tenant_memberships` junction table), this pattern is insufficient — it will only resolve the user's primary tenant and silently deny access to other tenants they are members of. In that case, replace with a membership check:
+
+```sql
+-- ✅ REQUIRED for multi-tenant membership models
+CREATE POLICY "tenant_member_select" ON documents
+  FOR SELECT USING (
+    tenant_id IN (
+      SELECT tenant_id FROM public.tenant_memberships
+      WHERE user_id = (SELECT auth.uid())
+    )
+  );
+```
+
+Check `docs/DATA_CONTRACT.md` to determine which model this project uses before writing tenant RLS policies. If the contract is silent on this, stop and ask — do not assume.
+
+If the tenant relationship is resolved differently in `docs/DATA_CONTRACT.md`, follow the contract — but the tenant check is never optional.
+
+### 7. Policy Content Must Come From DATA_CONTRACT.md — Not Inference
+
+When writing RLS policies for a migration, you MUST locate the `### RLS: <table_name>` block in `docs/DATA_CONTRACT.md` for each table and implement the exact predicates defined there. Do NOT infer or construct predicates from the schema alone — a policy that looks reasonable but differs from the contract is a bug.
+
+If a table in this migration has no `### RLS:` block in the contract, **STOP** — do not write a placeholder policy. Flag it as a **Contract Gap** and do not proceed with the migration until the contract is updated.
+
+The RLS Completeness Checklist in Rule 4 confirms *that* policies exist. This rule governs *what* they contain. Both checks are required.
+
+### 8. RLS Smoke Test (run after every migration containing new policies)
+
+After the migration is applied, verify each new policy passes both checks in the Supabase SQL Editor before marking the task complete.
+
+**Positive test** — confirm an owner can read their own row:
+
+```sql
+SET LOCAL request.jwt.claims = '{"sub":"<real-user-uuid>"}';
+SELECT * FROM <table> WHERE <owner_column> = '<real-user-uuid>';
+-- Expected: row(s) returned
+```
+
+**Negative test** — confirm a different user cannot read that row:
+
+```sql
+SET LOCAL request.jwt.claims = '{"sub":"<different-user-uuid>"}';
+SELECT * FROM <table> WHERE <owner_column> = '<real-user-uuid>';
+-- Expected: 0 rows returned (NOT an error — silent denial is correct behaviour)
+```
+
+A passing `turbo run build` does **NOT** verify RLS. These two tests are the only build-time check that catches silent permission denials for authenticated users.
+
+### 9. RLS Block Navigation in DATA_CONTRACT.md
+
+RLS policies in `docs/DATA_CONTRACT.md` are located under headers in the exact format `### RLS: <table_name>`. Navigate directly to these blocks — do not scan the full domain section. If the header format differs, the contract has not been updated to the current standard; flag the discrepancy before proceeding.
+
+## DTO/Entity Separation
+
+Database entities represent raw storage. DTOs represent the exact view model the frontend consumes. They are never the same object.
+
+```typescript
+// DB entity — never sent to frontend directly
+interface UserRecord {
+  id: string;
+  first_name: string;
+  last_name: string;
+  password_hash: string;       // NEVER in DTO
+  stripe_customer_id: string;  // NEVER in DTO
+}
+
+// DTO — the only shape the frontend receives
+interface UserDTO {
+  id: string;
+  fullName: string;            // Computed: first_name + ' ' + last_name
+  email: string;
+}
+```
+
+## Type Regeneration
+
+After any migration is applied, regenerate types:
+
+```bash
+npx supabase gen types typescript --project-id YOUR_PROJECT_ID \
+  > packages/supabase/src/database.types.ts
+```
+
+`DATA_CONTRACT.md` is the authoritative schema definition. If regenerated types conflict with the Data Contract, resolve the conflict before proceeding. The Data Contract wins.
+
+## Static Route Collision Guard
+
+For any entity that has both a dynamic route (`/[id]`) and creation flows, explicitly declare all reserved static segments that must precede the dynamic catch-all:
+
+```
+POST  /api/projects/new       ⚠️ STATIC ROUTE — must precede /[id]
+GET   /api/projects/import    ⚠️ STATIC ROUTE — must precede /[id]
+GET   /api/projects/[id]      Dynamic — resolves only after statics checked
+```
+
+Any path segment that is not a UUID (e.g. `new`, `edit`, `import`, `settings`) MUST be declared as a static route that takes precedence over the dynamic segment.
