@@ -1,0 +1,790 @@
+# Plano: Component Specification
+
+> This document gives Cursor two things: exact specifications for listed
+> components, and a reasoning foundation for everything else.
+>
+> When a component or page type is not explicitly listed here, do not
+> produce a minimal placeholder. Instead:
+> 1. Find the most structurally similar listed component and use its
+>    token assembly as the starting point.
+> 2. Use Appendix B to select the correct surface, border, and text tokens.
+> 3. Use Appendix A for all text styling decisions.
+> 4. Apply the Interaction Design Principles in full — they govern
+>    every component in this product, listed or not.
+>
+> A component derived this way will be visually consistent and
+> behaviourally intentional. That is the standard.
+
+---
+
+## How to read this document
+
+**Interaction Design Principles** (below, before components) — five
+product-specific rules covering progressive disclosure, action
+representation, width discipline, action hierarchy, and spacing rhythm.
+Read these before building anything. They apply to every component and
+every page in this product, whether listed here or not.
+
+**Component entries** (sections 1–12) — for each listed component:
+layout composition (structural arrangement), token assembly (visual
+properties), interaction design notes (behavioural decisions), and
+constraints (Always/Default rules with reasons).
+
+**Appendix A — Typography Matrix** — the authoritative reference for
+text size, weight, colour, and spacing across every UI context. When a
+component entry does not specify typography, this matrix governs.
+
+**Appendix B — Semantic Colour Guide** — a reasoning guide for choosing
+surface, border, text, and feedback tokens in any context. Use it to
+derive token choices for components and situations not explicitly covered
+in the entries above.
+
+---
+
+## Interaction Design Principles
+
+Plano is an architectural portfolio platform modelled on contemporary studio websites — OMA, BIG, Zaha Hadid Architects. Its personality is **modern, minimalist, sharp, and photographic**. The density setting is **spacious** — generous whitespace creates gallery-like breathing room. The radius direction is **sharp** — 2px default communicates precision and intentionality. Hierarchy comes from borders and whitespace, not from shadow stacking. These five principles are calibrated to that identity.
+
+### 1. Progressive Disclosure
+
+**Rule:** Primary actions (Add, Save, View) and safe secondary actions (Filter, Sort) are always visible. Destructive actions (Delete, Archive) and rarely-used secondary actions (Duplicate, Export) in list and table rows are hidden at rest and revealed on hover.
+
+**Implementation:** The row or card container carries `group`. Hidden affordances carry `opacity-0 group-hover:opacity-100 transition-opacity duration-150`. The 150ms duration is fast — Plano's personality is precise and responsive; animations should feel instantaneous, not cushioned.
+
+**Why this applies to Plano:** Architecture portfolios present curated content. A persistent Delete button next to every building card undermines the curatorial composure of the layout. Hiding destructive actions preserves the gallery-like calm and prevents accidental clicks in a photography-dense interface.
+
+**Exception:** A destructive action may be persistently visible when it is the sole action on a dedicated confirmation screen or within a modal whose entire purpose is the destructive operation.
+
+### 2. Action Representation
+
+**Rule:** Use text labels when an action appears once or twice on a screen. Use icon buttons when the action repeats across every row or card in a list or grid. Plano is spacious, not compact — text labels are affordable in single-instance contexts and preferred for clarity.
+
+**Standard icons (lucide-react):**
+- Edit: `Pencil` — aria-label: `"Edit {item name}"`
+- Delete: `Trash2` — aria-label: `"Delete {item name}"`
+- View/Detail: `ArrowUpRight` — aria-label: `"View {item name}"`
+- External link: `ExternalLink` — aria-label: `"Open {item name} in new tab"`
+- More actions: `MoreHorizontal` — aria-label: `"More actions for {item name}"`
+- Close: `X` — aria-label: `"Close"`
+- Add: `Plus` — aria-label: `"Add {item type}"`
+
+**Why this applies to Plano:** The spacious layout provides room for text labels in page-level CTAs and modal footers. But building grids, review lists, and collection tables repeat actions per row — icon-only buttons keep each row clean and let the building photography remain the dominant visual element.
+
+### 3. Input and Content Width
+
+**Rule:** Inputs are constrained by expected content length, never stretched to fill available viewport width.
+
+**Width constraints by content type:**
+- Building name, project title: `max-w-md` (28rem) — titles are typically under 60 characters
+- Short identifiers, building IDs, postcodes: `max-w-xs` (20rem)
+- Description, review body, notes: `max-w-xl` (36rem) — multi-line but not full-width
+- Numeric values (year, area, floors): `max-w-[8rem]`
+- Email, URL: `max-w-sm` (24rem)
+
+**Page-level content width:**
+- Data tables and building grids: full content-area width — density is intentional; the table or grid should use all available space within the content region
+- Settings pages, single-record forms, profile management: `max-w-2xl` (42rem) — a form stretching to 1440px is a layout decision that was never made
+- The underlying principle: an unconstrained input or form on a wide viewport is as much a defect as a wrong colour token
+
+### 4. Action Hierarchy
+
+**Rule:** At most one filled primary button per visible surface. Secondary supporting actions use ghost or outline variants. Row-level actions use icon-only ghost buttons, hover-revealed if destructive.
+
+**Maximum visible actions per surface:** 3 before overflow into a `MoreHorizontal` menu. Plano's spacious layout has room, but architectural composure requires restraint — more than three actions creates toolbar noise.
+
+**Destructive confirmation pattern by severity:**
+- Low severity (remove a tag, unlink a collection): inline confirmation — the button text changes to "Confirm?" for 3 seconds, then reverts. No modal.
+- Medium severity (delete a review, remove a building from a collection): dialog confirmation with a clear description of what will be lost.
+- High severity (delete a building with all associated data, delete account): dialog confirmation requiring the user to type the building name or "DELETE" to proceed.
+
+**Why this applies to Plano:** Buildings and their associated photography, reviews, and metadata represent significant curatorial effort. The confirmation pattern scales with the irreversibility and data loss of each action, ensuring that high-consequence deletions demand deliberate intent.
+
+### 5. Spacing Rhythm
+
+**Rule:** Consistent spacing tokens create visual grouping. Inconsistent gaps between sibling components of the same type are a visual defect — as detectable as a wrong colour, and as worth fixing.
+
+**Token assignments:**
+- `spacing-2` (8px): gap between tightly coupled elements within a component — icon and label text, label and input, badge icon and badge text
+- `spacing-4` (16px): gap between sibling elements within a component — fields within a form group, items within a card body, action buttons in a row
+- `spacing-6` (24px): gap between sibling components on a page — card to card in a grid, section heading to its content block
+- `spacing-8` (32px): internal padding of major containers — card padding, modal body padding, page content area padding
+- `spacing-12` (48px): separation between logical page sections — the gap between "Building Details" and "Reviews" sections on a building page
+- `spacing-16` (64px): major page-level vertical rhythm — top-of-page to first content block, between primary page regions
+
+**Section separation method:** `spacing-12` margin-top plus a `border-t border-border-default` divider line. Plano's flat design uses borders as the primary section separator — not extra whitespace alone, and never shadows.
+
+---
+
+## 1. Page Layout
+
+### Purpose
+The outermost structural shell that establishes page background, sidebar placement, header bar, content max-width, and content area padding. Every page in Plano is composed inside this layout.
+
+### Layout Composition
+The root element is a full-viewport flex row: `flex min-h-screen`. The sidebar is a fixed-width column on the left (`w-64 flex-shrink-0`). The main area is a flex column filling the remaining space (`flex-1 flex flex-col min-w-0`).
+
+The header bar sits at the top of the main area: `flex items-center justify-between h-16 px-8 border-b border-border-default`. It holds the page title on the left and page-level actions on the right.
+
+The content area fills below the header: `flex-1 overflow-y-auto`. Content inside it is padded with `p-8`. For pages that should not stretch to the full width (settings, forms, single-record views), the inner content block uses `max-w-2xl`. For data tables and grids, content fills the available width — no inner max-width constraint.
+
+Responsive behaviour: below `lg` (1024px), the sidebar collapses to a hamburger-triggered overlay. The content padding reduces to `p-6` at `md` and `p-4` at `sm`.
+
+### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Root | background | surface-default | bg-surface-default |
+| Sidebar | background | surface-muted | bg-surface-muted |
+| Sidebar | border-right | border-default | border-r border-border-default |
+| Sidebar | width | — | w-64 |
+| Header bar | background | surface-card | bg-surface-card |
+| Header bar | border-bottom | border-default | border-b border-border-default |
+| Header bar | height | spacing-16 | h-16 |
+| Header bar | padding-x | spacing-8 | px-8 |
+| Content area | padding | spacing-8 | p-8 |
+| Content area | background | surface-default | bg-surface-default |
+
+### Interaction Design Notes
+
+**Width constraints:** The content area itself has no max-width — it fills the space right of the sidebar. Pages that need a narrower column (settings, forms) apply `max-w-2xl mx-auto` to their own root wrapper inside the content area. Data-heavy pages (building tables, collection grids) intentionally use the full width.
+
+### Constraints
+
+**Always:** `surface-default` is applied only to the root page background — never to cards, panels, or components that sit on it. A component using `surface-default` becomes invisible against the page.
+
+**Always:** The sidebar uses `surface-muted`, not `surface-card`. The sidebar is a supporting structural element; giving it the same surface as content cards destroys the visual hierarchy.
+
+**Default:** Content area padding is `spacing-8`. Legitimate exception: a full-bleed photo gallery or map view that intentionally extends to the edges of the content region.
+
+---
+
+## 2. Card
+
+### Purpose
+The primary container surface for grouping related content — a building summary, a review, a stat block, a collection tile. Cards sit on `surface-default` and must be visually distinct from it.
+
+### Layout Composition
+Cards are `flex flex-col` containers. Internal content is separated with `gap-4`. When cards appear in a grid, the grid uses `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`.
+
+For cards containing a hero image (building cards), the image sits at the top with `aspect-[4/3] w-full object-cover rounded-t-sm` and the text content below with `p-6`.
+
+For text-only cards (stat blocks, review cards), the entire card is padded with `p-6`.
+
+### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | surface-card | bg-surface-card |
+| Container | border | border-default | border border-border-default |
+| Container | border-radius | radius-sm | rounded-sm |
+| Container | shadow | shadow-none | shadow-none |
+| Container | padding | spacing-6 | p-6 |
+| Container | gap (children) | spacing-4 | gap-4 |
+
+### Interactive States
+
+| State | Part | Property | Tailwind class |
+|---|---|---|---|
+| hover | Container | border | hover:border-border-strong |
+| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
+
+### Interaction Design Notes
+
+**Progressive disclosure:** Row-level actions (Edit, Delete) on cards in a grid are hover-revealed. The card container carries `group`. The action container (positioned `absolute top-3 right-3`) carries `opacity-0 group-hover:opacity-100 transition-opacity duration-150`.
+
+**Action representation:** Card actions use icon-only ghost buttons (`Pencil`, `Trash2`, `ArrowUpRight`) because they repeat across every card in the grid. Each button uses `h-8 w-8 p-1.5 rounded-sm` with `bg-surface-card/80 backdrop-blur-sm` to ensure visibility over photographs.
+
+### Constraints
+
+**Always:** Cards use `border border-border-default`. A card with `surface-card` but no border is invisible against `surface-default` in light mode — this is a rendering bug, not a stylistic choice.
+
+**Always:** Cards use `shadow-none` by default. Plano's hierarchy is border-driven, not shadow-driven. Use `shadow-md` only when a card needs explicit visual lift above sibling cards (e.g. a featured or pinned building).
+
+**Default:** Card border-radius is `radius-sm` (2px). The sharp aesthetic is the single most important spatial decision in Plano. Legitimate exception: none — cards are always sharp.
+
+---
+
+## 3. Button
+
+### Purpose
+The primary interactive affordance for triggering actions — submitting forms, opening modals, navigating to detail views, confirming destructive operations.
+
+### Layout Composition
+Buttons use `inline-flex items-center justify-center gap-2`. Button groups (e.g. modal footer) use `flex items-center gap-3` with the primary action last (rightmost).
+
+### Token Assembly (primary variant — base)
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | brand-primary | bg-brand-primary |
+| Container | border-radius | radius-sm | rounded-sm |
+| Container | shadow | shadow-none | shadow-none |
+
+### Variants
+
+| Variant | Part | Property | Token | Tailwind class |
+|---|---|---|---|---|
+| secondary | Container | background | brand-secondary | bg-brand-secondary |
+| secondary | Container | border | border-default | border border-border-default |
+| ghost | Container | background | transparent | bg-transparent |
+| ghost | Container | background (hover) | surface-muted | hover:bg-surface-muted |
+| destructive | Container | background | feedback-destructive | bg-feedback-destructive |
+
+### Sizes
+
+| Size | Height | Padding X | Padding Y | Tailwind classes |
+|---|---|---|---|---|
+| sm | spacing-8 | spacing-3 | spacing-1 | h-8 px-3 py-1 |
+| md | spacing-10 | spacing-4 | spacing-2 | h-10 px-4 py-2 |
+| lg | spacing-12 | spacing-6 | spacing-3 | h-12 px-6 py-3 |
+| icon-sm | spacing-8 | spacing-2 | spacing-2 | h-8 w-8 p-2 |
+| icon-md | spacing-10 | spacing-2 | spacing-2 | h-10 w-10 p-2 |
+
+### Interactive States
+
+| State | Part | Property | Tailwind class |
+|---|---|---|---|
+| hover (primary) | Container | background | hover:bg-brand-primary-hover |
+| hover (ghost) | Container | background | hover:bg-surface-muted |
+| hover (destructive) | Container | opacity | hover:opacity-90 |
+| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
+| active (primary) | Container | scale | active:scale-[0.98] |
+| disabled | Container | opacity + cursor | disabled:opacity-50 disabled:cursor-not-allowed |
+
+### Interaction Design Notes
+
+**Action representation:** Primary and secondary buttons always use text labels. Ghost icon-only buttons are reserved for repeated row/card actions. A primary button should never be icon-only — the neon accent demands a label to justify its visual weight.
+
+**Action hierarchy:** At most one primary (filled neon) button per visible surface. If two actions compete, the less important one is secondary or ghost. Destructive buttons use the destructive variant — never primary, because the neon accent must not be associated with danger.
+
+### Constraints
+
+**Always:** `brand-primary-foreground` (dark, `#171717`) is used for text on `brand-primary` buttons. The neon is a light colour — white text on it fails contrast. This is a WCAG violation if reversed.
+
+**Always:** Focus ring uses `brand-primary` at 2px offset across all button variants. No exceptions.
+
+**Default:** Button size is `md`. Use `sm` for table row actions and tight toolbar contexts. Use `lg` for page-level hero CTAs. Legitimate exception: a landing page may use a custom larger size, but it must still use `radius-sm`.
+
+---
+
+## 4. Form Field
+
+### Purpose
+A single input, textarea, or select element in isolation — the raw interactive control before it is composed with a label and helper text (see Form Structure).
+
+### Layout Composition
+Inputs are block-level: `flex w-full`. Textareas add `min-h-[120px] resize-y`. Selects use the same styling as inputs with a trailing `ChevronDown` icon.
+
+### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Input | background | surface-muted | bg-surface-muted |
+| Input | border | border-default | border border-border-default |
+| Input | border-radius | radius-sm | rounded-sm |
+| Input | shadow | shadow-none | shadow-none |
+| Input | padding-x | spacing-3 | px-3 |
+| Input | padding-y | spacing-2 | py-2 |
+| Input | height (single-line) | spacing-10 | h-10 |
+
+### Interactive States
+
+| State | Part | Property | Tailwind class |
+|---|---|---|---|
+| hover | Input | shadow | hover:shadow-sm |
+| hover | Input | border | hover:border-border-strong |
+| focus-visible | Input | border | focus-visible:border-brand-primary |
+| focus-visible | Input | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-0 |
+| disabled | Input | opacity + cursor | disabled:opacity-50 disabled:cursor-not-allowed |
+| error | Input | border | border-feedback-destructive |
+| error + focus | Input | ring | focus-visible:ring-2 focus-visible:ring-feedback-destructive |
+
+### Interaction Design Notes
+
+**Width constraints:** Inputs must never stretch to full viewport width. Apply `max-w-*` based on expected content (see Principle 3). A building name input uses `max-w-md`; a year input uses `max-w-[8rem]`. The Form Structure component (section 5) is responsible for enforcing this in context — but if a Form Field is ever used standalone, it must still be width-constrained.
+
+**Progressive disclosure:** None — inputs are always fully visible.
+
+### Constraints
+
+**Always:** Inputs use `surface-muted` background, not `surface-card`. This creates a subtle inset that differentiates the editable area from the card surface it sits on. An input with `surface-card` background on a `surface-card` panel is invisible.
+
+**Always:** Error state replaces the border colour with `feedback-destructive` and the focus ring with `feedback-destructive`. The error state must never rely on colour alone — pair it with an error message (see Form Structure).
+
+**Default:** Single-line inputs use `h-10`. Legitimate exception: compact table-inline editing inputs may use `h-8`.
+
+---
+
+## 5. Form Structure
+
+### Purpose
+The composition wrapper that assembles a label, a form field, helper text, and an error message into a single form group. This component governs vertical rhythm within forms.
+
+### Layout Composition
+Each form group is `flex flex-col gap-1.5`. The label sits above the input. Helper text sits below the input. Error text replaces helper text when validation fails — they never appear simultaneously.
+
+A form itself is `flex flex-col gap-6` — `spacing-6` between field groups. Logical sections within a form (e.g. "Location Details" vs "Building Metadata") are separated by `spacing-12` and a `border-t border-border-default pt-8` divider.
+
+Form-level actions (Submit, Cancel) sit at the bottom in `flex items-center justify-end gap-3 pt-6 border-t border-border-default`.
+
+For constrained-width forms (settings, single-record editing), the entire form wrapper uses `max-w-2xl`.
+
+### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Field group | gap (label → input → helper) | spacing-1.5 | gap-1.5 |
+| Form | gap (between field groups) | spacing-6 | gap-6 |
+| Section divider | border-top | border-default | border-t border-border-default |
+| Section divider | padding-top | spacing-8 | pt-8 |
+| Section divider | margin-top | spacing-12 | mt-12 |
+| Action row | padding-top | spacing-6 | pt-6 |
+| Action row | border-top | border-default | border-t border-border-default |
+| Action row | gap | spacing-3 | gap-3 |
+
+### Interaction Design Notes
+
+**Width constraints:** The form wrapper itself is constrained (`max-w-2xl` for full-page forms). Individual inputs within the form are further constrained by content type (see Principle 3). A form containing a "Building Name" field and a "Year Built" field should not make both inputs the same width — the name field is `max-w-md`, the year field is `max-w-[8rem]`.
+
+**Edit model:** Forms on dedicated pages (Create Building, Edit Profile) use inline editing — the page is the edit surface. Forms triggered from a list row or card (edit a review, change a building's collection assignment) use modal editing — the data returns to the list on save.
+
+### Constraints
+
+**Always:** Error text replaces helper text — they never coexist. Showing both creates ambiguity about which message applies.
+
+**Always:** The form action row uses `justify-end` — primary action (Save/Submit) is the rightmost button. This is a spatial convention that must not vary across pages.
+
+**Default:** Form section gap is `spacing-12` with a border divider. Legitimate exception: a very short form (2–3 fields, single section) omits section dividers entirely.
+
+---
+
+## 6. Badge
+
+### Purpose
+A small inline label communicating status (Published, Draft), category (Residential, Commercial), or count (3 reviews). Badges are read-only — they do not trigger actions.
+
+### Layout Composition
+Badges use `inline-flex items-center gap-1`. When badges appear as a set (e.g. building categories), the containing element uses `flex flex-wrap gap-2`.
+
+### Token Assembly (default/neutral variant)
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | surface-muted | bg-surface-muted |
+| Container | border | border-default | border border-border-default |
+| Container | border-radius | radius-sm | rounded-sm |
+| Container | padding-x | spacing-2 | px-2 |
+| Container | padding-y | spacing-0.5 | py-0.5 |
+
+### Variants
+
+| Variant | Part | Property | Token | Tailwind class |
+|---|---|---|---|---|
+| brand | Container | background | brand-secondary | bg-brand-secondary |
+| brand | Text | colour | brand-secondary-foreground | text-brand-secondary-foreground |
+| success | Container | background | feedback-success/10 | bg-feedback-success/10 |
+| success | Text | colour | feedback-success | text-feedback-success |
+| warning | Container | background | feedback-warning/10 | bg-feedback-warning/10 |
+| warning | Text | colour | feedback-warning | text-feedback-warning |
+| destructive | Container | background | feedback-destructive/10 | bg-feedback-destructive/10 |
+| destructive | Text | colour | feedback-destructive | text-feedback-destructive |
+
+### Constraints
+
+**Always:** Badges use `radius-sm` (2px), not `radius-full`. Pill-shaped badges contradict Plano's sharp aesthetic. Only avatars use `radius-full`.
+
+**Always:** Badge text uses `uppercase tracking-wide` (letter-spacing-wide). This is an intentional architectural convention — small-caps labels echo drafting notation. See the Typography Matrix for exact size and weight.
+
+**Default:** Use the neutral variant unless the badge communicates a specific system status (success, warning, destructive) or brand association. Legitimate exception: none — decorative colour on badges undermines the grayscale discipline.
+
+---
+
+## 7. Table
+
+### Purpose
+Presents structured, multi-column data — building lists, review tables, collection inventories. The table is the primary data-browsing surface in Plano.
+
+### Layout Composition
+The table sits inside a container: `w-full overflow-x-auto border border-border-default rounded-sm`. The `<table>` element uses `w-full border-collapse`. Header cells use `text-left`. Body rows are full-width. Cells use `px-4 py-3` padding.
+
+For tables with row actions, the last column is right-aligned (`text-right`) and contains the action buttons.
+
+### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | surface-card | bg-surface-card |
+| Container | border | border-default | border border-border-default |
+| Container | border-radius | radius-sm | rounded-sm |
+| Container | shadow | shadow-none | shadow-none |
+| Header row | background | surface-muted | bg-surface-muted |
+| Header row | border-bottom | border-default | border-b border-border-default |
+| Header cell | padding | spacing-4 x, spacing-3 y | px-4 py-3 |
+| Body row | border-bottom | border-default | border-b border-border-default |
+| Body cell | padding | spacing-4 x, spacing-3 y | px-4 py-3 |
+
+### Interactive States
+
+| State | Part | Property | Tailwind class |
+|---|---|---|---|
+| hover | Body row | background | hover:bg-brand-secondary |
+| selected | Body row | background | bg-brand-secondary |
+
+### Interaction Design Notes
+
+**Progressive disclosure:** Row actions (Edit, Delete, View) are hover-revealed. The `<tr>` carries `group`. The action cell contains buttons wrapped in a container with `opacity-0 group-hover:opacity-100 transition-opacity duration-150`. Exception: if the table has a single primary action per row (e.g. "View Building"), that action may be persistently visible as a text link.
+
+**Action representation:** Row actions use icon-only ghost buttons (`Pencil`, `Trash2`, `ArrowUpRight`), each `h-8 w-8`. They sit in a `flex items-center justify-end gap-1` container within the action cell.
+
+**Edit model:** Clicking a table row (outside the action cell) navigates to the detail view. Inline editing is not used in tables — the data model is too complex. Edit actions open the record in a modal or navigate to an edit page.
+
+**Empty state:** When the table has zero rows, render the Empty State component (section 10) inside the table container, replacing the `<table>` element entirely.
+
+### Constraints
+
+**Always:** Table header text uses `uppercase tracking-wide text-xs font-medium text-text-secondary`. This is the architectural drafting convention — column headers are labelling, not content.
+
+**Always:** Row hover uses `brand-secondary` (the barely-there neon tint), not `surface-muted`. This is the only place the brand accent appears in the table — it must be consistent.
+
+**Default:** Tables use `shadow-none` and rely on the border for containment. Legitimate exception: a table that sits on `surface-muted` (e.g. inside a sidebar panel) may use `shadow-md` to lift it from the muted surface.
+
+---
+
+## 8. Modal / Dialog
+
+### Purpose
+A floating overlay that captures focus for a self-contained task — creating a building, editing a review, confirming a destructive action. Modals interrupt the current flow and must be resolved before returning.
+
+### Layout Composition
+The backdrop is `fixed inset-0 bg-black/50 z-50 flex items-center justify-center`. The modal container is `flex flex-col w-full max-w-lg mx-4`. Internal structure: header (`flex items-center justify-between p-6 border-b border-border-default`), body (`p-6 overflow-y-auto`), footer (`flex items-center justify-end gap-3 p-6 border-t border-border-default`).
+
+For modals containing forms, the body scrolls independently if content exceeds `max-h-[70vh]`.
+
+### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Backdrop | background | — | bg-black/50 |
+| Container | background | surface-overlay | bg-surface-overlay |
+| Container | border | border-default | border border-border-default |
+| Container | border-radius | radius-lg | rounded-lg |
+| Container | shadow | shadow-lg | shadow-lg |
+| Header | padding | spacing-6 | p-6 |
+| Header | border-bottom | border-default | border-b border-border-default |
+| Body | padding | spacing-6 | p-6 |
+| Footer | padding | spacing-6 | p-6 |
+| Footer | border-top | border-default | border-t border-border-default |
+| Footer | gap | spacing-3 | gap-3 |
+
+### Interactive States
+
+| State | Part | Property | Tailwind class |
+|---|---|---|---|
+| — | Close button | — | See Button (ghost, icon-sm) |
+
+### Interaction Design Notes
+
+**Action representation:** The close affordance is an `X` icon button (ghost, icon-sm size) in the top-right of the header. The footer contains text-label buttons: primary action (rightmost, primary variant) and Cancel (ghost variant, leftmost).
+
+**Width constraints:** Default modal width is `max-w-lg` (32rem). For modals containing wide content (a data table, a building comparison view), use `max-w-2xl`. For narrow confirmation dialogs, use `max-w-sm`.
+
+**Edit model:** Modals are used for multi-field editing initiated from list views. Single-value edits (renaming inline) do not warrant a modal.
+
+### Constraints
+
+**Always:** Modals use `shadow-lg` — they float above all page content. Using `shadow-md` or `shadow-none` misrepresents the elevation and makes the backdrop feel disconnected from the modal.
+
+**Always:** Modals use `radius-lg` (6px). This is the one context where a slightly softer radius is permitted — the modal needs to feel like a distinct floating surface, not a sharp cut from the page. This does not extend to the buttons or inputs inside the modal, which remain `radius-sm`.
+
+**Always:** Focus is trapped within the modal. Pressing Escape closes it. These are WCAG requirements, not style choices.
+
+**Default:** Modal width is `max-w-lg`. Legitimate exception: modals displaying tabular data or side-by-side comparisons may use `max-w-2xl`.
+
+---
+
+## 9. Sidebar Navigation
+
+### Purpose
+The persistent vertical navigation panel on the left side of the layout. It provides access to all top-level sections of the application.
+
+### Layout Composition
+The sidebar is `flex flex-col h-full`. It contains a logo/brand area at the top (`p-6`), a navigation list in the middle (`flex-1 flex flex-col gap-1 px-3 py-4 overflow-y-auto`), and an optional footer area at the bottom (`p-4 border-t border-border-default`).
+
+Each nav item is `flex items-center gap-3 px-3 py-2 rounded-sm w-full text-left`. Items contain an icon (20×20, from lucide-react) and a text label.
+
+### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Sidebar container | background | surface-muted | bg-surface-muted |
+| Sidebar container | border-right | border-default | border-r border-border-default |
+| Nav item (default) | background | transparent | bg-transparent |
+| Nav item (default) | border-radius | radius-sm | rounded-sm |
+| Nav item (default) | padding | spacing-3 x, spacing-2 y | px-3 py-2 |
+| Nav item (active) | background | surface-card | bg-surface-card |
+| Nav item (active) | border | border-default | border border-border-default |
+| Active indicator | border-left | brand-primary | border-l-2 border-brand-primary |
+| Footer | border-top | border-default | border-t border-border-default |
+| Footer | padding | spacing-4 | p-4 |
+
+### Interactive States
+
+| State | Part | Property | Tailwind class |
+|---|---|---|---|
+| hover | Nav item | background | hover:bg-surface-card |
+| focus-visible | Nav item | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
+| active | Nav item | background + border | bg-surface-card border border-border-default |
+
+### Interaction Design Notes
+
+**Action representation:** Nav items always use icon + text label. The icon aids scannability; the text label is required for accessibility and for distinguishing sections with similar iconography. Icon-only collapsed sidebar is not part of Plano's design — the spacious density directive allocates room for the full sidebar.
+
+**Progressive disclosure:** All navigation items are visible at rest. No hover-revealed nav items — the sidebar is the primary wayfinding mechanism and must not hide destinations.
+
+### Constraints
+
+**Always:** The active nav item uses a `brand-primary` left border accent (2px). This is the only neon accent in the sidebar — it marks "you are here" with the product's single accent colour.
+
+**Always:** Nav item text uses `text-primary` for all states (default and active). Active vs default is distinguished by background surface and the left border accent, not by text colour. See the Typography Matrix for weight distinction (`font-weight-medium` default, `font-weight-semibold` active).
+
+**Default:** The sidebar is 256px wide (`w-64`). Legitimate exception: none — varying sidebar width across pages creates layout instability.
+
+---
+
+## 10. Empty State
+
+### Purpose
+Fills a content area when there is no data to display — an empty building list, a collection with no entries, a table with zero results. The empty state provides orientation and an optional CTA to resolve the emptiness.
+
+### Layout Composition
+The empty state is centred within its parent container: `flex flex-col items-center justify-center text-center py-16 px-8`. It contains an icon area (48×48, lucide-react icon in `text-text-disabled`), a heading, a description, and an optional primary button.
+
+Internal gap: `gap-4` between all children. The icon sits above the heading with `gap-3` between them.
+
+### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | padding-y | spacing-16 | py-16 |
+| Container | padding-x | spacing-8 | px-8 |
+| Container | gap | spacing-4 | gap-4 |
+| Icon | size | 48px | h-12 w-12 |
+| Icon | colour | text-disabled | text-text-disabled |
+| Description | max-width | — | max-w-sm |
+
+### Constraints
+
+**Always:** The description text is constrained to `max-w-sm` so it does not stretch across wide containers. Centred text wider than ~45 characters becomes difficult to read.
+
+**Default:** The CTA button uses the primary variant. Legitimate exception: if the empty state is inside a secondary context (e.g. a sidebar panel), the CTA may use the secondary variant to avoid neon accent overuse.
+
+---
+
+## 11. Loading Skeleton
+
+### Purpose
+Animated placeholder blocks that mirror the dimensions of real content, shown while data is being fetched. Skeletons prevent layout shift and communicate that content is loading.
+
+### Layout Composition
+Skeletons replicate the layout of the component they replace. A card skeleton matches the card's `flex flex-col gap-4 p-6` structure. A table skeleton uses the same column widths and row heights.
+
+Each skeleton block is a `div` with `animate-pulse rounded-sm`. Heights match the content they replace: heading blocks are `h-6`, body text blocks are `h-4`, image areas are `aspect-[4/3] w-full`.
+
+### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Skeleton block | background | surface-muted | bg-surface-muted |
+| Skeleton block | border-radius | radius-sm | rounded-sm |
+| Skeleton block | animation | — | animate-pulse |
+
+### Constraints
+
+**Always:** Skeleton blocks use `surface-muted`, not `border-default` or a custom grey. The muted surface is the designated "quiet/supporting" token — skeletons are a supporting visual element.
+
+**Always:** Skeleton blocks use `rounded-sm` to match the sharp aesthetic. Do not use `rounded-full` for skeleton lines — that creates a visual inconsistency with the sharp corners of the actual content that replaces them.
+
+**Default:** Use `animate-pulse` (Tailwind's built-in opacity animation). Legitimate exception: none — custom shimmer animations add implementation complexity without design benefit in Plano's minimal system.
+
+---
+
+## 12. Toast / Alert
+
+### Purpose
+A transient notification that communicates the result of a system action — a successful save, a validation warning, a destructive error, an informational update. Toasts appear briefly and dismiss automatically or on user action.
+
+### Layout Composition
+Toasts are positioned `fixed bottom-6 right-6 z-50` (or in a toast stack container). Each toast is `flex items-start gap-3 w-full max-w-sm p-4`. It contains a status icon (20×20), a text block (title + description in `flex flex-col gap-1`), and an optional dismiss button (`X`, ghost, icon-sm) on the right.
+
+### Token Assembly (info variant — base)
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | surface-card | bg-surface-card |
+| Container | border | border-default | border border-border-default |
+| Container | border-radius | radius-md | rounded-md |
+| Container | shadow | shadow-lg | shadow-lg |
+| Container | padding | spacing-4 | p-4 |
+| Container | gap | spacing-3 | gap-3 |
+| Container | max-width | — | max-w-sm |
+
+### Variants
+
+| Variant | Part | Property | Token | Tailwind class |
+|---|---|---|---|---|
+| success | Left border | border-left | feedback-success | border-l-4 border-feedback-success |
+| success | Icon | colour | feedback-success | text-feedback-success |
+| warning | Left border | border-left | feedback-warning | border-l-4 border-feedback-warning |
+| warning | Icon | colour | feedback-warning | text-feedback-warning |
+| destructive | Left border | border-left | feedback-destructive | border-l-4 border-feedback-destructive |
+| destructive | Icon | colour | feedback-destructive | text-feedback-destructive |
+| info | Left border | border-left | brand-primary | border-l-4 border-brand-primary |
+| info | Icon | colour | text-secondary | text-text-secondary |
+
+### Interactive States
+
+| State | Part | Property | Tailwind class |
+|---|---|---|---|
+| hover (dismiss) | Button | background | hover:bg-surface-muted |
+| focus-visible (dismiss) | Button | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
+
+### Interaction Design Notes
+
+**Action representation:** The dismiss button is an `X` icon (ghost, icon-sm). For toasts with an undo action (e.g. after a deletion), add a text button labelled "Undo" between the text block and the dismiss button.
+
+**Progressive disclosure:** All toast content is visible immediately — no hover-reveal. Toasts are transient and must communicate their message within the brief time they are visible.
+
+### Constraints
+
+**Always:** Toasts use `shadow-lg` — they float above all page content, same elevation as modals. Using a lesser shadow makes the toast appear embedded in the page rather than overlaid.
+
+**Always:** Each semantic variant has a 4px left border in the corresponding feedback colour. This coloured accent is the primary differentiator between variants — do not rely on icon alone. The left-border pattern echoes the sidebar's active indicator, creating a consistent "attention here" signal.
+
+**Always:** Toast text uses `text-primary` for the title and `text-secondary` for the description. Do not use feedback colours for toast text — the left border and icon already communicate severity. Coloured text on a white surface at `font-size-sm` can fail contrast checks.
+
+**Default:** Toasts auto-dismiss after 5 seconds. Destructive toasts with an Undo action auto-dismiss after 8 seconds to give the user time to react. Legitimate exception: error toasts that require user acknowledgment (e.g. a failed save with data loss) should persist until manually dismissed.
+
+---
+
+## Appendix A — Typography Application Matrix
+
+When a component entry does not specify typography for an element, this
+matrix takes precedence. Override it in a specific entry only with a
+documented reason.
+
+| Context | Size | Weight | Colour | Letter-spacing | Line-height |
+|---|---|---|---|---|---|
+| Page title (h1) | font-size-4xl | font-weight-bold | text-primary | letter-spacing-tight | line-height-tight |
+| Section heading (h2) | font-size-3xl | font-weight-semibold | text-primary | letter-spacing-tight | line-height-tight |
+| Card title (h3) | font-size-xl | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
+| Subsection heading (h4) | font-size-base | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
+| Body copy | font-size-base | font-weight-normal | text-primary | letter-spacing-normal | line-height-normal |
+| Supporting / secondary text | font-size-sm | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
+| Table header | font-size-xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
+| Table cell | font-size-sm | font-weight-normal | text-primary | letter-spacing-normal | line-height-normal |
+| Form label | font-size-sm | font-weight-medium | text-primary | letter-spacing-normal | line-height-normal |
+| Input placeholder | font-size-sm | font-weight-normal | text-disabled | letter-spacing-normal | line-height-normal |
+| Helper / hint text | font-size-xs | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
+| Error text | font-size-xs | font-weight-normal | feedback-destructive | letter-spacing-normal | line-height-normal |
+| Button label | font-size-sm | font-weight-medium | [variant-foreground] | letter-spacing-normal | line-height-tight |
+| Badge / tag | font-size-xs | font-weight-medium | [variant-foreground] | letter-spacing-wide | line-height-tight |
+| Nav item (default) | font-size-sm | font-weight-medium | text-primary | letter-spacing-normal | line-height-normal |
+| Nav item (active) | font-size-sm | font-weight-semibold | text-primary | letter-spacing-normal | line-height-normal |
+| Caption / timestamp | font-size-xs | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
+| Code / monospace | font-size-sm (font-mono) | font-weight-normal | text-primary | letter-spacing-normal | line-height-normal |
+| Building ID / short_id | font-size-xs (font-mono) | font-weight-normal | text-secondary | letter-spacing-wide | line-height-normal |
+| Empty state heading | font-size-lg | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
+| Empty state description | font-size-sm | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
+| Modal title | font-size-lg | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
+| Toast title | font-size-sm | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
+| Toast description | font-size-sm | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
+| Map pin label | font-size-xs | font-weight-medium | text-primary | letter-spacing-normal | line-height-tight |
+
+---
+
+## Appendix B — Semantic Colour Usage Guide
+
+A reasoning guide, not a prohibition list. When choosing tokens for a
+component not explicitly covered above, match the component's role to
+the descriptions below. The surface hierarchy creates depth; the text
+hierarchy creates emphasis. A token that misrepresents either hierarchy
+— even subtly — makes the UI feel flat or incoherent, even when
+individual components look correct in isolation.
+
+**Surface tokens**
+
+`surface-default` is the page canvas, applied once to the root layout.
+A component that shares this token with the page background becomes
+invisible against it.
+
+`surface-card` is for any contained block that groups content and sits
+on the page background: building cards, data panels, stat blocks,
+review cards, collection tiles, table containers, and modal bodies.
+In Plano's sharp/minimal design, `surface-card` is always paired with
+`border-default` — shadow is optional and discouraged (prefer
+border-only cards; use `shadow-md` only when explicit lift is needed).
+A card with `surface-card` and no border is invisible in light mode.
+
+`surface-muted` signals reduced visual prominence. Use it for areas
+that support the primary content: the sidebar background, input field
+backgrounds, table header rows, badge backgrounds, skeleton shimmer
+areas, code blocks, and filter panels. If a nested element should read
+as quieter than its parent card, `surface-muted` is the right choice.
+Never use it on action-bearing components (buttons, primary CTAs).
+
+`surface-overlay` is for modals and popovers — elements that float
+above all page content. It must always be accompanied by a `bg-black/50`
+backdrop and `shadow-lg`.
+
+**Border tokens**
+
+`border-default` provides structure without drawing the eye. It is the
+standard border for all components at rest: cards, inputs, table cells,
+dividers, section separators. In Plano's minimal system, borders are
+the primary hierarchy mechanism — they replace shadows in most contexts.
+When uncertain, start here.
+
+`border-strong` communicates that something is active, focused, or
+selected. Use it for: a focused input, a selected sidebar item, a
+highlighted table row. These three contexts and no others. Do not use
+for decorative emphasis.
+
+**Text tokens**
+
+`text-primary` is for content the user must read to complete a task:
+headings, body copy, form labels, table cell values, modal headings,
+nav items. Near-black, maximum contrast. Default to this when uncertain.
+
+`text-secondary` provides context but is not the primary action target:
+timestamps, helper text, column headers, metadata, empty-state
+descriptions. Never for interactive labels or required form labels.
+
+`text-disabled` is exclusively for placeholder text and disabled element
+labels. Not for de-emphasised content — use `text-secondary` for that.
+
+`text-inverse` is for text on dark or brand-coloured surfaces. Never
+place `text-primary` on a dark background.
+
+**Brand accent usage**
+
+`brand-primary` is the single neon accent (`#BEFF00`). Use for: primary
+button backgrounds, active nav indicators, focus rings, progress bars.
+It must appear sparingly — if the neon appears in more than two places
+on any given screen, it is overused.
+
+`brand-primary-foreground` is always dark (`#171717`). The neon is a
+light colour — it requires dark foreground, not white. Using
+`text-inverse` on `brand-primary` is a contrast failure.
+
+`brand-secondary` is a barely-there neon tint (`#F7FFE0`). Use for
+hovered table rows, selected filter chips, active tab backgrounds.
+It provides a whisper of accent without full neon intensity.
+
+**Feedback tokens**
+
+`feedback-success` (true green), `feedback-warning` (amber), and
+`feedback-destructive` (red) are for system-generated status only:
+toasts, validation, badges, alerts. Not for decorative colour. Each
+has a `*-foreground` token — always pair them. `feedback-success` is
+intentionally differentiated from `brand-primary` by hue so that
+"success" and "brand" are never conflated.
