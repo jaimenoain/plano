@@ -6,261 +6,102 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
   public: {
     Tables: {
-      admin_audit_logs: {
+      admin_diagnostic_logs: {
         Row: {
+          created_at: string | null
+          error_type: string
           id: string
-          admin_id: string
-          action_type: string
-          target_type: string
-          target_id: string
-          details: Json | null
-          created_at: string
+          message: string
+          stack_trace: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
         }
         Insert: {
+          created_at?: string | null
+          error_type: string
           id?: string
-          admin_id: string
-          action_type: string
-          target_type: string
-          target_id: string
-          details?: Json | null
-          created_at?: string
+          message: string
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Update: {
+          created_at?: string | null
+          error_type?: string
           id?: string
-          admin_id?: string
-          action_type?: string
-          target_type?: string
-          target_id?: string
-          details?: Json | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_audit_logs_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      },
-      architects: {
-        Row: {
-          id: string
-          name: string
-          type: "individual" | "studio"
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          type?: "individual" | "studio"
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          type?: "individual" | "studio"
-          created_at?: string
+          message?: string
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
-      },
+      }
+      app_config: {
+        Row: {
+          description: string | null
+          key: string
+          value: string | null
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          value?: string | null
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       blocks: {
         Row: {
-          id: string
-          blocker_id: string
           blocked_id: string
+          blocker_id: string
+          created_at: string | null
+          id: string
           reason: string | null
-          created_at: string
         }
         Insert: {
-          id?: string
-          blocker_id: string
           blocked_id: string
+          blocker_id: string
+          created_at?: string | null
+          id?: string
           reason?: string | null
-          created_at?: string
         }
         Update: {
-          id?: string
-          blocker_id?: string
           blocked_id?: string
+          blocker_id?: string
+          created_at?: string | null
+          id?: string
           reason?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      },
-      building_architects: {
-        Row: {
-          building_id: string
-          architect_id: string
-        }
-        Insert: {
-          building_id: string
-          architect_id: string
-        }
-        Update: {
-          building_id?: string
-          architect_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "building_architects_architect_id_fkey"
-            columns: ["architect_id"]
-            isOneToOne: false
-            referencedRelation: "architects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "building_architects_building_id_fkey"
-            columns: ["building_id"]
-            isOneToOne: false
-            referencedRelation: "buildings"
-            referencedColumns: ["id"]
-          }
-        ]
-      },
-      buildings: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          location: unknown | null
-          name: string
-          address: string | null
-          // architects: string[] | null -- DEPRECATED
-          // styles: string[] | null -- DEPRECATED
-          year_completed: number | null
-          city: string | null
-          country: string | null
-          functional_category_id: string | null
-          location_precision: Database["public"]["Enums"]["location_precision"]
-          merged_into_id: string | null
-          hero_image_id: string | null
-          access_level: Database["public"]["Enums"]["access_level"] | null
-          access_logistics: Database["public"]["Enums"]["access_logistics"] | null
-          access_cost: Database["public"]["Enums"]["access_cost"] | null
-          access_notes: string | null
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          location?: unknown | null
-          name: string
-          address?: string | null
-          // architects?: string[] | null
-          // styles?: string[] | null
-          year_completed?: number | null
-          city?: string | null
-          country?: string | null
-          functional_category_id?: string | null
-          location_precision?: Database["public"]["Enums"]["location_precision"]
-          merged_into_id?: string | null
-          hero_image_id?: string | null
-          access_level?: Database["public"]["Enums"]["access_level"] | null
-          access_logistics?: Database["public"]["Enums"]["access_logistics"] | null
-          access_cost?: Database["public"]["Enums"]["access_cost"] | null
-          access_notes?: string | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          location?: unknown | null
-          name?: string
-          address?: string | null
-          // architects?: string[] | null
-          // styles?: string[] | null
-          year_completed?: number | null
-          city?: string | null
-          country?: string | null
-          functional_category_id?: string | null
-          location_precision?: Database["public"]["Enums"]["location_precision"]
-          merged_into_id?: string | null
-          hero_image_id?: string | null
-          access_level?: Database["public"]["Enums"]["access_level"] | null
-          access_logistics?: Database["public"]["Enums"]["access_logistics"] | null
-          access_cost?: Database["public"]["Enums"]["access_cost"] | null
-          access_notes?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "buildings_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notifications_recommendation_id_fkey"
-            columns: ["recommendation_id"]
+            foreignKeyName: "blocks_blocker_id_fkey"
+            columns: ["blocker_id"]
             isOneToOne: false
-            referencedRelation: "recommendations"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      collection_markers: {
-        Row: {
-          id: string
-          collection_id: string
-          google_place_id: string | null
-          name: string
-          category: "accommodation" | "dining" | "transport" | "attraction" | "other"
-          lat: number
-          lng: number
-          address: string | null
-          notes: string | null
-          website: string | null
-          created_at: string
-          created_by: string
-        }
-        Insert: {
-          id?: string
-          collection_id: string
-          google_place_id?: string | null
-          name: string
-          category: "accommodation" | "dining" | "transport" | "attraction" | "other"
-          lat: number
-          lng: number
-          address?: string | null
-          notes?: string | null
-          website?: string | null
-          created_at?: string
-          created_by: string
-        }
-        Update: {
-          id?: string
-          collection_id?: string
-          google_place_id?: string | null
-          name?: string
-          category?: "accommodation" | "dining" | "transport" | "attraction" | "other"
-          lat?: number
-          lng?: number
-          address?: string | null
-          notes?: string | null
-          website?: string | null
-          created_at?: string
-          created_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "collection_markers_collection_id_fkey"
-            columns: ["collection_id"]
-            isOneToOne: false
-            referencedRelation: "collections"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "collection_markers_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
         ]
       }
       comment_likes: {
@@ -296,10 +137,45 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          resource_id: string
+          resource_type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          resource_id: string
+          resource_type: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          resource_id?: string
+          resource_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_new_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments_old: {
         Row: {
           content: string
           created_at: string
@@ -323,10 +199,17 @@ export interface Database {
         }
         Relationships: [
           {
-            foreignKeyName: "comments_log_id_fkey"
+            foreignKeyName: "comments_interaction_id_fkey"
             columns: ["interaction_id"]
             isOneToOne: false
-            referencedRelation: "user_buildings"
+            referencedRelation: "log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_interaction_id_fkey"
+            columns: ["interaction_id"]
+            isOneToOne: false
+            referencedRelation: "user_films"
             referencedColumns: ["id"]
           },
           {
@@ -335,24 +218,173 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
+      }
+      error_logs: {
+        Row: {
+          context: Json | null
+          created_at: string | null
+          id: string
+          message: string
+          resolved: boolean | null
+          severity: string
+          stack_trace: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          message: string
+          resolved?: boolean | null
+          severity: string
+          stack_trace?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          message?: string
+          resolved?: boolean | null
+          severity?: string
+          stack_trace?: string | null
+        }
+        Relationships: []
+      }
+      film_availability: {
+        Row: {
+          buy: Json | null
+          country_code: string
+          film_id: string
+          id: string
+          last_updated: string | null
+          rent: Json | null
+          stream: Json | null
+        }
+        Insert: {
+          buy?: Json | null
+          country_code: string
+          film_id: string
+          id?: string
+          last_updated?: string | null
+          rent?: Json | null
+          stream?: Json | null
+        }
+        Update: {
+          buy?: Json | null
+          country_code?: string
+          film_id?: string
+          id?: string
+          last_updated?: string | null
+          rent?: Json | null
+          stream?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_availability_film_id_fkey"
+            columns: ["film_id"]
+            isOneToOne: false
+            referencedRelation: "films"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      films: {
+        Row: {
+          backdrop_path: string | null
+          community_rating_count: number | null
+          community_vote_average: number | null
+          countries: Json | null
+          credits: Json | null
+          genre_ids: number[] | null
+          id: string
+          imdb_id: string | null
+          media_type: string
+          original_language: string | null
+          original_title: string | null
+          overview: string | null
+          poster_path: string | null
+          release_date: string | null
+          runtime: number | null
+          spoken_languages: Json | null
+          title: string
+          tmdb_id: number | null
+          trailer: string | null
+          vote_average: number | null
+          watch_providers: Json | null
+        }
+        Insert: {
+          backdrop_path?: string | null
+          community_rating_count?: number | null
+          community_vote_average?: number | null
+          countries?: Json | null
+          credits?: Json | null
+          genre_ids?: number[] | null
+          id?: string
+          imdb_id?: string | null
+          media_type?: string
+          original_language?: string | null
+          original_title?: string | null
+          overview?: string | null
+          poster_path?: string | null
+          release_date?: string | null
+          runtime?: number | null
+          spoken_languages?: Json | null
+          title: string
+          tmdb_id?: number | null
+          trailer?: string | null
+          vote_average?: number | null
+          watch_providers?: Json | null
+        }
+        Update: {
+          backdrop_path?: string | null
+          community_rating_count?: number | null
+          community_vote_average?: number | null
+          countries?: Json | null
+          credits?: Json | null
+          genre_ids?: number[] | null
+          id?: string
+          imdb_id?: string | null
+          media_type?: string
+          original_language?: string | null
+          original_title?: string | null
+          overview?: string | null
+          poster_path?: string | null
+          release_date?: string | null
+          runtime?: number | null
+          spoken_languages?: Json | null
+          title?: string
+          tmdb_id?: number | null
+          trailer?: string | null
+          vote_average?: number | null
+          watch_providers?: Json | null
+        }
+        Relationships: []
       }
       follows: {
         Row: {
+          compatibility_score: number | null
           created_at: string
           follower_id: string
           following_id: string
+          is_close_friend: boolean | null
+          last_synced_at: string | null
         }
         Insert: {
+          compatibility_score?: number | null
           created_at?: string
           follower_id: string
           following_id: string
+          is_close_friend?: boolean | null
+          last_synced_at?: string | null
         }
         Update: {
+          compatibility_score?: number | null
           created_at?: string
           follower_id?: string
           following_id?: string
+          is_close_friend?: boolean | null
+          last_synced_at?: string | null
         }
         Relationships: [
           {
@@ -368,8 +400,26 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
+      }
+      global_stats: {
+        Row: {
+          key: string
+          last_updated: string | null
+          value: number | null
+        }
+        Insert: {
+          key: string
+          last_updated?: string | null
+          value?: number | null
+        }
+        Update: {
+          key?: string
+          last_updated?: string | null
+          value?: number | null
+        }
+        Relationships: []
       }
       group_backlog_items: {
         Row: {
@@ -378,9 +428,9 @@ export interface Database {
           cycle_id: string | null
           group_id: string
           id: string
-          priority: "Low" | "Medium" | "High"
-          status: "Pending" | "Scheduled" | "Archived"
-          building_id: string
+          priority: string
+          status: string
+          tmdb_id: number
           user_id: string
         }
         Insert: {
@@ -389,9 +439,9 @@ export interface Database {
           cycle_id?: string | null
           group_id: string
           id?: string
-          priority?: "Low" | "Medium" | "High"
-          status?: "Pending" | "Scheduled" | "Archived"
-          building_id: string
+          priority?: string
+          status?: string
+          tmdb_id: number
           user_id: string
         }
         Update: {
@@ -400,9 +450,9 @@ export interface Database {
           cycle_id?: string | null
           group_id?: string
           id?: string
-          priority?: "Low" | "Medium" | "High"
-          status?: "Pending" | "Scheduled" | "Archived"
-          building_id?: string
+          priority?: string
+          status?: string
+          tmdb_id?: number
           user_id?: string
         }
         Relationships: [
@@ -421,19 +471,53 @@ export interface Database {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "group_backlog_items_building_id_fkey"
-            columns: ["building_id"]
-            isOneToOne: false
-            referencedRelation: "buildings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "group_backlog_items_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
+        ]
+      }
+      group_cycles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          group_id: string
+          host_notes: string | null
+          id: string
+          is_active: boolean | null
+          status: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          group_id: string
+          host_notes?: string | null
+          id?: string
+          is_active?: boolean | null
+          status?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          group_id?: string
+          host_notes?: string | null
+          id?: string
+          is_active?: boolean | null
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_cycles_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
         ]
       }
       group_members: {
@@ -478,7 +562,7 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       group_private_info: {
@@ -501,133 +585,211 @@ export interface Database {
             isOneToOne: true
             referencedRelation: "groups"
             referencedColumns: ["id"]
-          }
-        ]
-      }
-      group_cycles: {
-        Row: {
-          created_at: string
-          description: string | null
-          group_id: string
-          id: string
-          is_active: boolean
-          title: string
-          status: "active" | "draft" | "archived" | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          group_id: string
-          id?: string
-          is_active?: boolean
-          title: string
-          status?: "active" | "draft" | "archived" | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          group_id?: string
-          id?: string
-          is_active?: boolean
-          title?: string
-          status?: "active" | "draft" | "archived" | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_cycles_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          }
+          },
         ]
       }
       group_sessions: {
         Row: {
+          announced_at: string | null
           created_at: string | null
+          cycle_id: string | null
           description: string | null
           group_id: string
+          host_notes: string | null
           id: string
+          location: string | null
+          meeting_link: string | null
           resources: Json | null
           session_date: string
+          session_timezone: string | null
+          session_type: string | null
+          status: string | null
           title: string | null
-          host_notes: string | null
-          status: "published" | "draft" | "archived" | null
-          cycle_id: string | null
         }
         Insert: {
+          announced_at?: string | null
           created_at?: string | null
+          cycle_id?: string | null
           description?: string | null
           group_id: string
+          host_notes?: string | null
           id?: string
+          location?: string | null
+          meeting_link?: string | null
           resources?: Json | null
           session_date: string
+          session_timezone?: string | null
+          session_type?: string | null
+          status?: string | null
           title?: string | null
-          host_notes?: string | null
-          status?: "published" | "draft" | "archived" | null
-          cycle_id?: string | null
         }
         Update: {
+          announced_at?: string | null
           created_at?: string | null
+          cycle_id?: string | null
           description?: string | null
           group_id?: string
+          host_notes?: string | null
           id?: string
+          location?: string | null
+          meeting_link?: string | null
           resources?: Json | null
           session_date?: string
+          session_timezone?: string | null
+          session_type?: string | null
+          status?: string | null
           title?: string | null
-          host_notes?: string | null
-          status?: "published" | "draft" | "archived" | null
-          cycle_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "group_sessions_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "group_cycles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "group_sessions_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
-          }
+          },
+        ]
+      }
+      group_stats: {
+        Row: {
+          compatibility: Json
+          group_id: string
+          last_error: string | null
+          members: Json
+          scope: string
+          summary: Json
+          updated_at: string | null
+        }
+        Insert: {
+          compatibility?: Json
+          group_id: string
+          last_error?: string | null
+          members?: Json
+          scope?: string
+          summary?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          compatibility?: Json
+          group_id?: string
+          last_error?: string | null
+          members?: Json
+          scope?: string
+          summary?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_stats_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_stats_queue: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: number
+          last_update_request: string | null
+          processing_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: number
+          last_update_request?: string | null
+          processing_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: number
+          last_update_request?: string | null
+          processing_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_stats_queue_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
         ]
       }
       groups: {
         Row: {
+          active_tabs: string[] | null
+          announce_email_number: number | null
+          announce_email_relative: string | null
+          announce_email_unit: string | null
           cover_url: string | null
           created_at: string | null
           created_by: string
           description: string | null
           id: string
           is_public: boolean | null
+          legacy_session_time: string | null
+          links: Json | null
           name: string
+          ranking_cache: Json | null
+          session_time: string | null
+          session_timezone: string | null
           slug: string
           stats_cache: Json | null
-          links: Json | null
-          active_tabs: string[] | null
         }
         Insert: {
+          active_tabs?: string[] | null
+          announce_email_number?: number | null
+          announce_email_relative?: string | null
+          announce_email_unit?: string | null
           cover_url?: string | null
           created_at?: string | null
           created_by: string
           description?: string | null
           id?: string
           is_public?: boolean | null
-          name: string
-          slug?: string
-          stats_cache?: Json | null
+          legacy_session_time?: string | null
           links?: Json | null
-          active_tabs?: string[] | null
+          name: string
+          ranking_cache?: Json | null
+          session_time?: string | null
+          session_timezone?: string | null
+          slug: string
+          stats_cache?: Json | null
         }
         Update: {
+          active_tabs?: string[] | null
+          announce_email_number?: number | null
+          announce_email_relative?: string | null
+          announce_email_unit?: string | null
           cover_url?: string | null
           created_at?: string | null
           created_by?: string
           description?: string | null
           id?: string
           is_public?: boolean | null
+          legacy_session_time?: string | null
+          links?: Json | null
           name?: string
+          ranking_cache?: Json | null
+          session_time?: string | null
+          session_timezone?: string | null
           slug?: string
           stats_cache?: Json | null
-          links?: Json | null
-          active_tabs?: string[] | null
         }
         Relationships: [
           {
@@ -636,118 +798,7 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
-        ]
-      }
-      image_comments: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          image_id: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          image_id: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          image_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "image_comments_image_id_fkey"
-            columns: ["image_id"]
-            isOneToOne: false
-            referencedRelation: "review_images"
-            referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "image_comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      },
-      image_likes: {
-        Row: {
-          created_at: string
-          id: string
-          image_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          image_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          image_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "image_likes_image_id_fkey"
-            columns: ["image_id"]
-            isOneToOne: false
-            referencedRelation: "review_images"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "image_likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      },
-      link_likes: {
-        Row: {
-          created_at: string
-          id: string
-          link_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          link_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          link_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "link_likes_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
-            referencedRelation: "review_links"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "link_likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
         ]
       }
       likes: {
@@ -771,10 +822,17 @@ export interface Database {
         }
         Relationships: [
           {
-            foreignKeyName: "likes_log_id_fkey"
+            foreignKeyName: "likes_interaction_id_fkey"
             columns: ["interaction_id"]
             isOneToOne: false
-            referencedRelation: "user_buildings"
+            referencedRelation: "log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_interaction_id_fkey"
+            columns: ["interaction_id"]
+            isOneToOne: false
+            referencedRelation: "user_films"
             referencedColumns: ["id"]
           },
           {
@@ -783,74 +841,33 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
-      user_buildings: {
+      login_logs: {
         Row: {
-          content: string | null
-          created_at: string
-          edited_at: string | null
-          building_id: string
-          group_id: string | null
+          created_at: string | null
           id: string
-          rating: number | null
-          status: "pending" | "visited" | "ignored"
-          tags: string[] | null
-          user_id: string
-          visibility: string | null
-          visited_at: string | null
+          user_id: string | null
         }
         Insert: {
-          content?: string | null
-          created_at?: string
-          edited_at?: string | null
-          building_id: string
-          group_id?: string | null
+          created_at?: string | null
           id?: string
-          rating?: number | null
-          status?: "pending" | "visited" | "ignored"
-          tags?: string[] | null
-          user_id: string
-          visibility?: string | null
-          visited_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          content?: string | null
-          created_at?: string
-          edited_at?: string | null
-          building_id?: string
-          group_id?: string | null
+          created_at?: string | null
           id?: string
-          rating?: number | null
-          status?: "pending" | "visited" | "ignored"
-          tags?: string[] | null
-          user_id?: string
-          visibility?: string | null
-          visited_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "log_building_id_fkey"
-            columns: ["building_id"]
-            isOneToOne: false
-            referencedRelation: "buildings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "log_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "log_user_id_fkey"
+            foreignKeyName: "login_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       notifications: {
@@ -860,10 +877,11 @@ export interface Database {
           group_id: string | null
           id: string
           is_read: boolean
+          metadata: Json | null
+          recommendation_id: string | null
           resource_id: string | null
           session_id: string | null
-          recommendation_id: string | null
-          type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request" | "visit_request"
+          type: string
           user_id: string
         }
         Insert: {
@@ -872,10 +890,11 @@ export interface Database {
           group_id?: string | null
           id?: string
           is_read?: boolean
+          metadata?: Json | null
+          recommendation_id?: string | null
           resource_id?: string | null
           session_id?: string | null
-          recommendation_id?: string | null
-          type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request" | "visit_request"
+          type: string
           user_id: string
         }
         Update: {
@@ -884,10 +903,11 @@ export interface Database {
           group_id?: string | null
           id?: string
           is_read?: boolean
+          metadata?: Json | null
+          recommendation_id?: string | null
           resource_id?: string | null
           session_id?: string | null
-          recommendation_id?: string | null
-          type: "follow" | "like" | "comment" | "group_invitation" | "recommendation" | "new_session" | "friend_joined" | "suggest_follow" | "session_reminder" | "group_activity" | "join_request" | "visit_request"
+          type?: string
           user_id?: string
         }
         Relationships: [
@@ -906,10 +926,24 @@ export interface Database {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "notifications_recommendation_id_fkey"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "recommendations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "notifications_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
-            referencedRelation: "user_buildings"
+            referencedRelation: "log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "user_films"
             referencedColumns: ["id"]
           },
           {
@@ -925,42 +959,42 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       poll_options: {
         Row: {
-          created_at: string
-          id: string
-          option_text: string
-          question_id: string
-          is_correct: boolean | null
-          order_index: number
           content_type: string
+          id: string
+          is_correct: boolean | null
+          label: string | null
           media_url: string | null
-          building_id: string | null
+          option_text: string | null
+          order_index: number | null
+          question_id: string
+          tmdb_id: number | null
         }
         Insert: {
-          created_at?: string
-          id?: string
-          option_text: string
-          question_id: string
-          is_correct?: boolean | null
-          order_index?: number
           content_type?: string
+          id?: string
+          is_correct?: boolean | null
+          label?: string | null
           media_url?: string | null
-          building_id?: string | null
+          option_text?: string | null
+          order_index?: number | null
+          question_id: string
+          tmdb_id?: number | null
         }
         Update: {
-          created_at?: string
-          id?: string
-          option_text?: string
-          question_id?: string
-          is_correct?: boolean | null
-          order_index?: number
           content_type?: string
+          id?: string
+          is_correct?: boolean | null
+          label?: string | null
           media_url?: string | null
-          building_id?: string | null
+          option_text?: string | null
+          order_index?: number | null
+          question_id?: string
+          tmdb_id?: number | null
         }
         Relationships: [
           {
@@ -970,63 +1004,56 @@ export interface Database {
             referencedRelation: "poll_questions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "poll_options_building_id_fkey"
-            columns: ["building_id"]
-            isOneToOne: false
-            referencedRelation: "buildings"
-            referencedColumns: ["id"]
-          }
         ]
       }
       poll_questions: {
         Row: {
           allow_custom_answer: boolean | null
-          created_at: string
+          created_at: string | null
           id: string
-          order_index: number
-          poll_id: string
-          question_text: string
-          is_live_active: boolean
-          is_revealed: boolean
-          min_selections: number | null
+          is_live_active: boolean | null
+          is_revealed: boolean | null
           max_selections: number | null
-          response_type: string
+          media_data: Json | null
           media_type: string | null
           media_url: string | null
-          media_data: Json | null
+          min_selections: number | null
+          order_index: number | null
+          poll_id: string
+          question_text: string
+          response_type: string
         }
         Insert: {
           allow_custom_answer?: boolean | null
-          created_at?: string
+          created_at?: string | null
           id?: string
-          order_index?: number
-          poll_id: string
-          question_text: string
-          is_live_active?: boolean
-          is_revealed?: boolean
-          min_selections?: number | null
+          is_live_active?: boolean | null
+          is_revealed?: boolean | null
           max_selections?: number | null
-          response_type?: string
+          media_data?: Json | null
           media_type?: string | null
           media_url?: string | null
-          media_data?: Json | null
+          min_selections?: number | null
+          order_index?: number | null
+          poll_id: string
+          question_text: string
+          response_type?: string
         }
         Update: {
           allow_custom_answer?: boolean | null
-          created_at?: string
+          created_at?: string | null
           id?: string
-          order_index?: number
-          poll_id?: string
-          question_text?: string
-          is_live_active?: boolean
-          is_revealed?: boolean
-          min_selections?: number | null
+          is_live_active?: boolean | null
+          is_revealed?: boolean | null
           max_selections?: number | null
-          response_type?: string
+          media_data?: Json | null
           media_type?: string | null
           media_url?: string | null
-          media_data?: Json | null
+          min_selections?: number | null
+          order_index?: number | null
+          poll_id?: string
+          question_text?: string
+          response_type?: string
         }
         Relationships: [
           {
@@ -1035,12 +1062,12 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "polls"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       poll_votes: {
         Row: {
-          created_at: string
+          created_at: string | null
           custom_answer: string | null
           id: string
           option_id: string | null
@@ -1049,7 +1076,7 @@ export interface Database {
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           custom_answer?: string | null
           id?: string
           option_id?: string | null
@@ -1058,7 +1085,7 @@ export interface Database {
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           custom_answer?: string | null
           id?: string
           option_id?: string | null
@@ -1094,66 +1121,59 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       polls: {
         Row: {
-          created_at: string
+          allow_multiple_votes: boolean | null
+          created_at: string | null
           created_by: string
+          cycle_id: string | null
           description: string | null
           group_id: string
           id: string
           session_id: string | null
           show_results_before_close: boolean | null
+          slug: string | null
           status: string
           title: string
-          type: "general" | "building_selection" | "quiz"
-          allow_multiple_votes: boolean | null
-          cycle_id: string | null
-          slug: string | null
+          type: string
           updated_at: string | null
         }
         Insert: {
-          created_at?: string
+          allow_multiple_votes?: boolean | null
+          created_at?: string | null
           created_by: string
+          cycle_id?: string | null
           description?: string | null
           group_id: string
           id?: string
           session_id?: string | null
           show_results_before_close?: boolean | null
+          slug?: string | null
           status?: string
           title: string
-          type?: "general" | "building_selection" | "quiz"
-          allow_multiple_votes?: boolean | null
-          cycle_id?: string | null
-          slug?: string | null
+          type?: string
           updated_at?: string | null
         }
         Update: {
-          created_at?: string
+          allow_multiple_votes?: boolean | null
+          created_at?: string | null
           created_by?: string
+          cycle_id?: string | null
           description?: string | null
           group_id?: string
           id?: string
           session_id?: string | null
           show_results_before_close?: boolean | null
+          slug?: string | null
           status?: string
           title?: string
-          type?: "general" | "building_selection" | "quiz"
-          allow_multiple_votes?: boolean | null
-          cycle_id?: string | null
-          slug?: string | null
+          type?: string
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "polls_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "group_sessions"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "polls_created_by_fkey"
             columns: ["created_by"]
@@ -1162,180 +1182,188 @@ export interface Database {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "polls_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "group_cycles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "polls_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
-          }
+          },
+          {
+            foreignKeyName: "polls_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "group_sessions"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          country: string | null
+          created_at: string
+          email_session_verdicts: boolean | null
+          favorites: Json | null
+          id: string
+          invited_by: string | null
+          language: string | null
+          last_digest_sent_at: string | null
+          last_online: string | null
+          location: string | null
+          notification_preferences: Json | null
+          role: string | null
+          show_favorites: boolean | null
+          show_highlights: boolean | null
+          subscribed_platforms: string[] | null
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          email_session_verdicts?: boolean | null
+          favorites?: Json | null
+          id: string
+          invited_by?: string | null
+          language?: string | null
+          last_digest_sent_at?: string | null
+          last_online?: string | null
+          location?: string | null
+          notification_preferences?: Json | null
+          role?: string | null
+          show_favorites?: boolean | null
+          show_highlights?: boolean | null
+          subscribed_platforms?: string[] | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          email_session_verdicts?: boolean | null
+          favorites?: Json | null
+          id?: string
+          invited_by?: string | null
+          language?: string | null
+          last_digest_sent_at?: string | null
+          last_online?: string | null
+          location?: string | null
+          notification_preferences?: Json | null
+          role?: string | null
+          show_favorites?: boolean | null
+          show_highlights?: boolean | null
+          subscribed_platforms?: string[] | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
       }
       recommendations: {
         Row: {
-          id: string
-          recommender_id: string
-          recipient_id: string
-          building_id: string
-          status: "pending" | "accepted" | "ignored" | "visit_with"
           created_at: string
+          film_id: string
+          id: string
+          recipient_id: string
+          recommender_id: string
+          status: string
         }
         Insert: {
-          id?: string
-          recommender_id: string
-          recipient_id: string
-          building_id: string
-          status?: "pending" | "accepted" | "ignored" | "visit_with"
           created_at?: string
+          film_id: string
+          id?: string
+          recipient_id: string
+          recommender_id: string
+          status?: string
         }
         Update: {
-          id?: string
-          recommender_id?: string
-          recipient_id?: string
-          building_id?: string
-          status?: "pending" | "accepted" | "ignored" | "visit_with"
           created_at?: string
+          film_id?: string
+          id?: string
+          recipient_id?: string
+          recommender_id?: string
+          status?: string
         }
         Relationships: [
           {
-            foreignKeyName: "recommendations_recommender_id_fkey"
-            columns: ["recommender_id"]
-            referencedRelation: "profiles"
+            foreignKeyName: "recommendations_film_id_fkey"
+            columns: ["film_id"]
+            isOneToOne: false
+            referencedRelation: "films"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recommendations_recipient_id_fkey"
             columns: ["recipient_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "recommendations_building_id_fkey"
-            columns: ["building_id"]
-            referencedRelation: "buildings"
+            foreignKeyName: "recommendations_recommender_id_fkey"
+            columns: ["recommender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
-      },
+      }
       reports: {
         Row: {
-          id: string
-          reporter_id: string
-          reported_id: string
-          reason: string
+          created_at: string | null
           details: string | null
-          status: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          reporter_id: string
-          reported_id: string
+          id: string
           reason: string
+          reported_id: string
+          reporter_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
           details?: string | null
+          id?: string
+          reason: string
+          reported_id: string
+          reporter_id: string
           status?: string | null
-          created_at?: string
         }
         Update: {
+          created_at?: string | null
+          details?: string | null
           id?: string
-          reporter_id?: string
-          reported_id?: string
           reason?: string
-          details?: string | null
+          reported_id?: string
+          reporter_id?: string
           status?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      },
-      review_images: {
-        Row: {
-          created_at: string
-          id: string
-          likes_count: number | null
-          review_id: string
-          storage_path: string
-          user_id: string
-          is_generated: boolean
-          is_official: boolean
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          likes_count?: number | null
-          review_id: string
-          storage_path: string
-          user_id: string
-          is_generated?: boolean
-          is_official?: boolean
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          likes_count?: number | null
-          review_id?: string
-          storage_path?: string
-          user_id?: string
-          is_generated?: boolean
-          is_official?: boolean
         }
         Relationships: [
           {
-            foreignKeyName: "review_images_review_id_fkey"
-            columns: ["review_id"]
-            isOneToOne: false
-            referencedRelation: "user_buildings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "review_images_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "reports_reported_id_fkey"
+            columns: ["reported_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
-        ]
-      },
-      review_links: {
-        Row: {
-          created_at: string
-          id: string
-          review_id: string
-          title: string | null
-          url: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          review_id: string
-          title?: string | null
-          url: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          review_id?: string
-          title?: string | null
-          url?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "review_links_review_id_fkey"
-            columns: ["review_id"]
-            isOneToOne: false
-            referencedRelation: "user_buildings"
-            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "review_links_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
-      },
+      }
       saved_views: {
         Row: {
           created_at: string
@@ -1368,72 +1396,28 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
-      profiles: {
+      search_cache: {
         Row: {
-          avatar_url: string | null
-          bio: string | null
           created_at: string
-          id: string
-          updated_at: string | null
-          username: string | null
-          country: string | null
-          location: string | null
-          invited_by: string | null
-          favorites: Json | null
-          notification_preferences: Json | null
-          role: string | null
-          last_online: string | null
-          subscribed_platforms: string[] | null
-          verified_architect_id: string | null
+          query_hash: string
+          results: Json
         }
         Insert: {
-          avatar_url?: string | null
-          bio?: string | null
           created_at?: string
-          id: string
-          updated_at?: string | null
-          username?: string | null
-          country?: string | null
-          location?: string | null
-          invited_by?: string | null
-          favorites?: Json | null
-          notification_preferences?: Json | null
-          role?: string | null
-          last_online?: string | null
-          subscribed_platforms?: string[] | null
-          verified_architect_id?: string | null
+          query_hash: string
+          results: Json
         }
         Update: {
-          avatar_url?: string | null
-          bio?: string | null
           created_at?: string
-          id?: string
-          updated_at?: string | null
-          username?: string | null
-          country?: string | null
-          location?: string | null
-          invited_by?: string | null
-          favorites?: Json | null
-          notification_preferences?: Json | null
-          role?: string | null
-          last_online?: string | null
-          subscribed_platforms?: string[] | null
-          verified_architect_id?: string | null
+          query_hash?: string
+          results?: Json
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
-      session_comments: {
+      session_comments_old: {
         Row: {
           content: string
           created_at: string
@@ -1469,43 +1453,43 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
-      session_buildings: {
+      session_films: {
         Row: {
-          building_id: string
+          film_id: string
           id: string
           is_main: boolean | null
           session_id: string
         }
         Insert: {
-          building_id: string
+          film_id: string
           id?: string
           is_main?: boolean | null
           session_id: string
         }
         Update: {
-          building_id?: string
+          film_id?: string
           id?: string
           is_main?: boolean | null
           session_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "session_buildings_building_id_fkey"
-            columns: ["building_id"]
+            foreignKeyName: "session_films_film_id_fkey"
+            columns: ["film_id"]
             isOneToOne: false
-            referencedRelation: "buildings"
+            referencedRelation: "films"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_buildings_session_id_fkey"
+            foreignKeyName: "session_films_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "group_sessions"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       session_likes: {
@@ -1541,126 +1525,677 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
+        ]
+      }
+      signup_errors: {
+        Row: {
+          created_at: string | null
+          error_detail: string | null
+          error_message: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_detail?: string | null
+          error_message?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_detail?: string | null
+          error_message?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      suggestion_dismissals: {
+        Row: {
+          created_at: string | null
+          dismissed_user_id: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dismissed_user_id?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dismissed_user_id?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_dismissals_dismissed_user_id_fkey"
+            columns: ["dismissed_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestion_dismissals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_aliases: {
+        Row: {
+          alias: string
+          created_at: string
+          id: string
+          target_user_id: string
+          user_id: string
+        }
+        Insert: {
+          alias: string
+          created_at?: string
+          id?: string
+          target_user_id: string
+          user_id: string
+        }
+        Update: {
+          alias?: string
+          created_at?: string
+          id?: string
+          target_user_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_aliases_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_aliases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_films: {
+        Row: {
+          content: string | null
+          created_at: string
+          edited_at: string | null
+          film_id: string
+          group_id: string | null
+          id: string
+          original_language: string | null
+          rating: number | null
+          status: string
+          tags: string[] | null
+          translated_content: string | null
+          user_id: string
+          visibility: string | null
+          watched_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          edited_at?: string | null
+          film_id: string
+          group_id?: string | null
+          id?: string
+          original_language?: string | null
+          rating?: number | null
+          status?: string
+          tags?: string[] | null
+          translated_content?: string | null
+          user_id: string
+          visibility?: string | null
+          watched_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          edited_at?: string | null
+          film_id?: string
+          group_id?: string | null
+          id?: string
+          original_language?: string | null
+          rating?: number | null
+          status?: string
+          tags?: string[] | null
+          translated_content?: string | null
+          user_id?: string
+          visibility?: string | null
+          watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "log_film_id_fkey"
+            columns: ["film_id"]
+            isOneToOne: false
+            referencedRelation: "films"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "log_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      watchlist_notifications: {
+        Row: {
+          created_at: string
+          film_id: string | null
+          id: string
+          provider_name: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          film_id?: string | null
+          id?: string
+          provider_name: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          film_id?: string | null
+          id?: string
+          provider_name?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_notifications_film_id_fkey"
+            columns: ["film_id"]
+            isOneToOne: false
+            referencedRelation: "films"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "watchlist_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      log: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          edited_at: string | null
+          film_id: string | null
+          group_id: string | null
+          id: string | null
+          original_language: string | null
+          rating: number | null
+          status: string | null
+          tags: string[] | null
+          translated_content: string | null
+          user_id: string | null
+          visibility: string | null
+          watched_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          edited_at?: string | null
+          film_id?: string | null
+          group_id?: string | null
+          id?: string | null
+          original_language?: string | null
+          rating?: number | null
+          status?: string | null
+          tags?: string[] | null
+          translated_content?: string | null
+          user_id?: string | null
+          visibility?: string | null
+          watched_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          edited_at?: string | null
+          film_id?: string | null
+          group_id?: string | null
+          id?: string | null
+          original_language?: string | null
+          rating?: number | null
+          status?: string | null
+          tags?: string[] | null
+          translated_content?: string | null
+          user_id?: string | null
+          visibility?: string | null
+          watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "log_film_id_fkey"
+            columns: ["film_id"]
+            isOneToOne: false
+            referencedRelation: "films"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "log_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      get_people_you_may_know: {
-        Args: {
-          p_limit?: number
-        }
-        Returns: {
-          id: string
-          username: string | null
-          avatar_url: string | null
-          mutual_count: number
-          is_follows_me: boolean
-          group_mutual_count: number
-        }[]
-      },
-      find_nearby_buildings: {
-        Args: {
-          lat: number
-          long: number
-          name_query?: string | null
-          radius_meters?: number
-        }
-        Returns: {
-          id: string
-          name: string
-          address: string | null
-          location_lat: number
-          location_lng: number
-          dist_meters: number
-          similarity_score: number
-          location_precision: Database["public"]["Enums"]["location_precision"]
-        }[]
+      _calc_compatibility: {
+        Args: { user_a: string; user_b: string }
+        Returns: number
       }
-      get_group_building_stats: {
+      block_user: {
         Args: {
+          p_reason: string
+          p_report_abuse?: boolean
+          p_report_details?: string
+          p_target_id: string
+        }
+        Returns: undefined
+      }
+      calculate_global_average_rating: { Args: never; Returns: undefined }
+      calculate_scope_stats: {
+        Args: {
+          p_filter_film_ids: string[]
           p_group_id: string
-          p_building_ids: string[]
+          p_member_ids: string[]
+          p_session_dates: Json
         }
+        Returns: Json
+      }
+      check_group_member: {
+        Args: { target_group_id: string }
+        Returns: boolean
+      }
+      debug_group_stats: { Args: never; Returns: Json }
+      generate_unique_slug: {
+        Args: { group_id: string; name: string }
+        Returns: string
+      }
+      get_admin_dashboard_stats: { Args: never; Returns: Json }
+      get_app_config: {
+        Args: never
         Returns: {
-          building_id: string
-          avg_rating: number
-          log_count: number
+          description: string | null
+          key: string
+          value: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "app_config"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_cine_sync_stats: {
+        Args: { p_contact_ids: string[]; p_viewer_id: string }
+        Returns: {
+          compatibility_score: number
+          last_watched_backdrop: string
+          trend_indicator: string
+          user_id: string
         }[]
       }
-      get_user_groups_summary: {
+      get_explorer_feed: {
+        Args: { p_exclude_ids?: string[]; p_limit?: number; p_user_id: string }
+        Returns: {
+          backdrop_path: string
+          id: string
+          media_type: string
+          original_title: string
+          overview: string
+          poster_path: string
+          recommenders: Json
+          title: string
+          tmdb_id: number
+          trailer: string
+        }[]
+      }
+      get_friend_suggestions: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          avatar_url: string
+          bio: string
+          country: string
+          created_at: string
+          id: string
+          invited_by: string
+          location: string
+          mutual_count: number
+          shared_group_count: number
+          updated_at: string
+          username: string
+        }[]
+      }
+      get_group_film_stats:
+        | {
+            Args: { p_film_ids: string[]; p_group_id: string }
+            Returns: {
+              avg_rating: number
+              film_id: string
+              log_count: number
+            }[]
+          }
+        | {
+            Args: { p_film_ids: string[]; p_group_id: string }
+            Returns: {
+              avg_rating: number
+              film_id: string
+              log_count: number
+            }[]
+          }
+      get_group_smart_backlog: {
         Args: {
-          p_user_id: string
-          p_type?: string
-          p_limit?: number
+          p_exclude_seen?: boolean
+          p_group_id: string
+          p_max_runtime?: number
+          p_member_ids: string[]
+          p_providers?: string[]
         }
         Returns: {
           id: string
-          slug: string
-          name: string
-          description: string
-          is_public: boolean
-          cover_url: string
-          member_count: number
-          member_avatars: string[]
-          next_session_date: string
-          last_session_date: string
-          recent_posters: string[]
+          interested_users: Json
+          overlap_count: number
+          overview: string
+          poster_path: string
+          release_date: string
+          runtime: number
+          title: string
+          tmdb_id: number
+          total_selected_members: number
+          trailer: string
+          vote_average: number
         }[]
       }
       get_inviter_facepile: {
-        Args: {
-          inviter_id: string
-        }
+        Args: { inviter_id: string }
         Returns: {
+          avatar_url: string
           id: string
-          username: string | null
-          avatar_url: string | null
+          username: string
         }[]
       }
-      search_buildings: {
+      get_main_feed: {
         Args: {
-          query_text?: string | null
-          location_coordinates?: Json | null
-          radius_meters?: number | null
-          filters?: Json | null
-          sort_by?: string | null
+          p_limit: number
+          p_offset: number
+          p_show_group_activity: boolean
         }
         Returns: {
+          content: string | null
+          created_at: string
+          edited_at: string | null
+          film_id: string
+          group_id: string | null
           id: string
+          original_language: string | null
+          rating: number | null
+          status: string
+          tags: string[] | null
+          translated_content: string | null
+          user_id: string
+          visibility: string | null
+          watched_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "user_films"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_monthly_log_counts: { Args: { p_group_id: string }; Returns: Json }
+      get_mutual_affinity_users: {
+        Args: { user_a_id: string; user_b_id: string }
+        Returns: {
+          alias: string
+          avatar_url: string
+          combined_score: number
+          score_with_a: number
+          score_with_b: number
+          user_id: string
+          username: string
+        }[]
+      }
+      get_mutual_follows: {
+        Args: { target_user_id: string }
+        Returns: {
+          avatar_url: string
+          id: string
+          total_count: number
+          username: string
+        }[]
+      }
+      get_my_group_ids: { Args: never; Returns: string[] }
+      get_shared_directors: {
+        Args: { user_a_id: string; user_b_id: string }
+        Returns: {
+          director_id: number
           name: string
-          address: string | null
-          location_lat: number
-          location_lng: number
-          city: string | null
-          country: string | null
-          styles: Json | null
-          architects: Json | null
-          year_completed: number | null
-          distance_meters: number | null
-          social_context: string | null
-          social_score: number
-          location_precision: Database["public"]["Enums"]["location_precision"]
+          profile_path: string
+          score: number
         }[]
       }
-      get_discovery_filters: {
-        Args: Record<PropertyKey, never>
+      get_shared_exploration_candidates: {
+        Args: {
+          p_exclude_ids?: string[]
+          p_friend_id: string
+          p_limit?: number
+          p_user_id: string
+        }
+        Returns: {
+          backdrop_path: string
+          id: string
+          media_type: string
+          original_title: string
+          overview: string
+          poster_path: string
+          recommenders: Json
+          title: string
+          tmdb_id: number
+          trailer: string
+        }[]
+      }
+      get_user_digest_activity: {
+        Args: { p_since: string; p_user_id: string }
         Returns: Json
       }
-      get_building_leaderboards: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
+      get_user_groups_summary: {
+        Args: { p_limit?: number; p_type?: string; p_user_id: string }
+        Returns: {
+          cover_url: string
+          description: string
+          id: string
+          is_public: boolean
+          last_session_date: string
+          member_avatars: string[]
+          member_count: number
+          name: string
+          next_session_date: string
+          recent_posters: string[]
+          slug: string
+        }[]
       }
+      get_user_tags: {
+        Args: { p_user_id: string }
+        Returns: {
+          tag: string
+        }[]
+      }
+      invoke_group_stats_update: {
+        Args: { p_group_id: string }
+        Returns: undefined
+      }
+      invoke_translate_review: {
+        Args: { p_content: string; p_review_id: string }
+        Returns: undefined
+      }
+      is_admin: { Args: never; Returns: boolean }
+      is_group_admin: { Args: { check_group_id: string }; Returns: boolean }
+      is_group_member: { Args: { _group_id: string }; Returns: boolean }
+      is_mutual: { Args: { user_a: string; user_b: string }; Returns: boolean }
+      is_mutual_contact: {
+        Args: { user_id_a: string; user_id_b: string }
+        Returns: boolean
+      }
+      merge_group_stats_compatibility: {
+        Args: {
+          p_group_id: string
+          p_last_error: string
+          p_payload: Json
+          p_scope: string
+          p_updated_at?: string
+        }
+        Returns: undefined
+      }
+      merge_group_stats_members: {
+        Args: {
+          p_group_id: string
+          p_scope: string
+          p_superlatives: Json
+          p_updated_at?: string
+        }
+        Returns: undefined
+      }
+      merge_group_stats_summary: {
+        Args: {
+          p_group_id: string
+          p_scope: string
+          p_summary: Json
+          p_updated_at?: string
+        }
+        Returns: undefined
+      }
+      process_session_announcements: { Args: never; Returns: undefined }
+      process_session_verdicts: { Args: never; Returns: undefined }
+      search_films_debug: {
+        Args: {
+          p_countries?: string[]
+          p_decade_starts?: number[]
+          p_genre_ids?: number[]
+          p_limit?: number
+          p_offset?: number
+          p_query?: string
+          p_runtime_max?: number
+          p_runtime_min?: number
+        }
+        Returns: {
+          community_vote_average: number
+          countries: Json
+          friend_avg_rating: number
+          genre_ids: number[]
+          id: string
+          latest_interaction: string
+          media_type: string
+          original_title: string
+          overview: string
+          poster_path: string
+          release_date: string
+          runtime: number
+          tier: number
+          title: string
+          tmdb_id: number
+          vote_count: number
+        }[]
+      }
+      search_films_tiered: {
+        Args: {
+          p_countries?: string[]
+          p_decade_starts?: number[]
+          p_friends_min_rating?: number
+          p_genre_ids?: number[]
+          p_limit?: number
+          p_match_any_personal_filter?: boolean
+          p_media_type?: string
+          p_min_rating?: number
+          p_my_platforms?: string[]
+          p_not_seen_by_user_id?: string
+          p_offset?: number
+          p_only_my_platforms?: boolean
+          p_query?: string
+          p_rated_by_user_ids?: string[]
+          p_rent_buy?: boolean
+          p_runtime_max?: number
+          p_runtime_min?: number
+          p_seen_by_user_id?: string
+          p_shuffle_seed?: number
+          p_tag?: string
+          p_user_country?: string
+          p_watchlist_user_id?: string
+        }
+        Returns: {
+          community_vote_average: number
+          countries: Json
+          friend_avg_rating: number
+          genre_ids: number[]
+          id: string
+          latest_interaction: string
+          media_type: string
+          original_title: string
+          overview: string
+          poster_path: string
+          release_date: string
+          runtime: number
+          tier: number
+          title: string
+          tmdb_id: number
+          vote_count: number
+        }[]
+      }
+      send_session_reminders: { Args: never; Returns: undefined }
+      track_login: { Args: never; Returns: undefined }
+      update_app_config: {
+        Args: { p_key: string; p_value: string }
+        Returns: undefined
+      }
+      update_group_ranking_cache: {
+        Args: { p_group_id: string }
+        Returns: undefined
+      }
+      update_group_stats: {
+        Args: { target_group_id: string }
+        Returns: undefined
+      }
+      update_presence: { Args: never; Returns: undefined }
     }
     Enums: {
-      access_level: "public" | "private" | "restricted" | "commercial"
-      access_logistics: "walk-in" | "booking_required" | "tour_only" | "exterior_only"
-      access_cost: "free" | "paid" | "customers_only"
-      building_status: "Built" | "Under Construction" | "Unbuilt" | "Lost" | "Temporary"
-      location_precision: "exact" | "approximate"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1668,27 +2203,33 @@ export interface Database {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1696,20 +2237,24 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1717,20 +2262,24 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1738,21 +2287,41 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
-export interface UserProfile {
-  id: string;
-  // ... existing fields
-  role?: string; // Add this
-  verified_architect_id?: string | null;
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
 }
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

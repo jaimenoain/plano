@@ -39,20 +39,6 @@ export type DashboardStats = {
       visited_users: number;
     }[];
   };
-  group_dynamics: {
-    hot_groups: {
-      group_id: string;
-      name: string;
-      member_count: number;
-      new_members_30d: number;
-      sessions_30d: number;
-      activity_score: number;
-    }[];
-    session_reliability: {
-      published_count: number;
-      completed_count: number;
-    };
-  };
   content_intelligence: {
     trending_buildings: {
       building_id: string;
@@ -66,11 +52,9 @@ export type DashboardStats = {
     most_likes: LeaderboardUser[];
     most_comments: LeaderboardUser[];
     most_votes: LeaderboardUser[];
-    most_groups_joined: LeaderboardUser[];
     most_recently_online: LeaderboardUser[];
     most_follows_given: LeaderboardUser[];
     most_followers_gained: LeaderboardUser[];
-    most_sessions: LeaderboardUser[];
   };
   retention_analysis: {
     user_activity_distribution: {
@@ -141,18 +125,6 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
       visited_users: Math.floor(Math.random() * 200) + 150,
     })),
   },
-  group_dynamics: {
-    hot_groups: [
-      { group_id: '1', name: 'Bauhaus Club', member_count: 15, new_members_30d: 2, sessions_30d: 4, activity_score: 120 },
-      { group_id: '2', name: 'Brutalism Fans', member_count: 8, new_members_30d: 1, sessions_30d: 2, activity_score: 85 },
-      { group_id: '4', name: 'Modernist Geeks', member_count: 10, new_members_30d: 0, sessions_30d: 3, activity_score: 45 },
-      { group_id: '5', name: 'Urban Planning Crew', member_count: 5, new_members_30d: 0, sessions_30d: 0, activity_score: 10 },
-    ],
-    session_reliability: {
-      published_count: 15,
-      completed_count: 12,
-    },
-  },
   content_intelligence: {
     trending_buildings: [
       { building_id: '1', name: 'Empire State Building', visit_count: 45 },
@@ -188,11 +160,6 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
       { user_id: '10', username: 'decider_dave', avatar_url: null, count: 18 },
       { user_id: '4', username: 'rater_x', avatar_url: null, count: 15 },
     ],
-    most_groups_joined: [
-      { user_id: '11', username: 'newbie_ned', avatar_url: null, count: 5 },
-      { user_id: '12', username: 'joiner_jen', avatar_url: null, count: 4 },
-      { user_id: '13', username: 'groupie_greg', avatar_url: null, count: 3 },
-    ],
     most_recently_online: [
       { user_id: '1', username: 'archilover99', avatar_url: null, last_online: new Date().toISOString() },
       { user_id: '6', username: 'social_butterfly', avatar_url: null, last_online: new Date(Date.now() - 5 * 60000).toISOString() },
@@ -206,10 +173,6 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
       { user_id: '2', username: 'critic_alice', avatar_url: null, count: 30 },
       { user_id: '1', username: 'archilover99', avatar_url: null, count: 25 },
     ],
-    most_sessions: [
-      { user_id: '1', username: 'archilover99', avatar_url: null, count: 40 },
-      { user_id: '4', username: 'rater_x', avatar_url: null, count: 35 },
-    ]
   },
   retention_analysis: {
     user_activity_distribution: {

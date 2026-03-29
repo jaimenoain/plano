@@ -26,16 +26,6 @@ const NOTIFICATION_GROUPS = [
     ],
   },
   {
-    title: "Groups & Field Trips",
-    types: [
-      { id: "new_session", label: "New field trip scheduled" },
-      { id: "session_reminder", label: "Field trip reminders" },
-      { id: "group_invitation", label: "Group invitations" },
-      { id: "join_request", label: "Group join requests" },
-      { id: "group_activity", label: "Group activity (member left)" },
-    ],
-  },
-  {
     title: "Engagement",
     types: [
       { id: "like", label: "Likes on your reviews" },

@@ -1,6 +1,6 @@
 import { useArchitectPortfolio } from "@/hooks/useArchitectPortfolio";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SmartBuildingCard, SmartBuilding } from "@/components/groups/watchlist/SmartBuildingCard";
+import { PortfolioBuildingCard, PortfolioBuildingDisplay } from "@/components/profile/PortfolioBuildingCard";
 import { getBuildingImageUrl } from "@/utils/image";
 
 interface ArchitectPortfolioProps {
@@ -40,25 +40,17 @@ export function ArchitectPortfolio({ architectId, isOwnProfile }: ArchitectPortf
               }
             }
 
-            const mappedBuilding: SmartBuilding = {
+            const mappedBuilding: PortfolioBuildingDisplay = {
               id: building.id,
               name: building.name,
               main_image_url,
               year_completed: building.year_completed,
               architects: null,
-              overlap_count: 0,
-              interested_users: [],
-              total_selected_members: 0,
-              is_in_pipeline: false,
             };
 
             return (
               <div key={building.id} className="min-w-0 flex flex-col">
-                <SmartBuildingCard
-                  building={mappedBuilding}
-                  groupId="" // Empty group ID as it's not used in this context but required by the prop type
-                  hideBucketListButton={isOwnProfile}
-                />
+                <PortfolioBuildingCard building={mappedBuilding} hideBucketListButton={isOwnProfile} />
               </div>
             );
           })}

@@ -18,7 +18,6 @@ import Post from "./pages/Post";
 import Profile from "./pages/Profile";
 import UserPhotoGallery from "./pages/UserPhotoGallery";
 import Settings from "./pages/Settings";
-import GroupSettings from "./pages/GroupSettings";
 import NotFound from "./pages/NotFound";
 import BuildingDetails from "./pages/BuildingDetails";
 import ArchitectDashboard from "./pages/ArchitectDashboard";
@@ -26,31 +25,13 @@ import ArchitectDetails from "./pages/ArchitectDetails";
 import EditArchitect from "./pages/EditArchitect";
 import ReviewDetails from "./pages/ReviewDetails";
 import Notifications from "./pages/Notifications";
-import Groups from "./pages/Groups";
 import Connect from "./pages/Connect";
-import CreateSession from "./pages/CreateSession";
 import AddBuilding from "./pages/AddBuilding";
 import EditBuilding from "./pages/EditBuilding";
 import WriteReview from "./pages/WriteReview";
 import CollectionMap from "@/components/_legacy_v1/CollectionMap";
 import FolderView from "./pages/FolderView";
 
-import GroupLayout from "./pages/groups/GroupLayout";
-import GroupSessions from "./pages/groups/GroupSessions";
-import GroupFeed from "./pages/groups/GroupFeed";
-import GroupMembers from "./pages/groups/GroupMembers";
-import GroupBucketList from "./pages/groups/GroupBucketList";
-// import GroupStatsView from "./pages/groups/GroupStatsView";
-import GroupCycles from "./pages/groups/cycles/GroupCycles";
-import CycleDetails from "./pages/groups/cycles/CycleDetails";
-import PollsTab from "./components/groups/polls/PollsTab";
-import PollDetails from "./pages/groups/polls/PollDetails";
-import LivePollAdmin from "./pages/groups/live/LivePollAdmin";
-import LivePollParticipant from "./pages/groups/live/LivePollParticipant";
-import LivePollProjector from "./pages/groups/live/LivePollProjector";
-import RapidReview from "./pages/groups/live/RapidReview";
-import { PipelineTabWrapper } from "./components/groups/pipeline/PipelineTabWrapper";
-import SessionDetails from "./pages/groups/sessions/SessionDetails";
 import { PwaPrompt } from "./components/pwa/PwaPrompt";
 import { PwaProvider } from "@/hooks/usePwaInstall";
 import { GoogleAnalytics } from "./components/GoogleAnalytics";
@@ -135,37 +116,10 @@ const router = createBrowserRouter(
 
         <Route path="/add-building" element={<AddBuilding />} />
 
-        <Route path="/groups" element={<Groups />} />
         <Route path="/connect" element={<Connect />} />
 
-        {/* NESTED GROUP ROUTES */}
-        <Route path="/groups/:slug" element={<GroupLayout />}>
-          <Route index element={<GroupSessions />} />
-          <Route path="cycles" element={<GroupCycles />} />
-          <Route path="cycles/:cycleSlug" element={<CycleDetails />} />
-          <Route path="feed" element={<GroupFeed />} />
-          <Route path="polls" element={<PollsTab />} />
-          <Route path="polls/:pollSlug" element={<PollDetails />} />
-          <Route path="watchlist" element={<GroupBucketList />} />
-          <Route path="pipeline" element={<PipelineTabWrapper />} />
-          <Route path="members" element={<GroupMembers />} />
-          {/* <Route path="stats" element={<GroupStatsView />} /> */}
-        </Route>
-
-        <Route path="/groups/:slug/session/create" element={<CreateSession />} />
-        <Route path="/groups/:slug/session/:sessionId/edit" element={<CreateSession />} />
-        <Route path="/groups/:slug/live/:pollSlug/admin" element={<LivePollAdmin />} />
-        <Route path="/groups/:slug/live/:pollSlug/projector" element={<LivePollProjector />} />
-        <Route path="/groups/:slug/live/:pollSlug/rapid-review" element={<RapidReview />} />
-        <Route path="/groups/:slug/live/:pollSlug" element={<LivePollParticipant />} />
-        <Route path="/groups/:slug/settings" element={<GroupSettings />} />
-        <Route path="/groups/:slug/sessions/:sessionSlug/:sessionId" element={<GroupLayout />}>
-          <Route index element={<SessionDetails />} />
-        </Route>
-        {/* Fallback for old links */}
-        <Route path="/groups/:slug/sessions/:sessionId" element={<GroupLayout />}>
-          <Route index element={<SessionDetails />} />
-        </Route>
+        {/* Explicit 404: avoid matching /groups/* as /:username/folders/:slug (username = "groups") */}
+        <Route path="/groups/*" element={<NotFound />} />
 
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:username" element={<Profile />} />

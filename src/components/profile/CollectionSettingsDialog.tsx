@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus, Folder } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserSearch } from "@/components/groups/UserSearch";
+import { UserSearch } from "@/components/profile/UserSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collection } from "@/types/collection";

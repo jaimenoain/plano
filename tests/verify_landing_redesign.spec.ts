@@ -19,11 +19,6 @@ test('verify landing page redesign (Swiss Editorial)', async ({ page }) => {
       });
   });
 
-  // Mock user groups summary to avoid errors if it tries to fetch (though it shouldn't for landing)
-  await page.route('**/rest/v1/rpc/get_user_groups_summary', async route => {
-      await route.fulfill({ status: 200, body: JSON.stringify([]) });
-  });
-
   // 2. Navigate to Root
   await page.goto('http://localhost:8080/');
 

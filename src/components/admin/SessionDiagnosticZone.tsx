@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertTriangle, CheckCircle, RefreshCcw, Activity, FileWarning, Terminal } from "lucide-react";
 import { fetchDiagnosticLogs, fetchIncompleteSessions, logDiagnosticError, DiagnosticLog, IncompleteSession } from "@/api/diagnostics";
@@ -93,14 +91,10 @@ export function SessionDiagnosticZone() {
               </div>
             )}
              <div className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase text-muted-foreground">Trigger Definition Audit</h4>
-                <div className="text-xs bg-muted p-3 rounded-md font-mono">
-                  Completed = (Status is 'published' AND Date &lt; NOW()) AND (<br/>
-                  &nbsp;&nbsp;EXISTS(session_comments) OR<br/>
-                  &nbsp;&nbsp;EXISTS(session_likes) OR<br/>
-                  &nbsp;&nbsp;EXISTS(logs in group within 48h)<br/>
-                  )
-                </div>
+                <h4 className="text-xs font-semibold uppercase text-muted-foreground">Notes</h4>
+                <p className="text-xs text-muted-foreground">
+                  Group field-trip session tables were removed. Incomplete-trip listings are disabled until a new data source is wired.
+                </p>
              </div>
           </CardContent>
         </Card>
@@ -112,33 +106,14 @@ export function SessionDiagnosticZone() {
               <FileWarning className="h-5 w-5" />
               Recent Incomplete Trips
             </CardTitle>
-            <CardDescription>Published trips with no detected completion activity.</CardDescription>
+            <CardDescription>Legacy group trip data is no longer available.</CardDescription>
           </CardHeader>
           <CardContent>
-             <ScrollArea className="h-[200px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Group</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sessions.length > 0 ? sessions.map((session) => (
-                    <TableRow key={session.id}>
-                      <TableCell className="text-xs">{new Date(session.session_date).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-xs font-medium">{session.group_name || 'Unknown'}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-[10px]">{session.status}</Badge></TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground">No incomplete trips found (or loading...)</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </ScrollArea>
+            <p className="text-sm text-muted-foreground">
+              {sessions.length === 0
+                ? "No trip-completion backlog is shown. This section is reserved for a future replacement metric."
+                : `${sessions.length} item(s) loaded.`}
+            </p>
           </CardContent>
         </Card>
       </div>

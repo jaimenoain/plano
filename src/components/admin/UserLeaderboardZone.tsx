@@ -1,22 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LeaderboardUser } from "@/types/admin";
+import type { DashboardStats } from "@/types/admin";
 import { formatDistanceToNow } from "date-fns";
 
 type UserLeaderboardZoneProps = {
-  data: {
-    most_reviews: LeaderboardUser[];
-    most_ratings: LeaderboardUser[];
-    most_likes: LeaderboardUser[];
-    most_comments: LeaderboardUser[];
-    most_votes: LeaderboardUser[];
-    most_groups_joined: LeaderboardUser[];
-    most_recently_online: LeaderboardUser[];
-    most_follows_given: LeaderboardUser[];
-    most_followers_gained: LeaderboardUser[];
-    most_sessions: LeaderboardUser[];
-  };
+  data: DashboardStats["user_leaderboard"];
 };
 
 export function UserLeaderboardZone({ data }: UserLeaderboardZoneProps) {
@@ -26,11 +15,9 @@ export function UserLeaderboardZone({ data }: UserLeaderboardZoneProps) {
     { title: "Most Likes", data: data.most_likes, metric: "likes" },
     { title: "Most Comments", data: data.most_comments, metric: "comments" },
     { title: "Most Votes", data: data.most_votes, metric: "votes" },
-    { title: "Groups Joined", data: data.most_groups_joined, metric: "groups" },
     { title: "Recently Online", data: data.most_recently_online, metric: "time" },
     { title: "Most Follows", data: data.most_follows_given, metric: "follows" },
     { title: "Most Followers", data: data.most_followers_gained, metric: "followers" },
-    { title: "Most Field Trips", data: data.most_sessions, metric: "visits" },
   ];
 
   return (

@@ -82,43 +82,7 @@ export async function fetchDiagnosticLogs(): Promise<DiagnosticLog[]> {
 }
 
 export async function fetchIncompleteSessions(): Promise<IncompleteSession[]> {
-  // Fetch sessions that are published, in the past, and NOT effectively completed
-  // Note: The strict "completed" logic is complex (requires checking logs, comments, likes)
-  // Here we just fetch published past sessions and we can filter or display them.
-  // Ideally, we would use an RPC, but for now we'll fetch potentially incomplete sessions
-  // and maybe do a lightweight check or just list them for manual inspection.
-
-  // Fetch sessions from the last 30 days
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  const { data, error } = await supabase
-    .from('group_sessions')
-    .select(`
-      id,
-      session_date,
-      status,
-      group_id,
-      groups (
-        name
-      )
-    `)
-    .eq('status', 'published')
-    .lt('session_date', new Date().toISOString())
-    .gte('session_date', thirtyDaysAgo.toISOString())
-    .order('session_date', { ascending: false });
-
-  if (error) {
-    console.error('Failed to fetch sessions:', error);
-    throw error;
-  }
-
-  // Transform to flat structure
-  return data.map((item: any) => ({
-    id: item.id,
-    session_date: item.session_date,
-    status: item.status,
-    group_id: item.group_id,
-    group_name: item.groups?.name
-  }));
+  // Group sessions / field-trip tables were removed (Phase 7–11). Admin UI keeps the
+  // diagnostics card but there is no backing query anymore.
+  return [];
 }

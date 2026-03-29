@@ -159,9 +159,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-4 group-data-[collapsible=icon]:items-center">
               {navItems.map((item) => {
-                const isActive =
-                  location.pathname === item.path ||
-                  (item.path === "/connect" && location.pathname.startsWith("/groups"));
+                const isActive = location.pathname === item.path;
 
                 return (
                   <SidebarMenuItem key={item.path}>

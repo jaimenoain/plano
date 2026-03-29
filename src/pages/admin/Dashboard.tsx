@@ -4,7 +4,6 @@ import { DashboardStats } from "@/types/admin";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PulseZone } from "@/components/admin/PulseZone";
 import { ActivityTrendsZone } from "@/components/admin/ActivityTrendsZone";
-import { GroupDynamicsZone } from "@/components/admin/GroupDynamicsZone";
 import { ContentIntelligenceZone } from "@/components/admin/ContentIntelligenceZone";
 import { UserLeaderboardZone } from "@/components/admin/UserLeaderboardZone";
 import { RetentionZone } from "@/components/admin/RetentionZone";
@@ -76,15 +75,6 @@ export default function AdminDashboard() {
             <section className="space-y-4">
               <h2 className="text-xl font-semibold tracking-tight">Activity Trends</h2>
               <ActivityTrendsZone data={stats.activity_trends} />
-            </section>
-
-            {/* Zone 3: Group Dynamics */}
-            <section className="space-y-4">
-              <h2 className="text-xl font-semibold tracking-tight">Group Dynamics</h2>
-              <GroupDynamicsZone
-                hotGroups={stats.group_dynamics.hot_groups}
-                sessionReliability={stats.group_dynamics.session_reliability}
-              />
             </section>
 
             {/* Zone 4: Content Intelligence */}

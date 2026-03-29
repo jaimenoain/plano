@@ -25,8 +25,7 @@ export function BottomNav() {
       {/* Increased height to h-20 to accommodate larger text/icons comfortably */}
       <div className="flex items-center justify-around h-20 max-w-lg mx-auto px-2 pb-2">
         {navItems.map(({ icon: Icon, label, path }) => {
-          // specific check for Connect to highlight when viewing Groups sub-routes
-          const isActive = location.pathname === path || (path === "/connect" && location.pathname.startsWith("/groups"));
+          const isActive = location.pathname === path;
           
           return (
             <Link

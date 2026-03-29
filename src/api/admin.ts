@@ -61,16 +61,13 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     most_likes: [],
     most_comments: [],
     most_votes: [],
-    most_groups_joined: [],
     most_recently_online: [],
     most_follows_given: [],
     most_followers_gained: [],
-    most_sessions: []
   };
 
   const content = (contentData as any) || {
-    group_dynamics: { hot_groups: [], session_reliability: { published_count: 0, completed_count: 0 } },
-    content_intelligence: { trending_buildings: [] }
+    content_intelligence: { trending_buildings: [] },
   };
 
   const retention = (retentionData as any) || {
@@ -98,7 +95,6 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
       pending_reports: pendingReports || 0,
     },
     activity_trends: trends,
-    group_dynamics: content.group_dynamics,
     content_intelligence: content.content_intelligence,
     user_leaderboard: leaderboards,
     retention_analysis: retention,

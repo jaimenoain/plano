@@ -9,9 +9,11 @@ interface UserSearchProps {
   excludeIds?: string[];
 }
 
+type ProfileRow = { id: string; username: string; avatar_url: string | null };
+
 export function UserSearch({ onSelect, excludeIds = [] }: UserSearchProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -65,7 +67,7 @@ export function UserSearch({ onSelect, excludeIds = [] }: UserSearchProps) {
               }}
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src={u.avatar_url} />
+                <AvatarImage src={u.avatar_url ?? undefined} />
                 <AvatarFallback>{u.username?.[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
               <span className="font-medium text-sm">{u.username}</span>

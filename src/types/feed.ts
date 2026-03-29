@@ -40,7 +40,6 @@ export interface FeedReview {
   edited_at?: string | null;
   status?: string; // Made optional to match ReviewCard usage, though usually present
   user_id?: string; // Optional as ReviewCard doesn't explicitly require it in the type, but Index provides it
-  group_id?: string | null;
   user: ReviewUser;
   building: ReviewBuilding;
   likes_count: number;

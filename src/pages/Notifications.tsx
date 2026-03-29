@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Heart, MessageCircle, UserPlus, Loader2, Bell, Calendar, Sparkles, Clock, LogOut, Settings, Users, ShieldCheck } from "lucide-react";
+import { Heart, MessageCircle, UserPlus, Loader2, Bell, Sparkles, Settings, Users, ShieldCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { NotificationSettingsDialog } from "@/components/notifications/NotificationSettingsDialog";
@@ -14,10 +14,9 @@ import { Button } from "@/components/ui/button";
 interface Notification {
   id: string;
   created_at: string;
-  type: 'follow' | 'like' | 'comment' | 'new_session'| 'group_invitation' | 'friend_joined' | 'suggest_follow' | 'session_reminder' | 'group_activity' | 'recommendation' | 'join_request' | 'visit_request' | 'architect_verification';
+  type: 'follow' | 'like' | 'comment' | 'friend_joined' | 'suggest_follow' | 'recommendation' | 'visit_request' | 'architect_verification';
   is_read: boolean;
   actor_id: string;
-  group_id: string | null;
   recommendation_id?: string | null;
   architect_id?: string | null;
   actor: {
@@ -38,24 +37,11 @@ interface Notification {
     };
   };
   metadata?: { status?: string };
-  session?: {
-    id: string;
-    title: string | null;
-    session_date: string;
-    group_id: string;
-    group: {
-      name: string;
-    }
-  };
-  group?: {
-    name: string;
-  }
 }
 
 const NOTIFICATION_QUERY = `
   *,
   actor:notifications_actor_id_fkey(username, avatar_url),
-  group:notifications_group_id_fkey(name),
   architect:architects(name),
   resource:notifications_resource_id_fkey(
     id,
@@ -67,13 +53,6 @@ const NOTIFICATION_QUERY = `
     id,
     status,
     building:buildings(name)
-  ),
-  session:notifications_session_id_fkey(
-    id,
-    title,
-    session_date,
-    group_id,
-    group:groups(name)
   )
 `;
 
@@ -183,18 +162,6 @@ export default function Notifications() {
     if (['follow', 'friend_joined', 'suggest_follow'].includes(notification.type)) {
       const identifier = notification.actor?.username || notification.actor_id;
       navigate(`/profile/${identifier}`);
-    } else if (notification.type === 'group_activity') {
-       const identifier = notification.actor?.username || notification.actor_id;
-       navigate(`/profile/${identifier}`);
-    } else if (notification.type === 'new_session' || notification.type === 'session_reminder') {
-       // Link to the specific group where the session is
-       const groupId = notification.session?.group_id || notification.group_id;
-       if (groupId) navigate(`/groups/${groupId}`);
-    } else if (notification.type === 'group_invitation') {
-      // Direct link to group
-      if (notification.group_id) navigate(`/groups/${notification.group_id}`);
-    } else if (notification.type === 'join_request') {
-       if (notification.group_id) navigate(`/groups/${notification.group_id}/members`);
     } else if (notification.type === 'recommendation' || notification.type === 'visit_request') {
       navigate(`/profile?tab=foryou`);
     } else if (notification.type === 'architect_verification' && notification.metadata?.status === 'approved' && notification.architect_id) {
@@ -209,13 +176,8 @@ export default function Notifications() {
       case 'like': return <Heart className="h-4 w-4 text-red-500 fill-red-500" />;
       case 'comment': return <MessageCircle className="h-4 w-4 text-blue-500 fill-blue-500" />;
       case 'follow': return <UserPlus className="h-4 w-4 text-green-500 fill-green-500" />;
-      case 'new_session': return <Calendar className="h-4 w-4 text-purple-500" />;
-      case 'session_reminder': return <Clock className="h-4 w-4 text-orange-500 fill-orange-500" />;
       case 'friend_joined': return <UserPlus className="h-4 w-4 text-blue-400" />;
       case 'suggest_follow': return <Sparkles className="h-4 w-4 text-yellow-500 fill-yellow-500" />;
-      case 'group_invitation': return <UserPlus className="h-4 w-4 text-purple-500" />;
-      case 'join_request': return <UserPlus className="h-4 w-4 text-primary" />;
-      case 'group_activity': return <LogOut className="h-4 w-4 text-orange-500" />;
       case 'recommendation': return <Sparkles className="h-4 w-4 text-primary fill-primary" />;
       case 'visit_request': return <Users className="h-4 w-4 text-primary" />;
       case 'architect_verification': return <ShieldCheck className="h-4 w-4 text-green-600" />;
@@ -234,25 +196,7 @@ export default function Notifications() {
         return <span>Your request to be verified as <span className="font-semibold">{architectName}</span> was <span className={isApproved ? "text-green-600 font-medium" : "text-destructive font-medium"}>{isApproved ? "approved" : "declined"}</span></span>;
       case 'like': return <span><span className="font-semibold">{actorName}</span> liked your review of <span className="italic">{buildingName || "a building"}</span></span>;
       case 'comment': return <span><span className="font-semibold">{actorName}</span> commented on your review of <span className="italic">{buildingName || "a building"}</span></span>;
-      case 'group_invitation': 
-        const groupName = n.group?.name || "a group";
-        return <span><span className="font-semibold">{actorName}</span> added you to <span className="font-semibold">{groupName}</span></span>;
-      case 'join_request':
-        const requestGroupName = n.group?.name || "a group";
-        if (n.metadata?.status === 'accepted') {
-          return <span><span className="font-semibold">{actorName}</span> joined <span className="font-semibold">{requestGroupName}</span></span>;
-        }
-        return <span><span className="font-semibold">{actorName}</span> has requested to join <span className="font-semibold">{requestGroupName}</span></span>;
-      case 'group_activity':
-        const groupActivityName = n.group?.name || "a group";
-        return <span><span className="font-semibold">{actorName}</span> has left the <span className="font-semibold">{groupActivityName}</span> group</span>;
       case 'follow': return <span><span className="font-semibold">{actorName}</span> started following you</span>;
-      case 'new_session': 
-        const sessionGroupName = n.session?.group?.name || "a group";
-        return <span><span className="font-semibold">{actorName}</span> scheduled a session in <span className="font-semibold">{sessionGroupName}</span></span>;
-      case 'session_reminder':
-        const reminderGroupName = n.session?.group?.name || n.group?.name || "your group";
-        return <span>Reminder: You have a session today in <span className="font-semibold">{reminderGroupName}</span>!</span>;
       case 'friend_joined': 
         return <span>Your friend <span className="font-semibold">{actorName}</span> just joined Plano!</span>;
       case 'suggest_follow': 

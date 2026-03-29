@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "gen-types": "supabase gen types typescript --project-id gyxspsuctbrxhwiyfvlj --schema public > src/integrations/supabase/types.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "gen-types": "npx supabase gen types typescript --project-id gyxspsuctbrxhwiyfvlj --schema public > src/integrations/supabase/types.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },

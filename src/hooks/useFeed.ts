@@ -45,7 +45,6 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
         edited_at: review.edited_at,
         status: review.status,
         user_id: review.user_id,
-        group_id: review.group_id,
         user: {
           username: review.user_data?.username || null,
           avatar_url: review.user_data?.avatar_url || null,
