@@ -109,6 +109,10 @@ END;
 $$;
 
 -- --- Feed & suggestions: remove group_id from return shape ---
+-- PG requires DROP when OUT/RETURNS TABLE shape changes (cannot CREATE OR REPLACE).
+DROP FUNCTION IF EXISTS public.get_feed(integer, integer);
+DROP FUNCTION IF EXISTS public.get_suggested_posts(integer, integer);
+
 CREATE OR REPLACE FUNCTION get_feed(p_limit INT, p_offset INT)
 RETURNS TABLE (
   id UUID,
@@ -901,11 +905,31 @@ ALTER TABLE public.notifications DROP COLUMN IF EXISTS group_id;
 ALTER TABLE public.notifications DROP COLUMN IF EXISTS session_id;
 
 -- =============================================================================
--- 4) user_buildings: drop group scope column
+-- 4) user_buildings: RLS policy references group_id — drop & recreate, then column
 -- =============================================================================
 
+DROP POLICY IF EXISTS "Users can view user_buildings" ON public.user_buildings;
+
 ALTER TABLE public.user_buildings DROP CONSTRAINT IF EXISTS log_group_id_fkey;
+ALTER TABLE public.user_buildings DROP CONSTRAINT IF EXISTS user_buildings_group_id_fkey;
 ALTER TABLE public.user_buildings DROP COLUMN IF EXISTS group_id;
+
+-- Same visibility rules as 20260808000000_fix_user_buildings_visibility.sql minus group context.
+CREATE POLICY "Users can view user_buildings" ON public.user_buildings
+  FOR SELECT
+  USING (
+    auth.uid() = user_id
+    OR (
+      visibility IS DISTINCT FROM 'private'
+      AND (
+        COALESCE(visibility, 'public') = 'public'
+        OR (
+          visibility = 'contacts'
+          AND public.is_mutual_contact(auth.uid(), user_buildings.user_id)
+        )
+      )
+    )
+  );
 
 -- =============================================================================
 -- 5) Drop group / poll / session tables (children first; CASCADE for safety)
