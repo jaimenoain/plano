@@ -1,48 +1,48 @@
-# QA Audit Report: Phase 4 (Social & Groups Transformation)
+# QA Report: Unified Header System
 
-## 1. Terminology & UI Audit (The "Field Trip" Shift)
-**Status: PASS (with fixes applied)**
+## Overview
+This report documents the Quality Assurance review of the Unified Header System implementation. The analysis focused on compliance with specific design strictures regarding visual stability, route logic, functional integration, and responsive behavior.
 
-*   **Text Scan:**
-    *   **Initial Findings:** Found multiple instances of "Session" in user-facing UI (`GroupLayout`, `GroupCycles`, `LivePollProjector`, `LivePollParticipant`, `PollDetails`, `NotificationSettingsDialog`).
-    *   **Fixes Applied:** Refactored all identified user-facing text to "Field Trip" (for scheduled visits) or "Live Event" / "Event" (for polls).
-    *   **Result:** UI now consistently uses "Field Trip" and "Event".
-*   **Code Integrity:**
-    *   **Status:** PASS. The underlying file structure (`SessionCard.tsx`, `group_sessions` table) remains unchanged.
-*   **Feature Check (Rapid Review):**
-    *   **Initial Findings:** The "Live Voting" feature was named `TinderSession.tsx` but the UI presentation was already updated to "RAPID REVIEW" with "MUST VISIT" / "SKIP" indicators.
-    *   **Fixes Applied:** Renamed `TinderSession.tsx` to `RapidReview.tsx` and updated the route to `/rapid-review` to eliminate the "Tinder" reference in the URL and codebase.
-    *   **Result:** Feature is clearly presented as "Rapid Review".
+## Compliance Checklist
 
-## 2. Spatial Implementation Audit (Map-First Design)
-**Status: PASS**
+### 1. Visual Stability Check (The "No Jump" Rule)
+- **Height Consistency:** ✅ **Verified.**
+  - The `Header` component maintains a fixed height of `h-16` (64px) across all variants.
+  - The `AppLayout` consistently applies `pt-16` padding to the main content area, ensuring a stable starting position for page content regardless of the route (Feed, Groups, Map).
+- **Alignment:** ✅ **Verified.**
+  - The Header uses a `grid grid-cols-3` layout with `items-center` for all slots.
+  - **Center Slot:** The Feed Logo, Groups Title, and Map Search Input are all vertically centered within the 64px container using Flexbox alignment (`items-center`), ensuring the title text baseline visually matches the vertical center of the search input as requested.
 
-*   **Component Check:** `SessionCard.tsx` correctly implements the `SessionMap` component.
-*   **Data Integrity:**
-    *   The map receives `buildings` data with `location` (WKT).
-    *   `SessionMap.tsx` gracefully handles parsing `POINT(lng lat)` and filters out invalid or missing locations.
-    *   If no locations are found, the map does not render (returns null), preventing crashes or empty boxes.
-*   **Visual Hierarchy:** The map is sized appropriately (`h-48`) and provides context without overwhelming the list.
+### 2. Route Logic Verification
+- **Feed Tab (`/`):** ✅ **Verified.**
+  - Renders `<AppLayout variant="home">`.
+  - The Header correctly displays the `PlanoLogo` (which includes the yellow block) in the center slot.
+  - No text is rendered in the center slot.
+- **Map Tab (`/search`):** ✅ **Verified.**
+  - Renders `<AppLayout variant="map" searchBar={...}>`.
+  - The Header correctly renders the Search Input in the center slot.
+- **Groups / Connect Tabs:** ✅ **Verified.**
+  - **Groups:** Renders `<AppLayout title="Groups" showLogo={false}>`.
+  - **Connect:** Renders `<AppLayout title="Connect" showLogo={false}>`.
+  - Both correctly render the Title Case text ("Groups", "Connect") in the center slot via the default header behavior.
+- **Profile Tab (`/profile`):** ✅ **Verified.**
+  - Renders `<AppLayout title="Profile" showLogo={false}>`.
+  - The Header explicitly uses the static text "Profile".
+  - It does **not** render the user's dynamic username in the Header title.
 
-## 3. Social Mechanics Audit ("Visit With")
-**Status: PASS**
+### 3. Functional Integration
+- **Search Binding:** ✅ **Verified.**
+  - The `SearchPage` component passes a bound Search Input (via the `searchBar` prop) to the Header.
+  - Typing in this input correctly triggers `setSearchQuery`, driving the filter logic in `useBuildingSearch` and `useUserSearch`.
+- **Z-Index & Scrolling:** ✅ **Verified.**
+  - **Header:** Uses `fixed z-50`.
+  - **Groups List:** Content is in the document flow and scrolls under the fixed Header.
+  - **Map:** The Map is contained within a non-scrolling flex container below the header (`pt-16`). When in full-screen mode, the Map correctly overlays everything with `z-[5000]`. In standard mode, it sits below the Header.
 
-*   **Flow Verification:**
-    *   `AddBuilding.tsx` / `AddBuildingDetails.tsx` triggers `RecommendDialog` with `mode="visit_with"` upon successful addition.
-*   **Notification Logic:**
-    *   **Initial Findings:** The system sends a `recommendation` notification.
-    *   **Fixes Applied:** Updated the `NotificationSettingsDialog` label to "Building recommendations & Invites" to clarify that this setting covers visit invites.
-*   **Recipient Experience:**
-    *   `RecommendDialog` generates a deep link with `invited_by` parameter and "I'd like to visit this building with you!" text.
+### 4. Responsive & Desktop Behavior
+- **Desktop View:** ✅ **Verified.**
+  - **Search Bar Width:** The Search Input container is constrained with `max-w-sm` (approx. 384px) in `SearchPage.tsx` and `max-w-xs` (320px) in the default fallback, adhering to the "e.g., 400px" maximum width requirement.
+  - **Header Stretch:** The Header background spans full width, but content is constrained to `max-w-7xl` (Header) and `max-w-5xl` (AppLayout content), preventing awkward stretching on wide viewports.
 
-## 4. Regression & Safety Check
-**Status: PASS**
-
-*   **Clean Up:** `TinderSession.tsx` was identified and renamed to `RapidReview.tsx`. No legitimate files were found to be missing.
-*   **Build Check:**
-    *   `SessionMap` imports `react-map-gl` and `maplibre-gl` correctly.
-    *   No obvious circular dependencies found.
-    *   Text changes were verified to not break compilation (imports were checked).
-
-## Summary
-The audit identified terminology discrepancies which have been fixed. The spatial and social mechanics were found to be implemented correctly according to the requirements. The "Tinder" legacy naming was cleaned up.
+## Conclusion
+The implementation of the Unified Header System **strictly adheres** to all specified design requirements. The "State-Based" logic is functioning correctly across all examined routes. No critical fixes are required.
