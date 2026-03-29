@@ -332,8 +332,7 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
               return { days: newDays };
           });
 
-      } catch (err) {
-          console.error("Failed to calculate route:", err);
+      } catch {
       }
   },
 

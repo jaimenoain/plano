@@ -60,7 +60,6 @@ export function DiscoverySearchInput({
       }
       const apiKey = config.googleMaps.apiKey;
       if (!apiKey) {
-        console.error("DiscoverySearchInput: VITE_GOOGLE_MAPS_API_KEY is missing. Location search disabled.");
         return;
       }
 
@@ -72,8 +71,7 @@ export function DiscoverySearchInput({
           new Promise((_, reject) => setTimeout(() => reject(new Error("Google Maps load timeout")), 10000))
         ]);
         setScriptLoaded(true);
-      } catch (error) {
-        console.error("Error loading Google Maps script", error);
+      } catch {
       }
     };
     initMap();
@@ -170,8 +168,7 @@ export function DiscoverySearchInput({
 
       onLocationSelect({ lat, lng }, bounds);
       onPlaceDetails?.(results[0]);
-    } catch (error) {
-      console.error("Geocoding error: ", error);
+    } catch {
     }
   };
 

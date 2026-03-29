@@ -153,38 +153,32 @@ async function enrichBuildings(
   const idsToFetch = Array.from(new Set([...missingStatusIds, ...missingImageIds]));
 
   if (idsToFetch.length > 0) {
-    try {
-      const { data: fetchedData, error } = await supabase
-        .from('buildings')
-        .select('id, status, main_image_url')
-        .in('id', idsToFetch)
-        .limit(QUERY_LIMIT);
+    const { data: fetchedData, error } = await supabase
+      .from('buildings')
+      .select('id, status, main_image_url')
+      .in('id', idsToFetch)
+      .limit(QUERY_LIMIT);
 
-      if (error) {
-        console.error('Error fetching building data:', error);
-      } else if (fetchedData) {
-        const statusMap = new Map<string, string | null>();
-        const imageMap = new Map<string, string | null>();
+    if (!error && fetchedData) {
+      const statusMap = new Map<string, string | null>();
+      const imageMap = new Map<string, string | null>();
 
-        fetchedData.forEach((item: BuildingDataItem) => {
-          statusMap.set(item.id, item.status);
-          imageMap.set(item.id, item.main_image_url);
-        });
+      fetchedData.forEach((item: BuildingDataItem) => {
+        statusMap.set(item.id, item.status);
+        imageMap.set(item.id, item.main_image_url);
+      });
 
-        enrichedBuildings = enrichedBuildings.map(b => {
-          const updates: Partial<DiscoveryBuilding> = {};
-          if (b.status === undefined) {
-            updates.status = statusMap.get(b.id) as any || null;
-          }
-          if (b.main_image_url === undefined) {
-            updates.main_image_url = imageMap.get(b.id) || null;
-          }
+      enrichedBuildings = enrichedBuildings.map(b => {
+        const updates: Partial<DiscoveryBuilding> = {};
+        if (b.status === undefined) {
+          updates.status = statusMap.get(b.id) as any || null;
+        }
+        if (b.main_image_url === undefined) {
+          updates.main_image_url = imageMap.get(b.id) || null;
+        }
 
-          return Object.keys(updates).length > 0 ? { ...b, ...updates } : b;
-        });
-      }
-    } catch (error) {
-      console.error('Exception fetching building data:', error);
+        return Object.keys(updates).length > 0 ? { ...b, ...updates } : b;
+      });
     }
   }
 
@@ -203,10 +197,6 @@ async function enrichBuildings(
         .eq('follower_id', userId)
         .limit(QUERY_LIMIT);
 
-      if (followsError) {
-        console.error('Error fetching follows:', followsError);
-      }
-
       const followedIds = Array.isArray(follows) ? follows.map(f => f.following_id) : [];
       const contactIds = Array.from(new Set([...followedIds, ...(specificContactIds || [])]));
 
@@ -224,9 +214,7 @@ async function enrichBuildings(
           .or('status.eq.visited,status.eq.pending,rating.not.is.null')
           .limit(QUERY_LIMIT);
 
-        if (interactionsError) {
-          console.error('Error fetching contact interactions:', interactionsError);
-        } else if (contactInteractions && contactInteractions.length > 0) {
+        if (!interactionsError && contactInteractions && contactInteractions.length > 0) {
           const ratingsMap = new Map<string, ContactRater[]>();
           const visitorsMap = new Map<string, ContactRater[]>();
           const interactionsMap = new Map<string, ContactInteraction[]>();
@@ -303,8 +291,7 @@ async function enrichBuildings(
           };
         });
       }
-    } catch (error) {
-      console.error('Exception during social enrichment:', error);
+    } catch {
       // Fall back to RPC visitors only
       enrichedBuildings = enrichedBuildings.map(b => {
         const rpcVisitors = b.visitors || b.contact_visitors || [];
@@ -399,7 +386,6 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
           .limit(QUERY_LIMIT);
 
         if (error) {
-          console.error('Error fetching rated_by profiles:', error);
           return [];
         }
 
@@ -410,8 +396,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
           name: p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : p.username,
           bio: null
         } as UserSearchResult)) || [];
-      } catch (error) {
-        console.error('Exception fetching rated_by profiles:', error);
+      } catch {
         return [];
       }
     },
@@ -662,13 +647,11 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
           .limit(QUERY_LIMIT);
 
         if (error) {
-          console.error('Error fetching collections:', error);
           return [];
         }
 
         return data || [];
-      } catch (error) {
-        console.error('Exception fetching collections:', error);
+      } catch {
         return [];
       }
     },
@@ -728,123 +711,101 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
           // 1. Fetch from Target Users (Unified)
           if (targetUserIds.size > 0) {
-            try {
-              let query = supabase
-                .from('user_buildings')
-                .select('building_id, user_id')
-                .in('user_id', Array.from(targetUserIds));
+            let query = supabase
+              .from('user_buildings')
+              .select('building_id, user_id')
+              .in('user_id', Array.from(targetUserIds));
 
-              // Apply Status Filters
-              const activeStatuses: string[] = [];
-              if (statusFilters.includes('visited')) activeStatuses.push('visited');
-              if (statusFilters.includes('saved')) activeStatuses.push('pending');
+            // Apply Status Filters
+            const activeStatuses: string[] = [];
+            if (statusFilters.includes('visited')) activeStatuses.push('visited');
+            if (statusFilters.includes('saved')) activeStatuses.push('pending');
 
-              if (activeStatuses.length > 0) {
-                query = query.in('status', activeStatuses);
-              } else {
-                query = query.or('status.eq.visited,status.eq.pending,rating.not.is.null');
-              }
+            if (activeStatuses.length > 0) {
+              query = query.in('status', activeStatuses);
+            } else {
+              query = query.or('status.eq.visited,status.eq.pending,rating.not.is.null');
+            }
 
-              const effectiveMinRating = Math.max(personalMinRating, contactMinRating);
-              if (effectiveMinRating > 0) {
-                query = query.gte('rating', effectiveMinRating);
-              }
+            const effectiveMinRating = Math.max(personalMinRating, contactMinRating);
+            if (effectiveMinRating > 0) {
+              query = query.gte('rating', effectiveMinRating);
+            }
 
-              query = query.limit(QUERY_LIMIT);
+            query = query.limit(QUERY_LIMIT);
 
-              const { data: userBuildings, error: ubError } = await query;
-              if (ubError) {
-                console.error('Error fetching user buildings:', ubError);
-              } else if (userBuildings) {
-                const ids = filterBuildingIds(
-                  userBuildings,
-                  user,
-                  selectedContacts,
-                  ratedByMe,
-                  hasSpecificContacts
-                );
-                ids.forEach(id => buildingIds.add(id));
-              }
-            } catch (error) {
-              console.error('Exception fetching user buildings:', error);
+            const { data: userBuildings, error: ubError } = await query;
+            if (!ubError && userBuildings) {
+              const ids = filterBuildingIds(
+                userBuildings,
+                user,
+                selectedContacts,
+                ratedByMe,
+                hasSpecificContacts
+              );
+              ids.forEach(id => buildingIds.add(id));
             }
           }
 
           // 2. Generic "Filter Contacts" (Any Followed Contact)
           if (filterContacts && user) {
-            try {
-              const { data: follows, error: followsError } = await supabase
-                .from('follows')
-                .select('following_id')
-                .eq('follower_id', user.id)
-                .limit(QUERY_LIMIT);
+            const { data: follows, error: followsError } = await supabase
+              .from('follows')
+              .select('following_id')
+              .eq('follower_id', user.id)
+              .limit(QUERY_LIMIT);
 
-              if (followsError) {
-                console.error('Error fetching follows for filter:', followsError);
-              } else {
-                const contactIds = Array.isArray(follows) ? follows.map(f => f.following_id) : [];
+            if (!followsError) {
+              const contactIds = Array.isArray(follows) ? follows.map(f => f.following_id) : [];
 
-                if (contactIds.length > 0) {
-                  let query = supabase
-                    .from('user_buildings')
-                    .select('building_id')
-                    .in('user_id', contactIds)
-                    .in('status', ['visited', 'pending']);
+              if (contactIds.length > 0) {
+                let query = supabase
+                  .from('user_buildings')
+                  .select('building_id')
+                  .in('user_id', contactIds)
+                  .in('status', ['visited', 'pending']);
 
-                  if (contactMinRating > 0) {
-                    query = query.gte('rating', contactMinRating);
-                  }
+                if (contactMinRating > 0) {
+                  query = query.gte('rating', contactMinRating);
+                }
 
-                  query = query.limit(QUERY_LIMIT);
+                query = query.limit(QUERY_LIMIT);
 
-                  const { data: contactBuildings, error: cbError } = await query;
-                  if (cbError) {
-                    console.error('Error fetching contact buildings:', cbError);
-                  } else {
-                    contactBuildings?.forEach(cb => buildingIds.add(cb.building_id));
-                  }
+                const { data: contactBuildings, error: cbError } = await query;
+                if (!cbError) {
+                  contactBuildings?.forEach(cb => buildingIds.add(cb.building_id));
                 }
               }
-            } catch (error) {
-              console.error('Exception fetching contact buildings:', error);
             }
           }
 
           // 3. Collections and Folders
           if (hasCollections) {
-            try {
-              let allCollectionIds = selectedCollections.map(c => c.id);
+            let allCollectionIds = selectedCollections.map(c => c.id);
 
-              if (selectedFolders.length > 0) {
-                 const { data: folderItems, error: fError } = await supabase
-                    .from('user_folder_items')
-                    .select('collection_id')
-                    .in('folder_id', selectedFolders.map(f => f.id))
-                    .limit(QUERY_LIMIT);
+            if (selectedFolders.length > 0) {
+              const { data: folderItems, error: fError } = await supabase
+                .from('user_folder_items')
+                .select('collection_id')
+                .in('folder_id', selectedFolders.map(f => f.id))
+                .limit(QUERY_LIMIT);
 
-                 if (fError) {
-                    console.error('Error fetching folder items:', fError);
-                 } else if (folderItems) {
-                    const folderCollectionIds = folderItems.map(item => item.collection_id);
-                    allCollectionIds = Array.from(new Set([...allCollectionIds, ...folderCollectionIds]));
-                 }
+              if (!fError && folderItems) {
+                const folderCollectionIds = folderItems.map(item => item.collection_id);
+                allCollectionIds = Array.from(new Set([...allCollectionIds, ...folderCollectionIds]));
               }
+            }
 
-              if (allCollectionIds.length > 0) {
-                 const { data: collectionItems, error: cError } = await supabase
-                   .from('collection_items')
-                   .select('building_id')
-                   .in('collection_id', allCollectionIds)
-                   .limit(QUERY_LIMIT);
+            if (allCollectionIds.length > 0) {
+              const { data: collectionItems, error: cError } = await supabase
+                .from('collection_items')
+                .select('building_id')
+                .in('collection_id', allCollectionIds)
+                .limit(QUERY_LIMIT);
 
-                 if (cError) {
-                   console.error('Error fetching collection items:', cError);
-                 } else {
-                   collectionItems?.forEach(item => buildingIds.add(item.building_id));
-                 }
+              if (!cError) {
+                collectionItems?.forEach(item => buildingIds.add(item.building_id));
               }
-            } catch (error) {
-              console.error('Exception fetching collection/folder items:', error);
             }
           }
 
@@ -880,7 +841,6 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
             const { data: buildingsData, error: bError } = await query;
             if (bError) {
-              console.error('Error fetching buildings data:', bError);
               return [];
             }
 
@@ -921,8 +881,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                 } as BuildingPoint;
               })
               .filter(b => isValidCoordinate(b.lat, b.lng));
-          } catch (error) {
-            console.error('Exception in local search mode:', error);
+          } catch {
             return [];
           }
         }
@@ -962,7 +921,6 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
           });
 
           if (error) {
-            console.error('Error fetching map clusters:', error);
             return [];
           }
 
@@ -970,12 +928,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
           return (data as MapItem[]).filter(b =>
             isValidCoordinate(b.lat, b.lng)
           );
-        } catch (error) {
-          console.error('Exception in global search mode:', error);
+        } catch {
           return [];
         }
-      } catch (error) {
-        console.error('Exception in search query:', error);
+      } catch {
         return [];
       }
     },
@@ -1070,8 +1026,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               );
 
               return enriched;
-          } catch (error) {
-              console.error("Error fetching rich list items", error);
+          } catch {
               return [];
           }
       },

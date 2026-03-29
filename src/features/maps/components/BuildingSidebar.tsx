@@ -91,7 +91,6 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
       });
 
       if (error) {
-          console.error('Error fetching buildings list:', error);
           throw error;
       }
 

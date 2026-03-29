@@ -86,8 +86,7 @@ export function FolderAndCollectionMultiSelect({
 
       setCollections(uniqueCollections);
       setFolders(userFolders.data || []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
+    } catch {
     } finally {
       setLoading(false);
     }

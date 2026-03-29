@@ -1,6 +1,6 @@
 ---
-description: Frontend component rules, data binding, state management, and UI constraints. Auto-attached for any TSX component file.
-globs: ["**/*.tsx", "**/*.jsx", "**/components/**", "**/app/**/*.tsx"]
+description: Frontend component rules, data binding, state management, and UI constraints. Auto-attached for TSX/JSX and components.
+globs: ["**/*.tsx", "**/*.jsx", "**/components/**", "src/**/*.tsx", "src/**/*.jsx"]
 alwaysApply: false
 ---
 
@@ -69,23 +69,23 @@ If a component type is not covered in COMPONENT_SPEC.md, derive its **visual** t
 
 ## Design Pre-flight (required before building any page or component)
 
-Before writing a single line of JSX, answer these questions in a code commentat the top of the file. Do not skip this step.
+Before writing a single line of JSX, answer these questions in a code comment at the top of the file. Do not skip this step.
 
-1. **Content width**: Should this page's content fill the card, or be constrainedto a narrower max-width? Settings and management pages with forms or listsshould use `max-w-2xl` on the content container — not full card width. Datatables and dashboards may use full width. If in doubt, constrain.
+1. **Content width**: Should this page's content fill the card, or be constrained to a narrower max-width? Settings and management pages with forms or lists should use `max-w-2xl` on the content container — not full card width. Data tables and dashboards may use full width. If in doubt, constrain.
 
-2. **Action density**: Are there repeated actions on each row (edit, delete,reorder)? If yes, use icon-only buttons (`size="icon"` variant) with`aria-label`. Text button labels ("Up", "Down", "Delete") are only appropriatewhen the action appears once on the page, not in a repeated list context.
+2. **Action density**: Are there repeated actions on each row (edit, delete, reorder)? If yes, use icon-only buttons (`size="icon"` variant) with `aria-label`. Text button labels ("Up", "Down", "Delete") are only appropriate when the action appears once on the page, not in a repeated list context.
 
-3. **Destructive action visibility**: Does this component contain an irreversibleaction (delete, remove, revoke)? If yes, it must be hover-revealed using`opacity-0 group-hover:opacity-100` on the parent row with `group` on thecontainer. Destructive actions must never be persistently visible at the samevisual weight as primary actions.
+3. **Destructive action visibility**: Does this component contain an irreversible action (delete, remove, revoke)? If yes, it must be hover-revealed using `opacity-0 group-hover:opacity-100` on the parent row with `group` on the container. Destructive actions must never be persistently visible at the same visual weight as primary actions.
 
-4. **Input width discipline**: Every input's width should reflect the expectedcontent length. A "label" or "name" field is `max-w-sm`. A URL field is`max-w-lg`. A full-card-width input is only appropriate when the contentgenuinely benefits from maximum width (e.g. a rich text body). Stretchinginputs to fill available space is a layout bug.
+4. **Input width discipline**: Every input's width should reflect the expected content length. A "label" or "name" field is `max-w-sm`. A URL field is `max-w-lg`. A full-card-width input is only appropriate when the content genuinely benefits from maximum width (e.g. a rich text body). Stretching inputs to fill available space is a layout bug.
 
-5. **Status signals in lists**: If a list item has a status (e.g. "default","active", "pending"), use a Badge component — but place it inline with thelabel (same row, trailing), not on a separate line or in a separate column.A floating, disconnected badge signals a layout decision was deferred.
+5. **Status signals in lists**: If a list item has a status (e.g. "default", "active", "pending"), use a Badge component — but place it inline with the label (same row, trailing), not on a separate line or in a separate column. A floating, disconnected badge signals a layout decision was deferred.
 
 ## State Management Rules
 
-- **Server state:** React Query for all caching and synchronisation. Never fetch inside `useEffect` for data that belongs in React Query.
+- **Server state:** TanStack Query for all caching and synchronisation. Never fetch inside `useEffect` for data that belongs in TanStack Query (`useQuery` / `useInfiniteQuery`).
 - **URL-first state:** Filters, sorts, pagination, and view toggles MUST live in URL Search Parameters. These states must be bookmarkable and shareable.
-- **Global state ban:** Zustand, Redux, and React Context are FORBIDDEN for domain data. Use them only for `theme` and `sidebarOpen`.
+- **Global state ban:** Zustand, Redux, and React Context are FORBIDDEN for domain data. Use them only for `theme`, `sidebarOpen`, and auth/session plumbing.
 
 ## Finite State Machine (required for every component)
 
@@ -94,7 +94,7 @@ Every component that fetches or mutates data MUST explicitly implement all non-i
 | State | Implementation |
 |---|---|
 | `loading` | Shadcn `<Skeleton>` wrappers — sized to match real content |
-| `pending` | Submit button disabled + loading indicator during in-flight Server Action — prevents double-submit |
+| `pending` | Submit button disabled + loading indicator during in-flight `useMutation` — prevents double-submit |
 | `error` | Inline error message for field errors; `<Toast>` for action errors |
 | `empty` | An explicit empty state — never a blank screen |
 | `success` | Post-mutation confirmation (toast or redirect) |
@@ -106,10 +106,9 @@ Skipping any state is a spec defect.
 
 When a component subscribes to Supabase Realtime:
 
-- The component MUST be a Client Component.
 - The subscription MUST be established inside `useEffect` and MUST be torn down (unsubscribed) on unmount.
-- The containing route MUST be declared `runtime: nodejs` — Realtime WebSocket connections fail silently on Edge Runtime.
-- This pattern bypasses Next.js caching entirely. Do not call `revalidatePath` or `revalidateTag` for Realtime data flows.
+- Realtime updates SHOULD be merged into TanStack Query cache with `queryClient.setQueryData` / invalidation, or local state — pick one consistent strategy per feature.
+- Do not expect automatic query refetch from Realtime unless you implement it.
 
 ```typescript
 useEffect(() => {
@@ -122,24 +121,21 @@ useEffect(() => {
 ## Component File Structure
 
 ```
-app/
-  (marketing)/          # Public layout — no auth required page.tsx layout.tsx
-  (app)/                # Authenticated layout — protected by middleware dashboard/   page.tsx          # Server Component — fetches data   _components/      # Route-local components (underscore = private)     DashboardCard.tsx
-components/
-  ui/                   # Shadcn/UI primitives (auto-generated — do not edit)
-  [FeatureName]/        # Shared feature components
+src/
+  App.tsx                 # Router definition (createBrowserRouter)
+  main.tsx                # Entry — providers (QueryClient, auth, theme)
+  pages/                  # Route-level screens (or feature routes)
+  components/
+    ui/                   # Shadcn/UI primitives (auto-generated — do not edit)
+    layout/               # Shared shells
+    [FeatureName]/        # Shared feature components
+  features/               # Optional feature modules (components, hooks, stores)
+  hooks/                  # Shared hooks
 ```
 
-## Server vs Client Component Decision
+## SPA rendering model
 
-Default to **Server Components**. Reach for `'use client'` only when the component needs:
-- `useState` or `useReducer`
-- `useEffect`
-- Browser APIs
-- Event listeners
-- Supabase Realtime subscriptions
-
-A Server Component that contains a Client Component is fine. The reverse (Client Component importing a Server Component) is not — it downgrades the Server Component to client-side rendering.
+The app is a **client-rendered** Vite SPA. There are no React Server Components. Use standard React hooks (`useState`, `useEffect`, etc.), TanStack Query, and React Router as needed. Heavy work belongs in hooks, lazy-loaded routes (`React.lazy`), or small pure utilities — not in fictional “server-only” modules inside this repo.
 
 ## Visual Consistency Checklist (for every UI task)
 

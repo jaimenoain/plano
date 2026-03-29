@@ -42,8 +42,7 @@ export function useGooglePlacePhotos(markers: Marker[]) {
              serviceRef.current = new google.maps.places.PlacesService(document.createElement('div'));
         }
         if (isMounted) setIsLoaded(true);
-      } catch (error) {
-        console.error("Error loading Google Maps Places library", error);
+      } catch {
       }
     };
 
@@ -108,8 +107,7 @@ export function useGooglePlacePhotos(markers: Marker[]) {
                          resolve();
                      });
                  });
-             } catch (e) {
-                 console.error("Error fetching place details", e);
+             } catch {
              }
 
              // Small delay to be polite

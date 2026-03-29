@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { logDiagnosticError } from '@/api/diagnostics';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -29,10 +30,16 @@ export function useLoginTracker() {
             sessionStorage.setItem(LOGIN_TRACKING_KEY, 'true');
             localStorage.setItem(`${LOGIN_TRACKING_KEY}_ts`, now.toISOString());
           } else {
-            console.error('Failed to track login:', error);
+            void logDiagnosticError(
+              'useLoginTracker',
+              error instanceof Error ? error.message : String(error)
+            );
           }
         } catch (err) {
-          console.error('Failed to track login exception:', err);
+          void logDiagnosticError(
+            'useLoginTracker',
+            err instanceof Error ? err.message : String(err)
+          );
         }
       };
 

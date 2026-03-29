@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
-import { MutualAffinityUser } from '@/types/cine-sync';
 import { supabase } from '@/integrations/supabase/client';
+
+export interface MutualAffinityUser {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  combined_score: number;
+}
 
 export interface SimpleProfile {
   id: string;
@@ -103,8 +109,7 @@ export function useProfileComparison(currentUserId: string | undefined, targetUs
                 }
             });
 
-        } catch (error) {
-            console.error("Error fetching profile comparison:", error);
+        } catch {
         } finally {
             setLoading(false);
         }

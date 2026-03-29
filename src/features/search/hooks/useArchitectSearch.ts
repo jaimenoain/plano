@@ -36,13 +36,11 @@ export function useArchitectSearch({ searchQuery, limit = 5, enabled = true }: U
           .limit(limit);
 
         if (error) {
-          console.error("Error searching architects:", error);
           setArchitects([]);
         } else {
           setArchitects(data as ArchitectSearchResult[] || []);
         }
-      } catch (err) {
-        console.error("Unexpected error searching architects:", err);
+      } catch {
         setArchitects([]);
       } finally {
         setIsLoading(false);

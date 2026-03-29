@@ -167,8 +167,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
             longitude: evt.viewState.longitude,
             zoom: evt.viewState.zoom
         }));
-    } catch (e) {
-        console.warn('Failed to save map state to localStorage', e);
+    } catch {
     }
 
     // Update bounds for sidebar and markers
@@ -189,8 +188,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
           let savedState = null;
           try {
               savedState = localStorage.getItem(LOCAL_STORAGE_MAP_KEY);
-          } catch (e) {
-              console.warn('LocalStorage access failed', e);
+          } catch {
           }
 
           if (savedState) {
@@ -219,8 +217,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
                       // BUT wait, the prompt says "en cuanto al usuario, interactúe... estará terminantemente prohibido volver a redirigir"
                       return; // Skip geolocation if restored
                   }
-              } catch (e) {
-                  console.warn('Failed to restore map state from localStorage', e);
+              } catch {
               }
           }
 

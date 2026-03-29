@@ -90,8 +90,7 @@ function SearchPageContent() {
 
       handleLocationSelect({ lat, lng }, bounds);
       setSearchValue(""); // Clear search value
-    } catch (error) {
-      console.error("Geocoding error: ", error);
+    } catch {
     }
   };
 

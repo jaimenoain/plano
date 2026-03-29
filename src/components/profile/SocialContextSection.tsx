@@ -1,7 +1,6 @@
-import { MutualAffinityUser } from "@/types/cine-sync";
 import { MutualAffinityRow } from "./MutualAffinityRow";
 import { CommonFollowersFacepile } from "./CommonFollowersFacepile";
-import { SimpleProfile } from "@/hooks/useProfileComparison";
+import type { MutualAffinityUser, SimpleProfile } from "@/hooks/useProfileComparison";
 
 interface SocialContextSectionProps {
   mutualAffinityUsers: MutualAffinityUser[];

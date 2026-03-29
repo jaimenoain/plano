@@ -13,8 +13,7 @@ export function usePresenceTracker() {
     const updatePresence = async () => {
       try {
         await supabase.rpc('update_presence');
-      } catch (err) {
-        console.error('Failed to update presence:', err);
+      } catch {
       }
     };
 

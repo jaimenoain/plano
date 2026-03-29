@@ -94,8 +94,7 @@ export function BuildingPopupContent({
 
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
       queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
-    } catch (error) {
-      console.error("Action failed", error);
+    } catch {
       toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
       setIsSaving(false);
@@ -118,16 +117,12 @@ export function BuildingPopupContent({
         // Check for content (reviews, images)
         setIsSaving(true);
         try {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('user_buildings')
                 .select('content, review_images(count)')
                 .eq('user_id', user.id)
                 .eq('building_id', buildingId)
                 .single();
-
-            if (error && error.code !== 'PGRST116') { // Ignore "no rows" error if that happens, though unusual here
-                console.error("Error checking content:", error);
-            }
 
             const hasReview = data?.content && data.content.trim().length > 0;
             const imageCount = data?.review_images?.[0]?.count || 0;
@@ -154,8 +149,7 @@ export function BuildingPopupContent({
             setIsSaving(false); // Stop loading so dialog can show
             return;
 
-        } catch (err) {
-            console.error("Error in check:", err);
+        } catch {
             // Fallback to confirming anyway or just proceeding? Better to confirm safe.
             setConfirmTitle("Remove from list?");
             setConfirmMessage("Are you sure you want to remove this building?");
@@ -217,8 +211,7 @@ export function BuildingPopupContent({
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch (error) {
-      console.error("Failed to rate", error);
+    } catch {
       toast({ variant: "destructive", title: "Failed to update rating" });
       setOptimisticRating(null); // Revert on error
     }

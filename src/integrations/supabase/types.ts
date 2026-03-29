@@ -1863,15 +1863,6 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_cine_sync_stats: {
-        Args: { p_contact_ids: string[]; p_viewer_id: string }
-        Returns: {
-          compatibility_score: number
-          last_watched_backdrop: string
-          trend_indicator: string
-          user_id: string
-        }[]
-      }
       get_explorer_feed: {
         Args: { p_exclude_ids?: string[]; p_limit?: number; p_user_id: string }
         Returns: {

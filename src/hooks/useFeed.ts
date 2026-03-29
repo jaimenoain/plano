@@ -127,8 +127,7 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
           .from("likes")
           .insert({ interaction_id: reviewId, user_id: user.id });
       }
-    } catch (error) {
-      console.error("Error toggling like:", error);
+    } catch {
       // Revert
       queryClient.setQueryData<InfiniteData<FeedReview[]>>(queryKey, (oldData) => {
           if (!oldData) return undefined;
@@ -190,8 +189,7 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
         } else {
             await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
         }
-    } catch (error) {
-        console.error("Error toggling image like:", error);
+    } catch {
         // Revert
          queryClient.setQueryData<InfiniteData<FeedReview[]>>(queryKey, (oldData) => {
             if (!oldData) return undefined;

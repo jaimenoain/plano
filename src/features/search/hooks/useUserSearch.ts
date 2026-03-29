@@ -35,13 +35,11 @@ export function useUserSearch({ searchQuery, limit = 5, enabled = true }: UseUse
           .limit(limit);
 
         if (error) {
-          console.error("Error searching users:", error);
           setUsers([]);
         } else {
           setUsers(data || []);
         }
-      } catch (err) {
-        console.error("Unexpected error searching users:", err);
+      } catch {
         setUsers([]);
       } finally {
         setIsLoading(false);

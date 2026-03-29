@@ -1,4 +1,4 @@
-import { MutualAffinityUser } from "@/types/cine-sync";
+import type { MutualAffinityUser } from "@/hooks/useProfileComparison";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";

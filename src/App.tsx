@@ -29,7 +29,7 @@ import Connect from "./pages/Connect";
 import AddBuilding from "./pages/AddBuilding";
 import EditBuilding from "./pages/EditBuilding";
 import WriteReview from "./pages/WriteReview";
-import CollectionMap from "@/components/_legacy_v1/CollectionMap";
+import CollectionMap from "@/components/collections/CollectionMapPage";
 import FolderView from "./pages/FolderView";
 
 import { PwaPrompt } from "./components/pwa/PwaPrompt";

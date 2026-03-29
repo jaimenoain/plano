@@ -24,7 +24,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
-import { BuildingMap } from "@/components/_legacy_v1/BuildingMap";
+import { BuildingMap } from "@/components/admin/BuildingMap";
 import { parseLocation } from "@/utils/location";
 import {
   Carousel,

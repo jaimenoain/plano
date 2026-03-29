@@ -54,8 +54,7 @@ export function OmniSearchBar({
         await importLibrary("places");
         await importLibrary("geocoding");
         setScriptLoaded(true);
-      } catch (error) {
-        console.error("Error loading Google Maps script", error);
+      } catch {
       }
     };
     initMap();
@@ -119,8 +118,7 @@ export function OmniSearchBar({
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
       methods.moveMap(lat, lng, 12);
-    } catch (error) {
-      console.error("Geocoding error: ", error);
+    } catch {
     }
   };
 

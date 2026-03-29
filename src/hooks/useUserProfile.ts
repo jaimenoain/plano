@@ -9,7 +9,6 @@ export interface UserProfile {
   avatar_url: string | null;
   country: string | null;
   location: string | null;
-  subscribed_platforms: string[] | null;
   role: string | null;
   verified_architect_id?: string | null;
 }
@@ -30,15 +29,14 @@ export function useUserProfile() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role, verified_architect_id")
+          .select("id, username, bio, avatar_url, country, location, role, verified_architect_id")
           .eq("id", user.id)
           .maybeSingle();
 
         if (error) throw error;
         // @ts-ignore
         setProfile(data);
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -52,7 +50,7 @@ export function useUserProfile() {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, bio, avatar_url, country, location, subscribed_platforms, role, verified_architect_id")
+      .select("id, username, bio, avatar_url, country, location, role, verified_architect_id")
       .eq("id", user.id)
       .maybeSingle();
     if (data) {

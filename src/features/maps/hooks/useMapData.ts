@@ -137,7 +137,6 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
       });
 
       if (error) {
-        console.error('Error fetching map clusters:', error);
         throw error;
       }
 

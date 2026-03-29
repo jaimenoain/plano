@@ -62,7 +62,6 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
             .in('username', missingNames);
 
           if (error) {
-            console.error('Error fetching profiles for hydration:', error);
             return;
           }
 
@@ -81,8 +80,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
               return next;
             });
           }
-        } catch (err) {
-          console.error('Unexpected error during hydration:', err);
+        } catch {
         }
       };
 

@@ -1,5 +1,5 @@
 ---
-description: Core stack, monorepo structure, and forbidden patterns. Always active.
+description: Core stack, SPA structure, and forbidden patterns. Always active.
 alwaysApply: true
 ---
 
@@ -11,23 +11,23 @@ alwaysApply: true
 
 ## Stack (non-negotiable — no substitutions permitted)
 
-- **Monorepo:** Turborepo (`apps/web`, `apps/mobile`, `packages/supabase`)
-- **Web:** Next.js 14+ App Router + TypeScript strict mode
-- **Mobile:** React Native + Expo (iOS & Android) via EAS
-- **Backend/Auth/DB:** Supabase (Postgres + Auth + Storage + Edge Functions)
-- **Hosting:** Vercel (web), EAS (mobile)
+- **Build:** Vite (`vite build`, `vite` dev server)
+- **Framework:** React 18 SPA + TypeScript strict mode — client-side rendering only (`src/main.tsx` → `src/App.tsx`)
+- **Routing:** React Router v6 (`createBrowserRouter` in `src/App.tsx`)
+- **Backend/Auth/DB:** Supabase (Postgres/PostGIS + Auth + Storage + Edge Functions)
+- **Data access:** Supabase JS client in the browser (`src/integrations/supabase/client.ts`) — no Server Components, Server Actions, or app-owned HTTP API for core CRUD
 - **Styling:** Tailwind CSS + Shadcn/UI (Radix primitives) — no raw CSS, no arbitrary values
-- **Data fetching:** React Query (client cache) + Next.js Server Actions (mutations)
-- **Validation:** Zod — always, for all API inputs and form payloads
-- **Email:** Resend (all transactional and auth emails)
-- **Shared types:** `packages/supabase/src/database.types.ts` (auto-generated; never hand-edit)
+- **Server state:** TanStack Query (`@tanstack/react-query`) for caching, fetching, and mutations
+- **Auth session in UI:** React Context (and Supabase auth listener) — not a global store for domain data
+- **Validation:** Zod — always, for form payloads and any structured input before writes
+- **Shared DB types:** `src/integrations/supabase/types.ts` (generated; never hand-edit — regenerate via `npm run gen-types` when schema changes)
 
 ## Forbidden Patterns (hard rules — never violate)
 
 - **No mock data, no dummy auth states.** Every feature connects to real Supabase from day one.
 - **No raw CSS.** No `style={{}}` props for values expressible as Tailwind utilities. No arbitrary `p-[14px]` values.
 - **No raw Tailwind palette colors** (e.g. `bg-blue-500`). Use only design token aliases from `tailwind.config.ts` (e.g. `bg-brand-primary`). Token values are defined in `docs/DESIGN_TOKENS.md` — if a token is not present there, flag it rather than guessing.
-- **No global state for domain data.** Zustand/Redux/Context are strictly reserved for ephemeral UI preferences (theme, sidebar open). Server state lives in React Query.
+- **No global state for domain data.** Zustand/Redux/Context are strictly reserved for ephemeral UI preferences (theme, sidebar open) and auth/session wiring. Server state lives in TanStack Query.
 - **No installing npm packages** without explicit user permission. Use only what is in `package.json`.
 - **No `console.log`** in production code.
 - **No direct schema changes** via Supabase Dashboard or `supabase db push`. All schema changes are migration files only.
@@ -35,35 +35,23 @@ alwaysApply: true
 
 ## State Management Rules
 
-- **Server state:** React Query for all caching and synchronisation.
+- **Server state:** TanStack Query for all caching and synchronisation.
 - **URL-first state:** URL Search Parameters are the primary driver for filters, sorts, pagination, and view toggles. If a UI state can be bookmarked, it belongs in the URL.
-- **Global state:** Only for `theme` and `sidebarOpen`. Nothing else.
+- **Global state:** Only for `theme` and `sidebarOpen` (and similar UI chrome). Nothing else for domain data.
 
-## Vercel Runtime Declaration
+## Caching Strategy (TanStack Query)
 
-Every Server Component, API Route, and Server Action MUST declare its runtime:
+Choose query options intentionally; there is no framework-level HTTP cache.
 
-```typescript
-export const runtime = 'nodejs'; // default — required for Prisma/Supabase TCP connections
-// or
-export const runtime = 'edge'; // only when: no DB I/O, benefits from global distribution
-```
-
-Declaring `edge` on any route that performs database I/O is a **blocking error**.
-
-## Caching Strategy
-
-Every data-fetching route MUST declare one of:
-
-| Strategy | When to use | Constraints |
+| Strategy | When to use | Typical knobs |
 |---|---|---|
-| `cache: 'force-cache'` | Truly immutable data only | — |
-| `revalidate: N` | Infrequently changing data — specify N in seconds | — |
-| `cache: 'no-store'` | User-specific or real-time data | — |
-| `revalidatePath()` / `revalidateTag()` | Triggered from Server Action after every mutation | — |
-| `realtime: supabase-channel` | Live push via Supabase Realtime | **Client Components only. Route MUST be `runtime: nodejs`. Bypasses Next.js cache entirely — never call `revalidatePath`/`revalidateTag` for Realtime data flows. Subscription MUST be torn down on unmount.** See `03-frontend.mdc`. |
+| Longer `staleTime` | Reference or rarely changing data (lookups, static-ish config) | `staleTime` in ms; optional `gcTime` for retention after unmount |
+| Moderate `staleTime` | Lists and detail views that can be slightly stale | Balance freshness vs. network churn |
+| `staleTime: 0` | User-specific, permission-sensitive, or data that must reflect the latest write immediately after navigation | Treat as “always stale” — refetch on mount/focus as configured |
+| `queryClient.invalidateQueries()` | After a successful mutation | Invalidate the smallest relevant key set — never rely on stale UI after writes |
+| `realtime: supabase-channel` | Live push via Supabase Realtime | **Subscribe in `useEffect`; unsubscribe on unmount.** Does not go through TanStack Query’s cache unless you explicitly sync into the cache. See `03-frontend.mdc`. |
 
-Any authenticated layout MUST use `cache: 'no-store'`. Caching authenticated layouts is a critical security violation.
+User-specific queries MUST use query keys that include the authenticated user (or equivalent scope) so cached data is never shown to the wrong session. After logout, clear or reset queries as needed so no prior user’s data remains in memory.
 
 ## Memory Persistence
 

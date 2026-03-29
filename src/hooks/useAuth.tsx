@@ -78,7 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Validate redirect URL to prevent open redirect vulnerabilities
     if (!isValidRedirect(redirectUrl)) {
-      console.error("Invalid redirect URL generated");
       return { error: new Error("Security validation failed") };
     }
 

@@ -10,7 +10,7 @@ alwaysApply: true
 Every feature task from Phase 2 onwards is a **Vertical Slice** — a single, cohesive implementation that delivers complete, end-to-end business value touching all layers:
 
 ```
-Database (schema + RLS) → Backend (server actions / API) → Frontend (UI + state)
+Database (schema + RLS) → App (TanStack Query + Supabase client + Zod) → UI (routes + components)
 ```
 
 Building "the DB layer" as one task and "the UI" as a separate disconnected task is **FORBIDDEN**. The only exception is Phase 1 (Walking Skeleton), which is structural setup only.
@@ -26,7 +26,7 @@ A Vertical Slice that is too thick will fail. If a single feature requires any o
 ### Correct Thin Slice split pattern
 
 ```
-Slice 1 — The Core:     Schema + basic server action + minimal UI (prove data saves)
+Slice 1 — The Core:     Schema + Supabase-backed mutation/query + minimal UI (prove data saves)
 Slice 2 — The Polish:   Advanced UI + 3rd-party integration + edge case states
 ```
 
@@ -40,23 +40,23 @@ Every phase MUST contain these tasks in this order:
 Before building anything new, review `.ai-status.md` (`KNOWN_ISSUES`) and the current codebase. Resolve any critical blocking issues. Log non-blocking issues without fixing them.
 
 ### [MANUAL TASK — SECRETS] — if the phase involves new 3rd-party integrations
-Provide step-by-step instructions for configuring secrets. Reference the Vercel Dashboard for env vars, Supabase Dashboard for Vault entries. Consolidate ALL secrets for the phase into a single manual block placed before any Cursor tasks.
+Provide step-by-step instructions for configuring secrets. Reference the **hosting platform** for Vite env vars, Supabase Dashboard for Vault entries. Consolidate ALL secrets for the phase into a single manual block placed before any Cursor tasks.
 
 **Secrets placement decision:**
-- Consumed by Next.js / Vercel → Vercel Environment Variables
-- Consumed by Supabase Edge Functions or pg functions → Supabase Vault (+ Vercel)
+- Consumed by Vite build / client → hosting platform environment variables (and local `.env`, not committed)
+- Consumed by Supabase Edge Functions or pg functions → Supabase Vault (+ hosting/CI secrets if needed)
 - Never in `.ai-status.md`, never in chat, never committed to the repo
 
 ### Task X.97 — Autonomous Build & Integrity Check
 Before handing off to the user, Cursor MUST autonomously run:
-- `turbo run build`
-- `turbo run typecheck`
-- `turbo run lint`
+- `npm run build`
+- `npm run typecheck`
+- `npm run lint`
 
 Fix all failures before proceeding. Never ask the user to run these commands.
 
 ### Task X.98 — User Acceptance Testing (Manual)
-Provide a bulleted test plan. Instruct the user to test on the live Vercel deployment (or localhost if not yet deployed). If tests fail, the user asks Cursor for fixes.
+Provide a bulleted test plan. Instruct the user to test on the deployed preview/production URL (or localhost). If tests fail, the user asks Cursor for fixes.
 
 ### Task X.99 — Phase Review & Spec Sync
 
@@ -93,14 +93,14 @@ Cursor writes a timestamped SQL file to `supabase/migrations/`. Lists all tables
 **Data & Security Layer:**
 Explicitly list all RLS access patterns. Apply the full RLS checklist from `01-database.mdc`. Default Deny. Predicate Distinction. Sub-select auth form. Tenant isolation check for all tenant-scoped tables.
 
-**Backend/Logic Layer:**
-Specific Server Actions or API routes required. All validated with Zod. All returning typed result objects.
+**App / logic layer:**
+TanStack Query queries and mutations, Supabase client calls, and Zod-validated payloads. Typed results at boundaries; `invalidateQueries` (or equivalent cache updates) after successful writes where needed.
 
 **Frontend/UI Layer:**
 Must be fully self-contained — Cursor must be able to implement the UI from this task block alone without relying on external spec files. Inline the following directly in the task:
 - Exact component tree (parent → children, file paths)
 - All discrete UI states: `idle`, `loading`, `pending`, `error`, `empty`, `success`
-- All props and data bindings: which server action feeds which prop
+- All props and data bindings: which query or mutation feeds which prop
 - All interaction handlers
 
 For visual styling, reference `@docs/DESIGN_TOKENS.md` and `@tailwind.config.ts` as context
@@ -120,7 +120,7 @@ Every task MUST end with an instruction to:
    - A new table or column
    - A renamed or retyped field
    - A new or modified DTO
-   - A new API route or changed route signature
+   - A new Supabase Edge Function, RPC, or materially changed client access pattern documented in the contract
 
    Do not defer this to Task X.99. Task X.99 is a completeness check, not the primary sync mechanism. A contract that lags behind the implementation by multiple tasks causes downstream prompts to be generated against a stale schema, producing hallucinated field names and broken type bindings.
 

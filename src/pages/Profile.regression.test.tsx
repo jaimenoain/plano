@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mocks
 const mocks = vi.hoisted(() => {
+  const stableAuthUser = { id: 'user-123', email: 'test@example.com' };
   const mockChain: any = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -30,7 +31,8 @@ const mocks = vi.hoisted(() => {
     navigate: vi.fn(),
     signOut: vi.fn(),
     mockSupabase,
-    mockChain
+    mockChain,
+    stableAuthUser,
   };
 });
 
@@ -45,7 +47,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 'user-123', email: 'test@example.com' },
+    user: mocks.stableAuthUser,
     loading: false,
     signOut: mocks.signOut,
   }),

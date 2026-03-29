@@ -41,8 +41,6 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
         .select('*')
         .in('review_id', reviewIds);
 
-      if (imagesError) console.error("Error fetching review images:", imagesError);
-
       // Fetch image likes for current user to determine is_liked status for images
       let likedImageIds: Set<string> = new Set();
       if (imagesData && imagesData.length > 0) {
@@ -158,8 +156,7 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
           .from("likes")
           .insert({ interaction_id: reviewId, user_id: user.id });
       }
-    } catch (error) {
-      console.error("Error toggling like:", error);
+    } catch {
       // Revert
       queryClient.setQueryData<InfiniteData<FeedReview[]>>(queryKey, (oldData) => {
           if (!oldData) return undefined;
@@ -221,8 +218,7 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
         } else {
             await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
         }
-    } catch (error) {
-        console.error("Error toggling image like:", error);
+    } catch {
         // Revert
          queryClient.setQueryData<InfiniteData<FeedReview[]>>(queryKey, (oldData) => {
             if (!oldData) return undefined;

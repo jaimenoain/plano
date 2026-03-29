@@ -118,8 +118,6 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
         }
       } catch (err: any) {
         if (isMounted) {
-            console.error("Error fetching architect data:", err);
-
             // Handle "Row not found" specifically
             if (err.code === 'PGRST116') {
                 setError(new Error("Architect not found"));
