@@ -90,18 +90,18 @@ export function Header({
   } else if (effectiveVariant === 'map') {
     centerContent = searchBar || (
       <div className="relative w-full max-w-xs">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-secondary" />
         <Input
           type="search"
           placeholder="Search map..."
-          className="pl-9 h-9 bg-muted/50 border-none focus-visible:ring-1"
+          className="pl-9 h-9 bg-surface-muted border-border-default focus-visible:ring-1 focus-visible:ring-brand-primary"
         />
       </div>
     );
   } else {
     // Default / Title
     centerContent = (
-      <h1 className="text-xl font-bold tracking-tight text-foreground truncate max-w-[200px] md:max-w-md text-center">
+      <h1 className="text-xl font-bold tracking-tight text-text-primary truncate max-w-[200px] md:max-w-md text-center">
         {title}
       </h1>
     );
@@ -119,21 +119,21 @@ export function Header({
   const defaultGlobalActions = (
     <Link
       to="/notifications"
-      className="relative h-10 w-10 flex items-center justify-center rounded-full text-foreground hover:text-primary hover:bg-accent transition-all"
+      className="relative h-10 w-10 flex items-center justify-center rounded-sm text-text-primary hover:text-brand-primary hover:bg-brand-secondary transition-all"
       aria-label="Notifications"
     >
       <Bell className="h-6 w-6" />
       {showBadge && (
         <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-background shadow-sm"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-feedback-destructive opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-feedback-destructive border-2 border-surface-card shadow-sm"></span>
         </span>
       )}
     </Link>
   );
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b h-16 px-4 transition-all duration-300">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-surface-card border-b border-border-default h-16 px-4 transition-all duration-300">
       <div className={cn(
         "h-full w-full max-w-7xl mx-auto items-center",
         effectiveVariant === 'map' ? "flex justify-between gap-4" : "grid grid-cols-3"

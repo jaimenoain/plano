@@ -35,10 +35,10 @@ export function BottomNav() {
               className={cn(
                 "flex flex-col items-center justify-center gap-1.5 transition-all duration-300 relative",
                 // Minimum touch target width for accessibility, flex-1 allows shrinking on small screens
-                "flex-1 min-w-0 min-h-[64px] rounded-xl",
-                isActive 
-                  ? (isExplore ? "text-[#EEFF41]" : "text-primary")
-                  : (isExplore ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-primary")
+                "flex-1 min-w-0 min-h-[64px] rounded-sm",
+                isActive
+                  ? (isExplore ? "text-brand-primary" : "text-brand-primary")
+                  : (isExplore ? "text-text-secondary hover:text-text-inverse" : "text-text-secondary hover:text-brand-primary")
               )}
             >
               <div className="relative flex flex-col items-center">
@@ -47,7 +47,7 @@ export function BottomNav() {
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 {isActive && (
-                  <div className="absolute -bottom-3 w-1.5 h-1.5 bg-[#EEFF41] rounded-full" />
+                  <div className="absolute -bottom-3 w-1.5 h-1.5 bg-brand-primary rounded-full" />
                 )}
               </div>
               {/* Increased font size for readability */}

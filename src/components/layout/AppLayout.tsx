@@ -34,6 +34,8 @@ export function AppLayout({
   showHeader = true,
   fullWidth = false
 }: AppLayoutProps) {
+  void fullWidth;
+
   return (
     <>
       {showHeader && (
@@ -50,11 +52,9 @@ export function AppLayout({
           />
         </div>
       )}
-      {/* CHANGED: Reduced max-w-7xl to max-w-5xl to constrain width and make cards shorter */}
       <div className={cn(
         showHeader && "pt-16 md:pt-0",
         "w-full min-w-0",
-        (!isFullScreen && !fullWidth) && "max-w-5xl mx-auto",
         isFullScreen && "h-full flex flex-col flex-1",
         showNav && "pb-20 md:pb-0"
       )}>

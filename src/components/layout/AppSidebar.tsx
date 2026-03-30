@@ -5,16 +5,23 @@ import {
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton,
   SidebarHeader,
   SidebarFooter,
-  SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
-import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settings, LogOut, Bell } from "lucide-react";
+import {
+  Activity,
+  Users,
+  User as UserIcon,
+  Play,
+  Search,
+  ChevronsUpDown,
+  Settings,
+  LogOut,
+  Bell,
+} from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
@@ -28,15 +35,15 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
-  { icon: Activity, label: "Feed", path: "/" },
-  { icon: Play, label: "Explore", path: "/explore" },
-  { icon: Search, label: "Search", path: "/search" },
-  { icon: Users, label: "Connect", path: "/connect" },
-  { icon: Bell, label: "Notifications", path: "/notifications" },
-  { icon: UserIcon, label: "You", path: "/profile" },
+  { icon: Activity, label: "Feed",          path: "/" },
+  { icon: Play,     label: "Explore",       path: "/explore" },
+  { icon: Search,   label: "Search",        path: "/search" },
+  { icon: Users,    label: "Connect",       path: "/connect" },
+  { icon: Bell,     label: "Notifications", path: "/notifications" },
+  { icon: UserIcon, label: "You",           path: "/profile" },
 ];
 
-function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) {
+function UserMenu() {
   const { user, signOut } = useAuth();
   const { profile } = useUserProfile();
   const { isMobile } = useSidebar();
@@ -52,46 +59,53 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu onOpenChange={onOpenChange}>
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!mx-auto"
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={profile?.avatar_url || ""} alt={profile?.username || user?.email || ""} />
-                <AvatarFallback className="rounded-lg">
+            <button className="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-card transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2">
+              <Avatar className="h-7 w-7 flex-shrink-0">
+                <AvatarImage
+                  src={profile?.avatar_url || ""}
+                  alt={profile?.username || user?.email || ""}
+                />
+                <AvatarFallback className="text-xs">
                   {(profile?.username || user?.email || "U").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-semibold">{profile?.username || "User"}</span>
-                <span className="truncate text-xs">{user?.email || "guest@example.com"}</span>
+              <div className="grid flex-1 text-left leading-tight min-w-0">
+                <span className="truncate font-semibold text-sm">
+                  {profile?.username || "User"}
+                </span>
+                <span className="truncate text-xs text-text-secondary">
+                  {user?.email || ""}
+                </span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
-            </SidebarMenuButton>
+              <ChevronsUpDown className="ml-auto h-4 w-4 flex-shrink-0 text-text-secondary" />
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-56"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
           >
             <DropdownMenuItem asChild>
               <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
-                <UserIcon className="size-4" />
+                <UserIcon className="h-4 w-4" />
                 Your profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
-                <Settings className="size-4" />
+                <Settings className="h-4 w-4" />
                 Edit profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
-              <LogOut className="size-4" />
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className="gap-2 cursor-pointer text-feedback-destructive focus:text-feedback-destructive"
+            >
+              <LogOut className="h-4 w-4" />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -103,82 +117,45 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
 
 export function AppSidebar() {
   const location = useLocation();
-  const { state, setOpen, isMobile } = useSidebar();
-  const isHoveringRef = useRef(false);
-
-  const isMenuOpenRef = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    isHoveringRef.current = true;
-    setOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    isHoveringRef.current = false;
-    timeoutRef.current = setTimeout(() => {
-      if (!isHoveringRef.current && !isMenuOpenRef.current) {
-        setOpen(false);
-      }
-    }, 300);
-  };
-
-  const handleMenuOpenChange = (open: boolean) => {
-    isMenuOpenRef.current = open;
-    if (!open && !isHoveringRef.current) {
-      setOpen(false);
-    }
-  };
-
-  const sidebarProps = !isMobile
-    ? {
-        onMouseEnter: handleMouseEnter,
-        onMouseLeave: handleMouseLeave,
-      }
-    : {};
 
   return (
     <Sidebar
-      collapsible="icon"
-      preventShift={false}
-      className="border-r border-border bg-sidebar"
-      {...sidebarProps}
+      collapsible="offcanvas"
+      className="border-r border-sidebar-border bg-sidebar"
     >
-      <SidebarHeader>
-        <div className="flex h-12 items-center group-data-[collapsible=icon]:px-4 group-data-[collapsible=icon]:justify-center">
-          <PlanoLogo
-            viewBox={state === "collapsed" ? "-30 0 85 85" : undefined}
-            className="h-8 w-auto ml-2 group-data-[collapsible=icon]:ml-0"
-          />
-        </div>
+      {/* Logo area — p-6 per COMPONENT_SPEC §9. !p-6 overrides SidebarHeader default p-2. */}
+      <SidebarHeader className="!p-6">
+        <Link to="/" className="inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary rounded-sm">
+          <PlanoLogo className="h-8 w-auto" />
+        </Link>
       </SidebarHeader>
+
+      {/* Nav list — flex-1 overflow-y-auto handled by SidebarContent */}
       <SidebarContent>
-        <SidebarGroup>
+        {/* !p-0 overrides SidebarGroup default p-2; nav items carry their own px-3 py-2 */}
+        <SidebarGroup className="!p-0">
           <SidebarGroupContent>
-            <SidebarMenu className="gap-4 group-data-[collapsible=icon]:items-center">
+            {/* px-3 py-4 per spec; gap-1 is SidebarMenu default */}
+            <SidebarMenu className="px-3 py-4">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
-
                 return (
                   <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      asChild
-                      size="lg"
-                      tooltip={item.label}
-                      isActive={isActive}
+                    <Link
+                      to={item.path}
                       className={cn(
-                        "relative transition-all duration-200 text-base [&>svg]:size-6 text-muted-foreground hover:bg-sidebar-accent/50 rounded-none",
-                        "group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!mx-auto",
-                        "data-[active=true]:bg-sidebar-accent/40 data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
-                        "before:absolute before:left-0 before:top-0 before:w-[2px] before:h-full before:bg-primary before:hidden data-[active=true]:before:block before:rounded-none"
+                        "flex items-center gap-3 px-3 py-2 rounded-sm w-full text-sm font-medium text-text-primary transition-colors duration-150",
+                        isActive
+                          ? "bg-surface-card border border-border-default border-l-2 border-brand-primary font-semibold"
+                          : "bg-transparent hover:bg-surface-card"
                       )}
                     >
-                      <Link to={item.path}>
-                        <item.icon strokeWidth={isActive ? 2.5 : 2} />
-                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                      <item.icon
+                        className="h-5 w-5 flex-shrink-0"
+                        strokeWidth={isActive ? 2.5 : 2}
+                      />
+                      <span>{item.label}</span>
+                    </Link>
                   </SidebarMenuItem>
                 );
               })}
@@ -186,10 +163,11 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <UserMenu onOpenChange={handleMenuOpenChange} />
+
+      {/* Footer — p-4 border-t per COMPONENT_SPEC §9. !p-4 overrides SidebarFooter default p-2. */}
+      <SidebarFooter className="!p-4 border-t border-sidebar-border">
+        <UserMenu />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 }
