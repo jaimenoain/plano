@@ -30,7 +30,7 @@ const RatingCircles = ({ rating }: { rating: number }) => {
           key={i}
           className={`w-3 h-3 ${
             i < rating
-              ? "fill-text-brand-primary text-text-primary"
+              ? "fill-brand-primary text-text-primary"
               : "fill-transparent text-text-secondary/20"
           }`}
         />

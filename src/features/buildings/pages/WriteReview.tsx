@@ -823,7 +823,7 @@ toast({
                 <Circle
                   className={`w-8 h-8 transition-colors ${
                     star <= (hoverRating ?? rating)
-                      ? "fill-text-brand-primary text-text-primary"
+                      ? "fill-brand-primary text-text-primary"
                       : "text-text-disabled"
                   }`}
                 />

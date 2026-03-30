@@ -503,7 +503,7 @@ toast.error("Failed to add attribute");
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="rounded-full h-8"
+                        className="rounded-sm h-8"
                         onClick={() => setShowAliases(true)}
                     >
                         <Plus className="h-3 w-3 mr-1" /> Add Aliases
@@ -514,7 +514,7 @@ toast.error("Failed to add attribute");
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="rounded-full h-8"
+                        className="rounded-sm h-8"
                         onClick={() => setShowYear(true)}
                     >
                         <Plus className="h-3 w-3 mr-1" /> Add Year
@@ -525,7 +525,7 @@ toast.error("Failed to add attribute");
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="rounded-full h-8"
+                        className="rounded-sm h-8"
                         onClick={() => setShowArchitects(true)}
                     >
                         <Plus className="h-3 w-3 mr-1" /> Add Architects

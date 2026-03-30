@@ -1356,7 +1356,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                         return (
                                             <Circle
                                               key={i}
-                                              className={`w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity ${isFilled ? "fill-text-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`}
+                                              className={`w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity ${isFilled ? "fill-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`}
                                               onMouseEnter={() => setHoverRating(ratingValue)}
                                               onClick={() => handleRate(building.id, ratingValue === myRating ? 0 : ratingValue)}
                                             />
@@ -1792,7 +1792,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                                 {[...Array(3)].map((_, i) => (
                                                     <Circle
                                                       key={i}
-                                                      className={`w-3 h-3 ${i < entry.rating! ? "fill-text-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`}
+                                                      className={`w-3 h-3 ${i < entry.rating! ? "fill-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`}
                                                     />
                                                 ))}
                                             </div>

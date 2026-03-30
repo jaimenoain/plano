@@ -426,7 +426,7 @@ toast({ variant: "destructive", title: "Failed to update rating" });
                     {Array.from({ length: 3 }).map((_, i) => (
                         <Circle
                             key={i}
-                            className={`w-3 h-3 ${i < entry.rating! ? "fill-text-brand-primary text-text-primary" : "fill-transparent text-text-secondary/30"}`}
+                            className={`w-3 h-3 ${i < entry.rating! ? "fill-brand-primary text-text-primary" : "fill-transparent text-text-secondary/30"}`}
                         />
                     ))}
                 </span>
