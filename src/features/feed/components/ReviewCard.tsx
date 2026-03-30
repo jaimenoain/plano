@@ -90,7 +90,7 @@ export function ReviewCard({
       if (error) throw error;
 
       toast({ title: "Saved to your list" });
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Failed to save" });
     } finally {
       setIsSaving(false);
@@ -139,7 +139,9 @@ toast({ variant: "destructive", title: "Failed to save" });
   const year_completed = entry.building.year_completed;
 
   // Helper to extract names from potentially mixed type
-  const architectNames = architects ? architects.map((a: any) => typeof a === 'string' ? a : a.name) : [];
+  const architectNames = architects
+    ? architects.map((a) => (typeof a === "string" ? a : a.name)).filter(Boolean)
+    : [];
 
   let subTitle = entry.building.address;
 

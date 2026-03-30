@@ -74,12 +74,19 @@ export const searchBuildingsRpc = async (params: {
 throw error;
   }
 
-  return (data || []).map((b: any) => ({
-    ...b,
-    architects: (b.architects || []).map((ba: any) => ba.architect),
-    styles: (b.styles || []).map((s: any) => s.style),
-    typologies: (b.typologies || []).map((t: any) => t.typology?.name).filter(Boolean),
-  })) as DiscoveryBuilding[];
+  return (data || []).map((b: unknown) => {
+    const row = b as Record<string, unknown> & {
+      architects?: { architect: unknown }[];
+      styles?: { style: unknown }[];
+      typologies?: { typology?: { name?: string } }[];
+    };
+    return {
+      ...row,
+      architects: (row.architects || []).map((ba) => ba.architect),
+      styles: (row.styles || []).map((s) => s.style),
+      typologies: (row.typologies || []).map((t) => t.typology?.name).filter(Boolean),
+    };
+  }) as unknown as DiscoveryBuilding[];
 };
 
 export const getMapPinsRpc = async (params: {
@@ -104,10 +111,13 @@ export const getMapPinsRpc = async (params: {
   if (error) throw error;
 
   // Map snake_case to camelCase
-  return (data || []).map((pin: any) => ({
-    ...pin,
-    isCandidate: pin.is_candidate,
-  })) as DiscoveryBuildingMapPin[];
+  return (data || []).map((pin: unknown) => {
+    const p = pin as Record<string, unknown> & { is_candidate?: boolean };
+    return {
+      ...p,
+      isCandidate: p.is_candidate,
+    };
+  }) as DiscoveryBuildingMapPin[];
 };
 
 export const getBuildingsByIds = async (ids: string[]) => {
@@ -134,7 +144,7 @@ export const getDiscoveryFiltersRpc = async (): Promise<{ cities: string[]; styl
     const { data, error } = await supabase.rpc('get_discovery_filters');
     if (error) throw error;
     return data as { cities: string[]; styles: {id: string, name: string, slug: string}[] };
-  } catch (error) {
+  } catch (_error) {
 return { cities: [], styles: [] };
   }
 };
@@ -144,7 +154,7 @@ export const getBuildingLeaderboardsRpc = async (): Promise<LeaderboardData> => 
     const { data, error } = await supabase.rpc('get_building_leaderboards');
     if (error) throw error;
     return data as unknown as LeaderboardData;
-  } catch (error) {
+  } catch (_error) {
 return { most_visited: [], top_rated: [] };
   }
 };
@@ -154,12 +164,12 @@ export const findNearbyBuildingsRpc = async (params: {
     long: number;
     radius_meters: number;
     name_query?: string
-}): Promise<any[]> => {
+}): Promise<unknown[]> => {
     try {
         const { data, error } = await supabase.rpc('find_nearby_buildings', params);
         if (error) throw error;
         return data;
-    } catch (error) {
+    } catch (_error) {
 return [];
     }
 };
@@ -211,28 +221,42 @@ export const fetchBuildingDetails = async (id: string) => {
     if (!data) throw new Error("Building not found");
 
     // Transform styles from nested structure to flat array of objects
-    const styles = (data.styles as any)?.map((s: any) => s.style) || [];
-    const architects = (data.architects as any)?.map((a: any) => a.architect) || [];
+    type AttrRow = { group?: { slug?: string }; name?: string };
+    const styles = Array.isArray(data.styles)
+      ? data.styles.map((s: unknown) => (s as { style: unknown }).style)
+      : [];
+    const architects = Array.isArray(data.architects)
+      ? data.architects.map((a: unknown) => (a as { architect: unknown }).architect)
+      : [];
 
-    // Transform taxonomy structures
-    const categoryName = (data.category as any)?.name || null;
-    const typologies = (data.typologies as any)?.map((t: any) => t.typology?.name).filter(Boolean) || [];
+    const categoryName =
+      data.category && typeof data.category === "object" && data.category !== null && "name" in data.category
+        ? String((data.category as { name: unknown }).name)
+        : null;
+    const typologies = Array.isArray(data.typologies)
+      ? data.typologies
+          .map((t: unknown) => (t as { typology?: { name?: string } }).typology?.name)
+          .filter(Boolean)
+      : [];
 
-    // Transform attributes based on group
-    const attributesRaw = (data.attributes as any)?.map((a: any) => a.attribute).filter(Boolean) || [];
+    const attributesRaw: AttrRow[] = Array.isArray(data.attributes)
+      ? data.attributes
+          .map((a: unknown) => (a as { attribute: AttrRow }).attribute)
+          .filter(Boolean)
+      : [];
 
     const materials = attributesRaw
-        .filter((a: any) => a.group?.slug === 'materiality' || a.group?.slug === 'materials')
-        .map((a: any) => a.name);
+        .filter((a) => a.group?.slug === 'materiality' || a.group?.slug === 'materials')
+        .map((a) => a.name);
 
     const context = attributesRaw
-        .filter((a: any) => a.group?.slug === 'context')
-        .map((a: any) => a.name)
+        .filter((a) => a.group?.slug === 'context')
+        .map((a) => a.name)
         .join(', ') || null; // usually context is displayed as a string
 
     const intervention = attributesRaw
-        .filter((a: any) => a.group?.slug === 'intervention' || a.group?.slug === 'interventions')
-        .map((a: any) => a.name)
+        .filter((a) => a.group?.slug === 'intervention' || a.group?.slug === 'interventions')
+        .map((a) => a.name)
         .join(', ') || null;
 
     return {
@@ -272,7 +296,7 @@ export const upsertUserBuilding = async (data: {
 }) => {
     const { data: result, error } = await supabase
       .from("user_buildings")
-      .upsert(data, { onConflict: "user_id, building_id" } as any)
+      .upsert(data, { onConflict: "user_id, building_id" })
       .select()
       .single();
 

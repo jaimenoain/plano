@@ -30,6 +30,10 @@ interface EnrichedReport extends Report {
   contentSnippet?: string;
 }
 
+type ReportQueryRow = Report & {
+  reporter?: { username: string | null } | null;
+};
+
 export default function Moderation() {
   const [reports, setReports] = useState<EnrichedReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +65,7 @@ export default function Moderation() {
       }
 
       // Enrich with content
-      const enriched = await Promise.all(rawReports.map(async (r: any) => {
+      const enriched = await Promise.all((rawReports as ReportQueryRow[]).map(async (r) => {
         // Try Review
         const { data: review } = await supabase
             .from('user_buildings')
@@ -70,7 +74,7 @@ export default function Moderation() {
             .maybeSingle();
 
         if (review) {
-            return { ...r, contentType: 'review', contentSnippet: review.content };
+            return { ...r, contentType: 'review' as const, contentSnippet: review.content ?? undefined };
         }
 
         // Try Comment
@@ -81,14 +85,18 @@ export default function Moderation() {
             .maybeSingle();
 
         if (comment) {
-            return { ...r, contentType: 'comment', contentSnippet: comment.content };
+            return { ...r, contentType: 'comment' as const, contentSnippet: comment.content ?? undefined };
         }
 
-        return { ...r, contentType: 'unknown', contentSnippet: 'Content not found or deleted' };
+        return {
+          ...r,
+          contentType: 'unknown' as const,
+          contentSnippet: 'Content not found or deleted',
+        };
       }));
 
       setReports(enriched);
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to load reports");
     } finally {
       setLoading(false);
@@ -117,7 +125,7 @@ toast.error("Failed to load reports");
 
         setReports(prev => prev.filter(r => r.reported_id !== report.reported_id));
         toast.success("Reports dismissed");
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to dismiss report");
     }
   };
@@ -158,7 +166,7 @@ toast.error("Failed to dismiss report");
         setReports(prev => prev.filter(r => r.reported_id !== report.reported_id));
         toast.success("Content deleted and reports resolved");
 
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to delete content");
     }
   };

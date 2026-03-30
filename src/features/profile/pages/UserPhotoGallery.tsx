@@ -28,6 +28,19 @@ interface Photo {
   } | null;
 }
 
+type GalleryBuilding = { id: string; name: string; slug: string };
+
+type ReviewImageGalleryRow = {
+  id: string;
+  storage_path: string;
+  likes_count: number | null;
+  review_id: string;
+  user_buildings?:
+    | { building: GalleryBuilding | GalleryBuilding[] | null }
+    | { building: GalleryBuilding | GalleryBuilding[] | null }[]
+    | null;
+};
+
 export default function UserPhotoGallery() {
   const { user: currentUser } = useAuth();
   const { username: routeUsername } = useParams();
@@ -140,14 +153,21 @@ export default function UserPhotoGallery() {
           }
         }
 
-        const mappedPhotos = data.map((item: any) => ({
-          id: item.id,
-          storage_path: item.storage_path,
-          likes_count: item.likes_count || 0,
-          is_liked: likedIds.has(item.id),
-          review_id: item.review_id,
-          building: item.user_buildings?.building || null
-        }));
+        const rows = data as ReviewImageGalleryRow[];
+        const mappedPhotos = rows.map((item) => {
+          const ub = item.user_buildings;
+          const row = Array.isArray(ub) ? ub[0] : ub;
+          const bRaw = row?.building;
+          const b = Array.isArray(bRaw) ? bRaw[0] : bRaw;
+          return {
+            id: item.id,
+            storage_path: item.storage_path,
+            likes_count: item.likes_count || 0,
+            is_liked: likedIds.has(item.id),
+            review_id: item.review_id,
+            building: b ?? null,
+          };
+        });
 
         setPhotos(prev => page === 0 ? mappedPhotos : [...prev, ...mappedPhotos]);
       }
@@ -214,7 +234,7 @@ export default function UserPhotoGallery() {
             });
           if (error) throw error;
        }
-    } catch (err) {
+    } catch (_err) {
 // Revert
        setPhotos(prev => prev.map(p => {
           if (p.id === photoId) {

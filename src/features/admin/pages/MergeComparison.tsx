@@ -39,6 +39,20 @@ interface ComparisonBuilding extends Omit<AdminBuilding, 'architects'> {
     address?: string | null;
 }
 
+type ArchitectJoinCell = { architect: { id: string; name: string; type?: 'individual' | 'studio' } | null } | null;
+type BuildingComparisonRow = Record<string, unknown> & {
+  id: string;
+  architects?: ArchitectJoinCell[] | null;
+};
+
+function toComparisonBuilding(b: BuildingComparisonRow): ComparisonBuilding {
+  const architects =
+    b.architects
+      ?.map((row) => row?.architect)
+      .filter((a): a is NonNullable<typeof a> => Boolean(a)) ?? [];
+  return { ...b, architects } as ComparisonBuilding;
+}
+
 export default function MergeComparison() {
     const { targetId, sourceId } = useParams();
     const navigate = useNavigate();
@@ -88,10 +102,7 @@ export default function MergeComparison() {
 
             if (error) throw error;
 
-            const transformed = data.map((b: any) => ({
-                ...b,
-                architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || []
-            })) as ComparisonBuilding[];
+            const transformed = (data as BuildingComparisonRow[]).map(toComparisonBuilding);
 
             if (transformed.length !== 2) {
                 toast.error("Could not find both buildings");
@@ -118,7 +129,7 @@ export default function MergeComparison() {
                 });
                 setReviewImages(imgMap);
             }
-        } catch (error) {
+        } catch (_error) {
 toast.error("Failed to load buildings");
         } finally {
             setLoading(false);
@@ -137,7 +148,7 @@ toast.error("Failed to load buildings");
                 reviews: reviews.count || 0,
                 photos: photos.count || 0
             });
-        } catch (e) {
+        } catch (_e) {
 } finally {
             setImpactLoading(false);
         }

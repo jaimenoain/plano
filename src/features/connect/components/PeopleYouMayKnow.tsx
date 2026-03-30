@@ -15,6 +15,16 @@ interface SuggestionUser {
   }[];
 }
 
+type SuggestedHideRow = { suggested_user_id: string };
+
+type MutualFollowRow = {
+  following_id: string;
+  follower:
+    | { id: string; username: string | null; avatar_url: string | null }
+    | { id: string; username: string | null; avatar_url: string | null }[]
+    | null;
+};
+
 export function PeopleYouMayKnow() {
   const { user } = useAuth();
   const [suggestions, setSuggestions] = useState<SuggestionUser[]>([]);
@@ -37,11 +47,13 @@ export function PeopleYouMayKnow() {
 
         // Get IDs I hid
         const { data: hiddenData } = await supabase
-          .from("suggested_profile_hides" as any)
+          .from("suggested_profile_hides")
           .select("suggested_user_id")
           .eq("user_id", user.id);
 
-        const hiddenIds = new Set(hiddenData?.map((h: any) => h.suggested_user_id) || []);
+        const hiddenIds = new Set(
+          (hiddenData as SuggestedHideRow[] | null)?.map((h) => h.suggested_user_id) || []
+        );
 
         // 2. Fetch profiles
         // We fetch a batch and filter client-side to find non-followed users.
@@ -69,16 +81,15 @@ export function PeopleYouMayKnow() {
               .in("following_id", candidateIds)
               .in("follower_id", realFollowingIds);
 
+            const mutualRows = (mutualsData ?? []) as unknown as MutualFollowRow[];
             const suggestionsWithMutuals = filtered.map((candidate) => {
-              const mutuals = mutualsData
-                ?.filter((m) => m.following_id === candidate.id)
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .map((m: any) => m.follower)
-                .filter(Boolean) as {
-                id: string;
-                username: string | null;
-                avatar_url: string | null;
-              }[];
+              const mutuals = mutualRows
+                .filter((m) => m.following_id === candidate.id)
+                .map((m) => {
+                  const f = m.follower;
+                  return Array.isArray(f) ? f[0] : f;
+                })
+                .filter((f): f is NonNullable<typeof f> => f != null);
 
               return { ...candidate, mutual_follows: mutuals || [] };
             });
@@ -87,7 +98,7 @@ export function PeopleYouMayKnow() {
             setSuggestions(filtered);
           }
         }
-      } catch (error) {
+      } catch (_error) {
 } finally {
         setLoading(false);
       }
@@ -104,7 +115,7 @@ export function PeopleYouMayKnow() {
 
     try {
         const { error } = await supabase
-            .from("suggested_profile_hides" as any)
+            .from("suggested_profile_hides")
             .insert({
                 user_id: user.id,
                 suggested_user_id: suggestedId

@@ -87,7 +87,7 @@ export async function resizeImage(
               'image/jpeg',
               quality
             );
-          } catch (e) {
+          } catch (_e) {
 resolve(file);
           }
         };
@@ -100,7 +100,7 @@ resolve(file);
       reader.onerror = (_error) => {
 resolve(file);
       };
-    } catch (e) {
+    } catch (_e) {
 resolve(file);
     }
   });

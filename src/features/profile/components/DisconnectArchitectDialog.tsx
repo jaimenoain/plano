@@ -45,8 +45,8 @@ export function DisconnectArchitectDialog({
       toast.success("Successfully disconnected from architect profile.");
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-toast.error(error.message || "Failed to disconnect profile. Please try again.");
+    } catch (error: unknown) {
+toast.error(error instanceof Error ? error.message : "Failed to disconnect profile. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

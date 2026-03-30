@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from "react-dom";
 import { useSearchParams } from 'react-router-dom';
 import MapGL, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { type GeolocateControl as MaplibreGeolocateControl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Layers, Maximize2, Minimize2 } from "lucide-react";
 import { useURLMapState } from '@/features/maps/hooks/useURLMapState';
@@ -77,8 +77,7 @@ function CollectionMapGLContent({
   const [hasFittedBounds, setHasFittedBounds] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const geolocateControlRef = useRef<any>(null);
+  const geolocateControlRef = useRef<MaplibreGeolocateControl | null>(null);
 
   const [viewState, setViewState] = useState({
     latitude: lat,
@@ -177,11 +176,11 @@ function CollectionMapGLContent({
             image_attribution: b.image_attribution || undefined,
 
             // Custom fields
-            is_custom_marker: (b as any).isMarker,
-            marker_category: (b as any).markerCategory,
-            notes: (b as any).notes,
-            is_candidate: (b as any).isCandidate,
-            address: (b as any).address,
+            is_custom_marker: b.isMarker,
+            marker_category: b.markerCategory,
+            notes: b.notes ?? null,
+            is_candidate: b.isCandidate,
+            address: b.address ?? null,
             google_place_id: b.google_place_id,
             website: b.website,
 

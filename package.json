@@ -12,8 +12,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "gen-types": "npx supabase gen types typescript --project-id gyxspsuctbrxhwiyfvlj --schema public > src/integrations/supabase/types.ts",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix --max-warnings 0",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -20,6 +20,26 @@ interface Collection {
   owner?: { username: string | null };
 }
 
+type CollectionItemPin = { building?: { main_image_url?: string | null } | null };
+type NestedCollection = {
+  collection_items?: CollectionItemPin[] | null;
+};
+type UserFolderItemRow = {
+  collection?: NestedCollection | null;
+};
+type FolderQueryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_public: boolean;
+  created_at: string;
+  items_count?: { count: number }[];
+  user_folder_items?: UserFolderItemRow[] | null;
+};
+
+type FavoriteCollectionRow = { collection: Collection | Collection[] | null };
+
 interface CollectionsGridProps {
   userId: string;
   username: string | null;
@@ -82,11 +102,11 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
 return;
       }
 
-      const processedFolders: UserFolder[] = (data || []).map((folder: any) => {
-        // extract images
+      const folderRows = (data || []) as FolderQueryRow[];
+      const processedFolders: UserFolder[] = folderRows.map((folder) => {
         const images: string[] = [];
-        folder.user_folder_items?.forEach((item: any) => {
-            item.collection?.collection_items?.forEach((ci: any) => {
+        folder.user_folder_items?.forEach((item) => {
+            item.collection?.collection_items?.forEach((ci) => {
                 const rawUrl = ci.building?.main_image_url;
                 if (rawUrl) {
                   const resolvedUrl = getBuildingImageUrl(rawUrl);
@@ -112,7 +132,7 @@ return;
 
       setFolders(processedFolders);
 
-    } catch (err) {
+    } catch (_err) {
 }
   };
 
@@ -168,15 +188,17 @@ return;
       const owned = (ownedRes.data || []) as unknown as Collection[];
       const contributed = (contributedRes.data || []) as unknown as Collection[];
 
-      const favorites = (favoritesRes.data || [])
-        .map((item: any) => item.collection)
-        .filter((c: any) => c !== null)
-        .map((c: any) => ({ ...c, isFavorite: true })) as Collection[];
+      const favoriteRows = (favoritesRes.data || []) as unknown as FavoriteCollectionRow[];
+      const favorites = favoriteRows
+        .map((item) => {
+          const c = item.collection;
+          return Array.isArray(c) ? c[0] : c;
+        })
+        .filter((c): c is Collection => c !== null)
+        .map((c) => ({ ...c, isFavorite: true }));
 
-      // Extract organized collection IDs
-      const organizedIds = new Set(
-        (organizedRes.data || []).map((item: any) => item.collection_id)
-      );
+      const organizedItems = (organizedRes.data || []) as { collection_id: string }[];
+      const organizedIds = new Set(organizedItems.map((item) => item.collection_id));
 
       // Merge and deduplicate by ID
       const allCollections = new Map<string, Collection>();
@@ -205,7 +227,7 @@ return;
       );
 
       setCollections(sorted);
-    } catch (error) {
+    } catch (_error) {
 }
   };
 

@@ -78,8 +78,8 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setFolders((userFolders as any[]) || []);
-    } catch (error) {
+      setFolders((userFolders as UserFolder[] | null) ?? []);
+    } catch (_error) {
 } finally {
       setLoadingFolders(false);
     }
@@ -106,7 +106,7 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
 
       if (error) throw error;
       setCollections(data || []);
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to load collections." });
     } finally {
       setLoading(false);
@@ -162,7 +162,7 @@ toast({ variant: "destructive", description: "Collection created, but failed to 
       fetchCollections();
       setSelectedFolderIds(new Set());
       onUpdate?.();
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to create collection." });
     } finally {
       setProcessing(false);
@@ -186,7 +186,7 @@ toast({ variant: "destructive", description: "Failed to create collection." });
       setView("list");
       fetchCollections();
       onUpdate?.();
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to update collection." });
     } finally {
       setProcessing(false);
@@ -203,7 +203,7 @@ toast({ variant: "destructive", description: "Failed to update collection." });
       toast({ description: "Collection deleted." });
       fetchCollections();
       onUpdate?.();
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to delete collection." });
     } finally {
       setProcessing(false);

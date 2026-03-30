@@ -47,7 +47,7 @@ export function AddToFolderDialog({ open, onOpenChange, collectionId, userId, on
         .order("created_at", { ascending: false });
 
       if (foldersError) throw foldersError;
-      setFolders((userFolders as any[]) || []);
+      setFolders((userFolders as UserFolder[] | null) ?? []);
 
       // 2. Fetch folders where this collection is already present
       const { data: folderItems, error: itemsError } = await supabase
@@ -57,10 +57,12 @@ export function AddToFolderDialog({ open, onOpenChange, collectionId, userId, on
 
       if (itemsError) throw itemsError;
 
-      const currentFolderIds = new Set((folderItems || []).map((item: any) => item.folder_id));
+      const currentFolderIds = new Set(
+        ((folderItems ?? []) as { folder_id: string }[]).map((item) => item.folder_id)
+      );
       setSelectedFolderIds(currentFolderIds);
 
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to load folders." });
     } finally {
       setLoading(false);
@@ -86,7 +88,9 @@ toast({ variant: "destructive", description: "Failed to load folders." });
         .select("folder_id")
         .eq("collection_id", collectionId);
 
-      const currentIds = new Set((currentItems || []).map((i: any) => i.folder_id));
+      const currentIds = new Set(
+        ((currentItems ?? []) as { folder_id: string }[]).map((i) => i.folder_id)
+      );
       const targetIds = selectedFolderIds;
 
       const toAdd = Array.from(targetIds).filter(id => !currentIds.has(id));
@@ -111,7 +115,7 @@ toast({ variant: "destructive", description: "Failed to load folders." });
       toast({ description: "Collection updated in folders." });
       onOpenChange(false);
       if (onSuccess) onSuccess();
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to save changes." });
     } finally {
       setProcessing(false);
@@ -140,7 +144,7 @@ toast({ variant: "destructive", description: "Failed to save changes." });
       if (error) throw error;
 
       // Add the new folder to the list and select it
-      setFolders([data as any, ...folders]);
+      setFolders([data as UserFolder, ...folders]);
       const newSet = new Set(selectedFolderIds);
       newSet.add(data.id);
       setSelectedFolderIds(newSet);
@@ -149,7 +153,7 @@ toast({ variant: "destructive", description: "Failed to save changes." });
       setNewFolderName("");
       toast({ description: "Folder created and selected." });
 
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to create folder." });
     } finally {
       setProcessing(false);

@@ -28,6 +28,20 @@ type PotentialDuplicate = {
   score: number;
 };
 
+type ArchitectJoinCell = { architect: { id: string; name: string } | null } | null;
+type BuildingSearchRow = Record<string, unknown> & {
+  id: string;
+  architects?: ArchitectJoinCell[] | null;
+};
+
+function toAdminBuilding(b: BuildingSearchRow): AdminBuilding {
+  const architects =
+    b.architects
+      ?.map((row) => row?.architect)
+      .filter((a): a is NonNullable<typeof a> => Boolean(a)) ?? [];
+  return { ...b, architects } as AdminBuilding;
+}
+
 export default function MergeBuildings() {
   // Search State
   const [masterSearch, setMasterSearch] = useState("");
@@ -64,7 +78,7 @@ export default function MergeBuildings() {
 return;
       }
       setPotentialDuplicates(data as PotentialDuplicate[]);
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to fetch potential duplicates");
     } finally {
       setLoadingPotential(false);
@@ -86,13 +100,9 @@ toast.error("Failed to fetch potential duplicates");
         .limit(10);
 
       if (error) throw error;
-      // Transform relational data
-      const transformedData = data.map((b: any) => ({
-          ...b,
-          architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || []
-      }));
-      setResults(transformedData as AdminBuilding[]);
-    } catch (error) {
+      const transformedData = (data as BuildingSearchRow[]).map(toAdminBuilding);
+      setResults(transformedData);
+    } catch (_error) {
 } finally {
       setLoading(false);
     }
@@ -131,7 +141,7 @@ toast.error("Failed to fetch potential duplicates");
       setDupSearch("");
       setDupResults([]);
       fetchPotentialDuplicates(); // Refresh list
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
     } finally {
       setIsMerging(false);
@@ -148,10 +158,7 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
 
        if (loadError) throw loadError;
 
-       const transformed = rawData.map((b: any) => ({
-          ...b,
-          architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || []
-       })) as AdminBuilding[];
+       const transformed = (rawData as BuildingSearchRow[]).map(toAdminBuilding);
 
        const b1 = transformed.find(b => b.id === id1);
        const b2 = transformed.find(b => b.id === id2);
@@ -161,7 +168,7 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
 
        // Scroll up
        window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (error) {
+    } catch (_error) {
         toast.error("Failed to load building pair");
     }
   };
@@ -183,7 +190,7 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
         <CardContent className="text-sm space-y-2">
             {building.address && <div className="text-muted-foreground line-clamp-2" title={building.address}>{building.address}</div>}
             {building.architects && Array.isArray(building.architects) && building.architects.length > 0 && (
-                <div className="line-clamp-2">Architects: {(building.architects as any[]).map(a => a.name).join(", ")}</div>
+                <div className="line-clamp-2">Architects: {building.architects.map((a) => a.name).join(", ")}</div>
             )}
             <div className="text-xs text-muted-foreground break-all">ID: {building.id}</div>
         </CardContent>

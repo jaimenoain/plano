@@ -53,8 +53,8 @@ export function CreateCollectionDialog({ open, onOpenChange, userId, onSuccess }
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setFolders((userFolders as any[]) || []);
-    } catch (error) {
+      setFolders((userFolders as UserFolder[] | null) ?? []);
+    } catch (_error) {
 } finally {
       setLoadingFolders(false);
     }
@@ -130,7 +130,7 @@ toast({ variant: "destructive", description: "Collection created, but failed to 
       setSelectedFolderIds(new Set());
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to create collection." });
     } finally {
       setProcessing(false);

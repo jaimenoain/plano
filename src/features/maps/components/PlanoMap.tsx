@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from "react-dom";
 import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { type GeolocateControl as MaplibreGeolocateControl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Layers, Maximize2, Minimize2 } from "lucide-react";
 import { useURLMapState, DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/features/maps/hooks/useURLMapState';
@@ -47,11 +47,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
     }
   }, [fitBounds, fitMapBounds]);
 
-  // Reference to GeolocateControl to trigger it programmatically
-  // We use `any` to avoid complex type matching between react-map-gl wrapper and maplibre-gl instance,
-  // but in practice it exposes the underlying control or a compatible interface.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const geolocateControlRef = useRef<any>(null);
+  const geolocateControlRef = useRef<MaplibreGeolocateControl | null>(null);
 
   // Local view state to ensure smooth dragging (60fps) while syncing with URL
   const [viewState, setViewState] = useState({
@@ -78,7 +74,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
                if (hasInteracted) {
                    return prev; // Maintain current view, don't jump to (20, 0, 2)
                }
-           } catch (e) {
+           } catch (_e) {
                // ignore
            }
        }
@@ -108,7 +104,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
                   if (b && (b.getNorth() !== b.getSouth())) {
                       updateBounds(map);
                   }
-              } catch (e) {
+              } catch (_e) {
                   // Map might not be ready
               }
           }
@@ -134,7 +130,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
     // Record that the user has interacted with the map in this session
     try {
         sessionStorage.setItem('plano_map_interacted', 'true');
-    } catch (e) {
+    } catch (_e) {
         // Ignore session storage errors
     }
 
@@ -160,7 +156,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
           let hasInteracted = false;
           try {
               hasInteracted = sessionStorage.getItem('plano_map_interacted') === 'true';
-          } catch (e) {}
+          } catch (_e) {}
 
           // Try to restore from localStorage first
           let savedState = null;

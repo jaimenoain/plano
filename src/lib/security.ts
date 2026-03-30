@@ -11,7 +11,7 @@ export function isValidRedirect(url: string): boolean {
   try {
     const urlObj = new URL(url);
     return urlObj.origin === window.location.origin || urlObj.origin === 'https://plano.app';
-  } catch (e) {
+  } catch (_e) {
     return false;
   }
 }

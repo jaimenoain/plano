@@ -97,7 +97,7 @@ export function StyleSelect({
 
           handleSelect(data as StyleSummary);
           toast.success(`Created style "${name}"`);
-      } catch (error) {
+      } catch (_error) {
 toast.error("Failed to create style. It might already exist.");
       } finally {
           setIsCreating(false);

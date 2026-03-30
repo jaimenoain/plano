@@ -5,6 +5,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { Database } from "@/integrations/supabase/types";
+
+type ProfileImageRow = Pick<
+  Database["public"]["Tables"]["profiles"]["Row"],
+  "id" | "username" | "avatar_url" | "created_at"
+>;
 
 interface ImageItem {
   id: string; // The ID of the record (building or profile)
@@ -38,7 +44,8 @@ export default function ImageWall() {
       const combined: ImageItem[] = [];
 
       if (profiles) {
-        profiles.forEach((p: any) => {
+        (profiles as ProfileImageRow[]).forEach((p) => {
+           if (!p.avatar_url) return;
            combined.push({
              id: p.id,
              url: p.avatar_url,
@@ -54,7 +61,7 @@ export default function ImageWall() {
       combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       setImages(combined);
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to load images");
     } finally {
       setLoading(false);
@@ -95,7 +102,7 @@ toast.error("Failed to load images");
         setImages(prev => prev.filter(img => !selectedKeys.has(img.uniqueKey)));
         setSelectedKeys(new Set());
 
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to delete images");
     }
   };

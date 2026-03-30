@@ -60,9 +60,9 @@ export function UserPicker({ selectedIds, onSelect, onRemove, className, modal }
             .select("id, username, avatar_url")
             .in("id", ids);
 
-          setUsers((profiles as any[]) || []);
+          setUsers((profiles as User[]) || []);
         }
-      } catch (error) {
+      } catch (_error) {
 } finally {
         setLoading(false);
       }

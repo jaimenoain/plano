@@ -22,15 +22,12 @@ export function NavigationBlocker({ isDirty }: NavigationBlockerProps) {
   );
 
   // Handle browser refresh/close
-  useBeforeUnload(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (e: any) => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
+  useBeforeUnload((e: BeforeUnloadEvent) => {
+    if (isDirty) {
+      e.preventDefault();
+      e.returnValue = "";
     }
-  );
+  });
 
   // Reset blocker if form becomes clean while blocked
   useEffect(() => {
@@ -49,10 +46,10 @@ export function NavigationBlocker({ isDirty }: NavigationBlockerProps) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => blocker.reset()}>
+          <AlertDialogCancel onClick={() => blocker.reset?.()}>
             Keep Editing
           </AlertDialogCancel>
-          <AlertDialogAction onClick={() => blocker.proceed()} className="bg-destructive hover:bg-destructive/90">
+          <AlertDialogAction onClick={() => blocker.proceed?.()} className="bg-destructive hover:bg-destructive/90">
             Discard Changes
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -130,7 +130,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
   // Handle auto-zoom on search
   useEffect(() => {
     // Only proceed if we have a query, data is fresh (!isFetching), and we have results
-    if (filters.query && !isFetching && data?.pages?.[0]?.length > 0) {
+    if (filters.query && !isFetching && data && data.pages?.[0]?.length) {
       // If query changed since last zoom
       if (filters.query !== lastZoomedQuery.current) {
         const allBuildings = data.pages.flat();

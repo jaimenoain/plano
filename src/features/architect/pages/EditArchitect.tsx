@@ -51,7 +51,7 @@ export default function EditArchitect() {
 
   // Affiliations State
   const [affiliations, setAffiliations] = useState<SelectArchitect[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const [_isLoadingAffiliations, setIsLoadingAffiliations] = useState(false);
 
   const form = useForm<FormValues>({
@@ -111,7 +111,7 @@ export default function EditArchitect() {
                 // @ts-expect-error -- legacy Supabase row typing
                 setAffiliations(data.map(d => d.individual).filter(Boolean));
             }
-        } catch (e) {
+        } catch (_e) {
 } finally {
             setIsLoadingAffiliations(false);
         }
@@ -139,7 +139,7 @@ export default function EditArchitect() {
 
       toast.success("Architect updated successfully");
       navigate(`/architect/${id}`);
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to update architect");
     } finally {
       setIsSubmitting(false);
@@ -183,7 +183,7 @@ toast.error("Failed to update architect");
 
             if (error) throw error;
         }
-    } catch (e) {
+    } catch (_e) {
 toast.error("Failed to update affiliations");
         // Revert state?
         // We'll leave it for now as a simple implementation

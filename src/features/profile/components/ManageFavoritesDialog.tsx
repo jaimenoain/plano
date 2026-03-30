@@ -12,6 +12,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getBuildingImageUrl } from "@/utils/image";
 
+type SuggestionLogRow = {
+  building: { id: string; name: string; main_image_url: string | null; year_completed: number | null } | { id: string; name: string; main_image_url: string | null; year_completed: number | null }[] | null;
+};
+
+type UserRatingRow = { building_id: string; rating: number | null };
+
 interface ManageFavoritesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -55,18 +61,17 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
         .limit(20);
 
       if (data) {
-        // Map to FavoriteItem
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const items = data.map((log: any) => {
+        const items = (data as SuggestionLogRow[]).flatMap((log) => {
            const b = Array.isArray(log.building) ? log.building[0] : log.building;
-           return {
+           if (!b) return [];
+           return [{
              id: b.id,
              media_type: "building" as const,
              title: b.name,
              image_url: getBuildingImageUrl(b.main_image_url),
              rating: 10 as number,
              year_completed: b.year_completed ? String(b.year_completed) : undefined
-           } satisfies FavoriteItem;
+           } satisfies FavoriteItem];
         }).filter((item, index, self) =>
             index === self.findIndex((t) => (
                 t.id === item.id
@@ -74,7 +79,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
         );
         setSuggestions(items);
       }
-    } catch (e) {
+    } catch (_e) {
 } finally {
       setLoading(false);
     }
@@ -114,15 +119,14 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                .not("rating", "is", null);
 
              if (userRatings) {
-               const ratingMap = new Map();
-               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-               userRatings.forEach((log: any) => {
-                   ratingMap.set(log.building_id, log.rating);
+               const ratingMap = new Map<string, number | null>();
+               (userRatings as UserRatingRow[]).forEach((log) => {
+                   ratingMap.set(String(log.building_id), log.rating);
                });
 
                mapped = mapped.map((item) => ({
                  ...item,
-                 rating: ratingMap.get(item.id) as number | undefined,
+                 rating: ratingMap.get(String(item.id)) as number | undefined,
                }));
              }
            }

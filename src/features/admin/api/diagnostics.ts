@@ -69,7 +69,20 @@ export async function fetchDiagnosticLogs(): Promise<DiagnosticLog[]> {
     throw error;
   }
 
-  return data.map((log: any) => ({
+  type AuditRow = {
+    id: string;
+    created_at: string;
+    admin_id?: string | null;
+    details?: {
+      error_type?: string;
+      message?: string;
+      stack_trace?: string | null;
+      user_agent?: string | null;
+      url?: string | null;
+    } | null;
+  };
+
+  return (data ?? []).map((log: AuditRow) => ({
       id: log.id,
       created_at: log.created_at,
       error_type: log.details?.error_type || 'Unknown',
@@ -77,7 +90,7 @@ export async function fetchDiagnosticLogs(): Promise<DiagnosticLog[]> {
       stack_trace: log.details?.stack_trace || null,
       user_agent: log.details?.user_agent || null,
       url: log.details?.url || null,
-      user_id: log.admin_id
+      user_id: log.admin_id ?? null
   }));
 }
 

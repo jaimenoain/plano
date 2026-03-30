@@ -89,7 +89,8 @@ export default function EditBuilding() {
         .select('architect:architects(id, name, type)')
         .eq('building_id', data.id);
 
-      const relationArchitects = relations?.map((r: any) => r.architect) || [];
+      const relationArchitects =
+        (relations as { architect: Architect }[] | null | undefined)?.map((r) => r.architect) || [];
 
       const finalArchitects: Architect[] = relationArchitects;
 
@@ -99,7 +100,7 @@ export default function EditBuilding() {
         .select('typology_id')
         .eq('building_id', data.id);
 
-      const typologyIds = typologies?.map((t: any) => t.typology_id) || [];
+      const typologyIds = typologies?.map((t: { typology_id: string }) => t.typology_id) || [];
 
       // Fetch Attributes
       const { data: attributes } = await supabase
@@ -107,21 +108,23 @@ export default function EditBuilding() {
         .select('attribute_id')
         .eq('building_id', data.id);
 
-      const attributeIds = attributes?.map((a: any) => a.attribute_id) || [];
+      const attributeIds = attributes?.map((a: { attribute_id: string }) => a.attribute_id) || [];
 
 
+      const row = data as Record<string, unknown> & typeof data;
       setInitialValues({
         name: data.name,
-        alt_name: (data as any).alt_name || "",
-        aliases: (data as any).aliases || [],
+        alt_name: (typeof row.alt_name === "string" ? row.alt_name : "") || "",
+        aliases: Array.isArray(row.aliases) ? (row.aliases as string[]) : [],
         year_completed: data.year_completed,
-        status: (data as any).status || "",
-        access_level: (data as any).access_level || "",
-        access_logistics: (data as any).access_logistics || "",
-        access_cost: (data as any).access_cost || "",
-        access_notes: (data as any).access_notes || "",
+        status: (typeof row.status === "string" ? row.status : "") || "",
+        access_level: (typeof row.access_level === "string" ? row.access_level : "") || "",
+        access_logistics: (typeof row.access_logistics === "string" ? row.access_logistics : "") || "",
+        access_cost: (typeof row.access_cost === "string" ? row.access_cost : "") || "",
+        access_notes: (typeof row.access_notes === "string" ? row.access_notes : "") || "",
         architects: finalArchitects,
-        functional_category_id: (data as any).functional_category_id || "",
+        functional_category_id:
+          (typeof row.functional_category_id === "string" ? row.functional_category_id : "") || "",
         functional_typology_ids: typologyIds,
         selected_attribute_ids: attributeIds,
       });
@@ -140,7 +143,7 @@ export default function EditBuilding() {
           precision: data.location_precision || 'exact'
       });
 
-    } catch (error) {
+    } catch (_error) {
 toast.error("Error loading building");
     } finally {
       setLoading(false);
@@ -164,10 +167,10 @@ toast.error("Error loading building");
 
         if (error) throw error;
 
-        const others = (data || []).filter((b: any) => b.id !== buildingId);
+        const others = (data || []).filter((b: { id: string }) => b.id !== buildingId);
         setDuplicates(others);
 
-      } catch (error) {
+      } catch (_error) {
 } finally {
         setCheckingDuplicates(false);
       }
@@ -195,11 +198,11 @@ toast.error("Error loading building");
           alt_name: formData.alt_name || null,
           aliases: formData.aliases || [],
           year_completed: formData.year_completed,
-          status: formData.status as any,
-          access_level: formData.access_level as any,
-          access_logistics: formData.access_logistics as any,
-          access_cost: formData.access_cost as any,
-          access_notes: formData.access_notes as any,
+          status: formData.status,
+          access_level: formData.access_level,
+          access_logistics: formData.access_logistics,
+          access_cost: formData.access_cost,
+          access_notes: formData.access_notes,
           functional_category_id: formData.functional_category_id,
           // Removed legacy column updates for typologies/attributes
 
@@ -225,30 +228,27 @@ toast.error("Failed to update building");
       // We assume formData.architects contains valid UUIDs from the ArchitectSelect component
       if (formData.architects.length > 0) {
           const links = formData.architects.map(a => ({ building_id: buildingId, architect_id: a.id }));
-          // @ts-expect-error -- legacy Supabase row typing
-          const { error: linkError } = await supabase.from('building_architects').insert(links);
+          const { error: _linkError } = await supabase.from('building_architects').insert(links);
           }
 
       // Handle Typologies Junction Table
       await supabase.from('building_functional_typologies').delete().eq('building_id', buildingId);
       if (formData.functional_typology_ids.length > 0) {
           const tLinks = formData.functional_typology_ids.map(tid => ({ building_id: buildingId, typology_id: tid }));
-          // @ts-expect-error -- legacy Supabase row typing
-          const { error: tError } = await supabase.from('building_functional_typologies').insert(tLinks);
+          const { error: _tError } = await supabase.from('building_functional_typologies').insert(tLinks);
           }
 
       // Handle Attributes Junction Table
       await supabase.from('building_attributes').delete().eq('building_id', buildingId);
       if (formData.selected_attribute_ids.length > 0) {
           const aLinks = formData.selected_attribute_ids.map(aid => ({ building_id: buildingId, attribute_id: aid }));
-          // @ts-expect-error -- legacy Supabase row typing
-          const { error: aError } = await supabase.from('building_attributes').insert(aLinks);
+          const { error: _aError } = await supabase.from('building_attributes').insert(aLinks);
           }
 
       toast.success("Building updated successfully");
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
-    } catch (error) {
+    } catch (_error) {
 toast.error("Unexpected error");
     } finally {
       setIsSubmitting(false);
@@ -334,7 +334,7 @@ toast.error("Unexpected error");
               isSubmitting={isSubmitting}
               submitLabel="Update Building"
               mode="edit"
-              buildingId={buildingId}
+              buildingId={buildingId ?? undefined}
               shortId={buildingShortId}
             />
           </CardContent>

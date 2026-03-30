@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, Suspense } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
@@ -684,7 +685,7 @@ export default function CollectionMap() {
 
       const { error } = await supabase
           .from("collections")
-          .update({ itinerary: newItinerary as any })
+          .update({ itinerary: newItinerary as unknown as Json })
           .eq("id", collection.id);
 
       if (error) {
@@ -821,7 +822,7 @@ export default function CollectionMap() {
 
         queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
 
-    } catch (error) {
+    } catch (_error) {
 toast({
             title: "Error",
             description: "Failed to save buildings.",

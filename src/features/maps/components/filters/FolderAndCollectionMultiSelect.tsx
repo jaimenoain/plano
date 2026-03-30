@@ -20,6 +20,8 @@ interface UserFolder {
   slug: string;
 }
 
+type SharedCollectionRow = { collection: Collection | Collection[] | null };
+
 interface FolderAndCollectionMultiSelectProps {
   selectedCollectionIds: string[];
   selectedFolderIds: string[];
@@ -77,9 +79,13 @@ export function FolderAndCollectionMultiSelect({
       if (userFolders.error) throw userFolders.error;
 
       const ownedCollections = (owned.data || []) as Collection[];
-      const sharedCollections = (shared.data || [])
-        .map((item: any) => item.collection)
-        .filter(Boolean) as Collection[];
+      const sharedRows = (shared.data || []) as unknown as SharedCollectionRow[];
+      const sharedCollections = sharedRows
+        .map((item) => {
+          const c = item.collection;
+          return Array.isArray(c) ? c[0] : c;
+        })
+        .filter((c): c is Collection => Boolean(c));
 
       const allCollections = [...ownedCollections, ...sharedCollections];
       const uniqueCollections = Array.from(new Map(allCollections.map(c => [c.id, c])).values());

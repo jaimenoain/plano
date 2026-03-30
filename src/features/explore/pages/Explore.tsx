@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, type RefCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -143,7 +143,7 @@ export default function Explore() {
           }, { onConflict: 'user_id, building_id' });
 
           if (error) throw error;
-      } catch (error) {
+      } catch (_error) {
 }
   };
 
@@ -167,7 +167,7 @@ export default function Explore() {
           if (error) throw error;
 
           queryClient.invalidateQueries({ queryKey: ['discovery_feed'] });
-      } catch (error) {
+      } catch (_error) {
 toast.error("Failed to save");
       }
   };
@@ -191,7 +191,7 @@ toast.error("Failed to save");
           if (error) throw error;
 
           queryClient.invalidateQueries({ queryKey: ['discovery_feed'] });
-      } catch (error) {
+      } catch (_error) {
 toast.error("Failed to skip building");
       }
   };
@@ -294,7 +294,7 @@ toast.error("Failed to skip building");
 
               {/* Infinite Scroll Trigger */}
               {(hasNextPage || isFetchingNextPage) && (
-                <div ref={containerRef as any} className="h-20 w-full flex justify-center items-center p-4 snap-end">
+                <div ref={containerRef as RefCallback<HTMLDivElement>} className="h-20 w-full flex justify-center items-center p-4 snap-end">
                   {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin text-white/50" />}
                 </div>
               )}

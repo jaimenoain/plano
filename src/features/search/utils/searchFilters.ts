@@ -8,7 +8,8 @@ export interface BuildingFilterData {
   access_level?: string | null;
   access_logistics?: string | null;
   access_cost?: string | null;
-  [key: string]: any; // Allow passing through other fields like id, location, etc.
+  status?: string | null;
+  [key: string]: unknown; // Allow passing through other fields like id, location, etc.
 }
 
 export interface FilterCriteria {

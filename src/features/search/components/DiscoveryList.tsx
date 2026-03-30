@@ -87,7 +87,7 @@ export function DiscoveryList({
           key={building.id}
           building={building}
           distance={building.distance}
-          socialContext={building.social_context}
+          socialContext={building.social_context ?? undefined}
           action={renderAction?.(building)}
           onClick={onBuildingClick ? () => onBuildingClick(building) : undefined}
           imagePosition={imagePosition}

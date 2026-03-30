@@ -9,6 +9,39 @@ import { FeedReview } from "@/types/feed";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
 
+type FeedLikeRow = { user_id: string };
+type FeedImageRow = { id: string; storage_path: string; likes_count?: number | null };
+type FeedBuildingRow = {
+  id?: string;
+  name?: string;
+  address?: string | null;
+  slug?: string | null;
+  city?: string | null;
+  country?: string | null;
+  year_completed?: number | null;
+  hero_image?: { storage_path: string | null } | { storage_path: string | null }[] | null;
+  architects?: { architect: { name: string | null } | null }[] | null;
+};
+type ArchitectFeedRawRow = {
+  id: string;
+  content: string | null;
+  rating: number | null;
+  status: string;
+  created_at: string;
+  edited_at: string | null;
+  user_id: string;
+  tags: string[] | null;
+  user?:
+    | { username: string | null; avatar_url: string | null }
+    | { username: string | null; avatar_url: string | null }[]
+    | null;
+  building?: FeedBuildingRow | FeedBuildingRow[] | null;
+  images?: FeedImageRow[] | null;
+  likes?: { count: number }[] | null;
+  comments?: { count: number }[] | null;
+  my_likes?: FeedLikeRow[] | null;
+};
+
 export default function ArchitectDashboard() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -132,21 +165,30 @@ navigate("/");
 
         if (feedError) throw feedError;
 
-        const mappedFeed: FeedReview[] = (feedDataRaw || []).map((item: any) => {
-          // Check if current user liked it
-          // item.my_likes will be an array of { user_id }
+        const rawRows = (feedDataRaw ?? []) as unknown as ArchitectFeedRawRow[];
+        const mappedFeed: FeedReview[] = rawRows.map((item) => {
           const isLiked = item.my_likes && Array.isArray(item.my_likes)
-            ? item.my_likes.some((l: any) => l.user_id === user.id)
+            ? item.my_likes.some((l) => l.user_id === user.id)
             : false;
 
-          const images = item.images?.map((img: any) => ({
+          const images = item.images?.map((img) => ({
              id: img.id,
              url: getBuildingImageUrl(img.storage_path) || "",
              likes_count: img.likes_count || 0,
-             is_liked: false // We aren't fetching image likes for simplicity yet
+             is_liked: false
           })) || [];
 
-          const architects = item.building?.architects?.map((a: any) => a.architect?.name).filter(Boolean) || [];
+          const uRaw = item.user;
+          const u = Array.isArray(uRaw) ? uRaw[0] : uRaw;
+          const bRaw = item.building;
+          const buildingRow = Array.isArray(bRaw) ? bRaw[0] : bRaw;
+          const heroRaw = buildingRow?.hero_image;
+          const hero = Array.isArray(heroRaw) ? heroRaw[0] : heroRaw;
+
+          const architects =
+            buildingRow?.architects
+              ?.map((a) => a.architect?.name)
+              .filter((n): n is string => typeof n === "string" && n.length > 0) || [];
 
           return {
             id: item.id,
@@ -158,18 +200,18 @@ navigate("/");
             status: item.status,
             user_id: item.user_id,
             user: {
-              username: item.user?.username || "Unknown",
-              avatar_url: item.user?.avatar_url || null,
+              username: u?.username || "Unknown",
+              avatar_url: u?.avatar_url || null,
             },
             building: {
-              id: item.building?.id,
-              name: item.building?.name,
-              address: item.building?.address,
-              slug: item.building?.slug,
-              city: item.building?.city,
-              country: item.building?.country,
-              year_completed: item.building?.year_completed,
-              main_image_url: item.building?.hero_image?.storage_path || null,
+              id: buildingRow?.id ?? "",
+              name: buildingRow?.name ?? "",
+              address: buildingRow?.address,
+              slug: buildingRow?.slug,
+              city: buildingRow?.city,
+              country: buildingRow?.country,
+              year_completed: buildingRow?.year_completed,
+              main_image_url: hero?.storage_path || null,
               architects: architects,
             },
             likes_count: item.likes?.[0]?.count || 0,
@@ -181,7 +223,7 @@ navigate("/");
 
         setFeedItems(mappedFeed);
 
-      } catch (error) {
+      } catch (_error) {
 toast.error("Failed to load dashboard data");
       } finally {
         setLoading(false);

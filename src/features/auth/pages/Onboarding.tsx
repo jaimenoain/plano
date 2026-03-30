@@ -124,7 +124,7 @@ export default function Onboarding() {
             if (followCheck) setIsFollowing(true);
           }
         }
-      } catch (error) {
+      } catch (_error) {
 } finally {
         setLoadingInitialData(false);
       }
@@ -156,7 +156,7 @@ export default function Onboarding() {
         title: "Following",
         description: `You are now following ${inviter.username}`,
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -191,7 +191,7 @@ export default function Onboarding() {
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
       setAvatarUrl(data.publicUrl);
 
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Upload failed",
@@ -214,9 +214,7 @@ const { error: notifError } = await supabase
         .insert({
           user_id: user.id, // The notification is FOR the new user
           actor_id: inviter.id, // The actor is the inviter
-          // Cast to 'any' allows this string even if your local types.ts is not yet updated.
-          // Ensure your DB 'type' column accepts 'suggest_follow'.
-          type: "suggest_follow" as any, 
+          type: "suggest_follow",
           is_read: false
         });
       if (notifError) {

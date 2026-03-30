@@ -28,6 +28,8 @@ import { UserPicker } from "@/components/common/UserPicker";
 type Visibility = "public" | "contacts" | "private";
 type PostType = "review" | "bucket_list";
 
+type PostBuildingDetails = NonNullable<Awaited<ReturnType<typeof fetchBuildingDetailsRpc>>>;
+
 export default function Post() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -47,7 +49,7 @@ export default function Post() {
   const [showVisibilityMenu, setShowVisibilityMenu] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingExisting, setCheckingExisting] = useState(true);
-  const [buildingDetails, setBuildingDetails] = useState<any>(null);
+  const [buildingDetails, setBuildingDetails] = useState<PostBuildingDetails | null>(null);
   const [existingEntryId, setExistingEntryId] = useState<string | null>(null);
 
   // Recommendation state
@@ -81,7 +83,7 @@ export default function Post() {
           year_completed: data.year_completed
         });
       }
-    } catch (error) {
+    } catch (_error) {
 }
   };
 
@@ -99,7 +101,7 @@ export default function Post() {
         if (entry.content) setContent(entry.content);
         if (entry.visibility) setVisibility(entry.visibility as Visibility);
       }
-    } catch (error) {
+    } catch (_error) {
 } finally {
       setCheckingExisting(false);
     }
@@ -134,8 +136,8 @@ export default function Post() {
 
       toast({ title: isReview ? "Review posted!" : "Added to bucket list!" });
       navigate("/", { state: isReview ? { reviewPosted: true } : undefined });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+    } catch (error: unknown) {
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Something went wrong" });
     } finally {
       setLoading(false);
     }
@@ -150,8 +152,8 @@ export default function Post() {
 
       toast({ title: "Removed from your list" });
       navigate("/");
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+    } catch (error: unknown) {
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Something went wrong" });
       setLoading(false);
     }
   };
@@ -188,7 +190,7 @@ export default function Post() {
                 
                 <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
                   {buildingDetails?.architects && buildingDetails.architects.length > 0 && (
-                    <p>Architect: {buildingDetails.architects.map((a: any) => a.name).join(", ")}</p>
+                    <p>Architect: {buildingDetails.architects.map((a: { name: string }) => a.name).join(", ")}</p>
                   )}
                   {buildingDetails?.year_completed && <p>Year: {buildingDetails.year_completed}</p>}
                 </div>

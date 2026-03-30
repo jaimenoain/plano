@@ -37,7 +37,7 @@ export default function ArchitectDetails() {
       if (data) {
         setClaimStatus(data as unknown as { is_verified: boolean; my_claim_status: string | null });
       }
-    } catch (err) {
+    } catch (_err) {
 }
   }, [id]);
 

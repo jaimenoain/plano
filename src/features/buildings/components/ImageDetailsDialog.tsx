@@ -158,7 +158,7 @@ export function ImageDetailsDialog({
         setIsLiked(!!likeData);
       }
 
-    } catch (error) {
+    } catch (_error) {
 } finally {
       setIsLoading(false);
       // Scroll to bottom of comments
@@ -197,7 +197,7 @@ export function ImageDetailsDialog({
 
         if (error) throw error;
       }
-    } catch (error) {
+    } catch (_error) {
 // Revert optimistic update
       setIsLiked(previousIsLiked);
       setLikesCount(previousLikesCount);
@@ -240,7 +240,7 @@ export function ImageDetailsDialog({
       // Scroll to bottom
       setTimeout(() => commentEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
 
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Failed to post comment" });
     } finally {
       setIsSubmitting(false);
@@ -257,7 +257,7 @@ toast({ variant: "destructive", title: "Failed to post comment" });
       if (error) throw error;
 
       setComments(comments.filter(c => c.id !== commentId));
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Failed to delete comment" });
     }
   };

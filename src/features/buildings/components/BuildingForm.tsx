@@ -241,7 +241,7 @@ return true; // Fallback to true on error to avoid blocking UX unnecessarily
       setIsAddingTypology(false);
       toast.success("Typology added successfully");
 
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to add typology");
     } finally {
       setIsAddingTypologyLoading(false);
@@ -276,7 +276,7 @@ toast.error("Failed to add typology");
       setAddingAttributeGroupId(null);
       toast.success("Attribute added successfully");
 
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to add attribute");
     } finally {
       setIsAddingAttributeLoading(false);
@@ -324,7 +324,7 @@ toast.error("Failed to add attribute");
 
       await onSubmit(formData);
 
-    } catch (error) {
+    } catch (_error) {
 }
   };
 

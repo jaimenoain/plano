@@ -50,8 +50,8 @@ interface RecommendationCardProps {
   recommendation: Recommendation;
   interaction: RecommendationInteraction;
   onDismiss: (id: string) => void;
-  onRate: (building: any) => void;
-  onWatchlist: (building: any) => void;
+  onRate: (building: Recommendation["building"]) => void;
+  onWatchlist: (building: Recommendation["building"]) => void;
 }
 
 export function RecommendationCard({ recommendation, interaction, onDismiss, onRate, onWatchlist }: RecommendationCardProps) {

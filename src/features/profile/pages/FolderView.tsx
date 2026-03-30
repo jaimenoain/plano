@@ -19,7 +19,18 @@ interface Collection {
   created_at: string;
   collection_items: { count: number }[];
   owner?: { username: string | null };
+  owner_id?: string;
+  collection_contributors?: { user_id: string }[];
 }
+
+type FolderCollectionRow = Omit<Collection, "isFavorite"> & {
+  owner_id?: string;
+  collection_contributors?: { user_id: string }[];
+};
+
+type FolderItemRow = {
+  collection: FolderCollectionRow | FolderCollectionRow[] | null;
+};
 
 export default function FolderView() {
   const { username, slug } = useParams();
@@ -101,31 +112,37 @@ export default function FolderView() {
 
         if (itemsError) throw itemsError;
 
-        const fetchedCollections = (itemsData || [])
-            .map((item: any) => {
-                const c = item.collection;
+        const rows = (itemsData ?? []) as unknown as FolderItemRow[];
+        const fetchedCollections = rows
+            .map((item) => {
+                const raw = item.collection;
+                const c = Array.isArray(raw) ? raw[0] : raw;
                 if (!c) return null;
 
                 const isCreator = currentUser?.id === c.owner_id;
-                const isContributor = c.collection_contributors?.some((contrib: any) => contrib.user_id === currentUser?.id);
+                const isContributor = c.collection_contributors?.some((contrib) => contrib.user_id === currentUser?.id);
 
-                c.isFavorite = !isCreator && !isContributor;
+                const enriched: Collection = {
+                  ...c,
+                  isFavorite: !isCreator && !isContributor,
+                };
 
-                return c;
+                return enriched;
             })
-            .filter((c: any) => c !== null);
+            .filter((c): c is Collection => c !== null);
 
-        const visibleCollections = fetchedCollections.filter((c: any) => {
+        const visibleCollections = fetchedCollections.filter((c) => {
             if (isOwner) return true;
             return c.is_public;
         });
 
-        // Sort by created_at desc
-        visibleCollections.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        visibleCollections.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
 
         setCollections(visibleCollections);
 
-    } catch (err: any) {
+    } catch (_err: unknown) {
 setError("Failed to load folder");
     } finally {
         setLoading(false);

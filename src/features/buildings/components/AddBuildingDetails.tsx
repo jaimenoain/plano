@@ -46,11 +46,11 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           alt_name: data.alt_name || null,
           aliases: data.aliases || [],
           year_completed: data.year_completed,
-          status: data.status as any,
-          access_level: data.access_level as any,
-          access_logistics: data.access_logistics as any,
-          access_cost: data.access_cost as any,
-          access_notes: data.access_notes as any,
+          status: data.status,
+          access_level: data.access_level,
+          access_logistics: data.access_logistics,
+          access_cost: data.access_cost,
+          access_notes: data.access_notes,
 
           // Location Data (Merged from Main & Feature branches)
           address: locationData.address,
@@ -112,12 +112,11 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
             typology_id: tId
           }));
 
-          // @ts-expect-error -- legacy Supabase row typing
-          const { error: typoError } = await supabase
+          const { error: _typoError } = await supabase
             .from('building_functional_typologies')
             .insert(typologyLinks);
 
-          } catch (err) {
+          } catch (_err) {
 }
       }
 
@@ -129,12 +128,11 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
             attribute_id: aId
           }));
 
-          // @ts-expect-error -- legacy Supabase row typing
-          const { error: attrError } = await supabase
+          const { error: _attrError } = await supabase
             .from('building_attributes')
             .insert(attributeLinks);
 
-          } catch (err) {
+          } catch (_err) {
 }
       }
 
@@ -142,8 +140,8 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
       toast.success("Building added successfully!");
       navigate(`/building/${insertedData.id}`);
 
-    } catch (error: any) {
-toast.error(`Failed to save building: ${error.message || "Unknown error"}`);
+    } catch (error: unknown) {
+toast.error(`Failed to save building: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
     }

@@ -13,7 +13,7 @@ interface CollectionMarkerCardProps {
   onRemove?: () => void;
   onNavigate: () => void;
   isDraggable?: boolean;
-  dragHandleProps?: any;
+  dragHandleProps?: Record<string, unknown>;
   badgeIndex?: number;
 }
 

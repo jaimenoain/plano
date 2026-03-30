@@ -28,22 +28,29 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
   ]);
 
-  // Fallbacks using 'as any' to bypass initial strict typing, validated by return type
-  const pulse = (pulseData as any) || {
+  const pulse =
+    (pulseData as unknown as DashboardStats["pulse"] | null) ?? {
     total_users: 0,
     new_users_30d: 0,
+    new_users_24h: 0,
     active_users_24h: 0,
     active_users_30d: 0,
-    network_density: 0
+    network_density: 0,
+    total_buildings: 0,
+    total_reviews: 0,
+    total_photos: 0,
+    pending_reports: 0,
   };
 
-  const trends = (trendsData as any) || {
+  const trends =
+    (trendsData as unknown as DashboardStats["activity_trends"] | null) ?? {
     actions: [],
     logins: [],
-    dau_by_feature: []
+    dau_by_feature: [],
   };
 
-  const leaderboards = (leaderboardsData as any) || {
+  const leaderboards =
+    (leaderboardsData as unknown as DashboardStats["user_leaderboard"] | null) ?? {
     most_reviews: [],
     most_ratings: [],
     most_likes: [],
@@ -54,17 +61,20 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     most_followers_gained: [],
   };
 
-  const content = (contentData as any) || {
+  const content =
+    (contentData as unknown as { content_intelligence: DashboardStats["content_intelligence"] } | null) ?? {
     content_intelligence: { trending_buildings: [] },
   };
 
-  const retention = (retentionData as any) || {
+  const retention =
+    (retentionData as unknown as DashboardStats["retention_analysis"] | null) ?? {
     user_activity_distribution: { active_30d: 0, active_90d: 0, inactive: 0 },
     active_30d_breakdown: [],
-    recent_users: []
+    recent_users: [],
   };
 
-  const notifications = (notificationsData as any) || {
+  const notifications =
+    (notificationsData as unknown as DashboardStats["notification_intelligence"] | null) ?? {
     engagement: {
       total_notifications: 0,
       read_rate: 0,
@@ -93,11 +103,11 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function fetchPhotoHeatmapData(): Promise<HeatmapPoint[]> {
-  const { data, error } = await supabase.rpc('get_photo_heatmap_data' as any);
+  const { data, error } = await supabase.rpc("get_photo_heatmap_data");
 
   if (error) {
     return [];
   }
 
-  return (data as any[]) || [];
+  return (data as unknown as HeatmapPoint[]) || [];
 }

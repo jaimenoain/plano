@@ -63,10 +63,10 @@ export interface ProductionCountry {
  * 2. Legacy format: Array of objects { iso_3166_1, name } (stored in older records).
  * Returns a consistent array of objects with iso_3166_1 and name.
  */
-export function normalizeCountries(data: any[] | null): ProductionCountry[] {
+export function normalizeCountries(data: unknown[] | null): ProductionCountry[] {
   if (!Array.isArray(data)) return [];
 
-  return data.map((c: any) => {
+  return data.map((c: unknown) => {
     // New format: Array of ISO strings
     if (typeof c === 'string') {
         const country = COUNTRIES.find(C => C.code === c);

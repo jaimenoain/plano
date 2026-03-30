@@ -1,8 +1,11 @@
-export const extractLocationDetails = (result: any) => {
+type GeocoderAddressComponent = { long_name: string; types: string[] };
+type GeocoderResultLike = { address_components?: GeocoderAddressComponent[] };
+
+export const extractLocationDetails = (result: GeocoderResultLike | null | undefined) => {
   let city = null;
   let country = null;
 
-  if (!result || !result.address_components) return { city, country };
+  if (!result?.address_components) return { city, country };
 
   for (const component of result.address_components) {
     if (component.types.includes('locality')) {

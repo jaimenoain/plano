@@ -51,4 +51,5 @@ This project is a Single Page Application (SPA) built with the following core te
 ## 🚀 Development Scripts
 
 * `npm run dev`: Start local Vite server.
-* `npm run test`: Run Playwright tests.
+* `npm run test`: Run unit tests (Vitest).
+* `npm run typecheck`, `npm run lint`, `npm run build`: used in CI; see [`CONTRIBUTING.md`](CONTRIBUTING.md) for recommended branch protection (require the **CI / Quality checks** workflow on `main`).

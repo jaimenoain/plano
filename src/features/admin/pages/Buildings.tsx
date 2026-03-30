@@ -32,6 +32,7 @@ import { BuildingLocationPicker } from "@/features/buildings/components/Building
 import { Loader2, MapPin, Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { parseLocation } from "@/utils/location";
+import type { Architect as ArchitectOption } from "@/components/ui/architect-select";
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState<AdminBuilding[]>([]);
@@ -90,7 +91,7 @@ export default function Buildings() {
       if (count) {
         setTotalPages(Math.ceil(count / ITEMS_PER_PAGE));
       }
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to load buildings");
     } finally {
       setLoading(false);
@@ -110,7 +111,7 @@ toast.error("Failed to load buildings");
         b.id === id ? { ...b, is_verified: !currentStatus } : b
       ));
       toast.success(currentStatus ? "Building un-verified" : "Building verified");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to update status");
     }
   };
@@ -128,7 +129,7 @@ toast.error("Failed to load buildings");
         b.id === id ? { ...b, is_deleted: !currentStatus } : b
       ));
       toast.success(currentStatus ? "Building restored" : "Building soft-deleted");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to update status");
     }
   };
@@ -145,8 +146,8 @@ toast.error("Failed to load buildings");
         lat,
         lng,
         address: building.address || "",
-        city: building.city,
-        country: building.country,
+        city: building.city ?? null,
+        country: building.country ?? null,
         precision
     });
 
@@ -156,26 +157,27 @@ toast.error("Failed to load buildings");
       .select('architect:architects(id, name, type)')
       .eq('building_id', building.id);
 
-    const relationArchitects = relations?.map((r: any) => r.architect) || [];
+    const relationArchitects =
+      (relations as { architect: ArchitectOption }[] | null | undefined)?.map((r) => r.architect) || [];
 
     const { data: typologies } = await supabase
         .from('building_functional_typologies')
         .select('typology_id')
         .eq('building_id', building.id);
-    const typologyIds = typologies?.map((t: any) => t.typology_id) || [];
+    const typologyIds = typologies?.map((t: { typology_id: string }) => t.typology_id) || [];
 
     const { data: attributes } = await supabase
         .from('building_attributes')
         .select('attribute_id')
         .eq('building_id', building.id);
-    const attributeIds = attributes?.map((a: any) => a.attribute_id) || [];
+    const attributeIds = attributes?.map((a: { attribute_id: string }) => a.attribute_id) || [];
 
     setFormValues({
         name: building.name,
         hero_image_url: building.hero_image_url,
-        year_completed: building.year_completed,
+        year_completed: building.year_completed ?? null,
         architects: relationArchitects,
-        functional_category_id: (building as any).functional_category_id || "",
+        functional_category_id: (building as { functional_category_id?: string }).functional_category_id || "",
         functional_typology_ids: typologyIds,
         selected_attribute_ids: attributeIds,
     });
@@ -222,31 +224,28 @@ toast.error("Failed to load buildings");
       // 2. Insert new links
       if (formData.architects.length > 0) {
           const links = formData.architects.map(a => ({ building_id: id, architect_id: a.id }));
-          // @ts-expect-error -- legacy Supabase row typing
-          const { error: linkError } = await supabase.from('building_architects').insert(links);
+          const { error: _linkError } = await supabase.from('building_architects').insert(links);
           }
 
       // Handle Typologies Junction Table
       await supabase.from('building_functional_typologies').delete().eq('building_id', id);
       if (formData.functional_typology_ids.length > 0) {
           const tLinks = formData.functional_typology_ids.map(tid => ({ building_id: id, typology_id: tid }));
-          // @ts-expect-error -- legacy Supabase row typing
-          const { error: tError } = await supabase.from('building_functional_typologies').insert(tLinks);
+          const { error: _tError } = await supabase.from('building_functional_typologies').insert(tLinks);
           }
 
       // Handle Attributes Junction Table
       await supabase.from('building_attributes').delete().eq('building_id', id);
       if (formData.selected_attribute_ids.length > 0) {
           const aLinks = formData.selected_attribute_ids.map(aid => ({ building_id: id, attribute_id: aid }));
-          // @ts-expect-error -- legacy Supabase row typing
-          const { error: aError } = await supabase.from('building_attributes').insert(aLinks);
+          const { error: _aError } = await supabase.from('building_attributes').insert(aLinks);
           }
 
       toast.success("Building updated");
       setEditingBuilding(null);
       setFormValues(null);
       fetchBuildings(); // Refresh list
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to update building");
     }
   };
@@ -264,7 +263,7 @@ toast.error("Failed to update building");
             />
             <Select
                 value={statusFilter}
-                onValueChange={(val: any) => setStatusFilter(val)}
+                onValueChange={(val: string) => setStatusFilter(val as "all" | "verified" | "pending" | "deleted")}
             >
                 <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Status" />
@@ -333,7 +332,7 @@ toast.error("Failed to update building");
                                 <div className="h-8 w-px bg-border mx-1" />
                                 <Switch
                                     checked={building.is_verified}
-                                    onCheckedChange={() => handleVerify(building.id, building.is_verified)}
+                                    onCheckedChange={() => handleVerify(building.id, building.is_verified ?? false)}
                                     className="data-[state=checked]:bg-green-600"
                                     title="Toggle Verification"
                                 />
@@ -341,7 +340,7 @@ toast.error("Failed to update building");
                                     size="icon"
                                     variant="ghost"
                                     className={building.is_deleted ? "text-green-600" : "text-destructive"}
-                                    onClick={() => handleSoftDelete(building.id, building.is_deleted)}
+                                    onClick={() => handleSoftDelete(building.id, building.is_deleted ?? false)}
                                     title={building.is_deleted ? "Restore" : "Soft Delete"}
                                 >
                                     {building.is_deleted ? <CheckCircle2 className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}

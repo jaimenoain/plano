@@ -44,7 +44,7 @@ export function BuildingLocationMap({
     lat,
     lng,
     rating: rating,
-    status: status as any, // Cast to match ClusterResponse status type if needed
+    status: status ?? null,
     tier_rank_label: tierRank || null,
     is_cluster: false,
     count: 1,

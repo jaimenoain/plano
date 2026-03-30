@@ -49,8 +49,8 @@ export function BlockUserDialog({ open, onOpenChange, userId, username }: BlockU
             // Navigate away to feed or home, as profile is now inaccessible
             navigate("/");
 
-        } catch (error: any) {
-toast({ variant: "destructive", description: error.message || "Failed to block user." });
+        } catch (error: unknown) {
+toast({ variant: "destructive", description: error instanceof Error ? error.message : "Failed to block user." });
         } finally {
             setLoading(false);
         }

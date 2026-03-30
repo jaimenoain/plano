@@ -68,7 +68,7 @@ export function AddBuildingDialog({ onBuildingAdded, className }: AddBuildingDia
       // Keeping it open is usually better for "Quick Add" flows.
       // But maybe clear search?
       // setSearchQuery(""); // Optional: Clear search after add
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Failed to add building" });
     }
   };

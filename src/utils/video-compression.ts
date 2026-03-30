@@ -28,7 +28,7 @@ export class VideoCompressionService {
       });
 
       this.instance = ffmpeg;
-    } catch (error) {
+    } catch (_error) {
 throw new Error('Video compression engine failed to load. Please try again or check browser compatibility.');
     } finally {
       this.isLoading = false;

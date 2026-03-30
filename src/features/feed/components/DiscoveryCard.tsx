@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { DiscoveryBuilding } from "@/features/search/components/types";
+import { useState, useRef, useEffect, useMemo, type RefCallback } from "react";
+import { DiscoveryBuilding, type ArchitectSummary } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Bookmark, Check, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -87,12 +87,15 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   }, [uniqueImages, currentImageIndex, additionalImages]);
 
   // Format architect names (handle if architects is undefined, e.g. from FeedItem)
-  const architectNames = building.architects?.map((a: any) => a.name).join(", ");
+  const architectNames = building.architects
+    ?.map((a: ArchitectSummary | string) => (typeof a === "string" ? a : a.name))
+    .filter(Boolean)
+    .join(", ");
 
   const saveToSupabase = async (status: 'pending' | 'ignored', ratingValue?: number | null) => {
       if (!user) return;
       try {
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
             user_id: user.id,
             building_id: building.id,
             status: status,
@@ -104,7 +107,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
 
         const { error } = await supabase.from("user_buildings").upsert(updateData, { onConflict: 'user_id, building_id' });
         if (error) throw error;
-      } catch (error) {
+      } catch (_error) {
 toast.error("Failed to save");
       }
   };
@@ -205,7 +208,7 @@ toast.error("Failed to save");
 
   return (
     <motion.div
-      ref={containerRef as any}
+      ref={containerRef as RefCallback<HTMLDivElement>}
       className="relative w-full h-full overflow-hidden min-w-0 bg-black snap-start touch-pan-y"
       style={{ x, rotate, opacity }}
       drag="x"
@@ -214,7 +217,7 @@ toast.error("Failed to save");
       onDragEnd={handleDragEnd}
     >
       {/* View Tracker */}
-      <div ref={viewTrackerRef as any} className="absolute inset-0 pointer-events-none" />
+      <div ref={viewTrackerRef as RefCallback<HTMLDivElement>} className="absolute inset-0 pointer-events-none" />
 
       {/* Background Layer - Blurred */}
       {uniqueImages[currentImageIndex] && (

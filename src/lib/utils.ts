@@ -71,7 +71,7 @@ export function parseHomeBase(raw: string | null): { type: "physical" | "virtual
         }
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Fallback
   }
 

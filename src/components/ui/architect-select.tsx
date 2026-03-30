@@ -124,7 +124,7 @@ export function ArchitectSelect({
           handleSelect(data as Architect);
           setShowCreateDialog(false);
           toast.success(`Created ${newArchitectType} "${newArchitectName}"`);
-      } catch (error) {
+      } catch (_error) {
 toast.error("Failed to create architect. Name might already exist.");
       } finally {
           setIsCreating(false);
@@ -222,7 +222,7 @@ toast.error("Failed to create architect. Name might already exist.");
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-                <RadioGroup value={newArchitectType} onValueChange={(v: any) => setNewArchitectType(v)}>
+                <RadioGroup value={newArchitectType} onValueChange={(v: string) => setNewArchitectType(v as "individual" | "studio")}>
                     <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-muted/50" onClick={() => setNewArchitectType('individual')}>
                         <RadioGroupItem value="individual" id="r1" />
                         <Label htmlFor="r1" className="cursor-pointer">Individual Architect</Label>

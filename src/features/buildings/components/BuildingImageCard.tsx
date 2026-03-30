@@ -73,7 +73,7 @@ export function BuildingImageCard({ image, initialIsLiked, onOpen }: BuildingIma
           });
         if (error) throw error;
       }
-    } catch (error) {
+    } catch (_error) {
 setIsLiked(previousIsLiked);
       setLikesCount(previousLikesCount);
       toast({ variant: "destructive", title: "Failed to update like" });

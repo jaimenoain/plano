@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import Map, { Source, Layer, LayerProps, NavigationControl } from 'react-map-gl/maplibre';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { type MapLayerMouseEvent } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,10 +29,18 @@ const CIRCLE_LAYER: LayerProps = {
 };
 
 // Extracted logic for testing
+type BuildingForPhotoFilter = {
+  id: string;
+  name: string;
+  location: unknown;
+  slug?: string | null;
+  hero_image_url?: string | null;
+};
+
 export const filterMissingPhotoBuildings = (
-    buildings: any[],
+    buildings: BuildingForPhotoFilter[],
     publicReviewBuildingIds: Set<string>,
-    parseLocationFn: (loc: any) => { lat: number; lng: number } | null
+    parseLocationFn: (loc: unknown) => { lat: number; lng: number } | null
 ): NoPhotoBuilding[] => {
     return buildings
         .filter(b => {
@@ -90,10 +98,14 @@ export function NoPhotosMapZone() {
 
         if (error) throw error;
 
-        const mapped = filterMissingPhotoBuildings(data || [], buildingsWithPublicPhotos, parseLocation);
+        const mapped = filterMissingPhotoBuildings(
+          (data || []) as BuildingForPhotoFilter[],
+          buildingsWithPublicPhotos,
+          parseLocation
+        );
 
         setBuildings(mapped);
-      } catch (err) {
+      } catch (_err) {
 } finally {
         setLoading(false);
       }
@@ -116,7 +128,7 @@ export function NoPhotosMapZone() {
     };
   }, [buildings]);
 
-  const handleMapClick = (event: any) => {
+  const handleMapClick = (event: MapLayerMouseEvent) => {
     const feature = event.features?.[0];
     if (feature) {
       const { id, slug } = feature.properties;

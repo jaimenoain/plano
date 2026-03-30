@@ -22,6 +22,20 @@ import { ManageHighlightsDialog } from "@/features/profile/components/ManageHigh
 import { FavoriteItem } from "@/features/profile/components/types";
 import { DisconnectArchitectDialog } from "@/features/profile/components/DisconnectArchitectDialog";
 import { resizeImage } from "@/lib/image-compression";
+import type { Json } from "@/integrations/supabase/types";
+
+type UserBuildingExportRow = {
+  rating: number | null;
+  content: string | null;
+  tags: string[] | null;
+  status: string | null;
+  visited_at: string | null;
+  created_at: string | null;
+  buildings:
+    | { name: string | null; year_completed: number | null }
+    | { name: string | null; year_completed: number | null }[]
+    | null;
+};
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth();
@@ -112,8 +126,10 @@ export default function Settings() {
           .select("favorites")
           .eq("id", user.id)
           .single();
-        if (data) {
-          setFavorites((data.favorites as any) || []);
+        if (data?.favorites != null && Array.isArray(data.favorites)) {
+          setFavorites(data.favorites as FavoriteItem[]);
+        } else {
+          setFavorites([]);
         }
       };
       fetchFavorites();
@@ -212,11 +228,11 @@ export default function Settings() {
       // Clear password field after update
       setNewPassword("");
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Could not update settings. Please try again.",
+        description: error instanceof Error ? error.message : "Could not update settings. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -246,7 +262,7 @@ export default function Settings() {
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
       setAvatarUrl(data.publicUrl);
 
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Upload failed",
@@ -267,11 +283,11 @@ export default function Settings() {
       try {
           const { error } = await supabase
             .from("profiles")
-            .update({ favorites: combined as any })
+            .update({ favorites: combined as unknown as Json })
             .eq("id", user.id);
           if (error) throw error;
           toast({ description: "Favorites updated successfully." });
-      } catch (error) {
+      } catch (_error) {
 toast({ variant: "destructive", description: "Failed to save favorites." });
       }
   };
@@ -286,11 +302,11 @@ toast({ variant: "destructive", description: "Failed to save favorites." });
       try {
           const { error } = await supabase
             .from("profiles")
-            .update({ favorites: combined as any })
+            .update({ favorites: combined as unknown as Json })
             .eq("id", user.id);
           if (error) throw error;
           toast({ description: "Highlights updated successfully." });
-      } catch (error) {
+      } catch (_error) {
 toast({ variant: "destructive", description: "Failed to save highlights." });
       }
   };
@@ -326,7 +342,7 @@ toast({ variant: "destructive", description: "Failed to save highlights." });
       }
 
       // Helper function to escape CSV fields
-      const escapeCsvCell = (cell: any): string => {
+      const escapeCsvCell = (cell: unknown): string => {
         if (cell === null || cell === undefined) return "";
         const str = String(cell);
         if (str.includes(",") || str.includes("\n") || str.includes('"')) {
@@ -343,13 +359,12 @@ toast({ variant: "destructive", description: "Failed to save highlights." });
 
       // Generate CSV
       const headers = ["Name", "Year", "Rating", "Review", "Tags", "Status", "Date"];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rows = data.map((item: any) => {
+      const rows = (data as unknown as UserBuildingExportRow[]).map((item) => {
+        const bRaw = item.buildings;
+        const b = Array.isArray(bRaw) ? bRaw[0] : bRaw;
         return [
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          escapeCsvCell((item.buildings as any)?.name),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          escapeCsvCell((item.buildings as any)?.year_completed),
+          escapeCsvCell(b?.name),
+          escapeCsvCell(b?.year_completed),
           escapeCsvCell(item.rating),
           escapeCsvCell(item.content),
           escapeCsvCell(item.tags ? item.tags.join("|") : ""),
@@ -373,7 +388,7 @@ toast({ variant: "destructive", description: "Failed to save highlights." });
         description: "Your data has been successfully downloaded.",
       });
 
-    } catch (error: any) {
+    } catch (_error: unknown) {
 toast({
         variant: "destructive",
         title: "Export failed",

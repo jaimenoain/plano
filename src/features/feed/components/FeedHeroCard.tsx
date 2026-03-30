@@ -131,7 +131,7 @@ export function FeedHeroCard({
         if (error) throw error;
         toast({ title: "Building hidden" });
         queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
         setIsSaving(false);
@@ -162,7 +162,7 @@ toast({ variant: "destructive", title: "Failed to update status" });
         toast({ title: "Saved to your list" });
         queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
         setShowRatingInput(true);
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
         setIsSaving(false);
@@ -193,7 +193,7 @@ toast({ variant: "destructive", title: "Failed to update status" });
         toast({ title: "Marked as visited" });
         queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
         setShowRatingInput(true);
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
         setIsSaving(false);
@@ -213,7 +213,7 @@ toast({ variant: "destructive", title: "Failed to update status" });
 
         if (error) throw error;
         queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch (err) {
+    } catch (_err) {
 toast({ variant: "destructive", title: "Failed to update rating" });
     }
   };

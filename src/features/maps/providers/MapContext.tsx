@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useURLMapState } from '../hooks/useURLMapState';
 import { useStableMapUpdate } from '../hooks/useStableMapUpdate';
 import { MapMode, MapFilters, MapState } from '@/types/plano-map';
+import type { MapState as URLMapState } from '@/features/maps/hooks/useURLMapState';
 import { Bounds } from '@/utils/map';
 
 interface Contact {
@@ -154,7 +155,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
               primeContactCache(f.contacts);
           }
       }
-      setMapURL(state as any);
+      setMapURL(state as Partial<URLMapState>);
     },
     [setMapURL, primeContactCache]
   );

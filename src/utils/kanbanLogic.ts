@@ -1,13 +1,14 @@
 import { FeedReview } from "@/types/feed";
-import { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { toast as toastFn } from "@/hooks/use-toast";
 
 interface HandleDragEndParams {
   activeId: string;
   overId: string | null;
   content: FeedReview[];
   setContent: (value: React.SetStateAction<FeedReview[]>) => void;
-  supabase: SupabaseClient<any, "public", any>;
-  toast: (props: any) => void;
+  supabase: SupabaseClient;
+  toast: typeof toastFn;
   setUpdatingItemId?: (id: string | null) => void;
 }
 
@@ -90,7 +91,7 @@ export const handleDragEndLogic = async ({
       description: "Review updated",
       duration: 2000,
     });
-  } catch (error) {
+  } catch (_error) {
 // Revert
     setContent(previousContent);
     toast({

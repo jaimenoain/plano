@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { MapPin, Layers } from "lucide-react";
-import Map, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl/maplibre";
+import Map, { Marker, NavigationControl, MapMouseEvent, type MarkerDragEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { extractLocationDetails } from "@/lib/location-utils";
@@ -96,7 +96,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
                      precision: locationPrecision
                  });
              }
-         } catch (err) {
+         } catch (_err) {
 }
       };
 
@@ -160,7 +160,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
           const details = extractLocationDetails(results[0]);
           updateLocation(lat, lng, results[0].formatted_address, details);
         }
-      } catch (error) {
+      } catch (_error) {
 }
     }
   };
@@ -177,13 +177,13 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
         const details = extractLocationDetails(results[0]);
         updateLocation(lat, lng, address, details);
       }
-    } catch (error) {
+    } catch (_error) {
 // Fallback with existing address or empty
        updateLocation(lat, lng, selectedAddress, { city: null, country: null });
     }
   };
 
-  const handleMarkerDragEnd = async (event: any) => {
+  const handleMarkerDragEnd = async (event: MarkerDragEvent) => {
       const { lat, lng } = event.lngLat;
       setMarkerPosition({ lat, lng });
 
@@ -194,7 +194,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
             const details = extractLocationDetails(results[0]);
             updateLocation(lat, lng, address, details);
         }
-      } catch (error) {
+      } catch (_error) {
 updateLocation(lat, lng, selectedAddress, { city: null, country: null });
       }
   };

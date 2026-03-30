@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from "@/integrations/supabase/client";
-import { TransportMode, Itinerary, CollectionItemWithBuilding, ItineraryStop, CollectionMarker } from '@/features/collections/types';
+import { TransportMode, Itinerary, ItineraryDay, CollectionItemWithBuilding, ItineraryStop, CollectionMarker } from '@/features/collections/types';
 
 // Define ItineraryBuilding interface
 export interface ItineraryBuilding {
@@ -28,7 +28,7 @@ export interface DaySchedule {
   description?: string;
   stops: ItineraryStop[];
   defaultTransportMode: TransportMode;
-  routeGeometry?: any;
+  routeGeometry?: unknown;
   isFallback?: boolean;
   distance?: number; // meters
 }
@@ -47,7 +47,7 @@ interface ItineraryState {
   reorderStops: (dayIndex: number, newStopOrder: ItineraryStop[]) => void;
   moveStopToDay: (stopId: string, fromDayIndex: number, toDayIndex: number, newIndex: number) => void;
   setTransportMode: (mode: TransportMode) => void;
-  updateRouteGeometry: (dayIndex: number, geometry: any) => void;
+  updateRouteGeometry: (dayIndex: number, geometry: unknown) => void;
   setDaysCount: (count: number) => void;
   calculateRouteForDay: (dayIndex: number) => Promise<void>;
   updateDayContext: (dayIndex: number, context: { title?: string; description?: string }) => void;
@@ -73,17 +73,12 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
     const buildingRecord: Record<string, ItineraryBuilding> = {};
     availableBuildings.forEach(item => {
       if (item.building) {
-        // Since CollectionItemWithBuilding['building'] doesn't explicitly list 'address' in the type definition file I read,
-        // but the DB has it, we'll try to access it if it exists or default to null.
-        // We cast to any to avoid TS errors if the type definition is incomplete,
-        // assuming the runtime object might have it.
-        const b = item.building as any;
         buildingRecord[item.building.id] = {
           id: item.building.id,
           name: item.building.name,
           location_lat: item.building.location_lat,
           location_lng: item.building.location_lng,
-          address: b.address || null,
+          address: item.building.address ?? null,
           hero_image_url: item.building.hero_image_url,
           city: item.building.city,
           country: item.building.country,
@@ -107,7 +102,9 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
     const days: DaySchedule[] = [];
     // Initialize days array based on itinerary.days count
     for (let i = 1; i <= itinerary.days; i++) {
-        const route = itinerary.routes.find(r => r.dayNumber === i) as any;
+        const route = itinerary.routes.find(r => r.dayNumber === i) as
+          | (ItineraryDay & { buildingIds?: string[] })
+          | undefined;
 
         let stops: ItineraryStop[] = [];
         if (route?.stops) {

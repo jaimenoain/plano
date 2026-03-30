@@ -55,6 +55,28 @@ interface Contributor {
   };
 }
 
+type UserFolderLinkRow = {
+  folder_id: string;
+  user_folders: { id: string; name: string } | { id: string; name: string }[] | null;
+};
+
+type ExportBuildingArchitect = { architects: { name: string | null } | null };
+type ExportBuilding = {
+  name?: string | null;
+  address?: string | null;
+  city?: string | null;
+  country?: string | null;
+  year_completed?: number | null;
+  location?: unknown;
+  building_architects?: ExportBuildingArchitect[] | null;
+} | null;
+
+type CollectionItemExportRow = {
+  note: string | null;
+  custom_category_id: string | null;
+  buildings: ExportBuilding | ExportBuilding[];
+};
+
 const METHOD_DESCRIPTIONS = {
   uniform: "All pins appear identical, regardless of status or rating.",
   default: "Pins are colored based on your personal status (Visited, Pending, or Unvisited).",
@@ -104,12 +126,14 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
       .eq("collection_id", collection.id);
 
     if (!error && data) {
-      const mapped = data
-        .filter((item: any) => item.user_folders)
-        .map((item: any) => ({
-          id: item.user_folders.id,
-          name: item.user_folders.name
-        }));
+      const rows = data as unknown as UserFolderLinkRow[];
+      const mapped = rows
+        .map((item) => {
+          const uf = item.user_folders;
+          const folder = Array.isArray(uf) ? uf[0] : uf;
+          return folder ? { id: folder.id, name: folder.name } : null;
+        })
+        .filter((x): x is { id: string; name: string } => x !== null);
       setCollectionFolders(mapped);
     }
   };
@@ -138,8 +162,19 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
       .select("user_id, user:profiles(id, username, avatar_url)")
       .eq("collection_id", collection.id);
 
-    if (!error) {
-      setContributors(data as any[]);
+    if (!error && data) {
+      const rows = data as unknown as {
+        user_id: string;
+        user: Contributor["user"] | Contributor["user"][];
+      }[];
+      setContributors(
+        rows
+          .map((row) => {
+            const u = Array.isArray(row.user) ? row.user[0] : row.user;
+            return u ? { user_id: row.user_id, user: u } : null;
+          })
+          .filter((c): c is Contributor => c !== null)
+      );
     }
     setLoadingContributors(false);
   };
@@ -324,13 +359,15 @@ toast.error("Failed to add contributor");
 
       // Generate CSV
       const headers = ['Name', 'Address', 'City', 'Country', 'Year', 'Latitude', 'Longitude', 'Architects', 'Note', 'Category'];
-      const rows = data.map((item: any) => {
-        const building = item.buildings;
+      const exportRows = data as unknown as CollectionItemExportRow[];
+      const rows = exportRows.map((item) => {
+        const bRaw = item.buildings;
+        const building = Array.isArray(bRaw) ? bRaw[0] : bRaw;
         const location = parseLocation(building?.location);
 
         // Handle architects
         const architects = building?.building_architects
-          ?.map((ba: any) => ba.architects?.name)
+          ?.map((ba) => ba.architects?.name)
           .filter(Boolean)
           .join('; ');
 
@@ -338,7 +375,7 @@ toast.error("Failed to add contributor");
         const category = collection.custom_categories?.find(c => c.id === item.custom_category_id)?.label || '';
 
         // Escape CSV fields
-        const escape = (val: any) => {
+        const escape = (val: unknown) => {
           if (val === null || val === undefined) return '';
           const str = String(val);
           if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -372,7 +409,7 @@ toast.error("Failed to add contributor");
       document.body.removeChild(link);
 
       toast.success("Export successful");
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to export data");
     } finally {
       setDownloading(false);
@@ -545,7 +582,17 @@ toast.error("Failed to export data");
                 <Label>Categorization Method</Label>
                 <RadioGroup
                     value={formData.categorization_method}
-                    onValueChange={(val: any) => setFormData({...formData, categorization_method: val})}
+                    onValueChange={(val: string) =>
+                      setFormData({
+                        ...formData,
+                        categorization_method: val as
+                          | "default"
+                          | "custom"
+                          | "status"
+                          | "rating_member"
+                          | "uniform",
+                      })
+                    }
                     className="space-y-2"
                 >
                     <div className="flex items-center space-x-2">

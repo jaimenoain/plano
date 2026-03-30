@@ -27,7 +27,7 @@ interface CollectionBuildingCardProps {
   onRemove?: () => void;
   // Itinerary specific props
   isDraggable?: boolean;
-  dragHandleProps?: any;
+  dragHandleProps?: Record<string, unknown>;
   badgeIndex?: number;
 }
 

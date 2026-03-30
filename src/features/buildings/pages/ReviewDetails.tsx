@@ -152,14 +152,22 @@ export default function ReviewDetails() {
             const rawBuilding = Array.isArray(reviewData.building) ? reviewData.building[0] : reviewData.building;
             const formattedBuilding = {
                 ...rawBuilding,
-                architects: rawBuilding.architects?.map((a: any) => a.architect) || []
+                architects:
+                    (
+                        rawBuilding.architects as unknown as
+                            | { architect: { id: string; name: string } }[]
+                            | undefined
+                    )?.map((a) => a.architect) || []
             };
 
-            const images = (reviewData.images || []).map((img: any) => ({
-                id: img.id,
-                url: getBuildingImageUrl(img.storage_path),
-                is_generated: img.is_generated
-            })).filter((img: any) => img.url);
+            const images: { id: string; url: string; is_generated?: boolean }[] = [];
+            for (const img of reviewData.images || []) {
+                const row = img as { id: string; storage_path: string; is_generated?: boolean };
+                const url = getBuildingImageUrl(row.storage_path);
+                if (url) {
+                    images.push({ id: row.id, url, is_generated: row.is_generated });
+                }
+            }
 
             setReview({
                 id: reviewData.id,
@@ -197,7 +205,7 @@ export default function ReviewDetails() {
                     followingIds = follows?.map(f => f.following_id) || [];
                 }
 
-                let relatedData: any[] = [];
+                let relatedData: { id: string; rating: number | null; user: unknown }[] = [];
 
                 // Try to find friends first
                 if (followingIds.length > 0) {
@@ -247,9 +255,9 @@ export default function ReviewDetails() {
                         user: Array.isArray(r.user) ? r.user[0] : r.user
                     }));
 
-                    mapped.sort((a: any, b: any) => {
-                        const aHasAvatar = !!a.user.avatar_url;
-                        const bHasAvatar = !!b.user.avatar_url;
+                    mapped.sort((a: { user: { avatar_url?: string | null } }, b: { user: { avatar_url?: string | null } }) => {
+                        const aHasAvatar = !!a.user?.avatar_url;
+                        const bHasAvatar = !!b.user?.avatar_url;
                         if (aHasAvatar === bHasAvatar) return 0;
                         return bHasAvatar ? 1 : -1;
                     });
@@ -279,12 +287,12 @@ export default function ReviewDetails() {
                     .in("comment_id", commentIds);
 
                 formattedComments = commentsData.map(c => {
-                    const relevantLikes = likesData?.filter((l: any) => l.comment_id === c.id) || [];
+                    const relevantLikes = likesData?.filter((l: { comment_id: string; user_id: string }) => l.comment_id === c.id) || [];
                     return {
                         ...c,
                         user: Array.isArray(c.user) ? c.user[0] : c.user,
                         likes_count: relevantLikes.length,
-                        is_liked: user ? relevantLikes.some((l: any) => l.user_id === user.id) : false
+                        is_liked: user ? relevantLikes.some((l: { user_id: string }) => l.user_id === user.id) : false
                     };
                 });
             }
@@ -305,17 +313,17 @@ export default function ReviewDetails() {
                     .in("link_id", linkIds);
 
                 formattedLinks = linksData.map(l => {
-                    const relevant = allLinkLikes?.filter((x: any) => x.link_id === l.id) || [];
+                    const relevant = allLinkLikes?.filter((x: { link_id: string; user_id: string }) => x.link_id === l.id) || [];
                     return {
                         ...l,
                         likes_count: relevant.length,
-                        is_liked: user ? relevant.some((x: any) => x.user_id === user.id) : false
+                        is_liked: user ? relevant.some((x: { user_id: string }) => x.user_id === user.id) : false
                     };
                 });
             }
             setLinks(formattedLinks);
 
-        } catch (e) {
+        } catch (_e) {
 setNotFound(true);
         } finally {
             setLoading(false);
@@ -364,7 +372,7 @@ setNotFound(true);
       if (data) {
          setLikers(data.map(item => ({ user_id: item.user_id, user: Array.isArray(item.user) ? item.user[0] : item.user })));
       }
-    } catch (error) {
+    } catch (_error) {
 // Revert on error would go here
     }
   };
@@ -389,7 +397,7 @@ setNotFound(true);
             const { error } = await supabase.from("link_likes").insert({ link_id: linkId, user_id: user.id });
             if (error) throw error;
         }
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Error", description: "Failed to update like." });
         // Revert optimistic update
         setLinks(prev => prev.map(l => l.id === linkId ? {
@@ -416,7 +424,7 @@ toast({ variant: "destructive", title: "Error", description: "Failed to update l
         } else {
             await supabase.from("comment_likes").insert({ comment_id: commentId, user_id: user.id });
         }
-    } catch (error) {
+    } catch (_error) {
 }
   };
 
@@ -451,12 +459,12 @@ toast({ variant: "destructive", title: "Error", description: "Failed to update l
             .in("comment_id", commentIds);
 
           const formattedComments = commentsData.map(c => {
-            const relevantLikes = likesData?.filter((l: any) => l.comment_id === c.id) || [];
+            const relevantLikes = likesData?.filter((l: { comment_id: string; user_id: string }) => l.comment_id === c.id) || [];
             return {
                 ...c,
                 user: Array.isArray(c.user) ? c.user[0] : c.user,
                 likes_count: relevantLikes.length,
-                is_liked: user ? relevantLikes.some((l: any) => l.user_id === user.id) : false
+                is_liked: user ? relevantLikes.some((l: { user_id: string }) => l.user_id === user.id) : false
             };
           });
           setComments(formattedComments);
@@ -464,8 +472,8 @@ toast({ variant: "destructive", title: "Error", description: "Failed to update l
       }
 
       toast({ title: "Comment posted" });
-    } catch (error: any) {
-toast({ variant: "destructive", title: "Error", description: error.message || "Could not post comment." });
+    } catch (error: unknown) {
+toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Could not post comment." });
     } finally {
       setSubmitting(false);
     }
@@ -478,8 +486,8 @@ toast({ variant: "destructive", title: "Error", description: error.message || "C
         setComments(prev => prev.filter(c => c.id !== commentId));
         setReview(prev => prev ? ({ ...prev, comments_count: prev.comments_count - 1 }) : null);
         toast({ title: "Comment deleted" });
-    } catch (error: any) {
-toast({ variant: "destructive", title: "Error", description: error.message || "Could not delete comment." });
+    } catch (error: unknown) {
+toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Could not delete comment." });
     }
   };
 
@@ -491,8 +499,8 @@ toast({ variant: "destructive", title: "Error", description: error.message || "C
         if (error) throw error;
         toast({ title: "Log deleted" });
         navigate("/profile"); 
-    } catch (error: any) {
-toast({ variant: "destructive", title: "Error", description: error.message || "Could not delete log." });
+    } catch (error: unknown) {
+toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Could not delete log." });
     }
   };
 

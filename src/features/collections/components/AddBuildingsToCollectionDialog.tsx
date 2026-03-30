@@ -85,7 +85,7 @@ setHasError(true);
         await importLibrary("geocoding");
 
         setScriptLoaded(true);
-      } catch (error) {
+      } catch (_error) {
 setHasError(true);
       }
     };
@@ -154,7 +154,7 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
       toast.success("Marker added to collection");
       setValue("", false); // Clear input after successful add
       queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to add marker");
     }
   };

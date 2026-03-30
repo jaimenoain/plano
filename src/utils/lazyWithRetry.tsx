@@ -6,18 +6,19 @@ import { lazy, ComponentType } from "react";
  *
  * It uses sessionStorage to prevent infinite reload loops if the error persists.
  */
-export const lazyWithRetry = <T extends ComponentType<any>>(
+export const lazyWithRetry = <T extends ComponentType<unknown>>(
   componentImport: () => Promise<{ default: T }>
 ) =>
   lazy(async () => {
     try {
       return await componentImport();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if the error is related to dynamic import failure
+      const err = error instanceof Error ? error : new Error(String(error));
       const isChunkLoadError =
-        error.name === 'ChunkLoadError' ||
-        error.message?.includes('dynamically imported module') ||
-        error.message?.includes('error loading dynamically imported module');
+        err.name === 'ChunkLoadError' ||
+        err.message?.includes('dynamically imported module') ||
+        err.message?.includes('error loading dynamically imported module');
 
       if (isChunkLoadError) {
         const storageKey = 'last-force-refresh-timestamp';

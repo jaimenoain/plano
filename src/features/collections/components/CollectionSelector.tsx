@@ -15,6 +15,8 @@ interface Collection {
   slug: string;
 }
 
+type SharedCollectionRow = { collection: Collection | Collection[] | null };
+
 interface CollectionSelectorProps {
   userId: string;
   selectedCollectionIds: string[];
@@ -56,16 +58,20 @@ export function CollectionSelector({ userId, selectedCollectionIds, onChange, cl
       if (shared.error) throw shared.error;
 
       const ownedCollections = (owned.data || []) as Collection[];
-      const sharedCollections = (shared.data || [])
-        .map((item: any) => item.collection)
-        .filter(Boolean) as Collection[];
+      const sharedRows = (shared.data || []) as unknown as SharedCollectionRow[];
+      const sharedCollections = sharedRows
+        .map((item) => {
+          const c = item.collection;
+          return Array.isArray(c) ? c[0] : c;
+        })
+        .filter((c): c is Collection => Boolean(c));
 
       // Merge and remove duplicates by ID
       const allCollections = [...ownedCollections, ...sharedCollections];
       const uniqueCollections = Array.from(new Map(allCollections.map(c => [c.id, c])).values());
 
       setCollections(uniqueCollections);
-    } catch (error) {
+    } catch (_error) {
 } finally {
       setLoading(false);
     }
@@ -106,7 +112,7 @@ export function CollectionSelector({ userId, selectedCollectionIds, onChange, cl
       setNewCollectionName("");
       toast.success("Collection created");
 
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to create collection");
     } finally {
       setCreating(false);

@@ -467,7 +467,6 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       }
     };
     hydrateMetadata();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount to hydrate if initialized from URL
 
   // Default to London or URL params
@@ -520,7 +519,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
      if (hasActiveFilters) {
          try {
              sessionStorage.setItem('plano_map_interacted', 'true');
-         } catch (e) {
+         } catch (_e) {
              // Ignore
          }
      }

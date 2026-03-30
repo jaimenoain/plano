@@ -79,7 +79,7 @@ export function ClaimProfileDialog({
             form.reset();
         }, 300);
       }, 2000);
-    } catch (error) {
+    } catch (_error) {
 form.setError("professional_email", {
         type: "manual",
         message: "Failed to submit claim. Please try again.",

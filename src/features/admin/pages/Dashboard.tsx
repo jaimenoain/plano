@@ -20,7 +20,7 @@ export default function AdminDashboard() {
       try {
         const data = await fetchAdminDashboardStats();
         setStats(data);
-      } catch (error) {
+      } catch (_error) {
 } finally {
         setLoading(false);
       }

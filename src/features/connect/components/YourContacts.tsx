@@ -42,12 +42,12 @@ export function YourContacts() {
     try {
       const { error } = await supabase
         .from("follows")
-        .update({ is_close_friend: !currentStatus } as any)
+        .update({ is_close_friend: !currentStatus })
         .eq("follower_id", user.id)
         .eq("following_id", targetId);
 
       if (error) throw error;
-    } catch (error) {
+    } catch (_error) {
 // Revert on error
       setFollowing((prev) => {
         const updated = prev.map((u) =>
@@ -69,14 +69,16 @@ export function YourContacts() {
           .select("following_id, is_close_friend")
           .eq("follower_id", user.id);
 
-        // Cast to any because is_close_friend is not yet in the types
-        const refs = followingRefs as any[];
+        const refs = (followingRefs ?? []) as {
+          following_id: string;
+          is_close_friend: boolean | null;
+        }[];
         const followingMap = new Map<string, boolean>();
-        refs?.forEach((r) => {
-          followingMap.set(r.following_id, r.is_close_friend);
+        refs.forEach((r) => {
+          followingMap.set(r.following_id, Boolean(r.is_close_friend));
         });
 
-        const followingIds = refs?.map((r) => r.following_id) || [];
+        const followingIds = refs.map((r) => r.following_id);
 
         if (followingIds.length > 0) {
           const { data: followingProfiles } = await supabase
@@ -113,7 +115,7 @@ export function YourContacts() {
             setFollowers([]);
         }
 
-      } catch (error) {
+      } catch (_error) {
 } finally {
         setLoading(false);
       }

@@ -137,7 +137,7 @@ export default function WriteReview() {
 
         // 2. Fetch Existing Review/Status & Collections in Parallel
         if (user) {
-          const tasks: Promise<any>[] = [];
+          const tasks: Promise<void>[] = [];
 
           // Task A: Fetch collections
           tasks.push((async () => {
@@ -202,12 +202,14 @@ export default function WriteReview() {
                 // Process Images (Nested)
                 const remoteImages = userBuilding.review_images;
                 if (remoteImages) {
-                  const loadedImages: ReviewImage[] = remoteImages.map((img: any) => ({
+                  const loadedImages: ReviewImage[] = remoteImages.map(
+                    (img: { id: string; storage_path: string; is_generated?: boolean }) => ({
                     id: img.id,
                     preview: getBuildingImageUrl(img.storage_path) || "",
                     storage_path: img.storage_path,
                     is_generated: img.is_generated
-                  }));
+                  })
+                  );
                   setImages(loadedImages);
                 }
               }
@@ -215,7 +217,7 @@ export default function WriteReview() {
 
           await Promise.all(tasks);
         }
-      } catch (error) {
+      } catch (_error) {
 toast({ variant: "destructive", title: "Error loading data" });
       } finally {
         setLoading(false);
@@ -245,7 +247,7 @@ toast({ variant: "destructive", title: "Error loading data" });
           preview: previewUrl,
           is_generated: false
         });
-      } catch (error) {
+      } catch (_error) {
 toast({
           variant: "destructive",
           title: "Error processing image",
@@ -476,7 +478,7 @@ toast({
       if (data?.title && !newLinkTitle.trim()) {
         setNewLinkTitle(data.title);
       }
-    } catch (error) {
+    } catch (_error) {
 } finally {
       setIsFetchingTitle(false);
     }
@@ -558,6 +560,7 @@ toast({
       if (error) throw error;
 
       toast({ title: "Review deleted" });
+      if (!buildingId) return;
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {
@@ -678,7 +681,7 @@ toast({
         if (pathsToDelete.length > 0) {
           try {
             await deleteFiles(pathsToDelete);
-          } catch (error) {
+          } catch (_error) {
 }
         }
       }
@@ -687,7 +690,7 @@ toast({
       if (deletedVideoPath) {
         try {
           await deleteFiles([deletedVideoPath]);
-        } catch (error) {
+        } catch (_error) {
 }
       }
 

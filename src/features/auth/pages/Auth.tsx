@@ -74,7 +74,7 @@ export default function Auth() {
             setRelatedProfiles(profiles);
           }
         }
-      } catch (error) {
+      } catch (_error) {
 }
     }
     loadInviterData();

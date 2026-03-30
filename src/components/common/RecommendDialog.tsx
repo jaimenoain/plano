@@ -66,7 +66,7 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
         setUserRating(null);
         setUserStatus(null);
       }
-    } catch (error) {
+    } catch (_error) {
 }
   };
 
@@ -106,7 +106,7 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
         } else {
             toast({ title: "Rating saved" });
         }
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Failed to save rating" });
     } finally {
         setRatingLoading(false);
@@ -125,7 +125,7 @@ toast({ variant: "destructive", title: "Failed to save rating" });
 
         await navigator.clipboard.writeText(textToShare);
         toast({ title: "Link copied to clipboard" });
-    } catch (e) {
+    } catch (_e) {
 toast({ variant: "destructive", title: "Failed to copy link" });
     }
   };
@@ -171,8 +171,8 @@ toast({ variant: "destructive", title: "Failed to copy link" });
         toast({ title: actionText, description: `Sent to ${selectedUsers.length} friend${selectedUsers.length > 1 ? 's' : ''}.` });
         if (setOpen) setOpen(false);
         setSelectedUsers([]);
-    } catch (error: any) {
-toast({ variant: "destructive", title: "Error", description: error.message || "Failed to send." });
+    } catch (error: unknown) {
+toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Failed to send." });
     } finally {
         setLoading(false);
     }

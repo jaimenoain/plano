@@ -22,7 +22,7 @@ export function SessionDiagnosticZone() {
       ]);
       setLogs(logsData);
       setSessions(sessionsData);
-    } catch (error) {
+    } catch (_error) {
 } finally {
       setLoading(false);
     }
@@ -47,9 +47,10 @@ export function SessionDiagnosticZone() {
 
       setTestResult({ status: 'success', message: 'All systems operational. Test log sent.' });
       loadData(); // Reload to show the new log
-    } catch (e: any) {
-      setTestResult({ status: 'failure', message: e.message || 'Unknown error' });
-      await logDiagnosticError('Diagnostic Test Failure', e.message || 'Unknown error');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      setTestResult({ status: 'failure', message: msg });
+      await logDiagnosticError('Diagnostic Test Failure', msg);
     }
   };
 

@@ -7,6 +7,14 @@ import { Link } from "react-router-dom";
 import { MutualFacepile } from "@/features/connect/components/MutualFacepile";
 import { X } from "lucide-react";
 
+type MutualFollowRow = {
+  following_id: string;
+  follower:
+    | { id: string; username: string | null; avatar_url: string | null }
+    | { id: string; username: string | null; avatar_url: string | null }[]
+    | null;
+};
+
 type PeopleYouMayKnowSuggestion = {
   id: string;
   username: string | null;
@@ -55,16 +63,15 @@ export function PeopleYouMayKnow() {
         .in('following_id', suggestionIds)
         .in('follower_id', myFollowingIds);
 
+      const mutualRows = (mutualsData ?? []) as unknown as MutualFollowRow[];
       return data.map((s: { id: string }) => {
-        const mutuals = mutualsData
-          ?.filter(m => m.following_id === s.id)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((m: any) => m.follower)
-          .filter(Boolean) as {
-            id: string;
-            username: string | null;
-            avatar_url: string | null;
-          }[] || [];
+        const mutuals = mutualRows
+            .filter((m) => m.following_id === s.id)
+            .map((m) => {
+              const f = m.follower;
+              return Array.isArray(f) ? f[0] : f;
+            })
+            .filter((f): f is NonNullable<typeof f> => f != null);
 
         return { ...s, mutual_follows: mutuals };
       });
@@ -76,7 +83,7 @@ export function PeopleYouMayKnow() {
     mutationFn: async (suggestedId: string) => {
         if (!user) return;
         const { error } = await supabase
-            .from("suggested_profile_hides" as any)
+            .from("suggested_profile_hides")
             .insert({
                 user_id: user.id,
                 suggested_user_id: suggestedId
@@ -122,16 +129,16 @@ export function PeopleYouMayKnow() {
                     </div>
                   ) : (
                     <div className="h-5 flex items-center justify-center w-full">
-                      {person.mutual_count > 0 && (
+                      {(person.mutual_count ?? 0) > 0 && (
                         <span className="truncate">
-                          {person.mutual_count} mutual
+                          {person.mutual_count ?? 0} mutual
                         </span>
                       )}
                     </div>
                   )}
-                  {person.group_mutual_count > 0 && (
+                  {(person.group_mutual_count ?? 0) > 0 && (
                      <span className="truncate w-full text-[10px] text-muted-foreground/80">
-                      {person.group_mutual_count} group{person.group_mutual_count !== 1 ? 's' : ''} common
+                      {person.group_mutual_count ?? 0} group{(person.group_mutual_count ?? 0) !== 1 ? 's' : ''} common
                     </span>
                   )}
                 </div>

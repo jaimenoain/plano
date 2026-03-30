@@ -43,7 +43,7 @@ export function ArchitectPortfolio({ architectId, isOwnProfile }: ArchitectPortf
             const mappedBuilding: PortfolioBuildingDisplay = {
               id: building.id,
               name: building.name,
-              main_image_url,
+              main_image_url: main_image_url ?? null,
               year_completed: building.year_completed,
               architects: null,
             };

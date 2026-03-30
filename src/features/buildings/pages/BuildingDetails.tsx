@@ -61,7 +61,7 @@ interface BuildingDetails {
   alt_name?: string | null;
   aliases?: string[] | null;
   tier_rank?: string | null;
-  location: any; // PostGIS point handling usually requires parsing
+  location: unknown; // PostGIS point / GeoJSON — parsed via parseLocation
   location_precision?: 'exact' | 'approximate';
   address: string;
   city: string | null;
@@ -112,6 +112,27 @@ interface FeedEntry {
     storage_path: string;
     created_at?: string;
   }[];
+}
+
+/** Raw row from get_building_reviews RPC before mapping to FeedEntry */
+interface RpcBuildingReviewRow {
+  id: string;
+  user_id: string;
+  created_at: string;
+  user_data: FeedEntry["user"] | null;
+  images?: Array<{
+    id: string;
+    storage_path: string;
+    likes_count?: number;
+    created_at?: string;
+    is_generated?: boolean;
+    is_official?: boolean;
+  }>;
+  video_url?: string | null;
+  content?: string | null;
+  rating?: number | null;
+  status?: FeedEntry["status"];
+  tags?: string[] | null;
 }
 
 interface DisplayImage {
@@ -267,7 +288,7 @@ export default function BuildingDetails() {
 
       const sanitizedBuilding = {
         ...data,
-        architects: (data as any).architects || [],
+        architects: (data as { architects?: Architect[] }).architects || [],
       };
 
       setBuilding(sanitizedBuilding as unknown as BuildingDetails);
@@ -280,7 +301,7 @@ export default function BuildingDetails() {
             .single();
 
           if (heroImageData) {
-             setHeroImageUrl(getBuildingImageUrl(heroImageData.storage_path));
+             setHeroImageUrl(getBuildingImageUrl(heroImageData.storage_path) ?? null);
           }
       }
 
@@ -288,12 +309,12 @@ export default function BuildingDetails() {
           setIsCreator(true);
       }
 
-      const tasks: Promise<any>[] = [];
+      const tasks: Promise<void>[] = [];
 
       // Check if ANY architect of this building has been verified globally
       if (sanitizedBuilding.architects && sanitizedBuilding.architects.length > 0) {
           tasks.push((async () => {
-              const architectIds = sanitizedBuilding.architects.map((a: any) => a.id);
+              const architectIds = sanitizedBuilding.architects.map((a: Architect) => a.id);
               const { data: verifiedProfiles } = await supabase
                   .from('profiles')
                   .select('id')
@@ -392,17 +413,17 @@ export default function BuildingDetails() {
         if (entriesError) {
 // toast({ variant: "destructive", title: "Could not load activity feed" });
         } else if (entriesData) {
+            const rawEntries = entriesData as RpcBuildingReviewRow[];
 // Determine Social Context
             if (followedIds.size > 0) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const friendEntry = entriesData.find((e: any) => followedIds.has(e.user_id));
+                const friendEntry = rawEntries.find((e) => followedIds.has(e.user_id));
                 if (friendEntry) {
                      setSocialContext("Saved by contacts");
                 }
             }
 
             // Extract images & video
-            entriesData.forEach((entry: any) => {
+            rawEntries.forEach((entry) => {
                 // Video
                 if (entry.video_url) {
                     // Attempt to find a poster from images or main building
@@ -424,7 +445,7 @@ export default function BuildingDetails() {
 
                 // Images
                 if (entry.images && entry.images.length > 0) {
-                    entry.images.forEach((img: any) => {
+                    entry.images.forEach((img) => {
                           const publicUrl = getBuildingImageUrl(img.storage_path);
                           if (publicUrl) {
                               communityImages.push({
@@ -449,17 +470,29 @@ export default function BuildingDetails() {
             });
 
             // Sanitize entries
-            const sanitizedEntries = entriesData.map((e: any) => ({
-                ...e,
+            const sanitizedEntries: FeedEntry[] = rawEntries.map((e) => ({
+                id: e.id,
+                user_id: e.user_id,
+                content: e.content ?? null,
+                rating: e.rating ?? null,
+                status: e.status ?? "visited",
+                tags: e.tags ?? null,
+                created_at: e.created_at,
                 user: {
-                    ...e.user_data,
-                    avatar_url: e.user_data?.avatar_url || null
+                    username: e.user_data?.username ?? null,
+                    avatar_url: e.user_data?.avatar_url ?? null,
+                    is_verified_architect: e.user_data?.is_verified_architect,
+                    is_architect_of_building: e.user_data?.is_architect_of_building,
                 },
-                images: e.images || []
+                images: (e.images || []).map((img) => ({
+                    id: img.id,
+                    storage_path: img.storage_path,
+                    created_at: img.created_at,
+                })),
             }));
 
             // Sort entries: Followed users first, then by date (recency)
-            sanitizedEntries.sort((a: FeedEntry, b: FeedEntry) => {
+            sanitizedEntries.sort((a, b) => {
                 const aIsFollowed = followedIds.has(a.user_id);
                 const bIsFollowed = followedIds.has(b.user_id);
 
@@ -496,7 +529,7 @@ export default function BuildingDetails() {
       })());
 
       await Promise.all(tasks);
-    } catch (error: any) {
+    } catch (_error: unknown) {
 toast({ variant: "destructive", title: "Error", description: "Building not found" });
     } finally {
       setLoading(false);
@@ -557,7 +590,7 @@ toast({ variant: "destructive", title: "Error", description: "Building not found
       } else {
         await supabase.from("link_likes").insert({ link_id: linkId, user_id: user.id });
       }
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", title: "Failed to like link" });
       // Revert
       setLikedLinkIds(likedLinkIds);
@@ -620,7 +653,7 @@ toast({ variant: "destructive", title: "Failed to like link" });
           queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
 
           toast({ title });
-      } catch (error) {
+      } catch (_error) {
 toast({ variant: "destructive", title: "Failed to save status" });
           fetchBuildingData(); // Revert
       }
@@ -657,7 +690,7 @@ toast({ variant: "destructive", title: "Failed to save status" });
            } else {
                toast({ title: "Rating saved" });
            }
-       } catch (error) {
+       } catch (_error) {
 toast({ variant: "destructive", title: "Failed to save rating" });
            fetchBuildingData();
        }
@@ -676,7 +709,7 @@ toast({ variant: "destructive", title: "Failed to save rating" });
             preview: previewUrl,
             is_generated: false
           }]);
-        } catch (error) {
+        } catch (_error) {
 toast({ variant: "destructive", title: "Error processing image" });
         }
       }
@@ -801,7 +834,7 @@ toast({ variant: "destructive", title: "Error processing image" });
           queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
           queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
           fetchBuildingData();
-      } catch (error: any) {
+      } catch (_error: unknown) {
 toast({ variant: "destructive", title: "Failed to save note" });
       } finally {
           setIsSavingNote(false);
@@ -841,7 +874,7 @@ toast({ variant: "destructive", title: "Failed to save note" });
           queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
 
           toast({ title: "Removed from list" });
-      } catch (error) {
+      } catch (_error) {
 toast({ variant: "destructive", title: "Failed to remove" });
       }
   };
@@ -867,8 +900,8 @@ toast({ variant: "destructive", title: "Failed to remove" });
 
         toast({ title: "Invites sent!", description: `Sent to ${selectedFriends.length} friend${selectedFriends.length > 1 ? 's' : ''}.` });
         setSelectedFriends([]);
-    } catch (error: any) {
-toast({ variant: "destructive", title: "Error", description: error.message || "Failed to send invites." });
+    } catch (error: unknown) {
+toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Failed to send invites." });
     } finally {
         setSendingInvites(false);
     }
@@ -895,7 +928,7 @@ toast({ variant: "destructive", title: "Error", description: error.message || "F
           toast({ title: "Building updated successfully" });
           setIsOfficialEditing(false);
           fetchBuildingData();
-      } catch (error) {
+      } catch (_error) {
 toast({ variant: "destructive", title: "Failed to update building" });
       } finally {
           setIsSavingOfficial(false);
@@ -921,7 +954,7 @@ toast({ variant: "destructive", title: "Failed to update building" });
           if (error) throw error;
 
           toast({ title: "Hero image updated" });
-      } catch (error) {
+      } catch (_error) {
 toast({ variant: "destructive", title: "Failed to set hero image" });
           // Revert is handled by fetchBuildingData refetch or just simple error message,
           // strict revert would require storing previous state but image transition covers visual glitch
@@ -948,7 +981,7 @@ toast({ variant: "destructive", title: "Failed to set hero image" });
           if (error) throw error;
 
           toast({ title: newStatus ? "Added to Official Lookbook" : "Removed from Official Lookbook" });
-      } catch (error) {
+      } catch (_error) {
 toast({ variant: "destructive", title: "Failed to update lookbook status" });
           // Revert
           setSelectedImage(prev => prev ? { ...prev, is_official: !newStatus } : null);
@@ -1355,8 +1388,8 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                             username: profile?.username || user?.email || "Me",
                                             avatar_url: profile?.avatar_url || null
                                         },
-                                        is_generated: img.is_generated,
-                                        is_official: img.is_official
+                                        is_generated: img.is_generated ?? undefined,
+                                        is_official: img.is_official ?? undefined
                                     };
 
                                     return (
@@ -1510,7 +1543,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                 )}
 
                                 {/* Collections Section */}
-                                {showCollections && (
+                                {showCollections && user && (
                                     <div className="pt-2 animate-in fade-in slide-in-from-top-1">
                                          <CollectionSelector
                                             userId={user.id}

@@ -15,6 +15,13 @@ import { Loader2, Check, X, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import type { Database, Json } from "@/integrations/supabase/types";
+
+type ArchitectVerificationNotifInsert =
+  Database["public"]["Tables"]["notifications"]["Insert"] & {
+    architect_id: string;
+    metadata: Json;
+  };
 
 interface Claim {
   id: string;
@@ -62,8 +69,8 @@ export default function ArchitectClaims() {
       // Transform data to match interface if needed (Supabase types might be loose)
       // The join syntax user:user_id(...) returns an object or array depending on relation.
       // Since it's Many-to-One (claim -> user), it should be an object.
-      setClaims((data as any[]) || []);
-    } catch (error) {
+      setClaims((data as Claim[] | null) ?? []);
+    } catch (_error) {
 toast.error("Failed to load claims");
     } finally {
       setLoading(false);
@@ -91,10 +98,10 @@ toast.error("Failed to load claims");
           type: "architect_verification",
           architect_id: claim.architect_id,
           metadata: { status: 'approved' }
-        } as any);
+        } satisfies ArchitectVerificationNotifInsert);
 
       if (notifError) throw notifError;
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to approve claim");
       return;
     }
@@ -124,11 +131,11 @@ toast.error("Failed to load claims");
           type: "architect_verification",
           architect_id: claim.architect_id,
           metadata: { status: 'rejected' }
-        } as any);
+        } satisfies ArchitectVerificationNotifInsert);
 
       if (rejectNotifError) throw rejectNotifError;
 
-      } catch (error) {
+      } catch (_error) {
 toast.error("Failed to deny claim");
       return;
     }

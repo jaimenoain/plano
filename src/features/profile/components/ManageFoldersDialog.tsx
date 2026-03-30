@@ -38,6 +38,10 @@ interface AvailableCollection {
   source: 'owned' | 'contributed' | 'favorite';
 }
 
+type CollectionListRow = { id: string; name: string; is_public: boolean };
+type FavoriteCollectionWrap = { collection: CollectionListRow | CollectionListRow[] | null };
+type FolderItemIdRow = { collection_id: string };
+
 export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, initialFolder }: ManageFoldersDialogProps) {
   const { toast } = useToast();
   const [view, setView] = useState<"list" | "create" | "edit" | "manage_items">("list");
@@ -84,8 +88,8 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
 
       if (error) throw error;
       // Cast the result to UserFolder[] because select("*") might not infer everything perfectly or types might be loose
-      setFolders((data as any[]) || []);
-    } catch (error) {
+      setFolders((data as UserFolder[] | null) ?? []);
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to load folders." });
     } finally {
       setLoading(false);
@@ -121,20 +125,19 @@ toast({ variant: "destructive", description: "Failed to load folders." });
       const collectionMap = new Map<string, AvailableCollection>();
 
       // Add owned
-      (ownedRes.data || []).forEach((c: any) => {
+      ((ownedRes.data ?? []) as CollectionListRow[]).forEach((c) => {
         collectionMap.set(c.id, { id: c.id, name: c.name, is_public: c.is_public, source: 'owned' });
       });
 
-      // Add contributed (if not already owned, though shouldn't happen)
-      (contributedRes.data || []).forEach((c: any) => {
+      ((contributedRes.data ?? []) as CollectionListRow[]).forEach((c) => {
         if (!collectionMap.has(c.id)) {
             collectionMap.set(c.id, { id: c.id, name: c.name, is_public: c.is_public, source: 'contributed' });
         }
       });
 
-      // Add favorites
-      (favoritesRes.data || []).forEach((item: any) => {
-         const c = item.collection;
+      ((favoritesRes.data ?? []) as unknown as FavoriteCollectionWrap[]).forEach((item) => {
+         const raw = item.collection;
+         const c = Array.isArray(raw) ? raw[0] : raw;
          if (c && !collectionMap.has(c.id)) {
              collectionMap.set(c.id, { id: c.id, name: c.name, is_public: c.is_public, source: 'favorite' });
          }
@@ -142,7 +145,7 @@ toast({ variant: "destructive", description: "Failed to load folders." });
 
       setAvailableCollections(Array.from(collectionMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
 
-    } catch (error) {
+    } catch (_error) {
 }
   };
 
@@ -156,9 +159,9 @@ toast({ variant: "destructive", description: "Failed to load folders." });
 
       if (error) throw error;
 
-      const ids = new Set((data || []).map((item: any) => item.collection_id));
+      const ids = new Set(((data ?? []) as FolderItemIdRow[]).map((item) => item.collection_id));
       setSelectedCollectionIds(ids);
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to load folder contents." });
     } finally {
       setItemsLoading(false);
@@ -194,7 +197,9 @@ toast({ variant: "destructive", description: "Failed to load folder contents." }
         .select("collection_id")
         .eq("folder_id", activeFolder.id);
 
-      const currentIds = new Set((currentItems || []).map((i: any) => i.collection_id));
+      const currentIds = new Set(
+        ((currentItems ?? []) as FolderItemIdRow[]).map((i) => i.collection_id)
+      );
       const targetIds = selectedCollectionIds;
 
       const toAdd = Array.from(targetIds).filter(id => !currentIds.has(id));
@@ -220,7 +225,7 @@ toast({ variant: "destructive", description: "Failed to load folder contents." }
       setView("list");
       fetchFolders(); // refresh counts
       onUpdate?.();
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to save changes." });
     } finally {
       setProcessing(false);
@@ -260,7 +265,7 @@ toast({ variant: "destructive", description: "Failed to save changes." });
       setView("list");
       fetchFolders();
       onUpdate?.();
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to create folder." });
     } finally {
       setProcessing(false);
@@ -284,7 +289,7 @@ toast({ variant: "destructive", description: "Failed to create folder." });
       setView("list");
       fetchFolders();
       onUpdate?.();
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to update folder." });
     } finally {
       setProcessing(false);
@@ -301,7 +306,7 @@ toast({ variant: "destructive", description: "Failed to update folder." });
       toast({ description: "Folder deleted." });
       fetchFolders();
       onUpdate?.();
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to delete folder." });
     } finally {
       setProcessing(false);

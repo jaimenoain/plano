@@ -16,7 +16,7 @@ interface BuildingDetails {
   alt_name?: string | null;
   aliases?: string[] | null;
   tier_rank?: string | null;
-  location: any; // PostGIS point handling usually requires parsing
+  location: unknown; // PostGIS / GeoJSON — parsed via parseLocation
   location_precision?: 'exact' | 'approximate';
   address: string;
   city: string | null;

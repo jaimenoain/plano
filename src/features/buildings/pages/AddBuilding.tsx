@@ -132,7 +132,7 @@ export default function AddBuilding() {
                 await importLibrary("places");
                 await importLibrary("geocoding");
                 setMapsLoaded(true);
-            } catch (e) {
+            } catch (_e) {
 }
         }
     };
@@ -198,7 +198,7 @@ return new Map();
             .catch((_error) => {
           void _error;
 });
-        } catch (e) {
+        } catch (_e) {
 }
       }
     }
@@ -312,7 +312,7 @@ return new Map();
         });
 
         setDuplicates(uniqueDuplicates);
-      } catch (error) {
+      } catch (_error) {
 } finally {
         setCheckingDuplicates(false);
       }
@@ -347,7 +347,7 @@ return new Map();
           const details = extractLocationDetails(results[0]);
           setExtractedLocation(details);
         }
-      } catch (error) {
+      } catch (_error) {
 toast.error("Location search failed. Please click on the map to set the location manually.");
       }
     }
@@ -364,7 +364,7 @@ toast.error("Location search failed. Please click on the map to set the location
         const details = extractLocationDetails(results[0]);
         setExtractedLocation(details);
       }
-    } catch (error) {
+    } catch (_error) {
 // We don't block the user if reverse geocoding fails, they just won't get an auto-filled address
       if (!selectedAddress) {
         toast.error("Could not fetch address details, but location is set.");

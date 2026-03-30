@@ -13,10 +13,11 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { 
+import {
   LogOut, Building2, Bookmark, Loader2,
   Map as MapIcon,
-  Search, X, LayoutGrid, Columns, List
+  Search, X, LayoutGrid, Columns, List,
+  type LucideIcon,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -131,7 +132,7 @@ export default function Profile() {
   const [collectionsRefreshKey, setCollectionsRefreshKey] = useState(0);
 
   // Collections Drag State
-  const [activeCollectionData, setActiveCollectionData] = useState<any>(null);
+  const [activeCollectionData, setActiveCollectionData] = useState<{ id: string; name: string } | null>(null);
 
   // Drag and Drop Sensors
   const sensors = useSensors(
@@ -196,7 +197,7 @@ export default function Profile() {
       } else {
         toast({ description: "Already in folder" });
       }
-    } catch (error) {
+    } catch (_error) {
 toast({ variant: "destructive", description: "Failed to add to folder" });
     }
   };
@@ -271,7 +272,12 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
       let uid: string | null = null;
 
       let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id");
-      let data: any = null;
+      let data: {
+        id: string;
+        username?: string | null;
+        favorites?: unknown;
+        [key: string]: unknown;
+      } | null = null;
 
       if (routeUsername) {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(routeUsername);
@@ -306,9 +312,9 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
       }
 
       if (data) {
-          setProfile(data);
+          setProfile(data as unknown as Profile);
           uid = data.id;
-          const favs = (data as any).favorites || [];
+          const favs = Array.isArray(data.favorites) ? data.favorites : [];
           setFavorites(favs);
       }
 
@@ -407,7 +413,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
         commentsResult.data?.forEach(c => commentsCount.set(c.interaction_id, (commentsCount.get(c.interaction_id) || 0) + 1));
 
         const userLikes = new Set(userLikesResult.data?.map(l => l.interaction_id));
-        const userLikedImages = new Set(imageLikesResult.data?.map((l: any) => l.image_id));
+        const userLikedImages = new Set(imageLikesResult.data?.map((l: { image_id: string }) => l.image_id));
 
         // Group images by review_id
         const imagesByReviewId = new Map();
@@ -424,10 +430,35 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
             imagesByReviewId.get(img.review_id).push(imageObj);
         });
 
-        const formattedContent: FeedReview[] = entriesData.map((item: any) => {
+        type ProfileFeedRow = {
+          id: string;
+          content: string | null;
+          rating: number | null;
+          created_at: string;
+          edited_at?: string | null;
+          status: "visited" | "pending";
+          building_id: string;
+          building?: {
+            id?: string;
+            name?: string | null;
+            address?: string | null;
+            city?: string | null;
+            country?: string | null;
+            year_completed?: number | null;
+            main_image_url?: string | null;
+            slug?: string | null;
+            short_id?: number | null;
+            architects?: { architect: { id: string; name: string } | null }[] | null;
+          } | null;
+        };
+
+        const formattedContent: FeedReview[] = (entriesData as ProfileFeedRow[]).map((item) => {
             const reviewLikes = likesCount.get(item.id) || 0;
             const itemImages = imagesByReviewId.get(item.id) || [];
-            const imageLikes = itemImages.reduce((sum: number, img: any) => sum + (img.likes_count || 0), 0);
+            const imageLikes = itemImages.reduce(
+              (sum: number, img: { likes_count?: number }) => sum + (img.likes_count || 0),
+              0
+            );
 
             return {
             id: item.id,
@@ -447,7 +478,8 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
                 main_image_url: item.building?.main_image_url || null,
                 slug: item.building?.slug || null,
                 short_id: item.building?.short_id || null,
-                architects: item.building?.architects?.map((a: any) => a.architect).filter(Boolean) || [],
+                architects:
+                  item.building?.architects?.flatMap((a) => (a.architect ? [a.architect] : [])) || [],
             },
             tags: [] as string[],
             likes_count: reviewLikes + imageLikes,
@@ -466,7 +498,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
             setContent(prev => [...prev, ...formattedContent]);
             setHasMore(formattedContent.length === ITEMS_PER_PAGE);
         }
-    } catch (error) {
+    } catch (_error) {
 } finally {
       setContentLoading(false);
       setIsFetchingMore(false);
@@ -556,7 +588,12 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
           .limit(5);
 
       if (data) {
-          const squadMembers = data.map((d: any) => d.following).filter(Boolean);
+          const squadMembers = data
+            .map((row) => {
+              const f = row.following;
+              return Array.isArray(f) ? f[0] : f;
+            })
+            .filter((p): p is Profile => p != null);
           setSquad(squadMembers);
       }
   }
@@ -652,7 +689,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
             toast({ description: "Status updated" });
         }
 
-    } catch (error) {
+    } catch (_error) {
 // Revert content
         setContent(previousContent);
         // Revert stats if needed
@@ -1122,7 +1159,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
   );
 }
 
-function EmptyState({ icon: Icon, label, description, action }: { icon: any, label: string, description?: string, action?: ReactNode }) {
+function EmptyState({ icon: Icon, label, description, action }: { icon: LucideIcon; label: string; description?: string; action?: ReactNode }) {
   return (
     <div className="py-16 text-center border-2 border-dashed border-border/50 rounded-xl mt-4 px-4">
       <div className="w-12 h-12 bg-secondary/30 rounded-full flex items-center justify-center mx-auto mb-3">

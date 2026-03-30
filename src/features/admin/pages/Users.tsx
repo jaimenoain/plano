@@ -76,7 +76,7 @@ export default function Users() {
       if (count) {
         setTotalPages(Math.ceil(count / ITEMS_PER_PAGE));
       }
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to load users");
     } finally {
       setLoading(false);
@@ -129,7 +129,7 @@ toast.error("Failed to load users");
         toast.success(newRole === 'suspended' ? "User suspended" : "User restored");
         setUsers(prev => prev.map(u => u.id === actionUser.user.id ? { ...u, role: newRole } : u));
       }
-    } catch (error) {
+    } catch (_error) {
 toast.error("Action failed");
     } finally {
       setActionUser(null);

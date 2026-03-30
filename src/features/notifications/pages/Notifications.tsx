@@ -37,6 +37,11 @@ interface Notification {
     };
   };
   metadata?: { status?: string };
+  recommendation?: {
+    id?: string;
+    status?: string | null;
+    building?: { name: string | null } | null;
+  } | null;
 }
 
 const NOTIFICATION_QUERY = `
@@ -102,8 +107,8 @@ export default function Notifications() {
       if (unreadResult.error) throw unreadResult.error;
       if (readResult.error) throw readResult.error;
 
-      const unreadNotifications = (unreadResult.data as any) || [];
-      const readNotifications = (readResult.data as any) || [];
+      const unreadNotifications = (unreadResult.data ?? []) as Notification[];
+      const readNotifications = (readResult.data ?? []) as Notification[];
 
       setNotifications([...unreadNotifications, ...readNotifications]);
       setHasMore(readNotifications.length === 20);
@@ -145,11 +150,11 @@ export default function Notifications() {
 
       if (error) throw error;
 
-      const moreNotifications = (data as any) || [];
+      const moreNotifications = (data ?? []) as Notification[];
       setNotifications(prev => [...prev, ...moreNotifications]);
       setHasMore(moreNotifications.length === 20);
 
-    } catch (error) {
+    } catch (_error) {
 } finally {
       setLoadingMore(false);
     }
@@ -184,7 +189,7 @@ export default function Notifications() {
 
   const getText = (n: Notification) => {
     const actorName = n.actor?.username || "Someone";
-    const buildingName = n.resource?.building?.name || (n as any).recommendation?.building?.name;
+    const buildingName = n.resource?.building?.name || n.recommendation?.building?.name;
 
     switch (n.type) {
       case 'architect_verification': {
@@ -202,7 +207,7 @@ export default function Notifications() {
       case 'visit_request':
         return <span><span className="font-semibold">@{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
       case 'recommendation':
-        if ((n as any).recommendation?.status === 'visit_with') {
+        if (n.recommendation?.status === 'visit_with') {
              return <span><span className="font-semibold">@{actorName}</span> wants to visit <span className="italic">{buildingName || "a building"}</span> with you</span>;
         }
         return <span><span className="font-semibold">{actorName}</span> recommended <span className="italic">{buildingName || "a building"}</span> for you</span>;

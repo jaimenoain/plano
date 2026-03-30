@@ -66,7 +66,7 @@ setHasError(true);
         await importLibrary("geocoding");
         
         setScriptLoaded(true);
-      } catch (error) {
+      } catch (_error) {
 setHasError(true);
       }
     };
@@ -174,7 +174,7 @@ function PlacesAutocomplete({
       const countryCode = countryComponent ? countryComponent.short_name : "";
 
       onLocationSelected(address, countryCode, placeName);
-    } catch (error) {
+    } catch (_error) {
 // Fallback: save text even if geocode fails
       onLocationSelected(address, "", placeName);
     }

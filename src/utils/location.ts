@@ -3,14 +3,15 @@ export interface Coordinates {
   lng: number;
 }
 
-export function parseLocation(location: any): Coordinates | null {
+export function parseLocation(location: unknown): Coordinates | null {
   if (!location) return null;
 
   // Case 1: GeoJSON Object { type: "Point", coordinates: [lng, lat] }
-  if (typeof location === 'object') {
-    if (location.coordinates && Array.isArray(location.coordinates) && location.coordinates.length >= 2) {
-      const lng = Number(location.coordinates[0]);
-      const lat = Number(location.coordinates[1]);
+  if (typeof location === "object" && location !== null) {
+    const geo = location as { coordinates?: unknown };
+    if (Array.isArray(geo.coordinates) && geo.coordinates.length >= 2) {
+      const lng = Number(geo.coordinates[0]);
+      const lat = Number(geo.coordinates[1]);
       if (!isNaN(lng) && !isNaN(lat)) {
         return { lng, lat };
       }
@@ -69,7 +70,7 @@ export function parseLocation(location: any): Coordinates | null {
             }
           }
         }
-      } catch (e) {
+      } catch (_e) {
         // Fallthrough if WKB parsing fails
 }
     }

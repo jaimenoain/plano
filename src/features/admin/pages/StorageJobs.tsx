@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { type VariantProps } from "class-variance-authority";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Trash2, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -42,7 +43,7 @@ export default function StorageJobs() {
 
       if (error) throw error;
       setJobs(data as unknown as DeletionJob[]);
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to load jobs");
     } finally {
       setLoading(false);
@@ -92,14 +93,16 @@ fetchJobs(); // Simple refresh on any change
       toast.success("Deletion job queued successfully");
       setUserIdInput("");
       fetchJobs();
-    } catch (error: any) {
-toast.error(`Failed to queue job: ${error.message}`);
+    } catch (error: unknown) {
+toast.error(`Failed to queue job: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
+  type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
+
+  const getStatusColor = (status: string): BadgeVariant => {
     switch (status) {
       case 'completed': return 'default'; // primary/black
       case 'processing': return 'secondary'; // gray/blueish
@@ -186,7 +189,7 @@ toast.error(`Failed to queue job: ${error.message}`);
                 jobs.map((job) => (
                   <TableRow key={job.id}>
                     <TableCell>
-                      <Badge variant={getStatusColor(job.status) as any}>
+                      <Badge variant={getStatusColor(job.status)}>
                         {job.status.toUpperCase()}
                       </Badge>
                     </TableCell>

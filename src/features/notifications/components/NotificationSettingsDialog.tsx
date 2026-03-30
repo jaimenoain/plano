@@ -62,7 +62,7 @@ export function NotificationSettingsDialog({ open, onOpenChange }: NotificationS
       // We only store disabled preferences as false.
       const prefs = (data.notification_preferences as Record<string, boolean>) || {};
       setPreferences(prefs);
-    } catch (error) {
+    } catch (_error) {
 toast({
         title: "Error",
         description: "Failed to load notification settings.",
@@ -103,7 +103,7 @@ toast({
         description: "Your notification preferences have been updated.",
       });
       onOpenChange(false);
-    } catch (error) {
+    } catch (_error) {
 toast({
         title: "Error",
         description: "Failed to save settings.",

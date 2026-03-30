@@ -22,6 +22,13 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
+interface AuditLogView {
+  old_data?: Record<string, unknown> | null;
+  new_data?: Record<string, unknown> | null;
+  table_name?: string;
+  operation?: string;
+}
+
 export default function BuildingAudit() {
   const { data: logs, isLoading, refetch } = useQuery({
     queryKey: ["building_audit_logs"],
@@ -54,16 +61,16 @@ export default function BuildingAudit() {
 
       toast.success("Change reverted successfully");
       refetch();
-    } catch (error) {
+    } catch (_error) {
 toast.error("Failed to revert change");
     } finally {
       setRevertingId(null);
     }
   };
 
-  const renderDiff = (log: any) => {
-      const oldD = log.old_data || {};
-      const newD = log.new_data || {};
+  const renderDiff = (log: AuditLogView) => {
+      const oldD = log.old_data ?? {};
+      const newD = log.new_data ?? {};
 
       if (log.table_name === 'buildings' && log.operation === 'UPDATE') {
           // Compare keys
@@ -75,9 +82,9 @@ toast.error("Failed to revert change");
                   {changes.slice(0, 5).map(k => (
                       <div key={k}>
                           <span className="font-semibold">{k}:</span>{" "}
-                          <span className="text-red-500 line-through">{String(oldD[k]).slice(0, 20)}</span>
+                          <span className="text-red-500 line-through">{String(oldD[k] ?? "").slice(0, 20)}</span>
                           {" -> "}
-                          <span className="text-green-500">{String(newD[k]).slice(0, 20)}</span>
+                          <span className="text-green-500">{String(newD[k] ?? "").slice(0, 20)}</span>
                       </div>
                   ))}
                   {changes.length > 5 && <div>...and {changes.length - 5} more</div>}
@@ -87,9 +94,9 @@ toast.error("Failed to revert change");
           return (
               <div className="text-xs">
                   {log.operation === 'INSERT' ? (
-                      <span className="text-green-500">Added Style (ID: {newD.style_id?.slice(0,8)})</span>
+                      <span className="text-green-500">Added Style (ID: {String(newD.style_id ?? "").slice(0, 8)})</span>
                   ) : (
-                      <span className="text-red-500">Removed Style (ID: {oldD.style_id?.slice(0,8)})</span>
+                      <span className="text-red-500">Removed Style (ID: {String(oldD.style_id ?? "").slice(0, 8)})</span>
                   )}
               </div>
           )

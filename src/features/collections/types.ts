@@ -18,7 +18,7 @@ export type TransportMode = 'walking' | 'driving' | 'cycling' | 'transit';
 export interface ItineraryRoute {
   dayNumber: number;
   buildingIds: string[];
-  routeGeometry?: any; // GeoJSON LineString
+  routeGeometry?: unknown; // GeoJSON LineString
   isFallback?: boolean;
 }
 
@@ -39,7 +39,7 @@ export interface ItineraryDay {
   description?: string;
   stops: ItineraryStop[];
   defaultTransportMode: TransportMode;
-  routeGeometry?: any; // GeoJSON LineString
+  routeGeometry?: unknown; // GeoJSON LineString
   isFallback?: boolean;
 }
 
@@ -58,6 +58,7 @@ export interface CollectionItemWithBuilding {
   building: {
     id: string;
     name: string;
+    address?: string | null;
     location_lat: number;
     location_lng: number;
     city: string | null;

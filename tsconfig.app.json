@@ -24,6 +24,7 @@
     "noImplicitThis": true,
     "useUnknownInCatchVariables": true,
     "forceConsistentCasingInFileNames": true,
+    "strictNullChecks": true,
 
     "baseUrl": ".",
     "paths": {
