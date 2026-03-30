@@ -45,14 +45,14 @@ type FormValues = z.infer<typeof formSchema>;
 export default function EditArchitect() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { architect, loading: architectLoading, error } = useArchitect(id);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Affiliations State
   const [affiliations, setAffiliations] = useState<SelectArchitect[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isLoadingAffiliations, setIsLoadingAffiliations] = useState(false);
+  const [_isLoadingAffiliations, setIsLoadingAffiliations] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -98,7 +98,7 @@ export default function EditArchitect() {
                     .eq('individual_id', id);
 
                 if (error) throw error;
-                // @ts-ignore
+                // @ts-expect-error -- legacy Supabase row typing
                 setAffiliations(data.map(d => d.studio).filter(Boolean));
             } else {
                 // Fetch individuals that belong to this studio
@@ -108,12 +108,11 @@ export default function EditArchitect() {
                     .eq('studio_id', id);
 
                 if (error) throw error;
-                // @ts-ignore
+                // @ts-expect-error -- legacy Supabase row typing
                 setAffiliations(data.map(d => d.individual).filter(Boolean));
             }
         } catch (e) {
-            console.error("Error fetching affiliations", e);
-        } finally {
+} finally {
             setIsLoadingAffiliations(false);
         }
     };
@@ -125,7 +124,6 @@ export default function EditArchitect() {
     if (!id) return;
     setIsSubmitting(true);
     try {
-      // @ts-ignore
       const { error } = await supabase
         .from("architects")
         .update({
@@ -142,8 +140,7 @@ export default function EditArchitect() {
       toast.success("Architect updated successfully");
       navigate(`/architect/${id}`);
     } catch (error) {
-      console.error("Error updating architect:", error);
-      toast.error("Failed to update architect");
+toast.error("Failed to update architect");
     } finally {
       setIsSubmitting(false);
     }
@@ -187,8 +184,7 @@ export default function EditArchitect() {
             if (error) throw error;
         }
     } catch (e) {
-        console.error("Error updating affiliations", e);
-        toast.error("Failed to update affiliations");
+toast.error("Failed to update affiliations");
         // Revert state?
         // We'll leave it for now as a simple implementation
     }

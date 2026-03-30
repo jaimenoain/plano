@@ -5,7 +5,7 @@ import { AdminBuilding } from "@/features/admin/types/admin_building";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getBuildingUrl } from "@/utils/url";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeftRight, Check, Trash2, ArrowLeft, AlertTriangle, Image as ImageIcon, Pencil, Save, X } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ import {
 
 interface ComparisonBuilding extends Omit<AdminBuilding, 'architects'> {
     architects: { id: string; name: string; type?: 'individual' | 'studio' }[];
+    address?: string | null;
 }
 
 export default function MergeComparison() {
@@ -80,7 +81,6 @@ export default function MergeComparison() {
     const fetchBuildings = async (id1: string, id2: string) => {
         setLoading(true);
         try {
-            // @ts-ignore
             const { data, error } = await supabase
                 .from('buildings')
                 .select('*, architects:building_architects(architect:architects(name, id, type))')
@@ -119,8 +119,7 @@ export default function MergeComparison() {
                 setReviewImages(imgMap);
             }
         } catch (error) {
-            console.error("Error fetching buildings:", error);
-            toast.error("Failed to load buildings");
+toast.error("Failed to load buildings");
         } finally {
             setLoading(false);
         }
@@ -139,8 +138,7 @@ export default function MergeComparison() {
                 photos: photos.count || 0
             });
         } catch (e) {
-            console.error(e);
-        } finally {
+} finally {
             setImpactLoading(false);
         }
     };
@@ -207,9 +205,8 @@ export default function MergeComparison() {
             toast.success("Target building updated successfully");
 
         } catch (error) {
-            console.error("Error updating building:", error);
-            // @ts-ignore
-            toast.error("Failed to update building: " + error.message);
+            const msg = error instanceof Error ? error.message : "Unknown error";
+            toast.error("Failed to update building: " + msg);
         }
     };
 
@@ -240,21 +237,19 @@ export default function MergeComparison() {
                         source_name: buildings.find(b => b.id === sourcePointer)?.name
                     }
                 });
-            } catch (auditError) {
-                console.warn("Failed to create audit log entry:", auditError);
+            } catch (_auditError) {
+              void _auditError;
             }
 
             toast.success("Buildings merged successfully. Redirecting...");
 
             // Redirect to survivor
             const target = buildings.find(b => b.id === targetPointer);
-            // @ts-ignore
-            navigate(getBuildingUrl(targetPointer, target?.slug, target?.short_id));
+            navigate(getBuildingUrl(targetPointer!, target?.slug, target?.short_id != null ? Number(target.short_id) : null));
 
         } catch (error) {
-            console.error("Merge failed:", error);
-            // @ts-ignore
-            toast.error("Merge failed: " + error.message);
+            const msg = error instanceof Error ? error.message : "Unknown error";
+            toast.error("Merge failed: " + msg);
         } finally {
             setMerging(false);
         }

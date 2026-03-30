@@ -19,8 +19,7 @@ export async function uploadFile(file: File, folderName?: string): Promise<strin
 
   if (error) {
     // Log the actual error for debugging
-    console.error('Upload URL generation failed:', error);
-    throw new Error(`Failed to generate upload URL: ${error.message || 'Unknown error'}`);
+throw new Error(`Failed to generate upload URL: ${error.message || 'Unknown error'}`);
   }
 
   const { uploadUrl, key } = data;
@@ -61,8 +60,7 @@ export async function uploadFileWithProgress(
   });
 
   if (error) {
-    console.error('Upload URL generation failed:', error);
-    throw new Error(`Failed to generate upload URL: ${error.message || 'Unknown error'}`);
+throw new Error(`Failed to generate upload URL: ${error.message || 'Unknown error'}`);
   }
 
   const { uploadUrl, key } = data;

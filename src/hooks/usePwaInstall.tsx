@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 // Define the event interface
@@ -29,7 +29,7 @@ export function PwaProvider({ children }: { children: ReactNode }) {
   const [isInstallable, setIsInstallable] = useState(false);
 
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
+    needRefresh: [needRefresh, _setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered() {},

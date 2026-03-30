@@ -80,8 +80,7 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
       if (error) throw error;
       setFolders((userFolders as any[]) || []);
     } catch (error) {
-      console.error("Error fetching folders:", error);
-    } finally {
+} finally {
       setLoadingFolders(false);
     }
   };
@@ -108,8 +107,7 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
       if (error) throw error;
       setCollections(data || []);
     } catch (error) {
-      console.error("Error fetching collections:", error);
-      toast({ variant: "destructive", description: "Failed to load collections." });
+toast({ variant: "destructive", description: "Failed to load collections." });
     } finally {
       setLoading(false);
     }
@@ -155,8 +153,7 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
           .insert(folderItemsToInsert);
 
         if (folderError) {
-          console.error("Error adding to folders:", folderError);
-          toast({ variant: "destructive", description: "Collection created, but failed to add to some folders." });
+toast({ variant: "destructive", description: "Collection created, but failed to add to some folders." });
         }
       }
 
@@ -166,8 +163,7 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
       setSelectedFolderIds(new Set());
       onUpdate?.();
     } catch (error) {
-      console.error("Error creating collection:", error);
-      toast({ variant: "destructive", description: "Failed to create collection." });
+toast({ variant: "destructive", description: "Failed to create collection." });
     } finally {
       setProcessing(false);
     }
@@ -191,8 +187,7 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
       fetchCollections();
       onUpdate?.();
     } catch (error) {
-      console.error("Error updating collection:", error);
-      toast({ variant: "destructive", description: "Failed to update collection." });
+toast({ variant: "destructive", description: "Failed to update collection." });
     } finally {
       setProcessing(false);
     }
@@ -209,8 +204,7 @@ export function ManageCollectionDialog({ open, onOpenChange, userId, onUpdate }:
       fetchCollections();
       onUpdate?.();
     } catch (error) {
-      console.error("Error deleting collection:", error);
-      toast({ variant: "destructive", description: "Failed to delete collection." });
+toast({ variant: "destructive", description: "Failed to delete collection." });
     } finally {
       setProcessing(false);
       setDeleteId(null);

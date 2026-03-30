@@ -115,7 +115,7 @@ export const BuildingHeader = ({
                 <div className="flex flex-col gap-2 mt-4">
                     {accessSynthesis && (
                         <div className="flex items-center gap-2">
-                            <Badge variant={accessSynthesis.variant} className="flex items-center gap-1.5 w-fit">
+                            <Badge variant={accessSynthesis.variant === "warning" ? "secondary" : accessSynthesis.variant} className="flex items-center gap-1.5 w-fit">
                                 <accessSynthesis.icon className="w-3.5 h-3.5" />
                                 {accessSynthesis.label}
                             </Badge>

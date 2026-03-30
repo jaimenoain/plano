@@ -8,7 +8,7 @@ export function usePresenceTracker() {
   const { session } = useAuth();
 
   useEffect(() => {
-    if (!session?.user) return;
+    if (!session?.user) return undefined;
 
     const updatePresence = async () => {
       try {

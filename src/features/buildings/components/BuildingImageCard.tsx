@@ -74,8 +74,7 @@ export function BuildingImageCard({ image, initialIsLiked, onOpen }: BuildingIma
         if (error) throw error;
       }
     } catch (error) {
-      console.error("Error toggling like:", error);
-      setIsLiked(previousIsLiked);
+setIsLiked(previousIsLiked);
       setLikesCount(previousLikesCount);
       toast({ variant: "destructive", title: "Failed to update like" });
     } finally {

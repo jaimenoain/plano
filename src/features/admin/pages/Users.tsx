@@ -77,8 +77,7 @@ export default function Users() {
         setTotalPages(Math.ceil(count / ITEMS_PER_PAGE));
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
-      toast.error("Failed to load users");
+toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -131,8 +130,7 @@ export default function Users() {
         setUsers(prev => prev.map(u => u.id === actionUser.user.id ? { ...u, role: newRole } : u));
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Action failed");
+toast.error("Action failed");
     } finally {
       setActionUser(null);
     }

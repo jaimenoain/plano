@@ -88,8 +88,7 @@ export function PeopleYouMayKnow() {
           }
         }
       } catch (error) {
-        console.error("Error fetching suggestions:", error);
-      } finally {
+} finally {
         setLoading(false);
       }
     };
@@ -111,11 +110,9 @@ export function PeopleYouMayKnow() {
                 suggested_user_id: suggestedId
             });
 
-        if (error) {
-            console.error("Error hiding suggestion:", error);
-        }
-    } catch (err) {
-        console.error("Error hiding suggestion:", err);
+        if (error) throw error;
+    } catch (_err) {
+        void _err;
     }
   };
 

@@ -57,16 +57,16 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
       if (data) {
         // Map to FavoriteItem
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const items: FavoriteItem[] = data.map((log: any) => {
+        const items = data.map((log: any) => {
            const b = Array.isArray(log.building) ? log.building[0] : log.building;
            return {
              id: b.id,
-             media_type: "building",
+             media_type: "building" as const,
              title: b.name,
              image_url: getBuildingImageUrl(b.main_image_url),
-             rating: 10,
+             rating: 10 as number,
              year_completed: b.year_completed ? String(b.year_completed) : undefined
-           };
+           } satisfies FavoriteItem;
         }).filter((item, index, self) =>
             index === self.findIndex((t) => (
                 t.id === item.id
@@ -75,8 +75,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
         setSuggestions(items);
       }
     } catch (e) {
-      console.error(e);
-    } finally {
+} finally {
       setLoading(false);
     }
   };
@@ -96,12 +95,12 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                query_text: debouncedQuery
            });
 
-           let mapped = (data || []).map((b) => ({
+           let mapped: FavoriteItem[] = (data || []).map((b) => ({
               id: b.id,
-              media_type: "building",
+              media_type: "building" as const,
               title: b.name,
               image_url: getBuildingImageUrl(b.main_image_url),
-              rating: undefined,
+              rating: undefined as number | undefined,
               year_completed: b.year_completed ? String(b.year_completed) : undefined
            }));
 
@@ -123,14 +122,17 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
 
                mapped = mapped.map((item) => ({
                  ...item,
-                 rating: ratingMap.get(item.id),
+                 rating: ratingMap.get(item.id) as number | undefined,
                }));
              }
            }
 
            setResults(mapped);
-        } catch(e) { console.error(e); }
-        finally { setLoading(false); }
+        } catch (_e) {
+          void _e;
+        } finally {
+          setLoading(false);
+        }
      };
 
      search();

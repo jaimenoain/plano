@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,9 +14,8 @@ import { Separator } from '@/components/ui/separator';
 import { ArchitectSelect } from '@/features/search/components/ArchitectSelect';
 import { ContactPicker } from '@/features/search/components/ContactPicker';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { useMapContext } from '../providers/MapContext';
 import { useBuildingSearch } from '@/features/search/hooks/useBuildingSearch';
-import { MapMode, MichelinRating } from '@/types/plano-map';
+import { MapMode } from '@/types/plano-map';
 import { QualityRatingFilter } from './filters/QualityRatingFilter';
 import { FolderAndCollectionMultiSelect } from './filters/FolderAndCollectionMultiSelect';
 import { useTaxonomy } from '@/hooks/useTaxonomy';
@@ -86,17 +85,17 @@ export function FilterDrawer() {
   const {
     statusFilters: currentStatus,
     setStatusFilters,
-    hideVisited,
+    hideVisited: _hideVisited,
     setHideVisited,
     hideSaved,
     setHideSaved,
-    filterContacts,
-    setFilterContacts,
+    filterContacts: _filterContacts,
+    setFilterContacts: _setFilterContacts,
     personalMinRating: currentPersonalMinRating,
     setPersonalMinRating,
     globalMinRating: currentGlobalMinRating,
     setGlobalMinRating,
-    contactMinRating,
+    contactMinRating: _contactMinRating,
     setContactMinRating,
     selectedArchitects: currentArchitects,
     setSelectedArchitects,
@@ -466,8 +465,8 @@ const handleModeChange = (newMode: string) => {
                         <AccordionTrigger className="text-sm font-medium py-2 hover:no-underline">Folders & Collections</AccordionTrigger>
                         <AccordionContent>
                         <FolderAndCollectionMultiSelect
-                            selectedCollectionIds={currentCollectionIds}
-                            selectedFolderIds={currentFolderIds}
+                            selectedCollectionIds={currentCollectionIds.map((c) => c.id)}
+                            selectedFolderIds={currentFolderIds.map((f) => f.id)}
                             onCollectionChange={handleCollectionsChange}
                             onFolderChange={handleFoldersChange}
                         />

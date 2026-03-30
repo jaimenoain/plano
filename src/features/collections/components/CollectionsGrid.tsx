@@ -3,7 +3,6 @@ import { Plus, Map as MapIcon, Folder } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 import { UserFolder } from "@/features/collections/types";
 import { ManageFoldersDialog } from "@/features/profile/components/ManageFoldersDialog";
 import { FolderCard } from "@/features/profile/components/FolderCard";
@@ -80,8 +79,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching folders:", error);
-        return;
+return;
       }
 
       const processedFolders: UserFolder[] = (data || []).map((folder: any) => {
@@ -115,8 +113,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
       setFolders(processedFolders);
 
     } catch (err) {
-      console.error("Error in fetchFolders:", err);
-    }
+}
   };
 
   const fetchCollections = async () => {
@@ -209,8 +206,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
 
       setCollections(sorted);
     } catch (error) {
-      console.error("Error fetching collections:", error);
-    }
+}
   };
 
   if (loading) return <div className="h-32 w-full animate-pulse bg-secondary/20 rounded-lg mx-4" />;

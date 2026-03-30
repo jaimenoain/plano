@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, Trash2, ShieldAlert, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -89,8 +89,7 @@ export default function Moderation() {
 
       setReports(enriched);
     } catch (error) {
-      console.error("Error fetching reports:", error);
-      toast.error("Failed to load reports");
+toast.error("Failed to load reports");
     } finally {
       setLoading(false);
     }
@@ -119,8 +118,7 @@ export default function Moderation() {
         setReports(prev => prev.filter(r => r.reported_id !== report.reported_id));
         toast.success("Reports dismissed");
     } catch (error) {
-        console.error(error);
-        toast.error("Failed to dismiss report");
+toast.error("Failed to dismiss report");
     }
   };
 
@@ -161,8 +159,7 @@ export default function Moderation() {
         toast.success("Content deleted and reports resolved");
 
     } catch (error) {
-        console.error(error);
-        toast.error("Failed to delete content");
+toast.error("Failed to delete content");
     }
   };
 

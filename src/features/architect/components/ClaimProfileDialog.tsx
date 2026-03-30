@@ -60,7 +60,6 @@ export function ClaimProfileDialog({
 
     setIsSubmitting(true);
     try {
-      // @ts-expect-error - architect_claims table exists in migration
       const { error } = await supabase.from("architect_claims").insert({
         user_id: user.id,
         architect_id: architectId,
@@ -81,8 +80,7 @@ export function ClaimProfileDialog({
         }, 300);
       }, 2000);
     } catch (error) {
-      console.error("Error submitting claim:", error);
-      form.setError("professional_email", {
+form.setError("professional_email", {
         type: "manual",
         message: "Failed to submit claim. Please try again.",
       });

@@ -108,7 +108,7 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {unread_distribution.map((entry, index) => (
+                    {unread_distribution.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={index === 0 ? '#22c55e' : index === 3 ? '#ef4444' : '#3b82f6'} />
                     ))}
                 </Bar>

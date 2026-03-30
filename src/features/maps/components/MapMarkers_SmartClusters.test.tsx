@@ -4,8 +4,8 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { MapMarkers } from './MapMarkers';
 import { ClusterResponse } from '../hooks/useMapData';
 
-// Mock react-map-gl
-vi.mock('react-map-gl', () => ({
+// Mock react-map-gl/maplibre
+vi.mock('react-map-gl/maplibre', () => ({
   useMap: () => ({
     current: {
       getZoom: () => 10,

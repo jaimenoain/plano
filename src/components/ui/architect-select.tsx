@@ -54,7 +54,6 @@ export function ArchitectSelect({
   const { data: suggestions = [], isLoading } = useQuery({
     queryKey: ['architects', inputValue, filterType],
     queryFn: async () => {
-       // @ts-ignore - architects table created in migration
        let query = supabase.from('architects').select('*').limit(20);
 
        if (filterType) {
@@ -113,7 +112,6 @@ export function ArchitectSelect({
       if (!newArchitectName) return;
       setIsCreating(true);
       try {
-          // @ts-ignore - architects table created in migration
           const { data, error } = await supabase
             .from('architects')
             .insert({ name: newArchitectName, type: newArchitectType })
@@ -127,8 +125,7 @@ export function ArchitectSelect({
           setShowCreateDialog(false);
           toast.success(`Created ${newArchitectType} "${newArchitectName}"`);
       } catch (error) {
-          console.error("Error creating architect:", error);
-          toast.error("Failed to create architect. Name might already exist.");
+toast.error("Failed to create architect. Name might already exist.");
       } finally {
           setIsCreating(false);
       }

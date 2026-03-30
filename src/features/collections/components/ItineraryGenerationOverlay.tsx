@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,7 +14,7 @@ export function ItineraryGenerationOverlay({ open }: { open: boolean }) {
   useEffect(() => {
     if (!open) {
       setMessageIndex(0);
-      return;
+      return undefined;
     }
     const interval = setInterval(() => {
       setMessageIndex((prev) => (prev + 1) % loadingMessages.length);

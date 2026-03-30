@@ -3,8 +3,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { BuildingLocationMap } from './BuildingLocationMap';
 
-// Mock react-map-gl
-vi.mock('react-map-gl', () => {
+// Mock react-map-gl/maplibre
+vi.mock('react-map-gl/maplibre', () => {
   const Map = ({ children }: any) => <div data-testid="map-container">{children}</div>;
   return {
     __esModule: true,

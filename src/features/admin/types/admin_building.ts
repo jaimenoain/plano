@@ -1,20 +1,43 @@
-import { Database } from '@/integrations/supabase/types';
-import { Architect } from './architect';
-import { TierRank } from './plano-map';
+import type { Architect } from "@/features/architect/types";
+import type { TierRank } from "@/types/plano-map";
 
-export type BuildingRow = Database['public']['Tables']['buildings']['Row'];
+export type AccessLevel = "public" | "private" | "restricted" | "commercial";
+export type AccessLogistics =
+  | "walk-in"
+  | "booking_required"
+  | "tour_only"
+  | "exterior_only";
+export type AccessCost = "free" | "paid" | "customers_only";
 
-export type AccessLevel = Database['public']['Enums']['access_level'];
-export type AccessLogistics = Database['public']['Enums']['access_logistics'];
-export type AccessCost = Database['public']['Enums']['access_cost'];
-
-// Extend the existing Building type to include the new admin columns
-// These columns are added via migration `update_buildings_schema.sql`
-export interface AdminBuilding extends Omit<BuildingRow, 'architects'> {
-  is_deleted: boolean;
-  is_verified: boolean;
+/**
+ * Baseline row shape for `public.buildings` used by admin UIs.
+ * Generated `Database` types omit this table until `npm run gen-types` is refreshed.
+ */
+export type BuildingRow = {
+  id: string;
+  name: string;
+  address?: string | null;
+  location_precision?: string | null;
+  slug?: string | null;
+  short_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  city?: string | null;
+  country?: string | null;
+  location?: unknown;
+  status?: string | null;
+  year_completed?: number | null;
+  architects?: unknown;
+  access_level?: AccessLevel | null;
+  access_logistics?: AccessLogistics | null;
+  access_cost?: AccessCost | null;
+  is_deleted?: boolean;
+  is_verified?: boolean;
   hero_image_url?: string | null;
-  architects: Architect[] | null;
   popularity_score?: number | null;
   tier_rank?: TierRank | null;
+};
+
+export interface AdminBuilding extends Omit<BuildingRow, "architects"> {
+  architects: Architect[] | null;
 }

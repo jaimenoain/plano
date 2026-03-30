@@ -15,8 +15,7 @@ export default function PhotoAnalytics() {
         const data = await fetchPhotoHeatmapData();
         setHeatmapData(data);
       } catch (error) {
-        console.error("Failed to load photo analytics:", error);
-      } finally {
+} finally {
         setLoading(false);
       }
     };

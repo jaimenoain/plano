@@ -88,24 +88,20 @@ export async function resizeImage(
               quality
             );
           } catch (e) {
-            console.error('Error processing image:', e);
-            resolve(file);
+resolve(file);
           }
         };
 
-        img.onerror = (error) => {
-          console.error('Failed to load image:', error);
-          resolve(file);
+        img.onerror = (_error) => {
+resolve(file);
         };
       };
 
-      reader.onerror = (error) => {
-        console.error('Failed to read file:', error);
-        resolve(file);
+      reader.onerror = (_error) => {
+resolve(file);
       };
     } catch (e) {
-      console.error('Unexpected error in resizeImage:', e);
-      resolve(file);
+resolve(file);
     }
   });
 }

@@ -48,8 +48,7 @@ export function YourContacts() {
 
       if (error) throw error;
     } catch (error) {
-      console.error("Error updating close friend status:", error);
-      // Revert on error
+// Revert on error
       setFollowing((prev) => {
         const updated = prev.map((u) =>
           u.id === targetId ? { ...u, is_close_friend: currentStatus } : u
@@ -115,8 +114,7 @@ export function YourContacts() {
         }
 
       } catch (error) {
-        console.error("Error fetching contacts:", error);
-      } finally {
+} finally {
         setLoading(false);
       }
     };

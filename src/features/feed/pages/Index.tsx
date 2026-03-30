@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { EmptyFeed } from "../components/EmptyFeed";
@@ -8,7 +8,6 @@ import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
 import { MetaHead } from "@/components/common/MetaHead";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { aggregateFeed } from "@/lib/feed-aggregation";
@@ -23,7 +22,7 @@ import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { AllCaughtUpDivider } from "../components/AllCaughtUpDivider";
 import { ExploreTeaserBlock } from "../components/ExploreTeaserBlock";
 import { ReviewCard } from "../components/ReviewCard";
-import React from "react";
+import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 
 // --- New Landing Page Component ---
 function Landing() {
@@ -74,7 +73,7 @@ export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isMobile } = useSidebar();
+  const { isMobile: _isMobile } = useSidebar();
   const [showGroupActivity, setShowGroupActivity] = useState(true);
   const { containerRef: loadMoreRef, isVisible: isLoadMoreVisible } = useIntersectionObserver({
     rootMargin: "200px",
@@ -168,8 +167,10 @@ export default function Index() {
                             {card}
                             {/* Interruptor every 10 items */}
                             {(index + 1) % 10 === 0 && (
-                                <div className="py-2">
-                                    <ExploreTeaserBlock />
+                                <div key={`explore-teaser-${key}-${index}`} className="py-2">
+                                    <WidgetErrorBoundary>
+                                      <ExploreTeaserBlock />
+                                    </WidgetErrorBoundary>
                                 </div>
                             )}
                         </React.Fragment>
@@ -182,10 +183,13 @@ export default function Index() {
                         <AllCaughtUpDivider />
 
                         <div className="py-2">
-                            <ExploreTeaserBlock />
+                            <WidgetErrorBoundary>
+                              <ExploreTeaserBlock />
+                            </WidgetErrorBoundary>
                         </div>
 
                         {/* Discovery Feed Items */}
+                        <WidgetErrorBoundary>
                         <div className="flex flex-col gap-6 mt-6">
                             {discoveryReviews.map((post) => (
                                 <ReviewCard
@@ -203,6 +207,7 @@ export default function Index() {
                                 </div>
                             )}
                         </div>
+                        </WidgetErrorBoundary>
                       </>
                   )}
 
@@ -242,7 +247,9 @@ export default function Index() {
                            (Coming soon)
                          </p>
                       </div>
-                      <PeopleYouMayKnow />
+                      <WidgetErrorBoundary>
+                        <PeopleYouMayKnow />
+                      </WidgetErrorBoundary>
                    </div>
                 </div>
               </div>

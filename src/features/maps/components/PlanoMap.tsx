@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from "react-dom";
-import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl';
+import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Layers, Maximize2, Minimize2 } from "lucide-react";
@@ -10,32 +10,10 @@ import { MapErrorBoundary } from './MapErrorBoundary';
 import { useMapContext } from '../providers/MapContext';
 import { useMapData } from '../hooks/useMapData';
 import { MapMarkers } from './MapMarkers';
+import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const LOCAL_STORAGE_MAP_KEY = 'plano_map_view_state';
-
-const SATELLITE_STYLE = {
-  version: 8,
-  sources: {
-    "satellite-tiles": {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-      ],
-      tileSize: 256,
-      attribution: "&copy; Esri"
-    }
-  },
-  layers: [
-    {
-      id: "satellite-layer",
-      type: "raster",
-      source: "satellite-tiles",
-      minzoom: 0,
-      maxzoom: 22
-    }
-  ]
-};
 
 interface PlanoMapProps {
   showEmptyMessage?: boolean;
@@ -256,7 +234,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
             onLoad={onLoad}
             onResize={(evt) => updateBounds(evt.target)}
             mapLib={maplibregl}
-            mapStyle={isSatellite ? SATELLITE_STYLE : MAP_STYLE}
+            mapStyle={isSatellite ? SATELLITE_MAP_STYLE : MAP_STYLE}
             attributionControl={false}
             onClick={() => setHighlightedId(null)} // Clear highlight on map click
         >

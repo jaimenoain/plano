@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FavoriteItem } from "./types";
-import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Search, X, Check, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,7 +43,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
   const [architectQuery, setArchitectQuery] = useState("");
   const debouncedArchitectQuery = useDebounce(architectQuery, 500);
   const [architectResults, setArchitectResults] = useState<FavoriteItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, _setLoading] = useState(false);
 
   // Quote input state
   const [quoteText, setQuoteText] = useState("");
@@ -117,8 +116,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
     // TODO: Implement actual architect search against a profiles table or external API
     // For now, we are disabling this to prevent errors as no dedicated architect database exists yet.
-    console.log("Architect search currently disabled.");
-    setArchitectResults([]);
+setArchitectResults([]);
 
   }, [debouncedArchitectQuery]);
 
@@ -153,10 +151,10 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
   // --- Save ---
   const handleSave = async () => {
     // Combine all and ensure types are strictly the new values before saving
-    const combined = [
-      ...styles.map(s => ({ ...s, type: 'style' })), 
-      ...architects.map(a => ({ ...a, type: 'architect' })), 
-      ...quotes
+    const combined: FavoriteItem[] = [
+      ...styles.map((s) => ({ ...s, type: 'style' as const })),
+      ...architects.map((a) => ({ ...a, type: 'architect' as const })),
+      ...quotes,
     ];
     await onSave(combined);
     onOpenChange(false);
@@ -312,7 +310,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                           {quotes.length > 0 && (
                               <div className="space-y-3">
                                   <span className="text-xs text-muted-foreground font-bold uppercase">Your Quotes ({quotes.length})</span>
-                                  {quotes.map((q, i) => (
+                                  {quotes.map((q, _i) => (
                                       <div key={q.id} className="relative group p-3 rounded-lg bg-secondary/20 border border-border/50">
                                           <p className="text-sm italic pr-6">"{q.title}"</p>
                                           {q.quote_source && <p className="text-xs text-muted-foreground mt-1">— {q.quote_source}</p>}

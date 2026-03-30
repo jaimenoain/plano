@@ -47,7 +47,6 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
   const fetchUserRating = async () => {
     if (!user) return;
     try {
-      // @ts-ignore
       const { data, error } = await supabase
         .from("user_buildings")
         .select("rating, status")
@@ -68,15 +67,13 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
         setUserStatus(null);
       }
     } catch (error) {
-      console.error("Error fetching user rating:", error);
-    }
+}
   };
 
   const handleRate = async (buildingId: string, rating: number) => {
     if (!user) return;
     setRatingLoading(true);
     try {
-        // @ts-ignore
         const { data: existingLog } = await supabase
             .from("user_buildings")
             .select("id")
@@ -85,14 +82,12 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
             .maybeSingle();
 
         if (existingLog) {
-            // @ts-ignore
             const { error } = await supabase
                 .from("user_buildings")
                 .update({ rating, edited_at: new Date().toISOString() })
                 .eq("id", existingLog.id);
             if (error) throw error;
         } else {
-            // @ts-ignore
             const { error } = await supabase
                 .from("user_buildings")
                 .insert({
@@ -112,8 +107,7 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
             toast({ title: "Rating saved" });
         }
     } catch (error) {
-        console.error("Error saving rating:", error);
-        toast({ variant: "destructive", title: "Failed to save rating" });
+toast({ variant: "destructive", title: "Failed to save rating" });
     } finally {
         setRatingLoading(false);
     }
@@ -132,8 +126,7 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
         await navigator.clipboard.writeText(textToShare);
         toast({ title: "Link copied to clipboard" });
     } catch (e) {
-        console.error("Failed to copy link", e);
-        toast({ variant: "destructive", title: "Failed to copy link" });
+toast({ variant: "destructive", title: "Failed to copy link" });
     }
   };
 
@@ -176,11 +169,10 @@ export function RecommendDialog({ building, trigger, open: controlledOpen, onOpe
 
         const actionText = mode === "visit_with" ? "Visit request sent!" : "Recommendation sent!";
         toast({ title: actionText, description: `Sent to ${selectedUsers.length} friend${selectedUsers.length > 1 ? 's' : ''}.` });
-        setOpen && setOpen(false);
+        if (setOpen) setOpen(false);
         setSelectedUsers([]);
     } catch (error: any) {
-        console.error(error);
-        toast({ variant: "destructive", title: "Error", description: error.message || "Failed to send." });
+toast({ variant: "destructive", title: "Error", description: error.message || "Failed to send." });
     } finally {
         setLoading(false);
     }

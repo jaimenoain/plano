@@ -91,8 +91,7 @@ export const handleDragEndLogic = async ({
       duration: 2000,
     });
   } catch (error) {
-    console.error("Failed to update rating:", error);
-    // Revert
+// Revert
     setContent(previousContent);
     toast({
       variant: "destructive",

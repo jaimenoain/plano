@@ -7,18 +7,22 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
-import { Loader2, Settings, Plus, ExternalLink, Bookmark, Star, ListFilter, Sparkles } from "lucide-react";
+import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
-import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/features/collections/types";
+import {
+  Collection,
+  CollectionItemWithBuilding,
+  CollectionMarker,
+  Itinerary,
+} from "@/features/collections/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ItineraryList } from "@/features/collections/components/ItineraryList";
 import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
 
-import { DiscoveryBuilding } from "@/features/search/components/types";
-import { Itinerary } from "@/features/collections/types";
+import { DiscoveryBuilding, type StyleSummary } from "@/features/search/components/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -473,7 +477,7 @@ export default function CollectionMap() {
 
         if (statsData) {
             // Group by building
-            statsData.forEach(row => {
+            statsData.forEach((row: { building_id: string; status: string | null; rating: number | null }) => {
                 if (!statsMap.has(row.building_id)) {
                     statsMap.set(row.building_id, { visitedCount: 0, maxRating: 0, hasSaved: false });
                 }
@@ -545,8 +549,11 @@ export default function CollectionMap() {
             short_id: item.building.short_id,
             year_completed: item.building.year_completed,
             location_precision: item.building.location_precision,
-            architects: item.building.building_architects?.map((ba) => ba.architects).filter(Boolean) || [],
-            styles: [],
+            architects:
+                item.building.building_architects
+                  ?.map((ba) => ba.architects)
+                  .filter((a): a is { id: string; name: string } => a != null) ?? null,
+            styles: null as StyleSummary[] | null,
             color: color,
             personal_rating: interaction?.rating || null,
             personal_status: interaction?.status || null,
@@ -565,7 +572,7 @@ export default function CollectionMap() {
             city: null,
             country: null,
             architects: [],
-            styles: [],
+            styles: [] as StyleSummary[],
             year_completed: null,
             isMarker: true,
             markerCategory: marker.category,
@@ -671,32 +678,6 @@ export default function CollectionMap() {
     }
   };
 
-  const handleHideCandidate = async (buildingId: string) => {
-    if (!collection?.id) return;
-
-    const { error } = await supabase
-        .from("collection_items")
-        .insert({
-            collection_id: collection.id,
-            building_id: buildingId,
-            is_hidden: true
-        });
-
-    if (error) {
-        toast({
-            title: "Error",
-            description: "Failed to hide building.",
-            variant: "destructive"
-        });
-    } else {
-        toast({
-            title: "Hidden",
-            description: "Building hidden from suggestions."
-        });
-        queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
-        queryClient.invalidateQueries({ queryKey: ["collection_items", collection.id] });
-    }
-  };
 
   const handleUpdateItinerary = async (newItinerary: Itinerary) => {
       if (!collection?.id) return;
@@ -841,8 +822,7 @@ export default function CollectionMap() {
         queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
 
     } catch (error) {
-        console.error('Error saving collection:', error);
-        toast({
+toast({
             title: "Error",
             description: "Failed to save buildings.",
             variant: "destructive"

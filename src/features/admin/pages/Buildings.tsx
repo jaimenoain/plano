@@ -29,9 +29,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BuildingForm, BuildingFormData } from "@/features/buildings/components/BuildingForm";
 import { BuildingLocationPicker } from "@/features/buildings/components/BuildingLocationPicker";
-import { Loader2, MapPin, Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, MapPin, Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { parseLocation } from "@/utils/location";
 
 export default function Buildings() {
@@ -92,8 +91,7 @@ export default function Buildings() {
         setTotalPages(Math.ceil(count / ITEMS_PER_PAGE));
       }
     } catch (error) {
-      console.error("Error fetching buildings:", error);
-      toast.error("Failed to load buildings");
+toast.error("Failed to load buildings");
     } finally {
       setLoading(false);
     }
@@ -141,18 +139,18 @@ export default function Buildings() {
     const lat = coords ? coords.lat : null;
     const lng = coords ? coords.lng : null;
 
+    const precision: 'exact' | 'approximate' =
+      building.location_precision === 'approximate' ? 'approximate' : 'exact';
     setLocationData({
         lat,
         lng,
         address: building.address || "",
         city: building.city,
         country: building.country,
-        // @ts-ignore
-        precision: building.location_precision || 'exact'
+        precision
     });
 
     // Fetch Relations
-    // @ts-ignore
     const { data: relations } = await supabase
       .from('building_architects')
       .select('architect:architects(id, name, type)')
@@ -160,14 +158,12 @@ export default function Buildings() {
 
     const relationArchitects = relations?.map((r: any) => r.architect) || [];
 
-    // @ts-ignore
     const { data: typologies } = await supabase
         .from('building_functional_typologies')
         .select('typology_id')
         .eq('building_id', building.id);
     const typologyIds = typologies?.map((t: any) => t.typology_id) || [];
 
-    // @ts-ignore
     const { data: attributes } = await supabase
         .from('building_attributes')
         .select('attribute_id')
@@ -176,7 +172,6 @@ export default function Buildings() {
 
     setFormValues({
         name: building.name,
-        // @ts-ignore
         hero_image_url: building.hero_image_url,
         year_completed: building.year_completed,
         architects: relationArchitects,
@@ -201,22 +196,17 @@ export default function Buildings() {
         .from('buildings')
         .update({
           name: formData.name,
-          // @ts-ignore
           hero_image_url: formData.hero_image_url,
           year_completed: formData.year_completed,
           // Architects removed from here (handled via relation)
-          // @ts-ignore
           functional_category_id: formData.functional_category_id,
-          // @ts-ignore
           functional_typology_ids: formData.functional_typology_ids,
-          // @ts-ignore
           selected_attribute_ids: formData.selected_attribute_ids,
 
           address: locationData.address,
           city: locationData.city,
           country: locationData.country,
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown,
-          // @ts-ignore
           location_precision: locationData.precision,
         })
         .eq('id', editingBuilding.id);
@@ -227,44 +217,37 @@ export default function Buildings() {
 
       // Handle Architects Junction Table
       // 1. Clear existing links
-      // @ts-ignore
       await supabase.from('building_architects').delete().eq('building_id', id);
 
       // 2. Insert new links
       if (formData.architects.length > 0) {
           const links = formData.architects.map(a => ({ building_id: id, architect_id: a.id }));
-          // @ts-ignore
+          // @ts-expect-error -- legacy Supabase row typing
           const { error: linkError } = await supabase.from('building_architects').insert(links);
-          if (linkError) console.error("Link error:", linkError);
-      }
+          }
 
       // Handle Typologies Junction Table
-      // @ts-ignore
       await supabase.from('building_functional_typologies').delete().eq('building_id', id);
       if (formData.functional_typology_ids.length > 0) {
           const tLinks = formData.functional_typology_ids.map(tid => ({ building_id: id, typology_id: tid }));
-          // @ts-ignore
+          // @ts-expect-error -- legacy Supabase row typing
           const { error: tError } = await supabase.from('building_functional_typologies').insert(tLinks);
-          if (tError) console.error("Typology link error:", tError);
-      }
+          }
 
       // Handle Attributes Junction Table
-      // @ts-ignore
       await supabase.from('building_attributes').delete().eq('building_id', id);
       if (formData.selected_attribute_ids.length > 0) {
           const aLinks = formData.selected_attribute_ids.map(aid => ({ building_id: id, attribute_id: aid }));
-          // @ts-ignore
+          // @ts-expect-error -- legacy Supabase row typing
           const { error: aError } = await supabase.from('building_attributes').insert(aLinks);
-          if (aError) console.error("Attribute link error:", aError);
-      }
+          }
 
       toast.success("Building updated");
       setEditingBuilding(null);
       setFormValues(null);
       fetchBuildings(); // Refresh list
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to update building");
+toast.error("Failed to update building");
     }
   };
 
@@ -409,7 +392,7 @@ export default function Buildings() {
                             isSubmitting={false}
                             submitLabel="Save Changes"
                             buildingId={editingBuilding.id}
-                            shortId={editingBuilding.short_id}
+                            shortId={editingBuilding.short_id != null && editingBuilding.short_id !== '' ? Number(editingBuilding.short_id) : null}
                         />
                     </TabsContent>
 

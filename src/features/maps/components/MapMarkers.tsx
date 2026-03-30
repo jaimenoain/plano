@@ -1,5 +1,5 @@
 import { useMemo, useRef, useEffect, useCallback } from 'react';
-import { Marker, useMap, Popup } from 'react-map-gl';
+import { Marker, useMap, Popup } from 'react-map-gl/maplibre';
 import { ClusterResponse } from '../hooks/useMapData';
 import { BuildingPopupContent } from './BuildingPopupContent';
 import { getPinStyle } from '../utils/pinStyling';

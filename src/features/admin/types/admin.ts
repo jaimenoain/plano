@@ -44,6 +44,7 @@ export type DashboardStats = {
       building_id: string;
       name: string;
       visit_count: number;
+      main_image_url?: string | null;
     }[];
   };
   user_leaderboard: {
@@ -184,7 +185,7 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
       days_since_active: i,
       user_count: Math.floor(Math.random() * 50) + 10,
     })),
-    recent_users: Array.from({ length: 50 }, (_, i) => ({
+    recent_users: Array.from({ length: 50 }, (_, i): LeaderboardUser => ({
       user_id: `r${i}`,
       username: `user_${i}`,
       avatar_url: null,

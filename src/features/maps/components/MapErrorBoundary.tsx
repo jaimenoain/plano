@@ -3,7 +3,7 @@ import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const MapErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
+const MapErrorFallback = ({ error: _error, resetErrorBoundary }: FallbackProps) => {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center bg-muted/10 p-4 text-center">
       <AlertTriangle className="mb-4 h-10 w-10 text-destructive" />

@@ -4,11 +4,9 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
   DiscoveryBuilding,
-  DiscoveryBuildingMapPin,
   ContactRater,
   ContactInteraction,
   MapItem,
-  ClusterPoint,
   BuildingPoint,
   ArchitectSummary,
 } from "../components/types";
@@ -77,7 +75,6 @@ interface HydratedBuildingFromIdsRow {
 // Constants
 const EARTH_RADIUS_METERS = 6371000; // Earth's radius in meters
 const VALID_LOCATION_THRESHOLD = 0.0001; // Threshold for filtering invalid (0,0) coordinates
-const DEFAULT_SEARCH_RADIUS = 20000000; // 20,000 km in meters
 const QUERY_LIMIT = 100000; // Large limit to bypass default 1000 row limit
 
 // Helper to calculate Haversine distance in meters
@@ -113,7 +110,7 @@ function mapVisitorsToInteractions(visitors: ContactRater[]): ContactInteraction
   return visitors.map(v => ({
     user: v,
     status: 'visited' as const,
-    rating: null
+    rating: null as number | null
   }));
 }
 
@@ -229,7 +226,7 @@ async function enrichBuildings(
   // 3. Social Enrichment (Facepile)
   if (userId) {
     try {
-      const { data: follows, error: followsError } = await supabase
+      const { data: follows, error: _followsError } = await supabase
         .from('follows')
         .select('following_id')
         .eq('follower_id', userId)
@@ -305,7 +302,7 @@ async function enrichBuildings(
               .map(v => ({
                 user: v,
                 status: 'visited' as const,
-                rating: null
+                rating: null as number | null
               }));
 
             const mergedInteractions = [...dbInteractions, ...rpcInteractions];
@@ -445,7 +442,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   // Sync resolved profiles to state
   useEffect(() => {
     if (ratedByProfiles && ratedByProfiles.length > 0) {
-      const currentUsername = user?.username;
+      const currentUsername = (user?.user_metadata as { username?: string } | undefined)?.username;
       const otherContacts = ratedByProfiles.filter(p => p.username !== currentUsername);
       setSelectedContacts(otherContacts);
     } else if (!ratedByParam) {
@@ -614,8 +611,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
       // Construct rated_by param
       const ratedByUsers = new Set<string>();
-      if ((statusFilters.length > 0 || personalMinRating > 0) && user?.username) {
-        ratedByUsers.add(user.username);
+      const authUsername = (user?.user_metadata as { username?: string } | undefined)?.username;
+      if ((statusFilters.length > 0 || personalMinRating > 0) && authUsername) {
+        ratedByUsers.add(authUsername);
       }
       selectedContacts.forEach(c => {
         if (c.username) ratedByUsers.add(c.username);
@@ -787,13 +785,13 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
           // 2. Generic "Filter Contacts" (Any Followed Contact)
           if (filterContacts && user) {
-            const { data: follows, error: followsError } = await supabase
+            const { data: follows, error: _followsError } = await supabase
               .from('follows')
               .select('following_id')
               .eq('follower_id', user.id)
               .limit(QUERY_LIMIT);
 
-            if (!followsError) {
+            if (!_followsError) {
               const contactIds = Array.isArray(follows) ? follows.map(f => f.following_id) : [];
 
               if (contactIds.length > 0) {
@@ -888,7 +886,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                 architects: b.architects?.map((a) => ({ id: a.architect_id })) || []
             }));
 
-            const filteredData = filterLocalBuildings(preFilteredData, {
+            const filteredData = filterLocalBuildings(preFilteredData as unknown as import("../utils/searchFilters").BuildingFilterData[], {
               categoryId: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : null,
               typologyIds: selectedTypologies,
               attributeIds: selectedAttributes,
@@ -901,7 +899,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
             // 6. Map to MapItem (BuildingPoint)
             return filteredData
-              .map((b: BuildingMapSearchRow) => {
+              .map((b) => {
                 const coords = parseLocation(b.location);
                 const location_lat = coords?.lat || 0;
                 const location_lng = coords?.lng || 0;
@@ -1000,7 +998,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         const userStatus = userStatuses[b.id];
 
         // Hide Hidden
-        if (hideHidden && userStatus === 'hidden') return false; // Usually hidden means 'hidden' status
+        if (hideHidden && String(userStatus) === 'hidden') return false; // Usually hidden means 'hidden' status
 
         const isViewingContacts = selectedContacts.length > 0;
 

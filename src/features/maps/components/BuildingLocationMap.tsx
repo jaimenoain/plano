@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import Map, { Marker, NavigationControl, GeolocateControl, MapRef } from "react-map-gl";
+import Map, { Marker, NavigationControl, GeolocateControl, MapRef } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Layers, Maximize2, Minimize2 } from "lucide-react";
 import { MapPin as MapPinComponent } from "./MapPin";
 import { getPinStyle } from "../utils/pinStyling";
 import { ClusterResponse } from "../hooks/useMapData";
+import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
 interface BuildingLocationMapProps {
   lat: number;
@@ -20,29 +21,6 @@ interface BuildingLocationMapProps {
 }
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
-
-const SATELLITE_STYLE = {
-  version: 8,
-  sources: {
-    "satellite-tiles": {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-      ],
-      tileSize: 256,
-      attribution: "&copy; Esri"
-    }
-  },
-  layers: [
-    {
-      id: "satellite-layer",
-      type: "raster",
-      source: "satellite-tiles",
-      minzoom: 0,
-      maxzoom: 22
-    }
-  ]
-};
 
 export function BuildingLocationMap({
   lat,
@@ -104,7 +82,7 @@ export function BuildingLocationMap({
           }}
           mapLib={maplibregl}
           style={{ width: "100%", height: "100%" }}
-          mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
+          mapStyle={isSatellite ? SATELLITE_MAP_STYLE : DEFAULT_MAP_STYLE}
           attributionControl={false}
         >
           <NavigationControl position="bottom-right" />

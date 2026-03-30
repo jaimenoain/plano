@@ -117,42 +117,46 @@ describe('WriteReview Page', () => {
       error: null
     });
 
-    render(
+    const { unmount } = render(
       <BrowserRouter>
         <WriteReview />
       </BrowserRouter>
     );
 
-    // Wait for building name to load
-    await waitFor(() => {
-      expect(screen.getByText('Test Building')).toBeTruthy();
-    });
-
-    // Find and click "Add link" button
-    const addLinkBtn = await screen.findByText(/Add link/i);
-    fireEvent.click(addLinkBtn);
-
-    // Find URL input
-    const urlInput = await screen.findByPlaceholderText('https://...') as HTMLInputElement;
-    const titleInput = screen.getByPlaceholderText('Title (optional)') as HTMLInputElement;
-
-    // Type URL
-    fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
-
-    // Blur URL input to trigger fetch
-    fireEvent.blur(urlInput);
-
-    // Verify fetch was called
-    await waitFor(() => {
-      expect(mockInvoke).toHaveBeenCalledWith('fetch-url-metadata', {
-        body: { url: 'https://example.com' }
+    try {
+      // Wait for building name to load
+      await waitFor(() => {
+        expect(screen.getByText('Test Building')).toBeTruthy();
       });
-    });
 
-    // Verify title is populated
-    await waitFor(() => {
-      expect(titleInput.value).toBe('Example Domain');
-    });
+      // Find and click "Add link" button
+      const addLinkBtn = await screen.findByText(/Add link/i);
+      fireEvent.click(addLinkBtn);
+
+      // Find URL input
+      const urlInput = await screen.findByPlaceholderText('https://...') as HTMLInputElement;
+      const titleInput = screen.getByPlaceholderText('Title (optional)') as HTMLInputElement;
+
+      // Type URL
+      fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
+
+      // Blur URL input to trigger fetch
+      fireEvent.blur(urlInput);
+
+      // Verify fetch was called
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith('fetch-url-metadata', {
+          body: { url: 'https://example.com' }
+        });
+      });
+
+      // Verify title is populated
+      await waitFor(() => {
+        expect(titleInput.value).toBe('Example Domain');
+      });
+    } finally {
+      unmount();
+    }
   });
 
   it('does not fetch title if title field is not empty', async () => {
@@ -161,32 +165,36 @@ describe('WriteReview Page', () => {
       error: null
     });
 
-    render(
+    const { unmount } = render(
       <BrowserRouter>
         <WriteReview />
       </BrowserRouter>
     );
 
-    await waitFor(() => {
+    try {
+      await waitFor(() => {
         expect(screen.getByText('Test Building')).toBeTruthy();
-    });
+      });
 
-    // Check if input exists already
-    if (!screen.queryByPlaceholderText('https://...')) {
+      // Check if input exists already
+      if (!screen.queryByPlaceholderText('https://...')) {
         const addLinkBtn = await screen.findByText(/Add link/i);
         fireEvent.click(addLinkBtn);
+      }
+
+      const urlInput = await screen.findByPlaceholderText('https://...') as HTMLInputElement;
+      const titleInput = screen.getByPlaceholderText('Title (optional)') as HTMLInputElement;
+
+      fireEvent.change(titleInput, { target: { value: 'My Custom Title' } });
+      fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
+      fireEvent.blur(urlInput);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+      expect(mockInvoke).not.toHaveBeenCalled();
+
+      expect(titleInput.value).toBe('My Custom Title');
+    } finally {
+      unmount();
     }
-
-    const urlInput = await screen.findByPlaceholderText('https://...') as HTMLInputElement;
-    const titleInput = screen.getByPlaceholderText('Title (optional)') as HTMLInputElement;
-
-    fireEvent.change(titleInput, { target: { value: 'My Custom Title' } });
-    fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
-    fireEvent.blur(urlInput);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
-    expect(mockInvoke).not.toHaveBeenCalled();
-
-    expect(titleInput.value).toBe('My Custom Title');
   });
 });

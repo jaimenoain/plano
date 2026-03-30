@@ -75,8 +75,7 @@ export default function Auth() {
           }
         }
       } catch (error) {
-        console.error("Error fetching inviter details:", error);
-      }
+}
     }
     loadInviterData();
   }, [invitedBy]);

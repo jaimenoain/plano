@@ -29,8 +29,7 @@ export class VideoCompressionService {
 
       this.instance = ffmpeg;
     } catch (error) {
-      console.error('Failed to load FFmpeg:', error);
-      throw new Error('Video compression engine failed to load. Please try again or check browser compatibility.');
+throw new Error('Video compression engine failed to load. Please try again or check browser compatibility.');
     } finally {
       this.isLoading = false;
     }
@@ -72,7 +71,10 @@ export class VideoCompressionService {
       const data = await ffmpeg.readFile(outputName);
 
       // Convert to File
-      const blob = new Blob([data], { type: 'video/mp4' });
+      const blob = new Blob(
+        [typeof data === "string" ? data : new Uint8Array(data)],
+        { type: "video/mp4" },
+      );
       const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_compressed.mp4", {
         type: 'video/mp4',
         lastModified: Date.now(),
@@ -80,8 +82,8 @@ export class VideoCompressionService {
 
       return compressedFile;
 
-    } catch (error) {
-      console.error('Compression error:', error);
+    } catch (_error) {
+      void _error;
       throw new Error('Video compression failed.');
     } finally {
       // Cleanup
@@ -89,8 +91,8 @@ export class VideoCompressionService {
       try {
         await ffmpeg.deleteFile(inputName);
         await ffmpeg.deleteFile(outputName);
-      } catch (e) {
-        // Ignore cleanup errors
+      } catch (_e) {
+        void _e;
       }
     }
   }

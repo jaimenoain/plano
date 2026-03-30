@@ -16,7 +16,7 @@ interface FeedClusterCardProps {
 export function FeedClusterCard({
   entries,
   user,
-  location,
+  location: _location,
   timestamp
 }: FeedClusterCardProps) {
   const navigate = useNavigate();

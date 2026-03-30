@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings, LogOut, MoreHorizontal, UserPlus, UserCheck, PlayCircle, Ban } from "lucide-react";
+import { LogOut, MoreHorizontal, Ban } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,6 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { BlockUserDialog } from "./BlockUserDialog";
 import { AddBuildingDialog } from "./AddBuildingDialog";
 
@@ -56,10 +55,9 @@ export function UserCard({
     onOpenUserList,
     onTabChange,
     onBuildingAdded,
-    squad = []
+    squad: _squad = []
 }: UserCardProps) {
     const navigate = useNavigate();
-    const { toast } = useToast();
     const [showBlockDialog, setShowBlockDialog] = useState(false);
 
     const totalBuildings = stats.reviews + stats.pending;

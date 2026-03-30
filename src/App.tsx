@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,28 +9,51 @@ import { HelmetProvider } from "react-helmet-async";
 
 import Index from "@/features/feed/pages/Index";
 import Auth from "@/features/auth/pages/Auth";
-import UpdatePassword from "@/features/auth/pages/UpdatePassword";
-import Onboarding from "@/features/auth/pages/Onboarding";
 import Terms from "./pages/Terms";
-import Explore from "@/features/explore/pages/Explore";
-import Search from "@/features/search/SearchPage";
-import Post from "./pages/Post";
-import Profile from "@/features/profile/pages/Profile";
-import UserPhotoGallery from "@/features/profile/pages/UserPhotoGallery";
-import Settings from "@/features/profile/pages/Settings";
 import NotFound from "./pages/NotFound";
-import BuildingDetails from "@/features/buildings/pages/BuildingDetails";
-import ArchitectDashboard from "@/features/architect/pages/ArchitectDashboard";
-import ArchitectDetails from "@/features/architect/pages/ArchitectDetails";
-import EditArchitect from "@/features/architect/pages/EditArchitect";
-import ReviewDetails from "@/features/buildings/pages/ReviewDetails";
-import Notifications from "@/features/notifications/pages/Notifications";
-import Connect from "@/features/connect/pages/Connect";
-import AddBuilding from "@/features/buildings/pages/AddBuilding";
-import EditBuilding from "@/features/buildings/pages/EditBuilding";
-import WriteReview from "@/features/buildings/pages/WriteReview";
-import CollectionMap from "@/features/collections/components/CollectionMapPage";
-import FolderView from "@/features/profile/pages/FolderView";
+
+import { lazyWithRetry } from "@/utils/lazyWithRetry";
+import { RouteLoadingFallback } from "@/components/common/RouteLoadingFallback";
+import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
+import { RouteErrorBoundary } from "@/components/common/RouteErrorBoundary";
+
+const UpdatePassword = lazyWithRetry(() => import("@/features/auth/pages/UpdatePassword"));
+const Onboarding = lazyWithRetry(() => import("@/features/auth/pages/Onboarding"));
+const Explore = lazyWithRetry(() => import("@/features/explore/pages/Explore"));
+const Search = lazyWithRetry(() => import("@/features/search/SearchPage"));
+const Post = lazyWithRetry(() => import("./pages/Post"));
+const Profile = lazyWithRetry(() => import("@/features/profile/pages/Profile"));
+const UserPhotoGallery = lazyWithRetry(() => import("@/features/profile/pages/UserPhotoGallery"));
+const Settings = lazyWithRetry(() => import("@/features/profile/pages/Settings"));
+const BuildingDetails = lazyWithRetry(() => import("@/features/buildings/pages/BuildingDetails"));
+const ArchitectDashboard = lazyWithRetry(() => import("@/features/architect/pages/ArchitectDashboard"));
+const ArchitectDetails = lazyWithRetry(() => import("@/features/architect/pages/ArchitectDetails"));
+const EditArchitect = lazyWithRetry(() => import("@/features/architect/pages/EditArchitect"));
+const ReviewDetails = lazyWithRetry(() => import("@/features/buildings/pages/ReviewDetails"));
+const Notifications = lazyWithRetry(() => import("@/features/notifications/pages/Notifications"));
+const Connect = lazyWithRetry(() => import("@/features/connect/pages/Connect"));
+const AddBuilding = lazyWithRetry(() => import("@/features/buildings/pages/AddBuilding"));
+const EditBuilding = lazyWithRetry(() => import("@/features/buildings/pages/EditBuilding"));
+const WriteReview = lazyWithRetry(() => import("@/features/buildings/pages/WriteReview"));
+const CollectionMap = lazyWithRetry(() => import("@/features/collections/components/CollectionMapPage"));
+const FolderView = lazyWithRetry(() => import("@/features/profile/pages/FolderView"));
+
+const AdminDashboard = lazyWithRetry(() => import("@/features/admin/pages/Dashboard"));
+const Buildings = lazyWithRetry(() => import("@/features/admin/pages/Buildings"));
+const MergeBuildings = lazyWithRetry(() => import("@/features/admin/pages/MergeBuildings"));
+const MergeComparison = lazyWithRetry(() => import("@/features/admin/pages/MergeComparison"));
+const Users = lazyWithRetry(() => import("@/features/admin/pages/Users"));
+const Moderation = lazyWithRetry(() => import("@/features/admin/pages/Moderation"));
+const ImageWall = lazyWithRetry(() => import("@/features/admin/pages/ImageWall"));
+const PhotoAnalytics = lazyWithRetry(() => import("@/features/admin/pages/PhotoAnalytics"));
+const BuildingAudit = lazyWithRetry(() => import("@/features/admin/pages/BuildingAudit"));
+const StorageJobs = lazyWithRetry(() => import("@/features/admin/pages/StorageJobs"));
+const ArchitectClaims = lazyWithRetry(() => import("@/features/admin/pages/ArchitectClaims"));
+const Unauthorized = lazyWithRetry(() => import("@/features/admin/pages/Unauthorized"));
+
+import { AdminGuard } from "@/features/admin/components/AdminGuard";
+import AdminLayout from "@/features/admin/components/AdminLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 import { PwaPrompt } from "@/components/pwa/PwaPrompt";
 import { PwaProvider } from "@/hooks/usePwaInstall";
@@ -39,32 +62,17 @@ import { useLoginTracker } from "@/features/auth/hooks/useLoginTracker";
 import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
 import { logDiagnosticError } from "@/features/admin/api/diagnostics";
 
-// Admin Imports
-import AdminDashboard from "@/features/admin/pages/Dashboard";
-import Buildings from "@/features/admin/pages/Buildings";
-import MergeBuildings from "@/features/admin/pages/MergeBuildings";
-import MergeComparison from "@/features/admin/pages/MergeComparison";
-import Users from "@/features/admin/pages/Users";
-import Moderation from "@/features/admin/pages/Moderation";
-import ImageWall from "@/features/admin/pages/ImageWall";
-import PhotoAnalytics from "@/features/admin/pages/PhotoAnalytics";
-import BuildingAudit from "@/features/admin/pages/BuildingAudit";
-import StorageJobs from "@/features/admin/pages/StorageJobs";
-import ArchitectClaims from "@/features/admin/pages/ArchitectClaims";
-import { AdminGuard } from "@/features/admin/components/AdminGuard";
-import AdminLayout from "@/features/admin/components/AdminLayout";
-import { MainLayout } from "@/components/layout/MainLayout";
-import Unauthorized from "@/features/admin/pages/Unauthorized";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+      },
     },
-  },
-});
+  });
+}
 
 const RootLayout = () => (
   <>
@@ -181,20 +189,30 @@ const AppContent = () => {
         <PwaPrompt />
         <Toaster />
         <Sonner />
-        <RouterProvider router={router} />
+        <RouteErrorBoundary>
+          <Suspense fallback={<RouteLoadingFallback />}>
+            <RouterProvider router={router} />
+          </Suspense>
+        </RouteErrorBoundary>
       </PwaProvider>
     </TooltipProvider>
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <HelmetProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </HelmetProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [queryClient] = useState(makeQueryClient);
+
+  return (
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <HelmetProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </HelmetProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
+  );
+};
 
 export default App;

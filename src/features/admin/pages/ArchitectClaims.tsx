@@ -64,8 +64,7 @@ export default function ArchitectClaims() {
       // Since it's Many-to-One (claim -> user), it should be an object.
       setClaims((data as any[]) || []);
     } catch (error) {
-      console.error("Error fetching claims:", error);
-      toast.error("Failed to load claims");
+toast.error("Failed to load claims");
     } finally {
       setLoading(false);
     }
@@ -94,12 +93,8 @@ export default function ArchitectClaims() {
           metadata: { status: 'approved' }
         } as any);
 
-      if (notifError) {
-          console.error("Error sending notification", notifError);
-      }
-
+      if (notifError) throw notifError;
     } catch (error) {
-      console.error("Error approving claim:", error);
       toast.error("Failed to approve claim");
       return;
     }
@@ -121,7 +116,7 @@ export default function ArchitectClaims() {
 
       if (updateError) throw updateError;
 
-      const { error: notifError } = await supabase
+      const { error: rejectNotifError } = await supabase
         .from("notifications")
         .insert({
           user_id: claim.user_id,
@@ -131,11 +126,10 @@ export default function ArchitectClaims() {
           metadata: { status: 'rejected' }
         } as any);
 
-      if (notifError) console.error("Error sending notification", notifError);
+      if (rejectNotifError) throw rejectNotifError;
 
-    } catch (error) {
-      console.error("Error denying claim:", error);
-      toast.error("Failed to deny claim");
+      } catch (error) {
+toast.error("Failed to deny claim");
       return;
     }
 

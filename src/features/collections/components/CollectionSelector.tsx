@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { Check, Plus, Loader2, X } from "lucide-react";
+import { Check, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -67,8 +66,7 @@ export function CollectionSelector({ userId, selectedCollectionIds, onChange, cl
 
       setCollections(uniqueCollections);
     } catch (error) {
-      console.error("Error fetching collections:", error);
-    } finally {
+} finally {
       setLoading(false);
     }
   };
@@ -109,8 +107,7 @@ export function CollectionSelector({ userId, selectedCollectionIds, onChange, cl
       toast.success("Collection created");
 
     } catch (error) {
-      console.error("Error creating collection:", error);
-      toast.error("Failed to create collection");
+toast.error("Failed to create collection");
     } finally {
       setCreating(false);
     }

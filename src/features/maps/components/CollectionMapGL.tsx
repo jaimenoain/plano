@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from "react-dom";
 import { useSearchParams } from 'react-router-dom';
-import MapGL, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl';
+import MapGL, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Layers, Maximize2, Minimize2 } from "lucide-react";
-import { useURLMapState, DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/features/maps/hooks/useURLMapState';
+import { useURLMapState } from '@/features/maps/hooks/useURLMapState';
 import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { MapMarkers } from './MapMarkers';
@@ -14,31 +14,9 @@ import { DiscoveryBuilding } from '@/features/search/components/types';
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBoundsFromBuildings } from '@/utils/map';
 import { useItineraryStore } from '@/features/itinerary/stores/useItineraryStore';
+import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
-
-const SATELLITE_STYLE = {
-  version: 8,
-  sources: {
-    "satellite-tiles": {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-      ],
-      tileSize: 256,
-      attribution: "&copy; Esri"
-    }
-  },
-  layers: [
-    {
-      id: "satellite-layer",
-      type: "raster",
-      source: "satellite-tiles",
-      minzoom: 0,
-      maxzoom: 22
-    }
-  ]
-};
 
 interface CollectionMapGLProps {
   buildings: DiscoveryBuilding[];
@@ -58,9 +36,9 @@ function CollectionMapGLContent({
   setHighlightedId,
   onRemoveItem,
   onAddCandidate,
-  onUpdateMarkerNote,
-  onRemoveMarker,
-  showSavedCandidates,
+  onUpdateMarkerNote: _onUpdateMarkerNote,
+  onRemoveMarker: _onRemoveMarker,
+  showSavedCandidates: _showSavedCandidates,
   showItinerary
 }: CollectionMapGLProps) {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
@@ -138,17 +116,18 @@ function CollectionMapGLContent({
 
                   if (camera && camera.center && typeof camera.zoom === 'number') {
                       const { center, zoom } = camera;
+                      const ll = maplibregl.LngLat.convert(center);
 
                       // Update both local viewState and URL immediately
                       // This atomic update prevents race conditions with the URL sync hook
                       setViewState({
-                          latitude: center.lat,
-                          longitude: center.lng,
+                          latitude: ll.lat,
+                          longitude: ll.lng,
                           zoom: zoom
                       });
                       updateMapState({
-                          lat: center.lat,
-                          lng: center.lng,
+                          lat: ll.lat,
+                          lng: ll.lng,
                           zoom: zoom
                       }, true);
 
@@ -234,7 +213,7 @@ function CollectionMapGLContent({
             onMoveEnd={onMoveEnd}
             onLoad={() => setIsMapLoaded(true)}
             mapLib={maplibregl}
-            mapStyle={isSatellite ? SATELLITE_STYLE : MAP_STYLE}
+            mapStyle={isSatellite ? SATELLITE_MAP_STYLE : MAP_STYLE}
             attributionControl={false}
             onClick={() => setHighlightedId(null)}
         >

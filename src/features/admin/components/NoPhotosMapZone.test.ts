@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
 // Mock react-map-gl to prevent mapbox-gl import error
-vi.mock('react-map-gl', () => ({
+vi.mock('react-map-gl/maplibre', () => ({
   default: () => null,
   Source: () => null,
   Layer: () => null,

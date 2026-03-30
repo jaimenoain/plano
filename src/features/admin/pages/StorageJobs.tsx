@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Trash2, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Trash2, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -43,8 +43,7 @@ export default function StorageJobs() {
       if (error) throw error;
       setJobs(data as unknown as DeletionJob[]);
     } catch (error) {
-      console.error("Error fetching jobs:", error);
-      toast.error("Failed to load jobs");
+toast.error("Failed to load jobs");
     } finally {
       setLoading(false);
     }
@@ -59,9 +58,8 @@ export default function StorageJobs() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'deletion_jobs' },
-        (payload) => {
-           console.log('Change received!', payload);
-           fetchJobs(); // Simple refresh on any change
+        (_payload) => {
+fetchJobs(); // Simple refresh on any change
         }
       )
       .subscribe();
@@ -95,8 +93,7 @@ export default function StorageJobs() {
       setUserIdInput("");
       fetchJobs();
     } catch (error: any) {
-      console.error("Error creating job:", error);
-      toast.error(`Failed to queue job: ${error.message}`);
+toast.error(`Failed to queue job: ${error.message}`);
     } finally {
       setSubmitting(false);
     }

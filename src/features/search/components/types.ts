@@ -82,6 +82,7 @@ export interface LeaderboardBuilding {
   visit_count?: number;
   avg_rating?: number;
   rating_count?: number;
+  main_image_url?: string | null;
 }
 
 export interface LeaderboardData {

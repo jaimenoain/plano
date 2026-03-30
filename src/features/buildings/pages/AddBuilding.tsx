@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocationInput } from "@/components/ui/LocationInput";
@@ -6,8 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { config } from "@/config";
-import { Loader2, MapPin, Navigation, Plus, ArrowRight, Building2, Layers } from "lucide-react";
-import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
+import { Loader2, MapPin, ArrowRight, Building2, Layers } from "lucide-react";
+import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -30,31 +29,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getBuildingImageUrl } from "@/utils/image";
+import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
-
-const SATELLITE_STYLE = {
-  version: 8,
-  sources: {
-    "satellite-tiles": {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-      ],
-      tileSize: 256,
-      attribution: "&copy; Esri"
-    }
-  },
-  layers: [
-    {
-      id: "satellite-layer",
-      type: "raster",
-      source: "satellite-tiles",
-      minzoom: 0,
-      maxzoom: 22
-    }
-  ]
-};
 
 // Helper to parse Geocoder results
 const STOP_WORDS = [
@@ -112,6 +89,8 @@ interface NearbyBuilding {
   dist_meters: number;
   similarity_score?: number;
   location_precision?: 'exact' | 'approximate';
+
+  main_image_url?: string | null;
 }
 
 export default function AddBuilding() {
@@ -154,8 +133,7 @@ export default function AddBuilding() {
                 await importLibrary("geocoding");
                 setMapsLoaded(true);
             } catch (e) {
-                console.error("Failed to load maps", e);
-            }
+}
         }
     };
     loadMaps();
@@ -174,8 +152,7 @@ export default function AddBuilding() {
             .eq("user_id", user.id);
 
         if (error) {
-            console.error("Error fetching user buildings:", error);
-            return new Map();
+return new Map();
         }
 
         const map = new Map();
@@ -195,7 +172,7 @@ export default function AddBuilding() {
 
   // Handle URL parameters for initial location
   useEffect(() => {
-    if (!mapsLoaded) return; // Wait for maps to load
+    if (!mapsLoaded) return undefined; // Wait for maps to load
 
     const latParam = searchParams.get("lat");
     const lngParam = searchParams.get("lng");
@@ -218,14 +195,14 @@ export default function AddBuilding() {
                 setExtractedLocation(details);
               }
             })
-            .catch((error) => {
-              console.error("Initial reverse geocoding error:", error);
-            });
+            .catch((_error) => {
+          void _error;
+});
         } catch (e) {
-          console.error("Geocoding failed to initialize:", e);
-        }
+}
       }
     }
+    return undefined;
   }, [searchParams, mapsLoaded]);
 
   const [finalLocationData, setFinalLocationData] = useState<{
@@ -241,7 +218,7 @@ export default function AddBuilding() {
 
   // Debounced duplicate check
   useEffect(() => {
-    if (!markerPosition) return;
+    if (!markerPosition) return undefined;
 
     const checkDuplicates = async () => {
       setCheckingDuplicates(true);
@@ -277,19 +254,15 @@ export default function AddBuilding() {
 
             const [locationResult, nameResult] = await Promise.all([locationCheckPromise, nameCheckPromise]);
 
-            if (locationResult.error) {
-                console.warn("find_nearby_buildings RPC failed", locationResult.error);
-            } else {
+            if (!locationResult.error) {
                 locationData = locationResult.data || [];
             }
 
-            if (nameResult.error) {
-                 console.warn("find_nearby_buildings RPC failed", nameResult.error);
-            } else {
+            if (!nameResult.error) {
                 nameData = nameResult.data || [];
             }
-        } catch (err) {
-            console.warn("Exception checking duplicates:", err);
+        } catch (_err) {
+          void _err;
         }
 
         // Filter name results to ensure relevance
@@ -340,8 +313,7 @@ export default function AddBuilding() {
 
         setDuplicates(uniqueDuplicates);
       } catch (error) {
-        console.error("Error checking duplicates:", error);
-      } finally {
+} finally {
         setCheckingDuplicates(false);
       }
     };
@@ -376,8 +348,7 @@ export default function AddBuilding() {
           setExtractedLocation(details);
         }
       } catch (error) {
-        console.error("Geocoding error:", error);
-        toast.error("Location search failed. Please click on the map to set the location manually.");
+toast.error("Location search failed. Please click on the map to set the location manually.");
       }
     }
   };
@@ -394,15 +365,14 @@ export default function AddBuilding() {
         setExtractedLocation(details);
       }
     } catch (error) {
-      console.error("Reverse geocoding error:", error);
-      // We don't block the user if reverse geocoding fails, they just won't get an auto-filled address
+// We don't block the user if reverse geocoding fails, they just won't get an auto-filled address
       if (!selectedAddress) {
         toast.error("Could not fetch address details, but location is set.");
       }
     }
   };
 
-  const proceedToStep2 = () => {
+  const proceedToStep2 = (): void => {
     if (!markerPosition) return;
 
     if (duplicates.length > 0) {
@@ -615,7 +585,7 @@ export default function AddBuilding() {
             onClick={handleMapClick}
             mapLib={maplibregl}
             style={{ width: "100%", height: "100%" }}
-            mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
+            mapStyle={isSatellite ? SATELLITE_MAP_STYLE : DEFAULT_MAP_STYLE}
             cursor="crosshair"
           >
             <NavigationControl position="top-right" />

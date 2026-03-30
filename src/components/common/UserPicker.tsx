@@ -63,8 +63,7 @@ export function UserPicker({ selectedIds, onSelect, onRemove, className, modal }
           setUsers((profiles as any[]) || []);
         }
       } catch (error) {
-        console.error("Error fetching users", error);
-      } finally {
+} finally {
         setLoading(false);
       }
     }

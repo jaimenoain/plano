@@ -55,8 +55,7 @@ export default function ImageWall() {
 
       setImages(combined);
     } catch (error) {
-      console.error("Error fetching images:", error);
-      toast.error("Failed to load images");
+toast.error("Failed to load images");
     } finally {
       setLoading(false);
     }
@@ -97,8 +96,7 @@ export default function ImageWall() {
         setSelectedKeys(new Set());
 
     } catch (error) {
-        console.error(error);
-        toast.error("Failed to delete images");
+toast.error("Failed to delete images");
     }
   };
 

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, ArrowRight, Merge, RefreshCw, AlertTriangle } from "lucide-react";
+import { Loader2, Merge, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -61,13 +61,11 @@ export default function MergeBuildings() {
       });
       // RPC might fail if migration not applied, handle gracefully
       if (error) {
-          console.warn("get_potential_duplicates RPC failed (possibly not applied):", error);
-          return;
+return;
       }
       setPotentialDuplicates(data as PotentialDuplicate[]);
     } catch (error) {
-      console.error("Error fetching potential duplicates:", error);
-      toast.error("Failed to fetch potential duplicates");
+toast.error("Failed to fetch potential duplicates");
     } finally {
       setLoadingPotential(false);
     }
@@ -80,7 +78,6 @@ export default function MergeBuildings() {
     }
     setLoading(true);
     try {
-      // @ts-ignore
       const { data, error } = await supabase
         .from('buildings')
         .select('*, architects:building_architects(architect:architects(name, id))')
@@ -96,8 +93,7 @@ export default function MergeBuildings() {
       }));
       setResults(transformedData as AdminBuilding[]);
     } catch (error) {
-      console.error("Search error:", error);
-    } finally {
+} finally {
       setLoading(false);
     }
   };
@@ -136,8 +132,7 @@ export default function MergeBuildings() {
       setDupResults([]);
       fetchPotentialDuplicates(); // Refresh list
     } catch (error) {
-      console.error("Merge error:", error);
-      toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
+toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
     } finally {
       setIsMerging(false);
     }
@@ -146,23 +141,6 @@ export default function MergeBuildings() {
   const loadPair = async (id1: string, id2: string) => {
     // Fetch both buildings full details
     try {
-       const { data, error } = await supabase
-        .from('buildings')
-        .select('*')
-        .in('id', [id1, id2]);
-
-       if (error) throw error;
-       // We need to manually shape the architects for the AdminBuilding type because the query returns flattened rows or nested relations?
-       // The query here is `select('*')`. It returns columns. `architects` is deprecated column (string[] or null).
-       // Wait, `select('*')` returns the columns. Does it return the relation? No.
-       // So `architects` will be the string array (deprecated).
-       // But AdminBuilding expects Architect[] | null.
-       // If we want to support the new relation in `loadPair`, we need to update the query here too.
-       // Otherwise `b1.architects` (string[]) won't match `AdminBuilding` (Architect[]).
-       // And `BuildingCard` expects objects `a.name`.
-
-       // So I must update this query to fetch the relation.
-
        const { data: rawData, error: loadError } = await supabase
         .from('buildings')
         .select('*, architects:building_architects(architect:architects(name, id))')

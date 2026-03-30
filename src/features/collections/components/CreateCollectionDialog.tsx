@@ -55,8 +55,7 @@ export function CreateCollectionDialog({ open, onOpenChange, userId, onSuccess }
       if (error) throw error;
       setFolders((userFolders as any[]) || []);
     } catch (error) {
-      console.error("Error fetching folders:", error);
-    } finally {
+} finally {
       setLoadingFolders(false);
     }
   };
@@ -121,8 +120,7 @@ export function CreateCollectionDialog({ open, onOpenChange, userId, onSuccess }
           .insert(folderItemsToInsert);
 
         if (folderError) {
-          console.error("Error adding to folders:", folderError);
-          toast({ variant: "destructive", description: "Collection created, but failed to add to some folders." });
+toast({ variant: "destructive", description: "Collection created, but failed to add to some folders." });
         }
       }
 
@@ -133,8 +131,7 @@ export function CreateCollectionDialog({ open, onOpenChange, userId, onSuccess }
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error creating collection:", error);
-      toast({ variant: "destructive", description: "Failed to create collection." });
+toast({ variant: "destructive", description: "Failed to create collection." });
     } finally {
       setProcessing(false);
     }

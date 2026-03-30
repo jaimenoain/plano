@@ -138,9 +138,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
       .select("user_id, user:profiles(id, username, avatar_url)")
       .eq("collection_id", collection.id);
 
-    if (error) {
-      console.error("Error fetching contributors:", error);
-    } else {
+    if (!error) {
       setContributors(data as any[]);
     }
     setLoadingContributors(false);
@@ -199,8 +197,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
       });
 
     if (error) {
-      console.error("Error adding contributor:", error);
-      toast.error("Failed to add contributor");
+toast.error("Failed to add contributor");
     } else {
       toast.success("Contributor added");
       fetchContributors();
@@ -376,8 +373,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
 
       toast.success("Export successful");
     } catch (error) {
-      console.error("Export failed:", error);
-      toast.error("Failed to export data");
+toast.error("Failed to export data");
     } finally {
       setDownloading(false);
     }

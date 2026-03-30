@@ -7,6 +7,16 @@ import { Link } from "react-router-dom";
 import { MutualFacepile } from "@/features/connect/components/MutualFacepile";
 import { X } from "lucide-react";
 
+type PeopleYouMayKnowSuggestion = {
+  id: string;
+  username: string | null;
+  avatar_url?: string | null;
+  mutual_follows?: { id: string; username: string | null; avatar_url: string | null }[];
+  mutual_count?: number;
+  group_mutual_count?: number;
+  is_follows_me?: boolean;
+};
+
 export function PeopleYouMayKnow() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -22,7 +32,7 @@ export function PeopleYouMayKnow() {
       if (!data || data.length === 0 || !user) return data || [];
 
       // Fetch mutual follows details
-      const suggestionIds = data.map(s => s.id);
+      const suggestionIds = data.map((s: { id: string }) => s.id);
 
       // Get my following list first to filter mutuals
       const { data: followingData } = await supabase
@@ -33,7 +43,7 @@ export function PeopleYouMayKnow() {
       const myFollowingIds = followingData?.map(f => f.following_id) || [];
 
       if (myFollowingIds.length === 0) {
-        return data.map(s => ({ ...s, mutual_follows: [] }));
+        return data.map((s: { id: string }) => ({ ...s, mutual_follows: [] as { id: string; username: string | null; avatar_url: string | null }[] }));
       }
 
       const { data: mutualsData } = await supabase
@@ -45,7 +55,7 @@ export function PeopleYouMayKnow() {
         .in('following_id', suggestionIds)
         .in('follower_id', myFollowingIds);
 
-      return data.map(s => {
+      return data.map((s: { id: string }) => {
         const mutuals = mutualsData
           ?.filter(m => m.following_id === s.id)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,7 +94,7 @@ export function PeopleYouMayKnow() {
     <div className="p-5 border rounded-xl bg-card shadow-sm space-y-4 max-w-full w-full overflow-hidden">
       <h3 className="font-semibold">People you may know</h3>
       <div className="flex overflow-x-auto gap-4 pb-4 px-1 snap-x hide-scrollbar">
-        {suggestions.map((person) => (
+        {suggestions.map((person: PeopleYouMayKnowSuggestion) => (
           <div key={person.id} className="relative flex flex-col items-center justify-between gap-3 min-w-[200px] max-w-[200px] snap-center p-4 border rounded-lg bg-background/50 shrink-0 h-full group">
             <button
                 onClick={(e) => {

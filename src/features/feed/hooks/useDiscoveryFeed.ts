@@ -129,7 +129,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         // --- Process Architects ---
         if (architectsData) {
           const architectsMap: Record<string, { id: string; name: string }[]> = {};
-          (architectsData as BuildingArchitectJoinRow[]).forEach((item) => {
+          (architectsData as unknown as BuildingArchitectJoinRow[]).forEach((item) => {
             if (item.architects) {
               if (!architectsMap[item.building_id]) {
                 architectsMap[item.building_id] = [];
@@ -145,7 +145,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         // --- Process Images ---
         if (imagesData) {
           const imagesMap: Record<string, DiscoveryFeedImageRow[]> = {};
-          (imagesData as DiscoveryFeedImageRow[]).forEach((item) => {
+          (imagesData as unknown as DiscoveryFeedImageRow[]).forEach((item) => {
              const buildingId = item.user_buildings?.building_id;
              if (buildingId) {
                  if (!imagesMap[buildingId]) imagesMap[buildingId] = [];

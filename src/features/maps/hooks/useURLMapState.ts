@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useMemo, useCallback } from 'react';
-import { MapMode, MapFilters } from '@/types/plano-map';
+import { MapMode, MapFilters, type MichelinRating } from '@/types/plano-map';
 
 // Constants
 export const DEFAULT_LAT = 20;
@@ -127,6 +127,11 @@ export const useURLMapState = () => {
     const getNumParam = (param: string | null) => param ? parseInt(param, 10) : undefined;
     const getIdListParam = (param: string | null) => param ? param.split(",").map(id => ({ id, name: id })) : undefined;
 
+    const parseMichelin = (param: string | null): MichelinRating | undefined => {
+      const n = param ? parseInt(param, 10) : NaN;
+      return n === 0 || n === 1 || n === 2 || n === 3 ? n : undefined;
+    };
+
     const filters: MapFilters = {
        query: searchParams.get("q") || undefined,
        status: getArrayParam(searchParams.get("status")),
@@ -135,8 +140,8 @@ export const useURLMapState = () => {
        hideHidden: searchParams.get("hideHidden") === "false" ? false : true,
        hideWithoutImages: getBoolParam(searchParams.get("hideWithoutImages")),
        personalMinRating: getNumParam(searchParams.get("minRating")),
-       minRating: getNumParam(searchParams.get("globalMinRating")) || getNumParam(searchParams.get("min_rating")),
-       contactMinRating: getNumParam(searchParams.get("contactMinRating")),
+       minRating: parseMichelin(searchParams.get("globalMinRating")) ?? parseMichelin(searchParams.get("min_rating")),
+       contactMinRating: parseMichelin(searchParams.get("contactMinRating")),
        category: searchParams.get("category") || undefined,
        typologies: getArrayParam(searchParams.get("typologies")),
        attributes: getArrayParam(searchParams.get("attributes")),

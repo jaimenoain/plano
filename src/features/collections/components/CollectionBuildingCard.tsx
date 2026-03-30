@@ -20,7 +20,7 @@ interface CollectionBuildingCardProps {
   canEdit: boolean;
   onUpdateNote: (newNote: string) => void;
   onNavigate: () => void;
-  categorizationMethod?: 'default' | 'custom' | 'status' | 'rating_member';
+  categorizationMethod?: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
   customCategories?: { id: string; label: string; color: string }[] | null;
   onUpdateCategory?: (categoryId: string) => void;
   showImages?: boolean;

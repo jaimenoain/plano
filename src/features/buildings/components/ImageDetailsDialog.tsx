@@ -82,7 +82,7 @@ export function ImageDetailsDialog({
 
   // Handle keyboard navigation
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return undefined;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' && onNext && hasNext) {
@@ -159,8 +159,7 @@ export function ImageDetailsDialog({
       }
 
     } catch (error) {
-      console.error("Error fetching image details:", error);
-    } finally {
+} finally {
       setIsLoading(false);
       // Scroll to bottom of comments
       setTimeout(() => commentEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
@@ -199,8 +198,7 @@ export function ImageDetailsDialog({
         if (error) throw error;
       }
     } catch (error) {
-      console.error("Error toggling like:", error);
-      // Revert optimistic update
+// Revert optimistic update
       setIsLiked(previousIsLiked);
       setLikesCount(previousLikesCount);
       toast({ variant: "destructive", title: "Failed to update like" });
@@ -243,8 +241,7 @@ export function ImageDetailsDialog({
       setTimeout(() => commentEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
 
     } catch (error) {
-      console.error("Error adding comment:", error);
-      toast({ variant: "destructive", title: "Failed to post comment" });
+toast({ variant: "destructive", title: "Failed to post comment" });
     } finally {
       setIsSubmitting(false);
     }
@@ -261,8 +258,7 @@ export function ImageDetailsDialog({
 
       setComments(comments.filter(c => c.id !== commentId));
     } catch (error) {
-      console.error("Error deleting comment:", error);
-      toast({ variant: "destructive", title: "Failed to delete comment" });
+toast({ variant: "destructive", title: "Failed to delete comment" });
     }
   };
 

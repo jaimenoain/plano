@@ -24,11 +24,11 @@ export function VideoPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(muted);
   const [isControlsVisible, setIsControlsVisible] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const [_hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video) return undefined;
 
     if (autoPlayOnVisible) {
       const observer = new IntersectionObserver(
@@ -46,6 +46,7 @@ export function VideoPlayer({
               setIsPlaying(false);
             }
           });
+          return undefined;
         },
         { threshold: 0.6 } // 60% visibility required
       );
@@ -56,6 +57,7 @@ export function VideoPlayer({
 
       return () => observer.disconnect();
     }
+    return undefined;
   }, [autoPlayOnVisible]);
 
   const togglePlay = (e?: React.MouseEvent) => {

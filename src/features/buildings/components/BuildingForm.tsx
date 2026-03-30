@@ -121,8 +121,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
       });
 
       if (error) {
-        console.error("Error checking slug availability:", error);
-        return true; // Fallback to true on error to avoid blocking UX unnecessarily
+return true; // Fallback to true on error to avoid blocking UX unnecessarily
       }
       return data;
     },
@@ -243,8 +242,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
       toast.success("Typology added successfully");
 
     } catch (error) {
-      console.error("Error adding typology:", error);
-      toast.error("Failed to add typology");
+toast.error("Failed to add typology");
     } finally {
       setIsAddingTypologyLoading(false);
     }
@@ -279,8 +277,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
       toast.success("Attribute added successfully");
 
     } catch (error) {
-      console.error("Error adding attribute:", error);
-      toast.error("Failed to add attribute");
+toast.error("Failed to add attribute");
     } finally {
       setIsAddingAttributeLoading(false);
     }
@@ -320,16 +317,15 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
         return;
       }
 
-      const formData: BuildingFormData = {
+      const formData = {
         ...validationResult.data,
         functional_category_id: validationResult.data.functional_category_id ?? null,
-      };
+      } as BuildingFormData;
 
       await onSubmit(formData);
 
     } catch (error) {
-      console.error("Form submission error:", error);
-    }
+}
   };
 
   return (

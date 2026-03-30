@@ -1,9 +1,18 @@
-import { closestCenter, useState, useRef, Fragment } from "react";
-import { AlertTriangle, Plus, Pencil, Car, Footprints, Bike, Bus } from "lucide-react";
+import { useState, useRef, Fragment } from "react";
+import {
+  AlertTriangle,
+  Plus,
+  Pencil,
+  Car,
+  Footprints,
+  Bike,
+  Bus,
+  Clock,
+} from "lucide-react";
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
+  closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -12,7 +21,8 @@ import {
   DragOverEvent,
   DragEndEvent,
   defaultDropAnimationSideEffects,
-  DropAnimation
+  DropAnimation,
+  useDroppable,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -20,27 +30,27 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
-import { useItineraryStore, ItineraryBuilding } from "@/features/itinerary/stores/useItineraryStore";
+import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
 import { SortableItineraryItem } from "./SortableItineraryItem";
 import { CollectionBuildingCard } from "./CollectionBuildingCard";
 import { CollectionMarkerCard } from "./CollectionMarkerCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useDroppable } from "@dnd-kit/core";
-import { CollectionItemWithBuilding } from "@/features/collections/types";
+import {
+  CollectionItemWithBuilding,
+  ItineraryStop,
+  Itinerary,
+} from "@/features/collections/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock } from "lucide-react";
 import { parseDuration, formatDuration } from "@/utils/duration";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // --- Helper Components ---
-
-import { ItineraryStop, Itinerary } from "@/features/collections/types";
 
 interface AddStopPopoverProps {
   dayIndex: number; // 0-based index for the store

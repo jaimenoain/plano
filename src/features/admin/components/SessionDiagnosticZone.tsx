@@ -23,8 +23,7 @@ export function SessionDiagnosticZone() {
       setLogs(logsData);
       setSessions(sessionsData);
     } catch (error) {
-      console.error("Failed to load diagnostic data", error);
-    } finally {
+} finally {
       setLoading(false);
     }
   };

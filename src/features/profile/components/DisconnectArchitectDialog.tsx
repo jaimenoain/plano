@@ -34,7 +34,6 @@ export function DisconnectArchitectDialog({
 
     setIsSubmitting(true);
     try {
-      // @ts-expect-error - architect_claims table exists in migration
       const { error } = await supabase
         .from("architect_claims")
         .delete()
@@ -47,8 +46,7 @@ export function DisconnectArchitectDialog({
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error disconnecting architect:", error);
-      toast.error(error.message || "Failed to disconnect profile. Please try again.");
+toast.error(error.message || "Failed to disconnect profile. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

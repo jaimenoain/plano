@@ -1,5 +1,13 @@
-import { Unlock, Ticket, Eye, Lock, Shield, DoorOpen, Users, DollarSign, Store, Search } from "lucide-react";
-import { LucideIcon } from "lucide-react";
+import {
+  Unlock,
+  Ticket,
+  Eye,
+  Lock,
+  DoorOpen,
+  Store,
+  Search,
+  type LucideIcon,
+} from "lucide-react";
 
 type AccessLevel = "public" | "private" | "restricted" | "commercial" | null;
 type AccessLogistics = "walk-in" | "booking_required" | "tour_only" | "exterior_only" | null;

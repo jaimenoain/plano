@@ -28,7 +28,7 @@ const mocks = vi.hoisted(() => {
     const mockUpdate = vi.fn();
 
     // Define the chain object for select
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockSelectChain: any = {
         single: mockSingle
     };
@@ -41,7 +41,7 @@ const mocks = vi.hoisted(() => {
     };
 
     // Update chain
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockUpdateChain: any = {};
     const mockUpdateEq = vi.fn().mockReturnValue(mockUpdateChain);
     mockUpdateChain.eq = mockUpdateEq;
@@ -127,7 +127,7 @@ describe('BuildingPopupContent Rating UI', () => {
     mockUpdateEq.mockReturnValue(mockUpdateChain);
 
     // Make the chain awaitable
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (mockUpdateChain as any).then = (resolve: any) => resolve({ error: null });
 
     // Ensure select chain is preserved/restored

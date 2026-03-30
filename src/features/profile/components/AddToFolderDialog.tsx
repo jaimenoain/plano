@@ -61,8 +61,7 @@ export function AddToFolderDialog({ open, onOpenChange, collectionId, userId, on
       setSelectedFolderIds(currentFolderIds);
 
     } catch (error) {
-      console.error("Error fetching folders:", error);
-      toast({ variant: "destructive", description: "Failed to load folders." });
+toast({ variant: "destructive", description: "Failed to load folders." });
     } finally {
       setLoading(false);
     }
@@ -113,8 +112,7 @@ export function AddToFolderDialog({ open, onOpenChange, collectionId, userId, on
       onOpenChange(false);
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error saving to folders:", error);
-      toast({ variant: "destructive", description: "Failed to save changes." });
+toast({ variant: "destructive", description: "Failed to save changes." });
     } finally {
       setProcessing(false);
     }
@@ -152,8 +150,7 @@ export function AddToFolderDialog({ open, onOpenChange, collectionId, userId, on
       toast({ description: "Folder created and selected." });
 
     } catch (error) {
-      console.error("Error creating folder:", error);
-      toast({ variant: "destructive", description: "Failed to create folder." });
+toast({ variant: "destructive", description: "Failed to create folder." });
     } finally {
       setProcessing(false);
     }

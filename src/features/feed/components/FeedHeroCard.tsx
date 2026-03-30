@@ -80,7 +80,7 @@ interface FeedHeroCardProps {
 export function FeedHeroCard({
   entry,
   onLike,
-  onImageLike, // kept for prop compatibility
+  onImageLike: _onImageLike, // kept for prop compatibility
   onComment
 }: FeedHeroCardProps) {
   const navigate = useNavigate();
@@ -132,8 +132,7 @@ export function FeedHeroCard({
         toast({ title: "Building hidden" });
         queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
     } catch (error) {
-        console.error("Hide action failed", error);
-        toast({ variant: "destructive", title: "Failed to update status" });
+toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
         setIsSaving(false);
     }
@@ -164,8 +163,7 @@ export function FeedHeroCard({
         queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
         setShowRatingInput(true);
     } catch (error) {
-        console.error("Save action failed", error);
-        toast({ variant: "destructive", title: "Failed to update status" });
+toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
         setIsSaving(false);
     }
@@ -196,8 +194,7 @@ export function FeedHeroCard({
         queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
         setShowRatingInput(true);
     } catch (error) {
-        console.error("Visit action failed", error);
-        toast({ variant: "destructive", title: "Failed to update status" });
+toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
         setIsSaving(false);
     }
@@ -217,8 +214,7 @@ export function FeedHeroCard({
         if (error) throw error;
         queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
     } catch (err) {
-        console.error("Rate failed", err);
-        toast({ variant: "destructive", title: "Failed to update rating" });
+toast({ variant: "destructive", title: "Failed to update rating" });
     }
   };
 
@@ -369,6 +365,8 @@ export function FeedHeroCard({
         </div>
       );
     }
+
+    return null;
   };
 
   const renderRatingControl = () => {

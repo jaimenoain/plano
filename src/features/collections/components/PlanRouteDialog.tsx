@@ -58,8 +58,7 @@ export function PlanRouteDialog({
         onPlanGenerated('removed');
       }
     } catch (error) {
-      console.error("Error removing itinerary:", error);
-      toast({
+toast({
         title: "Error",
         description: (error as Error).message || "Failed to remove itinerary.",
         variant: "destructive",
@@ -101,8 +100,7 @@ export function PlanRouteDialog({
         onPlanGenerated('created');
       }
     } catch (error) {
-      console.error("Error generating itinerary:", error);
-      toast({
+toast({
         title: "Error",
         description: (error as Error).message || "Failed to generate itinerary. Please try again.",
         variant: "destructive",

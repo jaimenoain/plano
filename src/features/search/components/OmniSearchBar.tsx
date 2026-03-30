@@ -19,9 +19,16 @@ import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import { supabase } from "@/integrations/supabase/client";
 import { useMapContext } from "@/features/maps/providers/MapContext";
-import { Database } from "@/integrations/supabase/types";
+type BuildingSearchRow = {
+  id: string;
+  name: string;
+  city?: string | null;
+  country?: string | null;
+  location_lat?: number | null;
+  location_lng?: number | null;
+};
 
-type BuildingResult = Database["public"]["Functions"]["search_buildings"]["Returns"][number];
+type BuildingResult = BuildingSearchRow;
 
 interface OmniSearchBarProps {
   placeholder?: string;
@@ -50,7 +57,7 @@ export function OmniSearchBar({
       if (!apiKey) return;
 
       try {
-        setOptions({ key: apiKey, version: "weekly" });
+        setOptions({ key: apiKey, v: "weekly" });
         await importLibrary("places");
         await importLibrary("geocoding");
         setScriptLoaded(true);
@@ -62,8 +69,8 @@ export function OmniSearchBar({
 
   // Places Autocomplete
   const {
-    ready,
-    value: placesValue,
+    ready: _ready,
+    value: _placesValue,
     setValue: setPlacesValue,
     suggestions: { status: placesStatus, data: placesData },
     clearSuggestions,
@@ -84,7 +91,7 @@ export function OmniSearchBar({
         query_text: debouncedInput,
       });
       if (error) throw error;
-      return data;
+      return data as BuildingSearchRow[];
     },
     enabled: debouncedInput.length >= 2,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -195,7 +202,7 @@ export function OmniSearchBar({
 
               {hasBuildings && (
                 <CommandGroup heading="Buildings">
-                  {buildingsData.map((building) => (
+                  {buildingsData.map((building: BuildingResult) => (
                     <CommandItem
                       key={building.id}
                       value={building.name}

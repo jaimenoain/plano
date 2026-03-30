@@ -1,13 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { MapPin, Layers } from "lucide-react";
-import Map, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl";
+import Map, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { extractLocationDetails } from "@/lib/location-utils";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
 interface BuildingLocationPickerProps {
   initialLocation: {
@@ -29,29 +30,6 @@ interface BuildingLocationPickerProps {
 }
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
-
-const SATELLITE_STYLE = {
-  version: 8,
-  sources: {
-    "satellite-tiles": {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-      ],
-      tileSize: 256,
-      attribution: "&copy; Esri"
-    }
-  },
-  layers: [
-    {
-      id: "satellite-layer",
-      type: "raster",
-      source: "satellite-tiles",
-      minzoom: 0,
-      maxzoom: 22
-    }
-  ]
-};
 
 export function BuildingLocationPicker({ initialLocation, initialPrecision = 'exact', onLocationChange }: BuildingLocationPickerProps) {
   const [selectedAddress, setSelectedAddress] = useState(initialLocation.address);
@@ -119,8 +97,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
                  });
              }
          } catch (err) {
-             console.log("Auto-geocode on load failed:", err);
-         }
+}
       };
 
       attemptGeocode();
@@ -184,8 +161,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
           updateLocation(lat, lng, results[0].formatted_address, details);
         }
       } catch (error) {
-        console.error("Geocoding error:", error);
-      }
+}
     }
   };
 
@@ -202,8 +178,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
         updateLocation(lat, lng, address, details);
       }
     } catch (error) {
-      console.error("Reverse geocoding error:", error);
-       // Fallback with existing address or empty
+// Fallback with existing address or empty
        updateLocation(lat, lng, selectedAddress, { city: null, country: null });
     }
   };
@@ -220,8 +195,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
             updateLocation(lat, lng, address, details);
         }
       } catch (error) {
-          console.error("Reverse geocoding error:", error);
-          updateLocation(lat, lng, selectedAddress, { city: null, country: null });
+updateLocation(lat, lng, selectedAddress, { city: null, country: null });
       }
   };
 
@@ -269,7 +243,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
             onClick={handleMapClick}
             mapLib={maplibregl}
             style={{ width: "100%", height: "100%" }}
-            mapStyle={isSatellite ? SATELLITE_STYLE : DEFAULT_MAP_STYLE}
+            mapStyle={isSatellite ? SATELLITE_MAP_STYLE : DEFAULT_MAP_STYLE}
             cursor="crosshair"
           >
             <NavigationControl position="top-right" />

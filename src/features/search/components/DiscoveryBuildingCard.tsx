@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, EyeOff, Circle } from "lucide-react";
+import {  EyeOff, Circle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DiscoveryBuilding, ContactInteraction } from "./types";
 import { cn } from "@/lib/utils";
@@ -21,8 +21,8 @@ interface DiscoveryBuildingCardProps {
 
 export function DiscoveryBuildingCard({
   building,
-  socialContext,
-  distance,
+  socialContext: _socialContext,
+  distance: _distance,
   action,
   onClick,
   imagePosition = 'right',

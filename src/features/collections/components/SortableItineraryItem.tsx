@@ -2,7 +2,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CollectionBuildingCard } from "./CollectionBuildingCard";
 import { CollectionMarkerCard } from "./CollectionMarkerCard";
-import { ItineraryBuilding } from "@/features/itinerary/stores/useItineraryStore";
 import { CollectionItemWithBuilding, ItineraryStop } from "@/features/collections/types";
 import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
 

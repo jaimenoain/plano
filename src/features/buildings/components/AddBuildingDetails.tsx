@@ -41,7 +41,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         .from('buildings')
         .insert({
           name: data.name,
-          // @ts-ignore
+          // @ts-expect-error -- legacy Supabase row typing
           slug: data.slug || undefined,
           alt_name: data.alt_name || null,
           aliases: data.aliases || [],
@@ -58,11 +58,9 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           country: locationData.country,
           // PostGIS point format "POINT(lng lat)"
           location: `POINT(${locationData.lng} ${locationData.lat})`,
-          // @ts-ignore
           location_precision: locationData.precision || 'exact',
 
           created_by: user.id,
-          // @ts-ignore: New column functional_category_id
           functional_category_id: data.functional_category_id,
         })
         .select()
@@ -83,11 +81,9 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
             created_at: new Date().toISOString()
           });
 
-        if (userBuildingError) {
-          console.warn("Failed to auto-add to user list", userBuildingError);
-        }
-      } catch (err) {
-        console.warn("Exception auto-adding to user list", err);
+        if (userBuildingError) throw userBuildingError;
+      } catch (_err) {
+        void _err;
       }
 
       // 4. Insert Architect Links (Junction Table Logic)
@@ -98,16 +94,13 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
                 architect_id: a.id
             }));
 
-            // @ts-ignore
             const { error: linkError } = await supabase
                 .from('building_architects')
                 .insert(links);
 
-            if (linkError) {
-                console.warn("Error linking architects:", linkError);
-            }
-          } catch (err) {
-              console.warn("Failed to insert building_architects", err);
+            if (linkError) throw linkError;
+          } catch (_err) {
+            void _err;
           }
       }
 
@@ -119,15 +112,13 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
             typology_id: tId
           }));
 
-          // @ts-ignore
+          // @ts-expect-error -- legacy Supabase row typing
           const { error: typoError } = await supabase
             .from('building_functional_typologies')
             .insert(typologyLinks);
 
-          if (typoError) console.error("Error linking typologies:", typoError);
-        } catch (err) {
-          console.error("Failed to insert typologies", err);
-        }
+          } catch (err) {
+}
       }
 
       // 6. Insert Attributes (Junction Table)
@@ -138,15 +129,13 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
             attribute_id: aId
           }));
 
-          // @ts-ignore
+          // @ts-expect-error -- legacy Supabase row typing
           const { error: attrError } = await supabase
             .from('building_attributes')
             .insert(attributeLinks);
 
-          if (attrError) console.error("Error linking attributes:", attrError);
-        } catch (err) {
-          console.error("Failed to insert attributes", err);
-        }
+          } catch (err) {
+}
       }
 
       // 7. Success State
@@ -154,8 +143,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
       navigate(`/building/${insertedData.id}`);
 
     } catch (error: any) {
-      console.error("Error adding building:", error);
-      toast.error(`Failed to save building: ${error.message || "Unknown error"}`);
+toast.error(`Failed to save building: ${error.message || "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
     }

@@ -108,7 +108,7 @@ export function Header({
   }
 
   // Right Content Logic
-  let rightContent = rightAction || action; // Prefer rightAction, fallback to action (legacy)
+  const rightContent = rightAction || action; // Prefer rightAction, fallback to action (legacy)
 
   // Always append Bell/Profile if not explicitly replaced?
   // The requirement says "Right Slot: Reserved for global actions".

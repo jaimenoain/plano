@@ -61,7 +61,7 @@ export default function FolderView() {
         const isOwner = currentUser?.id === userId;
 
         // 2. Get Folder
-        let folderQuery = supabase
+        const folderQuery = supabase
             .from("user_folders")
             .select("*")
             .eq("owner_id", userId)
@@ -126,8 +126,7 @@ export default function FolderView() {
         setCollections(visibleCollections);
 
     } catch (err: any) {
-        console.error("Error fetching folder:", err);
-        setError("Failed to load folder");
+setError("Failed to load folder");
     } finally {
         setLoading(false);
     }

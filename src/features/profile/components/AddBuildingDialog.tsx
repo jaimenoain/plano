@@ -69,8 +69,7 @@ export function AddBuildingDialog({ onBuildingAdded, className }: AddBuildingDia
       // But maybe clear search?
       // setSearchQuery(""); // Optional: Clear search after add
     } catch (error) {
-      console.error("Error adding building:", error);
-      toast({ variant: "destructive", title: "Failed to add building" });
+toast({ variant: "destructive", title: "Failed to add building" });
     }
   };
 
@@ -119,7 +118,7 @@ export function AddBuildingDialog({ onBuildingAdded, className }: AddBuildingDia
 
             {buildings && buildings.length > 0 && (
               <CommandGroup heading="Results">
-                {buildings.map((building) => (
+                {buildings.map((building: { id: string; name: string; city?: string | null; country?: string | null }) => (
                   <CommandItem key={building.id} className="flex items-center justify-between py-3 px-4" value={building.name}>
                     <div className="flex flex-col gap-1 min-w-0 flex-1 mr-4">
                       <span className="font-medium truncate">{building.name}</span>

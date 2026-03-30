@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import Map, { Source, Layer, LayerProps, NavigationControl } from 'react-map-gl';
+import Map, { Source, Layer, LayerProps, NavigationControl } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ export interface NoPhotoBuilding {
   name: string;
   lat: number;
   lng: number;
-  slug?: string | null;
+  slug: string | null;
 }
 
 const CIRCLE_LAYER: LayerProps = {
@@ -50,7 +50,7 @@ export const filterMissingPhotoBuildings = (
                 name: b.name,
                 lat: coords.lat,
                 lng: coords.lng,
-                slug: b.slug
+                slug: b.slug ?? null
             };
         })
         .filter((b): b is NoPhotoBuilding => b !== null);
@@ -94,8 +94,7 @@ export function NoPhotosMapZone() {
 
         setBuildings(mapped);
       } catch (err) {
-        console.error("Failed to load no-photo buildings", err);
-      } finally {
+} finally {
         setLoading(false);
       }
     };

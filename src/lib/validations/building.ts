@@ -55,8 +55,7 @@ export const buildingSchema = z.object({
   });
 
   if (error) {
-    console.error("Error checking slug availability in validation:", error);
-    return true; // Don't block submission on DB error
+return true; // Don't block submission on DB error
   }
 
   return isAvailable;
@@ -118,8 +117,7 @@ export const editBuildingSchema = z.object({
   });
 
   if (error) {
-    console.error("Error checking slug availability in validation:", error);
-    return true;
+return true;
   }
 
   return isAvailable;

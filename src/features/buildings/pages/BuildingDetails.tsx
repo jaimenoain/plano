@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { 
-  Loader2, MapPin, Calendar, Send,
-  Check, Bookmark, MessageSquarePlus, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle, MessageSquare, Search, Play,
-  MessageCircle, EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon, Users, X,
+  Loader2, MapPin, Send,
+  Check, Bookmark, Image as ImageIcon,
+  Heart, ExternalLink, Circle, AlertTriangle, Search,
+  EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon, Users, X,
   Pencil, BadgeCheck
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -21,13 +21,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { TagInput } from "@/components/ui/tag-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -36,20 +34,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { MetaHead } from "@/components/common/MetaHead";
+import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { PersonalRatingButton } from "../components/PersonalRatingButton";
 import { UserPicker } from "@/components/common/UserPicker";
-import { fetchBuildingDetails, fetchUserBuildingStatus, upsertUserBuilding } from "@/utils/supabaseFallback";
+import { fetchBuildingDetails } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
 import { getBuildingImageUrl } from "@/utils/image";
 import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
 import { Architect } from "@/features/architect/types";
 import { getBuildingUrl } from "@/utils/url";
 import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
-import { BuildingAttributes } from "../components/BuildingAttributes";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
-import { PopularityBadge } from "../components/PopularityBadge";
 import { BuildingImageCard } from "../components/BuildingImageCard";
 import { BuildingHeader } from "../components/BuildingHeader";
 import { ArchitectStatement } from "../components/ArchitectStatement";
@@ -135,7 +132,6 @@ interface DisplayImage {
 
 export default function BuildingDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { toast } = useToast();
@@ -151,13 +147,13 @@ export default function BuildingDetails() {
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [displayImages, setDisplayImages] = useState<DisplayImage[]>([]);
-  const [userImages, setUserImages] = useState<{id: string, storage_path: string, is_generated?: boolean}[]>([]);
+  const [userImages, setUserImages] = useState<{id: string, storage_path: string, is_generated?: boolean; is_official?: boolean | null}[]>([]);
   const [selectedImage, setSelectedImage] = useState<DisplayImage | null>(null);
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
   const [likedLinkIds, setLikedLinkIds] = useState<Set<string>>(new Set());
   const [linksLoading, setLinksLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [socialContext, setSocialContext] = useState<string | null>(null);
+  const [_socialContext, setSocialContext] = useState<string | null>(null);
 
   // Official Data Editing State
   const [isOfficialEditing, setIsOfficialEditing] = useState(false);
@@ -169,7 +165,6 @@ export default function BuildingDetails() {
        return building.architects.some(a => verifiedClaims.includes(a.id));
   }, [building, verifiedClaims]);
 
-  const canEdit = isCreator || profile?.role === 'admin';
   const canEditOfficialData = profile?.role === 'admin' || isVerifiedArchitect || (isCreator && !hasVerifiedArchitect);
   const [draftOfficialData, setDraftOfficialData] = useState({
       name: "",
@@ -326,7 +321,7 @@ export default function BuildingDetails() {
                .eq('status', 'verified');
            if (claims) setVerifiedClaims(claims.map(c => c.architect_id));
 
-          const { data: userEntry, error: userEntryError } = await supabase
+          const { data: userEntry, error: _userEntryError } = await supabase
               .from("user_buildings")
               .select("*, images:review_images(id, storage_path, is_generated, is_official)")
               .eq("user_id", user.id)
@@ -340,7 +335,7 @@ export default function BuildingDetails() {
               .eq("building_id", resolvedBuildingId);
 
           const myCollectionIds = collectionItems
-              // @ts-ignore
+              // @ts-expect-error -- legacy Supabase row typing
               ?.filter(item => item.collections?.owner_id === user.id)
               .map(item => item.collection_id) || [];
 
@@ -352,7 +347,6 @@ export default function BuildingDetails() {
               setMyRating(userEntry.rating || 0);
               setNote(userEntry.content || "");
               // setTags(userEntry.tags || []); // Deprecated
-              // @ts-ignore - Supabase types join inference can be tricky
               setUserImages(userEntry.images || []);
               setIsEditing(false);
               if (userEntry.content || (myCollectionIds.length > 0)) {
@@ -371,18 +365,13 @@ export default function BuildingDetails() {
               if (userLinksData) setUserLinks(userLinksData);
           } else {
               setIsEditing(true);
-              if (userEntryError) {
-                  console.error("Error fetching user status:", userEntryError);
-              }
           }
         })());
       }
 
       // Task 3: Fetch Social Feed (Direct Supabase call)
       tasks.push((async () => {
-        console.log("Fetching social feed for building:", resolvedBuildingId);
-
-        // Fetch follows for prioritization
+// Fetch follows for prioritization
         let followedIds = new Set<string>();
         if (user) {
           const { data: followsData } = await supabase
@@ -401,12 +390,9 @@ export default function BuildingDetails() {
         const communityImages: DisplayImage[] = [];
 
         if (entriesError) {
-              console.warn("Error fetching feed:", entriesError);
-              // toast({ variant: "destructive", title: "Could not load activity feed" });
+// toast({ variant: "destructive", title: "Could not load activity feed" });
         } else if (entriesData) {
-            console.log("Fetched feed entries:", entriesData);
-
-            // Determine Social Context
+// Determine Social Context
             if (followedIds.size > 0) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const friendEntry = entriesData.find((e: any) => followedIds.has(e.user_id));
@@ -463,7 +449,7 @@ export default function BuildingDetails() {
             });
 
             // Sanitize entries
-            let sanitizedEntries = entriesData.map((e: any) => ({
+            const sanitizedEntries = entriesData.map((e: any) => ({
                 ...e,
                 user: {
                     ...e.user_data,
@@ -473,7 +459,7 @@ export default function BuildingDetails() {
             }));
 
             // Sort entries: Followed users first, then by date (recency)
-            sanitizedEntries.sort((a, b) => {
+            sanitizedEntries.sort((a: FeedEntry, b: FeedEntry) => {
                 const aIsFollowed = followedIds.has(a.user_id);
                 const bIsFollowed = followedIds.has(b.user_id);
 
@@ -500,7 +486,7 @@ export default function BuildingDetails() {
                     .eq("user_id", user.id)
                     .in("image_id", imageIds);
 
-                const likedSet = new Set(likesData?.map(l => l.image_id) || []);
+                const likedSet = new Set(likesData?.map((l: { image_id: string }) => l.image_id) || []);
                 setLikedImageIds(likedSet);
             }
         }
@@ -511,8 +497,7 @@ export default function BuildingDetails() {
 
       await Promise.all(tasks);
     } catch (error: any) {
-      console.error("Error:", error);
-      toast({ variant: "destructive", title: "Error", description: "Building not found" });
+toast({ variant: "destructive", title: "Error", description: "Building not found" });
     } finally {
       setLoading(false);
     }
@@ -525,13 +510,11 @@ export default function BuildingDetails() {
             p_building_id: buildingId
         });
 
-      if (linksError) {
-          console.warn("Error fetching top links:", linksError);
-      } else if (linksData) {
+      if (!linksError && linksData) {
           setTopLinks(linksData);
 
           if (user && linksData.length > 0) {
-              const linkIds = linksData.map(l => l.link_id);
+              const linkIds = linksData.map((l: { link_id: string }) => l.link_id);
               const { data: likes } = await supabase
                   .from('link_likes')
                   .select('link_id')
@@ -575,8 +558,7 @@ export default function BuildingDetails() {
         await supabase.from("link_likes").insert({ link_id: linkId, user_id: user.id });
       }
     } catch (error) {
-      console.error("Link like failed", error);
-      toast({ variant: "destructive", title: "Failed to like link" });
+toast({ variant: "destructive", title: "Failed to like link" });
       // Revert
       setLikedLinkIds(likedLinkIds);
       setTopLinks(prev => prev.map(l => {
@@ -639,13 +621,12 @@ export default function BuildingDetails() {
 
           toast({ title });
       } catch (error) {
-          console.error("Status update failed", error);
-          toast({ variant: "destructive", title: "Failed to save status" });
+toast({ variant: "destructive", title: "Failed to save status" });
           fetchBuildingData(); // Revert
       }
   };
 
-  const handleRate = async (buildingId: string, rating: number) => {
+  const handleRate = async (_buildingId: string, rating: number) => {
        if (!user || !building) return;
 
        setShowNoteEditor(true);
@@ -677,8 +658,7 @@ export default function BuildingDetails() {
                toast({ title: "Rating saved" });
            }
        } catch (error) {
-           console.error("Rating failed", error);
-           toast({ variant: "destructive", title: "Failed to save rating" });
+toast({ variant: "destructive", title: "Failed to save rating" });
            fetchBuildingData();
        }
   };
@@ -697,8 +677,7 @@ export default function BuildingDetails() {
             is_generated: false
           }]);
         } catch (error) {
-          console.error("Error processing image", error);
-          toast({ variant: "destructive", title: "Error processing image" });
+toast({ variant: "destructive", title: "Error processing image" });
         }
       }
       e.target.value = ""; // Reset input
@@ -768,23 +747,21 @@ export default function BuildingDetails() {
           const removedIds = initialCollectionIds.filter(id => !selectedCollectionIds.includes(id));
 
           if (addedIds.length > 0) {
-              const { error: addError } = await supabase
+              const { error: _addError } = await supabase
                   .from("collection_items")
                   .insert(addedIds.map(cId => ({
                       collection_id: cId,
                       building_id: building.id
                   })));
-              if (addError) console.error("Error adding to collections", addError);
-          }
+              }
 
           if (removedIds.length > 0) {
-              const { error: removeError } = await supabase
+              const { error: _removeError } = await supabase
                   .from("collection_items")
                   .delete()
                   .in("collection_id", removedIds)
                   .eq("building_id", building.id);
-              if (removeError) console.error("Error removing from collections", removeError);
-          }
+              }
 
           setInitialCollectionIds(selectedCollectionIds);
 
@@ -825,8 +802,7 @@ export default function BuildingDetails() {
           queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
           fetchBuildingData();
       } catch (error: any) {
-          console.error("Save note failed", error);
-          toast({ variant: "destructive", title: "Failed to save note" });
+toast({ variant: "destructive", title: "Failed to save note" });
       } finally {
           setIsSavingNote(false);
       }
@@ -866,8 +842,7 @@ export default function BuildingDetails() {
 
           toast({ title: "Removed from list" });
       } catch (error) {
-          console.error("Delete failed", error);
-          toast({ variant: "destructive", title: "Failed to remove" });
+toast({ variant: "destructive", title: "Failed to remove" });
       }
   };
 
@@ -893,8 +868,7 @@ export default function BuildingDetails() {
         toast({ title: "Invites sent!", description: `Sent to ${selectedFriends.length} friend${selectedFriends.length > 1 ? 's' : ''}.` });
         setSelectedFriends([]);
     } catch (error: any) {
-        console.error(error);
-        toast({ variant: "destructive", title: "Error", description: error.message || "Failed to send invites." });
+toast({ variant: "destructive", title: "Error", description: error.message || "Failed to send invites." });
     } finally {
         setSendingInvites(false);
     }
@@ -922,8 +896,7 @@ export default function BuildingDetails() {
           setIsOfficialEditing(false);
           fetchBuildingData();
       } catch (error) {
-          console.error("Error updating building:", error);
-          toast({ variant: "destructive", title: "Failed to update building" });
+toast({ variant: "destructive", title: "Failed to update building" });
       } finally {
           setIsSavingOfficial(false);
       }
@@ -949,8 +922,7 @@ export default function BuildingDetails() {
 
           toast({ title: "Hero image updated" });
       } catch (error) {
-          console.error("Error setting hero image:", error);
-          toast({ variant: "destructive", title: "Failed to set hero image" });
+toast({ variant: "destructive", title: "Failed to set hero image" });
           // Revert is handled by fetchBuildingData refetch or just simple error message,
           // strict revert would require storing previous state but image transition covers visual glitch
       }
@@ -977,8 +949,7 @@ export default function BuildingDetails() {
 
           toast({ title: newStatus ? "Added to Official Lookbook" : "Removed from Official Lookbook" });
       } catch (error) {
-          console.error("Error toggling official status:", error);
-          toast({ variant: "destructive", title: "Failed to update lookbook status" });
+toast({ variant: "destructive", title: "Failed to update lookbook status" });
           // Revert
           setSelectedImage(prev => prev ? { ...prev, is_official: !newStatus } : null);
           setDisplayImages(prev => prev.map(img =>
@@ -1064,17 +1035,19 @@ export default function BuildingDetails() {
                 )}
 
                 {coordinates ? (
-                  <BuildingLocationMap
-                    lat={coordinates.lat}
-                    lng={coordinates.lng}
-                    status={userStatus}
-                    rating={myRating}
-                    tierRank={building.tier_rank}
-                    locationPrecision={building.location_precision}
-                    isExpanded={isMapExpanded}
-                    onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
-                    className={isMapExpanded ? "" : "h-48 w-full"}
-                  />
+                  <WidgetErrorBoundary>
+                    <BuildingLocationMap
+                      lat={coordinates.lat}
+                      lng={coordinates.lng}
+                      status={userStatus}
+                      rating={myRating}
+                      tierRank={building.tier_rank}
+                      locationPrecision={building.location_precision}
+                      isExpanded={isMapExpanded}
+                      onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
+                      className={isMapExpanded ? "" : "h-48 w-full"}
+                    />
+                  </WidgetErrorBoundary>
                 ) : (
                 <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">
                     <MapPin className="w-6 h-6 opacity-50" />
@@ -1173,6 +1146,7 @@ export default function BuildingDetails() {
                 )}
             </div>
 
+            <WidgetErrorBoundary>
             {displayImages.length > 0 ? (
                 (() => {
                     const officialCount = displayImages.filter(img => img.is_official).length;
@@ -1237,6 +1211,7 @@ export default function BuildingDetails() {
                     </div>
                 </div>
             )}
+            </WidgetErrorBoundary>
 
             <div className="flex justify-center pt-2">
                  <a
@@ -1662,6 +1637,7 @@ export default function BuildingDetails() {
 
             {/* Top Community Resources */}
             {(linksLoading || topLinks.length > 0) && (
+                <WidgetErrorBoundary>
                 <div className="pt-4 border-t border-dashed">
                     <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
                         Top Community Resources
@@ -1736,6 +1712,7 @@ export default function BuildingDetails() {
                         )}
                     </div>
                 </div>
+                </WidgetErrorBoundary>
             )}
 
 

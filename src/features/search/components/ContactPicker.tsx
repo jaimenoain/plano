@@ -46,6 +46,7 @@ export function ContactPicker({
       observer.observe(containerRef.current)
       return () => observer.disconnect()
     }
+    return undefined
   }, [])
 
   const handleSelect = (user: UserSearchResult) => {

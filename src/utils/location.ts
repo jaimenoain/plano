@@ -71,8 +71,7 @@ export function parseLocation(location: any): Coordinates | null {
         }
       } catch (e) {
         // Fallthrough if WKB parsing fails
-        console.warn("Failed to parse location as WKB:", e);
-      }
+}
     }
 
     // Case 2b: WKT String "POINT(lng lat)"

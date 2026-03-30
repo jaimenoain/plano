@@ -71,8 +71,7 @@ export const searchBuildingsRpc = async (params: {
   const { data, error } = await query;
 
   if (error) {
-    console.error('searchBuildingsRpc direct query error:', error);
-    throw error;
+throw error;
   }
 
   return (data || []).map((b: any) => ({
@@ -136,8 +135,7 @@ export const getDiscoveryFiltersRpc = async (): Promise<{ cities: string[]; styl
     if (error) throw error;
     return data as { cities: string[]; styles: {id: string, name: string, slug: string}[] };
   } catch (error) {
-    console.warn("get_discovery_filters RPC failed", error);
-    return { cities: [], styles: [] };
+return { cities: [], styles: [] };
   }
 };
 
@@ -147,8 +145,7 @@ export const getBuildingLeaderboardsRpc = async (): Promise<LeaderboardData> => 
     if (error) throw error;
     return data as unknown as LeaderboardData;
   } catch (error) {
-    console.warn("get_building_leaderboards RPC failed", error);
-    return { most_visited: [], top_rated: [] };
+return { most_visited: [], top_rated: [] };
   }
 };
 
@@ -163,8 +160,7 @@ export const findNearbyBuildingsRpc = async (params: {
         if (error) throw error;
         return data;
     } catch (error) {
-        console.warn("find_nearby_buildings RPC failed", error);
-        return [];
+return [];
     }
 };
 
@@ -175,8 +171,7 @@ export const fetchUserBuildingsMap = async (userId: string): Promise<Map<string,
         .eq("user_id", userId);
 
     if (error) {
-        console.warn("Error fetching user buildings map:", error);
-        return new Map();
+return new Map();
     }
 
     const map = new Map();

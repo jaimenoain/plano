@@ -22,7 +22,7 @@ export function sanitizeCssValue(value: string): string {
   // Allow alphanumeric, dashes, underscores, spaces, dots, commas, parentheses, %, #
   // This covers hex codes, rgb/hsl functions, variable names, and standard units
   // but prevents injection of semicolons or closing braces
-  if (/^[a-zA-Z0-9\-\_\s\.\,\(\)\%\#]+$/.test(value)) {
+  if (/^[a-zA-Z0-9\-_\s.,()%#]+$/.test(value)) {
     return value;
   }
 

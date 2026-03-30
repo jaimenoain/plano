@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MetaHead } from "@/components/common/MetaHead";
-import { MapPin, Globe, Edit, Map as MapIcon, BadgeCheck } from "lucide-react";
+import { MapPin, Globe, Map as MapIcon, BadgeCheck } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 import { supabase } from "@/integrations/supabase/client";
 import { ClaimProfileDialog } from "@/features/architect/components/ClaimProfileDialog";
@@ -38,8 +38,7 @@ export default function ArchitectDetails() {
         setClaimStatus(data as unknown as { is_verified: boolean; my_claim_status: string | null });
       }
     } catch (err) {
-      console.error("Error fetching claim status:", err);
-    }
+}
   }, [id]);
 
   useEffect(() => {

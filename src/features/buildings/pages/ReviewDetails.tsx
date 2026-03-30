@@ -179,7 +179,6 @@ export default function ReviewDetails() {
             });
 
             if (likersData.data) {
-                // @ts-ignore
                 setLikers(likersData.data.map(item => ({
                     user_id: item.user_id,
                     user: Array.isArray(item.user) ? item.user[0] : item.user
@@ -255,7 +254,6 @@ export default function ReviewDetails() {
                         return bHasAvatar ? 1 : -1;
                     });
 
-                    // @ts-ignore
                     setRelatedReviews(mapped);
                 }
             }
@@ -275,7 +273,6 @@ export default function ReviewDetails() {
             let formattedComments: Comment[] = [];
             if (commentsData.length > 0) {
                 const commentIds = commentsData.map(c => c.id);
-                // @ts-ignore
                 const { data: likesData } = await supabase
                     .from("comment_likes")
                     .select("comment_id, user_id")
@@ -302,7 +299,6 @@ export default function ReviewDetails() {
             let formattedLinks: ReviewLink[] = [];
             if (linksData && linksData.length > 0) {
                 const linkIds = linksData.map(l => l.id);
-                // @ts-ignore
                 const { data: allLinkLikes } = await supabase
                     .from("link_likes")
                     .select("link_id, user_id")
@@ -320,8 +316,7 @@ export default function ReviewDetails() {
             setLinks(formattedLinks);
 
         } catch (e) {
-            console.error(e);
-            setNotFound(true);
+setNotFound(true);
         } finally {
             setLoading(false);
         }
@@ -367,12 +362,10 @@ export default function ReviewDetails() {
       // Re-fetch to ensure data consistency, especially user details
       const { data } = await supabase.from("likes").select("user_id, user:profiles(username, avatar_url)").eq("interaction_id", review.id).order("created_at", { ascending: false }).limit(50);
       if (data) {
-         // @ts-ignore
          setLikers(data.map(item => ({ user_id: item.user_id, user: Array.isArray(item.user) ? item.user[0] : item.user })));
       }
     } catch (error) {
-      console.error(error);
-      // Revert on error would go here
+// Revert on error would go here
     }
   };
 
@@ -390,17 +383,14 @@ export default function ReviewDetails() {
 
     try {
         if (wasLiked) {
-            // @ts-ignore
             const { error } = await supabase.from("link_likes").delete().eq("link_id", linkId).eq("user_id", user.id);
             if (error) throw error;
         } else {
-            // @ts-ignore
             const { error } = await supabase.from("link_likes").insert({ link_id: linkId, user_id: user.id });
             if (error) throw error;
         }
     } catch (error) {
-        console.error("Error toggling link like", error);
-        toast({ variant: "destructive", title: "Error", description: "Failed to update like." });
+toast({ variant: "destructive", title: "Error", description: "Failed to update like." });
         // Revert optimistic update
         setLinks(prev => prev.map(l => l.id === linkId ? {
             ...l,
@@ -422,15 +412,12 @@ export default function ReviewDetails() {
     } : c));
     try {
         if (wasLiked) {
-            // @ts-ignore
             await supabase.from("comment_likes").delete().eq("comment_id", commentId).eq("user_id", user.id);
         } else {
-            // @ts-ignore
             await supabase.from("comment_likes").insert({ comment_id: commentId, user_id: user.id });
         }
     } catch (error) {
-        console.error("Error toggling comment like", error);
-    }
+}
   };
 
   const handlePostComment = async () => {
@@ -458,7 +445,6 @@ export default function ReviewDetails() {
       if (commentsData) {
           // Refresh comments to ensure data consistency
           const commentIds = commentsData.map(c => c.id);
-          // @ts-ignore
           const { data: likesData } = await supabase
             .from("comment_likes")
             .select("comment_id, user_id")
@@ -479,8 +465,7 @@ export default function ReviewDetails() {
 
       toast({ title: "Comment posted" });
     } catch (error: any) {
-      console.error(error);
-      toast({ variant: "destructive", title: "Error", description: error.message || "Could not post comment." });
+toast({ variant: "destructive", title: "Error", description: error.message || "Could not post comment." });
     } finally {
       setSubmitting(false);
     }
@@ -494,8 +479,7 @@ export default function ReviewDetails() {
         setReview(prev => prev ? ({ ...prev, comments_count: prev.comments_count - 1 }) : null);
         toast({ title: "Comment deleted" });
     } catch (error: any) {
-        console.error(error);
-        toast({ variant: "destructive", title: "Error", description: error.message || "Could not delete comment." });
+toast({ variant: "destructive", title: "Error", description: error.message || "Could not delete comment." });
     }
   };
 
@@ -508,8 +492,7 @@ export default function ReviewDetails() {
         toast({ title: "Log deleted" });
         navigate("/profile"); 
     } catch (error: any) {
-        console.error(error);
-        toast({ variant: "destructive", title: "Error", description: error.message || "Could not delete log." });
+toast({ variant: "destructive", title: "Error", description: error.message || "Could not delete log." });
     }
   };
 

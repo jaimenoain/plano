@@ -45,6 +45,7 @@ export function ArchitectSelect({
       observer.observe(containerRef.current)
       return () => observer.disconnect()
     }
+    return undefined
   }, [])
 
   const handleSelect = (architect: ArchitectSearchResult) => {

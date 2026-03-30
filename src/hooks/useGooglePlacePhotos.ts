@@ -21,21 +21,23 @@ export function useGooglePlacePhotos(markers: Marker[]) {
   useEffect(() => {
     let isMounted = true;
 
-    const initMap = async () => {
+    const initMap = async (): Promise<void> => {
       // Check if global google object exists and has places
       if (window.google?.maps?.places) {
         if (!serviceRef.current) {
              serviceRef.current = new google.maps.places.PlacesService(document.createElement('div'));
         }
         if (isMounted) setIsLoaded(true);
-        return;
+        return undefined;
       }
 
       const apiKey = config.googleMaps.apiKey;
-      if (!apiKey) return;
+      if (!apiKey) {
+        return undefined;
+      }
 
       try {
-        setOptions({ key: apiKey, version: "weekly" });
+        setOptions({ key: apiKey, v: "weekly" });
         await importLibrary("places");
 
         if (!serviceRef.current) {
@@ -54,7 +56,7 @@ export function useGooglePlacePhotos(markers: Marker[]) {
   }, []);
 
   useEffect(() => {
-    if (!isLoaded || !serviceRef.current) return;
+    if (!isLoaded || !serviceRef.current) return undefined;
 
     let isMounted = true;
     const uniquePlaceIds = new Set<string>();
@@ -73,7 +75,7 @@ export function useGooglePlacePhotos(markers: Marker[]) {
         }
     });
 
-    if (uniquePlaceIds.size === 0) return;
+if (uniquePlaceIds.size === 0) return undefined;
 
     const fetchDetails = async () => {
         for (const placeId of uniquePlaceIds) {

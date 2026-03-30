@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -72,15 +72,13 @@ function OtherMarkersSearch({ collectionId, userId }: { collectionId: string, us
 
       const apiKey = config.googleMaps.apiKey;
       if (!apiKey) {
-        console.error("VITE_GOOGLE_MAPS_API_KEY is missing");
-        setHasError(true);
+setHasError(true);
         return;
       }
 
       try {
         setOptions({
           key: apiKey,
-          version: "weekly",
         });
 
         await importLibrary("places");
@@ -88,8 +86,7 @@ function OtherMarkersSearch({ collectionId, userId }: { collectionId: string, us
 
         setScriptLoaded(true);
       } catch (error) {
-        console.error("Error loading Google Maps script", error);
-        setHasError(true);
+setHasError(true);
       }
     };
 
@@ -158,8 +155,7 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
       setValue("", false); // Clear input after successful add
       queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
     } catch (error) {
-      console.error("Error adding marker:", error);
-      toast.error("Failed to add marker");
+toast.error("Failed to add marker");
     }
   };
 
@@ -311,7 +307,7 @@ export function AddBuildingsToCollectionDialog({
             architects: b.building_architects?.map((ba) => ba.architect).filter(Boolean) || [],
             location_lat: location?.lat || 0,
             location_lng: location?.lng || 0,
-            styles: [],
+            styles: [] as { name: string }[],
           };
       });
 
@@ -348,7 +344,7 @@ export function AddBuildingsToCollectionDialog({
         }
       }
 
-      return buildings as DiscoveryBuilding[];
+      return buildings as unknown as DiscoveryBuilding[];
     },
     enabled: !!user && open,
   });
@@ -406,9 +402,8 @@ export function AddBuildingsToCollectionDialog({
           toast.success("Building hidden from suggestions");
           queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
       },
-      onError: (error) => {
-          console.error("Failed to hide building:", error);
-          toast.error("Failed to hide building");
+      onError: (_error) => {
+toast.error("Failed to hide building");
       }
   });
 
@@ -441,9 +436,8 @@ export function AddBuildingsToCollectionDialog({
         toast.success("Building added to collection");
         queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
     },
-    onError: (error) => {
-        console.error("Failed to add building:", error);
-        toast.error("Failed to add building");
+    onError: (_error) => {
+toast.error("Failed to add building");
     }
   });
 
@@ -575,7 +569,13 @@ export function AddBuildingsToCollectionDialog({
 
             {/* Right Column: Details */}
             {selectedBuilding ? (
-              <BuildingDetailPanel building={selectedBuilding} />
+              <BuildingDetailPanel
+                building={{
+                  ...selectedBuilding,
+                  slug: selectedBuilding.slug ?? selectedBuilding.id,
+                  hero_image_url: selectedBuilding.main_image_url ?? null,
+                }}
+              />
             ) : (
               <div className="flex-1 border-l hidden lg:flex items-center justify-center text-muted-foreground bg-muted/10">
                 Select a building to view details

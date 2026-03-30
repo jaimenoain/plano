@@ -14,7 +14,7 @@ import {
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settings, LogOut, Bell } from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
@@ -102,7 +102,6 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
 }
 
 export function AppSidebar() {
-  const { user } = useAuth();
   const location = useLocation();
   const { state, setOpen, isMobile } = useSidebar();
   const isHoveringRef = useRef(false);

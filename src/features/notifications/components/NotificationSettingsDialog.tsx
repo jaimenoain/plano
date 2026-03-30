@@ -63,8 +63,7 @@ export function NotificationSettingsDialog({ open, onOpenChange }: NotificationS
       const prefs = (data.notification_preferences as Record<string, boolean>) || {};
       setPreferences(prefs);
     } catch (error) {
-      console.error("Error fetching notification preferences:", error);
-      toast({
+toast({
         title: "Error",
         description: "Failed to load notification settings.",
         variant: "destructive",
@@ -105,8 +104,7 @@ export function NotificationSettingsDialog({ open, onOpenChange }: NotificationS
       });
       onOpenChange(false);
     } catch (error) {
-      console.error("Error saving notification preferences:", error);
-      toast({
+toast({
         title: "Error",
         description: "Failed to save settings.",
         variant: "destructive",

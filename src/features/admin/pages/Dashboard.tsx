@@ -21,8 +21,7 @@ export default function AdminDashboard() {
         const data = await fetchAdminDashboardStats();
         setStats(data);
       } catch (error) {
-        console.error("Failed to load admin stats:", error);
-      } finally {
+} finally {
         setLoading(false);
       }
     };

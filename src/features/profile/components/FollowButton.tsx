@@ -33,8 +33,7 @@ export function FollowButton({ userId, initialIsFollowing, isFollower, className
 
         setIsFollowing(!!data);
       } catch (error) {
-        console.error("Error checking follow status:", error);
-      }
+}
     };
 
     checkStatus();

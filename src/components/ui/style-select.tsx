@@ -37,7 +37,6 @@ export function StyleSelect({
   const { data: suggestions = [], isLoading } = useQuery({
     queryKey: ['architectural_styles', inputValue],
     queryFn: async () => {
-       // @ts-ignore - architectural_styles table created in migration
        let query = supabase.from('architectural_styles').select('*').limit(20);
 
        if (inputValue.length > 0) {
@@ -88,7 +87,6 @@ export function StyleSelect({
           // Simple slug generation
           const slug = slugify(name);
 
-          // @ts-ignore
           const { data, error } = await supabase
             .from('architectural_styles')
             .insert({ name, slug })
@@ -100,8 +98,7 @@ export function StyleSelect({
           handleSelect(data as StyleSummary);
           toast.success(`Created style "${name}"`);
       } catch (error) {
-          console.error("Error creating style:", error);
-          toast.error("Failed to create style. It might already exist.");
+toast.error("Failed to create style. It might already exist.");
       } finally {
           setIsCreating(false);
       }
@@ -173,6 +170,7 @@ export function StyleSelect({
                      <CommandItem
                         value={inputValue}
                         onSelect={handleCreate}
+                        disabled={isCreating}
                         className="text-blue-500 font-medium"
                      >
                         + Create "{inputValue}"

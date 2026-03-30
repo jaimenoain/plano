@@ -64,17 +64,19 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
 }));
 
-// Mock maplibre-gl
-vi.mock('maplibre-gl', () => ({
+// Mock maplibre-gl (CollectionMapGL calls LngLat.convert after cameraForBounds)
+vi.mock("maplibre-gl", () => ({
   default: {
     Map: vi.fn(),
+    LngLat: {
+      convert: (c: { lng: number; lat: number }) => ({ lat: c.lat, lng: c.lng }),
+    },
   },
 }));
 
-// Mock react-map-gl
-vi.mock('react-map-gl', async () => {
+// Mock react-map-gl/maplibre (production imports from this subpath)
+vi.mock('react-map-gl/maplibre', async () => {
   const React = await import('react');
-  // eslint-disable-next-line react/display-name
   const Map = React.forwardRef((props: any, ref: any) => {
     // Simulate map load
     React.useEffect(() => {

@@ -11,7 +11,7 @@ export function useIntersectionObserver(
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    if (!ref) return;
+    if (!ref) return undefined;
 
     const observer = new IntersectionObserver(
       ([entry]) => {

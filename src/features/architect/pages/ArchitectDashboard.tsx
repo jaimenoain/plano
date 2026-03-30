@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
 
 export default function ArchitectDashboard() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [feedLoading, setFeedLoading] = useState(true);
@@ -40,8 +40,7 @@ export default function ArchitectDashboard() {
           .single();
 
         if (claimError || !claims) {
-          console.log("No verified architect claim found", claimError);
-          navigate("/");
+navigate("/");
           return;
         }
 
@@ -183,8 +182,7 @@ export default function ArchitectDashboard() {
         setFeedItems(mappedFeed);
 
       } catch (error) {
-        console.error("Error loading architect dashboard:", error);
-        toast.error("Failed to load dashboard data");
+toast.error("Failed to load dashboard data");
       } finally {
         setLoading(false);
         setFeedLoading(false);

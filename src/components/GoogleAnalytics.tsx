@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
-export const GoogleAnalytics = () => {
+export const GoogleAnalytics = (): null => {
   const { user, loading } = useAuth();
 
-  useEffect(() => {
+  useEffect((): void => {
     // Wait until auth loading is complete
     if (loading) return;
 

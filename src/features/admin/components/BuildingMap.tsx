@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import Map, { Marker, NavigationControl, MapRef } from "react-map-gl";
-import maplibregl from "maplibre-gl";
+import { useState, useEffect, useRef } from "react";
+import Map, { Marker, NavigationControl, MapRef } from "react-map-gl/maplibre";
+import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Layers, MapPin, Maximize2, Minimize2 } from "lucide-react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { MapItem, ClusterPoint, BuildingPoint } from "@/features/search/components/types";
+import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
 interface BuildingMapProps {
   lat: number;
@@ -14,7 +15,7 @@ interface BuildingMapProps {
   socialContext?: string | null;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
-  mapStyle?: string | object;
+  mapStyle?: string | StyleSpecification;
   locationPrecision?: 'exact' | 'approximate';
   items?: MapItem[];
   selectedId?: string;
@@ -22,29 +23,6 @@ interface BuildingMapProps {
 }
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
-
-const SATELLITE_STYLE = {
-  version: 8,
-  sources: {
-    "satellite-tiles": {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-      ],
-      tileSize: 256,
-      attribution: "&copy; Esri"
-    }
-  },
-  layers: [
-    {
-      id: "satellite-layer",
-      type: "raster",
-      source: "satellite-tiles",
-      minzoom: 0,
-      maxzoom: 22
-    }
-  ]
-};
 
 export function BuildingMap({ 
   lat, 
@@ -138,7 +116,7 @@ export function BuildingMap({
         }}
         mapLib={maplibregl}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={isSatellite ? SATELLITE_STYLE : (mapStyle || DEFAULT_MAP_STYLE)}
+        mapStyle={isSatellite ? SATELLITE_MAP_STYLE : (mapStyle || DEFAULT_MAP_STYLE)}
         attributionControl={false}
       >
         <NavigationControl position="bottom-right" />
@@ -210,9 +188,8 @@ export function BuildingMap({
                   latitude={building.lat}
                   anchor="bottom"
                   style={{ zIndex: isSelected ? 30 : 10 }}
-                  onClick={(e) => {
+                  onClick={() => {
                     // Optional: handle building click if needed
-                    // e.originalEvent.stopPropagation();
                   }}
                 >
                   <div className="relative group hover:z-50">

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import Map, { Source, Layer, LayerProps } from 'react-map-gl';
+import Map, { Source, Layer, LayerProps } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

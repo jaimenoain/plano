@@ -8,7 +8,7 @@ import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import React from "react";
 
 export function EmptyFeed() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const { data, isLoading, toggleLike, toggleImageLike } = useSuggestedFeed();
 
   const posts = data?.pages.flatMap((page) => page) || [];

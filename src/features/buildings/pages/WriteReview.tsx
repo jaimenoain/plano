@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
   Circle,
   Upload,
   X,
@@ -133,9 +132,7 @@ export default function WriteReview() {
         if (buildingError) throw buildingError;
         setBuildingName(building.name);
         setBuildingId(building.id);
-        // @ts-ignore
         setBuildingSlug(building.slug);
-        // @ts-ignore
         setBuildingShortId(building.short_id);
 
         // 2. Fetch Existing Review/Status & Collections in Parallel
@@ -196,7 +193,6 @@ export default function WriteReview() {
                 }
 
                 // Process Links (Nested)
-                // @ts-ignore
                 const existingLinks = userBuilding.review_links;
                 if (existingLinks) {
                   setLinks(existingLinks);
@@ -204,7 +200,6 @@ export default function WriteReview() {
                 }
 
                 // Process Images (Nested)
-                // @ts-ignore
                 const remoteImages = userBuilding.review_images;
                 if (remoteImages) {
                   const loadedImages: ReviewImage[] = remoteImages.map((img: any) => ({
@@ -221,8 +216,7 @@ export default function WriteReview() {
           await Promise.all(tasks);
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
-        toast({ variant: "destructive", title: "Error loading data" });
+toast({ variant: "destructive", title: "Error loading data" });
       } finally {
         setLoading(false);
       }
@@ -252,8 +246,7 @@ export default function WriteReview() {
           is_generated: false
         });
       } catch (error) {
-        console.error("Error compressing image:", error);
-        toast({
+toast({
           variant: "destructive",
           title: "Error processing image",
           description: file.name
@@ -301,8 +294,7 @@ export default function WriteReview() {
       });
 
     } catch (error) {
-      console.error("Video processing error:", error);
-      toast({
+toast({
         variant: "destructive",
         title: "Video upload failed",
         description: error instanceof Error ? error.message : "Unknown error"
@@ -357,7 +349,7 @@ export default function WriteReview() {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       // Do not await processMediaSelection to ensure input is cleared immediately
-      processMediaSelection(files).catch(console.error);
+      void processMediaSelection(files).catch((): undefined => undefined);
       // Cleanup input
       e.target.value = "";
     }
@@ -420,7 +412,7 @@ export default function WriteReview() {
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
         const items = Array.from(e.dataTransfer.files);
         // Do not await processMediaSelection to ensure non-blocking UI
-        processMediaSelection(items).catch(console.error);
+        void processMediaSelection(items).catch((): undefined => undefined);
       }
     };
 
@@ -485,8 +477,7 @@ export default function WriteReview() {
         setNewLinkTitle(data.title);
       }
     } catch (error) {
-      console.error("Error fetching title:", error);
-    } finally {
+} finally {
       setIsFetchingTitle(false);
     }
   };
@@ -570,8 +561,7 @@ export default function WriteReview() {
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {
-      console.error("Delete error:", error);
-      toast({
+toast({
         variant: "destructive",
         title: "Failed to delete review",
         description: error instanceof Error ? error.message : "An error occurred"
@@ -689,8 +679,7 @@ export default function WriteReview() {
           try {
             await deleteFiles(pathsToDelete);
           } catch (error) {
-            console.error("Error cleaning up storage:", error);
-          }
+}
         }
       }
 
@@ -699,8 +688,7 @@ export default function WriteReview() {
         try {
           await deleteFiles([deletedVideoPath]);
         } catch (error) {
-          console.error("Error deleting old video:", error);
-        }
+}
       }
 
       // 4. Update Existing Images Metadata
@@ -747,8 +735,7 @@ export default function WriteReview() {
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {
-      console.error("Submission error:", error);
-      toast({
+toast({
         variant: "destructive",
         title: "Failed to submit review",
         description: error instanceof Error ? error.message : "An error occurred"

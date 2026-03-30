@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Source, Layer, useMap } from 'react-map-gl';
+import { Source, Layer, useMap } from 'react-map-gl/maplibre';
 import { useItineraryStore } from '@/features/itinerary/stores/useItineraryStore';
 import { DAY_COLORS } from '@/features/maps/constants';
 
@@ -9,11 +9,11 @@ export function ItineraryRoutes() {
   const [firstSymbolId, setFirstSymbolId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (!map) return;
+    if (!map) return undefined;
 
-    const findFirstSymbolLayer = () => {
+    const findFirstSymbolLayer = (): void => {
         const style = map.getStyle();
-        if (!style || !style.layers) return;
+        if (!style || !style.layers) return undefined;
 
         const labelLayer = style.layers.find(layer => layer.type === 'symbol');
         if (labelLayer) {

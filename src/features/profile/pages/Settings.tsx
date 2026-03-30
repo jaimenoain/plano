@@ -21,6 +21,7 @@ import { ManageFavoritesDialog } from "@/features/profile/components/ManageFavor
 import { ManageHighlightsDialog } from "@/features/profile/components/ManageHighlightsDialog";
 import { FavoriteItem } from "@/features/profile/components/types";
 import { DisconnectArchitectDialog } from "@/features/profile/components/DisconnectArchitectDialog";
+import { resizeImage } from "@/lib/image-compression";
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth();
@@ -229,7 +230,8 @@ export default function Settings() {
         throw new Error("You must select an image to upload.");
       }
 
-      const file = event.target.files[0];
+      const rawFile = event.target.files[0];
+      const file = await resizeImage(rawFile, 500, 500, 0.8);
       const fileExt = file.name.split(".").pop();
       const filePath = `${user!.id}/${crypto.randomUUID()}.${fileExt}`;
 
@@ -250,8 +252,7 @@ export default function Settings() {
         title: "Upload failed",
         description: "Make sure you have an 'avatars' public bucket in Supabase.",
       });
-      console.error(error);
-    } finally {
+} finally {
       setUploading(false);
     }
   };
@@ -271,8 +272,7 @@ export default function Settings() {
           if (error) throw error;
           toast({ description: "Favorites updated successfully." });
       } catch (error) {
-          console.error(error);
-          toast({ variant: "destructive", description: "Failed to save favorites." });
+toast({ variant: "destructive", description: "Failed to save favorites." });
       }
   };
 
@@ -291,8 +291,7 @@ export default function Settings() {
           if (error) throw error;
           toast({ description: "Highlights updated successfully." });
       } catch (error) {
-          console.error(error);
-          toast({ variant: "destructive", description: "Failed to save highlights." });
+toast({ variant: "destructive", description: "Failed to save highlights." });
       }
   };
 
@@ -375,8 +374,7 @@ export default function Settings() {
       });
 
     } catch (error: any) {
-      console.error("Export failed:", error);
-      toast({
+toast({
         variant: "destructive",
         title: "Export failed",
         description: "Could not export your data. Please try again.",

@@ -28,17 +28,28 @@ interface UseArchitectResult {
   error: Error | null;
 }
 
-interface BuildingArchitectNestedRow {
-  building: {
-    id: string;
-    name: string;
-    city: string | null;
-    country: string | null;
-    year_completed: number | null;
-    main_image_url: string | null;
-    status: string | null;
-  } | null;
-}
+type BuildingArchitectNestedRow = {
+  building:
+    | {
+        id: string;
+        name: string;
+        city: string | null;
+        country: string | null;
+        year_completed: number | null;
+        main_image_url: string | null;
+        status: string | null;
+      }
+    | {
+        id: string;
+        name: string;
+        city: string | null;
+        country: string | null;
+        year_completed: number | null;
+        main_image_url: string | null;
+        status: string | null;
+      }[]
+    | null;
+};
 
 export function useArchitect(architectId: string | undefined | null): UseArchitectResult {
   const [architect, setArchitect] = useState<Architect | null>(null);
@@ -54,7 +65,7 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
       setBuildings([]);
       setLinkedUser(null);
       setLoading(false);
-      return;
+      return undefined;
     }
 
     let isMounted = true;
@@ -64,7 +75,6 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
       setError(null);
       try {
         // Fetch architect details (table not in generated Database until `npm run gen-types`)
-        // @ts-expect-error — architects relation missing from generated types
         const { data: architectData, error: architectError } = await supabase
           .from("architects")
           .select("*")
@@ -89,7 +99,6 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
         }
 
         // Fetch associated buildings
-        // @ts-expect-error — building_architects relation missing from generated types
         const { data: buildingsData, error: buildingsError } = await supabase
           .from("building_architects")
           .select(`
@@ -111,7 +120,8 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
             // Transform data to extract the nested building object
             const formattedBuildings = (buildingsData || [])
             .map((item: BuildingArchitectNestedRow) => {
-              const b = item.building;
+              const raw = item.building;
+              const b = Array.isArray(raw) ? raw[0] : raw;
               if (!b) return null;
 
               return {

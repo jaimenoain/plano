@@ -14,9 +14,9 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { 
-  Settings, LogOut, Building2, Bookmark, Loader2,
-  MoreVertical, Heart, Map as MapIcon, Star, ArrowRight,
-  Search, X, Share2, Edit2, LayoutGrid, Columns, List
+  LogOut, Building2, Bookmark, Loader2,
+  Map as MapIcon,
+  Search, X, LayoutGrid, Columns, List
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,20 +25,18 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 import { ReviewCard } from "@/features/feed/components/ReviewCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { FollowButton } from "@/features/profile/components/FollowButton";
 import { useToast } from "@/hooks/use-toast";
 import { FavoritesSection } from "@/features/profile/components/FavoritesSection";
 import { FavoriteItem } from "@/features/profile/components/types";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { MetaHead } from "@/components/common/MetaHead";
+import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useSidebar } from "@/components/ui/sidebar";
 
 // New Components
 import { UserCard } from "@/features/profile/components/UserCard";
@@ -46,7 +44,7 @@ import { ProfileHighlights } from "@/features/profile/components/ProfileHighligh
 import { SocialContextSection } from "@/features/profile/components/SocialContextSection";
 import { CollectionsGrid } from "@/features/collections/components/CollectionsGrid";
 import { CreateCollectionDialog } from "@/features/collections/components/CreateCollectionDialog";
-import { FeedReview } from "@/types/feed";
+import { FeedReview, WatchWithUser } from "@/types/feed";
 import { useProfileComparison } from "@/features/profile/hooks/useProfileComparison";
 import { getBuildingImageUrl } from "@/utils/image";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
@@ -97,8 +95,6 @@ export default function Profile() {
   const { username: routeUsername } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  const { state, isMobile } = useSidebar();
-  
   const [viewMode, setViewMode] = useState<'grid' | 'kanban' | 'list'>('grid');
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -201,8 +197,7 @@ export default function Profile() {
         toast({ description: "Already in folder" });
       }
     } catch (error) {
-      console.error(error);
-      toast({ variant: "destructive", description: "Failed to add to folder" });
+toast({ variant: "destructive", description: "Failed to add to folder" });
     }
   };
 
@@ -262,19 +257,6 @@ export default function Profile() {
     setSearchParams(newParams, { replace: true, preventScrollReset: true });
   };
 
-  const handleShare = () => {
-    let url = window.location.href;
-    if (profile?.username) {
-      const urlObj = new URL(window.location.href);
-      urlObj.pathname = `/profile/${profile.username.toLowerCase()}`;
-      url = urlObj.toString();
-    }
-    navigator.clipboard.writeText(url);
-    toast({
-      description: "Link copied to clipboard.",
-    });
-  };
-
   // --- Effects ---
 
   useEffect(() => {
@@ -326,7 +308,7 @@ export default function Profile() {
       if (data) {
           setProfile(data);
           uid = data.id;
-          let favs = (data as any).favorites || [];
+          const favs = (data as any).favorites || [];
           setFavorites(favs);
       }
 
@@ -467,11 +449,11 @@ export default function Profile() {
                 short_id: item.building?.short_id || null,
                 architects: item.building?.architects?.map((a: any) => a.architect).filter(Boolean) || [],
             },
-            tags: [],
+            tags: [] as string[],
             likes_count: reviewLikes + imageLikes,
             comments_count: commentsCount.get(item.id) || 0,
             is_liked: userLikes.has(item.id),
-            watch_with_users: [],
+            watch_with_users: [] as WatchWithUser[],
             images: itemImages,
             };
         });
@@ -485,8 +467,7 @@ export default function Profile() {
             setHasMore(formattedContent.length === ITEMS_PER_PAGE);
         }
     } catch (error) {
-      console.error("Error fetching content:", error);
-    } finally {
+} finally {
       setContentLoading(false);
       setIsFetchingMore(false);
     }
@@ -604,7 +585,9 @@ export default function Profile() {
       } else {
         await supabase.from("likes").insert({ interaction_id: reviewId, user_id: currentUser.id });
       }
-    } catch (error) { console.error(error); }
+    } catch (_error) {
+      void _error;
+    }
   };
 
   const handleFollowToggle = async () => {
@@ -670,8 +653,7 @@ export default function Profile() {
         }
 
     } catch (error) {
-        console.error(error);
-        // Revert content
+// Revert content
         setContent(previousContent);
         // Revert stats if needed
         if (updates.status && updates.status !== currentItem.status) {
@@ -745,8 +727,11 @@ export default function Profile() {
         }
         setUserList(formattedUsers);
       }
-    } catch (error) { console.error(error); } 
-    finally { setUserListLoading(false); }
+    } catch (_error) {
+      void _error;
+    } finally {
+      setUserListLoading(false);
+    }
   };
 
   // --- Render Helpers ---
@@ -825,7 +810,9 @@ export default function Profile() {
         {(() => {
           return verifiedArchitectId ? (
             <div className="max-w-7xl mx-auto px-4 mt-8 mb-8">
-              <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
+              <WidgetErrorBoundary>
+                <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
+              </WidgetErrorBoundary>
             </div>
           ) : null;
         })()}
@@ -855,6 +842,7 @@ export default function Profile() {
         {/* 4. Collections Grid */}
         {targetUserId && (
             <div id="collections-section" className="scroll-mt-24 max-w-7xl mx-auto">
+              <WidgetErrorBoundary>
               <DndContext sensors={sensors} onDragStart={handleCollectionDragStart} onDragEnd={handleCollectionDragEnd}>
                   <CollectionsGrid
                     userId={targetUserId}
@@ -876,6 +864,7 @@ export default function Profile() {
                     ) : null}
                   </DragOverlay>
               </DndContext>
+              </WidgetErrorBoundary>
             </div>
         )}
 
@@ -965,6 +954,7 @@ export default function Profile() {
                 <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : filteredContent.length > 0 ? (
                   <>
+                  <WidgetErrorBoundary>
                   <AnimatePresence mode="wait">
                     {viewMode === 'grid' ? (
                       <motion.div
@@ -1043,6 +1033,7 @@ export default function Profile() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+                  </WidgetErrorBoundary>
                   <div ref={containerRef} className="h-4 w-full" />
                   </>
               ) : (

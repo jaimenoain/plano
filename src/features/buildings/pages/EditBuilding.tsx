@@ -31,7 +31,6 @@ interface NearbyBuilding {
   dist_meters: number;
 }
 
-const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
 export default function EditBuilding() {
   const { id } = useParams();
@@ -42,7 +41,7 @@ export default function EditBuilding() {
   const [initialValues, setInitialValues] = useState<BuildingFormData | null>(null);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
-  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const [_checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [buildingSlug, setBuildingSlug] = useState<string | null>(null);
   const [buildingShortId, setBuildingShortId] = useState<number | null>(null);
@@ -59,8 +58,8 @@ export default function EditBuilding() {
 
       let query = supabase.from('buildings').select('*');
 
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id!);
-      if (isUUID) {
+      const idIsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id!);
+      if (idIsUuid) {
           query = query.eq('id', id);
       } else {
           query = query.eq('short_id', parseInt(id!));
@@ -80,14 +79,11 @@ export default function EditBuilding() {
       }
 
       setBuildingId(data.id);
-      // @ts-ignore
       setBuildingSlug(data.slug);
-      // @ts-ignore
       setBuildingShortId(data.short_id);
 
       // Fetch Relations
       // Architects
-      // @ts-ignore
       const { data: relations } = await supabase
         .from('building_architects')
         .select('architect:architects(id, name, type)')
@@ -98,7 +94,6 @@ export default function EditBuilding() {
       const finalArchitects: Architect[] = relationArchitects;
 
       // Fetch Typologies
-      // @ts-ignore
       const { data: typologies } = await supabase
         .from('building_functional_typologies')
         .select('typology_id')
@@ -107,7 +102,6 @@ export default function EditBuilding() {
       const typologyIds = typologies?.map((t: any) => t.typology_id) || [];
 
       // Fetch Attributes
-      // @ts-ignore
       const { data: attributes } = await supabase
         .from('building_attributes')
         .select('attribute_id')
@@ -143,13 +137,11 @@ export default function EditBuilding() {
           address: data.address || "",
           city: data.city,
           country: data.country,
-          // @ts-ignore: location_precision is a new column
           precision: data.location_precision || 'exact'
       });
 
     } catch (error) {
-      console.error(error);
-      toast.error("Error loading building");
+toast.error("Error loading building");
     } finally {
       setLoading(false);
     }
@@ -157,10 +149,10 @@ export default function EditBuilding() {
 
   // Duplicate Check Effect
   useEffect(() => {
-    if (!locationData || !buildingId) return;
-    if (locationData.lat === null || locationData.lng === null) return;
+    if (!locationData || !buildingId) return undefined;
+    if (locationData.lat === null || locationData.lng === null) return undefined;
 
-    const checkDuplicates = async () => {
+    const checkDuplicates = async (): Promise<void> => {
       setCheckingDuplicates(true);
       try {
         const { data, error } = await supabase.rpc('find_nearby_buildings', {
@@ -176,8 +168,7 @@ export default function EditBuilding() {
         setDuplicates(others);
 
       } catch (error) {
-        console.error("Error checking duplicates:", error);
-      } finally {
+} finally {
         setCheckingDuplicates(false);
       }
     };
@@ -186,8 +177,8 @@ export default function EditBuilding() {
     return () => clearTimeout(timer);
   }, [locationData?.lat, locationData?.lng, buildingId]);
 
-  const handleSubmit = async (formData: BuildingFormData) => {
-    if (!locationData || !buildingId) return;
+  const handleSubmit = async (formData: BuildingFormData): Promise<void> => {
+    if (!locationData || !buildingId) return undefined;
 
     if (locationData.lat === null || locationData.lng === null) {
         toast.error("Please ensure the location is set on the map");
@@ -209,7 +200,6 @@ export default function EditBuilding() {
           access_logistics: formData.access_logistics as any,
           access_cost: formData.access_cost as any,
           access_notes: formData.access_notes as any,
-          // @ts-ignore
           functional_category_id: formData.functional_category_id,
           // Removed legacy column updates for typologies/attributes
 
@@ -217,58 +207,49 @@ export default function EditBuilding() {
           city: locationData.city,
           country: locationData.country,
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown,
-          // @ts-ignore: location_precision is a new column
           location_precision: locationData.precision
         })
         .eq('id', buildingId);
 
       if (error) {
-        console.error("Update error:", error);
-        toast.error("Failed to update building");
+toast.error("Failed to update building");
         setIsSubmitting(false);
         return;
       }
 
       // Handle Architects Junction Table
       // 1. Clear existing links
-      // @ts-ignore
       await supabase.from('building_architects').delete().eq('building_id', buildingId);
 
       // 2. Insert new links
       // We assume formData.architects contains valid UUIDs from the ArchitectSelect component
       if (formData.architects.length > 0) {
           const links = formData.architects.map(a => ({ building_id: buildingId, architect_id: a.id }));
-          // @ts-ignore
+          // @ts-expect-error -- legacy Supabase row typing
           const { error: linkError } = await supabase.from('building_architects').insert(links);
-          if (linkError) console.error("Link error:", linkError);
-      }
+          }
 
       // Handle Typologies Junction Table
-      // @ts-ignore
       await supabase.from('building_functional_typologies').delete().eq('building_id', buildingId);
       if (formData.functional_typology_ids.length > 0) {
           const tLinks = formData.functional_typology_ids.map(tid => ({ building_id: buildingId, typology_id: tid }));
-          // @ts-ignore
+          // @ts-expect-error -- legacy Supabase row typing
           const { error: tError } = await supabase.from('building_functional_typologies').insert(tLinks);
-          if (tError) console.error("Typology link error:", tError);
-      }
+          }
 
       // Handle Attributes Junction Table
-      // @ts-ignore
       await supabase.from('building_attributes').delete().eq('building_id', buildingId);
       if (formData.selected_attribute_ids.length > 0) {
           const aLinks = formData.selected_attribute_ids.map(aid => ({ building_id: buildingId, attribute_id: aid }));
-          // @ts-ignore
+          // @ts-expect-error -- legacy Supabase row typing
           const { error: aError } = await supabase.from('building_attributes').insert(aLinks);
-          if (aError) console.error("Attribute link error:", aError);
-      }
+          }
 
       toast.success("Building updated successfully");
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {
-      console.error(error);
-      toast.error("Unexpected error");
+toast.error("Unexpected error");
     } finally {
       setIsSubmitting(false);
     }

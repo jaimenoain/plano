@@ -13,8 +13,8 @@ interface FeedCompactCardProps {
 
 export function FeedCompactCard({
   entry,
-  onLike, // kept for prop compatibility, though unused in view
-  onComment // kept for prop compatibility
+  onLike: _onLike,
+  onComment: _onComment
 }: FeedCompactCardProps) {
   const navigate = useNavigate();
 

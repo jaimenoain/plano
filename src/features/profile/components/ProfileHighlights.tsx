@@ -1,5 +1,4 @@
 import { FavoriteItem } from "./types";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Quote, User, Building2, Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";

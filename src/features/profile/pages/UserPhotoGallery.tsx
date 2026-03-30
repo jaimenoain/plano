@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Image as ImageIcon, Heart } from "lucide-react";
@@ -31,7 +31,6 @@ interface Photo {
 export default function UserPhotoGallery() {
   const { user: currentUser } = useAuth();
   const { username: routeUsername } = useParams();
-  const navigate = useNavigate();
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,15 +120,13 @@ export default function UserPhotoGallery() {
         .order(sortOrder === 'popular' ? "likes_count" : "created_at", { ascending: false })
         .range(from, to);
 
-      if (error) {
-        console.error("Error fetching photos:", error);
-      } else if (data) {
+      if (!error && data) {
         if (data.length < 24) {
           setHasMore(false);
         }
 
         const photoIds = data.map((p) => p.id);
-        let likedIds = new Set<string>();
+        const likedIds = new Set<string>();
 
         if (currentUser && photoIds.length > 0) {
           const { data: likesData } = await supabase
@@ -218,8 +215,7 @@ export default function UserPhotoGallery() {
           if (error) throw error;
        }
     } catch (err) {
-       console.error("Error toggling like:", err);
-       // Revert
+// Revert
        setPhotos(prev => prev.map(p => {
           if (p.id === photoId) {
              return {

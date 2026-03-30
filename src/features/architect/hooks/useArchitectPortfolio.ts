@@ -27,7 +27,6 @@ export function useArchitectPortfolio(architectId: string | null | undefined) {
     queryFn: async () => {
       if (!architectId) return [];
 
-      // @ts-expect-error — buildings relation missing from generated types
       const { data, error } = await supabase
         .from("buildings")
         .select(`

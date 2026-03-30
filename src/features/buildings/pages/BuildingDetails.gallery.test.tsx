@@ -85,8 +85,8 @@ vi.mock('@/utils/image', () => ({
 
 vi.mock('@/integrations/supabase/client', () => {
   const createQueryBuilder = (table: string) => {
-    let listResult: any = { data: [], error: null };
-    let singleResult: any = { data: null, error: null };
+    const listResult: any = { data: [], error: null };
+    const singleResult: any = { data: null, error: null };
 
     // Default mocks for queries
     const builder: any = {

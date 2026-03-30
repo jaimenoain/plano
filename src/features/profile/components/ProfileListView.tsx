@@ -10,11 +10,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { getBuildingImageUrl } from "@/utils/image";
 import { StatusBadge } from "./StatusBadge";
 import { InlineRating } from "./InlineRating";

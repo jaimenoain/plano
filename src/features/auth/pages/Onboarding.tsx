@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { sanitizeUsername } from "@/lib/utils";
-import { Loader2, Globe, User, UserPlus, Check, Upload } from "lucide-react";
+import { Loader2, User, UserPlus, Check, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LocationInput } from "@/components/ui/LocationInput";
+import { resizeImage } from "@/lib/image-compression";
 
 export default function Onboarding() {
   const { user, loading: authLoading } = useAuth();
@@ -89,7 +90,7 @@ export default function Onboarding() {
                   }
                 }
               })
-              .catch(() => console.log("Could not auto-detect country"));
+              .catch((): undefined => undefined);
           }
         }
 
@@ -124,8 +125,7 @@ export default function Onboarding() {
           }
         }
       } catch (error) {
-        console.error("Error loading onboarding data:", error);
-      } finally {
+} finally {
         setLoadingInitialData(false);
       }
     }
@@ -175,7 +175,8 @@ export default function Onboarding() {
         throw new Error("You must select an image to upload.");
       }
 
-      const file = event.target.files[0];
+      const rawFile = event.target.files[0];
+      const file = await resizeImage(rawFile, 500, 500, 0.8);
       const fileExt = file.name.split(".").pop();
       const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
@@ -196,8 +197,7 @@ export default function Onboarding() {
         title: "Upload failed",
         description: "Make sure you have an 'avatars' public bucket in Supabase.",
       });
-      console.error(error);
-    } finally {
+} finally {
       setUploading(false);
     }
   };
@@ -209,8 +209,7 @@ export default function Onboarding() {
     // Logic: If user was invited but hasn't followed the inviter yet, 
     // send a notification to the user suggesting they follow them.
     if (inviter && !isFollowing) {
-      console.log("Creating suggest_follow notification");
-      const { error: notifError } = await supabase
+const { error: notifError } = await supabase
         .from("notifications")
         .insert({
           user_id: user.id, // The notification is FOR the new user
@@ -220,9 +219,8 @@ export default function Onboarding() {
           type: "suggest_follow" as any, 
           is_read: false
         });
-        
       if (notifError) {
-        console.error("Failed to create suggestion notification:", notifError);
+        void notifError;
       }
     }
 

@@ -3,8 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { X, Circle, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +15,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -85,8 +82,7 @@ export default function Post() {
         });
       }
     } catch (error) {
-      console.error("Error fetching building details:", error);
-    }
+}
   };
 
   const checkExistingReview = async () => {
@@ -104,8 +100,7 @@ export default function Post() {
         if (entry.visibility) setVisibility(entry.visibility as Visibility);
       }
     } catch (error) {
-      console.error("Error checking existing review:", error);
-    } finally {
+} finally {
       setCheckingExisting(false);
     }
   };

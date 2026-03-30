@@ -1,12 +1,36 @@
-import { Database } from '../integrations/supabase/types';
+/**
+ * `public.user_buildings` row shapes until the table is present in generated `Database` types.
+ */
+export type UserBuilding = {
+  id: string;
+  user_id: string;
+  building_id: string;
+  status: string | null;
+  rating?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
 
-export type UserBuilding = Database['public']['Tables']['user_buildings']['Row'];
-export type UserBuildingInsert = Database['public']['Tables']['user_buildings']['Insert'];
-export type UserBuildingUpdate = Database['public']['Tables']['user_buildings']['Update'];
+export type UserBuildingInsert = {
+  id?: string;
+  user_id: string;
+  building_id: string;
+  status?: string | null;
+  rating?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
 
-export type UserBuildingStatus = 'pending' | 'visited';
+export type UserBuildingUpdate = Partial<
+  Omit<UserBuilding, "id" | "user_id" | "building_id">
+> & {
+  id?: string;
+  user_id?: string;
+  building_id?: string;
+};
 
-// Override the generic status string with specific union type
-export type UserBuildingWithStatus = Omit<UserBuilding, 'status'> & {
+export type UserBuildingStatus = "pending" | "visited";
+
+export type UserBuildingWithStatus = Omit<UserBuilding, "status"> & {
   status: UserBuildingStatus;
 };

@@ -55,8 +55,7 @@ export default function BuildingAudit() {
       toast.success("Change reverted successfully");
       refetch();
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to revert change");
+toast.error("Failed to revert change");
     } finally {
       setRevertingId(null);
     }
@@ -136,7 +135,6 @@ export default function BuildingAudit() {
                   {log.profiles?.username || "System"}
                 </TableCell>
                 <TableCell>
-                    {/* @ts-ignore */}
                   {log.buildings?.name || "Unknown"}
                 </TableCell>
                 <TableCell className="max-w-[300px]">

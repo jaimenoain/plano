@@ -5,7 +5,6 @@ import usePlacesAutocomplete, {
 } from "use-places-autocomplete";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import { config } from "@/config";
-import { Command as CommandPrimitive } from "cmdk";
 import {
   Command,
   CommandGroup,
@@ -64,7 +63,7 @@ export function DiscoverySearchInput({
       }
 
       try {
-        setOptions({ key: apiKey, version: "weekly" });
+        setOptions({ key: apiKey, v: "weekly" });
         // Add timeout to prevent hanging indefinitely
         await Promise.race([
           Promise.all([importLibrary("places"), importLibrary("geocoding")]),

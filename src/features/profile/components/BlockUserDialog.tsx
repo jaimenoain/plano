@@ -50,8 +50,7 @@ export function BlockUserDialog({ open, onOpenChange, userId, username }: BlockU
             navigate("/");
 
         } catch (error: any) {
-            console.error("Error blocking user:", error);
-            toast({ variant: "destructive", description: error.message || "Failed to block user." });
+toast({ variant: "destructive", description: error.message || "Failed to block user." });
         } finally {
             setLoading(false);
         }

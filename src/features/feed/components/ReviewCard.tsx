@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { Heart, MessageCircle, Circle, Image as ImageIcon, Bookmark, BadgeCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { slugify } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
@@ -58,7 +55,7 @@ interface ReviewCardProps {
 export function ReviewCard({ 
   entry,
   onLike,
-  onImageLike,
+  onImageLike: _onImageLike,
   onComment, 
   isDetailView = false, 
   hideUser = false,
@@ -94,8 +91,7 @@ export function ReviewCard({
 
       toast({ title: "Saved to your list" });
     } catch (error) {
-      console.error("Save failed", error);
-      toast({ variant: "destructive", title: "Failed to save" });
+toast({ variant: "destructive", title: "Failed to save" });
     } finally {
       setIsSaving(false);
     }
@@ -354,7 +350,6 @@ export function ReviewCard({
                             userId={entry.user_id}
                             hideIfFollowing
                             className="h-5 text-[10px] px-2"
-                            variant="secondary"
                           />
                       </span>
                     )}

@@ -144,8 +144,7 @@ export default function Explore() {
 
           if (error) throw error;
       } catch (error) {
-          console.error("Skip failed", error);
-      }
+}
   };
 
   const handleSwipeSave = async (buildingId: string) => {
@@ -169,8 +168,7 @@ export default function Explore() {
 
           queryClient.invalidateQueries({ queryKey: ['discovery_feed'] });
       } catch (error) {
-          console.error("Save failed", error);
-          toast.error("Failed to save");
+toast.error("Failed to save");
       }
   };
 
@@ -194,8 +192,7 @@ export default function Explore() {
 
           queryClient.invalidateQueries({ queryKey: ['discovery_feed'] });
       } catch (error) {
-          console.error("Hide failed", error);
-          toast.error("Failed to skip building");
+toast.error("Failed to skip building");
       }
   };
 

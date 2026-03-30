@@ -86,8 +86,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
       // Cast the result to UserFolder[] because select("*") might not infer everything perfectly or types might be loose
       setFolders((data as any[]) || []);
     } catch (error) {
-      console.error("Error fetching folders:", error);
-      toast({ variant: "destructive", description: "Failed to load folders." });
+toast({ variant: "destructive", description: "Failed to load folders." });
     } finally {
       setLoading(false);
     }
@@ -144,8 +143,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
       setAvailableCollections(Array.from(collectionMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
 
     } catch (error) {
-      console.error("Error fetching available collections:", error);
-    }
+}
   };
 
   const fetchFolderItems = async (folderId: string) => {
@@ -161,8 +159,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
       const ids = new Set((data || []).map((item: any) => item.collection_id));
       setSelectedCollectionIds(ids);
     } catch (error) {
-      console.error("Error fetching folder items:", error);
-      toast({ variant: "destructive", description: "Failed to load folder contents." });
+toast({ variant: "destructive", description: "Failed to load folder contents." });
     } finally {
       setItemsLoading(false);
     }
@@ -224,8 +221,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
       fetchFolders(); // refresh counts
       onUpdate?.();
     } catch (error) {
-       console.error("Error saving items:", error);
-       toast({ variant: "destructive", description: "Failed to save changes." });
+toast({ variant: "destructive", description: "Failed to save changes." });
     } finally {
       setProcessing(false);
     }
@@ -265,8 +261,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
       fetchFolders();
       onUpdate?.();
     } catch (error) {
-      console.error("Error creating folder:", error);
-      toast({ variant: "destructive", description: "Failed to create folder." });
+toast({ variant: "destructive", description: "Failed to create folder." });
     } finally {
       setProcessing(false);
     }
@@ -290,8 +285,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
       fetchFolders();
       onUpdate?.();
     } catch (error) {
-      console.error("Error updating folder:", error);
-      toast({ variant: "destructive", description: "Failed to update folder." });
+toast({ variant: "destructive", description: "Failed to update folder." });
     } finally {
       setProcessing(false);
     }
@@ -308,8 +302,7 @@ export function ManageFoldersDialog({ open, onOpenChange, userId, onUpdate, init
       fetchFolders();
       onUpdate?.();
     } catch (error) {
-      console.error("Error deleting folder:", error);
-      toast({ variant: "destructive", description: "Failed to delete folder." });
+toast({ variant: "destructive", description: "Failed to delete folder." });
     } finally {
       setProcessing(false);
       setDeleteId(null);

@@ -116,13 +116,11 @@ export default function Notifications() {
           .eq('user_id', user!.id)
           .eq('is_read', false);
 
-        if (updateError) {
-          console.error("Error marking notifications as read:", updateError);
-        }
+        if (updateError) throw updateError;
       }
 
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
+    } catch (_error) {
+      void _error;
     } finally {
       setLoading(false);
     }
@@ -152,8 +150,7 @@ export default function Notifications() {
       setHasMore(moreNotifications.length === 20);
 
     } catch (error) {
-      console.error("Error loading more notifications:", error);
-    } finally {
+} finally {
       setLoadingMore(false);
     }
   };
@@ -190,10 +187,11 @@ export default function Notifications() {
     const buildingName = n.resource?.building?.name || (n as any).recommendation?.building?.name;
 
     switch (n.type) {
-      case 'architect_verification':
+      case 'architect_verification': {
         const architectName = n.architect?.name || "an architect";
         const isApproved = n.metadata?.status === 'approved';
         return <span>Your request to be verified as <span className="font-semibold">{architectName}</span> was <span className={isApproved ? "text-green-600 font-medium" : "text-destructive font-medium"}>{isApproved ? "approved" : "declined"}</span></span>;
+      }
       case 'like': return <span><span className="font-semibold">{actorName}</span> liked your review of <span className="italic">{buildingName || "a building"}</span></span>;
       case 'comment': return <span><span className="font-semibold">{actorName}</span> commented on your review of <span className="italic">{buildingName || "a building"}</span></span>;
       case 'follow': return <span><span className="font-semibold">{actorName}</span> started following you</span>;

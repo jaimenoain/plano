@@ -18,10 +18,6 @@ import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Libraries should be loaded via importLibrary now, but we keep this for consistency if needed elsewhere
-const libraries: ("places" | "geometry" | "drawing" | "visualization")[] = [
-  "places",
-];
 
 interface LocationInputProps {
   value: string;
@@ -54,8 +50,7 @@ export function LocationInput({
 
       const apiKey = config.googleMaps.apiKey;
       if (!apiKey) {
-        console.error("VITE_GOOGLE_MAPS_API_KEY is missing");
-        setHasError(true);
+setHasError(true);
         return;
       }
 
@@ -63,7 +58,7 @@ export function LocationInput({
         // FIXED: Use new functional API
         setOptions({
           key: apiKey,
-          version: "weekly",
+          v: "weekly",
         });
 
         // Explicitly load the places library
@@ -72,8 +67,7 @@ export function LocationInput({
         
         setScriptLoaded(true);
       } catch (error) {
-        console.error("Error loading Google Maps script", error);
-        setHasError(true);
+setHasError(true);
       }
     };
 
@@ -181,8 +175,7 @@ function PlacesAutocomplete({
 
       onLocationSelected(address, countryCode, placeName);
     } catch (error) {
-      console.log("Error: ", error);
-      // Fallback: save text even if geocode fails
+// Fallback: save text even if geocode fails
       onLocationSelected(address, "", placeName);
     }
   };

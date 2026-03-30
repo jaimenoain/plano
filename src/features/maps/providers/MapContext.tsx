@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, ReactNode, useCallback, useState, useEffect } from 'react';
+import { createContext, useContext, useMemo, ReactNode, useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useURLMapState } from '../hooks/useURLMapState';
 import { useStableMapUpdate } from '../hooks/useStableMapUpdate';

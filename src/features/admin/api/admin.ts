@@ -4,17 +4,17 @@ import { DashboardStats, HeatmapPoint } from "@/features/admin/types/admin";
 export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
   // Parallel RPC calls to avoid single transaction timeout
   const [
-    { data: pulseData, error: pulseError },
-    { data: trendsData, error: trendsError },
-    { data: leaderboardsData, error: leaderboardsError },
-    { data: contentData, error: contentError },
-    { data: retentionData, error: retentionError },
-    { data: notificationsData, error: notificationsError },
+    { data: pulseData, error: _pulseError },
+    { data: trendsData, error: _trendsError },
+    { data: leaderboardsData, error: _leaderboardsError },
+    { data: contentData, error: _contentError },
+    { data: retentionData, error: _retentionError },
+    { data: notificationsData, error: _notificationsError },
     // Direct queries for counts
-    { count: totalBuildings, error: buildingsError },
-    { count: totalReviews, error: reviewsError },
-    { count: totalPhotos, error: photosError },
-    { count: pendingReports, error: reportsError },
+    { count: totalBuildings, error: _buildingsError },
+    { count: totalReviews, error: _reviewsError },
+    { count: totalPhotos, error: _photosError },
+    { count: pendingReports, error: _reportsError },
   ] = await Promise.all([
     supabase.rpc('get_admin_pulse'),
     supabase.rpc('get_admin_trends'),
@@ -27,18 +27,6 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     supabase.from('buildings').select('*', { count: 'exact', head: true }).not('main_image_url', 'is', null).eq('is_deleted', false),
     supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
   ]);
-
-  if (pulseError) console.error("Pulse Error:", pulseError);
-  if (trendsError) console.error("Trends Error:", trendsError);
-  if (leaderboardsError) console.error("Leaderboards Error:", leaderboardsError);
-  if (contentError) console.error("Content Error:", contentError);
-  if (retentionError) console.error("Retention Error:", retentionError);
-  if (notificationsError) console.error("Notifications Error:", notificationsError);
-
-  if (buildingsError) console.error("Failed to count buildings", buildingsError);
-  if (reviewsError) console.error("Failed to count reviews", reviewsError);
-  if (photosError) console.error("Failed to count photos", photosError);
-  if (reportsError) console.error("Failed to count reports", reportsError);
 
   // Fallbacks using 'as any' to bypass initial strict typing, validated by return type
   const pulse = (pulseData as any) || {
@@ -108,7 +96,6 @@ export async function fetchPhotoHeatmapData(): Promise<HeatmapPoint[]> {
   const { data, error } = await supabase.rpc('get_photo_heatmap_data' as any);
 
   if (error) {
-    console.error("Heatmap Error:", error);
     return [];
   }
 

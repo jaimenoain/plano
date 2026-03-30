@@ -10,6 +10,7 @@ export default defineConfig({
     // Explicitly exclude .spec.ts files as they are likely Playwright tests
     exclude: ['**/*.spec.ts', 'node_modules/**', 'dist/**'],
     environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
     alias: {
       '@': path.resolve(__dirname, './src'),
     }

@@ -31,7 +31,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   const prevVisible = useRef(false);
 
   // Lazy loading setup
-  const { containerRef, isVisible } = useIntersectionObserver({
+  const { containerRef, isVisible: _isVisible } = useIntersectionObserver({
     threshold: 0.1,
   });
 
@@ -105,8 +105,7 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
         const { error } = await supabase.from("user_buildings").upsert(updateData, { onConflict: 'user_id, building_id' });
         if (error) throw error;
       } catch (error) {
-          console.error("Save failed", error);
-          toast.error("Failed to save");
+toast.error("Failed to save");
       }
   };
 
