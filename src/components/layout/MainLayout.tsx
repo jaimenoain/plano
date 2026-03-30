@@ -1,23 +1,15 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { useAuth } from "@/features/auth/hooks/useAuth";
 
+/**
+ * Always mount AppSidebar so logged-out home and every route share the same shell.
+ * Desktop: `open` is controlled so off-canvas collapse cannot leave nav stuck off-screen.
+ * Mobile: sheet visibility still uses `openMobile` inside SidebarProvider.
+ */
 export function MainLayout() {
-  const { user } = useAuth();
-  const location = useLocation();
-  const isPublicHome = !user && location.pathname === "/";
-
-  if (isPublicHome) {
-    return (
-      <SidebarProvider defaultOpen={false}>
-        <Outlet />
-      </SidebarProvider>
-    );
-  }
-
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={true} open={true} onOpenChange={() => {}}>
       <AppSidebar />
       <SidebarInset
         className="min-w-0 bg-surface-default"

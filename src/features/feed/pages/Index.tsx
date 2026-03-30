@@ -7,7 +7,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSidebar } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { MetaHead } from "@/components/common/MetaHead";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { aggregateFeed } from "@/lib/feed-aggregation";
@@ -33,7 +33,11 @@ function Landing() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-surface-card/80 backdrop-blur-md border-b border-border-default h-16">
         <div className="container h-full mx-auto px-4 flex items-center justify-between">
-          <div className="w-32">
+          <div className="flex min-w-0 items-center gap-2">
+            <SidebarTrigger
+              className="shrink-0 border border-border-default bg-surface-card/90 shadow-sm"
+              aria-label="Open menu"
+            />
             <PlanoLogo className="h-8 w-auto text-text-primary [&_path]:fill-current" />
           </div>
 

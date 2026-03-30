@@ -35,8 +35,6 @@ export function Header({
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hasUnread, setHasUnread] = useState(false);
-  /** Matches MainLayout: AppSidebar mounts when not public logged-out home. */
-  const showAppSidebarTrigger = Boolean(user) || location.pathname !== "/";
 
   useEffect(() => {
     if (!user) return;
@@ -144,9 +142,7 @@ export function Header({
 
         {/* Left Slot */}
         <div className="flex items-center justify-start shrink-0 gap-2">
-          {showAppSidebarTrigger && (
-            <SidebarTrigger className="-ml-2 shrink-0" aria-label="Open menu" />
-          )}
+          <SidebarTrigger className="-ml-2 shrink-0" aria-label="Open menu" />
           {leftContent}
         </div>
 
