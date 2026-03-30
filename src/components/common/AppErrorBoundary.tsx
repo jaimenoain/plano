@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { captureErrorBoundaryException } from "@/lib/sentry";
 
 function AppErrorFallback({ resetErrorBoundary }: FallbackProps) {
   return (
@@ -25,6 +26,9 @@ export function AppErrorBoundary({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary
       FallbackComponent={AppErrorFallback}
+      onError={(error, errorInfo) => {
+        captureErrorBoundaryException(error, errorInfo.componentStack);
+      }}
       onReset={() => {
         window.location.href = "/";
       }}

@@ -1,23 +1,22 @@
 import { useEffect } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { GA_MEASUREMENT_ID } from "@/lib/analytics";
+import { getConsent, loadAnalytics } from "@/lib/consent";
 
 export const GoogleAnalytics = (): null => {
   const { user, loading } = useAuth();
 
   useEffect((): void => {
-    // Wait until auth loading is complete
     if (loading) return;
+    if (getConsent() !== "granted") return;
 
-    // Ensure gtag is available
-    if (typeof window.gtag === 'function') {
+    loadAnalytics();
+
+    if (typeof window.gtag === "function") {
       if (user) {
-        // Logged-in user: send user_id
-        window.gtag('config', 'G-V8H7C4CD0G', {
-          'user_id': user.id
-        });
+        window.gtag("config", GA_MEASUREMENT_ID, { user_id: user.id });
       } else {
-        // Anonymous user
-        window.gtag('config', 'G-V8H7C4CD0G');
+        window.gtag("config", GA_MEASUREMENT_ID);
       }
     }
   }, [user, loading]);

@@ -131,7 +131,7 @@ export default function Terms() {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">12. Contact Us</h2>
           <p>
-            If you have any questions about these Terms, please contact us at: <a href="mailto:support@cineforum.eu" className="text-primary hover:underline">support@cineforum.eu</a>
+            If you have any questions about these Terms, please contact us at: <a href="mailto:support@plano.app" className="text-primary hover:underline">support@plano.app</a>
           </p>
         </section>
       </div>

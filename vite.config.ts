@@ -15,11 +15,13 @@ export default defineConfig(() => ({
       registerType: 'prompt',
       includeAssets: ['robots.txt', 'android-chrome-192x192.png', 'android-chrome-512x512.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'PLANO',
-        short_name: 'PLANO',
-        description: 'PLANO PWA',
+        name: "Plano — The world's architecture, cataloged.",
+        short_name: 'Plano',
+        description: 'Track your architecture visits, rate buildings, and discover what friends are exploring.',
         theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
+        start_url: '/',
         icons: [
           {
             src: 'android-chrome-192x192.png',

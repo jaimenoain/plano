@@ -3319,6 +3319,8 @@ CREATE TABLE public.spatial_ref_sys (
 | `delete-storage-recursive` | Recursive directory deletion | manual JWT (`verify_jwt = false`) | `SUPABASE_SERVICE_ROLE_KEY` |
 | `fetch-url-metadata` | OpenGraph metadata scraping | manual JWT (`verify_jwt = false`) | — |
 | `send-welcome-email` | Branded welcome email via React Email | webhook trigger | `SUPABASE_SERVICE_ROLE_KEY` |
+| `og-tags` | Crawler-facing HTML with OG/Twitter meta for shared links (`?path=…`) | none (`verify_jwt = false`); anon reads only | Optional `STORAGE_PUBLIC_URL` to absolutize relative image paths (default S3 public base) |
+| `sitemap` | Dynamic `sitemap.xml` for public buildings, architects, profiles | none (`verify_jwt = false`); anon reads only | — |
 
 ### Global Environment Variable Registry
 
@@ -3352,4 +3354,14 @@ VITE_GA_MEASUREMENT_ID
   Vercel Dashboard: required
   Supabase Vault: not required
   Notes: Public, safe to expose in client bundle
+
+VITE_SENTRY_DSN
+  Consumed by: Sentry browser SDK (`@sentry/react`) in production builds
+  Vercel Dashboard: optional (empty = Sentry disabled)
+  Supabase Vault: not required
+  Notes: Set in deployment only; never commit real DSNs
+
+STORAGE_PUBLIC_URL
+  Consumed by: `og-tags` edge function (optional override for relative image URLs)
+  Supabase Vault: optional secret for edge functions if the default public asset base differs
 ```

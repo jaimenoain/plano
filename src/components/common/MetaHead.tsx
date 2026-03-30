@@ -12,7 +12,7 @@ interface MetaHeadProps {
 
 export function MetaHead({
   title,
-  description = "Track your architecture visits and share reviews.",
+  description = "Track your architecture visits, rate buildings, and discover what friends are exploring.",
   image = "/cover.jpg",
   type = "website",
   canonicalUrl,

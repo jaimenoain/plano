@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route, Outlet, ScrollRestoration } from "react-router-dom";
-import { AuthProvider } from "@/features/auth/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/features/auth/hooks/useAuth";
 import { HelmetProvider } from "react-helmet-async";
 
 import Index from "@/features/feed/pages/Index";
@@ -58,9 +58,11 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { PwaPrompt } from "@/components/pwa/PwaPrompt";
 import { PwaProvider } from "@/hooks/usePwaInstall";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { CookieConsent } from "@/components/common/CookieConsent";
 import { useLoginTracker } from "@/features/auth/hooks/useLoginTracker";
 import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
 import { logDiagnosticError } from "@/features/admin/api/diagnostics";
+import { setSentryUser } from "@/lib/sentry";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -159,8 +161,14 @@ const router = createBrowserRouter(
 );
 
 const AppContent = () => {
+  const { user, loading: authLoading } = useAuth();
   useLoginTracker();
   usePresenceTracker();
+
+  useEffect(() => {
+    if (authLoading) return;
+    setSentryUser(user?.id ?? null);
+  }, [user, authLoading]);
 
   useEffect(() => {
     // Global error handler for diagnostic logging
@@ -186,6 +194,7 @@ const AppContent = () => {
     <TooltipProvider>
       <PwaProvider>
         <GoogleAnalytics />
+        <CookieConsent />
         <PwaPrompt />
         <Toaster />
         <Sonner />

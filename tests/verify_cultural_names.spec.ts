@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // Credentials from TEST_USERS.md
 const TEST_USER = {
-  email: "tester@cineforum.eu",
+  email: "tester@plano.app",
   password: "CnjFsiVD2YgX9iBuZrfj"
 };
 

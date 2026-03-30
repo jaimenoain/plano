@@ -2,6 +2,7 @@ import React from 'react';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { captureErrorBoundaryException } from '@/lib/sentry';
 
 const MapErrorFallback = ({ error: _error, resetErrorBoundary }: FallbackProps) => {
   return (
@@ -22,6 +23,9 @@ export const MapErrorBoundary = ({ children }: { children: React.ReactNode }) =>
   return (
     <ErrorBoundary
       FallbackComponent={MapErrorFallback}
+      onError={(error, errorInfo) => {
+        captureErrorBoundaryException(error, errorInfo.componentStack);
+      }}
       onReset={() => {}}
     >
       {children}

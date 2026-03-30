@@ -38,5 +38,8 @@ export const config = {
   },
   storage: {
     publicUrl: getEnv('VITE_PUBLIC_STORAGE_URL', import.meta.env && import.meta.env.VITE_PUBLIC_STORAGE_URL) || "https://s3.eu-west-2.amazonaws.com/plano.app",
-  }
+  },
+  sentry: {
+    dsn: getEnv('VITE_SENTRY_DSN', import.meta.env && import.meta.env.VITE_SENTRY_DSN) || '',
+  },
 };

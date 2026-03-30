@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { captureErrorBoundaryException } from "@/lib/sentry";
 
 function RouteErrorFallback({ resetErrorBoundary }: FallbackProps) {
   return (
@@ -23,6 +24,13 @@ function RouteErrorFallback({ resetErrorBoundary }: FallbackProps) {
 
 export function RouteErrorBoundary({ children }: { children: ReactNode }) {
   return (
-    <ErrorBoundary FallbackComponent={RouteErrorFallback}>{children}</ErrorBoundary>
+    <ErrorBoundary
+      FallbackComponent={RouteErrorFallback}
+      onError={(error, errorInfo) => {
+        captureErrorBoundaryException(error, errorInfo.componentStack);
+      }}
+    >
+      {children}
+    </ErrorBoundary>
   );
 }

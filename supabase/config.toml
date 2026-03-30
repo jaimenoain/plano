@@ -14,3 +14,10 @@ verify_jwt = false
 
 [functions.calculate-route]
 verify_jwt = false
+
+# Public read-only HTML/XML for crawlers and SEO — no user JWT; uses anon client inside the function.
+[functions.og-tags]
+verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false
