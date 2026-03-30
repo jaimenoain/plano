@@ -2,16 +2,25 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
-import { DiscoveryBuilding, DiscoveryBuildingMapPin, ContactRater, ContactInteraction, MapItem, ClusterPoint, BuildingPoint } from "../components/types";
+import {
+  DiscoveryBuilding,
+  DiscoveryBuildingMapPin,
+  ContactRater,
+  ContactInteraction,
+  MapItem,
+  ClusterPoint,
+  BuildingPoint,
+  ArchitectSummary,
+} from "../components/types";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { getBuildingsByIds } from "@/utils/supabaseFallback";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getBuildingImageUrl } from "@/utils/image";
 import { parseLocation } from "@/utils/location";
 import { filterLocalBuildings } from "../utils/searchFilters";
 import { UserSearchResult } from "./useUserSearch";
-import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
+import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 import { Bounds } from "@/utils/map";
 
 // Type definitions for better type safety
@@ -34,6 +43,35 @@ interface ContactInteractionData {
     username: string;
     avatar_url: string | null;
   }[];
+}
+
+/** Row from `buildings` + FK selects used in map search branch. */
+interface BuildingMapSearchRow {
+  id: string;
+  location: unknown;
+  status: DiscoveryBuilding["status"] | null;
+  name: string;
+  main_image_url?: string | null;
+  slug?: string | null;
+  architects?: { architect_id: string }[] | null;
+  functional_category_id?: string | null;
+  typologies?: unknown;
+  attributes?: unknown;
+  access_level?: string | null;
+  access_logistics?: string | null;
+  access_cost?: string | null;
+}
+
+interface HydratedBuildingFromIdsRow {
+  id: string;
+  name: string;
+  location: unknown;
+  main_image_url?: string | null;
+  year_completed?: number | null;
+  city?: string | null;
+  country?: string | null;
+  status?: DiscoveryBuilding["status"];
+  architects?: { architect: ArchitectSummary | null }[] | null;
 }
 
 // Constants
@@ -80,7 +118,7 @@ function mapVisitorsToInteractions(visitors: ContactRater[]): ContactInteraction
 }
 
 // Helper function to normalize user data from query results
-function normalizeUserData(user: any): ContactRater {
+function normalizeUserData(user: ContactInteractionData["user"]): ContactRater {
   const userData = Array.isArray(user) ? user[0] : user;
   return {
     id: userData.id,
@@ -163,7 +201,7 @@ async function enrichBuildings(
       const statusMap = new Map<string, string | null>();
       const imageMap = new Map<string, string | null>();
 
-      fetchedData.forEach((item: BuildingDataItem) => {
+      (fetchedData as unknown as BuildingDataItem[]).forEach((item) => {
         statusMap.set(item.id, item.status);
         imageMap.set(item.id, item.main_image_url);
       });
@@ -171,7 +209,7 @@ async function enrichBuildings(
       enrichedBuildings = enrichedBuildings.map(b => {
         const updates: Partial<DiscoveryBuilding> = {};
         if (b.status === undefined) {
-          updates.status = statusMap.get(b.id) as any || null;
+          updates.status = (statusMap.get(b.id) ?? null) as DiscoveryBuilding["status"] | null;
         }
         if (b.main_image_url === undefined) {
           updates.main_image_url = imageMap.get(b.id) || null;
@@ -219,12 +257,12 @@ async function enrichBuildings(
           const visitorsMap = new Map<string, ContactRater[]>();
           const interactionsMap = new Map<string, ContactInteraction[]>();
 
-          contactInteractions.forEach((item: ContactInteractionData) => {
+          (contactInteractions as unknown as ContactInteractionData[]).forEach((item) => {
             const person = normalizeUserData(item.user);
 
             const interaction: ContactInteraction = {
               user: person,
-              status: item.status,
+              status: item.status as ContactInteraction["status"],
               rating: item.rating
             };
 
@@ -845,9 +883,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
             }
 
             // 5. Apply Characteristics / Architect Filters in Memory
-            const preFilteredData = (buildingsData || []).map((b: any) => ({
+            const preFilteredData = (buildingsData || []).map((b: BuildingMapSearchRow) => ({
                 ...b,
-                architects: b.architects?.map((a: any) => ({ id: a.architect_id })) || []
+                architects: b.architects?.map((a) => ({ id: a.architect_id })) || []
             }));
 
             const filteredData = filterLocalBuildings(preFilteredData, {
@@ -863,7 +901,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
             // 6. Map to MapItem (BuildingPoint)
             return filteredData
-              .map((b: any) => {
+              .map((b: BuildingMapSearchRow) => {
                 const coords = parseLocation(b.location);
                 const location_lat = coords?.lat || 0;
                 const location_lng = coords?.lng || 0;
@@ -959,7 +997,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         // For clusters, we can't easily filter by status unless the cluster has status info (it usually doesn't).
         if (b.is_cluster) return true;
 
-        const userStatus = (userStatuses as any)[b.id];
+        const userStatus = userStatuses[b.id];
 
         // Hide Hidden
         if (hideHidden && userStatus === 'hidden') return false; // Usually hidden means 'hidden' status
@@ -983,10 +1021,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
           if (idsToHydrate.length === 0) return [];
 
           try {
-              const buildings = await getBuildingsByIds(idsToHydrate);
+              const buildings = (await getBuildingsByIds(idsToHydrate)) as HydratedBuildingFromIdsRow[];
 
               // Map to DiscoveryBuilding structure (add distance, etc)
-              const mappedBuildings = buildings.map((b: any) => {
+              const mappedBuildings = buildings.map((b) => {
                   const coords = parseLocation(b.location);
                   const location_lat = coords?.lat || 0;
                   const location_lng = coords?.lng || 0;
@@ -1002,7 +1040,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                     id: b.id,
                     name: b.name,
                     main_image_url: b.main_image_url,
-                    architects: b.architects?.map((a: any) => a.architect).filter(Boolean) || [],
+                    architects: b.architects?.map((a) => a.architect).filter(Boolean) || [],
                     year_completed: b.year_completed,
                     city: b.city,
                     country: b.country,

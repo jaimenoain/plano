@@ -55,7 +55,7 @@ vi.mock('@/hooks/use-toast', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
     user: mocks.user,
     loading: false,
@@ -63,9 +63,11 @@ vi.mock('@/hooks/useAuth', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useUserProfile', () => ({
+vi.mock('@/features/profile/hooks/useUserProfile', () => ({
   useUserProfile: () => ({
     profile: { username: 'testuser', avatar_url: 'http://example.com/avatar.png', role: 'user' },
+    loading: false,
+    refetch: vi.fn(),
   }),
 }));
 
@@ -158,7 +160,7 @@ vi.mock('@/features/maps/components/BuildingLocationMap', () => ({
   BuildingLocationMap: () => <div data-testid="map">Map</div>
 }));
 
-vi.mock('@/components/BuildingImageCard', () => ({
+vi.mock('@/features/buildings/components/BuildingImageCard', () => ({
   BuildingImageCard: () => <div />
 }));
 

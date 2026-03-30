@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mocks
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({ user: { id: 'test-user' } }),
 }));
 
@@ -14,7 +14,7 @@ vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
 
-vi.mock('@/hooks/useUserBuildingStatuses', () => ({
+vi.mock('@/features/profile/hooks/useUserBuildingStatuses', () => ({
   useUserBuildingStatuses: () => ({ statuses: {}, ratings: {} }),
 }));
 

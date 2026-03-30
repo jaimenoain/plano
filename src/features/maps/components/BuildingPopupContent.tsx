@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBuildingImageUrl } from '@/utils/image';
-import { useAuth } from '@/hooks/useAuth';
-import { useUserBuildingStatuses } from '@/hooks/useUserBuildingStatuses';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useUserBuildingStatuses } from '@/features/profile/hooks/useUserBuildingStatuses';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';

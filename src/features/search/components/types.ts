@@ -1,4 +1,4 @@
-import { CollectionMarkerCategory } from "@/types/collection";
+import { CollectionMarkerCategory } from "@/features/collections/types";
 
 export interface ArchitectSummary {
   id: string;

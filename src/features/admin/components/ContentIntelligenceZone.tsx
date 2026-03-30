@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardStats } from "@/types/admin";
+import { DashboardStats } from "@/features/admin/types/admin";
 import { getBuildingImageUrl } from "@/utils/image";
 
 interface ContentIntelligenceZoneProps {

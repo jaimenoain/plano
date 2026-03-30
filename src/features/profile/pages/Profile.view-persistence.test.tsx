@@ -48,7 +48,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 });
 
 const mockUser = { id: 'user-123', email: 'test@example.com' };
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
     user: mockUser,
     loading: false,
@@ -92,23 +92,23 @@ vi.mock('@/utils/kanbanLogic', () => ({
 
 
 // Mock sub-components
-vi.mock('@/components/profile/UserCard', () => ({
+vi.mock('@/features/profile/components/UserCard', () => ({
     UserCard: () => <div data-testid="user-card">User Card</div>
 }));
 
-vi.mock('@/components/profile/SocialContextSection', () => ({
+vi.mock('@/features/profile/components/SocialContextSection', () => ({
     SocialContextSection: () => <div data-testid="social-context">Social Context</div>
 }));
 
-vi.mock('@/components/profile/FavoritesSection', () => ({
+vi.mock('@/features/profile/components/FavoritesSection', () => ({
     FavoritesSection: () => <div data-testid="favorites-section">Favorites</div>
 }));
 
-vi.mock('@/components/profile/ProfileHighlights', () => ({
+vi.mock('@/features/profile/components/ProfileHighlights', () => ({
     ProfileHighlights: () => <div data-testid="profile-highlights">Highlights</div>
 }));
 
-vi.mock('@/components/profile/ProfileKanbanView', () => ({
+vi.mock('@/features/profile/components/ProfileKanbanView', () => ({
     ProfileKanbanView: ({ kanbanData }: any) => (
         <div data-testid="kanban-view">
              {/* Render simplified content for verification */}
@@ -120,7 +120,7 @@ vi.mock('@/components/profile/ProfileKanbanView', () => ({
     )
 }));
 
-vi.mock('@/components/profile/ProfileListView', () => ({
+vi.mock('@/features/profile/components/ProfileListView', () => ({
     ProfileListView: ({ data }: any) => (
         <div data-testid="list-view">
             {data.map((i: any) => <div key={i.id} data-testid={`list-item-${i.id}`}>{i.building.name}</div>)}
@@ -128,15 +128,15 @@ vi.mock('@/components/profile/ProfileListView', () => ({
     )
 }));
 
-vi.mock('@/components/profile/CollectionsGrid', () => ({
+vi.mock('@/features/collections/components/CollectionsGrid', () => ({
     CollectionsGrid: () => <div data-testid="collections-grid">Collections</div>
 }));
 
-vi.mock('@/components/profile/FavoriteCollectionsGrid', () => ({
+vi.mock('@/features/profile/components/FavoriteCollectionsGrid', () => ({
     FavoriteCollectionsGrid: () => <div data-testid="fav-collections-grid">Fav Collections</div>
 }));
 
-vi.mock('@/components/feed/ReviewCard', () => ({
+vi.mock('@/features/feed/components/ReviewCard', () => ({
     ReviewCard: ({ entry }: any) => (
         <div data-testid={`review-card-${entry.id}`}>
             {entry.building.name}

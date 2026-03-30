@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { MetaHead } from "@/components/common/MetaHead";
 import NotFound from "@/pages/NotFound";
 import { getBuildingImageUrl } from "@/utils/image";
-import { ImageDetailsDialog } from "@/components/ImageDetailsDialog";
+import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
 
 interface FeedReview {
   id: string;

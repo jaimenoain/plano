@@ -42,9 +42,13 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
     setIsIOS(isIosDevice);
 
-    // Detect Standalone
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    // Detect Standalone (iOS Safari exposes `navigator.standalone`)
+    interface NavigatorStandalone extends Navigator {
+      standalone?: boolean;
+    }
+    const isStandaloneMode =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      Boolean((window.navigator as NavigatorStandalone).standalone);
     setIsStandalone(isStandaloneMode);
 
     // Listen for beforeinstallprompt

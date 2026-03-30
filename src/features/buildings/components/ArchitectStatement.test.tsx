@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
-import { ArchitectStatement } from "@/components/ArchitectStatement";
+import { ArchitectStatement } from "./ArchitectStatement";
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
 import * as matchers from "@testing-library/jest-dom/matchers";
 

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardStats } from "@/types/admin";
+import { DashboardStats } from "@/features/admin/types/admin";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Bell, BellOff, Eye, EyeOff } from "lucide-react";
 

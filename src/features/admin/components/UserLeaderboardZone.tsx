@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { DashboardStats } from "@/types/admin";
+import type { DashboardStats } from "@/features/admin/types/admin";
 import { formatDistanceToNow } from "date-fns";
 
 type UserLeaderboardZoneProps = {

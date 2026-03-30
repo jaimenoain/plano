@@ -5,9 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Architect } from "@/types/architect";
+import { Architect } from "@/features/architect/types";
 import { getBuildingImageUrl } from "@/utils/image";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export interface PortfolioBuildingDisplay {
   id: string;

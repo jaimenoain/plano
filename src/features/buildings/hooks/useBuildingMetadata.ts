@@ -11,6 +11,7 @@ export function useBuildingMetadata() {
         .select("*")
         .order("name");
       if (error) throw error;
+      // Generated `Database` omits Plano taxonomy tables; cast until `npm run gen-types`.
       return data as FunctionalCategory[];
     },
     staleTime: 1000 * 60 * 60, // 1 hour

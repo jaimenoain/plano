@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { logDiagnosticError } from '@/api/diagnostics';
+import { logDiagnosticError } from '@/features/admin/api/diagnostics';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 

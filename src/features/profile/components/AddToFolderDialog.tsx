@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserFolder } from "@/types/collection";
+import { UserFolder } from "@/features/collections/types";
 import { slugify } from "@/utils/url";
 
 interface AddToFolderDialogProps {

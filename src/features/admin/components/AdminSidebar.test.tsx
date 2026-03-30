@@ -20,7 +20,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { email: 'admin@example.com' },
     signOut: mocks.signOut,

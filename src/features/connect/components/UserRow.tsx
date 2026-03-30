@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Star, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FollowButton } from "@/components/FollowButton";
+import { FollowButton } from "@/features/profile/components/FollowButton";
 import { supabase } from "@/integrations/supabase/client";
 import { MutualFacepile } from "./MutualFacepile";
 

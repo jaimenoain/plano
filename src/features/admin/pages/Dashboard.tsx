@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { fetchAdminDashboardStats } from "@/api/admin";
-import { DashboardStats } from "@/types/admin";
+import { fetchAdminDashboardStats } from "@/features/admin/api/admin";
+import { DashboardStats } from "@/features/admin/types/admin";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { PulseZone } from "@/components/admin/PulseZone";
-import { ActivityTrendsZone } from "@/components/admin/ActivityTrendsZone";
-import { ContentIntelligenceZone } from "@/components/admin/ContentIntelligenceZone";
-import { UserLeaderboardZone } from "@/components/admin/UserLeaderboardZone";
-import { RetentionZone } from "@/components/admin/RetentionZone";
-import { SessionDiagnosticZone } from "@/components/admin/SessionDiagnosticZone";
-import { NotificationIntelligenceZone } from "@/components/admin/NotificationIntelligenceZone";
+import { PulseZone } from "@/features/admin/components/PulseZone";
+import { ActivityTrendsZone } from "@/features/admin/components/ActivityTrendsZone";
+import { ContentIntelligenceZone } from "@/features/admin/components/ContentIntelligenceZone";
+import { UserLeaderboardZone } from "@/features/admin/components/UserLeaderboardZone";
+import { RetentionZone } from "@/features/admin/components/RetentionZone";
+import { SessionDiagnosticZone } from "@/features/admin/components/SessionDiagnosticZone";
+import { NotificationIntelligenceZone } from "@/features/admin/components/NotificationIntelligenceZone";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminDashboard() {

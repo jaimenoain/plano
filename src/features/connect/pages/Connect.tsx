@@ -1,6 +1,6 @@
 import { AppLayout } from "@/components/layout/AppLayout";
-import { PeopleYouMayKnow } from "@/components/connect/PeopleYouMayKnow";
-import { YourContacts } from "@/components/connect/YourContacts";
+import { PeopleYouMayKnow } from "@/features/connect/components/PeopleYouMayKnow";
+import { YourContacts } from "@/features/connect/components/YourContacts";
 import { cn } from "@/lib/utils";
 
 export default function Connect() {

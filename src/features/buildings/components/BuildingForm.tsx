@@ -71,8 +71,8 @@ interface BuildingFormProps {
   shortId?: number | null;
 }
 
-import { useUserProfile } from "@/hooks/useUserProfile";
-import { ArchitectStatement } from "@/components/ArchitectStatement";
+import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
+import { ArchitectStatement } from "./ArchitectStatement";
 
 export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId }: BuildingFormProps) {
   const { profile } = useUserProfile();

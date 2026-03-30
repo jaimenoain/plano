@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { UserFolder } from "@/types/collection";
+import { UserFolder } from "@/features/collections/types";
 import { slugify } from "@/utils/url";
 
 interface ManageFoldersDialogProps {

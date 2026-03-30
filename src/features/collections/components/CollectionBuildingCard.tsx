@@ -1,5 +1,5 @@
 import { forwardRef, useState, useRef, useEffect } from "react";
-import { CollectionItemWithBuilding } from "@/types/collection";
+import { CollectionItemWithBuilding } from "@/features/collections/types";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, MessageSquarePlus, Check, GripVertical } from "lucide-react";

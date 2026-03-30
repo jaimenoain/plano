@@ -6,16 +6,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // @vitest-environment happy-dom
 
 // Mock hooks
-vi.mock("@/hooks/useSuggestedFeed", () => ({
+vi.mock("@/features/feed/hooks/useSuggestedFeed", () => ({
   useSuggestedFeed: vi.fn(),
 }));
 
-vi.mock("@/hooks/useAuth", () => ({
+vi.mock("@/features/auth/hooks/useAuth", () => ({
   useAuth: vi.fn(() => ({ user: { id: "test-user" } })),
 }));
 
 // Mock PeopleYouMayKnow
-vi.mock("@/components/feed/PeopleYouMayKnow", () => ({
+vi.mock("@/features/feed/components/PeopleYouMayKnow", () => ({
   PeopleYouMayKnow: () => <div data-testid="people-you-may-know">People You May Know</div>,
 }));
 
@@ -33,7 +33,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-import { useSuggestedFeed } from "@/hooks/useSuggestedFeed";
+import { useSuggestedFeed } from "@/features/feed/hooks/useSuggestedFeed";
 
 describe("EmptyFeed", () => {
   const queryClient = new QueryClient();

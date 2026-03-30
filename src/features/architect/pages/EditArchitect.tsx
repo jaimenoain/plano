@@ -28,9 +28,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useArchitect } from "@/hooks/useArchitect";
+import { useArchitect } from "@/features/architect/hooks/useArchitect";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),

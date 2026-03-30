@@ -56,7 +56,7 @@ vi.mock('@/hooks/use-toast', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
     user: mocks.user,
     loading: false,
@@ -64,9 +64,11 @@ vi.mock('@/hooks/useAuth', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useUserProfile', () => ({
+vi.mock('@/features/profile/hooks/useUserProfile', () => ({
   useUserProfile: () => ({
     profile: { username: 'testuser', avatar_url: 'http://example.com/avatar.png', role: 'user' },
+    loading: false,
+    refetch: vi.fn(),
   }),
 }));
 
@@ -129,7 +131,7 @@ vi.mock('@/features/maps/components/BuildingLocationMap', () => ({
 
 // We want to test Tabs behavior, so we shouldn't mock BuildingImageCard fully away,
 // or at least ensure it renders something identifiable.
-vi.mock('@/components/BuildingImageCard', () => ({
+vi.mock('@/features/buildings/components/BuildingImageCard', () => ({
   BuildingImageCard: ({ image }: { image: any }) => (
     <div data-testid={`image-card-${image.id}`}>
         Image {image.id} {image.is_official ? '(Official)' : '(Community)'}

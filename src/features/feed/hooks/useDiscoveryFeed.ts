@@ -1,7 +1,30 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { ContactInteraction } from "@/features/search/components/types";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import type { ContactInteraction, ContactRater } from "@/features/search/components/types";
+
+export interface DiscoveryFeedImageRow {
+  id: string;
+  storage_path: string;
+  likes_count?: number | null;
+  created_at?: string | null;
+  user_buildings?: {
+    building_id: string;
+    user: ContactRater | ContactRater[];
+  } | null;
+}
+
+interface BuildingArchitectJoinRow {
+  building_id: string;
+  architects: { id: string; name: string } | null;
+}
+
+interface UserBuildingInteractionRow {
+  building_id: string;
+  status: string;
+  rating: number | null;
+  user: ContactRater | ContactRater[];
+}
 
 export interface DiscoveryFeedItem {
   id: string;
@@ -15,7 +38,7 @@ export interface DiscoveryFeedItem {
   save_count: number;
   architects: { id: string; name: string }[] | null;
   contact_interactions?: ContactInteraction[];
-  images?: any[];
+  images?: DiscoveryFeedImageRow[];
 }
 
 export interface DiscoveryFilters {
@@ -106,7 +129,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         // --- Process Architects ---
         if (architectsData) {
           const architectsMap: Record<string, { id: string; name: string }[]> = {};
-          architectsData.forEach((item: any) => {
+          (architectsData as BuildingArchitectJoinRow[]).forEach((item) => {
             if (item.architects) {
               if (!architectsMap[item.building_id]) {
                 architectsMap[item.building_id] = [];
@@ -121,8 +144,8 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
 
         // --- Process Images ---
         if (imagesData) {
-          const imagesMap: Record<string, any[]> = {};
-          imagesData.forEach((item: any) => {
+          const imagesMap: Record<string, DiscoveryFeedImageRow[]> = {};
+          (imagesData as DiscoveryFeedImageRow[]).forEach((item) => {
              const buildingId = item.user_buildings?.building_id;
              if (buildingId) {
                  if (!imagesMap[buildingId]) imagesMap[buildingId] = [];
@@ -155,18 +178,18 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
           if (interactions) {
             const interactionsMap: Record<string, ContactInteraction[]> = {};
 
-            interactions.forEach((item: any) => {
+            (interactions as UserBuildingInteractionRow[]).forEach((item) => {
               const userProfile = Array.isArray(item.user) ? item.user[0] : item.user;
 
               const interaction: ContactInteraction = {
                 user: {
                   id: userProfile.id,
-                  username: userProfile.username,
+                  username: userProfile.username ?? null,
                   avatar_url: userProfile.avatar_url,
-                  first_name: userProfile.first_name,
-                  last_name: userProfile.last_name
+                  first_name: userProfile.first_name ?? null,
+                  last_name: userProfile.last_name ?? null
                 },
-                status: item.status,
+                status: item.status as ContactInteraction["status"],
                 rating: item.rating
               };
 

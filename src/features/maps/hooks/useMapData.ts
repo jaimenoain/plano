@@ -61,7 +61,16 @@ function calculateFetchBox(bounds: Bounds): Bounds {
   return { north, south, east, west };
 }
 
-function calculateTierRank(item: any): number {
+/** Row shape from `get_map_clusters_v2` RPC (subset used for tier logic). */
+interface MapClusterV2RpcRow {
+  rating?: number | null;
+  status?: string | null;
+  tier_rank?: string | number | null;
+}
+
+type MapClusterRpcItem = MapClusterV2RpcRow & Record<string, unknown>;
+
+function calculateTierRank(item: MapClusterV2RpcRow): number {
   // Determine context: Library (User Rating/Status) vs Discover (Global Rank)
   const userRating = item.rating ?? 0;
   const status = item.status;
@@ -142,10 +151,12 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
 
       // Filter out hidden (ignored) items client-side as a safeguard
       // The RPC should handle this with hide_hidden: true, but we double check
-      const visibleData = (data as any[]).filter(item => item.status !== 'ignored');
+      const visibleData = (data as MapClusterRpcItem[]).filter(
+        (item) => item.status !== "ignored"
+      );
 
       // Transform data to inject numeric tier_rank and preserve label
-      const transformedData = visibleData.map(item => {
+      const transformedData = visibleData.map((item) => {
         const rank = calculateTierRank(item);
 
         return {

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ReviewCard } from "@/components/feed/ReviewCard";
+import { ReviewCard } from "@/features/feed/components/ReviewCard";
 import { FeedReview } from "@/types/feed";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";

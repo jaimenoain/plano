@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ExploreTeaserBlock } from "./ExploreTeaserBlock";
-import { useDiscoveryFeed } from "@/hooks/useDiscoveryFeed";
+import { useDiscoveryFeed } from "@/features/feed/hooks/useDiscoveryFeed";
 import { BrowserRouter } from "react-router-dom";
 
 // @vitest-environment happy-dom
 
 // Mock the hook
-vi.mock("@/hooks/useDiscoveryFeed", () => ({
+vi.mock("@/features/feed/hooks/useDiscoveryFeed", () => ({
   useDiscoveryFeed: vi.fn(),
 }));
 

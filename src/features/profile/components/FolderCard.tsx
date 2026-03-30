@@ -1,4 +1,4 @@
-import { UserFolder } from "@/types/collection";
+import { UserFolder } from "@/features/collections/types";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Folder, Globe, Lock } from "lucide-react";

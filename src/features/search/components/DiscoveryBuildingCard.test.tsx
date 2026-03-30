@@ -6,7 +6,7 @@ import { DiscoveryBuilding } from './types';
 import { BrowserRouter } from 'react-router-dom';
 
 // Mocks
-vi.mock('@/hooks/useUserBuildingStatuses', () => ({
+vi.mock('@/features/profile/hooks/useUserBuildingStatuses', () => ({
   useUserBuildingStatuses: () => ({
     statuses: {},
     ratings: {},

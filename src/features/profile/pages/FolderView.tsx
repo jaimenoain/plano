@@ -4,11 +4,11 @@ import { Loader2, ArrowLeft, Folder } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { CollectionCard } from "@/components/CollectionCard";
-import { ManageFoldersDialog } from "@/components/profile/ManageFoldersDialog";
-import { UserFolder } from "@/types/collection";
+import { CollectionCard } from "@/features/collections/components/CollectionCard";
+import { ManageFoldersDialog } from "@/features/profile/components/ManageFoldersDialog";
+import { UserFolder } from "@/features/collections/types";
 import { MetaHead } from "@/components/common/MetaHead";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 interface Collection {
   id: string;

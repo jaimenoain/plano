@@ -14,7 +14,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 // Mock hooks
-vi.mock("@/hooks/useAuth", () => ({
+vi.mock("@/features/auth/hooks/useAuth", () => ({
   useAuth: () => ({ user: { id: "test-user-id", email: "test@example.com" } }),
 }));
 
@@ -27,7 +27,7 @@ vi.mock("@/components/layout/AppLayout", () => ({
   AppLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@/components/ImageDetailsDialog", () => ({
+vi.mock("@/features/buildings/components/ImageDetailsDialog", () => ({
   ImageDetailsDialog: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
     isOpen ? <div data-testid="image-details-dialog" onClick={onClose}>Image Details Dialog</div> : null
   ),

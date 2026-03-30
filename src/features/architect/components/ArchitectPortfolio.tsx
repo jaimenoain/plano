@@ -1,6 +1,6 @@
-import { useArchitectPortfolio } from "@/hooks/useArchitectPortfolio";
+import { useArchitectPortfolio } from "../hooks/useArchitectPortfolio";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PortfolioBuildingCard, PortfolioBuildingDisplay } from "@/components/profile/PortfolioBuildingCard";
+import { PortfolioBuildingCard, PortfolioBuildingDisplay } from "./PortfolioBuildingCard";
 import { getBuildingImageUrl } from "@/utils/image";
 
 interface ArchitectPortfolioProps {

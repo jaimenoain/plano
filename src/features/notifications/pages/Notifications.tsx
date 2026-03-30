@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, MessageCircle, UserPlus, Loader2, Bell, Sparkles, Settings, Users, ShieldCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { NotificationSettingsDialog } from "@/components/notifications/NotificationSettingsDialog";
+import { NotificationSettingsDialog } from "@/features/notifications/components/NotificationSettingsDialog";
 import { Button } from "@/components/ui/button";
 
 interface Notification {

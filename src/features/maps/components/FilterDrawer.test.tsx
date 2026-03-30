@@ -17,7 +17,7 @@ import * as Taxonomy from '@/hooks/useTaxonomy';
 import { useUserSearch } from '@/features/search/hooks/useUserSearch';
 import * as BuildingSearch from '@/features/search/hooks/useBuildingSearch';
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: vi.fn(() => ({ user: null })),
 }));
 

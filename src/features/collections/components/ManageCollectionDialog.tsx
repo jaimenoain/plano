@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { slugify } from "@/utils/url";
-import { UserFolder } from "@/types/collection";
+import { UserFolder } from "@/features/collections/types";
 
 interface Collection {
   id: string;

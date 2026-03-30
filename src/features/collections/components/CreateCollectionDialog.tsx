@@ -11,7 +11,8 @@ import { Loader2, Folder } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { slugify } from "@/utils/url";
-import { UserFolder } from "@/types/collection";
+import { UserFolder } from "@/features/collections/types";
+import { collectionSchema } from "@/lib/validations/collection";
 
 interface CreateCollectionDialogProps {
   open: boolean;
@@ -71,15 +72,25 @@ export function CreateCollectionDialog({ open, onOpenChange, userId, onSuccess }
   };
 
   const handleCreate = async () => {
-    if (!formData.name.trim()) {
-      toast({ variant: "destructive", description: "Name is required." });
+    const parsed = collectionSchema.safeParse({
+      name: formData.name,
+      description: formData.description || undefined,
+      is_public: formData.is_public,
+      external_link: null,
+    });
+    if (!parsed.success) {
+      toast({
+        variant: "destructive",
+        title: "Validation error",
+        description: parsed.error.issues[0]?.message ?? "Invalid collection",
+      });
       return;
     }
 
     setProcessing(true);
     try {
       // Generate slug
-      let slug = slugify(formData.name);
+      let slug = slugify(parsed.data.name);
       if (!slug) slug = "collection";
 
       // Ensure uniqueness (simple append)
@@ -90,9 +101,9 @@ export function CreateCollectionDialog({ open, onOpenChange, userId, onSuccess }
 
       const { data: newCollection, error } = await supabase.from("collections").insert({
         owner_id: userId,
-        name: formData.name,
-        description: formData.description || null,
-        is_public: formData.is_public,
+        name: parsed.data.name,
+        description: parsed.data.description ?? null,
+        is_public: parsed.data.is_public,
         slug: slug
       }).select().single();
 

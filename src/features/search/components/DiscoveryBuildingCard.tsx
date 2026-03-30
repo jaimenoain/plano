@@ -7,7 +7,7 @@ import { DiscoveryBuilding, ContactInteraction } from "./types";
 import { cn } from "@/lib/utils";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
-import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
+import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 
 interface DiscoveryBuildingCardProps {
   building: DiscoveryBuilding;

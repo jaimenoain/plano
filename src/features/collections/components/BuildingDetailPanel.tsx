@@ -1,9 +1,9 @@
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { useBuildingImages } from "@/hooks/useBuildingImages";
+import { useBuildingImages } from "@/features/buildings";
 import { getBuildingImageUrl } from "@/utils/image";
 import { ExternalLink, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-import { BuildingAttributes } from "@/components/BuildingAttributes";
+import { BuildingAttributes } from "@/features/buildings/components/BuildingAttributes";
 
 interface BuildingDetailPanelProps {
   building: {

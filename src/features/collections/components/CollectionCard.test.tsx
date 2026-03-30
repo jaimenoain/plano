@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { CollectionCard } from "@/components/CollectionCard";
+import { CollectionCard } from "./CollectionCard";
 import { describe, it, expect, afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";

@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BuildingForm, BuildingFormData } from "./BuildingForm";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 interface AddBuildingDetailsProps {
   locationData: {

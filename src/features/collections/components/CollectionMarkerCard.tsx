@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { CollectionMarker } from "@/types/collection";
+import { CollectionMarker } from "@/features/collections/types";
 import { cn } from "@/lib/utils";
 import { Check, MapPin, Bed, Utensils, Bus, Camera, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/card";

@@ -4,10 +4,10 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { UserFolder } from "@/types/collection";
-import { ManageFoldersDialog } from "@/components/profile/ManageFoldersDialog";
-import { FolderCard } from "@/components/profile/FolderCard";
-import { CollectionCard } from "@/components/CollectionCard";
+import { UserFolder } from "@/features/collections/types";
+import { ManageFoldersDialog } from "@/features/profile/components/ManageFoldersDialog";
+import { FolderCard } from "@/features/profile/components/FolderCard";
+import { CollectionCard } from "./CollectionCard";
 import { getBuildingImageUrl } from "@/utils/image";
 
 interface Collection {

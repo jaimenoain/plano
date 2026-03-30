@@ -16,7 +16,7 @@ const { mockUseAuth } = vi.hoisted(() => {
   return { mockUseAuth: vi.fn() };
 });
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: mockUseAuth,
 }));
 
@@ -65,7 +65,7 @@ const { mockUseUserBuildingStatuses } = vi.hoisted(() => {
   return { mockUseUserBuildingStatuses: vi.fn() };
 });
 
-vi.mock('@/hooks/useUserBuildingStatuses', () => ({
+vi.mock('@/features/profile/hooks/useUserBuildingStatuses', () => ({
   useUserBuildingStatuses: mockUseUserBuildingStatuses,
 }));
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminBuilding } from "@/types/admin_building";
+import { AdminBuilding } from "@/features/admin/types/admin_building";
 import {
   Table,
   TableBody,
@@ -27,8 +27,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BuildingForm, BuildingFormData } from "@/components/BuildingForm";
-import { BuildingLocationPicker } from "@/components/BuildingLocationPicker";
+import { BuildingForm, BuildingFormData } from "@/features/buildings/components/BuildingForm";
+import { BuildingLocationPicker } from "@/features/buildings/components/BuildingLocationPicker";
 import { Loader2, MapPin, Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";

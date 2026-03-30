@@ -1,10 +1,10 @@
 import { MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { useSuggestedFeed } from "@/hooks/useSuggestedFeed";
-import { useAuth } from "@/hooks/useAuth";
-import { ReviewCard } from "@/components/feed/ReviewCard";
-import { PeopleYouMayKnow } from "@/components/feed/PeopleYouMayKnow";
+import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { ReviewCard } from "./ReviewCard";
+import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import React from "react";
 
 export function EmptyFeed() {

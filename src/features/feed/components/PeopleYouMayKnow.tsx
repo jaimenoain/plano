@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FollowButton } from "@/components/FollowButton";
-import { useAuth } from "@/hooks/useAuth";
+import { FollowButton } from "@/features/profile/components/FollowButton";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Link } from "react-router-dom";
-import { MutualFacepile } from "@/components/connect/MutualFacepile";
+import { MutualFacepile } from "@/features/connect/components/MutualFacepile";
 import { X } from "lucide-react";
 
 export function PeopleYouMayKnow() {

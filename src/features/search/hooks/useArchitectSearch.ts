@@ -28,7 +28,7 @@ export function useArchitectSearch({ searchQuery, limit = 5, enabled = true }: U
 
       setIsLoading(true);
       try {
-        // @ts-ignore - architects table exists but types might not be generated yet
+        // @ts-expect-error — architects relation missing from generated types
         const { data, error } = await supabase
           .from("architects")
           .select("id, name, type")

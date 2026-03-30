@@ -51,3 +51,51 @@ export interface FeedReview {
   is_suggested?: boolean;
   suggestion_reason?: string;
 }
+
+/** JSON payload from `get_feed` / `get_suggested_posts` RPCs. */
+export interface RawFeedUserData {
+  username?: string | null;
+  avatar_url?: string | null;
+  is_verified_architect?: boolean;
+  is_architect_of_building?: boolean;
+}
+
+export interface RawFeedBuildingData {
+  id?: string;
+  short_id?: number | null;
+  slug?: string | null;
+  name?: string | null;
+  address?: string | null;
+  city?: string | null;
+  country?: string | null;
+  main_image_url?: string | null;
+  architects?: unknown;
+  year_completed?: number | null;
+}
+
+export interface RawFeedReviewImageRow {
+  id: string;
+  storage_path: string;
+  likes_count?: number | null;
+  is_liked?: boolean;
+}
+
+export interface RawFeedRow {
+  id: string;
+  content: string | null;
+  rating: number | null;
+  tags?: string[] | null;
+  created_at: string;
+  edited_at?: string | null;
+  status?: string | null;
+  user_id?: string;
+  user_data?: RawFeedUserData | null;
+  building_data?: RawFeedBuildingData | null;
+  likes_count?: number | null;
+  comments_count?: number | null;
+  is_liked: boolean;
+  review_images?: RawFeedReviewImageRow[] | null;
+  is_suggested?: boolean;
+  suggestion_reason?: string | null;
+  group_id?: string | null;
+}

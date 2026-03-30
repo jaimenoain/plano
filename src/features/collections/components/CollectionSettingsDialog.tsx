@@ -11,10 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus, Folder } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserSearch } from "@/components/profile/UserSearch";
+import { UserSearch } from "@/features/profile/components/UserSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Collection } from "@/types/collection";
+import { Collection } from "@/features/collections/types";
 import { parseLocation } from "@/utils/location";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -29,7 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AddToFolderDialog } from "./AddToFolderDialog";
+import { AddToFolderDialog } from "@/features/profile/components/AddToFolderDialog";
+import { collectionSchema } from "@/lib/validations/collection";
 
 interface CollectionSettingsDialogProps {
   collection: Collection;
@@ -68,6 +69,7 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
     name: string;
     description: string;
     is_public: boolean;
+    external_link: string;
     show_community_images: boolean;
     categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
     custom_categories: { id: string; label: string; color: string }[];
@@ -145,14 +147,26 @@ export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpd
   };
 
   const handleSaveGeneral = async () => {
+    const ext = formData.external_link?.trim();
+    const parsed = collectionSchema.safeParse({
+      name: formData.name,
+      description: formData.description || undefined,
+      is_public: formData.is_public,
+      external_link: ext ? ext : null,
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Invalid collection");
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase
       .from("collections")
       .update({
-        name: formData.name,
-        description: formData.description || null,
-        is_public: formData.is_public,
-        external_link: formData.external_link || null,
+        name: parsed.data.name,
+        description: parsed.data.description ?? null,
+        is_public: parsed.data.is_public,
+        external_link: parsed.data.external_link ?? null,
         show_community_images: formData.show_community_images,
         categorization_method: formData.categorization_method,
         custom_categories: formData.custom_categories,

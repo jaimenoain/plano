@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardStats, HeatmapPoint } from "@/types/admin";
+import { DashboardStats, HeatmapPoint } from "@/features/admin/types/admin";
 
 export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
   // Parallel RPC calls to avoid single transaction timeout

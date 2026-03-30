@@ -4,10 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { UserPicker } from "@/components/common/UserPicker";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useUserProfile } from "@/hooks/useUserProfile";
-import { PersonalRatingButton, BuildingStatus } from "@/components/PersonalRatingButton";
+import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
+import { PersonalRatingButton, BuildingStatus } from "@/features/buildings";
 
 interface RecommendDialogProps {
   building: {

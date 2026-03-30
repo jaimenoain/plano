@@ -1,6 +1,6 @@
 import { MutualAffinityRow } from "./MutualAffinityRow";
 import { CommonFollowersFacepile } from "./CommonFollowersFacepile";
-import type { MutualAffinityUser, SimpleProfile } from "@/hooks/useProfileComparison";
+import type { MutualAffinityUser, SimpleProfile } from "@/features/profile/hooks/useProfileComparison";
 
 interface SocialContextSectionProps {
   mutualAffinityUsers: MutualAffinityUser[];

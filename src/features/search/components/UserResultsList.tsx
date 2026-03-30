@@ -1,5 +1,5 @@
 import { UserSearchResult } from "../hooks/useUserSearch";
-import { UserRow } from "@/components/connect/UserRow";
+import { UserRow } from "@/features/connect/components/UserRow";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserResultsListProps {

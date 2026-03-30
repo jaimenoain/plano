@@ -8,7 +8,7 @@ import { FeedReview } from '@/types/feed';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mock hooks
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { id: 'test-user', email: 'test@example.com' },
     session: null,

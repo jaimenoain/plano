@@ -20,7 +20,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { email: 'test@example.com' },
     signOut: mocks.signOut,
@@ -28,9 +28,11 @@ vi.mock('@/hooks/useAuth', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }));
 
-vi.mock('@/hooks/useUserProfile', () => ({
+vi.mock('@/features/profile/hooks/useUserProfile', () => ({
   useUserProfile: () => ({
     profile: { username: 'testuser', avatar_url: 'http://example.com/avatar.png' },
+    loading: false,
+    refetch: vi.fn(),
   }),
 }));
 

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, Suspense } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
@@ -12,13 +12,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
-import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/types/collection";
+import { Collection, CollectionItemWithBuilding, CollectionMarker } from "@/features/collections/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ItineraryList } from "@/components/collections/ItineraryList";
+import { ItineraryList } from "@/features/collections/components/ItineraryList";
 import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
 
 import { DiscoveryBuilding } from "@/features/search/components/types";
-import { Itinerary } from "@/types/collection";
+import { Itinerary } from "@/features/collections/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,12 +33,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
 
-const CollectionSettingsDialog = lazyWithRetry(() => import("@/components/profile/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
-const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/components/collections/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
-const PlanRouteDialog = lazyWithRetry(() => import("@/components/collections/PlanRouteDialog").then(module => ({ default: module.PlanRouteDialog })));
+const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
+const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
+const PlanRouteDialog = lazyWithRetry(() => import("@/features/collections/components/PlanRouteDialog").then(module => ({ default: module.PlanRouteDialog })));
 const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/CollectionMapGL").then(module => ({ default: module.CollectionMapGL })));
-const CollectionBuildingCard = lazyWithRetry(() => import("@/components/collections/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
-const CollectionMarkerCard = lazyWithRetry(() => import("@/components/collections/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
+const CollectionBuildingCard = lazyWithRetry(() => import("@/features/collections/components/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
+const CollectionMarkerCard = lazyWithRetry(() => import("@/features/collections/components/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 
 interface CollectionItemResponse {
   id: string;

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminBuilding } from "@/types/admin_building";
-import { useAuth } from "@/hooks/useAuth";
+import { AdminBuilding } from "@/features/admin/types/admin_building";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getBuildingUrl } from "@/utils/url";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -24,7 +24,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
-import { BuildingMap } from "@/components/admin/BuildingMap";
+import { BuildingMap } from "@/features/admin/components/BuildingMap";
 import { parseLocation } from "@/utils/location";
 import {
   Carousel,

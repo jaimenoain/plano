@@ -12,29 +12,29 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 import { HelmetProvider } from 'react-helmet-async';
-import { SidebarProvider } from '../components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Index from './Index';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useFeed } from '../hooks/useFeed';
 import { useSuggestedFeed } from '../hooks/useSuggestedFeed';
 import { useDiscoveryFeed } from '../hooks/useDiscoveryFeed';
 
 // Mock the hooks
-vi.mock('../hooks/useAuth');
+vi.mock('@/features/auth/hooks/useAuth');
 vi.mock('../hooks/useFeed');
 vi.mock('../hooks/useSuggestedFeed');
 vi.mock('../hooks/useDiscoveryFeed');
-vi.mock('../hooks/useIntersectionObserver', () => ({
+vi.mock('@/hooks/useIntersectionObserver', () => ({
   useIntersectionObserver: () => ({ containerRef: null, isVisible: false })
 }));
-vi.mock('../components/layout/AppLayout', () => ({ AppLayout: ({ children }: any) => <div data-testid="app-layout">{children}</div> }));
-vi.mock('../components/feed/ExploreTeaserBlock', () => ({ ExploreTeaserBlock: () => <div data-testid="explore-teaser" /> }));
-vi.mock('../components/feed/AllCaughtUpDivider', () => ({ AllCaughtUpDivider: () => <div data-testid="all-caught-up" /> }));
-vi.mock('../components/feed/ReviewCard', () => ({ ReviewCard: () => <div data-testid="review-card" /> }));
+vi.mock('@/components/layout/AppLayout', () => ({ AppLayout: ({ children }: any) => <div data-testid="app-layout">{children}</div> }));
+vi.mock('../components/ExploreTeaserBlock', () => ({ ExploreTeaserBlock: () => <div data-testid="explore-teaser" /> }));
+vi.mock('../components/AllCaughtUpDivider', () => ({ AllCaughtUpDivider: () => <div data-testid="all-caught-up" /> }));
+vi.mock('../components/ReviewCard', () => ({ ReviewCard: () => <div data-testid="review-card" /> }));
 
 const queryClient = new QueryClient();
 

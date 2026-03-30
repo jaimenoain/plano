@@ -22,7 +22,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { id: 'user-1' },
     loading: false,
@@ -49,7 +49,7 @@ vi.mock('@/lib/image-compression', () => ({
   resizeImage: vi.fn(),
 }));
 
-vi.mock('@/components/profile/CollectionSelector', () => ({
+vi.mock('@/features/collections/components/CollectionSelector', () => ({
   CollectionSelector: () => <div>CollectionSelector</div>
 }));
 

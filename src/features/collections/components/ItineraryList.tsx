@@ -26,7 +26,7 @@ import { CollectionBuildingCard } from "./CollectionBuildingCard";
 import { CollectionMarkerCard } from "./CollectionMarkerCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useDroppable } from "@dnd-kit/core";
-import { CollectionItemWithBuilding } from "@/types/collection";
+import { CollectionItemWithBuilding } from "@/features/collections/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // --- Helper Components ---
 
-import { ItineraryStop, Itinerary } from "@/types/collection";
+import { ItineraryStop, Itinerary } from "@/features/collections/types";
 
 interface AddStopPopoverProps {
   dayIndex: number; // 0-based index for the store

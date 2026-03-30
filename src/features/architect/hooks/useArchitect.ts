@@ -28,6 +28,18 @@ interface UseArchitectResult {
   error: Error | null;
 }
 
+interface BuildingArchitectNestedRow {
+  building: {
+    id: string;
+    name: string;
+    city: string | null;
+    country: string | null;
+    year_completed: number | null;
+    main_image_url: string | null;
+    status: string | null;
+  } | null;
+}
+
 export function useArchitect(architectId: string | undefined | null): UseArchitectResult {
   const [architect, setArchitect] = useState<Architect | null>(null);
   const [buildings, setBuildings] = useState<ArchitectBuilding[]>([]);
@@ -51,8 +63,8 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
       setLoading(true);
       setError(null);
       try {
-        // Fetch architect details
-        // @ts-ignore - architects table created in migration
+        // Fetch architect details (table not in generated Database until `npm run gen-types`)
+        // @ts-expect-error — architects relation missing from generated types
         const { data: architectData, error: architectError } = await supabase
           .from("architects")
           .select("*")
@@ -77,7 +89,7 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
         }
 
         // Fetch associated buildings
-        // @ts-ignore - building_architects table created in migration
+        // @ts-expect-error — building_architects relation missing from generated types
         const { data: buildingsData, error: buildingsError } = await supabase
           .from("building_architects")
           .select(`
@@ -98,7 +110,7 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
         if (isMounted) {
             // Transform data to extract the nested building object
             const formattedBuildings = (buildingsData || [])
-            .map((item: any) => {
+            .map((item: BuildingArchitectNestedRow) => {
               const b = item.building;
               if (!b) return null;
 
@@ -112,14 +124,17 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
                 status: b.status || null
               };
             })
-            .filter((b: any) => b !== null) as ArchitectBuilding[];
+            .filter((b): b is ArchitectBuilding => b !== null);
 
             setBuildings(formattedBuildings);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (isMounted) {
-            // Handle "Row not found" specifically
-            if (err.code === 'PGRST116') {
+            const code =
+              typeof err === "object" && err !== null && "code" in err
+                ? String((err as { code?: string }).code)
+                : undefined;
+            if (code === "PGRST116") {
                 setError(new Error("Architect not found"));
             } else {
                 setError(err instanceof Error ? err : new Error("Unknown error"));

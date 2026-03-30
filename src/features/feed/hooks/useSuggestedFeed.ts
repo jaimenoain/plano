@@ -1,7 +1,21 @@
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { FeedReview } from "@/types/feed";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { FeedReview, RawFeedRow } from "@/types/feed";
+
+interface ReviewImageDbRow {
+  id: string;
+  review_id: string;
+  storage_path: string;
+  likes_count?: number | null;
+}
+
+type ImageLikeRow = { image_id: string };
+
+type ReviewImagesByReviewId = Record<
+  string,
+  { id: string; url: string; likes_count: number; is_liked: boolean }[]
+>;
 import { getBuildingImageUrl } from "@/utils/image";
 
 interface UseSuggestedFeedOptions {
@@ -28,23 +42,24 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
 
       if (error) throw error;
 
-      const posts = data || [];
+      const posts = (data || []) as unknown as RawFeedRow[];
 
       if (posts.length === 0) return [];
 
       // Extract review IDs to fetch images
-      const reviewIds = posts.map((p: any) => p.id);
+      const reviewIds = posts.map((p) => p.id);
 
       // Fetch images
-      const { data: imagesData, error: imagesError } = await supabase
+      const { data: imagesData } = await supabase
         .from('review_images')
         .select('*')
         .in('review_id', reviewIds);
 
       // Fetch image likes for current user to determine is_liked status for images
       let likedImageIds: Set<string> = new Set();
-      if (imagesData && imagesData.length > 0) {
-        const imageIds = imagesData.map((img: any) => img.id);
+      const imageRows = (imagesData || []) as unknown as ReviewImageDbRow[];
+      if (imageRows.length > 0) {
+        const imageIds = imageRows.map((img) => img.id);
         const { data: likesData } = await supabase
           .from('image_likes')
           .select('image_id')
@@ -52,11 +67,13 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
           .in('image_id', imageIds);
 
         if (likesData) {
-          likedImageIds = new Set(likesData.map((l: any) => l.image_id));
+          likedImageIds = new Set(
+            (likesData as unknown as ImageLikeRow[]).map((l) => l.image_id)
+          );
         }
       }
 
-      const imagesMap = (imagesData || []).reduce((acc: any, img: any) => {
+      const imagesMap = imageRows.reduce<ReviewImagesByReviewId>((acc, img) => {
         if (!acc[img.review_id]) {
           acc[img.review_id] = [];
         }
@@ -69,7 +86,7 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
         return acc;
       }, {});
 
-      return posts.map((post: any) => {
+      return posts.map((post) => {
         const buildingData = post.building_data;
         const userData = post.user_data;
 

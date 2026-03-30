@@ -40,7 +40,7 @@ vi.mock('@/hooks/use-toast', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { id: 'user-123', email: 'test@example.com' },
     loading: false,
@@ -48,13 +48,15 @@ vi.mock('@/hooks/useAuth', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useUserProfile', () => ({
+vi.mock('@/features/profile/hooks/useUserProfile', () => ({
   useUserProfile: () => ({
     profile: { username: 'testuser', avatar_url: 'http://example.com/avatar.png' },
+    loading: false,
+    refetch: vi.fn(),
   }),
 }));
 
-vi.mock('@/components/profile/UserCard', () => ({
+vi.mock('@/features/profile/components/UserCard', () => ({
   UserCard: ({ onSignOut }: { onSignOut: () => void }) => (
     <div data-testid="user-card">
       <button onClick={onSignOut}>Mock Sign Out</button>
@@ -66,7 +68,7 @@ vi.mock('@/components/layout/AppLayout', () => ({
   AppLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('@/hooks/useProfileComparison', () => ({
+vi.mock('@/features/profile/hooks/useProfileComparison', () => ({
   useProfileComparison: () => ({
     profileComparison: {
       mutualAffinityUsers: [],

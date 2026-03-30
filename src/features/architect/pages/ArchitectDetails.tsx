@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link, Navigate } from "react-router-dom";
-import { useArchitect } from "@/hooks/useArchitect";
-import { useAuth } from "@/hooks/useAuth";
+import { useArchitect } from "@/features/architect/hooks/useArchitect";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { MetaHead } from "@/components/common/MetaHead";
 import { MapPin, Globe, Edit, Map as MapIcon, BadgeCheck } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 import { supabase } from "@/integrations/supabase/client";
-import { ClaimProfileDialog } from "@/components/architect/ClaimProfileDialog";
+import { ClaimProfileDialog } from "@/features/architect/components/ClaimProfileDialog";
 
 export default function ArchitectDetails() {
   const { id } = useParams<{ id: string }>();

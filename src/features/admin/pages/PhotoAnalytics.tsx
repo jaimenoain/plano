@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { fetchPhotoHeatmapData } from "@/api/admin";
-import { HeatmapPoint } from "@/types/admin";
-import { PhotoHeatmapZone } from "@/components/admin/PhotoHeatmapZone";
-import { NoPhotosMapZone } from "@/components/admin/NoPhotosMapZone";
+import { fetchPhotoHeatmapData } from "@/features/admin/api/admin";
+import { HeatmapPoint } from "@/features/admin/types/admin";
+import { PhotoHeatmapZone } from "@/features/admin/components/PhotoHeatmapZone";
+import { NoPhotosMapZone } from "@/features/admin/components/NoPhotosMapZone";
 import { BottomNav } from "@/components/layout/BottomNav";
 
 export default function PhotoAnalytics() {

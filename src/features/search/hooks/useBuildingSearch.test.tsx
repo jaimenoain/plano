@@ -4,13 +4,13 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {},
 }));
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({}),
 }));
 vi.mock('@/hooks/useUserLocation', () => ({
   useUserLocation: () => ({}),
 }));
-vi.mock('@/hooks/useUserBuildingStatuses', () => ({
+vi.mock('@/features/profile/hooks/useUserBuildingStatuses', () => ({
   useUserBuildingStatuses: () => ({}),
 }));
 

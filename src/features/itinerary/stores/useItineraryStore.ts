@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from "@/integrations/supabase/client";
-import { TransportMode, Itinerary, CollectionItemWithBuilding, ItineraryStop, ItineraryDay, CollectionMarker } from '@/types/collection';
+import { TransportMode, Itinerary, CollectionItemWithBuilding, ItineraryStop, ItineraryDay, CollectionMarker } from '@/features/collections/types';
 
 // Define ItineraryBuilding interface
 export interface ItineraryBuilding {

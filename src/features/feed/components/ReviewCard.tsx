@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/utils";
@@ -14,7 +14,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { SuggestedContentBlock } from "./SuggestedContentBlock";
-import { FollowButton } from "@/components/FollowButton";
+import { FollowButton } from "@/features/profile/components/FollowButton";
 
 function getCityFromAddress(address: string | null | undefined): string {
   if (!address) return "";

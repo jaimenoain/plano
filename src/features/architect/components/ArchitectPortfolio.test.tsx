@@ -1,21 +1,21 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ArchitectPortfolio } from "./ArchitectPortfolio";
-import { useArchitectPortfolio } from "@/hooks/useArchitectPortfolio";
+import { useArchitectPortfolio } from "@/features/architect/hooks/useArchitectPortfolio";
 import { BrowserRouter } from "react-router-dom";
 import '@testing-library/jest-dom/vitest';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Mock the hook
-vi.mock("@/hooks/useArchitectPortfolio", () => ({
+vi.mock("@/features/architect/hooks/useArchitectPortfolio", () => ({
   useArchitectPortfolio: vi.fn(),
 }));
 
-vi.mock("@/hooks/useUserBuildingStatuses", () => ({
+vi.mock("@/features/profile/hooks/useUserBuildingStatuses", () => ({
   useUserBuildingStatuses: () => ({ statuses: {}, ratings: {} }),
 }));
 
-vi.mock("@/hooks/useAuth", () => ({
+vi.mock("@/features/auth/hooks/useAuth", () => ({
   useAuth: () => ({ user: null }),
 }));
 

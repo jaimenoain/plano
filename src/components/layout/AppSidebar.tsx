@@ -16,8 +16,8 @@ import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settin
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
-import { useUserProfile } from "@/hooks/useUserProfile";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import {
   DropdownMenu,
   DropdownMenuContent,

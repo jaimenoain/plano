@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useItineraryStore } from './useItineraryStore';
-import { CollectionItemWithBuilding } from '@/types/collection';
+import { CollectionItemWithBuilding } from '@/features/collections/types';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({

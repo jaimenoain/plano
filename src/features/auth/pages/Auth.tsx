@@ -5,23 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { z } from "zod";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
-
-// Removed username requirement from sign-up schema
-const signUpSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-const signInSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  password: z.string().min(1, "Password is required"),
-});
+import {
+  resetPasswordSchema,
+  signInSchema,
+  signUpSchema,
+} from "@/lib/validations/auth";
 
 type Profile = {
   id: string;
@@ -40,7 +33,6 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [checkEmail, setCheckEmail] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
@@ -98,18 +90,22 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors({});
     setLoading(true);
 
     try {
       if (isResetPassword) {
-        if (!email) {
-           setErrors({ email: "Email is required" });
-           setLoading(false);
-           return;
+        const resetParsed = resetPasswordSchema.safeParse({ email });
+        if (!resetParsed.success) {
+          toast({
+            variant: "destructive",
+            title: "Validation error",
+            description: resetParsed.error.issues[0]?.message ?? "Invalid email",
+          });
+          setLoading(false);
+          return;
         }
 
-        const { error } = await resetPassword(email);
+        const { error } = await resetPassword(resetParsed.data.email);
         if (error) {
           toast({
              variant: "destructive",
@@ -125,32 +121,41 @@ export default function Auth() {
         }
       } else if (isSignUp) {
         if (!termsAccepted) {
-          setErrors({ terms: "You must accept the Terms and Conditions" });
-          setLoading(false);
-          return;
-        }
-
-        const result = signUpSchema.safeParse({ email, password });
-        if (!result.success) {
-          const fieldErrors: Record<string, string> = {};
-          result.error.errors.forEach((err) => {
-            if (err.path[0]) {
-              fieldErrors[err.path[0] as string] = err.message;
-            }
+          toast({
+            variant: "destructive",
+            title: "Validation error",
+            description: "You must accept the Terms and Conditions",
           });
-          setErrors(fieldErrors);
           setLoading(false);
           return;
         }
 
-        // Auto-generate the username here
         const autoUsername = generateUsername(email);
+        const signUpParsed = signUpSchema.safeParse({
+          email,
+          password,
+          username: autoUsername,
+        });
+        if (!signUpParsed.success) {
+          toast({
+            variant: "destructive",
+            title: "Validation error",
+            description: signUpParsed.error.issues[0]?.message ?? "Invalid sign-up data",
+          });
+          setLoading(false);
+          return;
+        }
 
         // Use the resolved inviter ID (UUID) if available, to prevent sending a username string
         // which would cause a database error if the column is of type UUID.
         const inviterId = inviterProfile?.id;
 
-        const { error } = await signUp(email, password, autoUsername, inviterId);
+        const { error } = await signUp(
+          signUpParsed.data.email,
+          signUpParsed.data.password,
+          signUpParsed.data.username,
+          inviterId
+        );
         if (error) {
           if (error.message.includes("already registered")) {
             toast({
@@ -173,20 +178,18 @@ export default function Auth() {
           });
         }
       } else {
-        const result = signInSchema.safeParse({ email, password });
-        if (!result.success) {
-          const fieldErrors: Record<string, string> = {};
-          result.error.errors.forEach((err) => {
-            if (err.path[0]) {
-              fieldErrors[err.path[0] as string] = err.message;
-            }
+        const signInParsed = signInSchema.safeParse({ email, password });
+        if (!signInParsed.success) {
+          toast({
+            variant: "destructive",
+            title: "Validation error",
+            description: signInParsed.error.issues[0]?.message ?? "Invalid sign-in data",
           });
-          setErrors(fieldErrors);
           setLoading(false);
           return;
         }
 
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(signInParsed.data.email, signInParsed.data.password);
         if (error) {
           toast({
             variant: "destructive",
@@ -296,9 +299,6 @@ export default function Auth() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            {errors.email && (
-              <p className="text-xs text-destructive">{errors.email}</p>
-            )}
           </div>
 
           {!isResetPassword && (
@@ -323,9 +323,6 @@ export default function Auth() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-xs text-destructive">{errors.password}</p>
-              )}
             </div>
           )}
 
@@ -344,9 +341,6 @@ export default function Auth() {
                   I accept the <Link to="/terms" className="text-foreground hover:underline decoration-[#EEFF41] decoration-2 underline-offset-4" target="_blank">Terms and Conditions</Link>
                 </Label>
               </div>
-              {errors.terms && (
-                <p className="text-xs text-destructive">{errors.terms}</p>
-              )}
             </div>
           )}
 
@@ -356,7 +350,6 @@ export default function Auth() {
                  type="button"
                  onClick={() => {
                    setIsResetPassword(true);
-                   setErrors({});
                  }}
                  className="text-xs text-muted-foreground hover:text-foreground"
                >
@@ -386,7 +379,6 @@ export default function Auth() {
                type="button"
                onClick={() => {
                  setIsResetPassword(false);
-                 setErrors({});
                }}
                className="text-foreground hover:underline decoration-[#EEFF41] decoration-2 underline-offset-4 font-medium"
              >
@@ -399,7 +391,6 @@ export default function Auth() {
                  type="button"
                  onClick={() => {
                    setIsSignUp(!isSignUp);
-                   setErrors({});
                  }}
                  className="text-foreground hover:underline decoration-[#EEFF41] decoration-2 underline-offset-4 font-medium"
                >

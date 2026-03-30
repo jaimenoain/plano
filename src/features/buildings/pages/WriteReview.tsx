@@ -37,16 +37,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { resizeImage } from "@/lib/image-compression";
 import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
 import { uploadFile, deleteFiles, uploadFileWithProgress } from "@/utils/upload";
-import { CollectionSelector } from "@/components/profile/CollectionSelector";
+import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
 import { VideoCompressionService } from "@/utils/video-compression";
-import { getRatingLabel } from "@/components/PersonalRatingButton";
+import { getRatingLabel } from "../components/PersonalRatingButton";
+import { reviewSubmitSchema } from "@/lib/validations/review";
 
 interface ReviewImage {
   id: string;
@@ -583,6 +584,23 @@ export default function WriteReview() {
   const handleSubmit = async () => {
     if (!user || !buildingId) return;
 
+    const parsed = reviewSubmitSchema.safeParse({
+      rating,
+      content: content || undefined,
+      status,
+      visibility,
+    });
+    if (!parsed.success) {
+      toast({
+        variant: "destructive",
+        title: "Validation error",
+        description: parsed.error.issues[0]?.message ?? "Invalid review",
+      });
+      return;
+    }
+
+    const reviewValues = parsed.data;
+
     setSubmitting(true);
     try {
       // 1. Upsert User Building (Review)
@@ -591,10 +609,10 @@ export default function WriteReview() {
         .upsert({
           user_id: user.id,
           building_id: buildingId,
-          rating: rating === 0 ? null : rating,
-          content: content,
-          status: status,
-          visibility: visibility,
+          rating: reviewValues.rating,
+          content: reviewValues.content ?? null,
+          status: reviewValues.status,
+          visibility: reviewValues.visibility,
           video_url: video.storage_path, // Save video path
           edited_at: new Date().toISOString()
         }, { onConflict: 'user_id, building_id' })

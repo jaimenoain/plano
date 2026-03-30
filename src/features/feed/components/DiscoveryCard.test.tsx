@@ -5,11 +5,11 @@ import { DiscoveryCard } from './DiscoveryCard';
 import { BrowserRouter } from 'react-router-dom';
 
 // Mock dependencies
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({ user: { id: 'test-user' }, loading: false }),
 }));
 
-vi.mock('@/hooks/useBuildingImages', () => ({
+vi.mock('@/features/buildings/hooks/useBuildingImages', () => ({
   useBuildingImages: () => ({ data: [] }),
 }));
 

@@ -2,13 +2,13 @@ import { Heart, MessageCircle, Circle, Bookmark, Check, EyeOff } from "lucide-re
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FeedReview } from "@/types/feed";
 import { getBuildingUrl } from "@/utils/url";
 import { useState } from "react";
-import { useUserBuildingStatuses } from "@/hooks/useUserBuildingStatuses";
+import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 

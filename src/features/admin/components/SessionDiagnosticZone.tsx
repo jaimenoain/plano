@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertTriangle, CheckCircle, RefreshCcw, Activity, FileWarning, Terminal } from "lucide-react";
-import { fetchDiagnosticLogs, fetchIncompleteSessions, logDiagnosticError, DiagnosticLog, IncompleteSession } from "@/api/diagnostics";
+import { fetchDiagnosticLogs, fetchIncompleteSessions, logDiagnosticError, DiagnosticLog, IncompleteSession } from "@/features/admin/api/diagnostics";
 import { supabase } from "@/integrations/supabase/client";
 
 export function SessionDiagnosticZone() {

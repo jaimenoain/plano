@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardStats } from "@/types/admin";
+import { DashboardStats } from "@/features/admin/types/admin";
 import { Users, UserPlus, Activity, Share2, Building2, MessageSquare, Image, AlertCircle } from "lucide-react";
 
 interface PulseZoneProps {

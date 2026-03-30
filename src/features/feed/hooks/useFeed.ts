@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { FeedReview } from "@/types/feed";
+import { FeedReview, RawFeedRow } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
 
 const INITIAL_PAGE_SIZE = 10;
@@ -34,9 +34,10 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
 
       if (error) throw error;
 
-      const feedData = data || [];
+      // RPC return shape not in generated `Database.Functions`
+      const feedData = (data || []) as unknown as RawFeedRow[];
 
-      return feedData.filter((r: any) => r.status !== 'ignored').map((review: any) => ({
+      return feedData.filter((r) => r.status !== "ignored").map((review) => ({
         id: review.id,
         content: review.content,
         rating: review.rating,
@@ -66,7 +67,7 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
         likes_count: review.likes_count || 0,
         comments_count: review.comments_count || 0,
         is_liked: review.is_liked,
-        images: (review.review_images || []).map((img: any) => {
+        images: (review.review_images || []).map((img) => {
             return {
                 id: img.id,
                 url: getBuildingImageUrl(img.storage_path),

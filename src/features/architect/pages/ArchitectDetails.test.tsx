@@ -13,11 +13,11 @@ const mocks = vi.hoisted(() => ({
   insert: vi.fn().mockResolvedValue({ error: null }),
 }));
 
-vi.mock('@/hooks/useArchitect', () => ({
+vi.mock('@/features/architect/hooks/useArchitect', () => ({
   useArchitect: mocks.useArchitect,
 }));
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: mocks.useAuth,
   AuthProvider: ({ children }: any) => children,
 }));

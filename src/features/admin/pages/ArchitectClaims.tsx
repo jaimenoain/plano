@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, X, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 interface Claim {
   id: string;

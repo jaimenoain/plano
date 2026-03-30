@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Lock } from "lucide-react";
+import { updatePasswordSchema } from "@/lib/validations/auth";
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState("");
@@ -17,26 +18,18 @@ export default function UpdatePassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
+    const parsed = updatePasswordSchema.safeParse({ password, confirmPassword });
+    if (!parsed.success) {
       toast({
         variant: "destructive",
-        title: "Passwords do not match",
-        description: "Please make sure both passwords match.",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        variant: "destructive",
-        title: "Password too short",
-        description: "Password must be at least 6 characters long.",
+        title: "Validation error",
+        description: parsed.error.issues[0]?.message ?? "Invalid password",
       });
       return;
     }
 
     setLoading(true);
-    const { error } = await updatePassword(password);
+    const { error } = await updatePassword(parsed.data.password);
     setLoading(false);
 
     if (error) {

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { FolderCard } from "./FolderCard";
-import { UserFolder } from "@/types/collection";
+import { UserFolder } from "@/features/collections/types";
 import { describe, it, expect, afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";

@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 // Mock useUserProfile
-vi.mock('@/hooks/useUserProfile', () => ({
+vi.mock('@/features/profile/hooks/useUserProfile', () => ({
   useUserProfile: vi.fn(() => ({
     profile: null,
     loading: false,

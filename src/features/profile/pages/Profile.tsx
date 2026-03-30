@@ -22,17 +22,17 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/hooks/useAuth";
-import { useUserProfile } from "@/hooks/useUserProfile";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { ReviewCard } from "@/components/feed/ReviewCard";
+import { ReviewCard } from "@/features/feed/components/ReviewCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { FollowButton } from "@/components/FollowButton";
+import { FollowButton } from "@/features/profile/components/FollowButton";
 import { useToast } from "@/hooks/use-toast";
-import { FavoritesSection } from "@/components/profile/FavoritesSection";
-import { FavoriteItem } from "@/components/profile/types";
+import { FavoritesSection } from "@/features/profile/components/FavoritesSection";
+import { FavoriteItem } from "@/features/profile/components/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -41,19 +41,19 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useSidebar } from "@/components/ui/sidebar";
 
 // New Components
-import { UserCard } from "@/components/profile/UserCard";
-import { ProfileHighlights } from "@/components/profile/ProfileHighlights";
-import { SocialContextSection } from "@/components/profile/SocialContextSection";
-import { CollectionsGrid } from "@/components/profile/CollectionsGrid";
-import { CreateCollectionDialog } from "@/components/profile/CreateCollectionDialog";
+import { UserCard } from "@/features/profile/components/UserCard";
+import { ProfileHighlights } from "@/features/profile/components/ProfileHighlights";
+import { SocialContextSection } from "@/features/profile/components/SocialContextSection";
+import { CollectionsGrid } from "@/features/collections/components/CollectionsGrid";
+import { CreateCollectionDialog } from "@/features/collections/components/CreateCollectionDialog";
 import { FeedReview } from "@/types/feed";
-import { useProfileComparison } from "@/hooks/useProfileComparison";
+import { useProfileComparison } from "@/features/profile/hooks/useProfileComparison";
 import { getBuildingImageUrl } from "@/utils/image";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
-import { ProfileKanbanView } from "@/components/profile/ProfileKanbanView";
+import { ProfileKanbanView } from "@/features/profile/components/ProfileKanbanView";
 import { handleDragEndLogic } from "@/utils/kanbanLogic";
-import { ProfileListView } from "@/components/profile/ProfileListView";
-import { ArchitectPortfolio } from "@/components/profile/ArchitectPortfolio";
+import { ProfileListView } from "@/features/profile/components/ProfileListView";
+import { ArchitectPortfolio } from "@/features/architect/components/ArchitectPortfolio";
 
 // --- Types ---
 interface Profile {

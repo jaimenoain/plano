@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
-import { useDiscoveryFeed } from "@/hooks/useDiscoveryFeed";
-import { DiscoveryCard } from "@/components/feed/DiscoveryCard";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useDiscoveryFeed } from "@/features/feed/hooks/useDiscoveryFeed";
+import { DiscoveryCard } from "@/features/feed/components/DiscoveryCard";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Loader2, MapPin, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

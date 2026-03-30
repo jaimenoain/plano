@@ -2,11 +2,11 @@ import { Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { PopularityBadge } from "@/components/PopularityBadge";
+import { PopularityBadge } from "./PopularityBadge";
 import { getBuildingUrl } from "@/utils/url";
-import { Architect } from "@/types/architect";
+import { Architect } from "@/features/architect/types";
 import { synthesizeAccess } from "@/utils/accessSynthesis";
-import { BuildingAttributes } from "@/components/BuildingAttributes";
+import { BuildingAttributes } from "./BuildingAttributes";
 
 interface BuildingDetails {
   id: string;

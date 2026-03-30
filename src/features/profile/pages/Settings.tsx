@@ -6,20 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { sanitizeUsername } from "@/lib/utils";
+import { profileUpdateSchema } from "@/lib/validations/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
-import { useUserProfile } from "@/hooks/useUserProfile";
+import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { NavigationBlocker } from "@/components/common/NavigationBlocker";
-import { ManageFavoritesDialog } from "@/components/profile/ManageFavoritesDialog";
-import { ManageHighlightsDialog } from "@/components/profile/ManageHighlightsDialog";
-import { FavoriteItem } from "@/components/profile/types";
-import { DisconnectArchitectDialog } from "@/components/settings/DisconnectArchitectDialog";
+import { ManageFavoritesDialog } from "@/features/profile/components/ManageFavoritesDialog";
+import { ManageHighlightsDialog } from "@/features/profile/components/ManageHighlightsDialog";
+import { FavoriteItem } from "@/features/profile/components/types";
+import { DisconnectArchitectDialog } from "@/features/profile/components/DisconnectArchitectDialog";
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth();
@@ -137,17 +138,34 @@ export default function Settings() {
     e.preventDefault();
     if (!user) return;
 
+    const parsed = profileUpdateSchema.safeParse({
+      username,
+      bio: bio || undefined,
+      country: country || undefined,
+      location: location || undefined,
+      avatar_url: avatarUrl === "" ? null : avatarUrl,
+    });
+    if (!parsed.success) {
+      toast({
+        variant: "destructive",
+        title: "Validation error",
+        description: parsed.error.issues[0]?.message ?? "Invalid profile data",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
+      const v = parsed.data;
       // 1. Update Profile Data (Database)
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
-          username,
-          bio,
-          country,
-          location,
-          avatar_url: avatarUrl,
+          username: v.username,
+          bio: v.bio ?? null,
+          country: v.country ?? null,
+          location: v.location ?? null,
+          avatar_url: v.avatar_url ?? null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
