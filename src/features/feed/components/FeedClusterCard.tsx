@@ -43,34 +43,34 @@ export function FeedClusterCard({
   return (
     <div
       onClick={handleClick}
-      className="flex items-start gap-3 py-1.5 px-2 w-full max-w-full overflow-hidden min-w-0 group cursor-pointer hover:bg-muted/50 rounded-lg transition-colors"
+      className="flex items-start gap-3 py-1.5 px-2 w-full max-w-full overflow-hidden min-w-0 group cursor-pointer hover:bg-surface-muted/50 rounded-lg transition-colors"
     >
-      <Avatar className="h-6 w-6 border border-border/50 shrink-0 mt-0.5">
+      <Avatar className="h-6 w-6 border border-border-default/50 shrink-0 mt-0.5">
         <AvatarImage src={avatarUrl} />
         <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
       </Avatar>
 
-      <div className="text-sm text-foreground/90 flex-1 break-words leading-tight min-w-0">
+      <div className="text-sm text-text-primary/90 flex-1 break-words leading-tight min-w-0">
         <span className="font-semibold">{username}</span>
-        <span className="text-muted-foreground"> {action} </span>
+        <span className="text-text-secondary"> {action} </span>
         {uniqueCount > 2 ? (
           <>
             <span className="font-semibold">{uniqueBuildings[0]}</span>
-            <span className="text-muted-foreground">, </span>
+            <span className="text-text-secondary">, </span>
             <span className="font-semibold">{uniqueBuildings[1]}</span>
-            <span className="text-muted-foreground"> and </span>
+            <span className="text-text-secondary"> and </span>
             <span className="font-semibold">{uniqueCount - 2} more</span>
           </>
         ) : uniqueCount === 2 ? (
           <>
             <span className="font-semibold">{uniqueBuildings[0]}</span>
-            <span className="text-muted-foreground"> and </span>
+            <span className="text-text-secondary"> and </span>
             <span className="font-semibold">{uniqueBuildings[1]}</span>
           </>
         ) : (
           <span className="font-semibold">{uniqueBuildings[0]}</span>
         )}
-        <span className="text-muted-foreground text-xs ml-2">
+        <span className="text-text-secondary text-xs ml-2">
           • {formatDistanceToNow(new Date(timestamp)).replace("about ", "")} ago
         </span>
       </div>

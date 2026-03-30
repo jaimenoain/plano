@@ -15,7 +15,7 @@ describe('MapPin Component', () => {
     shape: 'circle',
     zIndex: 5,
     size: 20,
-    classes: 'bg-muted/80 border-white/50 border',
+    classes: 'bg-surface-muted/80 border-white/50 border',
     showDot: false,
     showContent: true
   };

@@ -279,8 +279,8 @@ toast.error("Failed to load buildings");
     if (!targetBuilding || !sourceBuilding) {
         return (
             <div className="container mx-auto py-8 px-4 max-w-7xl flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-                <AlertTriangle className="h-16 w-16 text-muted-foreground opacity-20" />
-                <h2 className="text-xl font-semibold text-muted-foreground">Buildings not found</h2>
+                <AlertTriangle className="h-16 w-16 text-text-secondary opacity-20" />
+                <h2 className="text-xl font-semibold text-text-secondary">Buildings not found</h2>
                 <Button onClick={() => navigate('/admin/merge')}>Return to Merge Tool</Button>
             </div>
         );
@@ -294,7 +294,7 @@ toast.error("Failed to load buildings");
                 </Button>
                 <div>
                     <h1 className="text-2xl font-bold">Compare & Merge</h1>
-                    <p className="text-muted-foreground">Review details and confirm merge direction.</p>
+                    <p className="text-text-secondary">Review details and confirm merge direction.</p>
                 </div>
             </div>
 
@@ -322,7 +322,7 @@ toast.error("Failed to load buildings");
                             <Badge className="bg-green-600 hover:bg-green-700 hidden sm:inline-flex">Surviving</Badge>
                         </div>
                     </div>
-                    <div className="aspect-video w-full bg-muted relative overflow-hidden group">
+                    <div className="aspect-video w-full bg-surface-muted relative overflow-hidden group">
                         {targetBuilding.hero_image_url ? (
                             <img
                                 src={getBuildingImageUrl(targetBuilding.hero_image_url)}
@@ -330,7 +330,7 @@ toast.error("Failed to load buildings");
                                 className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500"
                             />
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 bg-muted/50">
+                            <div className="flex flex-col items-center justify-center h-full text-text-secondary/50 bg-surface-muted/50">
                                 <ImageIcon className="h-12 w-12 mb-2" />
                                 <span className="text-sm font-medium">No Image</span>
                             </div>
@@ -340,7 +340,7 @@ toast.error("Failed to load buildings");
                         {isEditing && editForm ? (
                             <div className="space-y-3">
                                 <div className="space-y-1">
-                                    <div className="text-xs text-muted-foreground font-semibold uppercase">Name</div>
+                                    <div className="text-xs text-text-secondary font-semibold uppercase">Name</div>
                                     <Input
                                         value={editForm.name}
                                         onChange={e => setEditForm({ ...editForm, name: e.target.value })}
@@ -348,7 +348,7 @@ toast.error("Failed to load buildings");
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="text-xs text-muted-foreground font-semibold uppercase">Architect</div>
+                                    <div className="text-xs text-text-secondary font-semibold uppercase">Architect</div>
                                     <ArchitectSelect
                                         selectedArchitects={editForm.architects as SelectArchitect[]}
                                         setSelectedArchitects={(a) => setEditForm({ ...editForm, architects: a })}
@@ -358,7 +358,7 @@ toast.error("Failed to load buildings");
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1">
-                                        <div className="text-xs text-muted-foreground font-semibold uppercase">Year</div>
+                                        <div className="text-xs text-text-secondary font-semibold uppercase">Year</div>
                                         <Input
                                             type="number"
                                             value={editForm.year_completed || ''}
@@ -367,7 +367,7 @@ toast.error("Failed to load buildings");
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <div className="text-xs text-muted-foreground font-semibold uppercase">City</div>
+                                        <div className="text-xs text-text-secondary font-semibold uppercase">City</div>
                                         <Input
                                             value={editForm.city || ''}
                                             onChange={e => setEditForm({ ...editForm, city: e.target.value })}
@@ -376,7 +376,7 @@ toast.error("Failed to load buildings");
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="text-xs text-muted-foreground font-semibold uppercase">Address</div>
+                                    <div className="text-xs text-text-secondary font-semibold uppercase">Address</div>
                                     <Textarea
                                         value={editForm.address || ''}
                                         onChange={e => setEditForm({ ...editForm, address: e.target.value })}
@@ -396,27 +396,27 @@ toast.error("Failed to load buildings");
                         ) : (
                             <>
                                 <div>
-                                    <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Name</div>
+                                    <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Name</div>
                                     <div className="text-xl font-bold truncate" title={targetBuilding.name}>{targetBuilding.name}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Architect</div>
+                                    <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Architect</div>
                                     <div className="text-lg truncate">
                                         {targetBuilding.architects?.map(a => a.name).join(", ") || "Unknown Architect"}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                      <div>
-                                        <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Year</div>
+                                        <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Year</div>
                                         <div>{targetBuilding.year_completed || "N/A"}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">City</div>
+                                        <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">City</div>
                                         <div className="truncate" title={targetBuilding.city || ""}>{targetBuilding.city || "N/A"}</div>
                                     </div>
                                 </div>
                                 <div>
-                                     <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Address</div>
+                                     <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Address</div>
                                      <div className="text-sm break-words line-clamp-2" title={targetBuilding.address || ""}>{targetBuilding.address || "N/A"}</div>
                                 </div>
                             </>
@@ -424,8 +424,8 @@ toast.error("Failed to load buildings");
 
                         {targetLocation && (
                             <div className="space-y-1 pt-2">
-                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Location</div>
-                                <div className="w-full h-48 rounded-md border border-border bg-muted overflow-hidden relative">
+                                <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Location</div>
+                                <div className="w-full h-48 rounded-md border border-border-default bg-surface-muted overflow-hidden relative">
                                   <BuildingMap
                                     lat={targetLocation.lat}
                                     lng={targetLocation.lng}
@@ -438,12 +438,12 @@ toast.error("Failed to load buildings");
 
                         {reviewImages[targetBuilding.id]?.length > 0 && (
                             <div className="space-y-2 pt-2">
-                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Review Images</div>
+                                <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Review Images</div>
                                 <Carousel className="w-full max-w-full relative group/carousel">
                                     <CarouselContent className="-ml-2">
                                         {reviewImages[targetBuilding.id].map((url, idx) => (
                                             <CarouselItem key={idx} className="pl-2 basis-1/3 md:basis-1/4">
-                                                <div className="aspect-square relative overflow-hidden rounded-md border bg-muted">
+                                                <div className="aspect-square relative overflow-hidden rounded-md border bg-surface-muted">
                                                     <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" />
                                                 </div>
                                             </CarouselItem>
@@ -466,13 +466,13 @@ toast.error("Failed to load buildings");
                     <Button
                         size="icon"
                         variant="outline"
-                        className="rounded-full h-12 w-12 border-2 border-purple-200 bg-white hover:bg-purple-50 shadow-md transition-transform hover:scale-110 active:scale-95"
+                        className="rounded-full h-12 w-12 border-2 border-purple-200 bg-white hover:bg-purple-50 shadow-none transition-transform hover:scale-110 active:scale-95"
                         onClick={handleSwap}
                         title="Swap Direction"
                     >
                         <ArrowLeftRight className="h-6 w-6 text-purple-600" />
                     </Button>
-                    <div className="mt-2 text-xs font-medium text-muted-foreground uppercase tracking-widest">Swap</div>
+                    <div className="mt-2 text-xs font-medium text-text-secondary uppercase tracking-widest">Swap</div>
                 </div>
 
                 {/* SOURCE COLUMN (REMOVE) */}
@@ -481,7 +481,7 @@ toast.error("Failed to load buildings");
                         <span className="flex items-center gap-2"><Trash2 className="h-5 w-5" /> SOURCE (REMOVE)</span>
                         <Badge variant="destructive">Will be Deleted</Badge>
                     </div>
-                    <div className="aspect-video w-full bg-muted relative overflow-hidden group">
+                    <div className="aspect-video w-full bg-surface-muted relative overflow-hidden group">
                         {sourceBuilding.hero_image_url ? (
                             <img
                                 src={getBuildingImageUrl(sourceBuilding.hero_image_url)}
@@ -489,7 +489,7 @@ toast.error("Failed to load buildings");
                                 className="w-full h-full object-cover grayscale opacity-90 transition-transform group-hover:scale-105 duration-500"
                             />
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 bg-muted/50">
+                            <div className="flex flex-col items-center justify-center h-full text-text-secondary/50 bg-surface-muted/50">
                                 <ImageIcon className="h-12 w-12 mb-2" />
                                 <span className="text-sm font-medium">No Image</span>
                             </div>
@@ -498,34 +498,34 @@ toast.error("Failed to load buildings");
                     </div>
                     <CardContent className="p-6 space-y-4">
                         <div>
-                            <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Name</div>
+                            <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Name</div>
                             <div className="text-xl font-bold text-red-900/80 line-through decoration-red-500/50 truncate" title={sourceBuilding.name}>{sourceBuilding.name}</div>
                         </div>
                         <div>
-                            <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Architect</div>
+                            <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Architect</div>
                             <div className="text-lg text-red-900/80 truncate">
                                 {sourceBuilding.architects?.map(a => a.name).join(", ") || "Unknown Architect"}
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                              <div>
-                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Year</div>
+                                <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Year</div>
                                 <div className="text-red-900/80">{sourceBuilding.year_completed || "N/A"}</div>
                             </div>
                             <div>
-                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">City</div>
+                                <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">City</div>
                                 <div className="text-red-900/80 truncate" title={sourceBuilding.city || ""}>{sourceBuilding.city || "N/A"}</div>
                             </div>
                         </div>
                         <div>
-                             <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Address</div>
+                             <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Address</div>
                              <div className="text-sm text-red-900/80 break-words line-clamp-2" title={sourceBuilding.address || ""}>{sourceBuilding.address || "N/A"}</div>
                         </div>
 
                         {sourceLocation && (
                             <div className="space-y-1 pt-2">
-                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Location</div>
-                                <div className="w-full h-48 rounded-md border border-red-200 bg-muted overflow-hidden relative">
+                                <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Location</div>
+                                <div className="w-full h-48 rounded-md border border-red-200 bg-surface-muted overflow-hidden relative">
                                   <BuildingMap
                                     lat={sourceLocation.lat}
                                     lng={sourceLocation.lng}
@@ -538,12 +538,12 @@ toast.error("Failed to load buildings");
 
                         {reviewImages[sourceBuilding.id]?.length > 0 && (
                             <div className="space-y-2 pt-2">
-                                <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Review Images</div>
+                                <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Review Images</div>
                                 <Carousel className="w-full max-w-full relative group/carousel">
                                     <CarouselContent className="-ml-2">
                                         {reviewImages[sourceBuilding.id].map((url, idx) => (
                                             <CarouselItem key={idx} className="pl-2 basis-1/3 md:basis-1/4">
-                                                <div className="aspect-square relative overflow-hidden rounded-md border bg-muted">
+                                                <div className="aspect-square relative overflow-hidden rounded-md border bg-surface-muted">
                                                     <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" />
                                                 </div>
                                             </CarouselItem>
@@ -565,7 +565,7 @@ toast.error("Failed to load buildings");
 
             {/* IMPACT & ACTIONS */}
             <div className="mt-8">
-                <Card className="border-t-4 border-t-purple-500 shadow-md">
+                <Card className="border-t-4 border-t-purple-500 shadow-none">
                     <CardContent className="p-8">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                             <div className="space-y-2 flex-1">
@@ -573,7 +573,7 @@ toast.error("Failed to load buildings");
                                     <AlertTriangle className="h-5 w-5 text-amber-500" />
                                     Merge Impact Summary
                                 </h3>
-                                <p className="text-muted-foreground text-lg">
+                                <p className="text-text-secondary text-lg">
                                     You are about to merge <strong>{sourceBuilding.name}</strong> into <strong>{targetBuilding.name}</strong>.
                                 </p>
                                 <div className="flex items-center gap-4 mt-2">

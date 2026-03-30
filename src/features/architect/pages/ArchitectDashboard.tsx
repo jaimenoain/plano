@@ -254,7 +254,7 @@ toast.error("Failed to load dashboard data");
     <div className="container max-w-7xl mx-auto py-8 px-4 space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Architect Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-text-secondary mt-2">
           Track the impact of your work and see how the community engages with your projects.
         </p>
       </div>
@@ -267,7 +267,7 @@ toast.error("Failed to load dashboard data");
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalVisits}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               Community members who visited your buildings
             </p>
           </CardContent>
@@ -278,7 +278,7 @@ toast.error("Failed to load dashboard data");
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.bucketLists}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               People who want to visit your buildings
             </p>
           </CardContent>
@@ -291,7 +291,7 @@ toast.error("Failed to load dashboard data");
             <div className="text-2xl font-bold">
               {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "—"}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               Average community score across all projects
             </p>
           </CardContent>
@@ -301,7 +301,7 @@ toast.error("Failed to load dashboard data");
       {/* Feed Section */}
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold tracking-tight">Community Feed</h2>
-        <p className="text-muted-foreground">Recent reviews and photos of your buildings.</p>
+        <p className="text-text-secondary">Recent reviews and photos of your buildings.</p>
 
         {feedLoading ? (
           <div className="space-y-4">
@@ -309,8 +309,8 @@ toast.error("Failed to load dashboard data");
             <Skeleton className="h-64 w-full" />
           </div>
         ) : feedItems.length === 0 ? (
-          <div className="py-12 text-center border rounded-lg bg-muted/10">
-            <p className="text-muted-foreground">No recent activity found for your buildings.</p>
+          <div className="py-12 text-center border rounded-lg bg-surface-muted/10">
+            <p className="text-text-secondary">No recent activity found for your buildings.</p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

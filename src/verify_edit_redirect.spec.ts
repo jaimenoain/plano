@@ -95,7 +95,7 @@ test('verify edit button redirects to review page for visited buildings', async 
   // Locate the "Edit" button in that section
   // It is currently a button with text "Edit"
   // We scope it to the "Your Activity" container to avoid matching the "Edit building information" link at the bottom
-  const activitySection = page.locator('.bg-card', { hasText: 'Your Activity' });
+  const activitySection = page.locator('.bg-surface-card', { hasText: 'Your Activity' });
 
   // Verify it is a LINK (This should FAIL currently, as it is a button with onClick)
   const editLink = activitySection.getByRole('link', { name: 'Edit' });

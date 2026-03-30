@@ -42,7 +42,7 @@ export function UserRow({
 
   return (
     <div
-      className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border/50 relative group"
+      className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border-default/50 relative group"
       onClick={() => navigate(`/profile/${user.username?.toLowerCase() || user.id}`)}
     >
     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -60,7 +60,7 @@ export function UserRow({
         {onHide && (
             <button
                 onClick={onHide}
-                className="p-1.5 hover:bg-muted rounded-full transition-colors focus:outline-none text-muted-foreground hover:text-foreground"
+                className="p-1.5 hover:bg-surface-muted rounded-full transition-colors focus:outline-none text-text-secondary hover:text-text-primary"
                 title="Hide suggestion"
             >
                 <X className="h-4 w-4" />
@@ -70,12 +70,12 @@ export function UserRow({
         {onToggleCloseFriend && (
           <button
             onClick={onToggleCloseFriend}
-            className="p-1 hover:bg-muted rounded-full transition-colors focus:outline-none"
+            className="p-1 hover:bg-surface-muted rounded-full transition-colors focus:outline-none"
             title={isCloseFriend ? "Remove from close friends" : "Add to close friends"}
           >
             <Star
               className={`h-5 w-5 ${
-                isCloseFriend ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                isCloseFriend ? "fill-yellow-400 text-yellow-400" : "text-text-secondary"
               }`}
             />
           </button>

@@ -84,7 +84,7 @@ export default function ArchitectDetails() {
       <AppLayout showBack>
         <div className="px-4 py-6 md:px-6 flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
           <h1 className="text-2xl font-bold">Architect not found</h1>
-          <p className="text-muted-foreground">
+          <p className="text-text-secondary">
             The architect you are looking for does not exist or an error occurred.
           </p>
           <Button asChild variant="secondary">
@@ -105,9 +105,9 @@ export default function ArchitectDetails() {
 
           {/* Avatar Section */}
           <div className="shrink-0 mx-auto md:mx-0">
-            <Avatar className="h-24 w-24 md:h-40 md:w-40 border-2 border-border shadow-sm">
+            <Avatar className="h-24 w-24 md:h-40 md:w-40 border-2 border-border-default shadow-sm">
               <AvatarImage src={buildings[0]?.main_image_url ? getBuildingImageUrl(buildings[0].main_image_url) : undefined} className="object-cover" />
-              <AvatarFallback className="text-3xl bg-secondary">{architect.name?.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="text-3xl bg-surface-muted">{architect.name?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
           </div>
 
@@ -119,7 +119,7 @@ export default function ArchitectDetails() {
                 <span className="flex items-center gap-2">
                   {architect.name}
                   {claimStatus.is_verified && (
-                    <div className="inline-flex items-center text-foreground shrink-0" title="Verified Architect">
+                    <div className="inline-flex items-center text-text-primary shrink-0" title="Verified Architect">
                       <BadgeCheck className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                   )}
@@ -171,14 +171,14 @@ export default function ArchitectDetails() {
             </div>
 
             {/* Stats Row */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border/40">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border-default/40">
                 <StatItem label="total projects" value={totalProjects} />
                 <StatItem label="built works" value={builtWorks} />
             </div>
 
             {/* Bio & Details */}
             <div className="text-center md:text-left px-2 md:px-0">
-               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-3 text-sm text-muted-foreground">
+               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-3 text-sm text-text-secondary">
                  <div className="flex items-center gap-1 group capitalize">
                    {architect.type}
                  </div>
@@ -202,12 +202,12 @@ export default function ArchitectDetails() {
         </div>
 
         {buildings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-muted/30 rounded-lg border border-dashed">
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-              <MapPin className="h-6 w-6 text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-surface-muted/30 rounded-lg border border-dashed">
+            <div className="w-12 h-12 rounded-full bg-surface-muted flex items-center justify-center mb-4">
+              <MapPin className="h-6 w-6 text-text-secondary" />
             </div>
             <h3 className="text-lg font-semibold mb-1">No designs listed yet</h3>
-            <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+            <p className="text-text-secondary text-sm max-w-xs mx-auto">
               We haven't added any buildings for this architect yet.
             </p>
           </div>
@@ -216,7 +216,7 @@ export default function ArchitectDetails() {
             {buildings.map((building) => (
               <Card
                 key={building.id}
-                className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
+                className="overflow-hidden cursor-pointer shadow-none transition-shadow group"
                 onClick={() => navigate(`/building/${building.id}`)}
               >
                 <CardContent className="p-0">
@@ -228,18 +228,18 @@ export default function ArchitectDetails() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
+                      <div className="w-full h-full bg-surface-muted flex items-center justify-center text-text-secondary">
                         No Image
                       </div>
                     )}
                   </AspectRatio>
                   <div className="p-4 space-y-1">
                     <h3 className="font-semibold text-lg line-clamp-1">{building.name}</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-text-secondary">
                       {[building.city, building.country].filter(Boolean).join(", ")}
                     </p>
                     {building.year_completed && (
-                        <p className="text-xs text-muted-foreground pt-1">
+                        <p className="text-xs text-text-secondary pt-1">
                             {building.year_completed}
                         </p>
                     )}
@@ -265,10 +265,10 @@ export default function ArchitectDetails() {
 function StatItem({ label, value, onClick }: { label: string, value: number, onClick?: () => void }) {
     const content = (
         <>
-            <span className="font-bold text-base md:text-md text-foreground group-hover:text-primary transition-colors">
+            <span className="font-bold text-base md:text-md text-text-primary group-hover:text-brand-primary transition-colors">
                 {formatStatValue(value)}
             </span>
-            <span className="text-xs md:text-sm text-muted-foreground capitalize">
+            <span className="text-xs md:text-sm text-text-secondary capitalize">
                 {label}
             </span>
         </>

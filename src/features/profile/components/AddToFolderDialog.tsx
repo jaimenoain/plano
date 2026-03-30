@@ -180,16 +180,16 @@ toast({ variant: "destructive", description: "Failed to create folder." });
 
             {loading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
                 </div>
             ) : (
                 <ScrollArea className="h-[300px] pr-4">
                     {folders.length === 0 ? (
-                        <p className="text-center py-8 text-muted-foreground">No folders found.</p>
+                        <p className="text-center py-8 text-text-secondary">No folders found.</p>
                     ) : (
                         <div className="space-y-2">
                              {folders.map(folder => (
-                                 <div key={folder.id} className="flex items-center space-x-3 p-2 rounded hover:bg-secondary/30">
+                                 <div key={folder.id} className="flex items-center space-x-3 p-2 rounded hover:bg-surface-muted/30">
                                      <Checkbox
                                          id={`folder-${folder.id}`}
                                          checked={selectedFolderIds.has(folder.id)}
@@ -200,7 +200,7 @@ toast({ variant: "destructive", description: "Failed to create folder." });
                                              htmlFor={`folder-${folder.id}`}
                                              className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
                                          >
-                                             <Folder className="h-4 w-4 text-muted-foreground" />
+                                             <Folder className="h-4 w-4 text-text-secondary" />
                                              {folder.name}
                                          </label>
                                      </div>

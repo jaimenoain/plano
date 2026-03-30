@@ -6,17 +6,19 @@ import { captureErrorBoundaryException } from "@/lib/sentry";
 
 function AppErrorFallback({ resetErrorBoundary }: FallbackProps) {
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center p-8 text-center">
-      <AlertTriangle className="mb-6 h-12 w-12 text-destructive" />
-      <h1 className="mb-2 text-2xl font-semibold">Something went wrong</h1>
-      <p className="mb-6 max-w-md text-muted-foreground">
-        An unexpected error occurred. Try refreshing the page.
-      </p>
-      <div className="flex gap-3">
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          Refresh page
-        </Button>
-        <Button onClick={resetErrorBoundary}>Try again</Button>
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-surface-default px-8 py-16 text-center">
+      <div className="flex flex-col items-center justify-center gap-4">
+        <AlertTriangle className="h-12 w-12 text-feedback-destructive" />
+        <h1 className="text-2xl font-semibold text-text-primary">Something went wrong</h1>
+        <p className="max-w-md text-sm text-text-secondary">
+          An unexpected error occurred. Try refreshing the page.
+        </p>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Refresh page
+          </Button>
+          <Button onClick={resetErrorBoundary}>Try again</Button>
+        </div>
       </div>
     </div>
   );

@@ -59,6 +59,20 @@ export const BuildingHeader = ({
       ? synthesizeAccess(building.access_level || null, building.access_logistics || null, building.access_cost || null)
       : null;
 
+    const accessBadgeVariant = ():
+      | "default"
+      | "success"
+      | "warning"
+      | "brand" => {
+      const level = building.access_level;
+      if (level === "public") return "success";
+      if (level === "commercial") return "brand";
+      if (level === "private" || level === "restricted") return "warning";
+      if (accessSynthesis?.variant === "warning") return "warning";
+      if (accessSynthesis?.variant === "outline") return "brand";
+      return "default";
+    };
+
     return (
         <div className={`${className || ""} group`}>
             <div className="flex justify-between items-start">
@@ -69,7 +83,7 @@ export const BuildingHeader = ({
                         <Input
                             value={nameValue}
                             onChange={(e) => onNameChange?.(e.target.value)}
-                            className="text-3xl sm:text-4xl font-extrabold tracking-tight h-auto px-3 py-2 w-full"
+                            className="text-3xl sm:text-4xl font-extrabold tracking-tight h-auto px-3 py-2 w-full max-w-md"
                             placeholder="Official Building Name"
                         />
                     ) : (
@@ -77,19 +91,19 @@ export const BuildingHeader = ({
                     )}
 
                     {building.alt_name && building.alt_name !== building.name && !isEditing && (
-                        <h2 className="text-xl text-muted-foreground font-medium">{building.alt_name}</h2>
+                        <h2 className="text-xl text-text-secondary font-medium">{building.alt_name}</h2>
                     )}
                 </div>
             </div>
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground items-center">
+            <div className="flex flex-wrap gap-4 text-sm text-text-secondary items-center">
                 {isEditing && (
                     <div className="flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4" />
+                        <Calendar className="w-4 h-4 text-text-secondary" />
                         <Input
                             type="number"
                             value={yearValue}
                             onChange={(e) => onYearChange?.(parseInt(e.target.value))}
-                            className="w-24 h-8 text-sm"
+                            className="w-24 max-w-[8rem] h-8 text-sm"
                             placeholder="Year"
                         />
                     </div>
@@ -98,7 +112,7 @@ export const BuildingHeader = ({
                     <div className="flex flex-wrap items-center gap-1.5">
                         {building.architects.map((arch, i) => (
                             <span key={arch.id}>
-                                <Link to={`/architect/${arch.id}`} className="hover:underline text-primary">
+                                <Link to={`/architect/${arch.id}`} className="hover:underline text-brand-primary">
                                     {arch.name}
                                 </Link>
                                 {i < building.architects.length - 1 && ", "}
@@ -115,14 +129,14 @@ export const BuildingHeader = ({
                 <div className="flex flex-col gap-2 mt-4">
                     {accessSynthesis && (
                         <div className="flex items-center gap-2">
-                            <Badge variant={accessSynthesis.variant === "warning" ? "secondary" : accessSynthesis.variant} className="flex items-center gap-1.5 w-fit">
+                            <Badge variant={accessBadgeVariant()} className="flex items-center gap-1.5 w-fit">
                                 <accessSynthesis.icon className="w-3.5 h-3.5" />
                                 {accessSynthesis.label}
                             </Badge>
                         </div>
                     )}
                     {building.access_notes && (
-                        <div className="text-sm text-muted-foreground border-l-2 border-primary/20 pl-3 py-0.5 bg-muted/30 rounded-r-md">
+                        <div className="text-sm text-text-secondary border-l-2 border-brand-primary/20 pl-3 py-0.5 bg-surface-muted/30 rounded-sm">
                             {building.access_notes}
                         </div>
                     )}
@@ -133,7 +147,7 @@ export const BuildingHeader = ({
                 <div className="mt-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
                     <Link
                         to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}
-                        className="text-xs text-muted-foreground hover:underline"
+                        className="text-xs text-text-secondary hover:underline"
                     >
                         Edit building information
                     </Link>

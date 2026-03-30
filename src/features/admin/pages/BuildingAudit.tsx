@@ -101,7 +101,7 @@ toast.error("Failed to revert change");
               </div>
           )
       }
-      return <span className="text-xs text-muted-foreground">{log.operation} on {log.table_name}</span>;
+      return <span className="text-xs text-text-secondary">{log.operation} on {log.table_name}</span>;
   };
 
   if (isLoading) {
@@ -116,7 +116,7 @@ toast.error("Failed to revert change");
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Audit Logs</h2>
-        <p className="text-muted-foreground">
+        <p className="text-text-secondary">
           Track and revert changes made to buildings.
         </p>
       </div>
@@ -180,7 +180,7 @@ toast.error("Failed to revert change");
             ))}
             {logs?.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center h-24 text-text-secondary">
                         No logs found.
                     </TableCell>
                 </TableRow>

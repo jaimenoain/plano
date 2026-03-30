@@ -56,7 +56,7 @@ export function InlineReviewEditor({ initialContent, isOwnProfile, onSave }: Inl
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Write a review..."
-          className="min-h-[80px] text-xs resize-none bg-background z-10 relative"
+          className="min-h-[80px] text-xs resize-none bg-surface-default z-10 relative"
           autoFocus
           onKeyDown={handleKeyDown}
           onClick={(e) => e.stopPropagation()} // Prevent row click
@@ -100,7 +100,7 @@ export function InlineReviewEditor({ initialContent, isOwnProfile, onSave }: Inl
             </Tooltip>
           ) : (
             isOwnProfile ? (
-                <span className="text-muted-foreground/50 italic text-[10px] cursor-pointer hover:text-foreground/80 transition-colors"
+                <span className="text-text-secondary/50 italic text-[10px] cursor-pointer hover:text-text-primary/80 transition-colors"
                       onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}>
                     Add a review...
                 </span>
@@ -114,11 +114,11 @@ export function InlineReviewEditor({ initialContent, isOwnProfile, onSave }: Inl
         <Button
           variant="ghost"
           size="icon"
-          className="h-5 w-5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hover:bg-muted"
+          className="h-5 w-5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hover:bg-surface-muted"
           onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
           title="Edit review"
         >
-          <Pencil className="h-3 w-3 text-muted-foreground" />
+          <Pencil className="h-3 w-3 text-text-secondary" />
         </Button>
       )}
     </div>

@@ -11,6 +11,7 @@ import { Loader2, User, UserPlus, Check, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { resizeImage } from "@/lib/image-compression";
+import { PlanoLogo } from "@/components/common/PlanoLogo";
 
 export default function Onboarding() {
   const { user, loading: authLoading } = useAuth();
@@ -277,37 +278,43 @@ const { error: notifError } = await supabase
     await completeOnboarding();
   };
 
-  if (authLoading || loadingInitialData) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (authLoading || loadingInitialData)
+    return (
+      <div className="flex h-screen items-center justify-center bg-surface-default">
+        <Loader2 className="animate-spin text-text-secondary" />
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm space-y-8 text-center">
+    <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
+      <PlanoLogo className="h-8 w-auto mb-6" />
+      <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6 text-center">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Welcome!</h1>
-          <p className="text-muted-foreground">Let's set up your profile.</p>
+          <h1 className="text-3xl font-bold text-text-primary">Welcome!</h1>
+          <p className="text-text-secondary">Let's set up your profile.</p>
         </div>
 
         {inviter && (
-          <div className="bg-secondary/30 border border-border/50 rounded-xl p-4 flex items-center justify-between gap-3 text-left animate-in fade-in slide-in-from-top-2">
+          <div className="bg-surface-muted/50 border border-border-default rounded-sm p-4 flex items-center justify-between gap-3 text-left animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-3">
               <Avatar>
                 <AvatarImage src={inviter.avatar_url || undefined} />
                 <AvatarFallback>{inviter.username[0]}</AvatarFallback>
               </Avatar>
               <div className="space-y-0.5">
-                <p className="text-sm font-medium">Follow {inviter.username}</p>
-                <p className="text-xs text-muted-foreground">They invited you!</p>
+                <p className="text-sm font-medium text-text-primary">Follow {inviter.username}</p>
+                <p className="text-xs text-text-secondary">They invited you!</p>
               </div>
             </div>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant={isFollowing ? "outline" : "default"}
               onClick={handleFollowInviter}
               disabled={isFollowing || followLoading}
               className="h-8"
             >
               {followLoading ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Loader2 className="h-3 w-3 animate-spin text-text-secondary" />
               ) : isFollowing ? (
                 <><Check className="h-3 w-3 mr-1" /> Following</>
               ) : (
@@ -319,10 +326,10 @@ const { error: notifError } = await supabase
 
         {/* Avatar Selection */}
         <div className="flex flex-col items-center">
-          <Avatar className="h-24 w-24 mb-4 border-2 border-border">
+          <Avatar className="h-24 w-24 mb-4 border-2 border-border-default">
             <AvatarImage src={avatarUrl || undefined} className="object-cover" />
             <AvatarFallback className="text-2xl">
-              {username?.[0]?.toUpperCase() || <User className="h-10 w-10 text-muted-foreground" />}
+              {username?.[0]?.toUpperCase() || <User className="h-10 w-10 text-text-secondary" />}
             </AvatarFallback>
           </Avatar>
           <div className="relative">
@@ -334,17 +341,16 @@ const { error: notifError } = await supabase
               onChange={handleAvatarUpload}
               disabled={uploading}
             />
-            <Label
-              htmlFor="avatar-upload"
-              className="cursor-pointer inline-flex items-center gap-2 bg-secondary px-4 py-2 rounded-md text-sm font-medium hover:bg-secondary/80 transition-colors"
-            >
-              {uploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-              Change Photo
-            </Label>
+            <Button variant="outline" size="sm" asChild>
+              <Label htmlFor="avatar-upload" className="cursor-pointer inline-flex items-center gap-2">
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                Change Photo
+              </Label>
+            </Button>
           </div>
         </div>
 
@@ -353,7 +359,7 @@ const { error: notifError } = await supabase
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
               <Input
                 id="username"
                 value={username}
@@ -362,7 +368,7 @@ const { error: notifError } = await supabase
                 placeholder="Choose a display name"
               />
             </div>
-            <p className="text-[10px] text-muted-foreground">This is how other architecture lovers will see you.</p>
+            <p className="text-[10px] text-text-secondary">This is how other architecture lovers will see you.</p>
           </div>
 
           {/* Location Field (Seamlessly sets Country) */}
@@ -376,7 +382,7 @@ const { error: notifError } = await supabase
               }}
               placeholder="e.g. New York, USA"
             />
-            <p className="text-[10px] text-muted-foreground">Helps us show local architecture info.</p>
+            <p className="text-[10px] text-text-secondary">Helps us show local architecture info.</p>
           </div>
         </div>
 

@@ -44,22 +44,22 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
     <div className="-mx-4 overflow-x-auto">
       <Table className="min-w-full table-fixed text-xs">
         <TableHeader>
-          <TableRow className="border-b border-border/40 hover:bg-transparent h-8">
-            <TableHead className="w-[70px] pl-4 text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">
+          <TableRow className="border-b border-border-default/40 hover:bg-transparent h-8">
+            <TableHead className="w-[70px] pl-4 text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">
               {isMobile ? "" : "Photo"}
             </TableHead>
             <TableHead className={cn(
-              "text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0",
+              "text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0",
               isMobile ? "w-auto" : "w-[15%]"
             )}>Name</TableHead>
-            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Status</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Points</TableHead>}
-            {!isMobile && <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Review</TableHead>}
-            {!isMobile && <TableHead className="w-[15%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Architect</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Year</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Location</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Country</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] pr-4 text-right text-muted-foreground font-medium text-[10px] uppercase tracking-wider h-8 py-0">Likes</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Status</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Points</TableHead>}
+            {!isMobile && <TableHead className="w-[15%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Review</TableHead>}
+            {!isMobile && <TableHead className="w-[15%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Architect</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Year</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Location</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Country</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] pr-4 text-right text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Likes</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -76,7 +76,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                 key={review.id}
                 onClick={() => handleRowClick(review)}
                 className={cn(
-                  "cursor-pointer hover:bg-muted/30 border-b border-border/30 transition-colors group",
+                  "cursor-pointer hover:bg-surface-muted/30 border-b border-border-default/30 transition-colors group",
                   isMobile ? "h-auto" : "h-8"
                 )}
               >
@@ -88,7 +88,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                           <img
                             src={imageUrl}
                             alt={review.building.name}
-                            className="w-8 h-8 rounded-md object-cover border border-border/50"
+                            className="w-8 h-8 rounded-md object-cover border border-border-default/50"
                           />
                         </div>
                       </HoverCardTrigger>
@@ -101,10 +101,10 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                       </HoverCardContent>
                     </HoverCard>
                   ) : (
-                    <div className="w-8 h-8 rounded-md bg-secondary/50" />
+                    <div className="w-8 h-8 rounded-md bg-surface-muted/50" />
                   )}
                 </TableCell>
-                <TableCell className={cn("font-medium text-foreground py-1", !isMobile && "truncate")}>
+                <TableCell className={cn("font-medium text-text-primary py-1", !isMobile && "truncate")}>
                   <div className="flex flex-col gap-1">
                     <span className="truncate">{review.building.name}</span>
                     {isMobile && (
@@ -149,28 +149,28 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                         readOnly={!isOwnProfile}
                       />
                     </TableCell>
-                    <TableCell className="text-muted-foreground py-1">
+                    <TableCell className="text-text-secondary py-1">
                       <InlineReviewEditor
                         initialContent={review.content}
                         isOwnProfile={isOwnProfile}
                         onSave={(content) => onUpdate(review.id, { content })}
                       />
                     </TableCell>
-                    <TableCell className="text-muted-foreground py-1 truncate">
+                    <TableCell className="text-text-secondary py-1 truncate">
                       {architectNames}
                     </TableCell>
-                    <TableCell className="text-muted-foreground py-1">
+                    <TableCell className="text-text-secondary py-1">
                       {review.building.year_completed || "—"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground py-1 truncate">
+                    <TableCell className="text-text-secondary py-1 truncate">
                       {location}
                     </TableCell>
-                    <TableCell className="text-muted-foreground py-1 truncate">
+                    <TableCell className="text-text-secondary py-1 truncate">
                       {review.building.country || "—"}
                     </TableCell>
                     <TableCell className="pr-4 text-right py-1">
-                        <div className="flex items-center justify-end gap-1 text-muted-foreground">
-                            <Heart className={cn("w-3 h-3", review.is_liked && "fill-primary text-primary")} />
+                        <div className="flex items-center justify-end gap-1 text-text-secondary">
+                            <Heart className={cn("w-3 h-3", review.is_liked && "fill-primary text-brand-primary")} />
                             <span>{review.likes_count}</span>
                         </div>
                     </TableCell>

@@ -180,8 +180,8 @@ export default function Notifications() {
       case 'follow': return <UserPlus className="h-4 w-4 text-green-500 fill-green-500" />;
       case 'friend_joined': return <UserPlus className="h-4 w-4 text-blue-400" />;
       case 'suggest_follow': return <Sparkles className="h-4 w-4 text-yellow-500 fill-yellow-500" />;
-      case 'recommendation': return <Sparkles className="h-4 w-4 text-primary fill-primary" />;
-      case 'visit_request': return <Users className="h-4 w-4 text-primary" />;
+      case 'recommendation': return <Sparkles className="h-4 w-4 text-brand-primary fill-brand-primary" />;
+      case 'visit_request': return <Users className="h-4 w-4 text-brand-primary" />;
       case 'architect_verification': return <ShieldCheck className="h-4 w-4 text-green-600" />;
       default: return <Bell className="h-4 w-4" />;
     }
@@ -195,7 +195,14 @@ export default function Notifications() {
       case 'architect_verification': {
         const architectName = n.architect?.name || "an architect";
         const isApproved = n.metadata?.status === 'approved';
-        return <span>Your request to be verified as <span className="font-semibold">{architectName}</span> was <span className={isApproved ? "text-green-600 font-medium" : "text-destructive font-medium"}>{isApproved ? "approved" : "declined"}</span></span>;
+        return (
+          <span>
+            Your request to be verified as <span className="font-semibold">{architectName}</span> was{" "}
+            <span className={isApproved ? "text-feedback-success font-medium" : "text-feedback-destructive font-medium"}>
+              {isApproved ? "approved" : "declined"}
+            </span>
+          </span>
+        );
       }
       case 'like': return <span><span className="font-semibold">{actorName}</span> liked your review of <span className="italic">{buildingName || "a building"}</span></span>;
       case 'comment': return <span><span className="font-semibold">{actorName}</span> commented on your review of <span className="italic">{buildingName || "a building"}</span></span>;
@@ -222,31 +229,31 @@ export default function Notifications() {
           key={n.id}
           onClick={() => handleNotificationClick(n)}
           className={cn(
-            "flex items-center gap-4 px-4 py-4 border-b border-border/40 cursor-pointer transition-colors hover:bg-secondary/30",
-            !n.is_read && "bg-secondary/10"
+            "flex items-center gap-4 px-4 py-4 border-b border-border-default last:border-0 cursor-pointer transition-colors hover:bg-surface-muted/30",
+            !n.is_read && "bg-surface-muted/10"
           )}
         >
           <div className="relative">
-            <Avatar className="h-10 w-10 border border-border">
+            <Avatar className="h-10 w-10 border border-border-default">
               <AvatarImage src={n.actor?.avatar_url || undefined} />
               <AvatarFallback>{n.actor?.username?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
-            <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 shadow-sm">
+            <div className="absolute -bottom-1 -right-1 bg-surface-default rounded-sm p-0.5">
               {getIcon(n.type)}
             </div>
           </div>
           
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-foreground line-clamp-2">
+            <p className="text-sm text-text-primary line-clamp-2">
               {getText(n)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-text-secondary mt-1">
               {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
             </p>
           </div>
 
           {!n.is_read && (
-            <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+            <div className="h-2 w-2 rounded-full bg-brand-primary shrink-0" />
           )}
         </div>
       ))}
@@ -255,8 +262,8 @@ export default function Notifications() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-surface-default flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
       </div>
     );
   }
@@ -269,12 +276,7 @@ export default function Notifications() {
       title="Notifications"
       showLogo={false}
       headerAction={
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowSettings(true)}
-          className="h-10 w-10 rounded-full hover:bg-white/5"
-        >
+        <Button variant="ghost" size="icon-sm" onClick={() => setShowSettings(true)}>
           <Settings className="h-6 w-6" />
         </Button>
       }
@@ -285,25 +287,26 @@ export default function Notifications() {
       />
 
       <ScrollArea className="h-full pb-20">
-        <div className="flex flex-col">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto flex flex-col">
+          <h1 className="text-2xl font-semibold text-text-primary sr-only">Notifications</h1>
           {notifications.length > 0 ? (
             <>
               {newNotifications.length > 0 && (
                 <div className="pb-2">
-                  <h3 className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-background/95 backdrop-blur sticky top-0 z-10">
+                  <h3 className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider bg-surface-card/95 backdrop-blur sticky top-0 z-10">
                     New
                   </h3>
                   {renderNotificationList(newNotifications)}
                 </div>
               )}
-              
+
               {earlierNotifications.length > 0 && (
                 <div>
-                   {newNotifications.length > 0 && (
-                    <h3 className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-background/95 backdrop-blur sticky top-0 z-10">
+                  {newNotifications.length > 0 && (
+                    <h3 className="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider bg-surface-card/95 backdrop-blur sticky top-0 z-10">
                       Earlier
                     </h3>
-                   )}
+                  )}
                   {renderNotificationList(earlierNotifications)}
                 </div>
               )}
@@ -314,21 +317,21 @@ export default function Notifications() {
                     variant="ghost"
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="w-full text-muted-foreground"
+                    className="w-full text-text-secondary"
                   >
-                    {loadingMore ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {loadingMore ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2 text-text-secondary" />
+                    ) : null}
                     See older notifications
                   </Button>
                 </div>
               )}
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-              <div className="w-16 h-16 bg-secondary/30 rounded-full flex items-center justify-center mb-4">
-                <Bell className="h-8 w-8 text-muted-foreground/50" />
-              </div>
-              <h3 className="font-semibold text-lg">No notifications yet</h3>
-              <p className="text-sm text-muted-foreground mt-2">
+            <div className="flex flex-col items-center justify-center text-center py-16 px-8 gap-4">
+              <Bell className="h-12 w-12 text-text-disabled" />
+              <h3 className="text-lg font-semibold text-text-primary">No notifications yet</h3>
+              <p className="text-sm text-text-secondary max-w-sm">
                 When people interact with you or your reviews, you'll see it here.
               </p>
             </div>

@@ -43,18 +43,18 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
   }
 
   return (
-    <div className="flex-1 border-l h-full flex flex-col bg-background min-w-0">
+    <div className="flex-1 border-l h-full flex flex-col bg-surface-default min-w-0">
       <div className="p-6 space-y-6 overflow-y-auto h-full">
         <div>
           <Link
             to={`/building/${building.slug || building.id}`}
             target="_blank"
-            className="group flex items-start gap-2 hover:text-primary transition-colors"
+            className="group flex items-start gap-2 hover:text-brand-primary transition-colors"
           >
             <h2 className="text-xl font-semibold leading-tight">{building.name}</h2>
             <ExternalLink className="h-5 w-5 opacity-50 group-hover:opacity-100 shrink-0 mt-0.5" />
           </Link>
-          <div className="flex items-center text-muted-foreground text-sm mt-2">
+          <div className="flex items-center text-text-secondary text-sm mt-2">
             <MapPin className="h-4 w-4 mr-1" />
             <span>
               {building.city && building.country
@@ -72,7 +72,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
                   <Link
                     to={`/building/${building.slug || building.id}`}
                     target="_blank"
-                    className="block aspect-square relative overflow-hidden rounded-md border bg-muted group cursor-pointer"
+                    className="block aspect-square relative overflow-hidden rounded-md border bg-surface-muted group cursor-pointer"
                   >
                     <img
                       src={img.url}
@@ -91,7 +91,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
             )}
           </Carousel>
         ) : (
-          <div className="aspect-square rounded-md border bg-muted flex items-center justify-center text-muted-foreground">
+          <div className="aspect-square rounded-md border bg-surface-muted flex items-center justify-center text-text-secondary">
             No images available
           </div>
         )}

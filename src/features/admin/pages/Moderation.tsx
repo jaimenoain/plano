@@ -177,7 +177,7 @@ toast.error("Failed to delete content");
         <h1 className="text-2xl font-bold tracking-tight">Moderation Queue</h1>
        </div>
 
-       <div className="rounded-md border bg-card">
+       <div className="rounded-md border bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -198,7 +198,7 @@ toast.error("Failed to delete content");
                 </TableRow>
              ) : reports.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-24 text-center text-text-secondary">
                         All caught up! No pending reports.
                     </TableCell>
                 </TableRow>
@@ -210,10 +210,10 @@ toast.error("Failed to delete content");
                         </TableCell>
                         <TableCell>
                             <div className="font-medium">{report.reason}</div>
-                            {report.details && <div className="text-xs text-muted-foreground">{report.details}</div>}
+                            {report.details && <div className="text-xs text-text-secondary">{report.details}</div>}
                         </TableCell>
                         <TableCell className="max-w-md truncate">
-                            {report.contentSnippet || <span className="text-muted-foreground italic">No content</span>}
+                            {report.contentSnippet || <span className="text-text-secondary italic">No content</span>}
                         </TableCell>
                         <TableCell>
                             {report.reporter?.username || report.reporter_id}

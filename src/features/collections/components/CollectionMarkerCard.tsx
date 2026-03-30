@@ -42,8 +42,8 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
         <Card
             ref={ref}
             className={cn(
-                "group relative overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-md",
-                isHighlighted ? "border-primary ring-1 ring-primary bg-secondary/5" : "hover:border-primary/50"
+                "group relative overflow-hidden transition-all duration-200 cursor-pointer shadow-none",
+                isHighlighted ? "border-brand-primary ring-1 ring-brand-primary bg-surface-muted/5" : "hover:border-brand-primary/50"
             )}
             onMouseEnter={() => setHighlightedId(marker.id)}
             onMouseLeave={() => setHighlightedId(null)}
@@ -69,7 +69,7 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
                 {/* Drag Handle */}
                 {isDraggable && (
                     <div
-                        className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r"
+                        className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary hover:bg-surface-muted/50 transition-colors border-r"
                         {...dragHandleProps}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -79,14 +79,14 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
 
                 {/* Content Section */}
                 <div className="flex flex-1 items-start p-2 gap-3 min-w-0">
-                    <div className="p-1.5 bg-secondary/50 rounded-full shrink-0">
-                        <Icon className="w-4 h-4 text-muted-foreground" />
+                    <div className="p-1.5 bg-surface-muted/50 rounded-full shrink-0">
+                        <Icon className="w-4 h-4 text-text-secondary" />
                     </div>
 
                     <div className="flex flex-col flex-1 min-w-0">
                         <div className="flex items-start gap-2 min-w-0">
                             {badgeIndex !== undefined && (
-                                <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm mt-0.5 shrink-0">
+                                <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-brand-primary text-[10px] font-bold text-brand-primary-foreground shadow-sm mt-0.5 shrink-0">
                                     {badgeIndex}
                                 </div>
                             )}
@@ -96,13 +96,13 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
                         </div>
 
                         {marker.notes && (
-                        <div className="text-xs text-muted-foreground mt-1 line-clamp-2 italic">
+                        <div className="text-xs text-text-secondary mt-1 line-clamp-2 italic">
                             "{marker.notes}"
                         </div>
                     )}
 
                         {displayAddress && (
-                            <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                            <div className="text-xs text-text-secondary mt-1 line-clamp-1">
                                 {displayAddress}
                             </div>
                         )}

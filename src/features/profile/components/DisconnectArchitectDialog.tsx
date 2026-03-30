@@ -56,7 +56,7 @@ toast.error(error instanceof Error ? error.message : "Failed to disconnect profi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-destructive">
+          <DialogTitle className="flex items-center gap-2 text-feedback-destructive">
             <AlertTriangle className="h-5 w-5" />
             Disconnect Architect Profile
           </DialogTitle>
@@ -65,11 +65,11 @@ toast.error(error instanceof Error ? error.message : "Failed to disconnect profi
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 space-y-4 text-sm text-muted-foreground">
+        <div className="py-4 space-y-4 text-sm text-text-secondary">
           <p>
             You will lose access to the architect dashboard and will no longer be able to manage official building data.
           </p>
-          <p className="font-medium text-foreground">
+          <p className="font-medium text-text-primary">
             Note: All studio and building data you introduced will remain in the system.
           </p>
         </div>

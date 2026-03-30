@@ -33,6 +33,7 @@ import { Loader2, MapPin, Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { parseLocation } from "@/utils/location";
 import type { Architect as ArchitectOption } from "@/components/ui/architect-select";
+import { cn } from "@/lib/utils";
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState<AdminBuilding[]>([]);
@@ -251,9 +252,9 @@ toast.error("Failed to update building");
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="min-h-screen bg-surface-default space-y-6 p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Building Registry</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-text-primary">Building Registry</h1>
         <div className="flex gap-2">
             <Input
                 placeholder="Search buildings..."
@@ -278,7 +279,7 @@ toast.error("Failed to update building");
         </div>
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -293,58 +294,68 @@ toast.error("Failed to update building");
                 <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">
                         <div className="flex justify-center items-center">
-                            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                            <Loader2 className="h-6 w-6 animate-spin mr-2 text-text-secondary" />
                             Loading...
                         </div>
                     </TableCell>
                 </TableRow>
             ) : buildings.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={4} className="h-24 text-center text-text-secondary">
                         No buildings found.
                     </TableCell>
                 </TableRow>
             ) : (
                 buildings.map((building) => (
-                    <TableRow key={building.id} className={building.is_deleted ? "opacity-60 bg-muted/50" : ""}>
+                    <TableRow
+                      key={building.id}
+                      className={cn(
+                        "group",
+                        building.is_deleted ? "opacity-60 bg-surface-muted/50" : "",
+                      )}
+                    >
                         <TableCell className="font-medium">
                             {building.name}
-                            {building.year_completed && <span className="text-muted-foreground font-normal ml-2">({building.year_completed})</span>}
+                            {building.year_completed && (
+                              <span className="text-text-secondary font-normal ml-2">({building.year_completed})</span>
+                            )}
                         </TableCell>
                         <TableCell>
                             {building.city && building.country ? `${building.city}, ${building.country}` : building.address || "Unknown"}
                         </TableCell>
                         <TableCell>
                             <div className="flex gap-2">
-                                {building.is_verified && <Badge variant="default" className="bg-green-600 hover:bg-green-700">Verified</Badge>}
+                                {building.is_verified && <Badge variant="success">Verified</Badge>}
                                 {building.is_deleted && <Badge variant="destructive">Deleted</Badge>}
                                 {!building.is_verified && !building.is_deleted && <Badge variant="secondary">Pending</Badge>}
                             </div>
                         </TableCell>
                         <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                                <Button size="icon" variant="ghost" title="Locate on Map" onClick={() => openEditDialog(building)}>
-                                    <MapPin className="h-4 w-4" />
-                                </Button>
-                                <Button size="icon" variant="ghost" title="Edit Details" onClick={() => openEditDialog(building)}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                                <div className="h-8 w-px bg-border mx-1" />
-                                <Switch
-                                    checked={building.is_verified}
-                                    onCheckedChange={() => handleVerify(building.id, building.is_verified ?? false)}
-                                    className="data-[state=checked]:bg-green-600"
-                                    title="Toggle Verification"
-                                />
-                                <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className={building.is_deleted ? "text-green-600" : "text-destructive"}
-                                    onClick={() => handleSoftDelete(building.id, building.is_deleted ?? false)}
-                                    title={building.is_deleted ? "Restore" : "Soft Delete"}
-                                >
-                                    {building.is_deleted ? <CheckCircle2 className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-                                </Button>
+                                <div className="flex gap-2 items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">
+                                    <Button size="icon" variant="ghost" title="Locate on Map" onClick={() => openEditDialog(building)}>
+                                        <MapPin className="h-4 w-4" />
+                                    </Button>
+                                    <Button size="icon" variant="ghost" title="Edit Details" onClick={() => openEditDialog(building)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <div className="h-8 w-px bg-border-default mx-1" />
+                                    <Switch
+                                        checked={building.is_verified}
+                                        onCheckedChange={() => handleVerify(building.id, building.is_verified ?? false)}
+                                        className="data-[state=checked]:bg-feedback-success"
+                                        title="Toggle Verification"
+                                    />
+                                    <Button
+                                        size="icon"
+                                        variant={building.is_deleted ? "ghost" : "destructive"}
+                                        className={building.is_deleted ? "text-feedback-success" : undefined}
+                                        onClick={() => handleSoftDelete(building.id, building.is_deleted ?? false)}
+                                        title={building.is_deleted ? "Restore" : "Soft Delete"}
+                                    >
+                                        {building.is_deleted ? <CheckCircle2 className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                                    </Button>
+                                </div>
                             </div>
                         </TableCell>
                     </TableRow>
@@ -396,7 +407,7 @@ toast.error("Failed to update building");
                     </TabsContent>
 
                     <TabsContent value="location" className="mt-4">
-                        <div className="mb-4 p-4 border rounded-md bg-yellow-50 text-yellow-800 text-sm">
+                        <div className="mb-4 p-4 border border-feedback-warning/30 rounded-sm bg-feedback-warning/10 text-feedback-warning text-sm">
                             Adjust the location below. When finished, go back to the <strong>Details</strong> tab to click "Save Changes".
                         </div>
                         <BuildingLocationPicker

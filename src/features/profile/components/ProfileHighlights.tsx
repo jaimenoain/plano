@@ -25,7 +25,7 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
     <div className="space-y-6 px-4 mb-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
             <span className="w-1.5 h-4 bg-purple-500 rounded-sm" />
             Highlights
         </h3>
@@ -43,18 +43,18 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
           {/* 1. Genres (Styles) */}
           {showGenres && (
              <div className="space-y-2">
-                 <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Styles</h4>
+                 <h4 className="text-xs font-semibold text-text-secondary/80 pl-1">Favorite Styles</h4>
                  {genres.length > 0 ? (
                      <div className="flex flex-wrap gap-2">
                         {genres.map(g => (
-                            <div key={g.id} className="bg-secondary/50 border border-border/50 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
-                                <Building2 className="h-3 w-3 text-muted-foreground" />
+                            <div key={g.id} className="bg-surface-muted/50 border border-border-default/50 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
+                                <Building2 className="h-3 w-3 text-text-secondary" />
                                 {g.title}
                             </div>
                         ))}
                      </div>
                  ) : (
-                     <div className="text-sm text-muted-foreground italic pl-1">No styles selected</div>
+                     <div className="text-sm text-text-secondary italic pl-1">No styles selected</div>
                  )}
              </div>
           )}
@@ -62,14 +62,14 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
           {/* 2. Quotes */}
           {(quotes.length > 0) && (
              <div className="space-y-2">
-                 <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Quotes</h4>
+                 <h4 className="text-xs font-semibold text-text-secondary/80 pl-1">Favorite Quotes</h4>
                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
                     {quotes.map((q, i) => (
-                        <Card key={i} className="min-w-[260px] max-w-[300px] p-4 bg-gradient-to-br from-secondary/50 to-background border-border/50 snap-start">
-                             <Quote className="h-4 w-4 text-primary/50 mb-2" />
+                        <Card key={i} className="min-w-[260px] max-w-[300px] p-4 bg-gradient-to-br from-surface-muted/50 to-surface-default border-border-default/50 snap-start">
+                             <Quote className="h-4 w-4 text-brand-primary/50 mb-2" />
                              <p className="text-sm font-medium italic mb-3 line-clamp-4">"{q.title}"</p>
                              {q.quote_source && (
-                                 <p className="text-xs text-muted-foreground text-right">— {q.quote_source}</p>
+                                 <p className="text-xs text-text-secondary text-right">— {q.quote_source}</p>
                              )}
                         </Card>
                     ))}
@@ -80,15 +80,15 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
           {/* 3. People (Architects) */}
           {showPeople && (
              <div className="space-y-2">
-                 <h4 className="text-xs font-semibold text-muted-foreground/80 pl-1">Favorite Architects</h4>
+                 <h4 className="text-xs font-semibold text-text-secondary/80 pl-1">Favorite Architects</h4>
                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
                     {people.map(p => (
                         <div key={p.id} className="flex flex-col items-center gap-2 w-20 shrink-0 snap-start">
-                             <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-border/50 shadow-sm bg-muted">
+                             <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-border-default/50 shadow-sm bg-surface-muted">
                                  {p.image_url ? (
                                      <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
                                  ) : (
-                                     <div className="w-full h-full flex items-center justify-center bg-secondary"><User className="h-8 w-8 text-muted-foreground/50" /></div>
+                                     <div className="w-full h-full flex items-center justify-center bg-surface-muted"><User className="h-8 w-8 text-text-secondary/50" /></div>
                                  )}
                              </div>
                              <span className="text-xs text-center font-medium leading-tight line-clamp-2">{p.title}</span>

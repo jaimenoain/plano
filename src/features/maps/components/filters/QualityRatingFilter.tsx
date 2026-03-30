@@ -16,7 +16,7 @@ export function QualityRatingFilter({ value, onChange }: QualityRatingFilterProp
         onValueChange={(values) => onChange(values[0])}
         className="w-full"
       />
-      <div className="flex justify-between text-xs text-muted-foreground px-1">
+      <div className="flex justify-between text-xs text-text-secondary px-1">
         <span>All</span>
         <span>●</span>
         <span>●●</span>

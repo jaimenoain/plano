@@ -99,7 +99,7 @@ describe('FeedHeroCard Aspect Ratio', () => {
     });
 
     const imgContainer = imgElement.parentElement;
-    expect(imgContainer?.className).toContain('bg-secondary');
+    expect(imgContainer?.className).toContain('bg-surface-muted');
     // Aspect ratio 1600/900 = 1.777...
     expect(imgContainer?.style.aspectRatio).toContain('1.777');
     expect(imgElement.className).toContain('object-cover');

@@ -154,7 +154,7 @@ toast.error("Failed to deny claim");
         </Badge>
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="rounded-md border bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -177,7 +177,7 @@ toast.error("Failed to deny claim");
               </TableRow>
             ) : claims.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="h-24 text-center text-text-secondary">
                   <div className="flex flex-col items-center gap-2">
                     <ShieldCheck className="h-8 w-8 opacity-20" />
                     <p>No pending verification claims.</p>
@@ -201,15 +201,15 @@ toast.error("Failed to deny claim");
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium">{claim.architect.name}</span>
-                      <span className="text-xs text-muted-foreground capitalize">{claim.architect.type}</span>
+                      <span className="text-xs text-text-secondary capitalize">{claim.architect.type}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                    <code className="relative rounded bg-surface-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
                       {claim.proof_email}
                     </code>
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="text-text-secondary text-sm">
                     {formatDistanceToNow(new Date(claim.created_at), { addSuffix: true })}
                   </TableCell>
                   <TableCell className="text-right">
@@ -217,7 +217,7 @@ toast.error("Failed to deny claim");
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="text-feedback-destructive hover:text-feedback-destructive hover:bg-feedback-destructive/10"
                         onClick={() => handleDeny(claim)}
                         disabled={processingId === claim.id}
                       >

@@ -19,7 +19,7 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
   if (isLoading) {
     return (
       <div className={cn("py-8 flex items-center justify-center", className)}>
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
       </div>
     );
   }
@@ -33,7 +33,7 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
       <div className="flex items-center justify-between px-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight">Trending Architecture</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-text-secondary mt-0.5">
             Discover popular gems around the world
           </p>
         </div>
@@ -49,7 +49,7 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
           <Link
             key={building.id}
             to={`/building/${building.id}/${building.slug || 'details'}`}
-            className="snap-start shrink-0 w-[280px] group relative aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border/50 shadow-sm hover:shadow-md transition-all"
+            className="snap-start shrink-0 w-[280px] group relative aspect-[4/3] rounded-xl overflow-hidden bg-surface-muted border border-border-default/50 shadow-none transition-all"
           >
              {/* Image */}
              <div className="absolute inset-0">
@@ -60,7 +60,7 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                  />
                ) : (
-                 <div className="w-full h-full bg-secondary flex items-center justify-center text-muted-foreground">
+                 <div className="w-full h-full bg-surface-muted flex items-center justify-center text-text-secondary">
                    No Image
                  </div>
                )}
@@ -86,12 +86,12 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
         {/* "View All" Card */}
         <Link
            to="/explore"
-           className="snap-start shrink-0 w-[140px] aspect-[4/3] rounded-xl overflow-hidden bg-muted/30 border-2 border-dashed border-border flex flex-col items-center justify-center gap-3 hover:bg-muted/50 hover:border-primary/50 transition-all group/view-all"
+           className="snap-start shrink-0 w-[140px] aspect-[4/3] rounded-xl overflow-hidden bg-surface-muted/30 border-2 border-dashed border-border-default flex flex-col items-center justify-center gap-3 hover:bg-surface-muted/50 hover:border-brand-primary/50 transition-all group/view-all"
         >
-            <div className="h-12 w-12 rounded-full bg-background flex items-center justify-center shadow-sm group-hover/view-all:scale-110 transition-transform">
-                <ArrowRight className="w-5 h-5 text-foreground" />
+            <div className="h-12 w-12 rounded-full bg-surface-default flex items-center justify-center shadow-sm group-hover/view-all:scale-110 transition-transform">
+                <ArrowRight className="w-5 h-5 text-text-primary" />
             </div>
-            <span className="font-medium text-sm text-muted-foreground group-hover/view-all:text-foreground transition-colors">
+            <span className="font-medium text-sm text-text-secondary group-hover/view-all:text-text-primary transition-colors">
               Explore All
             </span>
         </Link>

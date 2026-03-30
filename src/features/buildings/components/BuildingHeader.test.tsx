@@ -38,7 +38,7 @@ describe('BuildingHeader', () => {
         expect(screen.getByText('Alt Name')).toBeTruthy();
         const subtitle = screen.getByText('Alt Name');
         expect(subtitle.tagName).toBe('H2');
-        expect(subtitle.className).toContain('text-muted-foreground');
+        expect(subtitle.className).toContain('text-text-secondary');
     });
 
     it('does not render alt_name if same as name', () => {

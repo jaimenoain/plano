@@ -69,7 +69,7 @@ export function ProfileKanbanView({ kanbanData, showCommunityImages, updatingIte
         ))}
       </div>
       <div className="md:hidden absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-background via-background/80 to-transparent pointer-events-none flex items-center justify-end pr-1 opacity-80">
-        <ChevronRight className="w-8 h-8 animate-pulse text-muted-foreground/70" />
+        <ChevronRight className="w-8 h-8 animate-pulse text-text-secondary/70" />
       </div>
     </div>
   );

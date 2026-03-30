@@ -231,23 +231,23 @@ return;
 }
   };
 
-  if (loading) return <div className="h-32 w-full animate-pulse bg-secondary/20 rounded-lg mx-4" />;
+  if (loading) return <div className="h-32 w-full animate-pulse bg-surface-muted/20 rounded-sm mx-4" />;
   if (collections.length === 0 && folders.length === 0 && !isOwnProfile) return null;
 
   return (
     <div className="w-full mb-6">
       <div className="flex items-center justify-between px-4 mb-3">
         <h3 className="font-semibold text-lg flex items-center gap-2">
-           <MapIcon className="h-4 w-4 text-muted-foreground" />
+           <MapIcon className="h-4 w-4 text-text-secondary" />
            Collections
         </h3>
         {isOwnProfile && (
             <div className="flex items-center gap-1">
-                 <Button variant="ghost" size="sm" onClick={() => setShowManageFolders(true)} className="h-8 text-xs text-muted-foreground hover:text-primary">
+                 <Button variant="ghost" size="sm" onClick={() => setShowManageFolders(true)} className="h-8 text-xs text-text-secondary hover:text-brand-primary">
                      <Folder className="h-3 w-3 mr-1" /> Organize
                  </Button>
                  {onCreate && (
-                     <Button variant="ghost" size="sm" onClick={onCreate} className="h-8 text-xs text-muted-foreground hover:text-primary">
+                     <Button variant="ghost" size="sm" onClick={onCreate} className="h-8 text-xs text-text-secondary hover:text-brand-primary">
                          <Plus className="h-3 w-3 mr-1" /> New
                      </Button>
                  )}
@@ -278,12 +278,12 @@ return;
           {isOwnProfile && collections.length === 0 && folders.length === 0 && onCreate && (
             <button
               onClick={onCreate}
-              className="flex-shrink-0 w-[160px] h-[100px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-secondary/50 transition-colors group"
+              className="flex-shrink-0 w-[160px] h-[100px] border-2 border-dashed border-border-default rounded-sm flex flex-col items-center justify-center gap-2 hover:bg-surface-muted/50 transition-colors group"
             >
-              <div className="h-8 w-8 rounded-full bg-secondary/50 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+              <div className="h-8 w-8 rounded-sm bg-surface-muted flex items-center justify-center group-hover:bg-brand-secondary/30 group-hover:text-brand-primary transition-colors">
                  <Plus className="h-4 w-4" />
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Create New</span>
+              <span className="text-sm font-medium text-text-secondary">Create New</span>
             </button>
           )}
 

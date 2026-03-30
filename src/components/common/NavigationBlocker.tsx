@@ -49,7 +49,7 @@ export function NavigationBlocker({ isDirty }: NavigationBlockerProps) {
           <AlertDialogCancel onClick={() => blocker.reset?.()}>
             Keep Editing
           </AlertDialogCancel>
-          <AlertDialogAction onClick={() => blocker.proceed?.()} className="bg-destructive hover:bg-destructive/90">
+          <AlertDialogAction onClick={() => blocker.proceed?.()} className="bg-feedback-destructive hover:bg-feedback-destructive/90">
             Discard Changes
           </AlertDialogAction>
         </AlertDialogFooter>

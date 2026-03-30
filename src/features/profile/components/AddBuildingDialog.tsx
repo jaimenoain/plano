@@ -98,20 +98,20 @@ toast({ variant: "destructive", title: "Failed to add building" });
           />
           <CommandList className="max-h-full">
             {isLoading && (
-              <div className="flex items-center justify-center p-4 text-muted-foreground">
+              <div className="flex items-center justify-center p-4 text-text-secondary">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Searching...
               </div>
             )}
 
             {!isLoading && searchQuery.length >= 2 && buildings?.length === 0 && (
-              <div className="p-4 text-center text-sm text-muted-foreground">
+              <div className="p-4 text-center text-sm text-text-secondary">
                 No buildings found.
               </div>
             )}
 
             {!isLoading && searchQuery.length < 2 && (
-               <div className="p-8 text-center text-sm text-muted-foreground">
+               <div className="p-8 text-center text-sm text-text-secondary">
                   Type at least 2 characters to search.
                </div>
             )}
@@ -122,7 +122,7 @@ toast({ variant: "destructive", title: "Failed to add building" });
                   <CommandItem key={building.id} className="flex items-center justify-between py-3 px-4" value={building.name}>
                     <div className="flex flex-col gap-1 min-w-0 flex-1 mr-4">
                       <span className="font-medium truncate">{building.name}</span>
-                      <div className="flex items-center text-xs text-muted-foreground gap-1">
+                      <div className="flex items-center text-xs text-text-secondary gap-1">
                         <MapPin className="h-3 w-3 shrink-0" />
                         <span className="truncate">
                           {[building.city, building.country].filter(Boolean).join(", ")}
@@ -134,7 +134,7 @@ toast({ variant: "destructive", title: "Failed to add building" });
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        className="h-8 w-8 p-0 text-text-secondary hover:text-brand-primary hover:bg-brand-primary/10"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleAdd(building.id, 'pending', building.name);
@@ -146,7 +146,7 @@ toast({ variant: "destructive", title: "Failed to add building" });
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-green-600 hover:bg-green-500/10"
+                        className="h-8 w-8 p-0 text-text-secondary hover:text-green-600 hover:bg-green-500/10"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleAdd(building.id, 'visited', building.name);

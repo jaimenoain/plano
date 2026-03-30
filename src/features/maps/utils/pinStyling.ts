@@ -109,7 +109,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 100,
         size: 30,
-        classes: 'bg-lime-high border-foreground border-2 text-black',
+        classes: 'bg-lime-high border-text-primary border-2 text-black',
         showDot: false,
         showContent: true
       };
@@ -119,7 +119,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 100,
         size: 30,
-        classes: 'bg-white border-foreground border-2',
+        classes: 'bg-white border-text-primary border-2',
         showDot: false,
         showContent: true
       };
@@ -140,7 +140,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 5,
         size: 20,
-        classes: 'bg-muted/80 border-gray-600 border',
+        classes: 'bg-surface-muted/80 border-gray-600 border',
         showDot: false,
         showContent: true
       };

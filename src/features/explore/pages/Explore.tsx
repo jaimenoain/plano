@@ -223,27 +223,49 @@ toast.error("Failed to skip building");
                   <DrawerTrigger asChild>
                     <Button
                         variant="secondary"
-                        className="rounded-full shadow-lg bg-black/50 backdrop-blur-md text-white border border-white/20 hover:bg-black/70 pl-3 pr-4 h-10 gap-2"
+                        className={
+                          locationFilter.label
+                            ? "rounded-sm shadow-lg border border-border-default bg-brand-primary text-brand-primary-foreground pl-3 pr-4 h-10 gap-2 text-sm font-medium hover:opacity-90"
+                            : "rounded-full shadow-lg bg-black/50 backdrop-blur-md text-text-inverse border border-white/20 hover:bg-black/70 pl-3 pr-4 h-10 gap-2"
+                        }
                     >
-                        <MapPin className="h-4 w-4 text-white/80" />
+                        <MapPin
+                          className={
+                            locationFilter.label ? "h-4 w-4" : "h-4 w-4 text-text-inverse/80"
+                          }
+                        />
                         <span className="max-w-[200px] truncate font-medium">
                             {locationFilter.label || "World"}
                         </span>
                         {locationFilter.label && (
-                            <div
+                            <span
                                 role="button"
                                 tabIndex={0}
-                                onClick={clearFilter}
-                                className="ml-1 p-0.5 rounded-full hover:bg-white/20 cursor-pointer"
+                                aria-label="Clear location filter"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    clearFilter(e);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        clearFilter(e as unknown as React.MouseEvent);
+                                    }
+                                }}
+                                className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-sm text-brand-primary-foreground hover:bg-black/10"
                             >
                                 <X className="h-3 w-3" />
-                            </div>
+                            </span>
                         )}
                     </Button>
                   </DrawerTrigger>
-                  <DrawerContent className="h-[80vh] bg-background text-foreground">
+                  <DrawerContent className="h-[80vh] bg-surface-default text-text-primary">
                     <DrawerHeader>
-                        <DrawerTitle>Filter by Location</DrawerTitle>
+                        <DrawerTitle className="text-lg font-semibold text-text-primary">
+                            Filter by Location
+                        </DrawerTitle>
                     </DrawerHeader>
                     <div className="p-4 pt-0">
                         <DiscoverySearchInput
@@ -269,15 +291,19 @@ toast.error("Failed to skip building");
             >
               {status === "pending" ? (
                 <div className="h-full w-full flex items-center justify-center snap-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-white" />
+                    <Loader2 className="h-8 w-8 animate-spin text-text-inverse/70" />
                 </div>
             ) : status === 'error' ? (
-                <div className="h-full w-full flex items-center justify-center snap-center text-red-400">
+                <div className="h-full w-full flex items-center justify-center snap-center text-feedback-destructive">
                     Failed to load feed
                 </div>
             ) : buildings.length === 0 ? (
-                <div className="h-full w-full flex flex-col items-center justify-center snap-center text-gray-400 gap-4">
-                    <p>No buildings found</p>
+                <div className="h-full w-full flex flex-col items-center justify-center text-center snap-center py-16 px-8 gap-4">
+                    <MapPin className="h-12 w-12 text-text-inverse/40" />
+                    <p className="text-lg font-semibold text-text-inverse">No buildings found</p>
+                    <p className="text-sm text-text-inverse/80 max-w-sm">
+                        Try widening your location filter or check back later.
+                    </p>
                 </div>
             ) : (
                 buildings.map((building) => (
@@ -295,7 +321,7 @@ toast.error("Failed to skip building");
               {/* Infinite Scroll Trigger */}
               {(hasNextPage || isFetchingNextPage) && (
                 <div ref={containerRef as RefCallback<HTMLDivElement>} className="h-20 w-full flex justify-center items-center p-4 snap-end">
-                  {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin text-white/50" />}
+                  {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin text-text-inverse/60" />}
                 </div>
               )}
             </div>

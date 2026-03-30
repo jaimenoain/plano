@@ -26,7 +26,7 @@ export function UserResultsList({ users, isLoading }: UserResultsListProps) {
 
   if (users.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+      <div className="flex flex-col items-center justify-center p-8 text-center text-text-secondary">
         <p>No users found matching your search.</p>
       </div>
     );

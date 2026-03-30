@@ -123,10 +123,10 @@ function SearchPageContent() {
 
         {/* Desktop Sidebar (Fixed) */}
         <div
-            className={`hidden md:flex flex-col w-[400px] bg-background border-r border-border absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
+            className={`hidden md:flex flex-col w-[400px] bg-surface-default border-r border-border-default absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
             style={{ left: isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0 }}
         >
-           <div className="p-4 border-b flex items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+           <div className="p-4 border-b flex items-center gap-2 bg-surface-default/95 backdrop-blur supports-[backdrop-filter]:bg-surface-default/60">
               <DiscoverySearchInput
                  value={searchValue}
                  onSearchChange={handleSearchChange}
@@ -183,7 +183,7 @@ function SearchPageContent() {
 
         {/* Mobile List Overlay */}
         {isMobile && viewMode === 'list' && (
-           <div className="absolute inset-0 bg-background z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
+           <div className="absolute inset-0 bg-surface-default z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
               <div className="flex-1 overflow-hidden relative">
                  <BuildingSidebar
                     suggestions={suggestions}

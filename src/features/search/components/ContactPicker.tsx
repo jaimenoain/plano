@@ -95,7 +95,7 @@ export function ContactPicker({
           <PopoverAnchor asChild>
               <div
                 ref={containerRef}
-                className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background relative"
+                className="group border border-border-default px-3 py-2 text-sm rounded-md focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2 bg-surface-default relative"
               >
                 <div className="flex flex-wrap gap-1">
           {selectedContacts.map((contact) => (
@@ -107,7 +107,7 @@ export function ContactPicker({
               {contact.username}
               <button
                 type="button"
-                className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                className="ml-1 rounded-full outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -117,7 +117,7 @@ export function ContactPicker({
                   handleUnselect(contact.id);
                 }}
               >
-                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                <X className="h-3 w-3 text-text-secondary hover:text-text-primary" />
               </button>
             </Badge>
           ))}
@@ -133,7 +133,7 @@ export function ContactPicker({
                     }}
                     placeholder={placeholder}
                     autoComplete="off"
-                    className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px]"
+                    className="ml-2 flex-1 bg-transparent outline-none placeholder:text-text-secondary min-w-[50px]"
                   />
                 </div>
               </div>

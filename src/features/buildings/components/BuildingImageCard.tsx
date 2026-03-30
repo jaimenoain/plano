@@ -111,27 +111,27 @@ setIsLiked(previousIsLiked);
 
       <div className="flex items-center justify-between px-1 gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <Avatar className="w-8 h-8 border border-border shrink-0">
+          <Avatar className="w-8 h-8 border border-border-default shrink-0">
             <AvatarImage src={image.user?.avatar_url || undefined} />
-            <AvatarFallback className="text-[10px] bg-muted text-muted-foreground border-border">
+            <AvatarFallback className="text-[10px] bg-surface-muted text-text-secondary border-border-default">
               {image.user?.username?.[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-medium text-foreground truncate">
+            <span className="text-sm font-medium text-text-primary truncate">
               {image.user?.username || "Anonymous"}
             </span>
-            <span className="text-xs text-muted-foreground truncate">
+            <span className="text-xs text-text-secondary truncate">
               {format(new Date(image.created_at), 'MMM d, yyyy')}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-muted-foreground shrink-0">
+        <div className="flex items-center gap-4 text-text-secondary shrink-0">
           {!isVideo && (
             <button
               onClick={handleLike}
-              className={`flex items-center gap-1.5 transition-colors hover:text-foreground ${isLiked ? 'text-red-500 hover:text-red-600' : ''}`}
+              className={`flex items-center gap-1.5 transition-colors hover:text-text-primary ${isLiked ? 'text-red-500 hover:text-red-600' : ''}`}
               disabled={isProcessing}
             >
               <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
@@ -141,7 +141,7 @@ setIsLiked(previousIsLiked);
 
           <button
             onClick={onOpen}
-            className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+            className="flex items-center gap-1.5 transition-colors hover:text-text-primary"
           >
             <MessageCircle className="w-6 h-6" />
           </button>

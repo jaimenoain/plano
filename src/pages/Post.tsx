@@ -165,7 +165,7 @@ export default function Post() {
   if (!buildingId) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-surface-default">
       <header className="fixed top-0 left-0 right-0 z-50 glass safe-area-pt">
         <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
           <button onClick={() => navigate(-1)} className="p-2 -ml-2"><X className="h-5 w-5" /></button>
@@ -176,19 +176,19 @@ export default function Post() {
       </header>
 
       <main className="pt-14 pb-8 px-4 max-w-lg mx-auto">
-        {checkingExisting ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> : (
+        {checkingExisting ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-brand-primary" /></div> : (
           <>
             <div className="flex gap-5 py-6 hairline">
               {paramImage ? (
-                <img src={paramImage} alt={mainTitle} className="w-32 h-auto aspect-[2/3] object-cover rounded-md shadow-md flex-shrink-0" />
+                <img src={paramImage} alt={mainTitle} className="w-32 h-auto aspect-[2/3] object-cover rounded-md shadow-none flex-shrink-0" />
               ) : (
-                <div className="w-32 h-auto aspect-[2/3] bg-secondary rounded-md flex-shrink-0" />
+                <div className="w-32 h-auto aspect-[2/3] bg-surface-muted rounded-md flex-shrink-0" />
               )}
               <div className="flex flex-col justify-center">
                 <h2 className="text-xl font-bold leading-tight">{mainTitle}</h2>
-                {subTitle && <p className="text-sm text-muted-foreground mt-0.5">{subTitle}</p>}
+                {subTitle && <p className="text-sm text-text-secondary mt-0.5">{subTitle}</p>}
                 
-                <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
+                <div className="text-sm text-text-secondary mt-1 space-y-0.5">
                   {buildingDetails?.architects && buildingDetails.architects.length > 0 && (
                     <p>Architect: {buildingDetails.architects.map((a: { name: string }) => a.name).join(", ")}</p>
                   )}
@@ -199,7 +199,7 @@ export default function Post() {
 
             <div className="flex gap-2 py-4">
               {(["review", "bucket_list"] as PostType[]).map((type) => (
-                <button key={type} onClick={() => setPostType(type)} className={cn("flex-1 py-2 rounded-md text-sm font-medium capitalize", postType === type ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground")}>
+                <button key={type} onClick={() => setPostType(type)} className={cn("flex-1 py-2 rounded-md text-sm font-medium capitalize", postType === type ? "bg-brand-primary text-brand-primary-foreground" : "bg-surface-muted text-text-secondary")}>
                   {type === "bucket_list" ? "Bucket List" : "Review"}
                 </button>
               ))}
@@ -207,7 +207,7 @@ export default function Post() {
 
             {postType === "review" && (
               <div className="py-4 hairline">
-                <p className="text-sm text-muted-foreground mb-3">Your Rating (Optional)</p>
+                <p className="text-sm text-text-secondary mb-3">Your Rating (Optional)</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-0.5 md:gap-1" onMouseLeave={() => setHoverRating(0)}>
                     {Array.from({ length: 3 }).map((_, i) => {
@@ -226,14 +226,14 @@ export default function Post() {
                             "h-6 w-6 md:h-7 md:w-7 transition-colors",
                             isHighlighted 
                               ? "fill-[#595959] text-[#595959]" // Active: Signature gray
-                              : "text-muted-foreground/20" // Inactive: Transparent fill, lighter outline
+                              : "text-text-secondary/20" // Inactive: Transparent fill, lighter outline
                           )} />
                         </button>
                       );
                     })}
                   </div>
                   {(hoverRating > 0 || rating > 0) && (
-                    <span className="text-4xl font-bold text-primary ml-2">
+                    <span className="text-4xl font-bold text-brand-primary ml-2">
                       {hoverRating || rating}
                     </span>
                   )}
@@ -246,12 +246,12 @@ export default function Post() {
                 placeholder={postType === "review" ? "Write your thoughts..." : "Why do you want to visit this?"}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="min-h-[120px] bg-secondary/20 border border-input rounded-md p-3 resize-none focus-visible:ring-1 focus-visible:ring-primary text-base"
+                className="min-h-[120px] bg-surface-muted/20 border border-border-default rounded-md p-3 resize-none focus-visible:ring-1 focus-visible:ring-brand-primary text-base"
               />
             </div>
 
             <div className="py-4 hairline space-y-3">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-text-secondary">
                 {postType === "review"
                   ? "Anyone in particular that shouldn't miss this?"
                   : "I'd like to visit this with... (optional)"}
@@ -265,16 +265,16 @@ export default function Post() {
 
             <div className="py-6 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Visibility: <span className="text-foreground font-medium capitalize">{visibility}</span></span>
-                <button onClick={() => setShowVisibilityMenu(!showVisibilityMenu)} className="p-1 hover:bg-secondary rounded-full transition-colors">
-                  <Pencil className="h-3 w-3 text-muted-foreground/50" />
+                <span className="text-xs text-text-secondary">Visibility: <span className="text-text-primary font-medium capitalize">{visibility}</span></span>
+                <button onClick={() => setShowVisibilityMenu(!showVisibilityMenu)} className="p-1 hover:bg-surface-muted rounded-full transition-colors">
+                  <Pencil className="h-3 w-3 text-text-secondary/50" />
                 </button>
               </div>
 
               {showVisibilityMenu && (
-                <div className="absolute bottom-16 left-4 right-4 bg-popover border rounded-md shadow-xl z-50 overflow-hidden">
+                <div className="absolute bottom-16 left-4 right-4 bg-surface-overlay border rounded-md shadow-xl z-50 overflow-hidden">
                   {(["public", "contacts", "private"] as Visibility[]).map((v) => (
-                    <button key={v} onClick={() => { setVisibility(v); setShowVisibilityMenu(false); }} className={cn("w-full px-4 py-3 text-left text-sm hover:bg-secondary", visibility === v ? "text-primary font-bold" : "")}>
+                    <button key={v} onClick={() => { setVisibility(v); setShowVisibilityMenu(false); }} className={cn("w-full px-4 py-3 text-left text-sm hover:bg-surface-muted", visibility === v ? "text-brand-primary font-bold" : "")}>
                       {v.charAt(0).toUpperCase() + v.slice(1)}
                     </button>
                   ))}
@@ -309,7 +309,7 @@ export default function Post() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      <AlertDialogAction onClick={handleDelete} className="bg-feedback-destructive text-feedback-destructive-foreground hover:bg-feedback-destructive/90">
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -318,7 +318,7 @@ export default function Post() {
               ) : (
                 <button
                   onClick={() => navigate(-1)}
-                  className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+                  className="text-sm text-text-secondary hover:text-text-primary hover:underline"
                 >
                   Cancel
                 </button>

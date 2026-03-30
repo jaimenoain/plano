@@ -324,7 +324,7 @@ toast.error("Failed to update affiliations");
                      filterType={architect.type === 'individual' ? 'studio' : 'individual'}
                      placeholder={architect.type === 'individual' ? 'Search studios...' : 'Search architects...'}
                   />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-text-secondary">
                     {architect.type === 'individual'
                        ? "Search for studios this architect is associated with."
                        : "Search for individual architects that are part of this studio."}

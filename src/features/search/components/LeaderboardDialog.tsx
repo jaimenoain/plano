@@ -34,7 +34,7 @@ export function LeaderboardDialog({ open, onOpenChange }: LeaderboardDialogProps
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
           </div>
         ) : (
           <Tabs defaultValue="most_visited" className="flex-1 flex flex-col min-h-0">
@@ -52,7 +52,7 @@ export function LeaderboardDialog({ open, onOpenChange }: LeaderboardDialogProps
             <ScrollArea className="flex-1 -mx-2 px-2">
               <TabsContent value="most_visited" className="mt-0 space-y-1 pb-4">
                 {leaderboard?.most_visited?.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-8 text-text-secondary">
                     No stats available yet.
                   </div>
                 ) : (
@@ -69,7 +69,7 @@ export function LeaderboardDialog({ open, onOpenChange }: LeaderboardDialogProps
 
               <TabsContent value="top_rated" className="mt-0 space-y-1 pb-4">
                 {leaderboard?.top_rated?.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-8 text-text-secondary">
                     No rated buildings yet (min. 3 votes required).
                   </div>
                 ) : (

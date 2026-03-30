@@ -48,22 +48,22 @@ export default function UpdatePassword() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center px-6">
       <div className="flex items-center gap-3 mb-10">
-        <Building2 className="h-10 w-10 text-primary" />
-        <span className="text-2xl font-bold tracking-tight text-foreground">
+        <Building2 className="h-10 w-10 text-brand-primary" />
+        <span className="text-2xl font-bold tracking-tight text-text-primary">
           Plano
         </span>
       </div>
 
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-6">
-          <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center">
-            <Lock className="h-8 w-8 text-primary" />
+          <div className="h-16 w-16 bg-brand-primary/10 rounded-full flex items-center justify-center">
+            <Lock className="h-8 w-8 text-brand-primary" />
           </div>
         </div>
 
-        <h1 className="text-xl font-semibold text-foreground text-center mb-6">
+        <h1 className="text-xl font-semibold text-text-primary text-center mb-6">
           Set new password
         </h1>
 
@@ -77,7 +77,7 @@ export default function UpdatePassword() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="bg-secondary border-border focus:border-primary"
+              className="bg-surface-muted border-border-default focus:border-brand-primary"
             />
           </div>
 
@@ -90,13 +90,13 @@ export default function UpdatePassword() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="bg-secondary border-border focus:border-primary"
+              className="bg-surface-muted border-border-default focus:border-brand-primary"
             />
           </div>
 
           <Button
             type="submit"
-            className="w-full bg-primary hover:bg-primary/90"
+            className="w-full bg-brand-primary hover:bg-brand-primary/90"
             disabled={loading}
           >
             {loading ? "Updating..." : "Update Password"}

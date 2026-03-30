@@ -268,7 +268,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         hideCloseButton
-        className="max-w-5xl h-[95vh] md:h-[90vh] p-0 overflow-hidden flex flex-col md:flex-row gap-0 border-none bg-background sm:rounded-lg"
+        className="max-w-5xl h-[95vh] md:h-[90vh] p-0 overflow-hidden flex flex-col md:flex-row gap-0 border-none bg-surface-default sm:rounded-lg"
       >
         {/* Hidden titles for accessibility */}
         <DialogTitle className="sr-only">Image Details</DialogTitle>
@@ -346,7 +346,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
 
         {/* RIGHT: Sidebar (Comments & Actions) */}
         {isInteractive && (
-          <div className="w-full md:w-[400px] flex flex-col bg-background border-l border-border h-[35vh] md:h-full">
+          <div className="w-full md:w-[400px] flex flex-col bg-surface-default border-l border-border-default h-[35vh] md:h-full">
 
             {/* Header: User Info */}
             <div className="p-4 border-b flex items-center justify-between shrink-0">
@@ -357,19 +357,19 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                     </Avatar>
                     <div className="flex flex-col">
                         <span className="text-sm font-semibold">{uploadedBy?.username || "Unknown"}</span>
-                        {uploadDate && <span className="text-xs text-muted-foreground">{format(new Date(uploadDate), 'MMMM d, yyyy')}</span>}
+                        {uploadDate && <span className="text-xs text-text-secondary">{format(new Date(uploadDate), 'MMMM d, yyyy')}</span>}
                     </div>
                  </div>
 
-                 <DialogClose className="hidden md:flex rounded-full hover:bg-muted p-2">
+                 <DialogClose className="hidden md:flex rounded-full hover:bg-surface-muted p-2">
                      <X className="h-5 w-5" />
                  </DialogClose>
             </div>
 
             {/* Curation Actions */}
             {canEdit && (
-                <div className="px-4 py-3 border-b bg-muted/10 space-y-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Curation</h4>
+                <div className="px-4 py-3 border-b bg-surface-muted/10 space-y-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary">Curation</h4>
                     <div className="flex flex-col gap-2">
                         <Button
                             variant={isOfficial ? "secondary" : "outline"}
@@ -395,17 +395,17 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
             )}
 
             {/* Stats */}
-            <div className="px-4 py-2 border-b flex items-center justify-start gap-4 shrink-0 bg-muted/20">
+            <div className="px-4 py-2 border-b flex items-center justify-start gap-4 shrink-0 bg-surface-muted/20">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`flex items-center gap-1.5 px-2 ${isLiked ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground'}`}
+                    className={`flex items-center gap-1.5 px-2 ${isLiked ? 'text-red-500 hover:text-red-600' : 'text-text-secondary'}`}
                     onClick={handleLike}
                   >
                     <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
                     <span className="font-semibold">{likesCount}</span>
                   </Button>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-text-secondary">
                     <MessageCircle className="w-5 h-5" />
                     <span className="font-semibold">{comments.length}</span>
                   </div>
@@ -415,10 +415,10 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {isLoading ? (
                 <div className="flex justify-center p-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-6 h-6 animate-spin text-text-secondary" />
                 </div>
               ) : comments.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8 text-sm">
+                <div className="text-center text-text-secondary py-8 text-sm">
                   No comments yet. Be the first to say something!
                 </div>
               ) : (
@@ -431,11 +431,11 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                     <div className="flex-1 space-y-1">
                       <div className="flex items-baseline justify-between">
                         <span className="text-sm font-semibold">{comment.user.username}</span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-text-secondary">
                           {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                         </span>
                       </div>
-                      <p className="text-sm text-foreground/90 break-words">{comment.content}</p>
+                      <p className="text-sm text-text-primary/90 break-words">{comment.content}</p>
                     </div>
                     {user && user.id === comment.user.id && (
                       <Button
@@ -444,7 +444,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity -mt-1"
                         onClick={() => handleDeleteComment(comment.id)}
                       >
-                        <Trash2 className="w-3 h-3 text-destructive" />
+                        <Trash2 className="w-3 h-3 text-feedback-destructive" />
                       </Button>
                     )}
                   </div>
@@ -454,7 +454,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
             </div>
 
             {/* Footer: Add Comment */}
-            <div className="p-4 border-t mt-auto bg-background shrink-0">
+            <div className="p-4 border-t mt-auto bg-surface-default shrink-0">
               <form onSubmit={handleAddComment} className="flex gap-2">
                 <Input
                   placeholder="Add a comment..."

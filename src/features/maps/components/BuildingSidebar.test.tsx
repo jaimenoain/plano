@@ -79,8 +79,8 @@ describe('BuildingSidebar', () => {
     const dots = ratingContainer.querySelectorAll('div');
     expect(dots.length).toBe(3);
 
-    // Verify the class name contains bg-primary
-    expect(dots[0].className).toContain('bg-primary');
+    // Verify the class name contains bg-brand-primary
+    expect(dots[0].className).toContain('bg-brand-primary');
     expect(dots[0].className).not.toContain('bg-yellow-400');
   });
 });

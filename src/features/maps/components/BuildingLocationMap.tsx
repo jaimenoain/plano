@@ -67,7 +67,7 @@ export function BuildingLocationMap({
       <div
         className={
           isExpanded
-            ? "relative w-full h-full max-w-7xl max-h-[90vh] bg-background rounded-xl overflow-hidden shadow-2xl border border-white/10"
+            ? "relative w-full h-full max-w-7xl max-h-[90vh] bg-surface-default rounded-xl overflow-hidden shadow-2xl border border-white/10"
             : "w-full h-full"
         }
         onClick={isExpanded ? (e) => e.stopPropagation() : undefined}
@@ -107,7 +107,7 @@ export function BuildingLocationMap({
                   e.stopPropagation();
                   setIsSatellite(!isSatellite);
               }}
-              className="p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors flex items-center gap-2"
+              className="p-2 bg-surface-default/90 backdrop-blur rounded-md border shadow-sm hover:bg-surface-muted transition-colors flex items-center gap-2"
               title={isSatellite ? "Show Map" : "Show Satellite"}
             >
               <Layers className="w-4 h-4" />
@@ -121,7 +121,7 @@ export function BuildingLocationMap({
                   e.stopPropagation();
                   onToggleExpand();
               }}
-              className="absolute top-2 right-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-[60]"
+              className="absolute top-2 right-2 p-2 bg-surface-default/90 backdrop-blur rounded-md border shadow-sm hover:bg-surface-muted transition-colors z-[60]"
               title={isExpanded ? "Collapse Map" : "Expand Map"}
           >
               {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}

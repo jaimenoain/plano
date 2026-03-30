@@ -44,22 +44,22 @@ export function UserSearch({ onSelect, excludeIds = [] }: UserSearchProps) {
   return (
     <div className="relative w-full">
       <div className="relative">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-text-secondary" />
         <Input
           placeholder="Type a username..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-9"
         />
-        {loading && <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />}
+        {loading && <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-text-secondary" />}
       </div>
 
       {results.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg overflow-hidden">
+        <div className="absolute z-50 w-full mt-1 bg-surface-overlay border rounded-md shadow-lg overflow-hidden">
           {results.map((u) => (
             <div
               key={u.id}
-              className="flex items-center gap-3 p-3 hover:bg-accent cursor-pointer transition-colors"
+              className="flex items-center gap-3 p-3 hover:bg-brand-secondary cursor-pointer transition-colors"
               onClick={() => {
                 onSelect(u.id, u.username);
                 setQuery("");

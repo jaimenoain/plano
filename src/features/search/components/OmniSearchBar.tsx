@@ -174,13 +174,13 @@ export function OmniSearchBar({
           />
           {isBuildingsLoading && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
             </div>
           )}
         </div>
 
         {showDropdown && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95 max-h-[400px] overflow-y-auto">
+          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95 max-h-[400px] overflow-y-auto">
             <CommandList>
               {hasPlaces && (
                 <CommandGroup heading="Places">
@@ -191,7 +191,7 @@ export function OmniSearchBar({
                       onSelect={() => handlePlaceSelect(description)}
                       className="cursor-pointer"
                     >
-                      <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <MapPin className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
                       <span>{description}</span>
                     </CommandItem>
                   ))}
@@ -209,11 +209,11 @@ export function OmniSearchBar({
                       onSelect={() => handleBuildingSelect(building)}
                       className="cursor-pointer"
                     >
-                      <Building2 className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Building2 className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
                       <div className="flex flex-col">
                         <span>{building.name}</span>
                         {building.city && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-text-secondary">
                             {building.city}
                             {building.country ? `, ${building.country}` : ""}
                           </span>

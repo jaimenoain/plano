@@ -46,7 +46,7 @@ const MOCK_ACTIVITIES = [
 
 export const LandingMarquee = () => {
   return (
-    <div className="w-0 min-w-full overflow-hidden border-y border-border bg-background py-3">
+    <div className="w-0 min-w-full overflow-hidden border-y border-border-default bg-surface-default py-3">
       <div className="relative flex w-full items-center">
         <motion.div
           className="flex flex-nowrap gap-0"
@@ -64,7 +64,7 @@ export const LandingMarquee = () => {
               key={`${activity.id}-${index}`}
               className="flex items-center gap-3 whitespace-nowrap"
             >
-              <Avatar className="h-6 w-6 border border-border">
+              <Avatar className="h-6 w-6 border border-border-default">
                 <AvatarImage src={activity.avatar} alt={activity.user} />
                 <AvatarFallback>{activity.user[0]}</AvatarFallback>
               </Avatar>
@@ -72,7 +72,7 @@ export const LandingMarquee = () => {
                 <span className="font-medium">{activity.user}</span> {activity.action}{" "}
                 <span className="font-medium">{activity.target}</span> {activity.details}
               </span>
-              <span className="mx-8 text-primary">+</span>
+              <span className="mx-8 text-brand-primary">+</span>
             </div>
           ))}
         </motion.div>

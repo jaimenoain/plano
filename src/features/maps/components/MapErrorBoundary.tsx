@@ -6,10 +6,10 @@ import { captureErrorBoundaryException } from '@/lib/sentry';
 
 const MapErrorFallback = ({ error: _error, resetErrorBoundary }: FallbackProps) => {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center bg-muted/10 p-4 text-center">
-      <AlertTriangle className="mb-4 h-10 w-10 text-destructive" />
+    <div className="flex h-full w-full flex-col items-center justify-center bg-surface-muted/10 p-4 text-center">
+      <AlertTriangle className="mb-4 h-10 w-10 text-feedback-destructive" />
       <h3 className="mb-2 text-lg font-semibold">Map Unavailable</h3>
-      <p className="mb-4 text-sm text-muted-foreground">
+      <p className="mb-4 text-sm text-text-secondary">
         Something went wrong while loading the map.
       </p>
       <Button variant="outline" onClick={resetErrorBoundary}>

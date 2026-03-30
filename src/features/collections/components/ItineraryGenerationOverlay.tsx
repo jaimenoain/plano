@@ -25,7 +25,7 @@ export function ItineraryGenerationOverlay({ open }: { open: boolean }) {
   return (
     <Dialog open={open}>
       <DialogPortal>
-        <DialogOverlay className="z-[1200] bg-background/95 backdrop-blur-md" />
+        <DialogOverlay className="z-[1200] bg-surface-default/95 backdrop-blur-md" />
         <DialogContent
           className="z-[1200] flex flex-col items-center justify-center w-full h-full max-w-none border-none bg-transparent shadow-none sm:max-w-none"
           hideCloseButton
@@ -51,7 +51,7 @@ export function ItineraryGenerationOverlay({ open }: { open: boolean }) {
                   cy={dot.cy}
                   r="2"
                   fill="currentColor"
-                  className="text-primary"
+                  className="text-brand-primary"
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.3, duration: 0.5 }}
@@ -64,7 +64,7 @@ export function ItineraryGenerationOverlay({ open }: { open: boolean }) {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.5"
-                className="text-primary drop-shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]" // Attempt to use CSS variable if available, otherwise fallback is managed by browser or ignored
+                className="text-brand-primary drop-shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]" // Attempt to use CSS variable if available, otherwise fallback is managed by browser or ignored
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
                 transition={{
@@ -86,7 +86,7 @@ export function ItineraryGenerationOverlay({ open }: { open: boolean }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="text-lg font-medium text-center text-foreground"
+                className="text-lg font-medium text-center text-text-primary"
               >
                 {loadingMessages[messageIndex]}
               </motion.p>

@@ -407,7 +407,7 @@ toast.error("Location search failed. Please click on the map to set the location
     <div className="container max-w-4xl py-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Add a Building</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-text-secondary mt-2">
           Pinpoint the location on the map.
         </p>
       </div>
@@ -440,7 +440,7 @@ toast.error("Location search failed. Please click on the map to set the location
                   searchTypes={[]}
                   className="w-full"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-secondary">
                   Search or click on the map to set location.
                 </p>
               </div>
@@ -458,7 +458,7 @@ toast.error("Location search failed. Please click on the map to set the location
                     >
                         Approximate Location
                     </Label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-text-secondary">
                         Check this if the exact location is unknown. The pin will represent a general area (e.g. city center).
                     </p>
                 </div>
@@ -500,7 +500,7 @@ toast.error("Location search failed. Please click on the map to set the location
                 {/* Location Matches */}
                 {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
                     <div className="space-y-2">
-                        <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
+                        <div className="text-xs font-bold uppercase text-text-secondary tracking-wider flex items-center gap-2">
                            <MapPin className="h-3 w-3" /> Same Location / Vicinity
                         </div>
                         {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
@@ -514,7 +514,7 @@ toast.error("Location search failed. Please click on the map to set the location
                                 >
                                   <Avatar className="h-10 w-10 rounded-md">
                                     <AvatarFallback className="rounded-md">
-                                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                                      <Building2 className="h-5 w-5 text-text-secondary" />
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1 min-w-0">
@@ -525,7 +525,7 @@ toast.error("Location search failed. Please click on the map to set the location
                                       </span>
                                     </div>
                                     {building.address && (
-                                      <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
+                                      <p className="text-xs text-text-secondary line-clamp-2">{building.address}</p>
                                     )}
                                   </div>
                                 </div>
@@ -538,13 +538,13 @@ toast.error("Location search failed. Please click on the map to set the location
                 {/* Name Matches */}
                 {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
                     <div className="space-y-2 pt-2">
-                        <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                        <div className="text-xs font-bold uppercase text-text-secondary tracking-wider">
                            Similar Names (Far Away)
                         </div>
                          {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
                              <div
                                 key={building.id}
-                                className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
+                                className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-surface-muted/50 transition-colors"
                               >
                                 <div
                                   className="cursor-pointer flex gap-3"
@@ -553,18 +553,18 @@ toast.error("Location search failed. Please click on the map to set the location
                                   <Avatar className="h-10 w-10 rounded-md">
                                     <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
                                     <AvatarFallback className="rounded-md">
-                                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                                      <Building2 className="h-5 w-5 text-text-secondary" />
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium flex justify-between items-start">
                                       <span className="truncate pr-1">{building.name}</span>
-                                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                      <span className="text-xs text-text-secondary whitespace-nowrap">
                                         {(building.dist_meters / 1000).toFixed(1)}km
                                       </span>
                                     </div>
                                     {building.address && (
-                                      <p className="text-xs text-muted-foreground line-clamp-2">{building.address}</p>
+                                      <p className="text-xs text-text-secondary line-clamp-2">{building.address}</p>
                                     )}
                                   </div>
                                 </div>
@@ -578,7 +578,7 @@ toast.error("Location search failed. Please click on the map to set the location
         </div>
 
         {/* Map Area */}
-        <div className="h-[600px] rounded-xl overflow-hidden border shadow-sm relative bg-muted">
+        <div className="h-[600px] rounded-xl overflow-hidden border shadow-sm relative bg-surface-muted">
           <MapGL
             {...viewState}
             onMove={evt => setViewState(evt.viewState)}
@@ -612,7 +612,7 @@ toast.error("Location search failed. Please click on the map to set the location
               >
                 <div className="flex flex-col items-center">
                     {locationPrecision === 'approximate' ? (
-                        <div className="w-6 h-6 rounded-full bg-[#EEFF41] border-2 border-background drop-shadow-md transition-transform" />
+                        <div className="w-6 h-6 rounded-full bg-[#EEFF41] border-2 border-surface-default drop-shadow-md transition-transform" />
                     ) : (
                         <MapPin
                             className="h-8 w-8 text-[#EEFF41] fill-[#EEFF41] drop-shadow-md transition-colors"
@@ -650,7 +650,7 @@ toast.error("Location search failed. Please click on the map to set the location
                         <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-foreground"></div>
                     </div>
 
-                    <div className={`w-6 h-6 rounded-full ${pinColor} border-2 border-white shadow-md flex items-center justify-center text-white text-[10px] font-bold`}>
+                    <div className={`w-6 h-6 rounded-full ${pinColor} border-2 border-white shadow-none flex items-center justify-center text-white text-[10px] font-bold`}>
                         {label}
                     </div>
                  </div>
@@ -659,10 +659,10 @@ toast.error("Location search failed. Please click on the map to set the location
           </MapGL>
 
           {/* Overlay Legend or Status */}
-          <div className="absolute top-4 left-4 bg-background/95 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-xs space-y-1">
+          <div className="absolute top-4 left-4 bg-surface-default/95 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-xs space-y-1">
              <div className="flex items-center gap-2">
                  {locationPrecision === 'approximate' ? (
-                     <div className="w-3 h-3 rounded-full bg-[#EEFF41] border border-background" />
+                     <div className="w-3 h-3 rounded-full bg-[#EEFF41] border border-surface-default" />
                  ) : (
                      <MapPin className="h-3 w-3 text-[#EEFF41] fill-[#EEFF41]" />
                  )}
@@ -673,7 +673,7 @@ toast.error("Location search failed. Please click on the map to set the location
                  <span>Existing Building</span>
              </div>
              {checkingDuplicates && (
-                 <div className="flex items-center gap-2 text-muted-foreground pt-1 border-t mt-1">
+                 <div className="flex items-center gap-2 text-text-secondary pt-1 border-t mt-1">
                      <Loader2 className="h-3 w-3 animate-spin" />
                      <span>Checking nearby...</span>
                  </div>
@@ -685,7 +685,7 @@ toast.error("Location search failed. Please click on the map to set the location
               variant="secondary"
               size="sm"
               onClick={() => setIsSatellite(!isSatellite)}
-              className="bg-background/90 backdrop-blur shadow-sm hover:bg-muted"
+              className="bg-surface-default/90 backdrop-blur shadow-sm hover:bg-surface-muted"
             >
               <Layers className="h-4 w-4 mr-2" />
               {isSatellite ? "Map" : "Satellite"}
@@ -705,7 +705,7 @@ toast.error("Location search failed. Please click on the map to set the location
             <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 my-2">
                 {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
                     <div className="space-y-2">
-                        <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
+                        <div className="text-xs font-bold uppercase text-text-secondary tracking-wider flex items-center gap-2">
                             <MapPin className="h-3 w-3" /> Same Location / Vicinity
                         </div>
                         {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
@@ -719,7 +719,7 @@ toast.error("Location search failed. Please click on the map to set the location
                                 >
                                     <Avatar className="h-10 w-10 rounded-md">
                                         <AvatarFallback className="rounded-md">
-                                            <Building2 className="h-5 w-5 text-muted-foreground" />
+                                            <Building2 className="h-5 w-5 text-text-secondary" />
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1 min-w-0">
@@ -730,7 +730,7 @@ toast.error("Location search failed. Please click on the map to set the location
                                             </span>
                                         </div>
                                         {building.address && (
-                                            <p className="text-xs text-muted-foreground line-clamp-1 truncate">{building.address}</p>
+                                            <p className="text-xs text-text-secondary line-clamp-1 truncate">{building.address}</p>
                                         )}
                                     </div>
                                 </div>
@@ -741,13 +741,13 @@ toast.error("Location search failed. Please click on the map to set the location
 
                 {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
                     <div className="space-y-2 pt-2">
-                        <div className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                        <div className="text-xs font-bold uppercase text-text-secondary tracking-wider">
                             Similar Names (Far Away)
                         </div>
                         {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
                             <div
                                 key={building.id}
-                                className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-muted/50 transition-colors"
+                                className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-surface-muted/50 transition-colors"
                             >
                                 <div
                                     className="cursor-pointer flex gap-3"
@@ -756,18 +756,18 @@ toast.error("Location search failed. Please click on the map to set the location
                                     <Avatar className="h-10 w-10 rounded-md">
                                       <AvatarImage src={getBuildingImageUrl(building.main_image_url) || undefined} alt={building.name} className="object-cover" />
                                         <AvatarFallback className="rounded-md">
-                                            <Building2 className="h-5 w-5 text-muted-foreground" />
+                                            <Building2 className="h-5 w-5 text-text-secondary" />
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1 min-w-0">
                                         <div className="font-medium flex justify-between items-start">
                                             <span className="truncate pr-1">{building.name}</span>
-                                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                            <span className="text-xs text-text-secondary whitespace-nowrap">
                                                 {(building.dist_meters / 1000).toFixed(1)}km
                                             </span>
                                         </div>
                                         {building.address && (
-                                            <p className="text-xs text-muted-foreground line-clamp-1 truncate">{building.address}</p>
+                                            <p className="text-xs text-text-secondary line-clamp-1 truncate">{building.address}</p>
                                         )}
                                     </div>
                                 </div>
@@ -777,7 +777,7 @@ toast.error("Location search failed. Please click on the map to set the location
                 )}
             </div>
             <DialogFooter className="sm:justify-start">
-                <Button variant="ghost" className="text-muted-foreground text-xs" onClick={forceProceedToStep2}>
+                <Button variant="ghost" className="text-text-secondary text-xs" onClick={forceProceedToStep2}>
                     No, I want to create a new entry <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
             </DialogFooter>

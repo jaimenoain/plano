@@ -60,7 +60,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
   const imageUrl = getBuildingImageUrl(building.main_image_url);
 
   return (
-    <div className="bg-card border border-border/50 rounded-lg overflow-hidden flex flex-col h-full animate-in fade-in zoom-in-95 duration-300">
+    <div className="bg-surface-card border border-border-default/50 rounded-lg overflow-hidden flex flex-col h-full animate-in fade-in zoom-in-95 duration-300">
       <div className="relative aspect-[2/3] group cursor-pointer overflow-hidden">
         <Link to={getBuildingUrl(building.id, building.slug, building.short_id)}>
             {imageUrl ? (
@@ -70,7 +70,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
             ) : (
-            <div className="w-full h-full bg-secondary flex items-center justify-center text-muted-foreground p-4 text-center">
+            <div className="w-full h-full bg-surface-muted flex items-center justify-center text-text-secondary p-4 text-center">
                 {building.name}
             </div>
             )}
@@ -82,17 +82,17 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
             <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="hover:underline">
                  <h3 className="font-semibold leading-tight line-clamp-1" title={building.name}>{building.name}</h3>
             </Link>
-            <p className="text-xs text-muted-foreground mt-0.5">{year_completed} • {formatDistanceToNow(new Date(recommendation.created_at))} ago</p>
+            <p className="text-xs text-text-secondary mt-0.5">{year_completed} • {formatDistanceToNow(new Date(recommendation.created_at))} ago</p>
         </div>
 
         {/* Recommender Info - More prominent in body */}
-        <div className="flex items-center gap-3 bg-secondary/30 p-2 rounded-md my-1">
+        <div className="flex items-center gap-3 bg-surface-muted/30 p-2 rounded-md my-1">
              <Avatar className="h-8 w-8">
                 <AvatarImage src={recommender.avatar_url || undefined} />
                 <AvatarFallback className="text-xs">{recommender.username?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground leading-none">From</span>
+                <span className="text-xs text-text-secondary leading-none">From</span>
                 <span className="font-semibold text-sm leading-tight">{recommender.username}</span>
             </div>
         </div>
@@ -107,8 +107,8 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
                   size={interaction.rating ? "default" : "icon"}
                   className={cn("h-8 w-full rounded-md transition-colors",
                     interaction.rating
-                      ? "bg-primary/10 text-[#595959] hover:bg-primary/20 hover:text-[#595959] border-primary/20 border"
-                      : "hover:bg-primary hover:text-primary-foreground"
+                      ? "bg-brand-primary/10 text-[#595959] hover:bg-brand-primary/20 hover:text-[#595959] border-brand-primary/20 border"
+                      : "hover:bg-brand-primary hover:text-brand-primary-foreground"
                   )}
                   onClick={() => onRate(building)}
                 >
@@ -130,7 +130,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
                   variant={interaction.status === 'pending' ? "default" : "secondary"}
                   size="icon"
                   className={cn("h-8 w-full rounded-md transition-colors",
-                    interaction.status === 'pending' ? "bg-blue-600 hover:bg-blue-700 text-white" : "hover:bg-primary hover:text-primary-foreground"
+                    interaction.status === 'pending' ? "bg-blue-600 hover:bg-blue-700 text-white" : "hover:bg-brand-primary hover:text-brand-primary-foreground"
                   )}
                   onClick={() => onWatchlist(building)}
                 >
@@ -146,7 +146,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
               <Tooltip>
                 <TooltipTrigger asChild>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-full rounded-md hover:bg-destructive/20 hover:text-destructive transition-colors">
+                    <Button variant="ghost" size="icon" className="h-8 w-full rounded-md hover:bg-feedback-destructive/20 hover:text-feedback-destructive transition-colors">
                         <Trash2 className="h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>
@@ -164,7 +164,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onDismiss(recommendation.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  <AlertDialogAction onClick={() => onDismiss(recommendation.id)} className="bg-feedback-destructive text-feedback-destructive-foreground hover:bg-feedback-destructive/90">
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>

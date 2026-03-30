@@ -104,7 +104,7 @@ setHasError(true);
   if (!scriptLoaded) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
       </div>
     );
   }
@@ -163,7 +163,7 @@ toast.error("Failed to add marker");
     <Command shouldFilter={false} className="h-full flex flex-col overflow-hidden bg-transparent">
       <div className="p-4 border-b shrink-0">
         <div className="relative">
-          <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+          <MapPin className="absolute left-3 top-3 h-4 w-4 text-text-secondary z-10" />
           <CommandPrimitive.Input
             value={value}
             onValueChange={(val) => {
@@ -173,7 +173,7 @@ toast.error("Failed to add marker");
             placeholder="Search for a place (e.g. 'Central Station')..."
             autoComplete="off"
             className={cn(
-              "flex h-10 w-full rounded-md border-none bg-transparent pl-9 pr-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              "flex h-10 w-full rounded-md border-none bg-transparent pl-9 pr-3 py-2 text-sm outline-none placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
             )}
           />
         </div>
@@ -201,7 +201,7 @@ toast.error("Failed to add marker");
             )}
           </CommandList>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 text-center">
+          <div className="flex flex-col items-center justify-center h-full text-text-secondary p-8 text-center">
             <p>Search for real-world locations like restaurants, hotels, or transit stations to add them to your collection map.</p>
             <p className="mt-2">Selected locations are saved immediately.</p>
           </div>
@@ -448,7 +448,7 @@ toast.error("Failed to add building");
 
   const searchFooter = searchQuery ? (
     <div className="flex flex-col items-center justify-center py-8 gap-4 border-t mt-4">
-      <p className="text-center text-muted-foreground">
+      <p className="text-center text-text-secondary">
         Not finding what you are looking for?
       </p>
       <Button
@@ -475,13 +475,13 @@ toast.error("Failed to add building");
             <TabsList className="justify-start w-full h-12 p-0 bg-transparent rounded-none">
               <TabsTrigger
                 value="architecture"
-                className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-text-secondary shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
               >
                 Architecture
               </TabsTrigger>
               <TabsTrigger
                 value="other-markers"
-                className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-text-secondary shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
               >
                 Other Markers
               </TabsTrigger>
@@ -493,7 +493,7 @@ toast.error("Failed to add building");
             <div className="w-[350px] shrink-0 flex flex-col border-r">
               <div className="p-4 pb-2 border-b space-y-2">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-secondary" />
                   <Input
                     placeholder="Search by name, city, country, or address..."
                     value={searchQuery}
@@ -510,7 +510,7 @@ toast.error("Failed to add building");
                   className="p-2"
                   emptyState={
                     <div className="flex flex-col items-center justify-center py-8 gap-4">
-                      <p className="text-center text-muted-foreground">
+                      <p className="text-center text-text-secondary">
                         {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
                       </p>
                       {searchQuery && (
@@ -537,7 +537,7 @@ toast.error("Failed to add building");
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                            className="h-8 w-8 p-0 shrink-0 text-text-secondary hover:text-text-primary hover:bg-surface-muted"
                             title="Hide suggestion"
                             disabled={hideMutation.isPending || addMutation.isPending}
                             onClick={(e) => {
@@ -577,7 +577,7 @@ toast.error("Failed to add building");
                 }}
               />
             ) : (
-              <div className="flex-1 border-l hidden lg:flex items-center justify-center text-muted-foreground bg-muted/10">
+              <div className="flex-1 border-l hidden lg:flex items-center justify-center text-text-secondary bg-surface-muted/10">
                 Select a building to view details
               </div>
             )}

@@ -775,8 +775,8 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-surface-default flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
       </div>
     );
   }
@@ -786,11 +786,11 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
         <>
           <AppLayout title="User Not Found" showLogo={false} showBack>
               <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-                  <div className="bg-secondary/50 p-6 rounded-full mb-6">
-                      <LogOut className="h-10 w-10 text-muted-foreground" />
+                  <div className="bg-surface-muted/50 p-6 rounded-full mb-6">
+                      <LogOut className="h-10 w-10 text-text-secondary" />
                   </div>
                   <h2 className="text-2xl font-bold mb-2">User Unavailable</h2>
-                  <p className="text-muted-foreground max-w-sm mx-auto mb-8">
+                  <p className="text-text-secondary max-w-sm mx-auto mb-8">
                       This profile is not available. The user might have been deleted, suspended, or does not exist.
                   </p>
                   <Button onClick={() => navigate("/")}>Go Home</Button>
@@ -818,6 +818,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
           image={avatarUrl}
         />
 
+        <div className="p-4 sm:p-6 lg:p-8">
         {/* 1. Header & User Card */}
         <UserCard
           profile={profile}
@@ -891,7 +892,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
 
                   <DragOverlay dropAnimation={null}>
                     {activeCollectionData ? (
-                      <div className="scale-105 shadow-xl cursor-grabbing rounded-xl bg-card border overflow-hidden opacity-90 inline-block">
+                      <div className="scale-105 shadow-xl cursor-grabbing rounded-sm bg-surface-card border overflow-hidden opacity-90 inline-block">
                         <div className="p-4 h-[100px] w-[180px] flex flex-col justify-between">
                           <h4 className="font-medium text-sm line-clamp-2 leading-tight">
                             {activeCollectionData.name}
@@ -906,20 +907,20 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
         )}
 
         {/* 5. Filter & Content Section */}
-        <div className="px-4 mt-2 scroll-mt-20 min-h-screen" id="profile-content-start">
-            <div className="sticky top-16 md:top-0 bg-background z-30 pt-2 pb-4 space-y-3 shadow-sm border-b border-border/40 -mx-4 px-4 mb-4">
+        <div className="mt-12 border-t border-border-default pt-8 px-4 scroll-mt-20 min-h-screen" id="profile-content-start">
+            <div className="sticky top-16 md:top-0 bg-surface-default z-30 pt-2 pb-4 space-y-3 border-b border-border-default -mx-4 px-4 mb-4">
               <div className="flex flex-wrap items-center justify-between gap-y-2">
 
                 <div className="flex items-center gap-2 md:gap-4 overflow-x-auto max-w-full pb-1 -mb-1 hide-scrollbar">
                   {/* Filter Toggle */}
                   <ToggleGroup type="single" value={activeFilter} onValueChange={handleFilterChange} className="justify-start">
-                      <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground">
                           All
                       </ToggleGroupItem>
-                      <ToggleGroupItem value="visited" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      <ToggleGroupItem value="visited" className="px-3 py-1.5 text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground">
                           Reviews
                       </ToggleGroupItem>
-                      <ToggleGroupItem value="pending" className="px-3 py-1.5 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      <ToggleGroupItem value="pending" className="px-3 py-1.5 text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground">
                           Bucket List
                       </ToggleGroupItem>
                   </ToggleGroup>
@@ -944,7 +945,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
                     checked={showCommunityImages}
                     onCheckedChange={setShowCommunityImages}
                   />
-                  <Label htmlFor="show-community" className="text-xs text-muted-foreground hidden sm:block">
+                  <Label htmlFor="show-community" className="text-xs text-text-secondary hidden sm:block">
                     Community Photos
                   </Label>
                 </div>
@@ -953,16 +954,16 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
               {/* Search Input */}
               <div className="flex gap-2">
                   <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
                   <Input
                       placeholder="Search reviews..."
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
-                      className="pl-9 bg-secondary/50 border-transparent focus:bg-background transition-colors"
+                      className="pl-9 bg-surface-muted/50 border-transparent focus:bg-surface-default transition-colors"
                   />
                   {searchQuery && (
                       <button onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                          <X className="h-4 w-4 text-text-secondary hover:text-text-primary" />
                       </button>
                   )}
                   </div>
@@ -988,7 +989,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
             {/* Grid Content */}
             <div className="mt-0">
               {contentLoading ? (
-                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-text-secondary" /></div>
               ) : filteredContent.length > 0 ? (
                   <>
                   <WidgetErrorBoundary>
@@ -1049,7 +1050,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
                             />
                             <DragOverlay dropAnimation={null}>
                               {activeId ? (
-                                <div className="w-[280px] scale-105 shadow-xl z-50 cursor-grabbing rounded-xl bg-card border overflow-hidden opacity-90">
+                                <div className="w-[280px] scale-105 shadow-xl z-50 cursor-grabbing rounded-sm bg-surface-card border overflow-hidden opacity-90">
                                   {(() => {
                                     const activeItem = content.find((i) => i.id === activeId);
                                     return activeItem ? (
@@ -1092,10 +1093,11 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
               )}
               {isFetchingMore && (
                   <div className="flex justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
                   </div>
               )}
             </div>
+        </div>
         </div>
 
         {/* User List Modal */}
@@ -1106,12 +1108,12 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
               {userListLoading ? (
-                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-text-secondary" /></div>
               ) : userList.length > 0 ? (
                 <div className="space-y-1 p-1">
                   {userList.map((u) => (
                     <div key={u.id}
-                        className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors"
+                        className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-muted/50 cursor-pointer transition-colors"
                         onClick={() => { setUserListDialog(prev => ({ ...prev, open: false })); navigate(`/profile/${u.username?.toLowerCase()}`); }}
                     >
                       <div className="flex items-center gap-3">
@@ -1136,7 +1138,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">No users found</div>
+                <div className="text-center py-8 text-text-secondary">No users found</div>
               )}
             </ScrollArea>
           </DialogContent>
@@ -1161,13 +1163,11 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
 
 function EmptyState({ icon: Icon, label, description, action }: { icon: LucideIcon; label: string; description?: string; action?: ReactNode }) {
   return (
-    <div className="py-16 text-center border-2 border-dashed border-border/50 rounded-xl mt-4 px-4">
-      <div className="w-12 h-12 bg-secondary/30 rounded-full flex items-center justify-center mx-auto mb-3">
-        <Icon className="h-6 w-6 text-muted-foreground/50" />
-      </div>
-      <p className="text-muted-foreground font-medium">{label}</p>
-      {description && <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">{description}</p>}
-      {action && <div className="mt-4">{action}</div>}
+    <div className="flex flex-col items-center justify-center text-center py-16 px-8 gap-4">
+      <Icon className="h-12 w-12 text-text-disabled" />
+      <p className="text-lg font-semibold text-text-primary">{label}</p>
+      {description && <p className="text-sm text-text-secondary max-w-sm">{description}</p>}
+      {action && <div>{action}</div>}
     </div>
   );
 }

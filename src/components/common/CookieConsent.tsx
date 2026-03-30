@@ -25,14 +25,14 @@ export function CookieConsent() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background p-4 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-default bg-surface-default p-4 shadow-lg"
       role="dialog"
       aria-label="Cookie preferences"
     >
       <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-text-secondary">
           We use cookies to understand how you use Plano and improve your experience.{" "}
-          <a href="/terms" className="underline hover:text-foreground">
+          <a href="/terms" className="underline hover:text-text-primary">
             Learn more
           </a>
         </p>

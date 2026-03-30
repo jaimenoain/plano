@@ -404,7 +404,8 @@ toast({
   return (
     <AppLayout title="Settings" showLogo={false}>
       <NavigationBlocker isDirty={isDirty} />
-      <div className="container max-w-lg mx-auto p-4 pb-20">
+      <div className="p-4 sm:p-6 lg:p-8 pb-20">
+        <div className="max-w-2xl mx-auto">
         <Button 
           variant="ghost" 
           className="mb-6 pl-0 hover:bg-transparent" 
@@ -414,7 +415,7 @@ toast({
           Back to Profile
         </Button>
 
-        <h1 className="text-2xl font-bold mb-6">Settings</h1>
+        <h1 className="text-2xl font-bold mb-6 text-text-primary">Settings</h1>
 
         <div className="flex flex-col items-center mb-8">
             <Avatar className="h-24 w-24 mb-4">
@@ -432,24 +433,23 @@ toast({
                 onChange={handleAvatarUpload}
                 disabled={uploading}
               />
-              <Label
-                htmlFor="avatar-upload"
-                className="cursor-pointer inline-flex items-center gap-2 bg-secondary px-4 py-2 rounded-md text-sm font-medium hover:bg-secondary/80 transition-colors"
-              >
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                Change Photo
-              </Label>
+              <Button variant="outline" size="sm" asChild>
+                <Label htmlFor="avatar-upload" className="cursor-pointer inline-flex items-center gap-2">
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  Change Photo
+                </Label>
+              </Button>
             </div>
         </div>
 
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           {/* Public Profile Section */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Public Profile</h2>
+            <h2 className="text-lg font-semibold text-text-primary mb-6">Public Profile</h2>
             
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
@@ -485,73 +485,74 @@ toast({
                 }}
                 placeholder="e.g. New York, USA"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary mt-1">
                 This helps us personalize your experience.
               </p>
             </div>
           </div>
 
-          <Separator />
+          <div className="mt-12 border-t border-border-default pt-8" />
 
           {/* Profile Content Section */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-text-primary mb-6 flex items-center gap-2">
               <LayoutTemplate className="h-4 w-4" /> Profile Customization
             </h2>
-            <div className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm space-y-4">
+            <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                   <h3 className="font-medium">All-time Favourites</h3>
-                   <p className="text-sm text-muted-foreground">Select up to 6 buildings to showcase on your profile.</p>
+                   <h3 className="font-medium text-text-primary">All-time Favourites</h3>
+                   <p className="text-sm text-text-secondary">Select up to 6 buildings to showcase on your profile.</p>
                 </div>
                 <Button type="button" variant="outline" onClick={() => setShowManageFavorites(true)}>Manage</Button>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div>
-                   <h3 className="font-medium">Highlights</h3>
-                   <p className="text-sm text-muted-foreground">Add favorite styles, architects, and quotes.</p>
+                   <h3 className="font-medium text-text-primary">Highlights</h3>
+                   <p className="text-sm text-text-secondary">Add favorite styles, architects, and quotes.</p>
                 </div>
                 <Button type="button" variant="outline" onClick={() => setShowManageHighlights(true)}>Manage</Button>
               </div>
             </div>
           </div>
 
-          <Separator />
-
-          {/* App Experience Section */}
           {(isInstallable || isIOS) && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Smartphone className="h-4 w-4" /> App Experience
-              </h2>
-              <div className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm">
-                 <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Install App</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Add Plano to your home screen for easier access.
-                      </p>
-                    </div>
-                    <Button type="button" onClick={promptInstall}>
-                      Install
-                    </Button>
-                 </div>
+            <>
+              <div className="mt-12 border-t border-border-default pt-8" />
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-text-primary mb-6 flex items-center gap-2">
+                  <Smartphone className="h-4 w-4" /> App Experience
+                </h2>
+                <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none">
+                   <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-text-primary">Install App</h3>
+                        <p className="text-sm text-text-secondary">
+                          Add Plano to your home screen for easier access.
+                        </p>
+                      </div>
+                      <Button type="button" variant="outline" onClick={promptInstall}>
+                        Install
+                      </Button>
+                   </div>
+                </div>
               </div>
-              <Separator />
-            </div>
+            </>
           )}
+
+          <div className="mt-12 border-t border-border-default pt-8" />
 
           {/* Account Security Section */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-text-primary mb-6 flex items-center gap-2">
               <Lock className="h-4 w-4" /> Account & Security
             </h2>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-text-secondary" />
                 <Input
                   id="email"
                   type="email"
@@ -561,7 +562,7 @@ toast({
                   placeholder="your@email.com"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary mt-1">
                 Changing this will require verification on the new address.
               </p>
             </div>
@@ -578,11 +579,11 @@ toast({
             </div>
 
             {profile?.verified_architect_id && (
-              <div className="pt-4 mt-4 border-t border-border">
+              <div className="pt-4 mt-4 border-t border-border-default">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-destructive">Disconnect Architect Profile</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="font-medium text-feedback-destructive">Disconnect Architect Profile</h3>
+                    <p className="text-sm text-text-secondary">
                       Unlink your account from your verified architect or studio profile.
                     </p>
                   </div>
@@ -598,18 +599,18 @@ toast({
             )}
           </div>
 
-          <Separator />
+          <div className="mt-12 border-t border-border-default pt-8" />
 
           {/* Data & Privacy Section */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-text-primary mb-6 flex items-center gap-2">
               <Database className="h-4 w-4" /> Data & Privacy
             </h2>
-            <div className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm">
+            <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium">Download My Data</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-medium text-text-primary">Download My Data</h3>
+                  <p className="text-sm text-text-secondary">
                     Export your ratings, reviews, and bucket list to a CSV file.
                   </p>
                 </div>
@@ -630,11 +631,14 @@ toast({
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
-          </Button>
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-border-default mt-6">
+            <Button type="submit" variant="default" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-text-secondary" />}
+              Save Changes
+            </Button>
+          </div>
         </form>
+        </div>
       </div>
 
       {/* Manage Favorites (Buildings) Dialog */}

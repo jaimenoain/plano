@@ -48,27 +48,27 @@ export function KanbanColumn({
       className={cn(
         "flex-shrink-0 w-[280px] rounded-xl flex flex-col h-full overflow-hidden snap-center border transition-all duration-200",
         isOverContainer
-            ? "bg-secondary/80 border-primary ring-2 ring-primary/40 shadow-md"
-            : "bg-secondary/20 border-border/60"
+            ? "bg-surface-muted/80 border-brand-primary ring-2 ring-brand-primary/40 shadow-none"
+            : "bg-surface-muted/20 border-border-default/60"
       )}
     >
       {/* Header */}
       <div className={cn(
         "p-4 font-medium sticky top-0 backdrop-blur-sm z-10 border-b flex items-center justify-between transition-colors duration-200",
-        isOverContainer ? "bg-background/90 border-primary/40" : "bg-background/80 border-border/40"
+        isOverContainer ? "bg-surface-default/90 border-brand-primary/40" : "bg-surface-default/80 border-border-default/40"
       )}>
         <div className="flex items-center gap-2">
             {ratingValue === 0 || ratingValue === null ? (
-              <span className="text-foreground flex items-center justify-center w-6 h-6 rounded-full bg-secondary/50">
+              <span className="text-text-primary flex items-center justify-center w-6 h-6 rounded-full bg-surface-muted/50">
                 <Bookmark className="w-4 h-4" aria-label="Saved" />
               </span>
             ) : (
-              <span className="text-foreground flex items-center justify-center h-6 px-1.5 rounded-full bg-secondary/50">
+              <span className="text-text-primary flex items-center justify-center h-6 px-1.5 rounded-full bg-surface-muted/50">
                  <div className="flex items-center gap-0.5" aria-label={`${ratingValue} point${ratingValue > 1 ? 's' : ''}`}>
                     {Array.from({ length: 3 }).map((_, i) => (
                        <Circle
                           key={i}
-                          className={`w-3 h-3 ${i < ratingValue ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
+                          className={`w-3 h-3 ${i < ratingValue ? "fill-[#595959] text-[#595959]" : "fill-transparent text-text-secondary/30"}`}
                        />
                     ))}
                  </div>
@@ -76,7 +76,7 @@ export function KanbanColumn({
             )}
           <span className="text-sm font-semibold">{title}</span>
         </div>
-        <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+        <span className="text-xs text-text-secondary bg-surface-muted px-2 py-0.5 rounded-full">
           {items.length}
         </span>
       </div>
@@ -91,10 +91,10 @@ export function KanbanColumn({
             <div className={cn(
                 "flex flex-col items-center justify-center text-center p-6 border-2 border-dashed rounded-lg transition-all duration-200 flex-1 min-h-[200px]",
                 isOverContainer
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border/40 text-muted-foreground/60 hover:border-border/60 hover:bg-secondary/30"
+                    ? "border-brand-primary bg-brand-primary/10 text-brand-primary"
+                    : "border-border-default/40 text-text-secondary/60 hover:border-border-default/60 hover:bg-surface-muted/30"
             )}>
-                <div className="mb-2 p-3 rounded-full bg-background/50">
+                <div className="mb-2 p-3 rounded-full bg-surface-default/50">
                     {ratingValue === 0 || ratingValue === null ? (
                         <Bookmark className="w-5 h-5 opacity-50" />
                     ) : (

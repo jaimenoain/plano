@@ -129,16 +129,16 @@ toast.error("Failed to create collection");
 
   return (
     <div className={cn("space-y-3", className)}>
-      <Label className="text-xs font-medium uppercase text-muted-foreground">Save to Collections</Label>
+      <Label className="text-xs font-medium uppercase text-text-secondary">Save to Collections</Label>
 
-      <div className="border rounded-md bg-background">
+      <div className="border rounded-md bg-surface-default">
         <ScrollArea className="h-[140px] p-2">
             {loading ? (
                 <div className="flex justify-center py-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
                 </div>
             ) : collections.length === 0 ? (
-                <div className="text-center py-4 text-xs text-muted-foreground">
+                <div className="text-center py-4 text-xs text-text-secondary">
                     No collections yet. Create one below.
                 </div>
             ) : (
@@ -150,7 +150,7 @@ toast.error("Failed to create collection");
                                 key={collection.id}
                                 className={cn(
                                     "flex items-center justify-between px-2 py-1.5 rounded-sm cursor-pointer text-sm transition-colors",
-                                    isSelected ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-muted-foreground"
+                                    isSelected ? "bg-brand-primary/10 text-brand-primary font-medium" : "hover:bg-surface-muted text-text-secondary"
                                 )}
                                 onClick={() => toggleCollection(collection.id)}
                             >

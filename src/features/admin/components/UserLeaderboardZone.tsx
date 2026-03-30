@@ -27,7 +27,7 @@ export function UserLeaderboardZone({ data }: UserLeaderboardZoneProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
               {category.title}
-              <span className="text-xs font-normal text-muted-foreground ml-1">
+              <span className="text-xs font-normal text-text-secondary ml-1">
                 (30d)
               </span>
             </CardTitle>
@@ -36,7 +36,7 @@ export function UserLeaderboardZone({ data }: UserLeaderboardZoneProps) {
             <ScrollArea className="h-[200px] pr-4">
               <div className="space-y-4">
                 {category.data.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No activity recorded.</p>
+                  <p className="text-xs text-text-secondary">No activity recorded.</p>
                 ) : (
                   category.data.map((user, index) => (
                     <div key={user.user_id} className="flex items-center gap-3">
@@ -46,7 +46,7 @@ export function UserLeaderboardZone({ data }: UserLeaderboardZoneProps) {
                             <AvatarImage src={user.avatar_url || undefined} alt={user.username || "User"} />
                             <AvatarFallback>{user.username?.slice(0, 2).toUpperCase() || "??"}</AvatarFallback>
                           </Avatar>
-                          <div className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground font-bold shadow-sm ring-1 ring-background">
+                          <div className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-primary text-[10px] text-brand-primary-foreground font-bold shadow-sm ring-1 ring-surface-default">
                             {index + 1}
                           </div>
                         </div>

@@ -63,14 +63,14 @@ export function UserCard({
     const totalBuildings = stats.reviews + stats.pending;
 
     return (
-        <div className="px-4 py-6 md:py-10 max-w-7xl mx-auto">
+        <div className="px-4 py-6 md:py-10 max-w-7xl mx-auto pb-8 border-b border-border-default">
             <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start md:items-center">
 
                 {/* Avatar Section */}
                 <div className="shrink-0 mx-auto md:mx-0">
-                    <Avatar className="h-24 w-24 md:h-40 md:w-40 border-2 border-border shadow-sm">
+                    <Avatar className="h-24 w-24 md:h-40 md:w-40 border-2 border-border-default shadow-none">
                         <AvatarImage src={profile?.avatar_url || undefined} className="object-cover" />
-                        <AvatarFallback className="text-3xl bg-secondary">{profile?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="text-3xl bg-surface-muted">{profile?.username?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                 </div>
 
@@ -78,7 +78,7 @@ export function UserCard({
                 <div className="flex-1 min-w-0 w-full">
                     {/* Top Row: Name + Actions */}
                     <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-4 md:mb-6">
-                        <h1 className="text-xl md:text-2xl font-bold truncate min-w-0 max-w-[200px] md:max-w-none">
+                        <h1 className="text-xl md:text-2xl font-bold truncate min-w-0 max-w-[200px] md:max-w-none text-text-primary">
                             {profile?.username}
                         </h1>
 
@@ -96,7 +96,7 @@ export function UserCard({
                                              </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={onSignOut} className="text-destructive">
+                                            <DropdownMenuItem onClick={onSignOut} className="text-feedback-destructive">
                                                 <LogOut className="mr-2 h-4 w-4" /> Sign Out
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -106,7 +106,7 @@ export function UserCard({
                                 <>
                                     <Button
                                         onClick={onFollowToggle}
-                                        variant={isFollowing ? "secondary" : "default"}
+                                        variant={isFollowing ? "outline" : "default"}
                                         size="sm"
                                         className="h-8 px-5 font-semibold"
                                     >
@@ -119,7 +119,7 @@ export function UserCard({
                                              </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => setShowBlockDialog(true)} className="text-destructive">
+                                            <DropdownMenuItem onClick={() => setShowBlockDialog(true)} className="text-feedback-destructive">
                                                 <Ban className="mr-2 h-4 w-4" /> Block User
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -139,7 +139,7 @@ export function UserCard({
                     )}
 
                     {/* Stats Row */}
-                    <div className="flex flex-wrap items-center justify-start gap-x-6 gap-y-2 md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border/40">
+                    <div className="flex flex-wrap items-center justify-start gap-x-6 gap-y-2 md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border-default/40">
                         <StatItem label="edificios" value={totalBuildings} onClick={() => onTabChange("all")} />
                         <StatItem
                             label="photos"
@@ -168,9 +168,9 @@ export function UserCard({
                         )}
 
                          {profile?.last_online && (
-                            <p className="text-[10px] text-muted-foreground font-medium inline-flex items-center gap-1.5">
+                            <p className="text-[10px] text-text-secondary font-medium inline-flex items-center gap-1.5">
                                 <span className={cn("w-1.5 h-1.5 rounded-full",
-                                new Date(profile.last_online).getTime() > Date.now() - 1000 * 60 * 10 ? "bg-green-500" : "bg-muted-foreground/30"
+                                new Date(profile.last_online).getTime() > Date.now() - 1000 * 60 * 10 ? "bg-feedback-success" : "bg-text-secondary/30"
                                 )} />
                                 {new Date(profile.last_online).getTime() > Date.now() - 1000 * 60 * 10
                                 ? "Online"
@@ -187,10 +187,10 @@ export function UserCard({
 function StatItem({ label, value, onClick }: { label: string, value: number, onClick: () => void }) {
     return (
         <button onClick={onClick} className="flex flex-col md:flex-row items-center gap-1 group">
-            <span className="font-bold text-base md:text-md text-foreground group-hover:text-primary transition-colors">
+            <span className="text-xl font-semibold text-text-primary group-hover:text-brand-primary transition-colors">
                 {formatStatValue(value)}
             </span>
-            <span className="text-xs md:text-sm text-muted-foreground capitalize">
+            <span className="text-xs text-text-secondary capitalize">
                 {label}
             </span>
         </button>

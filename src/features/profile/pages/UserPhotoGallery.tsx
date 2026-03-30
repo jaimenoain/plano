@@ -252,7 +252,7 @@ export default function UserPhotoGallery() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
       </div>
     );
   }
@@ -260,7 +260,7 @@ export default function UserPhotoGallery() {
   if (!profileUsername) {
      return (
         <AppLayout title="Not Found" showBack>
-           <div className="flex flex-col items-center justify-center min-h-[50vh] text-muted-foreground">
+           <div className="flex flex-col items-center justify-center min-h-[50vh] text-text-secondary">
              <p>User not found.</p>
            </div>
         </AppLayout>
@@ -269,7 +269,7 @@ export default function UserPhotoGallery() {
 
   return (
     <AppLayout title={`${profileUsername}'s Photos`} showBack showLogo={false}>
-      <div className="p-4">
+      <div className="p-4 sm:p-6 lg:p-8">
         {photos.length > 0 && (
           <div className="flex justify-end mb-4">
             <Select value={sortOrder} onValueChange={handleSortChange}>
@@ -285,14 +285,14 @@ export default function UserPhotoGallery() {
         )}
 
         {photos.length === 0 ? (
-           <div className="flex flex-col items-center justify-center min-h-[40vh] text-muted-foreground gap-2">
-             <div className="bg-secondary/50 p-4 rounded-full">
+           <div className="flex flex-col items-center justify-center min-h-[40vh] text-text-secondary gap-2">
+             <div className="bg-surface-muted/50 p-4 rounded-sm">
                 <ImageIcon className="h-8 w-8 opacity-50" />
              </div>
              <p>No photos uploaded yet.</p>
            </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {photos.map((photo) => {
                const imageUrl = getBuildingImageUrl(photo.storage_path);
                const linkUrl = photo.building ? `/building/${photo.building.id}/${photo.building.slug}` : "#";
@@ -301,7 +301,7 @@ export default function UserPhotoGallery() {
                  <Link
                     key={photo.id}
                     to={linkUrl}
-                    className="relative aspect-square overflow-hidden rounded-md bg-secondary/20 group block"
+                    className="relative aspect-square overflow-hidden rounded-sm bg-surface-muted/20 group block"
                  >
                     <img
                       src={imageUrl}
@@ -319,17 +319,17 @@ export default function UserPhotoGallery() {
                       <Heart
                          className={cn(
                            "w-4 h-4 transition-colors",
-                           photo.is_liked ? "fill-red-500 text-red-500" : "text-white"
+                           photo.is_liked ? "fill-feedback-destructive text-feedback-destructive" : "text-text-inverse"
                          )}
                       />
                       {photo.likes_count > 0 && (
-                        <span className="text-xs font-medium text-white">{photo.likes_count}</span>
+                        <span className="text-xs font-medium text-text-inverse">{photo.likes_count}</span>
                       )}
                     </button>
 
                     {photo.building && (
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                         <p className="text-white text-xs truncate font-medium">{photo.building.name}</p>
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                         <p className="text-text-inverse text-xs truncate font-medium">{photo.building.name}</p>
                       </div>
                     )}
                  </Link>
@@ -343,7 +343,7 @@ export default function UserPhotoGallery() {
                 className="col-span-full flex items-center justify-center p-4 min-h-[50px]"
               >
                 {fetchingMore && (
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
                 )}
               </div>
             )}

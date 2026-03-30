@@ -128,7 +128,7 @@ toast.error("Failed to delete images");
             <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : images.length === 0 ? (
-        <div className="text-center text-muted-foreground py-12">No images found.</div>
+        <div className="text-center text-text-secondary py-12">No images found.</div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {images.map(img => (
@@ -136,7 +136,7 @@ toast.error("Failed to delete images");
                     key={img.uniqueKey}
                     className={cn(
                         "relative group aspect-square rounded-md overflow-hidden border cursor-pointer transition-all",
-                        selectedKeys.has(img.uniqueKey) ? "ring-2 ring-primary border-primary" : "hover:border-primary/50"
+                        selectedKeys.has(img.uniqueKey) ? "ring-2 ring-brand-primary border-brand-primary" : "hover:border-brand-primary/50"
                     )}
                     onClick={() => toggleSelect(img.uniqueKey)}
                 >
@@ -151,7 +151,7 @@ toast.error("Failed to delete images");
                         <Checkbox
                             checked={selectedKeys.has(img.uniqueKey)}
                             onCheckedChange={() => toggleSelect(img.uniqueKey)}
-                            className="bg-white/90 border-transparent data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                            className="bg-white/90 border-transparent data-[state=checked]:bg-brand-primary data-[state=checked]:text-brand-primary-foreground"
                         />
                     </div>
                 </div>

@@ -130,10 +130,10 @@ export function PeopleYouMayKnow() {
   if (loading) {
     return (
         <div className="space-y-4">
-             <div className="h-6 w-40 bg-muted animate-pulse rounded" />
+             <div className="h-6 w-40 bg-surface-muted animate-pulse rounded" />
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="h-16 bg-muted/50 animate-pulse rounded-lg" />
+                    <div key={i} className="h-16 bg-surface-muted/50 animate-pulse rounded-lg" />
                 ))}
              </div>
         </div>
@@ -145,12 +145,12 @@ export function PeopleYouMayKnow() {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-         <UserPlus className="h-5 w-5 text-primary" />
+         <UserPlus className="h-5 w-5 text-brand-primary" />
          People You May Know
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {suggestions.map(u => (
-            <div key={u.id} className="bg-card border rounded-lg shadow-sm overflow-hidden">
+            <div key={u.id} className="bg-surface-card border rounded-lg shadow-sm overflow-hidden">
                  <UserRow
                     user={u}
                     showFollowButton={true}

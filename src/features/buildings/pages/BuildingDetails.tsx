@@ -1012,11 +1012,12 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
 
       <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
 
+      <div className="p-4 sm:p-6 lg:p-8">
       {/* Building Header - Mobile Only */}
       <BuildingHeader
         building={building}
         showEditLink={!!user}
-        className="lg:hidden p-4 pb-0"
+        className="lg:hidden pb-0"
         isEditing={isOfficialEditing}
         nameValue={draftOfficialData.name}
         yearValue={draftOfficialData.year_completed}
@@ -1025,7 +1026,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
       />
 
       {canEditOfficialData && (
-        <div className="lg:hidden px-4 mt-2 mb-2 flex justify-end">
+        <div className="lg:hidden mt-2 mb-2 flex justify-end">
             {isOfficialEditing ? (
                 <div className="flex gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setIsOfficialEditing(false)} disabled={isSavingOfficial}>
@@ -1049,10 +1050,10 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
         statement={draftOfficialData.architect_statement}
         isEditing={isOfficialEditing}
         onChange={(val) => setDraftOfficialData(prev => ({ ...prev, architect_statement: val }))}
-        className="lg:hidden px-4 mt-4"
+        className="lg:hidden mt-4"
       />
 
-      <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto p-4 lg:p-8 pt-4">
+      <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto pt-4">
         
         {/* LEFT: Visuals & Map (Map-First Experience ) */}
         <div className="space-y-6">
@@ -1082,14 +1083,14 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                     />
                   </WidgetErrorBoundary>
                 ) : (
-                <div className="h-48 bg-muted/20 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-col gap-2 text-muted-foreground">
+                <div className="h-48 bg-surface-muted/20 rounded-sm border border-dashed border-border-default flex items-center justify-center flex-col gap-2 text-text-secondary">
                     <MapPin className="w-6 h-6 opacity-50" />
                     <span className="text-xs uppercase tracking-widest">Location Unavailable</span>
                 </div>
                 )}
 
                 <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-muted-foreground w-full">
+                    <div className="flex items-center gap-2 text-text-secondary w-full">
                         <MapPin className="w-4 h-4 shrink-0" />
                         {isOfficialEditing ? (
                             <div className="flex gap-2 w-full max-w-sm">
@@ -1115,7 +1116,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                         {user && !isOfficialEditing && (
                             <Link
                                 to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}
-                                className="hidden group-hover:inline-flex items-center justify-center p-1 rounded hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors ml-1"
+                                className="hidden group-hover:inline-flex items-center justify-center p-1 rounded hover:bg-surface-muted text-text-secondary/50 hover:text-text-primary transition-colors ml-1"
                                 title="Edit building"
                             >
                                 <Pencil className="w-3 h-3" />
@@ -1166,7 +1167,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                 </div>
 
                 {(building.status === 'Lost' || building.status === 'Unbuilt' || building.status === 'Under Construction') && (
-                    <Alert className="mt-4 border-destructive/50 bg-destructive/10 text-destructive dark:text-red-400">
+                    <Alert className="mt-4 border-feedback-destructive/50 bg-feedback-destructive/10 text-feedback-destructive dark:text-red-400">
                         <AlertTriangle className="h-4 w-4 stroke-destructive dark:stroke-red-400" />
                         <AlertDescription className="ml-2 font-medium">
                             {building.status === 'Lost'
@@ -1179,6 +1180,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                 )}
             </div>
 
+            <div className="mt-12 border-t border-border-default pt-8 space-y-6">
             <WidgetErrorBoundary>
             {displayImages.length > 0 ? (
                 (() => {
@@ -1230,11 +1232,11 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                     }
                 })()
             ) : (
-                <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-white/10 relative group">
-                    <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground text-center p-6">
-                        <ImageIcon className="w-12 h-12 text-muted-foreground/20 mb-3" />
-                        <h3 className="font-medium text-muted-foreground mb-1">No image yet</h3>
-                        <p className="text-xs text-muted-foreground/50 max-w-[200px] mb-4">Be the first to add a photo of this building</p>
+                <div className="aspect-[4/3] rounded-sm overflow-hidden shadow-none border border-border-default relative group">
+                    <div className="w-full h-full bg-surface-muted flex flex-col items-center justify-center text-text-secondary text-center p-6">
+                        <ImageIcon className="w-12 h-12 text-text-secondary/20 mb-3" />
+                        <h3 className="font-medium text-text-secondary mb-1">No image yet</h3>
+                        <p className="text-xs text-text-secondary/50 max-w-[200px] mb-4">Be the first to add a photo of this building</p>
                         <Button variant="outline" size="sm" asChild>
                             <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}>
                                 <ImagePlus className="w-4 h-4 mr-2" />
@@ -1251,12 +1253,13 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                     href={googleSearchUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary hover:underline transition-colors"
+                    className="flex items-center gap-2 text-xs text-text-secondary hover:text-brand-primary hover:underline transition-colors"
                 >
                     <Search className="w-3 h-3" />
                     Search for photos on Google
                     <ExternalLink className="w-3 h-3 opacity-50" />
                 </a>
+            </div>
             </div>
         </div>
 
@@ -1306,12 +1309,12 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
       </div>
 
             {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
-            <div className="space-y-6">
+            <div className="mt-12 border-t border-border-default pt-8 space-y-6">
                 {!isEditing && userStatus ? (
                     // Summary View
-                    <div className="bg-white rounded-2xl p-5 border border-transparent space-y-4 group">
+                    <div className="bg-surface-card rounded-sm p-5 border border-border-default space-y-4 group">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                            <h3 className="text-sm font-bold uppercase tracking-widest text-text-secondary">
                                 Your Activity
                             </h3>
                             <Button variant="ghost" size="sm" asChild>
@@ -1324,17 +1327,17 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                         <div className="flex flex-wrap gap-4 items-center">
                             {userStatus === 'visited' ? (
                                 <Badge
-                                    className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                                    className="bg-brand-primary text-brand-primary-foreground hover:opacity-90 cursor-pointer"
                                     onClick={() => handleStatusChange('pending')}
                                 >
                                     Visited
                                 </Badge>
                             ) : userStatus === 'ignored' ? (
-                                <Badge variant="outline" className="text-muted-foreground border-dashed">Hidden</Badge>
+                                <Badge variant="outline" className="text-text-secondary border-dashed">Hidden</Badge>
                             ) : (
                                 <Badge
                                     variant="secondary"
-                                    className="cursor-pointer hover:bg-secondary/80"
+                                    className="cursor-pointer hover:bg-surface-muted/80"
                                     onClick={() => handleStatusChange('visited')}
                                 >
                                     Saved
@@ -1353,7 +1356,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                         return (
                                             <Circle
                                               key={i}
-                                              className={`w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity ${isFilled ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
+                                              className={`w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity ${isFilled ? "fill-text-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`}
                                               onMouseEnter={() => setHoverRating(ratingValue)}
                                               onClick={() => handleRate(building.id, ratingValue === myRating ? 0 : ratingValue)}
                                             />
@@ -1363,7 +1366,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                             )}
                         </div>
 
-                        {note && <p className="text-sm text-foreground/90">{note}</p>}
+                        {note && <p className="text-sm text-text-primary/90">{note}</p>}
 
                         {selectedCollectionIds.length > 0 && (
                              <div className="flex flex-wrap gap-2">
@@ -1396,7 +1399,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                         <img
                                             key={img.id}
                                             src={publicUrl}
-                                            className="h-24 w-24 object-cover rounded-md border bg-muted cursor-pointer hover:opacity-90 transition-opacity"
+                                            className="h-24 w-24 object-cover rounded-md border bg-surface-muted cursor-pointer hover:opacity-90 transition-opacity"
                                             alt="Review photo"
                                             onClick={() => setSelectedImage(displayImg)}
                                         />
@@ -1410,11 +1413,11 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                     <>
                         <div className="flex flex-col gap-4">
                             {/* Toggle Status */}
-                            <div className="flex items-center gap-2 w-full py-4 border-y border-dashed border-border/60">
+                            <div className="flex items-center gap-2 w-full py-4 border-y border-dashed border-border-default/60">
                                 {userStatus && (
                                     <Button
                                         variant="link"
-                                        className="text-muted-foreground hover:text-destructive h-auto p-0 text-xs shrink-0"
+                                        className="text-text-secondary hover:text-feedback-destructive h-auto p-0 text-xs shrink-0"
                                         onClick={() => setShowDeleteAlert(true)}
                                     >
                                         Remove from my list
@@ -1423,7 +1426,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                 <Button
                                     variant={userStatus === 'visited' ? "default" : "secondary"}
                                     size="sm"
-                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-muted-foreground/10"
+                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-surface-muted/80"
                                     onClick={() => handleStatusChange('visited')}
                                 >
                                     <Check className="w-4 h-4 mr-2" />
@@ -1432,7 +1435,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                 <Button
                                     variant={userStatus === 'pending' ? "default" : "secondary"}
                                     size="sm"
-                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-muted-foreground/10 data-[state=active]:bg-primary"
+                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-surface-muted/80"
                                     onClick={() => handleStatusChange('pending')}
                                 >
                                     <Bookmark className={`w-4 h-4 mr-2 ${userStatus === 'pending' ? "fill-current" : ""}`} />
@@ -1441,7 +1444,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                 <Button
                                     variant={userStatus === 'ignored' ? "default" : "secondary"}
                                     size="sm"
-                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-muted-foreground/10"
+                                    className="flex-1 rounded-full h-10 shadow-none hover:bg-surface-muted/80"
                                     onClick={() => handleStatusChange('ignored')}
                                 >
                                     <EyeOff className="w-4 h-4 mr-2" />
@@ -1467,7 +1470,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                         {showNoteEditor && (userStatus === 'visited' || userStatus === 'pending') && (
                             <div className="pt-4 border-t border-dashed space-y-4 animate-in fade-in slide-in-from-top-2">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium uppercase text-muted-foreground">Your Note</label>
+                                    <label className="text-xs font-medium uppercase text-text-secondary">Your Note</label>
                                     <Textarea
                                         placeholder="Write a note..."
                                         value={note}
@@ -1521,12 +1524,12 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                 {pendingImages.length > 0 && (
                                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 animate-in fade-in slide-in-from-top-1">
                                         {pendingImages.map((img) => (
-                                            <div key={img.id} className="relative aspect-square group rounded-md overflow-hidden border bg-muted">
+                                            <div key={img.id} className="relative aspect-square group rounded-md overflow-hidden border bg-surface-muted">
                                                 <img src={img.preview} className="w-full h-full object-cover" alt="Preview" />
 
                                                 <button
                                                     onClick={() => setPendingImages(prev => prev.map(p => p.id === img.id ? { ...p, is_generated: !p.is_generated } : p))}
-                                                    className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase transition-colors z-10 ${img.is_generated ? 'bg-primary text-primary-foreground' : 'bg-black/60 text-white hover:bg-black/80'}`}
+                                                    className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase transition-colors z-10 ${img.is_generated ? "bg-brand-primary text-brand-primary-foreground" : "bg-black/60 text-text-inverse hover:bg-black/80"}`}
                                                 >
                                                     {img.is_generated ? 'Render' : 'Photo'}
                                                 </button>
@@ -1559,15 +1562,15 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                          {userLinks.length > 0 && (
                                              <div className="space-y-2">
                                                  {userLinks.map(link => (
-                                                     <div key={link.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50 border text-sm">
+                                                     <div key={link.id} className="flex items-center justify-between p-2 rounded-md bg-surface-muted/50 border text-sm">
                                                          <div className="flex flex-col overflow-hidden">
                                                              <span className="font-medium truncate">{link.title || link.url}</span>
-                                                             <span className="text-xs text-muted-foreground truncate opacity-70">{link.url}</span>
+                                                             <span className="text-xs text-text-secondary truncate opacity-70">{link.url}</span>
                                                          </div>
                                                          <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                                            className="h-6 w-6 text-text-secondary hover:text-feedback-destructive"
                                                             onClick={() => handleRemoveLink(link.id)}
                                                          >
                                                             <Trash2 className="w-3 h-3" />
@@ -1578,10 +1581,10 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                          )}
 
                                          {showLinkEditor && (
-                                             <div className="flex flex-col gap-2 p-3 bg-muted/20 rounded-md border border-dashed">
+                                             <div className="flex flex-col gap-2 p-3 bg-surface-muted/20 rounded-md border border-dashed">
                                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                      <div className="space-y-1">
-                                                        <Label className="text-[10px] uppercase text-muted-foreground">URL</Label>
+                                                        <Label className="text-[10px] uppercase text-text-secondary">URL</Label>
                                                         <Input
                                                             value={newLinkUrl}
                                                             onChange={e => setNewLinkUrl(e.target.value)}
@@ -1590,7 +1593,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                                         />
                                                      </div>
                                                      <div className="space-y-1">
-                                                        <Label className="text-[10px] uppercase text-muted-foreground">Title</Label>
+                                                        <Label className="text-[10px] uppercase text-text-secondary">Title</Label>
                                                         <Input
                                                             value={newLinkTitle}
                                                             onChange={e => setNewLinkTitle(e.target.value)}
@@ -1625,7 +1628,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                         {!showVisitWith ? (
                             <Button
                                 variant="outline"
-                                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                                className="w-full justify-start text-text-secondary hover:text-text-primary"
                                 onClick={() => setShowVisitWith(true)}
                             >
                                 <span className="flex items-center gap-2">
@@ -1658,7 +1661,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                         {sendingInvites ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     </Button>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-text-secondary">
                                     Invite friends to join you. They'll get a notification.
                                 </p>
                             </div>
@@ -1672,14 +1675,14 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
             {(linksLoading || topLinks.length > 0) && (
                 <WidgetErrorBoundary>
                 <div className="pt-4 border-t border-dashed">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-4">
                         Top Community Resources
                     </h3>
                     <div className="space-y-2">
                         {linksLoading ? (
                             <>
-                                <Skeleton className="h-12 w-full rounded-lg" />
-                                <Skeleton className="h-12 w-full rounded-lg" />
+                                <Skeleton className="h-12 w-full rounded-sm" />
+                                <Skeleton className="h-12 w-full rounded-sm" />
                             </>
                         ) : (
                             topLinks.map(link => {
@@ -1695,7 +1698,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                 return (
                                     <div
                                         key={link.link_id}
-                                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border group"
+                                        className="flex items-center justify-between p-3 rounded-sm bg-surface-muted/50 hover:bg-surface-muted transition-colors border border-transparent hover:border-border-default group"
                                     >
                                         <a
                                             href={link.url}
@@ -1703,10 +1706,10 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                             rel="noopener noreferrer"
                                             className="flex-1 flex flex-col gap-0.5 overflow-hidden cursor-pointer"
                                         >
-                                            <span className="font-medium truncate pr-2 text-sm group-hover:text-primary transition-colors">
+                                            <span className="font-medium truncate pr-2 text-sm group-hover:text-brand-primary transition-colors">
                                                 {hasTitle ? link.title : displayDomain}
                                             </span>
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-2 text-xs text-text-secondary">
                                                 {hasTitle && (
                                                     <span className="truncate max-w-[150px]">{displayDomain}</span>
                                                 )}
@@ -1720,7 +1723,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className={`h-8 px-2 gap-1.5 text-xs hover:bg-transparent ${isLiked ? 'text-pink-500 hover:text-pink-600' : 'text-muted-foreground hover:text-pink-500'}`}
+                                                className={`h-8 px-2 gap-1.5 text-xs hover:bg-transparent ${isLiked ? 'text-pink-500 hover:text-pink-600' : 'text-text-secondary hover:text-pink-500'}`}
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     handleLinkLike(link.link_id);
@@ -1734,7 +1737,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-1.5 rounded-md hover:bg-background text-muted-foreground/50 hover:text-foreground transition-colors"
+                                                className="p-1.5 rounded-md hover:bg-surface-default text-text-secondary/50 hover:text-text-primary transition-colors"
                                             >
                                                 <ExternalLink className="w-4 h-4" />
                                             </a>
@@ -1754,10 +1757,10 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                 <h3 className="text-lg font-bold mb-4">Community Notes</h3>
                 <div className="space-y-4">
                     {entries.length === 0 ? (
-                        <p className="text-muted-foreground text-sm">No one has visited this building yet.</p>
+                        <p className="text-text-secondary text-sm">No one has visited this building yet.</p>
                     ) : (
                         entries.map(entry => (
-                            <div key={entry.id} className={`flex gap-4 p-4 bg-muted/10 rounded-lg ${entry.user.is_architect_of_building ? 'border-l-2 border-l-[#eeff41ff] bg-background border-t border-r border-b border-border/50' : ''}`}>
+                            <div key={entry.id} className={`flex gap-4 p-4 bg-surface-muted/10 rounded-sm ${entry.user.is_architect_of_building ? 'border-l-2 border-l-[#eeff41ff] bg-surface-default border-t border-r border-b border-border-default/50' : ''}`}>
                                 <Avatar>
                                     <AvatarImage src={entry.user.avatar_url || undefined} />
                                     <AvatarFallback>{entry.user.username?.[0]}</AvatarFallback>
@@ -1769,7 +1772,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                         </Link>
                                         {entry.user.is_verified_architect && (
                                             <div
-                                                className="inline-flex items-center text-foreground ml-1 align-middle"
+                                                className="inline-flex items-center text-text-primary ml-1 align-middle"
                                                 data-testid="verified-badge-icon"
                                                 title="Verified Architect"
                                             >
@@ -1778,7 +1781,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                         )}
                                         {entry.status === 'visited' && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">Visited</Badge>}
                                         {entry.status === 'pending' && <Badge variant="outline" className="text-[10px] h-5 px-1.5">Saved</Badge>}
-                                        <Link to={`/review/${entry.id}`} className="text-xs text-muted-foreground hover:underline">
+                                        <Link to={`/review/${entry.id}`} className="text-xs text-text-secondary hover:underline">
                                             {formatDistanceToNow(new Date(entry.created_at))} ago
                                         </Link>
                                     </div>
@@ -1789,12 +1792,12 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                                 {[...Array(3)].map((_, i) => (
                                                     <Circle
                                                       key={i}
-                                                      className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/20"}`}
+                                                      className={`w-3 h-3 ${i < entry.rating! ? "fill-text-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`}
                                                     />
                                                 ))}
                                             </div>
                                         )}
-                                        {entry.content && <p className="text-sm mt-1 text-muted-foreground group-hover:text-foreground transition-colors">{entry.content}</p>}
+                                        {entry.content && <p className="text-sm mt-1 text-text-secondary group-hover:text-text-primary transition-colors">{entry.content}</p>}
                                     </Link>
 
                                     {entry.images && entry.images.length > 0 && (
@@ -1815,7 +1818,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                                     <img
                                                         key={img.id}
                                                         src={publicUrl}
-                                                        className="h-24 w-24 object-cover rounded-md border bg-muted cursor-pointer hover:opacity-90 transition-opacity"
+                                                        className="h-24 w-24 object-cover rounded-md border bg-surface-muted cursor-pointer hover:opacity-90 transition-opacity"
                                                         alt="Review photo"
                                                         onClick={() => setSelectedImage(displayImg)}
                                                     />
@@ -1832,6 +1835,8 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
             </div>
 
         </div>
+      </div>
+
       </div>
 
       <ImageDetailsDialog
@@ -1864,7 +1869,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
               </AlertDialogHeader>
               <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  <AlertDialogAction onClick={handleDelete} className="bg-feedback-destructive text-feedback-destructive-foreground hover:opacity-90">
                       Remove
                   </AlertDialogAction>
               </AlertDialogFooter>

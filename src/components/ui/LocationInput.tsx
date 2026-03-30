@@ -184,7 +184,7 @@ function PlacesAutocomplete({
     <div className="relative" ref={commandRef}>
       <Command shouldFilter={false} className="overflow-visible bg-transparent">
         <div className="relative">
-          <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+          <MapPin className="absolute left-3 top-3 h-4 w-4 text-text-secondary z-10" />
           <CommandPrimitive.Input
             id={id}
             value={value}
@@ -199,13 +199,13 @@ function PlacesAutocomplete({
             placeholder={placeholder}
             autoComplete="off" // FIXED: Disable browser autocomplete
             className={cn(
-              "flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              "flex h-10 w-full rounded-sm border border-border-default bg-surface-muted pl-9 pr-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-text-primary placeholder:text-text-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             )}
           />
         </div>
 
         {open && (status === "OK" || status === "ZERO_RESULTS") && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-[1150] rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
+          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-[1150] rounded-sm border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95">
             <CommandList>
               <CommandGroup>
                 {status === "OK" &&

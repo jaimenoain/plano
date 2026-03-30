@@ -42,7 +42,7 @@ export function MutualFacepile({ users, className }: MutualFacepileProps) {
             : undefined;
 
             return (
-              <Avatar key={user.id} className="h-5 w-5 border-2 border-background">
+              <Avatar key={user.id} className="h-5 w-5 border-2 border-surface-default">
                 <AvatarImage src={avatarUrl || ""} alt={user.username || "User"} />
                 <AvatarFallback className="text-[8px]">
                   {(user.username?.[0] || "?").toUpperCase()}
@@ -51,7 +51,7 @@ export function MutualFacepile({ users, className }: MutualFacepileProps) {
             );
         })}
       </div>
-      <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">
+      <span className="text-xs text-text-secondary truncate flex-1 min-w-0">
         {text}
       </span>
     </div>

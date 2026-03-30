@@ -81,8 +81,10 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
         <Card
             ref={ref}
             className={cn(
-                "group relative overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-md",
-                isHighlighted ? "border-primary ring-1 ring-primary bg-secondary/5" : "hover:border-primary/50"
+                "group relative overflow-hidden transition-colors duration-150 cursor-pointer border border-border-default rounded-sm shadow-none bg-surface-card",
+                isHighlighted
+                    ? "border-brand-primary ring-1 ring-brand-primary bg-brand-secondary/50"
+                    : "hover:border-border-default-strong"
             )}
             onMouseEnter={() => setHighlightedId(item.building.id)}
             onMouseLeave={() => setHighlightedId(null)}
@@ -92,14 +94,11 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
             }}
         >
             {canEdit && onRemove && (
-                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-6 w-6 rounded-full shadow-sm bg-green-500 hover:bg-green-600 text-white border-none"
-                        onClick={onRemove}
-                        title="Remove from map"
-                    >
+                <div
+                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <Button variant="destructive" size="icon-sm" onClick={onRemove} title="Remove from map">
                         <Check className="h-3 w-3" />
                     </Button>
                 </div>
@@ -108,7 +107,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                 {/* Drag Handle */}
                 {isDraggable && (
                     <div
-                        className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-r"
+                        className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary hover:bg-surface-muted/50 transition-colors border-r border-border-default"
                         {...dragHandleProps}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -122,7 +121,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                         <div className="flex justify-between items-start gap-2 min-w-0">
                              <div className="flex items-start gap-2 min-w-0">
                                 {badgeIndex !== undefined && (
-                                    <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm mt-0.5">
+                                    <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-brand-primary text-[10px] font-bold text-brand-primary-foreground mt-0.5">
                                         {badgeIndex}
                                     </div>
                                 )}
@@ -132,7 +131,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                              </div>
                         </div>
 
-                        <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                        <div className="text-xs text-text-secondary mt-1 line-clamp-1">
                              <span>{architectNames || "Unknown Architect"}</span>
                              {item.building.year_completed && (
                                 <>
@@ -151,18 +150,18 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                         onValueChange={(val) => onUpdateCategory?.(val === "unassigned" ? "" : val)}
                                     >
                                         <SelectTrigger className="h-auto p-0 border-none bg-transparent hover:bg-transparent shadow-none w-auto ring-0 focus:ring-0">
-                                             <div className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-secondary/50 transition-colors cursor-pointer">
+                                             <div className="flex items-center gap-2 px-1 py-0.5 rounded-sm hover:bg-surface-muted/50 transition-colors cursor-pointer">
                                                  <div
                                                     className="w-3 h-3 rounded-full"
                                                     style={{ backgroundColor: currentCategory?.color || "#9CA3AF" }}
                                                  />
-                                                 <span className="truncate max-w-[120px] text-sm text-foreground">
+                                                 <span className="truncate max-w-[120px] text-sm text-text-primary">
                                                     {currentCategory?.label || "Uncategorized"}
                                                  </span>
                                              </div>
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="unassigned" className="text-muted-foreground italic">Uncategorized</SelectItem>
+                                            <SelectItem value="unassigned" className="text-text-secondary italic">Uncategorized</SelectItem>
                                             {customCategories?.map(cat => (
                                                 <SelectItem key={cat.id} value={cat.id}>
                                                     <div className="flex items-center gap-2">
@@ -180,7 +179,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                                 className="w-3 h-3 rounded-full"
                                                 style={{ backgroundColor: currentCategory.color }}
                                             />
-                                            <span className="text-sm text-foreground">{currentCategory.label}</span>
+                                            <span className="text-sm text-text-primary">{currentCategory.label}</span>
                                         </div>
                                     )
                                 )}
@@ -199,7 +198,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                         value={noteValue}
                                         onChange={(e) => setNoteValue(e.target.value)}
                                         onBlur={handleNoteBlur}
-                                        className="resize-none text-xs min-h-[40px] bg-secondary/30 border-transparent focus:border-input focus:bg-background transition-colors p-2"
+                                        className="resize-none text-xs min-h-[40px] bg-surface-muted/30 border-transparent focus:border-border-default focus:bg-surface-default transition-colors p-2"
                                         rows={3}
                                     />
                                     <div className="absolute bottom-1 right-1 opacity-50 pointer-events-none">
@@ -208,7 +207,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                 </div>
                             ) : noteValue ? (
                                 <div
-                                    className="text-xs text-muted-foreground italic bg-secondary/30 p-2 rounded line-clamp-3 cursor-text hover:bg-secondary/50 transition-colors"
+                                    className="text-xs text-text-secondary italic bg-surface-muted/30 p-2 rounded-sm line-clamp-3 cursor-text hover:bg-surface-muted/50 transition-colors"
                                     onClick={() => setIsEditingNote(true)}
                                 >
                                     "{noteValue}"
@@ -216,14 +215,14 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                             ) : (
                                <button
                                    onClick={() => setIsEditingNote(true)}
-                                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-1 py-0.5 rounded hover:bg-secondary/50 transition-colors opacity-0 group-hover:opacity-100"
+                                   className="text-xs text-text-secondary hover:text-text-primary flex items-center gap-1 px-1 py-0.5 rounded-sm hover:bg-surface-muted/50 transition-colors opacity-0 group-hover:opacity-100 transition-opacity duration-150"
                                >
                                    <MessageSquarePlus className="h-3 w-3" />
                                    Add note
                                </button>
                             )
                         ) : item.note ? (
-                            <div className="text-xs text-muted-foreground italic bg-secondary/30 p-2 rounded line-clamp-3">
+                            <div className="text-xs text-text-secondary italic bg-surface-muted/30 p-2 rounded-sm line-clamp-3">
                                 "{item.note}"
                             </div>
                         ) : null}
@@ -232,7 +231,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
 
                 {/* Image Section */}
                 {showImages && (
-                    <div className="w-28 shrink-0 relative border-l bg-secondary">
+                    <div className="w-28 shrink-0 relative border-l border-border-default bg-surface-muted">
                          {imageUrl ? (
                             <img
                                 src={imageUrl}
@@ -241,7 +240,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                 loading="lazy"
                             />
                         ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                            <div className="absolute inset-0 flex items-center justify-center text-text-secondary">
                                 <span className="text-xs">No Image</span>
                             </div>
                         )}

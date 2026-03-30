@@ -95,7 +95,7 @@ export function ArchitectSelect({
           <PopoverAnchor asChild>
               <div
                 ref={containerRef}
-                className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background relative"
+                className="group border border-border-default px-3 py-2 text-sm rounded-md focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2 bg-surface-default relative"
               >
                 <div className="flex flex-wrap gap-1">
                   {selectedArchitects.map((architect) => (
@@ -104,10 +104,10 @@ export function ArchitectSelect({
                       {architect.name}
                       <button
                         type="button"
-                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        className="ml-1 rounded-full outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
                         onClick={() => handleUnselect(architect.id)}
                       >
-                        <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        <X className="h-3 w-3 text-text-secondary hover:text-text-primary" />
                       </button>
                     </Badge>
                   ))}
@@ -123,7 +123,7 @@ export function ArchitectSelect({
                     }}
                     placeholder={placeholder}
                     autoComplete="off"
-                    className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px]"
+                    className="ml-2 flex-1 bg-transparent outline-none placeholder:text-text-secondary min-w-[50px]"
                   />
                 </div>
               </div>
@@ -151,10 +151,10 @@ export function ArchitectSelect({
                     onSelect={() => handleSelect(suggestion)}
                   >
                      <div className="flex items-center gap-2">
-                        <PencilRuler className="h-4 w-4 text-muted-foreground" />
+                        <PencilRuler className="h-4 w-4 text-text-secondary" />
                         <div className="flex flex-col">
                             <span>{suggestion.name}</span>
-                            <span className="text-[10px] text-muted-foreground capitalize">{suggestion.type}</span>
+                            <span className="text-[10px] text-text-secondary capitalize">{suggestion.type}</span>
                         </div>
                      </div>
                   </CommandItem>

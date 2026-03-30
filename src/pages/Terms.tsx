@@ -2,14 +2,14 @@ import { ScrollRestoration } from "react-router-dom";
 
 export default function Terms() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-surface-default text-text-primary">
       <ScrollRestoration />
       <div className="container mx-auto py-10 px-4 max-w-3xl space-y-8">
         <header className="space-y-4">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Terms and Conditions for Plano
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-text-secondary">
             <strong>Last Updated:</strong> January 2026
           </p>
         </header>
@@ -131,7 +131,7 @@ export default function Terms() {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">12. Contact Us</h2>
           <p>
-            If you have any questions about these Terms, please contact us at: <a href="mailto:support@plano.app" className="text-primary hover:underline">support@plano.app</a>
+            If you have any questions about these Terms, please contact us at: <a href="mailto:support@plano.app" className="text-brand-primary hover:underline">support@plano.app</a>
           </p>
         </section>
       </div>

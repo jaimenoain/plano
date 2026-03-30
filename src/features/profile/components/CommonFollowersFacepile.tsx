@@ -14,7 +14,7 @@ export function CommonFollowersFacepile({ users, count }: CommonFollowersFacepil
 
   // Helper to wrap name
   const Name = ({ user }: { user: SimpleProfile }) => (
-      <span className="font-semibold text-foreground">{user.username}</span>
+      <span className="font-semibold text-text-primary">{user.username}</span>
   );
 
   if (count === 1) {
@@ -34,7 +34,7 @@ export function CommonFollowersFacepile({ users, count }: CommonFollowersFacepil
            textContent = (
                <>
                  Followed by <Name user={users[0]} />, <Name user={users[1]} />
-                 {remaining > 0 && <span className="font-semibold text-foreground"> +{remaining}</span>}
+                 {remaining > 0 && <span className="font-semibold text-text-primary"> +{remaining}</span>}
                </>
            );
       } else {
@@ -43,18 +43,18 @@ export function CommonFollowersFacepile({ users, count }: CommonFollowersFacepil
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-border/40 bg-card/30">
+    <div className="flex items-center gap-3 px-4 py-3 border-b border-border-default/40 bg-surface-card/30">
       <div className="flex -space-x-2 overflow-hidden">
         {users.slice(0, 3).map((user) => (
           <Link key={user.id} to={`/profile/${user.username || user.id}`}>
-             <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
+             <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-surface-default">
                 <AvatarImage src={user.avatar_url || undefined} alt={user.username || "User"} />
                 <AvatarFallback className="text-[10px]">{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
              </Avatar>
           </Link>
         ))}
       </div>
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-text-secondary">
           {textContent}
       </div>
     </div>

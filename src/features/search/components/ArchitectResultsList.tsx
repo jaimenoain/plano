@@ -29,7 +29,7 @@ export function ArchitectResultsList({ architects, isLoading }: ArchitectResults
 
   if (architects.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+      <div className="flex flex-col items-center justify-center p-8 text-center text-text-secondary">
         <p>No architects found matching your search.</p>
       </div>
     );
@@ -40,20 +40,20 @@ export function ArchitectResultsList({ architects, isLoading }: ArchitectResults
       {architects.map((architect) => (
         <div
           key={architect.id}
-          className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border/50 group"
+          className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border-default/50 group"
           onClick={() => navigate(`/architect/${architect.id}`)}
         >
           <div className="flex items-center gap-3">
-             <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center border">
-                <PencilRuler className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+             <div className="h-10 w-10 rounded-full bg-surface-muted flex items-center justify-center border">
+                <PencilRuler className="h-5 w-5 text-text-secondary group-hover:text-text-primary transition-colors" />
              </div>
             <div className="flex flex-col">
               <span className="font-medium text-sm">{architect.name}</span>
-              <span className="text-xs text-muted-foreground capitalize">{architect.type}</span>
+              <span className="text-xs text-text-secondary capitalize">{architect.type}</span>
             </div>
           </div>
 
-          <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
+          <ChevronRight className="h-4 w-4 text-text-secondary/50 group-hover:text-text-primary transition-colors" />
         </div>
       ))}
     </div>

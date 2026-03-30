@@ -156,7 +156,7 @@ setError("Failed to load folder");
   if (loading || authLoading) {
       return (
           <div className="flex justify-center items-center h-screen">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
           </div>
       );
   }
@@ -165,11 +165,11 @@ setError("Failed to load folder");
       return (
         <AppLayout title="Folder Not Found" showLogo={false} showBack>
             <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-                <div className="bg-secondary/50 p-6 rounded-full mb-6">
-                    <Folder className="h-10 w-10 text-muted-foreground" />
+                <div className="bg-surface-muted/50 p-6 rounded-full mb-6">
+                    <Folder className="h-10 w-10 text-text-secondary" />
                 </div>
                 <h2 className="text-2xl font-bold mb-2">Unavailable</h2>
-                <p className="text-muted-foreground max-w-sm mx-auto mb-8">
+                <p className="text-text-secondary max-w-sm mx-auto mb-8">
                     {error || "This folder does not exist or you don't have permission to view it."}
                 </p>
                 <Button onClick={handleBack}>Back to Profile</Button>
@@ -190,18 +190,18 @@ setError("Failed to load folder");
        <div className="max-w-7xl mx-auto px-4 py-6">
            {/* Header */}
            <div className="mb-8">
-               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2 cursor-pointer hover:text-foreground w-fit" onClick={handleBack}>
+               <div className="flex items-center gap-2 text-sm text-text-secondary mb-2 cursor-pointer hover:text-text-primary w-fit" onClick={handleBack}>
                    <ArrowLeft className="h-4 w-4" />
                    Back to {username}'s Profile
                </div>
                <div className="flex items-start justify-between">
                    <div>
                        <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-                           <Folder className="h-8 w-8 text-muted-foreground" />
+                           <Folder className="h-8 w-8 text-text-secondary" />
                            {folder.name}
                        </h1>
                        {folder.description && (
-                           <p className="text-muted-foreground max-w-2xl text-lg">
+                           <p className="text-text-secondary max-w-2xl text-lg">
                                {folder.description}
                            </p>
                        )}
@@ -227,12 +227,12 @@ setError("Failed to load folder");
                    ))}
                </div>
            ) : (
-               <div className="py-20 text-center border-2 border-dashed border-border/50 rounded-xl bg-secondary/10">
-                   <div className="w-16 h-16 bg-secondary/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                       <Folder className="h-8 w-8 text-muted-foreground/50" />
+               <div className="py-20 text-center border-2 border-dashed border-border-default/50 rounded-xl bg-surface-muted/10">
+                   <div className="w-16 h-16 bg-surface-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <Folder className="h-8 w-8 text-text-secondary/50" />
                    </div>
                    <h3 className="text-xl font-medium mb-2">Folder is empty</h3>
-                   <p className="text-muted-foreground max-w-sm mx-auto mb-6">
+                   <p className="text-text-secondary max-w-sm mx-auto mb-6">
                        {isOwner ? "Add collections to this folder to organize your maps." : "This folder doesn't have any public collections yet."}
                    </p>
                    {isOwner && (

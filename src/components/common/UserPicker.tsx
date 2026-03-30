@@ -89,7 +89,7 @@ export function UserPicker({ selectedIds, onSelect, onRemove, className, modal }
                         </Avatar>
                         <span>{u.username}</span>
                         <X
-                            className="h-4 w-4 cursor-pointer hover:text-destructive transition-colors"
+                            className="h-4 w-4 cursor-pointer hover:text-feedback-destructive transition-colors"
                             onClick={() => onRemove(u.id)}
                         />
                     </Badge>
@@ -103,7 +103,7 @@ export function UserPicker({ selectedIds, onSelect, onRemove, className, modal }
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between bg-secondary/20 border-input text-muted-foreground hover:text-foreground"
+            className="w-full justify-between bg-surface-muted/20 border-border-default text-text-secondary hover:text-text-primary"
           >
             {selectedIds.length > 0 ? "Add more people..." : "Select friends..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -119,7 +119,7 @@ export function UserPicker({ selectedIds, onSelect, onRemove, className, modal }
             />
             <CommandList>
                 {loading ? (
-                    <div className="py-6 text-center text-sm text-muted-foreground">Loading...</div>
+                    <div className="py-6 text-center text-sm text-text-secondary">Loading...</div>
                 ) : filteredUsers.length === 0 ? (
                     <CommandEmpty>No friends found.</CommandEmpty>
                 ) : (

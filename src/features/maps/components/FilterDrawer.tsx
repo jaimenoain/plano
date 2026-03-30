@@ -55,7 +55,7 @@ function MultiSelectCheckboxList({ items, selectedIds, onChange, className }: Mu
   };
 
   if (items.length === 0) {
-    return <div className="text-xs text-muted-foreground py-2">No items available</div>;
+    return <div className="text-xs text-text-secondary py-2">No items available</div>;
   }
 
   return (
@@ -344,7 +344,7 @@ const handleModeChange = (newMode: string) => {
         <Button variant="outline" size="icon" className="h-9 w-9 relative" aria-label="Filters">
           <ListFilter className="h-4 w-4" />
           {activeFilterCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground">
+            <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-brand-primary text-[8px] text-brand-primary-foreground">
               {activeFilterCount}
             </span>
           )}
@@ -358,7 +358,7 @@ const handleModeChange = (newMode: string) => {
               variant="ghost"
               size="sm"
               onClick={handleClearAll}
-              className="h-auto px-2 text-xs text-muted-foreground hover:text-foreground"
+              className="h-auto px-2 text-xs text-text-secondary hover:text-text-primary"
             >
               Clear all
             </Button>
@@ -383,7 +383,7 @@ const handleModeChange = (newMode: string) => {
             /* Discover Mode Section */
             <>
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-xs">
+                <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider text-xs">
                   Discovery Settings
                 </h3>
 
@@ -403,7 +403,7 @@ const handleModeChange = (newMode: string) => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium">Show only the best</Label>
-                    <span className="text-xs text-muted-foreground">{getTierLabel(currentMinRating)}</span>
+                    <span className="text-xs text-text-secondary">{getTierLabel(currentMinRating)}</span>
                   </div>
                   <Slider
                     defaultValue={[0]}
@@ -420,7 +420,7 @@ const handleModeChange = (newMode: string) => {
             /* Library Mode Section */
             <>
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-xs">
+                <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider text-xs">
                   {isContactMode ? 'Contact Filters' : 'Library Settings'}
                 </h3>
 
@@ -448,7 +448,7 @@ const handleModeChange = (newMode: string) => {
                         {isContactMode ? 'Your Rating (Overlap)' : 'Your Rating'}
                     </Label>
                     {currentPersonalMinRating > 0 && (
-                      <span className="text-xs text-muted-foreground">Min {currentPersonalMinRating}</span>
+                      <span className="text-xs text-text-secondary">Min {currentPersonalMinRating}</span>
                     )}
                   </div>
                   <QualityRatingFilter
@@ -483,14 +483,14 @@ const handleModeChange = (newMode: string) => {
           {/* Global Filters Section */}
           <div className="space-y-4">
              <div className="flex items-center justify-between">
-                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-xs">
+                 <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider text-xs">
                   Global Filters
                 </h3>
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleResetGlobalFilters}
-                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                    className="h-auto p-0 text-xs text-text-secondary hover:text-text-primary"
                 >
                     Reset
                 </Button>
@@ -528,7 +528,7 @@ const handleModeChange = (newMode: string) => {
                     <AccordionTrigger className="text-sm">Function</AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-2">
                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">Category</Label>
+                            <Label className="text-xs font-medium text-text-secondary">Category</Label>
                             <Select
                                 value={currentCategory || "all"}
                                 onValueChange={handleCategoryChange}
@@ -548,7 +548,7 @@ const handleModeChange = (newMode: string) => {
                          </div>
 
                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">Typology</Label>
+                            <Label className="text-xs font-medium text-text-secondary">Typology</Label>
                             <MultiSelectCheckboxList
                                 items={filteredTypologies}
                                 selectedIds={currentTypologies}

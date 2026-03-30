@@ -16,11 +16,11 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Read Rate (30d)</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <Eye className="h-4 w-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{engagement.read_rate.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               of {engagement.total_notifications.toLocaleString()} notifications
             </p>
           </CardContent>
@@ -29,13 +29,13 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ghost Users</CardTitle>
-            <BellOff className="h-4 w-4 text-muted-foreground" />
+            <BellOff className="h-4 w-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-500">
               {engagement.active_users_never_read_percent.toFixed(1)}%
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               active users never read notifications
             </p>
           </CardContent>
@@ -44,13 +44,13 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Ignorers</CardTitle>
-            <EyeOff className="h-4 w-4 text-muted-foreground" />
+            <EyeOff className="h-4 w-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">
               {engagement.active_ignoring_percent.toFixed(1)}%
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               active while having unread notifications
             </p>
           </CardContent>
@@ -59,13 +59,13 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Zero Unread</CardTitle>
-                <Bell className="h-4 w-4 text-muted-foreground" />
+                <Bell className="h-4 w-4 text-text-secondary" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold text-green-500">
                     {unread_distribution.find(d => d.bucket === "0")?.count || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-secondary">
                     users have cleared all notifications
                 </p>
             </CardContent>
@@ -101,11 +101,11 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
                 <Tooltip
                   cursor={{ fill: 'transparent' }}
                   contentStyle={{
-                    backgroundColor: 'hsl(var(--background))',
-                    border: '1px solid hsl(var(--border))',
+                    backgroundColor: 'var(--surface-card)',
+                    border: '1px solid var(--border-default)',
                     borderRadius: 'var(--radius)'
                   }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  labelStyle={{ color: 'var(--text-primary)' }}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                     {unread_distribution.map((_entry, index) => (

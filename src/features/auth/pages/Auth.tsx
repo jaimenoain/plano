@@ -204,27 +204,24 @@ export default function Auth() {
 
   if (checkEmail) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-        <PlanoLogo className="h-16 md:h-20 w-auto mb-10" />
-
-        <div className="w-full max-w-sm text-center space-y-6">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <Mail className="h-8 w-8 text-primary" />
+      <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
+        <PlanoLogo className="h-8 w-auto mb-6" />
+        <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6 text-center">
+          <div className="flex justify-center">
+            <div className="h-16 w-16 bg-brand-secondary/30 rounded-sm flex items-center justify-center">
+              <Mail className="h-8 w-8 text-brand-primary" />
             </div>
           </div>
-          
-          <h1 className="text-xl font-semibold text-foreground">
-            Check your email
-          </h1>
-          
-          <p className="text-muted-foreground">
-            We've sent a {isResetPassword ? "password reset" : "confirmation"} link to <span className="font-medium text-foreground">{email}</span>.
-            Please check your inbox to continue.
+
+          <h1 className="text-xl font-semibold text-text-primary">Check your email</h1>
+
+          <p className="text-text-secondary">
+            We've sent a {isResetPassword ? "password reset" : "confirmation"} link to{" "}
+            <span className="font-medium text-text-primary">{email}</span>. Please check your inbox to continue.
           </p>
 
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full"
             onClick={() => {
               setCheckEmail(false);
@@ -240,11 +237,11 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-      <PlanoLogo className="h-16 md:h-20 w-auto mb-10" />
+    <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
+      <PlanoLogo className="h-8 w-auto mb-6" />
 
-      <div className="w-full max-w-sm">
-        <h1 className="text-xl font-semibold text-foreground text-center mb-6">
+      <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6">
+        <h1 className="text-xl font-semibold text-text-primary text-center">
           {isResetPassword
             ? "Reset your password"
             : isSignUp
@@ -257,27 +254,29 @@ export default function Auth() {
             <div className="flex flex-col items-center gap-4 mb-8">
               <div className="flex items-center justify-center pl-3">
                 {relatedProfiles.map((profile) => (
-                  <Avatar key={profile.id} className="h-10 w-10 border-2 border-background -ml-3 ring-2 ring-background">
+                  <Avatar key={profile.id} className="h-10 w-10 border-2 border-surface-default -ml-3 ring-2 ring-surface-default">
                     <AvatarImage src={profile.avatar_url || undefined} />
-                    <AvatarFallback className="text-xs bg-muted">{profile.username?.[0]?.toUpperCase()}</AvatarFallback>
+                    <AvatarFallback className="text-xs bg-surface-muted">{profile.username?.[0]?.toUpperCase()}</AvatarFallback>
                   </Avatar>
                 ))}
-                
-                <Avatar className="h-14 w-14 border-2 border-background -ml-3 z-10 shadow-lg ring-2 ring-background">
+
+                <Avatar className="h-14 w-14 border-2 border-surface-default -ml-3 z-10 shadow-lg ring-2 ring-surface-default">
                   <AvatarImage src={inviterProfile.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/20 text-primary text-lg">{inviterProfile.username?.[0]?.toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="bg-brand-secondary/30 text-brand-primary text-lg">
+                    {inviterProfile.username?.[0]?.toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
               </div>
 
               <div className="text-center space-y-1">
-                <p className="text-base text-foreground">
+                <p className="text-base text-text-primary">
                   Join <span className="font-bold">{inviterProfile.username}</span> and others
                 </p>
-                <p className="text-sm text-muted-foreground">on PLANO</p>
+                <p className="text-sm text-text-secondary">on PLANO</p>
               </div>
             </div>
           ) : (
-            <div className="bg-primary/10 text-primary px-4 py-3 rounded-md mb-6 text-sm flex items-center gap-2 border border-primary/20">
+            <div className="bg-brand-secondary/30 text-brand-primary px-4 py-3 rounded-sm text-sm flex items-center gap-2 border border-border-default">
               <UserPlus className="h-4 w-4 shrink-0" />
               <span>
                 <span className="font-semibold">{invitedBy}</span> invited you to join!
@@ -288,7 +287,7 @@ export default function Auth() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm text-muted-foreground">
+            <Label htmlFor="email" className="text-sm text-text-secondary">
               Email
             </Label>
             <Input
@@ -302,7 +301,7 @@ export default function Auth() {
 
           {!isResetPassword && (
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm text-muted-foreground">
+              <Label htmlFor="password" className="text-sm text-text-secondary">
                 Password
               </Label>
               <div className="relative">
@@ -317,7 +316,7 @@ export default function Auth() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -335,9 +334,16 @@ export default function Auth() {
                 />
                 <Label
                   htmlFor="terms"
-                  className="text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-sm text-text-secondary leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  I accept the <Link to="/terms" className="text-foreground hover:underline decoration-[#EEFF41] decoration-2 underline-offset-4" target="_blank">Terms and Conditions</Link>
+                  I accept the{" "}
+                  <Link
+                    to="/terms"
+                    className="text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4"
+                    target="_blank"
+                  >
+                    Terms and Conditions
+                  </Link>
                 </Label>
               </div>
             </div>
@@ -350,18 +356,14 @@ export default function Auth() {
                  onClick={() => {
                    setIsResetPassword(true);
                  }}
-                 className="text-xs text-muted-foreground hover:text-foreground"
+                 className="text-xs text-text-secondary hover:text-text-primary"
                >
                  Forgot password?
                </button>
             </div>
           )}
 
-          <Button
-            type="submit"
-            className="w-full bg-primary hover:bg-primary/90"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" variant="default" disabled={loading}>
             {loading
               ? "Loading..."
               : isResetPassword
@@ -372,30 +374,30 @@ export default function Auth() {
           </Button>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
+        <p className="text-center text-sm text-text-secondary">
           {isResetPassword ? (
-             <button
-               type="button"
-               onClick={() => {
-                 setIsResetPassword(false);
-               }}
-               className="text-foreground hover:underline decoration-[#EEFF41] decoration-2 underline-offset-4 font-medium"
-             >
-               Back to Sign In
-             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsResetPassword(false);
+              }}
+              className="text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4 font-medium"
+            >
+              Back to Sign In
+            </button>
           ) : (
-             <>
-               {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-               <button
-                 type="button"
-                 onClick={() => {
-                   setIsSignUp(!isSignUp);
-                 }}
-                 className="text-foreground hover:underline decoration-[#EEFF41] decoration-2 underline-offset-4 font-medium"
-               >
-                 {isSignUp ? "Sign In" : "Sign Up"}
-               </button>
-             </>
+            <>
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                }}
+                className="text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4 font-medium"
+              >
+                {isSignUp ? "Sign In" : "Sign Up"}
+              </button>
+            </>
           )}
         </p>
       </div>

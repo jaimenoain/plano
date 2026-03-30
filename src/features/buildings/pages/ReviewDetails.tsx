@@ -511,7 +511,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
     return (
       <AppLayout>
         <div className="flex justify-center items-center h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
         </div>
       </AppLayout>
     );
@@ -536,32 +536,32 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                 <div className="md:col-span-2 space-y-6">
                     
                     {/* Header Card */}
-                    <Card className="border-border/50 shadow-sm bg-card/50 backdrop-blur-sm">
+                    <Card className="border-border-default/50 shadow-sm bg-surface-card/50 backdrop-blur-sm">
                         <CardHeader className="p-4 pb-0">
                              <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">
                                     <Link to={`/profile/${review.user.username || review.user_id}`}>
-                                        <Avatar className="h-10 w-10 border border-border">
+                                        <Avatar className="h-10 w-10 border border-border-default">
                                             <AvatarImage src={review.user.avatar_url || undefined} />
                                             <AvatarFallback>{review.user.username?.charAt(0).toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                     </Link>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <Link to={`/profile/${review.user.username || review.user_id}`} className="font-semibold text-foreground hover:underline">
+                                            <Link to={`/profile/${review.user.username || review.user_id}`} className="font-semibold text-text-primary hover:underline">
                                                 {review.user.username}
                                             </Link>
                                             {isBucketList ? (
-                                                <Badge variant="outline" className="text-xs font-normal text-muted-foreground border-blue-500/30 text-blue-500">
+                                                <Badge variant="outline" className="text-xs font-normal text-text-secondary border-blue-500/30 text-blue-500">
                                                     Wants to visit
                                                 </Badge>
                                             ) : (
-                                                <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
+                                                <Badge variant="outline" className="text-xs font-normal text-text-secondary">
                                                     Visited
                                                 </Badge>
                                             )}
                                         </div>
-                                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <div className="text-xs text-text-secondary flex items-center gap-1">
                                             {formatDate(review.created_at)}
                                         </div>
                                     </div>
@@ -577,7 +577,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                                     "h-4 w-4",
                                                     i < review.rating!
                                                         ? "fill-[#595959] text-[#595959]"
-                                                        : "text-muted-foreground/20"
+                                                        : "text-text-secondary/20"
                                                 )}
                                             />
                                         ))}
@@ -590,7 +590,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
 
                             {/* Text Content */}
                             {review.content && (
-                                <div className="text-lg md:text-xl text-foreground/90 leading-relaxed font-normal">
+                                <div className="text-lg md:text-xl text-text-primary/90 leading-relaxed font-normal">
                                     <p className="whitespace-pre-line">{review.content}</p>
                                 </div>
                             )}
@@ -626,12 +626,12 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                             )}
 
                             {/* Interaction Bar */}
-                            <div className="flex items-center gap-4 pt-2 border-t border-border/50">
+                            <div className="flex items-center gap-4 pt-2 border-t border-border-default/50">
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     className={cn(
-                                        "gap-2 px-2 h-8 text-muted-foreground hover:text-foreground",
+                                        "gap-2 px-2 h-8 text-text-secondary hover:text-text-primary",
                                         review.is_liked && "text-red-500 hover:text-red-600 hover:bg-red-500/10"
                                     )}
                                     onClick={handleLikeReview}
@@ -640,7 +640,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                     <span className="text-xs">{review.likes_count > 0 ? review.likes_count : "Like"}</span>
                                 </Button>
 
-                                <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                                <div className="flex items-center gap-2 text-text-secondary text-xs">
                                     <MessageCircle className="h-4 w-4" />
                                     <span>{comments.length} Comments</span>
                                 </div>
@@ -652,7 +652,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                          <Button
                                             size="icon"
                                             variant="ghost"
-                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                            className="h-8 w-8 text-text-secondary hover:text-text-primary"
                                             onClick={() => navigate(`/post?id=${review.building_id}&title=${encodeURIComponent(review.building.name)}`)}
                                         >
                                             <Pencil className="w-4 h-4" />
@@ -660,7 +660,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            className="h-8 w-8 text-text-secondary hover:text-feedback-destructive hover:bg-feedback-destructive/10"
                                             onClick={handleDeleteReview}
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -674,20 +674,20 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                 <div className="pt-1">
                                     <button
                                         onClick={() => setShowLikesDialog(true)}
-                                        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group text-left"
+                                        className="flex items-center gap-2 text-xs text-text-secondary hover:text-text-primary transition-colors group text-left"
                                     >
                                         <div className="flex -space-x-1.5">
                                             {likers.slice(0, 3).map((liker) => (
-                                                <Avatar key={liker.user_id} className="h-5 w-5 border border-background ring-1 ring-background">
+                                                <Avatar key={liker.user_id} className="h-5 w-5 border border-surface-default ring-1 ring-surface-default">
                                                     <AvatarImage src={liker.user.avatar_url || undefined} />
                                                     <AvatarFallback className="text-[6px]">{liker.user.username?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                             ))}
                                         </div>
                                         <span>
-                                            Liked by <span className="font-medium text-foreground">{likers[0].user.username}</span>
+                                            Liked by <span className="font-medium text-text-primary">{likers[0].user.username}</span>
                                             {likers.length > 1 && (
-                                                <> and <span className="font-medium text-foreground">{likers.length - 1} other{likers.length > 2 ? 's' : ''}</span></>
+                                                <> and <span className="font-medium text-text-primary">{likers.length - 1} other{likers.length > 2 ? 's' : ''}</span></>
                                             )}
                                         </span>
                                     </button>
@@ -699,7 +699,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
 
                     {/* Comments Section */}
                     <div className="space-y-4 pl-0 md:pl-2">
-                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Comments</h3>
+                         <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Comments</h3>
                          {comments.map((comment) => (
                              <div key={comment.id} className="flex gap-3 group">
                                 <Link to={`/profile/${comment.user_id}`}>
@@ -709,12 +709,12 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                     </Avatar>
                                 </Link>
                                 <div className="flex-1 space-y-1">
-                                    <div className="bg-card/50 border border-border/50 rounded-lg p-3">
+                                    <div className="bg-surface-card/50 border border-border-default/50 rounded-lg p-3">
                                         <div className="flex items-center justify-between mb-1">
                                             <Link to={`/profile/${comment.user_id}`} className="text-sm font-semibold hover:underline">
                                                 {comment.user.username}
                                             </Link>
-                                            <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(comment.created_at))} ago</span>
+                                            <span className="text-xs text-text-secondary">{formatDistanceToNow(new Date(comment.created_at))} ago</span>
                                         </div>
                                         <p className="text-sm">{comment.content}</p>
                                     </div>
@@ -723,8 +723,8 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                         <button
                                             onClick={() => handleLikeComment(comment.id)}
                                             className={cn(
-                                                "text-xs flex items-center gap-1.5 transition-colors hover:text-foreground",
-                                                comment.is_liked ? "text-red-500" : "text-muted-foreground"
+                                                "text-xs flex items-center gap-1.5 transition-colors hover:text-text-primary",
+                                                comment.is_liked ? "text-red-500" : "text-text-secondary"
                                             )}
                                         >
                                             <Heart className={cn("h-3 w-3", comment.is_liked && "fill-current")} />
@@ -734,7 +734,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                         {(isReviewOwner || user?.id === comment.user_id) && (
                                             <button
                                                 onClick={() => handleDeleteComment(comment.id)}
-                                                className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1.5 transition-colors opacity-0 group-hover:opacity-100"
+                                                className="text-xs text-text-secondary hover:text-feedback-destructive flex items-center gap-1.5 transition-colors opacity-0 group-hover:opacity-100"
                                             >
                                                 Delete
                                             </button>
@@ -746,7 +746,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                     </div>
 
                     {/* Comment Input */}
-                    <div className="flex gap-3 items-start pt-4 border-t border-border/50 sticky bottom-0 bg-background/95 backdrop-blur-sm p-4 -mx-4 md:static md:bg-transparent md:p-0">
+                    <div className="flex gap-3 items-start pt-4 border-t border-border-default/50 sticky bottom-0 bg-surface-default/95 backdrop-blur-sm p-4 -mx-4 md:static md:bg-transparent md:p-0">
                          <Avatar className="h-8 w-8">
                             <AvatarImage src={user?.user_metadata?.avatar_url || undefined} />
                             <AvatarFallback>{user?.email?.charAt(0)}</AvatarFallback>
@@ -775,8 +775,8 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                 <div className="md:col-span-1 space-y-6">
 
                     {/* Building Card */}
-                    <Card className="overflow-hidden border-border/50 shadow-sm">
-                        <div className="aspect-[4/3] bg-muted relative group cursor-pointer" onClick={() => navigate(`/building/${review.building_id}`)}>
+                    <Card className="overflow-hidden border-border-default/50 shadow-sm">
+                        <div className="aspect-[4/3] bg-surface-muted relative group cursor-pointer" onClick={() => navigate(`/building/${review.building_id}`)}>
                              {review.building.main_image_url ? (
                                 <img
                                     src={getBuildingImageUrl(review.building.main_image_url)}
@@ -784,7 +784,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 />
                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
+                                <div className="w-full h-full flex items-center justify-center text-text-secondary bg-surface-muted/50">
                                     <Building2 className="h-10 w-10 opacity-20" />
                                 </div>
                              )}
@@ -796,13 +796,13 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                         <CardContent className="p-4 space-y-4">
                             <div className="space-y-2 text-sm">
                                 {review.building.address && (
-                                    <div className="flex items-start gap-2 text-muted-foreground">
+                                    <div className="flex items-start gap-2 text-text-secondary">
                                         <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
                                         <span>{review.building.address}</span>
                                     </div>
                                 )}
                                 {review.building.year_completed && (
-                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                    <div className="flex items-center gap-2 text-text-secondary">
                                         <Calendar className="h-4 w-4 shrink-0" />
                                         <span>{review.building.year_completed}</span>
                                     </div>
@@ -810,7 +810,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                 {review.building.architects && review.building.architects.length > 0 && (
                                     <div className="flex flex-wrap gap-1 pt-1">
                                         {review.building.architects.map(arch => (
-                                             <Badge key={arch.id} variant="secondary" className="text-xs bg-secondary/50 hover:bg-secondary">
+                                             <Badge key={arch.id} variant="secondary" className="text-xs bg-surface-muted/50 hover:bg-surface-muted">
                                                  {arch.name}
                                              </Badge>
                                         ))}
@@ -825,19 +825,19 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
 
                     {/* Also Visited By */}
                     {relatedReviews.length > 0 && (
-                        <div className="bg-card/30 rounded-lg p-4 border border-border/50">
-                            <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wider">Also visited by</h4>
+                        <div className="bg-surface-card/30 rounded-lg p-4 border border-border-default/50">
+                            <h4 className="text-xs font-semibold uppercase text-text-secondary mb-3 tracking-wider">Also visited by</h4>
                             <div className="flex flex-wrap gap-2">
                                 {relatedReviews.map(r => (
                                     <Link key={r.id} to={`/profile/${r.user.username}`}>
-                                         <Avatar className="h-8 w-8 ring-2 ring-background hover:ring-primary transition-all cursor-pointer">
+                                         <Avatar className="h-8 w-8 ring-2 ring-surface-default hover:ring-brand-primary transition-all cursor-pointer">
                                             <AvatarImage src={r.user.avatar_url || undefined} />
                                             <AvatarFallback>{r.user.username?.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                     </Link>
                                 ))}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-2">
+                            <p className="text-xs text-text-secondary mt-2">
                                 + {relatedReviews.length} others from the community
                             </p>
                         </div>
@@ -846,26 +846,26 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                     {/* Resources/Links */}
                     {links.length > 0 && (
                          <div className="space-y-3">
-                            <h4 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Linked Resources</h4>
+                            <h4 className="text-xs font-semibold uppercase text-text-secondary tracking-wider">Linked Resources</h4>
                             <div className="grid gap-2">
                                 {links.map(link => {
                                     let domain = "";
                                     try { domain = new URL(link.url).hostname; } catch {}
                                     return (
-                                        <div key={link.id} className="flex items-center justify-between p-2 rounded-md bg-card border border-border/50 hover:border-border transition-colors group">
+                                        <div key={link.id} className="flex items-center justify-between p-2 rounded-md bg-surface-card border border-border-default/50 hover:border-border-default transition-colors group">
                                             <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 min-w-0 flex-1">
-                                                <div className="h-8 w-8 rounded bg-secondary/50 flex items-center justify-center shrink-0">
-                                                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                                <div className="h-8 w-8 rounded bg-surface-muted/50 flex items-center justify-center shrink-0">
+                                                    <ExternalLink className="h-4 w-4 text-text-secondary" />
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium truncate">{link.title || domain}</p>
-                                                    <p className="text-xs text-muted-foreground truncate">{domain}</p>
+                                                    <p className="text-xs text-text-secondary truncate">{domain}</p>
                                                 </div>
                                             </a>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className={cn("h-8 w-8 text-muted-foreground", link.is_liked && "text-red-500")}
+                                                className={cn("h-8 w-8 text-text-secondary", link.is_liked && "text-red-500")}
                                                 onClick={() => handleLikeLink(link.id)}
                                             >
                                                 <Heart className={cn("h-4 w-4", link.is_liked && "fill-current")} />
@@ -893,13 +893,13 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                 key={liker.user_id}
                                 to={`/profile/${liker.user.username}`}
                                 onClick={() => setShowLikesDialog(false)}
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors"
+                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-muted transition-colors"
                             >
                                 <Avatar className="h-10 w-10">
                                     <AvatarImage src={liker.user.avatar_url || undefined} />
                                     <AvatarFallback>{liker.user.username?.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <div className="font-medium text-foreground">
+                                <div className="font-medium text-text-primary">
                                     {liker.user.username}
                                 </div>
                             </Link>

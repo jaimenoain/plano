@@ -48,7 +48,7 @@ export function InlineRating({ rating, onRate, readOnly = false }: InlineRatingP
                   "w-4 h-4 transition-colors",
                   isFilled
                     ? "fill-black text-black"
-                    : "text-muted-foreground/20 fill-transparent"
+                    : "text-text-secondary/20 fill-transparent"
                 )}
               />
             </motion.div>

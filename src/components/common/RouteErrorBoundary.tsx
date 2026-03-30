@@ -6,17 +6,19 @@ import { captureErrorBoundaryException } from "@/lib/sentry";
 
 function RouteErrorFallback({ resetErrorBoundary }: FallbackProps) {
   return (
-    <div className="flex h-[60vh] w-full flex-col items-center justify-center p-8 text-center">
-      <AlertTriangle className="mb-4 h-10 w-10 text-destructive" />
-      <h2 className="mb-2 text-xl font-semibold">This page encountered an error</h2>
-      <p className="mb-4 max-w-md text-sm text-muted-foreground">
-        Something went wrong loading this content. The rest of the app should still work.
-      </p>
-      <div className="flex gap-3">
-        <Button variant="outline" onClick={() => window.history.back()}>
-          Go back
-        </Button>
-        <Button onClick={resetErrorBoundary}>Retry</Button>
+    <div className="flex h-[60vh] w-full flex-col items-center justify-center bg-surface-default px-8 py-16 text-center">
+      <div className="flex flex-col items-center justify-center gap-4">
+        <AlertTriangle className="h-12 w-12 text-feedback-destructive" />
+        <h2 className="text-xl font-semibold text-text-primary">This page encountered an error</h2>
+        <p className="max-w-md text-sm text-text-secondary">
+          Something went wrong loading this content. The rest of the app should still work.
+        </p>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => window.history.back()}>
+            Go back
+          </Button>
+          <Button onClick={resetErrorBoundary}>Retry</Button>
+        </div>
       </div>
     </div>
   );

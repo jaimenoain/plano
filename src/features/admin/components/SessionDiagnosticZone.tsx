@@ -59,7 +59,7 @@ export function SessionDiagnosticZone() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold tracking-tight">Field Trip Diagnostics & Health</h2>
-          <p className="text-sm text-muted-foreground">Real-time monitoring and investigation tools.</p>
+          <p className="text-sm text-text-secondary">Real-time monitoring and investigation tools.</p>
         </div>
         <Button onClick={loadData} variant="outline" size="sm" disabled={loading}>
           <RefreshCcw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -91,8 +91,8 @@ export function SessionDiagnosticZone() {
               </div>
             )}
              <div className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase text-muted-foreground">Notes</h4>
-                <p className="text-xs text-muted-foreground">
+                <h4 className="text-xs font-semibold uppercase text-text-secondary">Notes</h4>
+                <p className="text-xs text-text-secondary">
                   Group field-trip session tables were removed. Incomplete-trip listings are disabled until a new data source is wired.
                 </p>
              </div>
@@ -109,7 +109,7 @@ export function SessionDiagnosticZone() {
             <CardDescription>Legacy group trip data is no longer available.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-secondary">
               {sessions.length === 0
                 ? "No trip-completion backlog is shown. This section is reserved for a future replacement metric."
                 : `${sessions.length} item(s) loaded.`}
@@ -141,16 +141,16 @@ export function SessionDiagnosticZone() {
               <TableBody>
                 {logs.length > 0 ? logs.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="text-xs text-text-secondary">
                       {new Date(log.created_at).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-xs font-medium">{log.error_type}</TableCell>
                     <TableCell className="text-xs font-mono break-all">{log.message}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{log.user_id ? 'Auth' : 'Anon'}</TableCell>
+                    <TableCell className="text-xs text-text-secondary">{log.user_id ? 'Auth' : 'Anon'}</TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">No logs found.</TableCell>
+                    <TableCell colSpan={4} className="text-center text-text-secondary">No logs found.</TableCell>
                   </TableRow>
                 )}
               </TableBody>

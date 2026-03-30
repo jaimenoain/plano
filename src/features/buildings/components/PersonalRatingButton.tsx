@@ -96,7 +96,7 @@ export function PersonalRatingButton({
               type="button"
               disabled={isLoading}
               className={`
-                relative p-0.5 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                relative p-0.5 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary
                 ${isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
               `}
               onMouseEnter={() => setHoverRating(star)}
@@ -128,7 +128,7 @@ export function PersonalRatingButton({
                   <Circle
                     className={`
                       w-6 h-6 transition-colors
-                      ${isFilled ? "fill-[#595959] text-[#595959]" : "text-muted-foreground/20"}
+                      ${isFilled ? "fill-[#595959] text-[#595959]" : "text-text-secondary/20"}
                     `}
                   />
               </motion.div>
@@ -136,7 +136,7 @@ export function PersonalRatingButton({
           );
         })}
       </div>
-      <div className="text-xs font-medium text-muted-foreground h-4 text-center w-full">
+      <div className="text-xs font-medium text-text-secondary h-4 text-center w-full">
         {currentLabel}
       </div>
     </div>
@@ -155,8 +155,8 @@ export function PersonalRatingButton({
           className={`
             h-8 transition-all gap-1.5
             ${hasRated
-              ? "bg-primary/10 hover:bg-primary/20 text-[#595959] hover:text-[#595959] border-primary/20 border"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              ? "bg-brand-primary/10 hover:bg-brand-primary/20 text-[#595959] hover:text-[#595959] border-brand-primary/20 border"
+              : "text-text-secondary hover:text-text-primary hover:bg-surface-muted"
             }
           `}
         >

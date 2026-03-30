@@ -128,17 +128,17 @@ toast({
 
         {loading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
           </div>
         ) : (
           <div className="space-y-6 py-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-secondary">
               Choose which notifications you want to receive. Changes will apply to future notifications.
             </p>
 
             {NOTIFICATION_GROUPS.map((group) => (
               <div key={group.title} className="space-y-3">
-                <h4 className="text-sm font-medium text-foreground border-b pb-1">
+                <h4 className="text-sm font-medium text-text-primary border-b pb-1">
                   {group.title}
                 </h4>
                 <div className="space-y-3">

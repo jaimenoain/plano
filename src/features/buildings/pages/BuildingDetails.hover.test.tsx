@@ -224,8 +224,8 @@ describe('BuildingDetails Rating Hover', () => {
     // Expect 1st and 2nd to be filled, 3rd to be transparent
     // Wait for re-render
     await waitFor(() => {
-        expect(circle1.getAttribute('class')).toContain('fill-[#595959]');
-        expect(circle2.getAttribute('class')).toContain('fill-[#595959]');
+        expect(circle1.getAttribute('class')).toContain('fill-text-brand-primary');
+        expect(circle2.getAttribute('class')).toContain('fill-text-brand-primary');
         expect(circle3.getAttribute('class')).toContain('fill-transparent');
     });
 

@@ -125,13 +125,13 @@ export function YourContacts() {
   }, [user]);
 
   if (loading) {
-     return <div className="h-40 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+     return <div className="h-40 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-text-secondary" /></div>;
   }
 
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-         <Users className="h-5 w-5 text-primary" />
+         <Users className="h-5 w-5 text-brand-primary" />
          Your Contacts
       </h2>
 
@@ -142,7 +142,7 @@ export function YourContacts() {
         </TabsList>
 
         <TabsContent value="following" className="mt-4">
-           <div className="bg-card border rounded-xl overflow-hidden">
+           <div className="bg-surface-card border rounded-xl overflow-hidden">
                <ScrollArea className="h-[300px] sm:h-[400px]">
                    <div className="p-2 space-y-1">
                        {following.length > 0 ? following.map(u => (
@@ -154,7 +154,7 @@ export function YourContacts() {
                              onToggleCloseFriend={() => toggleCloseFriend(u.id, !!u.is_close_friend)}
                            />
                        )) : (
-                           <div className="p-8 text-center text-muted-foreground">You are not following anyone yet.</div>
+                           <div className="p-8 text-center text-text-secondary">You are not following anyone yet.</div>
                        )}
                    </div>
                </ScrollArea>
@@ -162,7 +162,7 @@ export function YourContacts() {
         </TabsContent>
 
         <TabsContent value="followers" className="mt-4">
-            <div className="bg-card border rounded-xl overflow-hidden">
+            <div className="bg-surface-card border rounded-xl overflow-hidden">
                <ScrollArea className="h-[300px] sm:h-[400px]">
                    <div className="p-2 space-y-1">
                        {followers.length > 0 ? followers.map(u => (
@@ -173,7 +173,7 @@ export function YourContacts() {
                                isFollower={true} // Since they are in followers list, isFollower is true.
                            />
                        )) : (
-                           <div className="p-8 text-center text-muted-foreground">No followers yet.</div>
+                           <div className="p-8 text-center text-text-secondary">No followers yet.</div>
                        )}
                    </div>
                </ScrollArea>

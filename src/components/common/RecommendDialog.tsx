@@ -194,8 +194,8 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
         </DialogHeader>
         <div className="space-y-4 py-4">
             {/* Building Preview with Image */}
-            <div className="flex gap-4 items-center bg-muted/30 p-3 rounded-lg border">
-              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-background flex items-center justify-center text-muted-foreground">
+            <div className="flex gap-4 items-center bg-surface-muted/30 p-3 rounded-lg border">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-surface-default flex items-center justify-center text-text-secondary">
                 {building.image_url ? (
                   <img src={building.image_url} alt={building.name} className="h-full w-full object-cover" />
                 ) : (
@@ -204,7 +204,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-medium truncate">{building.name}</h4>
-                <p className="text-xs text-muted-foreground truncate">{description}</p>
+                <p className="text-xs text-text-secondary truncate">{description}</p>
               </div>
             </div>
 

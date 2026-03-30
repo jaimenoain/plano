@@ -37,7 +37,7 @@ export function DiscoveryList({
     return (
       <div className="space-y-4 p-4">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="flex flex-row h-auto overflow-hidden rounded-xl border bg-card text-card-foreground shadow">
+          <div key={i} className="flex flex-row h-auto overflow-hidden rounded-xl border bg-surface-card text-text-primary shadow">
              <Skeleton className="w-32 h-32 shrink-0" />
              <div className="flex-1 p-4 space-y-2">
                  <Skeleton className="h-5 w-3/4" />
@@ -60,11 +60,11 @@ export function DiscoveryList({
 
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center h-full min-h-[50vh]">
-        <div className="bg-muted rounded-full p-4 mb-4">
-          <Building2 className="h-10 w-10 text-muted-foreground" />
+        <div className="bg-surface-muted rounded-full p-4 mb-4">
+          <Building2 className="h-10 w-10 text-text-secondary" />
         </div>
         <h3 className="text-lg font-semibold">No buildings found here yet</h3>
-        <p className="text-muted-foreground max-w-sm mt-1 mb-6">
+        <p className="text-text-secondary max-w-sm mt-1 mb-6">
           Be the first to map this area.
         </p>
 
@@ -99,7 +99,7 @@ export function DiscoveryList({
 
       {searchQuery && !footer && (
         <div className="flex flex-col items-center justify-center py-8 gap-3 border-t mt-4">
-          <h3 className="text-sm font-medium text-muted-foreground">
+          <h3 className="text-sm font-medium text-text-secondary">
             Not what you are looking for?
           </h3>
           <Button asChild variant="outline">

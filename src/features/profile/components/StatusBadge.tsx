@@ -20,8 +20,8 @@ export function StatusBadge({ status, isOwnProfile, onClick }: StatusBadgeProps)
       );
     }
     return cn(
-      "bg-secondary text-secondary-foreground",
-      isOwnProfile ? "hover:bg-secondary/80" : "opacity-80"
+      "bg-surface-muted text-secondary-foreground",
+      isOwnProfile ? "hover:bg-surface-muted/80" : "opacity-80"
     );
   };
 

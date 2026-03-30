@@ -84,7 +84,7 @@ describe('DiscoveryBuildingCard Overflow', () => {
     // The Badge is likely the parent or the element itself if it was just text, but here it has children (icon circle)
     // The Badge component renders a div.
     // Let's find the closest div with badge classes or just parent.
-    const visitedBadge = visitedText.closest('div[class*="rounded-full"]'); // Badge has rounded-full by default
+    const visitedBadge = visitedText.closest('div[class*="rounded-sm"]');
 
     expect(visitedBadge).not.toBeNull();
     expect(visitedBadge?.className).toContain('max-w-full');
@@ -92,7 +92,7 @@ describe('DiscoveryBuildingCard Overflow', () => {
 
     // 'Lost' badge comes from building status
     const statusText = screen.getByText('Lost');
-    const statusBadge = statusText.closest('div[class*="rounded-full"]');
+    const statusBadge = statusText.closest('div[class*="rounded-sm"]');
 
     expect(statusBadge).not.toBeNull();
     expect(statusBadge?.className).toContain('max-w-full');
@@ -108,7 +108,7 @@ describe('DiscoveryBuildingCard Overflow', () => {
     );
 
     const lostText = screen.getByText('Lost');
-    const lostBadge = lostText.closest('div[class*="rounded-full"]');
+    const lostBadge = lostText.closest('div[class*="rounded-sm"]');
 
     expect(lostBadge).not.toBeNull();
     expect(lostBadge?.className).toContain('max-w-full');

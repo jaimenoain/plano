@@ -68,10 +68,10 @@ export const BuildingAttributes = ({
   if (activeFields.length === 0) return null;
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-foreground", className)}>
+    <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-primary", className)}>
       {activeFields.map((field) => (
         <div key={field.key} className="flex items-center gap-1.5">
-          <field.icon className="w-4 h-4 text-muted-foreground" />
+          <field.icon className="w-4 h-4 text-text-secondary" />
           <span>{getFormattedValue(field.value)}</span>
         </div>
       ))}

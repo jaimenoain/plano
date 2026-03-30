@@ -138,13 +138,13 @@ export function RetentionZone({ data }: RetentionZoneProps) {
                       <TooltipTrigger asChild>
                         {user.username ? (
                           <Link to={`/profile/${user.username}`}>
-                            <Avatar className="h-10 w-10 border border-border cursor-pointer transition-transform hover:scale-110">
+                            <Avatar className="h-10 w-10 border border-border-default cursor-pointer transition-transform hover:scale-110">
                               <AvatarImage src={user.avatar_url || undefined} alt={user.username || "User"} />
                               <AvatarFallback>{user.username?.slice(0, 2).toUpperCase() || "??"}</AvatarFallback>
                             </Avatar>
                           </Link>
                         ) : (
-                          <Avatar className="h-10 w-10 border border-border cursor-pointer transition-transform hover:scale-110">
+                          <Avatar className="h-10 w-10 border border-border-default cursor-pointer transition-transform hover:scale-110">
                             <AvatarImage src={user.avatar_url || undefined} alt={user.username || "User"} />
                             <AvatarFallback>{user.username?.slice(0, 2).toUpperCase() || "??"}</AvatarFallback>
                           </Avatar>
@@ -152,7 +152,7 @@ export function RetentionZone({ data }: RetentionZoneProps) {
                       </TooltipTrigger>
                       <TooltipContent className="text-xs">
                         <p className="font-bold">{user.username || "Anonymous"}</p>
-                        <p className="text-muted-foreground">
+                        <p className="text-text-secondary">
                           {user.last_online
                             ? formatDistanceToNow(new Date(user.last_online), { addSuffix: true })
                             : "Unknown"}
@@ -171,13 +171,13 @@ export function RetentionZone({ data }: RetentionZoneProps) {
                         {user.username || "User"}
                       </span>
                     )}
-                    <span className="text-[10px] text-muted-foreground font-medium">
+                    <span className="text-[10px] text-text-secondary font-medium">
                       {getShortTimeSince(user.last_online)}
                     </span>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">No recent users found.</p>
+                <p className="text-sm text-text-secondary">No recent users found.</p>
               )}
             </div>
           </TooltipProvider>

@@ -838,7 +838,7 @@ toast({
     return (
       <AppLayout title="Collection" showBack>
         <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
         </div>
       </AppLayout>
     );
@@ -847,7 +847,7 @@ toast({
   if (!collection) {
     return (
       <AppLayout title="Not Found" showBack>
-        <div className="flex items-center justify-center h-[calc(100vh-64px)] text-muted-foreground">
+        <div className="flex items-center justify-center h-[calc(100vh-64px)] text-text-secondary">
           Collection not found
         </div>
       </AppLayout>
@@ -867,16 +867,16 @@ toast({
 
         {/* Sidebar List */}
         <div className={cn(
-          "w-full lg:w-[450px] bg-background border-r flex-col shrink-0 lg:h-full lg:order-1 lg:flex",
+          "w-full lg:w-[450px] bg-surface-default border-r flex-col shrink-0 lg:h-full lg:order-1 lg:flex",
           viewMode === 'list' ? "h-full flex order-2" : "hidden"
         )}>
             <div className="p-4 border-b flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
                     <h1 className="font-bold text-xl truncate">{collection.name}</h1>
-                    <div className="text-sm text-muted-foreground mb-1">
-                      By: <Link to={`/profile/${ownerProfile?.username}`} className="hover:underline text-foreground">{ownerProfile?.username}</Link>
+                    <div className="text-sm text-text-secondary mb-1">
+                      By: <Link to={`/profile/${ownerProfile?.username}`} className="hover:underline text-text-primary">{ownerProfile?.username}</Link>
                     </div>
-                    {collection.description && <p className="text-sm text-muted-foreground line-clamp-2">{collection.description}</p>}
+                    {collection.description && <p className="text-sm text-text-secondary line-clamp-2">{collection.description}</p>}
                     {collection.external_link && (
                         <Button variant="outline" size="sm" className="mt-2 h-8" asChild>
                             <a href={collection.external_link} target="_blank" rel="noopener noreferrer">
@@ -889,10 +889,10 @@ toast({
                 {canEdit && (
                     <div className="flex items-center gap-2 shrink-0">
                         <Button variant="ghost" size="icon" onClick={() => setShowAddBuildings(true)}>
-                            <Plus className="h-5 w-5 text-muted-foreground" />
+                            <Plus className="h-5 w-5 text-text-secondary" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-                            <Settings className="h-5 w-5 text-muted-foreground" />
+                            <Settings className="h-5 w-5 text-text-secondary" />
                         </Button>
                     </div>
                 )}
@@ -903,13 +903,13 @@ toast({
                                 variant="ghost"
                                 size="icon"
                                 onClick={handleToggleFavorite}
-                                className="text-muted-foreground hover:text-yellow-500"
+                                className="text-text-secondary hover:text-yellow-500"
                             >
                                 <Star className={cn("h-5 w-5", isFavorite ? "fill-yellow-500 text-yellow-500" : "")} />
                             </Button>
                         )}
                          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-                            <ListFilter className="h-5 w-5 text-muted-foreground" />
+                            <ListFilter className="h-5 w-5 text-text-secondary" />
                         </Button>
                     </div>
                 )}
@@ -932,7 +932,7 @@ toast({
                                 {items && items.filter(i => !i.is_hidden).length > 0 && (
                                     <Suspense fallback={
                                         <div className="flex items-center justify-center p-8">
-                                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                            <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
                                         </div>
                                     }>
                                         {items.filter(i => !i.is_hidden).map(item => (
@@ -960,12 +960,12 @@ toast({
                                     <div className="mt-4 border-t pt-2">
                                         <Accordion type="single" collapsible defaultValue="markers">
                                             <AccordionItem value="markers" className="border-none">
-                                                <AccordionTrigger className="py-2 hover:no-underline text-sm font-semibold text-muted-foreground">
+                                                <AccordionTrigger className="py-2 hover:no-underline text-sm font-semibold text-text-secondary">
                                                     Trip Logistics
                                                 </AccordionTrigger>
                                                 <AccordionContent>
                                                     <div className="space-y-3 pt-2">
-                                                        <Suspense fallback={<div className="p-2 text-center text-xs text-muted-foreground">Loading markers...</div>}>
+                                                        <Suspense fallback={<div className="p-2 text-center text-xs text-text-secondary">Loading markers...</div>}>
                                                             {markers.map(marker => (
                                                                 <CollectionMarkerCard
                                                                     key={marker.id}
@@ -989,7 +989,7 @@ toast({
                                 )}
 
                                 {(!items || items.filter(i => !i.is_hidden).length === 0) && (!markers || markers.length === 0) && (
-                                    <div className="text-center py-8 text-muted-foreground text-sm">
+                                    <div className="text-center py-8 text-text-secondary text-sm">
                                         No places in this collection yet.
                                     </div>
                                 )}
@@ -1009,7 +1009,7 @@ canEdit={canEdit}
 onUpdateNote={handleUpdateNote}
                                 />
                                 {!collection.itinerary && (
-                                    <div className="text-center py-8 text-muted-foreground">
+                                    <div className="text-center py-8 text-text-secondary">
                                         <p>No itinerary generated yet.</p>
                                         {canEdit && (
                                             <Button
@@ -1035,8 +1035,8 @@ onUpdateNote={handleUpdateNote}
           viewMode === 'map' ? "h-full flex order-1" : "hidden"
         )}>
             <Suspense fallback={
-                <div className="flex items-center justify-center h-full w-full bg-muted/20">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="flex items-center justify-center h-full w-full bg-surface-muted/20">
+                    <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
                 </div>
             }>
                 <CollectionMapGL
@@ -1059,7 +1059,7 @@ onUpdateNote={handleUpdateNote}
                     <div className="absolute top-4 right-4 z-[50]">
                         <Button
                             variant="secondary"
-                            className="shadow-md rounded-full"
+                            className="shadow-none rounded-full"
                             onClick={() => setActiveTab('itinerary')}
                         >
                             <ListFilter className="w-4 h-4 mr-2" />

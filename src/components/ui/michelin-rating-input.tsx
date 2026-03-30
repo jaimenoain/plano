@@ -38,7 +38,7 @@ export function MichelinRatingInput({
             }}
             onMouseEnter={() => !disabled && setHovered(rating)}
             onMouseLeave={() => !disabled && setHovered(null)}
-            className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded-full hover:bg-muted/20 transition-colors"
+            className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded-sm hover:bg-surface-muted transition-colors focus-visible:ring-2 focus-visible:ring-brand-primary"
           >
              <RatingCircle active={isActive} />
           </motion.button>
@@ -58,8 +58,8 @@ function RatingCircle({ active }: { active: boolean }) {
             className={cn(
                 "transition-colors duration-200",
                 active
-                  ? "fill-primary stroke-primary"
-                  : "fill-transparent stroke-muted-foreground/50"
+                  ? "fill-brand-primary stroke-brand-primary"
+                  : "fill-transparent stroke-text-disabled"
             )}
             strokeLinecap="round"
             strokeLinejoin="round"

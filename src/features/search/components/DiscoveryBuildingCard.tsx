@@ -48,7 +48,7 @@ export function DiscoveryBuildingCard({
   const actionPositionClass = imagePosition === 'left' ? 'bottom-2 right-2' : 'top-2 right-2';
 
   const Content = (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow group relative min-w-0">
+    <Card className="overflow-hidden shadow-none transition-shadow group relative min-w-0">
       {action && (
         <div
           className={cn("absolute z-10", actionPositionClass)}
@@ -66,17 +66,17 @@ export function DiscoveryBuildingCard({
         {/* Content */}
         <div className="flex flex-col flex-1 p-3 justify-center min-w-0">
           <div className="flex flex-col pr-6">
-            <h3 className="font-semibold text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+            <h3 className="font-semibold text-base leading-tight line-clamp-2 group-hover:text-brand-primary transition-colors">
               {building.name}
             </h3>
             {building.alt_name && building.alt_name !== building.name && (
-              <span className="text-xs text-muted-foreground line-clamp-1 italic">
+              <span className="text-xs text-text-secondary line-clamp-1 italic">
                 {building.alt_name}
               </span>
             )}
           </div>
 
-          <div className={cn("text-xs text-muted-foreground mt-1", imageUrl ? "line-clamp-2" : "line-clamp-1")}>
+          <div className={cn("text-xs text-text-secondary mt-1", imageUrl ? "line-clamp-2" : "line-clamp-1")}>
             {building.city && (
               <>
                 <span>{building.city}</span>
@@ -95,7 +95,7 @@ export function DiscoveryBuildingCard({
           {/* Badges */}
           <div className="flex flex-wrap gap-2 mt-2">
             {(userStatus === 'visited' || userStatus === 'pending') && (
-              <Badge variant="secondary" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 border max-w-full truncate">
+              <Badge variant="secondary" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-brand-primary/20 border max-w-full truncate">
                 {userStatus === 'visited' ? "Visited" : "Saved"}
                 {userRating && userRating > 0 && (
                    <div className="flex gap-0.5 ml-1">
@@ -107,12 +107,12 @@ export function DiscoveryBuildingCard({
               </Badge>
             )}
             {(building.status === 'Lost' || building.status === 'Unbuilt') && (
-              <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-muted-foreground border-muted-foreground/30 max-w-full truncate">
+              <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-text-secondary border-text-secondary/30 max-w-full truncate">
                 {building.status}
               </Badge>
             )}
             {isHidden && (
-              <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-muted-foreground border-dashed max-w-full truncate">
+              <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-text-secondary border-dashed max-w-full truncate">
                 <EyeOff className="h-3 w-3" />
                 Hidden
               </Badge>
@@ -133,13 +133,13 @@ export function DiscoveryBuildingCard({
               <div className="flex items-center gap-2 mt-2 min-w-0">
                 <div className="flex -space-x-2 shrink-0">
                   {sortedInteractions.slice(0, 3).map((interaction) => (
-                    <Avatar key={interaction.user.id} className="w-5 h-5 border border-background">
+                    <Avatar key={interaction.user.id} className="w-5 h-5 border border-surface-default">
                       <AvatarImage src={interaction.user.avatar_url || undefined} />
                       <AvatarFallback className="text-[8px]">{interaction.user.username?.[0] || interaction.user.first_name?.[0] || "?"}</AvatarFallback>
                     </Avatar>
                   ))}
                 </div>
-                <span className="text-xs text-muted-foreground truncate">
+                <span className="text-xs text-text-secondary truncate">
                   {getInteractionText(sortedInteractions)}
                 </span>
               </div>

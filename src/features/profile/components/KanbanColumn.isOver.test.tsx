@@ -35,15 +35,15 @@ describe('KanbanColumn isOver state', () => {
 
     // Check for the specific classes we added
     const columnDiv = container.firstChild as HTMLElement;
-    expect(columnDiv.className).toContain('bg-secondary/80');
-    expect(columnDiv.className).toContain('border-primary');
+    expect(columnDiv.className).toContain('bg-surface-muted/80');
+    expect(columnDiv.className).toContain('border-brand-primary');
     expect(columnDiv.className).toContain('ring-2');
 
     // Check empty state styling
     // The empty state renders because items is empty array
     const emptyState = screen.getByText('No Drag Over buildings').closest('div');
     expect(emptyState).toBeTruthy();
-    expect(emptyState?.className).toContain('border-primary');
-    expect(emptyState?.className).toContain('bg-primary/10');
+    expect(emptyState?.className).toContain('border-brand-primary');
+    expect(emptyState?.className).toContain('bg-brand-primary/10');
   });
 });

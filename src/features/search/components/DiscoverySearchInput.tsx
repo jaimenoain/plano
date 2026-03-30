@@ -203,7 +203,7 @@ export function DiscoverySearchInput({
         </div>
 
         {!disableDropdown && open && (status === "OK") && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
+          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95">
             <CommandList>
               <CommandGroup heading="Locations">
                 {data.map(({ place_id, description }) => (
@@ -213,7 +213,7 @@ export function DiscoverySearchInput({
                       onSelect={() => handleSelect(description)}
                       className="cursor-pointer"
                     >
-                      <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <MapPin className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
                       <span>{description}</span>
                     </CommandItem>
                   ))}

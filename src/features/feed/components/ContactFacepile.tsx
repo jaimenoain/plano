@@ -45,7 +45,7 @@ export function ContactFacepile({ interactions, className }: ContactFacepileProp
         {displayUsers.map((user) => (
           <Avatar key={user.id} className="h-6 w-6 border-2 border-black">
             <AvatarImage src={user.avatar_url || ""} alt={user.username || "User"} />
-            <AvatarFallback className="bg-muted text-[10px] text-muted-foreground">
+            <AvatarFallback className="bg-surface-muted text-[10px] text-text-secondary">
               {(user.first_name?.[0] || user.username?.[0] || "?").toUpperCase()}
             </AvatarFallback>
           </Avatar>

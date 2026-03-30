@@ -61,10 +61,10 @@ export function PwaPrompt() {
           // Check if toast is already active to avoid duplicates
           // (Sonner handles this by ID, but good to be explicit)
           toast.custom((t) => (
-            <div className="bg-background border border-border p-4 rounded-lg shadow-lg flex flex-col gap-3 w-full max-w-sm pointer-events-auto">
+            <div className="bg-surface-default border border-border-default p-4 rounded-lg shadow-lg flex flex-col gap-3 w-full max-w-sm pointer-events-auto">
               <div className="flex flex-col gap-1">
-                <h3 className="font-semibold text-foreground">Install PLANO</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold text-text-primary">Install PLANO</h3>
+                <p className="text-sm text-text-secondary">
                   Install our app for the best experience.
                 </p>
               </div>
@@ -130,22 +130,22 @@ export function PwaPrompt() {
 
           <div className="p-4 flex flex-col gap-6">
             <div className="flex items-center gap-4">
-               <div className="bg-secondary p-3 rounded-xl">
-                 <Share className="w-6 h-6 text-foreground" />
+               <div className="bg-surface-muted p-3 rounded-xl">
+                 <Share className="w-6 h-6 text-text-primary" />
                </div>
                <div className="flex-1">
                  <p className="font-medium">1. Tap the Share button</p>
-                 <p className="text-sm text-muted-foreground">Usually at the bottom of the screen</p>
+                 <p className="text-sm text-text-secondary">Usually at the bottom of the screen</p>
                </div>
             </div>
 
             <div className="flex items-center gap-4">
-               <div className="bg-secondary p-3 rounded-xl">
-                 <SquarePlus className="w-6 h-6 text-foreground" />
+               <div className="bg-surface-muted p-3 rounded-xl">
+                 <SquarePlus className="w-6 h-6 text-text-primary" />
                </div>
                <div className="flex-1">
                  <p className="font-medium">2. Select 'Add to Home Screen'</p>
-                 <p className="text-sm text-muted-foreground">Scroll down to find it</p>
+                 <p className="text-sm text-text-secondary">Scroll down to find it</p>
                </div>
             </div>
           </div>

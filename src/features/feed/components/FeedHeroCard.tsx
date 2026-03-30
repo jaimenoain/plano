@@ -33,7 +33,7 @@ function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
   // While loading, use a placeholder aspect ratio (e.g., 4:5)
   if (aspectRatio === null) {
     return (
-      <div className="relative w-full aspect-[4/5] bg-secondary animate-pulse">
+      <div className="relative w-full aspect-[4/5] bg-surface-muted animate-pulse">
         <img
           src={image.url}
           className="opacity-0 absolute inset-0 w-full h-full max-w-full"
@@ -51,7 +51,7 @@ function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
     <div
       className={cn(
         "relative w-full overflow-hidden flex justify-center items-center transition-all duration-300",
-        isTall ? "bg-black" : "bg-secondary"
+        isTall ? "bg-black" : "bg-surface-muted"
       )}
       style={{
         aspectRatio: isTall ? `${MAX_ASPECT_RATIO}` : `${aspectRatio}`,
@@ -357,7 +357,7 @@ toast({ variant: "destructive", title: "Failed to update rating" });
                 e.stopPropagation();
                 navigate(`/review/${entry.id}`);
               }}
-              className="relative w-full aspect-square bg-muted flex items-center justify-center text-muted-foreground font-medium text-sm border-l border-background cursor-pointer hover:bg-muted/80 transition-colors min-w-0 overflow-hidden"
+              className="relative w-full aspect-square bg-surface-muted flex items-center justify-center text-text-secondary font-medium text-sm border-l border-surface-default cursor-pointer hover:bg-surface-muted/80 transition-colors min-w-0 overflow-hidden"
             >
               +{remaining}
             </div>
@@ -373,7 +373,7 @@ toast({ variant: "destructive", title: "Failed to update rating" });
      // 3 circles (values 1-3)
      const options = [1, 2, 3];
      return (
-         <div className="flex items-center gap-1 mr-2 bg-secondary/80 backdrop-blur-sm px-2.5 py-1.5 rounded-full animate-in fade-in slide-in-from-right-5 duration-200 border border-border/50 shadow-sm" onClick={(e) => e.stopPropagation()}>
+         <div className="flex items-center gap-1 mr-2 bg-surface-muted/80 backdrop-blur-sm px-2.5 py-1.5 rounded-sm animate-in fade-in slide-in-from-right-5 duration-200 border border-border-default/50 shadow-none" onClick={(e) => e.stopPropagation()}>
              {options.map((val) => {
                  const isFilled = (viewerRating || 0) >= val;
                  return (
@@ -385,8 +385,8 @@ toast({ variant: "destructive", title: "Failed to update rating" });
                          <Circle
                             className={`w-3.5 h-3.5 transition-colors ${
                                 isFilled
-                                ? "fill-primary text-primary"
-                                : "text-muted-foreground/40 hover:text-primary/70"
+                                ? "fill-brand-primary text-brand-primary"
+                                : "text-text-secondary/40 hover:text-brand-primary/70"
                             }`}
                          />
                      </button>
@@ -399,24 +399,24 @@ toast({ variant: "destructive", title: "Failed to update rating" });
   return (
     <article
       onClick={handleCardClick}
-      className="group relative flex flex-col w-full max-w-full min-w-0 bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer mb-6"
+      className="group relative flex flex-col w-full max-w-full min-w-0 bg-surface-card border border-border-default rounded-sm overflow-hidden shadow-none hover:border-border-default-strong transition-colors cursor-pointer mb-6"
     >
       {/* Header */}
-      <div className="p-4 flex items-start gap-3 border-b border-border/40">
-        <Avatar className="h-10 w-10 border border-border/50 mt-0.5">
+      <div className="p-4 flex items-start gap-3 border-b border-border-default/40">
+        <Avatar className="h-10 w-10 border border-border-default/50 mt-0.5">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback>{userInitial}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-0.5 flex-1 min-w-0 max-w-full overflow-hidden">
           {/* Line 1: User Action Building */}
-          <div className="text-sm md:text-base text-foreground leading-snug break-words w-full">
-            <span className="font-bold text-foreground">{username}</span>
-            <span className="text-muted-foreground/60 font-normal"> {actionText} </span>
-            <span className="font-bold text-foreground">{mainTitle}</span>
+          <div className="text-sm md:text-base text-text-primary leading-snug break-words w-full">
+            <span className="font-bold text-text-primary">{username}</span>
+            <span className="text-text-secondary/60 font-normal"> {actionText} </span>
+            <span className="font-bold text-text-primary">{mainTitle}</span>
           </div>
 
           {/* Line 2: Metadata */}
-          <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <div className="text-xs text-text-secondary flex items-center gap-1.5">
              {city && <span>{city}</span>}
              {city && (!entry.rating || entry.rating <= 0) && <span>•</span>}
 
@@ -426,7 +426,7 @@ toast({ variant: "destructive", title: "Failed to update rating" });
                     {Array.from({ length: 3 }).map((_, i) => (
                         <Circle
                             key={i}
-                            className={`w-3 h-3 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-muted-foreground/30"}`}
+                            className={`w-3 h-3 ${i < entry.rating! ? "fill-text-brand-primary text-text-primary" : "fill-transparent text-text-secondary/30"}`}
                         />
                     ))}
                 </span>
@@ -440,29 +440,29 @@ toast({ variant: "destructive", title: "Failed to update rating" });
       {/* Content Body (Review Text) */}
       {entry.content && (
         <div className="px-4 pt-3 pb-2 flex flex-col gap-2 max-w-full overflow-hidden">
-           <p className="text-sm text-foreground leading-relaxed break-words w-full">
+           <p className="text-sm text-text-primary leading-relaxed break-words w-full">
              {entry.content}
            </p>
         </div>
       )}
 
       {/* Hero Images (UGC) - Full Bleed */}
-      <div className="w-full bg-secondary overflow-hidden min-w-0">
+      <div className="w-full bg-surface-muted overflow-hidden min-w-0">
         {renderImages()}
       </div>
 
       {/* Footer */}
-      <div className="p-4 pt-3 flex flex-wrap items-center gap-4 mt-auto border-t border-border/50">
+      <div className="p-4 pt-3 flex flex-wrap items-center gap-4 mt-auto border-t border-border-default/50">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onLike?.(entry.id);
             }}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors group/like"
+            className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like"
           >
             <Heart
               className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${
-                entry.is_liked ? "fill-primary text-primary" : ""
+                entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
               }`}
             />
             <span className="text-xs font-medium">{entry.likes_count}</span>
@@ -470,7 +470,7 @@ toast({ variant: "destructive", title: "Failed to update rating" });
 
           <button
             onClick={handleCommentClick}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group/comment"
+            className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment"
           >
             <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
             <span className="text-xs font-medium">{entry.comments_count}</span>
@@ -485,8 +485,8 @@ toast({ variant: "destructive", title: "Failed to update rating" });
                  onClick={handleVisit}
                  className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
                     isVisited
-                      ? 'text-primary bg-primary/10 font-bold ring-1 ring-primary/20'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      ? "text-brand-primary bg-brand-secondary/40 font-bold ring-1 ring-brand-primary/20"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-muted/50"
                  } ${isSaving ? 'opacity-50' : ''}`}
                  disabled={isSaving}
                >
@@ -500,12 +500,12 @@ toast({ variant: "destructive", title: "Failed to update rating" });
                  onClick={handleSave}
                  className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
                     isSaved
-                      ? 'text-primary bg-primary/10 font-bold ring-1 ring-primary/20'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      ? "text-brand-primary bg-brand-secondary/40 font-bold ring-1 ring-brand-primary/20"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-muted/50"
                  } ${isSaving ? 'opacity-50' : ''}`}
                  disabled={isSaving}
                >
-                 <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-primary' : ''}`} />
+                 <Bookmark className={`h-4 w-4 ${isSaved ? "fill-brand-primary" : ""}`} />
                  <span className={`text-xs hidden sm:inline ${isSaved ? '' : 'font-medium'}`}>Save</span>
                </button>
              )}
@@ -515,8 +515,8 @@ toast({ variant: "destructive", title: "Failed to update rating" });
                  onClick={handleHide}
                  className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
                     isIgnored
-                      ? 'text-muted-foreground bg-muted font-medium ring-1 ring-border'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      ? "text-text-secondary bg-surface-muted font-medium ring-1 ring-border-default"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-muted/50"
                  } ${isSaving ? 'opacity-50' : ''}`}
                  disabled={isSaving}
                  title="Hide from map"

@@ -775,20 +775,20 @@ toast({
       title="Write Review"
       showBack
     >
-      <div className="max-w-2xl mx-auto p-4 space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
 
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold">{buildingName}</h1>
-          <p className="text-muted-foreground">Share your experience</p>
+          <p className="text-text-secondary">Share your experience</p>
         </div>
 
         {/* Status */}
-        <div className="flex bg-muted/50 p-1 rounded-lg w-fit">
+        <div className="flex bg-surface-muted/50 p-1 rounded-sm w-fit">
           <button
             type="button"
             onClick={() => setStatus('visited')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${status === 'visited' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-sm text-sm font-medium transition-colors ${status === 'visited' ? 'bg-brand-primary text-brand-primary-foreground shadow-none' : 'text-text-secondary hover:text-text-primary'}`}
           >
             <Check className="w-4 h-4" />
             Visited
@@ -796,16 +796,18 @@ toast({
           <button
             type="button"
             onClick={() => setStatus('pending')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${status === 'pending' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-sm text-sm font-medium transition-colors ${status === 'pending' ? 'bg-brand-primary text-brand-primary-foreground shadow-none' : 'text-text-secondary hover:text-text-primary'}`}
           >
             <Bookmark className="w-4 h-4" />
             Bucket List
           </button>
         </div>
 
+        <div className="mt-12 border-t border-border-default pt-8" />
+
         {/* Rating */}
         <div className="space-y-2">
-          <label className="text-sm font-medium uppercase text-muted-foreground">Add points (Optional)</label>
+          <label className="text-sm font-medium uppercase text-text-secondary">Add points (Optional)</label>
           <div
             className="flex items-center gap-2"
             onMouseLeave={() => setHoverRating(null)}
@@ -821,26 +823,28 @@ toast({
                 <Circle
                   className={`w-8 h-8 transition-colors ${
                     star <= (hoverRating ?? rating)
-                      ? "fill-[#595959] text-[#595959]"
-                      : "text-muted-foreground/20"
+                      ? "fill-text-brand-primary text-text-primary"
+                      : "text-text-disabled"
                   }`}
                 />
               </button>
             ))}
-            <span className="ml-2 text-sm font-medium text-muted-foreground">
+            <span className="ml-2 text-sm font-medium text-text-secondary">
               {hoverRating ? getRatingLabel(hoverRating) : (rating ? getRatingLabel(rating) : "")}
             </span>
           </div>
         </div>
 
+        <div className="mt-12 border-t border-border-default pt-8" />
+
         {/* Text Review */}
         <div className="space-y-2">
-          <label className="text-sm font-medium uppercase text-muted-foreground">Review (Optional)</label>
+          <label className="text-sm font-medium uppercase text-text-secondary">Review (Optional)</label>
           <Textarea
             placeholder="What did you think about this building?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[150px] resize-none"
+            className="min-h-[150px] resize-none max-w-xl"
           />
         </div>
 
@@ -860,14 +864,14 @@ toast({
                 // Empty State
                 <div
                     onClick={() => mediaInputRef.current?.click()}
-                    className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-muted-foreground/50 cursor-pointer transition-all gap-3"
+                    className="border-2 border-dashed border-border-default rounded-sm p-10 flex flex-col items-center justify-center text-text-secondary hover:bg-surface-muted/50 hover:text-text-primary hover:border-border-default-strong cursor-pointer transition-all gap-3"
                 >
-                    <div className="p-4 bg-muted rounded-full">
+                    <div className="p-4 bg-surface-muted rounded-sm">
                          <ImagePlus className="w-8 h-8" />
                     </div>
                     <div className="text-center">
                         <p className="font-medium text-lg">Add Photos or Video</p>
-                        <p className="text-sm text-muted-foreground">Share your experience</p>
+                        <p className="text-sm text-text-secondary">Share your experience</p>
                     </div>
                 </div>
             ) : (
@@ -875,19 +879,19 @@ toast({
                 <div className="space-y-4">
                     {/* Video Component */}
                     {(video.status !== 'idle' || video.preview) && (
-                        <div className="relative rounded-lg overflow-hidden border bg-muted">
+                        <div className="relative rounded-sm overflow-hidden border border-border-default bg-surface-muted">
                              {video.status === 'compressing' && (
                                  <div className="p-10 flex flex-col items-center justify-center gap-3">
-                                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                   <Loader2 className="w-8 h-8 animate-spin text-text-secondary" />
                                    <p className="text-sm font-medium">Optimizando vídeo...</p>
                                  </div>
                                )}
 
                                {video.status === 'uploading' && (
                                  <div className="p-10 flex flex-col items-center justify-center gap-3 w-full">
-                                   <div className="w-full max-w-xs bg-secondary h-2 rounded-full overflow-hidden">
+                                   <div className="w-full max-w-xs bg-surface-muted h-2 rounded-sm overflow-hidden">
                                      <div
-                                       className="bg-primary h-full transition-all duration-300 ease-out"
+                                       className="bg-brand-primary h-full transition-all duration-300 ease-out"
                                        style={{ width: `${video.progress}%` }}
                                      />
                                    </div>
@@ -912,7 +916,7 @@ toast({
                                )}
 
                                {video.status === 'error' && (
-                                 <div className="p-10 flex flex-col items-center justify-center gap-3 text-destructive">
+                                 <div className="p-10 flex flex-col items-center justify-center gap-3 text-feedback-destructive">
                                    <p className="font-medium">Upload failed</p>
                                    <Button variant="outline" size="sm" onClick={() => setVideo(prev => ({ ...prev, status: 'idle', progress: 0 }))}>
                                      Try Again
@@ -925,7 +929,7 @@ toast({
                     {/* Image Grid */}
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
                         {images.map((img) => (
-                             <div key={img.id} className="relative aspect-square group rounded-lg overflow-hidden border bg-muted">
+                             <div key={img.id} className="relative aspect-square group rounded-sm overflow-hidden border border-border-default bg-surface-muted">
                                <img
                                  src={img.preview}
                                  alt="Preview"
@@ -934,7 +938,7 @@ toast({
 
                                <button
                                    onClick={() => setImages(prev => prev.map(p => p.id === img.id ? { ...p, is_generated: !p.is_generated } : p))}
-                                   className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase transition-colors z-10 ${img.is_generated ? 'bg-primary text-primary-foreground' : 'bg-black/60 text-white hover:bg-black/80'}`}
+                                   className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase transition-colors z-10 ${img.is_generated ? "bg-brand-primary text-brand-primary-foreground" : "bg-black/60 text-text-inverse hover:bg-black/80"}`}
                                >
                                    {img.is_generated ? 'Render' : 'Photo'}
                                </button>
@@ -950,7 +954,7 @@ toast({
                         {/* Add Button */}
                         <button
                             onClick={() => mediaInputRef.current?.click()}
-                            className="aspect-square flex flex-col items-center justify-center border-2 border-dashed rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                            className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-border-default rounded-sm text-text-secondary hover:bg-surface-muted/50 hover:text-text-primary transition-colors"
                         >
                             <Plus className="w-6 h-6 mb-1" />
                             <span className="text-xs font-medium">Add</span>
@@ -974,7 +978,7 @@ toast({
         {/* Resources & Links */}
         {showLinks && (
           <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-            <Label className="text-sm font-medium uppercase text-muted-foreground">Resources & Links</Label>
+            <Label className="text-sm font-medium uppercase text-text-secondary">Resources & Links</Label>
 
             <div className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row gap-2 items-center">
@@ -994,7 +998,7 @@ toast({
                   />
                   {isFetchingTitle && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      <Loader2 className="w-4 h-4 animate-spin text-text-secondary" />
                     </div>
                   )}
                 </div>
@@ -1020,14 +1024,14 @@ toast({
                   } catch { }
 
                   return (
-                    <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                    <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg bg-surface-muted/30">
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="p-2 bg-background rounded border">
-                          <LinkIcon className="w-4 h-4 text-muted-foreground" />
+                        <div className="p-2 bg-surface-muted rounded-sm border border-border-default">
+                          <LinkIcon className="w-4 h-4 text-text-secondary" />
                         </div>
                         <div className="min-w-0">
                           <p className="font-medium truncate text-sm">{link.title || link.url}</p>
-                          <p className="text-xs text-muted-foreground truncate">{domain}</p>
+                          <p className="text-xs text-text-secondary truncate">{domain}</p>
                         </div>
                       </div>
                       <Button
@@ -1035,7 +1039,7 @@ toast({
                         variant="ghost"
                         size="icon"
                         onClick={() => removeLink(link.id)}
-                        className="text-muted-foreground hover:text-destructive"
+                        className="text-text-secondary hover:text-feedback-destructive"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -1063,10 +1067,10 @@ toast({
 
         {/* Visibility */}
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-muted-foreground">Visibility:</label>
+          <label className="text-sm font-medium text-text-secondary">Visibility:</label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground transition-colors w-fit">
+              <div className="flex items-center gap-2 cursor-pointer text-text-secondary hover:text-text-primary transition-colors w-fit">
                 <span className="text-sm">{visibility.charAt(0).toUpperCase() + visibility.slice(1)}</span>
                 <Pencil className="w-3 h-3" />
               </div>
@@ -1080,11 +1084,11 @@ toast({
         </div>
 
         {/* Submit Actions */}
-        <div className="pt-4 flex justify-end gap-4">
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-border-default mt-6">
           {reviewId && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" className="text-destructive hover:text-destructive mr-auto" disabled={submitting || isProcessingVideo}>
+                <Button variant="ghost" className="text-feedback-destructive hover:text-feedback-destructive mr-auto" disabled={submitting || isProcessingVideo}>
                   Delete Review
                 </Button>
               </AlertDialogTrigger>
@@ -1097,7 +1101,7 @@ toast({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  <AlertDialogAction onClick={handleDelete} className="bg-feedback-destructive text-feedback-destructive-foreground hover:opacity-90">
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -1117,10 +1121,10 @@ toast({
 
       {isDragging && (
         <div
-          className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-primary m-4 rounded-xl animate-in fade-in duration-200 pointer-events-none"
+          className="fixed inset-0 z-[100] bg-surface-default/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-brand-primary m-4 rounded-sm animate-in fade-in duration-200 pointer-events-none"
         >
-          <div className="bg-background p-8 rounded-full mb-4 shadow-lg">
-             <Upload className="w-12 h-12 text-primary" />
+          <div className="bg-surface-card p-8 rounded-sm mb-4 shadow-lg">
+             <Upload className="w-12 h-12 text-brand-primary" />
           </div>
           <h2 className="text-2xl font-bold">Drop media here</h2>
         </div>

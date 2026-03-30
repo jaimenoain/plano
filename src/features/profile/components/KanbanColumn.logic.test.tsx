@@ -37,8 +37,8 @@ describe('KanbanColumn logic', () => {
     const columnDiv = container.firstChild as HTMLElement;
 
     // We expect these to BE present
-    const isActive = columnDiv.className.includes('bg-secondary/80') &&
-                     columnDiv.className.includes('border-primary') &&
+    const isActive = columnDiv.className.includes('bg-surface-muted/80') &&
+                     columnDiv.className.includes('border-brand-primary') &&
                      columnDiv.className.includes('ring-2');
 
     if (!isActive) {

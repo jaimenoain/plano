@@ -18,7 +18,7 @@ export function ContentIntelligenceZone({ trendingBuildings }: ContentIntelligen
             const imageUrl = getBuildingImageUrl(building.main_image_url);
             return (
             <div key={building.building_id} className="flex flex-col items-center text-center space-y-2">
-              <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-muted">
+              <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-surface-muted">
                 {imageUrl ? (
                   <img
                     src={imageUrl}
@@ -26,14 +26,14 @@ export function ContentIntelligenceZone({ trendingBuildings }: ContentIntelligen
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                  <div className="flex h-full items-center justify-center text-xs text-text-secondary">
                     No Image
                   </div>
                 )}
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium leading-none line-clamp-2">{building.name}</p>
-                <p className="text-xs text-muted-foreground">{building.visit_count} interactions</p>
+                <p className="text-xs text-text-secondary">{building.visit_count} interactions</p>
               </div>
             </div>
           )})}

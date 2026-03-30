@@ -15,7 +15,7 @@ interface FloatingCardProps {
 const FloatingCard = ({ name, rating, className, delay = 0 }: FloatingCardProps) => {
   return (
     <motion.div
-      className={`absolute hidden md:flex items-center gap-3 p-3 bg-card border-2 border-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg z-10 ${className}`}
+      className={`absolute hidden md:flex items-center gap-3 p-3 bg-surface-card border-2 border-text-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg z-10 ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{
         opacity: 1,
@@ -38,7 +38,7 @@ const FloatingCard = ({ name, rating, className, delay = 0 }: FloatingCardProps)
         }}
       >
         <span className="font-semibold text-sm">{name}</span>
-        <div className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded">
+        <div className="flex items-center gap-1 bg-surface-muted/50 px-1.5 py-0.5 rounded">
           <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
           <span className="text-xs font-medium">{rating}</span>
         </div>
@@ -62,7 +62,7 @@ export const LandingHero = () => {
   };
 
   return (
-    <div className="w-full py-32 flex flex-col items-center justify-center space-y-8 bg-background bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
+    <div className="w-full py-32 flex flex-col items-center justify-center space-y-8 bg-surface-default bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
       {/* Content Container */}
       <div className="w-full max-w-4xl px-4 flex flex-col items-center text-center space-y-8 relative">
 
@@ -94,11 +94,11 @@ export const LandingHero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-foreground">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-text-primary">
             The world's architecture, <br className="hidden md:block" />
             cataloged.
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-text-secondary max-w-2xl mx-auto">
             Track visits, rate buildings, and follow friends.
           </p>
         </motion.div>
@@ -111,13 +111,13 @@ export const LandingHero = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           whileHover={{ scale: 1.01 }}
         >
-          <div className="relative rounded-lg bg-card border-2 border-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-2">
+          <div className="relative rounded-lg bg-surface-card border-2 border-text-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-2">
             <DiscoverySearchInput
               value={searchValue}
               onSearchChange={setSearchValue}
               onLocationSelect={handleLocationSelect}
               placeholder="Search for a city, building, or architect..."
-              className="w-full [&_input]:bg-transparent [&_input]:border-none [&_input]:focus-visible:ring-0 [&_input]:text-lg [&_input]:h-12 [&_input]:placeholder:text-muted-foreground/70"
+              className="w-full [&_input]:bg-transparent [&_input]:border-none [&_input]:focus-visible:ring-0 [&_input]:text-lg [&_input]:h-12 [&_input]:placeholder:text-text-secondary/70"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleSearchSubmit();

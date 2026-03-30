@@ -29,18 +29,18 @@ function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col w-full overflow-x-hidden">
+    <div className="min-h-screen bg-surface-default flex flex-col w-full overflow-x-hidden">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border h-16 shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-card/80 backdrop-blur-md border-b border-border-default h-16">
         <div className="container h-full mx-auto px-4 flex items-center justify-between">
           <div className="w-32">
-            <PlanoLogo className="h-8 w-auto text-foreground [&_path]:fill-current" />
+            <PlanoLogo className="h-8 w-auto text-text-primary [&_path]:fill-current" />
           </div>
 
           <Button
             variant="ghost"
             onClick={() => navigate("/auth")}
-            className="font-semibold bg-foreground text-background hover:bg-foreground/90 hover:text-background"
+            className="font-semibold bg-text-brand-primary text-text-inverse hover:opacity-90"
           >
             Log in
           </Button>
@@ -53,10 +53,10 @@ function Landing() {
         <LandingMarquee />
         <div className="container mx-auto py-24 px-4">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
+            <h2 className="text-4xl font-bold tracking-tight text-text-primary">
               Everything you need
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-text-secondary text-lg max-w-2xl mx-auto">
               Built for architecture enthusiasts, by architecture enthusiasts.
             </p>
           </div>
@@ -124,8 +124,8 @@ export default function Index() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
       </div>
     );
   }
@@ -139,10 +139,10 @@ export default function Index() {
         <MetaHead title="Home" />
         {socialFeed.isLoading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
           </div>
         ) : (
-          <div className="px-4 md:px-6 pt-6 md:pt-8 pb-24 mx-auto w-full">
+          <div className="p-4 sm:p-6 lg:p-8 pb-24 mx-auto w-full">
             {socialReviews.length === 0 ? (
               <EmptyFeed />
             ) : (
@@ -180,7 +180,9 @@ export default function Index() {
                   {/* Transition to Discovery */}
                   {!socialFeed.hasNextPage && (
                       <>
-                        <AllCaughtUpDivider />
+                        <div className="mt-12 border-t border-border-default pt-8">
+                          <AllCaughtUpDivider />
+                        </div>
 
                         <div className="py-2">
                             <WidgetErrorBoundary>
@@ -203,7 +205,7 @@ export default function Index() {
                             {/* Loader for initial fetch of discovery feed */}
                             {discoveryFeed.isLoading && (
                                 <div className="flex items-center justify-center py-8">
-                                    <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+                                    <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
                                 </div>
                             )}
                         </div>
@@ -215,19 +217,19 @@ export default function Index() {
                   {(socialFeed.hasNextPage || discoveryFeed.hasNextPage) && (
                     <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
                       {(socialFeed.isFetchingNextPage || discoveryFeed.isFetchingNextPage) ? (
-                        <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+                        <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
                       ) : (socialFeed.isError || discoveryFeed.isError) ? (
                          <Button
                           variant="ghost"
                           onClick={() => socialFeed.hasNextPage ? socialFeed.fetchNextPage() : discoveryFeed.fetchNextPage()}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="text-text-secondary hover:text-text-primary"
                         >
                           Error loading more. Click to retry.
                         </Button>
                       ) : (
                          <Button
                           variant="ghost"
-                          className="text-muted-foreground hover:text-foreground opacity-0"
+                          className="text-text-secondary hover:text-text-primary opacity-0"
                         >
                           Load More
                         </Button>
@@ -239,9 +241,9 @@ export default function Index() {
                 {/* Sidebar Column */}
                 <div className="hidden lg:block lg:w-1/3 sticky top-20">
                    <div className="space-y-4">
-                      <div className="p-5 border rounded-xl bg-card shadow-sm">
-                         <h3 className="font-semibold mb-2">Trending</h3>
-                         <p className="text-sm text-muted-foreground">
+                      <div className="p-5 border border-border-default rounded-sm bg-surface-card shadow-none">
+                         <h3 className="font-semibold mb-2 text-text-primary">Trending</h3>
+                         <p className="text-sm text-text-secondary">
                            Discover popular buildings and active discussions in the community.
                            <br/><br/>
                            (Coming soon)

@@ -132,7 +132,7 @@ toast({
               onChange={(e) => setDays(parseInt(e.target.value) || 1)}
               required
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               Select between 1 and 14 days for your itinerary.
             </p>
           </div>
@@ -157,7 +157,7 @@ toast({
                 variant="link"
                 onClick={handleDelete}
                 disabled={isLoading}
-                className="mb-2 sm:mb-0 text-destructive hover:text-destructive/90"
+                className="mb-2 sm:mb-0 text-feedback-destructive hover:text-feedback-destructive/90"
               >
                 Remove Itinerary
               </Button>

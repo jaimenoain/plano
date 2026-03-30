@@ -30,8 +30,8 @@ const RatingCircles = ({ rating }: { rating: number }) => {
           key={i}
           className={`w-3 h-3 ${
             i < rating
-              ? "fill-[#595959] text-[#595959]"
-              : "fill-transparent text-muted-foreground/20"
+              ? "fill-text-brand-primary text-text-primary"
+              : "fill-transparent text-text-secondary/20"
           }`}
         />
       ))}
@@ -219,22 +219,22 @@ toast({ variant: "destructive", title: "Failed to save" });
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="h-9 w-9">
               <AvatarImage src={avatarUrl} />
-              <AvatarFallback className="bg-secondary text-foreground text-sm">
+              <AvatarFallback className="bg-surface-muted text-text-primary text-sm">
                 {userInitial}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
+              <p className="text-sm font-medium text-text-primary truncate">
                 {username}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary">
                 {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace("about ", "")}
               </p>
             </div>
           </div>
         ) : (
           <div className="mb-3">
-             <p className="text-xs text-muted-foreground">
+             <p className="text-xs text-text-secondary">
                {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace("about ", "")}
              </p>
           </div>
@@ -266,8 +266,8 @@ toast({ variant: "destructive", title: "Failed to save" });
                 className="w-32 h-24 object-cover rounded-sm flex-shrink-0"
               />
             ) : (
-              <div className="w-32 h-24 bg-secondary rounded-sm flex-shrink-0 flex items-center justify-center">
-                <span className="text-xs text-muted-foreground">No image</span>
+              <div className="w-32 h-24 bg-surface-muted rounded-sm flex-shrink-0 flex items-center justify-center">
+                <span className="text-xs text-text-secondary">No image</span>
               </div>
             )
           )}
@@ -275,11 +275,11 @@ toast({ variant: "destructive", title: "Failed to save" });
           <div className="flex-1 min-w-0">
             {!hideBuildingInfo && (
               <div className="mb-2">
-                <h3 className="text-base font-semibold text-foreground truncate">
+                <h3 className="text-base font-semibold text-text-primary truncate">
                   {mainTitle}
                 </h3>
                 {subTitle && (
-                  <p className="text-xs text-muted-foreground truncate">{subTitle}</p>
+                  <p className="text-xs text-text-secondary truncate">{subTitle}</p>
                 )}
               </div>
             )}
@@ -291,7 +291,7 @@ toast({ variant: "destructive", title: "Failed to save" });
             )}
 
             {entry.content && (
-              <p className="text-sm text-muted-foreground mb-2 break-words">
+              <p className="text-sm text-text-secondary mb-2 break-words">
                 {entry.content}
               </p>
             )}
@@ -305,18 +305,18 @@ toast({ variant: "destructive", title: "Failed to save" });
               onLike?.(entry.id);
               window.dispatchEvent(new CustomEvent('pwa-interaction'));
             }}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors"
           >
             <Heart
               className={`h-4 w-4 ${
-                entry.is_liked ? "fill-primary text-primary" : ""
+                entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
               }`}
             />
             <span className="text-xs">{entry.likes_count}</span>
           </button>
           <button
             onClick={handleCommentClick}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors"
           >
             <MessageCircle className="h-4 w-4" />
             <span className="text-xs">{entry.comments_count}</span>
@@ -331,18 +331,18 @@ toast({ variant: "destructive", title: "Failed to save" });
   const action = entry.status === 'pending' ? 'saved' : 'visited';
 
   const Header = !hideUser && (
-        <div className={`p-3 md:p-4 flex items-center gap-3 border-b border-border/40`}>
-          <Avatar className="h-10 w-10 border border-border/50 shrink-0">
+        <div className={`p-3 md:p-4 flex items-center gap-3 border-b border-border-default/40`}>
+          <Avatar className="h-10 w-10 border border-border-default/50 shrink-0">
             <AvatarImage src={avatarUrl} />
             <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
-          <div className="text-sm md:text-base text-foreground leading-snug min-w-0 max-w-full flex-1 break-words">
+          <div className="text-sm md:text-base text-text-primary leading-snug min-w-0 max-w-full flex-1 break-words">
             <div className="flex flex-col gap-0.5 md:block min-w-0">
                 {/* Row 1: User + Follow */}
                 <div className="flex items-center gap-2 min-w-0 md:inline md:gap-0">
                     <span className="font-semibold truncate md:text-clip min-w-0">{username}</span>
                     {isVerifiedArchitect && (
-                      <div className="inline-flex items-center text-foreground ml-1 align-middle" title="Verified Architect">
+                      <div className="inline-flex items-center text-text-primary ml-1 align-middle" title="Verified Architect">
                         <BadgeCheck className="w-4 h-4" />
                       </div>
                     )}
@@ -359,9 +359,9 @@ toast({ variant: "destructive", title: "Failed to save" });
 
                 {/* Row 2: Action + Building */}
                 <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
-                    <span className="text-muted-foreground/60 font-normal md:ml-1 shrink-0"> {action} </span>
-                    <span className="font-semibold text-foreground truncate block md:inline md:w-auto md:max-w-none min-w-0 flex-1 md:flex-none">{mainTitle}</span>
-                    {city && <span className="text-muted-foreground hidden md:inline"> in {city}</span>}
+                    <span className="text-text-secondary/60 font-normal md:ml-1 shrink-0"> {action} </span>
+                    <span className="font-semibold text-text-primary truncate block md:inline md:w-auto md:max-w-none min-w-0 flex-1 md:flex-none">{mainTitle}</span>
+                    {city && <span className="text-text-secondary hidden md:inline"> in {city}</span>}
                 </div>
 
                 {/* Row 3: Rating + Time */}
@@ -371,7 +371,7 @@ toast({ variant: "destructive", title: "Failed to save" });
                              <RatingCircles rating={entry.rating} />
                          </span>
                     )}
-                    <span className="text-muted-foreground text-xs md:ml-2 shrink min-w-0 truncate">
+                    <span className="text-text-secondary text-xs md:ml-2 shrink min-w-0 truncate">
                       {!(entry.rating && entry.rating > 0) && <span className="hidden md:inline">• </span>}
                       {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
                     </span>
@@ -404,7 +404,7 @@ toast({ variant: "destructive", title: "Failed to save" });
               onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/50">
+            <div className="w-full h-full flex items-center justify-center text-text-secondary bg-surface-muted/50">
               <ImageIcon className="w-4 h-4 opacity-50" />
             </div>
           )
@@ -448,7 +448,7 @@ toast({ variant: "destructive", title: "Failed to save" });
 
     // 4+ Items
     return (
-      <div className="w-full h-full flex flex-col gap-0.5 rounded-xl overflow-hidden">
+      <div className="w-full h-full flex flex-col gap-0.5 rounded-sm overflow-hidden">
         <div className="flex-[2] min-h-0">
           {renderMediaItem(mediaItems[0])}
         </div>
@@ -461,14 +461,14 @@ toast({ variant: "destructive", title: "Failed to save" });
             if (index === 2 && mediaItems.length > 4) {
               // 3rd thumbnail on mobile
               overlay = (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-white font-semibold text-lg pointer-events-none md:hidden">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-text-inverse font-semibold text-lg pointer-events-none md:hidden">
                   +{mediaItems.length - 4}
                 </div>
               );
             } else if (index === 3 && mediaItems.length > 5) {
               // 4th thumbnail on desktop
               overlay = (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm hidden md:flex items-center justify-center text-white font-semibold text-lg pointer-events-none">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm hidden md:flex items-center justify-center text-text-inverse font-semibold text-lg pointer-events-none">
                   +{mediaItems.length - 5}
                 </div>
               );
@@ -483,14 +483,14 @@ toast({ variant: "destructive", title: "Failed to save" });
 
   const Media = !hideBuildingInfo && (
         mediaItems.length > 0 ? (
-          <div className={`relative w-full max-w-full min-w-0 overflow-hidden bg-secondary ${!isCompact ? 'md:w-[280px] md:shrink-0 aspect-[4/3] md:aspect-auto' : 'aspect-[4/3]'}`}>
+          <div className={`relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${!isCompact ? 'md:w-[280px] md:shrink-0 aspect-[4/3] md:aspect-auto' : 'aspect-[4/3]'}`}>
              <div className="absolute inset-0 w-full h-full">
                {renderMediaGrid()}
              </div>
           </div>
         ) : (posterUrl && showCommunityImages) ? (
           // OPTION B: Building Poster (Fallback)
-          <div className={`relative w-full max-w-full min-w-0 bg-secondary overflow-hidden aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:w-[280px] md:shrink-0' : ''}`}>
+          <div className={`relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:w-[280px] md:shrink-0' : ''}`}>
             <img
               src={posterUrl}
               alt={mainTitle || ""}
@@ -505,11 +505,11 @@ toast({ variant: "destructive", title: "Failed to save" });
         {/* Building Name (Context) - Only if NOT hidden */}
         {!hideBuildingInfo && (
           <div className="mb-1">
-            <h3 className="text-base font-bold text-foreground line-clamp-2 leading-tight">
+            <h3 className="text-base font-bold text-text-primary line-clamp-2 leading-tight">
               {mainTitle}
             </h3>
             {subTitle && (
-              <p className="text-xs text-muted-foreground line-clamp-1 truncate">
+              <p className="text-xs text-text-secondary line-clamp-1 truncate">
                 {subTitle}
               </p>
             )}
@@ -524,7 +524,7 @@ toast({ variant: "destructive", title: "Failed to save" });
 
         {/* Review Text: Only show if exists */}
         {entry.content && (
-           <p className="text-sm font-medium text-foreground line-clamp-3 leading-relaxed">
+           <p className="text-sm font-medium text-text-primary line-clamp-3 leading-relaxed">
              "{entry.content}"
            </p>
         )}
@@ -532,7 +532,7 @@ toast({ variant: "destructive", title: "Failed to save" });
   ) : (
       <>
         {entry.content && (
-           <p className="text-sm text-foreground mb-2 leading-relaxed break-words">
+           <p className="text-sm text-text-primary mb-2 leading-relaxed break-words">
              {entry.content}
            </p>
         )}
@@ -540,7 +540,7 @@ toast({ variant: "destructive", title: "Failed to save" });
   );
 
   const Footer = (
-        <div className={`flex w-full max-w-full min-w-0 items-center gap-2 md:gap-4 flex-wrap ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border/50' : 'mt-auto pt-3 border-t border-border/50'}`}>
+        <div className={`flex w-full max-w-full min-w-0 items-center gap-2 md:gap-4 flex-wrap ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border-default/50' : 'mt-auto pt-3 border-t border-border-default/50'}`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -548,11 +548,11 @@ toast({ variant: "destructive", title: "Failed to save" });
               // Trigger PWA interaction check on like
               window.dispatchEvent(new CustomEvent('pwa-interaction'));
             }}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors group/like"
+            className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like"
           >
             <Heart
               className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${
-                entry.is_liked ? "fill-primary text-primary" : ""
+                entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
               }`}
             />
             <span className="text-xs font-medium">{entry.likes_count}</span>
@@ -560,7 +560,7 @@ toast({ variant: "destructive", title: "Failed to save" });
            
           <button
             onClick={handleCommentClick}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group/comment"
+            className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment"
           >
             <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
             <span className="text-xs font-medium">{entry.comments_count}</span>
@@ -569,7 +569,7 @@ toast({ variant: "destructive", title: "Failed to save" });
           {!isCompact && (
              <button
                onClick={handleSave}
-               className={`flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors ml-auto ${isSaving ? 'opacity-50' : ''}`}
+               className={`flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors ml-auto ${isSaving ? 'opacity-50' : ''}`}
                disabled={isSaving}
              >
                <Bookmark className="h-4 w-4" />
@@ -587,7 +587,7 @@ toast({ variant: "destructive", title: "Failed to save" });
       <article
         onClick={handleCardClick}
         // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer min-w-0 w-full max-w-full ${isArchitectOfBuilding ? 'border-l-2 border-l-[#eeff41ff]' : ''}`}
+        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-surface-card border border-border-default rounded-sm overflow-hidden shadow-none hover:border-border-default-strong transition-colors cursor-pointer min-w-0 w-full max-w-full ${isArchitectOfBuilding ? "border-l-2 border-l-brand-primary" : ""}`}
       >
         {isCompact ? (
           // COMPACT LAYOUT: Header -> Text -> Media -> Footer

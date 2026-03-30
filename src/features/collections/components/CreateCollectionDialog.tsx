@@ -170,7 +170,7 @@ toast({ variant: "destructive", description: "Failed to create collection." });
           <div className="flex items-center justify-between space-x-2">
             <Label htmlFor="public" className="flex flex-col space-y-1">
               <span>Public Collection</span>
-              <span className="font-normal text-xs text-muted-foreground">Visible to everyone on your profile</span>
+              <span className="font-normal text-xs text-text-secondary">Visible to everyone on your profile</span>
             </Label>
             <Switch
               id="public"
@@ -183,15 +183,15 @@ toast({ variant: "destructive", description: "Failed to create collection." });
             <Label>Add to Folders (Optional)</Label>
             {loadingFolders ? (
               <div className="flex justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
               </div>
             ) : folders.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-2">No folders found.</p>
+              <p className="text-sm text-text-secondary py-2">No folders found.</p>
             ) : (
               <ScrollArea className="h-[120px] rounded-md border p-2">
                 <div className="space-y-2">
                   {folders.map(folder => (
-                    <div key={folder.id} className="flex items-center space-x-3 p-1 rounded hover:bg-secondary/30">
+                    <div key={folder.id} className="flex items-center space-x-3 p-1 rounded hover:bg-surface-muted/30">
                       <Checkbox
                         id={`folder-${folder.id}`}
                         checked={selectedFolderIds.has(folder.id)}
@@ -202,7 +202,7 @@ toast({ variant: "destructive", description: "Failed to create collection." });
                           htmlFor={`folder-${folder.id}`}
                           className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
                         >
-                          <Folder className="h-4 w-4 text-muted-foreground" />
+                          <Folder className="h-4 w-4 text-text-secondary" />
                           {folder.name}
                         </label>
                       </div>

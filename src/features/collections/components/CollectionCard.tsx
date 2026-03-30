@@ -44,26 +44,31 @@ export function CollectionCard({ collection, username, className, isDragEnabled 
           // Prevent default link behavior while dragging to avoid accidental navigation
           onClick={(e) => { if (isDragging) e.preventDefault(); }}
       >
-          <Card className={cn("h-[100px] hover:border-primary/50 transition-colors overflow-hidden relative", collection.isFavorite && "border-dashed border-primary/20")}>
+          <Card
+            className={cn(
+              "h-[100px] rounded-sm shadow-none border-border-default hover:border-border-default-strong transition-colors overflow-hidden relative",
+              collection.isFavorite && "border-dashed border-brand-primary/20"
+            )}
+          >
               <CardContent className="p-4 h-full flex flex-col justify-between pointer-events-none">
             <div className="flex justify-between items-start">
-                <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors pr-4 whitespace-normal">
+                <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-brand-primary transition-colors pr-4 whitespace-normal text-text-primary">
                     {collection.name}
                 </h4>
                 {collection.isFavorite ? (
-                    <Star className="h-3 w-3 text-muted-foreground shrink-0 fill-yellow-500 stroke-yellow-500" />
+                    <Star className="h-3 w-3 text-feedback-warning shrink-0 fill-feedback-warning stroke-feedback-warning" />
                 ) : collection.is_public ? (
-                    <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <Globe className="h-3 w-3 text-text-secondary shrink-0" />
                 ) : (
-                    <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <Lock className="h-3 w-3 text-text-secondary shrink-0" />
                 )}
             </div>
             <div className="flex items-center justify-between mt-auto">
-                <span className="text-xs text-muted-foreground font-medium">
+                <span className="text-xs text-text-secondary font-medium">
                     {collection.collection_items?.[0]?.count || 0} places
                 </span>
                 {collection.isFavorite && collection.owner?.username && (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[10px] text-text-secondary">
                       by {collection.owner.username}
                   </span>
                 )}

@@ -188,11 +188,11 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
             </CardDescription>
         </CardHeader>
         <CardContent className="text-sm space-y-2">
-            {building.address && <div className="text-muted-foreground line-clamp-2" title={building.address}>{building.address}</div>}
+            {building.address && <div className="text-text-secondary line-clamp-2" title={building.address}>{building.address}</div>}
             {building.architects && Array.isArray(building.architects) && building.architects.length > 0 && (
                 <div className="line-clamp-2">Architects: {building.architects.map((a) => a.name).join(", ")}</div>
             )}
-            <div className="text-xs text-muted-foreground break-all">ID: {building.id}</div>
+            <div className="text-xs text-text-secondary break-all">ID: {building.id}</div>
         </CardContent>
     </Card>
   );
@@ -202,7 +202,7 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
       <div className="flex justify-between items-center">
         <div>
             <h1 className="text-2xl font-bold tracking-tight">Merge Buildings</h1>
-            <p className="text-muted-foreground">Consolidate duplicate records safely.</p>
+            <p className="text-text-secondary">Consolidate duplicate records safely.</p>
         </div>
         <Button variant="outline" onClick={fetchPotentialDuplicates} disabled={loadingPotential}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loadingPotential ? "animate-spin" : ""}`} />
@@ -223,18 +223,18 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
                     value={masterSearch}
                     onChange={e => setMasterSearch(e.target.value)}
                 />
-                {loadingMaster && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />}
+                {loadingMaster && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-text-secondary" />}
 
                 {masterSearch && !selectedMaster && masterResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-surface-overlay border rounded-md shadow-lg max-h-60 overflow-y-auto">
                         {masterResults.map(b => (
                             <div
                                 key={b.id}
-                                className="p-2 hover:bg-accent cursor-pointer flex justify-between items-center gap-2"
+                                className="p-2 hover:bg-brand-secondary cursor-pointer flex justify-between items-center gap-2"
                                 onClick={() => { setSelectedMaster(b); setMasterSearch(""); }}
                             >
                                 <span className="truncate font-medium">{b.name}</span>
-                                <span className="text-muted-foreground text-xs whitespace-nowrap">{b.city}</span>
+                                <span className="text-text-secondary text-xs whitespace-nowrap">{b.city}</span>
                             </div>
                         ))}
                     </div>
@@ -252,7 +252,7 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
                     >Change</Button>
                 </div>
             ) : (
-                <div className="h-40 border-2 border-dashed rounded-lg flex items-center justify-center text-muted-foreground bg-muted/30">
+                <div className="h-40 border-2 border-dashed rounded-lg flex items-center justify-center text-text-secondary bg-surface-muted/30">
                     No Master Selected
                 </div>
             )}
@@ -270,18 +270,18 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
                     value={dupSearch}
                     onChange={e => setDupSearch(e.target.value)}
                 />
-                {loadingDup && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />}
+                {loadingDup && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-text-secondary" />}
 
                  {dupSearch && !selectedDup && dupResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-surface-overlay border rounded-md shadow-lg max-h-60 overflow-y-auto">
                         {dupResults.map(b => (
                             <div
                                 key={b.id}
-                                className="p-2 hover:bg-accent cursor-pointer flex justify-between items-center gap-2"
+                                className="p-2 hover:bg-brand-secondary cursor-pointer flex justify-between items-center gap-2"
                                 onClick={() => { setSelectedDup(b); setDupSearch(""); }}
                             >
                                 <span className="truncate font-medium">{b.name}</span>
-                                <span className="text-muted-foreground text-xs whitespace-nowrap">{b.city}</span>
+                                <span className="text-text-secondary text-xs whitespace-nowrap">{b.city}</span>
                             </div>
                         ))}
                     </div>
@@ -299,7 +299,7 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
                     >Change</Button>
                 </div>
             ) : (
-                <div className="h-40 border-2 border-dashed rounded-lg flex items-center justify-center text-muted-foreground bg-muted/30">
+                <div className="h-40 border-2 border-dashed rounded-lg flex items-center justify-center text-text-secondary bg-surface-muted/30">
                     No Duplicate Selected
                 </div>
             )}
@@ -343,24 +343,24 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
         <h3 className="text-xl font-semibold">Potential Duplicates</h3>
         <ScrollArea className="h-96 rounded-md border p-4">
             {potentialDuplicates.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
+                <div className="text-center text-text-secondary py-8">
                     {loadingPotential ? "Scanning for duplicates..." : "No potential duplicates found."}
                 </div>
             ) : (
                 <div className="space-y-2">
                     {potentialDuplicates.map((pair, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-card border rounded-md hover:bg-accent/50 transition-colors">
+                        <div key={idx} className="flex items-center justify-between p-3 bg-surface-card border rounded-md hover:bg-brand-secondary/50 transition-colors">
                             <div className="flex items-center gap-4 flex-1">
                                 <div className="flex-1 text-right">
                                     <div className="font-medium">{pair.name1}</div>
-                                    <div className="text-xs text-muted-foreground">{pair.id1.slice(0, 8)}...</div>
+                                    <div className="text-xs text-text-secondary">{pair.id1.slice(0, 8)}...</div>
                                 </div>
-                                <div className="text-muted-foreground font-mono text-xs bg-muted px-2 py-1 rounded">
+                                <div className="text-text-secondary font-mono text-xs bg-surface-muted px-2 py-1 rounded">
                                     {Math.round(pair.score * 100)}% Match
                                 </div>
                                 <div className="flex-1 text-left">
                                     <div className="font-medium">{pair.name2}</div>
-                                    <div className="text-xs text-muted-foreground">{pair.id2.slice(0, 8)}...</div>
+                                    <div className="text-xs text-text-secondary">{pair.id2.slice(0, 8)}...</div>
                                 </div>
                             </div>
                             <div className="flex gap-2 ml-4">

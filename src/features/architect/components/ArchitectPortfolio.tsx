@@ -22,8 +22,8 @@ export function ArchitectPortfolio({ architectId, isOwnProfile }: ArchitectPortf
           ))}
         </div>
       ) : buildings.length === 0 ? (
-        <div className="py-12 text-center border rounded-xl bg-secondary/10">
-          <p className="text-muted-foreground">System recognizes you as a verified architect, but no buildings were found in your portfolio.</p>
+        <div className="py-12 text-center border rounded-xl bg-surface-muted/10">
+          <p className="text-text-secondary">System recognizes you as a verified architect, but no buildings were found in your portfolio.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

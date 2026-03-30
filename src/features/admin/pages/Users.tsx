@@ -148,7 +148,7 @@ toast.error("Action failed");
         />
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="rounded-md border bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -170,7 +170,7 @@ toast.error("Action failed");
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={4} className="h-24 text-center text-text-secondary">
                   No users found.
                 </TableCell>
               </TableRow>
@@ -185,7 +185,7 @@ toast.error("Action failed");
                       </Avatar>
                       <div className="flex flex-col">
                         <span className="font-medium">{user.username || "Unknown"}</span>
-                        <span className="text-xs text-muted-foreground">{user.id}</span>
+                        <span className="text-xs text-text-secondary">{user.id}</span>
                       </div>
                     </div>
                   </TableCell>
@@ -210,7 +210,7 @@ toast.error("Action failed");
                       <Button
                         size="icon"
                         variant="ghost"
-                        className={user.role === 'suspended' ? "text-green-600" : "text-destructive"}
+                        className={user.role === 'suspended' ? "text-green-600" : "text-feedback-destructive"}
                         title={user.role === 'suspended' ? "Restore Access" : "Suspend User"}
                         onClick={() => setActionUser({ type: 'suspend', user })}
                       >
@@ -257,7 +257,7 @@ toast.error("Action failed");
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAction} className={actionUser?.type === 'reset' ? "" : "bg-destructive hover:bg-destructive/90"}>
+            <AlertDialogAction onClick={handleAction} className={actionUser?.type === 'reset' ? "" : "bg-feedback-destructive hover:bg-feedback-destructive/90"}>
               Confirm
             </AlertDialogAction>
           </AlertDialogFooter>

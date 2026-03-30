@@ -98,31 +98,31 @@ export function PeopleYouMayKnow() {
   if (isLoading || !suggestions || suggestions.length === 0) return null;
 
   return (
-    <div className="p-5 border rounded-xl bg-card shadow-sm space-y-4 max-w-full w-full overflow-hidden">
+    <div className="p-5 border rounded-xl bg-surface-card shadow-sm space-y-4 max-w-full w-full overflow-hidden">
       <h3 className="font-semibold">People you may know</h3>
       <div className="flex overflow-x-auto gap-4 pb-4 px-1 snap-x hide-scrollbar">
         {suggestions.map((person: PeopleYouMayKnowSuggestion) => (
-          <div key={person.id} className="relative flex flex-col items-center justify-between gap-3 min-w-[200px] max-w-[200px] snap-center p-4 border rounded-lg bg-background/50 shrink-0 h-full group">
+          <div key={person.id} className="relative flex flex-col items-center justify-between gap-3 min-w-[200px] max-w-[200px] snap-center p-4 border rounded-lg bg-surface-default/50 shrink-0 h-full group">
             <button
                 onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     hideMutation.mutate(person.id);
                 }}
-                className="absolute top-1 right-1 p-1 text-muted-foreground/30 hover:text-foreground hover:bg-muted rounded-full transition-colors z-10"
+                className="absolute top-1 right-1 p-1 text-text-secondary/30 hover:text-text-primary hover:bg-surface-muted rounded-full transition-colors z-10"
                 title="Hide suggestion"
             >
                 <X className="h-4 w-4" />
             </button>
 
             <Link to={`/profile/${person.username || person.id}`} className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity w-full text-center">
-              <Avatar className="h-14 w-14 mb-1 border-2 border-background shadow-sm">
+              <Avatar className="h-14 w-14 mb-1 border-2 border-surface-default shadow-sm">
                 <AvatarImage src={person.avatar_url || undefined} />
                 <AvatarFallback>{person.username?.[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-center w-full min-w-0 gap-1">
                 <span className="text-sm font-semibold leading-none truncate w-full">{person.username}</span>
-                <div className="flex flex-col items-center text-xs text-muted-foreground w-full gap-0.5">
+                <div className="flex flex-col items-center text-xs text-text-secondary w-full gap-0.5">
                   {person.mutual_follows && person.mutual_follows.length > 0 ? (
                     <div className="scale-90 origin-top w-full flex justify-center">
                         <MutualFacepile users={person.mutual_follows} className="justify-center w-full" />
@@ -137,7 +137,7 @@ export function PeopleYouMayKnow() {
                     </div>
                   )}
                   {(person.group_mutual_count ?? 0) > 0 && (
-                     <span className="truncate w-full text-[10px] text-muted-foreground/80">
+                     <span className="truncate w-full text-[10px] text-text-secondary/80">
                       {person.group_mutual_count ?? 0} group{(person.group_mutual_count ?? 0) !== 1 ? 's' : ''} common
                     </span>
                   )}

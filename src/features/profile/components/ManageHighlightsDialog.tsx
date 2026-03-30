@@ -187,7 +187,7 @@ setArchitectResults([]);
                       <div className="space-y-4">
                           <div className="flex items-center justify-between">
                               <h4 className="text-sm font-medium">Select up to 5 styles</h4>
-                              <span className="text-xs text-muted-foreground">{styles.length}/5</span>
+                              <span className="text-xs text-text-secondary">{styles.length}/5</span>
                           </div>
                           <div className="flex flex-wrap gap-2">
                               {Object.entries(ARCHITECTURAL_STYLES).map(([id, name]) => {
@@ -214,7 +214,7 @@ setArchitectResults([]);
                   {activeTab === "architects" && (
                       <div className="space-y-4">
                           <div className="relative">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
                               <Input
                                   placeholder="Search architects..."
                                   value={architectQuery}
@@ -223,24 +223,24 @@ setArchitectResults([]);
                               />
                           </div>
 
-                          <p className="text-sm text-muted-foreground text-center py-4">
+                          <p className="text-sm text-text-secondary text-center py-4">
                               Architect search is coming soon.
                           </p>
 
                           {/* Selected Architects */}
                           {architects.length > 0 && (
                               <div className="space-y-2">
-                                  <span className="text-xs text-muted-foreground font-bold uppercase">Selected ({architects.length}/5)</span>
+                                  <span className="text-xs text-text-secondary font-bold uppercase">Selected ({architects.length}/5)</span>
                                   <div className="space-y-1">
                                       {architects.map(p => (
-                                          <div key={p.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                                          <div key={p.id} className="flex items-center justify-between p-2 rounded-md bg-surface-muted/50">
                                               <div className="flex items-center gap-3">
-                                                  <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
+                                                  <div className="h-10 w-10 rounded-full bg-surface-muted overflow-hidden">
                                                       {p.image_url && <img src={p.image_url} className="w-full h-full object-cover" alt={p.title}/>}
                                                   </div>
                                                   <span className="text-sm font-medium">{p.title}</span>
                                               </div>
-                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => toggleArchitect(p)}>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-text-secondary hover:text-feedback-destructive" onClick={() => toggleArchitect(p)}>
                                                   <X className="h-4 w-4" />
                                               </Button>
                                           </div>
@@ -252,7 +252,7 @@ setArchitectResults([]);
                           {/* Search Results */}
                           {architectResults.length > 0 && (
                                <div className="space-y-2 mt-4">
-                                  <span className="text-xs text-muted-foreground font-bold uppercase">Results</span>
+                                  <span className="text-xs text-text-secondary font-bold uppercase">Results</span>
                                   <div className="space-y-1">
                                       {architectResults.map(p => {
                                           const isSelected = !!architects.find(sel => sel.id === p.id);
@@ -263,28 +263,28 @@ setArchitectResults([]);
                                                   disabled={!isSelected && architects.length >= 5}
                                                   className={cn(
                                                       "flex items-center gap-3 p-2 rounded-md w-full text-left transition-colors",
-                                                      isSelected ? "bg-primary/10 opacity-50 cursor-default" : "hover:bg-secondary"
+                                                      isSelected ? "bg-brand-primary/10 opacity-50 cursor-default" : "hover:bg-surface-muted"
                                                   )}
                                               >
-                                                  <div className="h-10 w-10 rounded-full bg-muted overflow-hidden shrink-0">
+                                                  <div className="h-10 w-10 rounded-full bg-surface-muted overflow-hidden shrink-0">
                                                       {p.image_url && <img src={p.image_url} className="w-full h-full object-cover" alt={p.title}/>}
                                                   </div>
                                                   <span className="text-sm font-medium truncate">{p.title}</span>
-                                                  {isSelected && <Check className="ml-auto h-4 w-4 text-primary" />}
+                                                  {isSelected && <Check className="ml-auto h-4 w-4 text-brand-primary" />}
                                               </button>
                                           )
                                       })}
                                   </div>
                                </div>
                           )}
-                          {loading && <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
+                          {loading && <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 animate-spin text-text-secondary" /></div>}
                       </div>
                   )}
 
                   {/* QUOTES TAB */}
                   {activeTab === "quotes" && (
                       <div className="space-y-6">
-                          <div className="space-y-3 p-4 bg-secondary/30 rounded-lg border border-border/50">
+                          <div className="space-y-3 p-4 bg-surface-muted/30 rounded-lg border border-border-default/50">
                                <div className="space-y-1">
                                    <Label className="text-xs">Quote</Label>
                                    <Textarea
@@ -309,14 +309,14 @@ setArchitectResults([]);
 
                           {quotes.length > 0 && (
                               <div className="space-y-3">
-                                  <span className="text-xs text-muted-foreground font-bold uppercase">Your Quotes ({quotes.length})</span>
+                                  <span className="text-xs text-text-secondary font-bold uppercase">Your Quotes ({quotes.length})</span>
                                   {quotes.map((q, _i) => (
-                                      <div key={q.id} className="relative group p-3 rounded-lg bg-secondary/20 border border-border/50">
+                                      <div key={q.id} className="relative group p-3 rounded-lg bg-surface-muted/20 border border-border-default/50">
                                           <p className="text-sm italic pr-6">"{q.title}"</p>
-                                          {q.quote_source && <p className="text-xs text-muted-foreground mt-1">— {q.quote_source}</p>}
+                                          {q.quote_source && <p className="text-xs text-text-secondary mt-1">— {q.quote_source}</p>}
                                           <button
                                               onClick={() => removeQuote(q.id)}
-                                              className="absolute top-2 right-2 text-muted-foreground/50 hover:text-destructive transition-colors"
+                                              className="absolute top-2 right-2 text-text-secondary/50 hover:text-feedback-destructive transition-colors"
                                           >
                                               <Trash2 className="h-4 w-4" />
                                           </button>
@@ -329,7 +329,7 @@ setArchitectResults([]);
               </div>
           </div>
 
-          <div className="p-4 border-t bg-background">
+          <div className="p-4 border-t bg-surface-default">
               <Button onClick={handleSave} className="w-full">Save Changes</Button>
           </div>
         </DialogContent>

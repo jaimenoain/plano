@@ -70,7 +70,7 @@ describe('BuildingLocationMap', () => {
     // Expect failure until implementation
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.className).toContain('bg-lime-high');
-    expect(pin.className).toContain('border-foreground');
+    expect(pin.className).toContain('border-text-primary');
   });
 
   it('renders Tier A pin for rating 2', () => {
@@ -99,7 +99,7 @@ describe('BuildingLocationMap', () => {
     render(<BuildingLocationMap {...defaultProps} rating={0} tierRank="Standard" />);
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.className).toContain('bg-muted/80');
+    expect(pin.className).toContain('bg-surface-muted/80');
   });
 
   it('uses bottom anchor for exact location (pin shape)', () => {

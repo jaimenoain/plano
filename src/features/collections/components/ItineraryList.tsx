@@ -94,7 +94,7 @@ function AddStopPopover({ dayIndex, onUpdateItinerary }: AddStopPopoverProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-foreground mt-2 border border-transparent hover:border-border border-dashed">
+        <Button variant="ghost" size="sm" className="w-full text-text-secondary hover:text-text-primary mt-2 border border-transparent hover:border-border-default border-dashed">
           <Plus className="mr-2 h-4 w-4" /> Add Stop
         </Button>
       </PopoverTrigger>
@@ -190,12 +190,12 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
   if (!canEdit) {
     return (
       <div className="relative flex items-center justify-center h-6 my-1 group">
-        <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-primary/50 transition-colors" />
+        <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-brand-primary/50 transition-colors" />
 
         <div className="relative z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity w-full px-4">
           <div className="flex-1 flex justify-end pr-2">
             {transitToNext?.estimatedMinutes ? (
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
+              <span className="text-xs text-text-secondary whitespace-nowrap">
                 {formatDuration(transitToNext.estimatedMinutes)}
               </span>
             ) : null}
@@ -204,8 +204,8 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
           {instructions || transitToNext?.estimatedMinutes ? (
             <Popover>
               <PopoverTrigger asChild>
-                <button className="shrink-0 bg-background border border-border rounded-full p-1 shadow-sm cursor-help">
-                  <Icon className="w-3 h-3 text-primary" />
+                <button className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-sm cursor-help">
+                  <Icon className="w-3 h-3 text-brand-primary" />
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-80" side="right" align="center">
@@ -215,23 +215,23 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
                    </h4>
                    {transitToNext?.estimatedMinutes && (
                      <p className="text-sm font-medium flex items-center gap-1.5 mt-1">
-                       <Clock className="w-3 h-3 text-muted-foreground" />
+                       <Clock className="w-3 h-3 text-text-secondary" />
                        {formatDuration(transitToNext.estimatedMinutes)}
                      </p>
                    )}
-                   {instructions && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{instructions}</p>}
+                   {instructions && <p className="text-sm text-text-secondary whitespace-pre-wrap mt-2">{instructions}</p>}
                 </div>
               </PopoverContent>
             </Popover>
           ) : (
-            <div className="shrink-0 bg-background border border-border rounded-full p-1 shadow-sm">
-              <Icon className="w-3 h-3 text-muted-foreground" />
+            <div className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-sm">
+              <Icon className="w-3 h-3 text-text-secondary" />
             </div>
           )}
 
           <div className="flex-1 flex justify-start pl-2 overflow-hidden">
             {instructions ? (
-              <span className="text-xs text-muted-foreground truncate" title={instructions}>
+              <span className="text-xs text-text-secondary truncate" title={instructions}>
                 {instructions}
               </span>
             ) : null}
@@ -244,13 +244,13 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
   return (
     <div className="relative flex items-center justify-center h-6 my-1 group">
       {/* The subtle vertical line */}
-      <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-primary/50 transition-colors" />
+      <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-brand-primary/50 transition-colors" />
 
       {/* The interactive pill containing the icon, visible on hover */}
       <div className="relative z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity w-full px-4">
         <div className="flex-1 flex justify-end pr-2">
           {transitToNext?.estimatedMinutes ? (
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
+            <span className="text-xs text-text-secondary whitespace-nowrap">
               {formatDuration(transitToNext.estimatedMinutes)}
             </span>
           ) : null}
@@ -258,15 +258,15 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
 
         <Popover open={isOpen} onOpenChange={handleOpenChange}>
           <PopoverTrigger asChild>
-            <button className="shrink-0 bg-background border border-border rounded-full p-1 shadow-sm hover:bg-muted cursor-pointer">
-              <Icon className="w-3 h-3 text-muted-foreground" />
+            <button className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-sm hover:bg-surface-muted cursor-pointer">
+              <Icon className="w-3 h-3 text-text-secondary" />
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-80" side="right" align="center">
             <div className="grid gap-4">
             <div className="space-y-2">
               <h4 className="font-medium leading-none">Segment Options</h4>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-text-secondary">
                 Override default transport and add notes.
               </p>
             </div>
@@ -316,7 +316,7 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
 
         <div className="flex-1 flex justify-start pl-2 overflow-hidden">
           {instructions ? (
-            <span className="text-xs text-muted-foreground truncate" title={instructions}>
+            <span className="text-xs text-text-secondary truncate" title={instructions}>
               {instructions}
             </span>
           ) : null}
@@ -374,26 +374,26 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
   };
 
   return (
-    <AccordionItem value={`day-${dayNumber}`} className="border-b-0 mb-4 bg-muted/30 rounded-lg overflow-hidden border relative group">
+    <AccordionItem value={`day-${dayNumber}`} className="border-b-0 mb-4 bg-surface-muted/30 rounded-lg overflow-hidden border relative group">
         {canEdit && (
             <div className="absolute top-2 right-4 z-10">
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 bg-muted/50 hover:bg-muted/80"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 bg-surface-muted/50 hover:bg-surface-muted/80"
                     onClick={handleOpenEditDialog}
                 >
-                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                    <Pencil className="h-4 w-4 text-text-secondary" />
                     <span className="sr-only">Edit Day</span>
                 </Button>
             </div>
         )}
-        <AccordionTrigger className="px-4 py-2 hover:no-underline bg-muted/50 hover:bg-muted/80 transition-colors">
+        <AccordionTrigger className="px-4 py-2 hover:no-underline bg-surface-muted/50 hover:bg-surface-muted/80 transition-colors">
             <div className="flex flex-col w-full items-start text-left pr-10">
                 <div className="flex items-center w-full justify-between">
                     <div className="flex items-center">
                         <span className="font-semibold">Day {dayNumber}{title ? `: ${title}` : ''}</span>
-                        <span className="text-xs text-muted-foreground ml-2 font-normal">
+                        <span className="text-xs text-text-secondary ml-2 font-normal">
                             {stops.length} stop{stops.length !== 1 ? 's' : ''}
                         </span>
                     </div>
@@ -408,7 +408,7 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
         </AccordionTrigger>
         <AccordionContent className="p-0">
              {description && (
-                <div className="px-4 py-3 bg-muted/20 border-b text-sm text-muted-foreground">
+                <div className="px-4 py-3 bg-surface-muted/20 border-b text-sm text-text-secondary">
                     {description}
                 </div>
              )}
@@ -418,7 +418,7 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                     strategy={verticalListSortingStrategy}
                 >
                     {stops.length === 0 && canEdit && (
-                        <div className="flex flex-col items-center justify-center text-xs text-center text-muted-foreground py-4 border-2 border-dashed rounded-md px-4">
+                        <div className="flex flex-col items-center justify-center text-xs text-center text-text-secondary py-4 border-2 border-dashed rounded-md px-4">
                             <span className="mb-2">Drag places here</span>
                             <AddStopPopover dayIndex={dayNumber - 1} onUpdateItinerary={onUpdateItinerary} />
                         </div>

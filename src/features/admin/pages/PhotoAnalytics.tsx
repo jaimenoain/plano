@@ -25,14 +25,14 @@ export default function PhotoAnalytics() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading analytics...</p>
+      <div className="min-h-screen bg-surface-default flex items-center justify-center">
+        <p className="text-text-secondary">Loading analytics...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-surface-default pb-20">
       <div className="container py-8 space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Photo Analytics</h1>

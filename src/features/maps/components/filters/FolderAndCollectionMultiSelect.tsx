@@ -127,7 +127,7 @@ export function FolderAndCollectionMultiSelect({
   return (
     <div className={cn("space-y-3", className)}>
       <div className="relative">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-text-secondary" />
         <Input
           placeholder="Search folders & collections..."
           value={searchQuery}
@@ -136,21 +136,21 @@ export function FolderAndCollectionMultiSelect({
         />
       </div>
 
-      <div className="border rounded-md bg-background">
+      <div className="border rounded-md bg-surface-default">
         <ScrollArea className="h-[200px] p-2">
           {loading ? (
             <div className="flex justify-center py-4">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
             </div>
           ) : (filteredCollections.length === 0 && filteredFolders.length === 0) ? (
-            <div className="text-center py-4 text-xs text-muted-foreground">
+            <div className="text-center py-4 text-xs text-text-secondary">
               {(collections.length === 0 && folders.length === 0) ? "No items found." : "No matches found."}
             </div>
           ) : (
             <div className="space-y-4">
               {filteredFolders.length > 0 && (
                 <div className="space-y-1">
-                  <div className="text-xs font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
+                  <div className="text-xs font-semibold text-text-secondary px-2 py-1 uppercase tracking-wider">
                     Folders
                   </div>
                   {filteredFolders.map(folder => {
@@ -158,7 +158,7 @@ export function FolderAndCollectionMultiSelect({
                     return (
                       <div
                         key={`folder-${folder.id}`}
-                        className="flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-muted/50 cursor-pointer"
+                        className="flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-surface-muted/50 cursor-pointer"
                         onClick={() => toggleFolder(folder.id)}
                       >
                         <Checkbox
@@ -166,7 +166,7 @@ export function FolderAndCollectionMultiSelect({
                           onCheckedChange={() => toggleFolder(folder.id)}
                           id={`folder-${folder.id}`}
                         />
-                        <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <Folder className="h-4 w-4 text-text-secondary shrink-0" />
                         <Label
                           htmlFor={`folder-${folder.id}`}
                           className="text-sm font-normal cursor-pointer flex-1 truncate"
@@ -181,7 +181,7 @@ export function FolderAndCollectionMultiSelect({
 
               {filteredCollections.length > 0 && (
                 <div className="space-y-1">
-                  <div className="text-xs font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
+                  <div className="text-xs font-semibold text-text-secondary px-2 py-1 uppercase tracking-wider">
                     Collections
                   </div>
                   {filteredCollections.map(collection => {
@@ -189,7 +189,7 @@ export function FolderAndCollectionMultiSelect({
                     return (
                       <div
                         key={`collection-${collection.id}`}
-                        className="flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-muted/50 cursor-pointer"
+                        className="flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-surface-muted/50 cursor-pointer"
                         onClick={() => toggleCollection(collection.id)}
                       >
                         <Checkbox
@@ -197,7 +197,7 @@ export function FolderAndCollectionMultiSelect({
                           onCheckedChange={() => toggleCollection(collection.id)}
                           id={`collection-${collection.id}`}
                         />
-                        <Layers className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <Layers className="h-4 w-4 text-text-secondary shrink-0" />
                         <Label
                           htmlFor={`collection-${collection.id}`}
                           className="text-sm font-normal cursor-pointer flex-1 truncate"
@@ -215,7 +215,7 @@ export function FolderAndCollectionMultiSelect({
       </div>
 
       {totalSelected > 0 && (
-        <div className="text-xs text-muted-foreground px-1">
+        <div className="text-xs text-text-secondary px-1">
           {totalSelected} item{totalSelected !== 1 ? 's' : ''} selected
         </div>
       )}

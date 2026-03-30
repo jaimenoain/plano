@@ -117,7 +117,7 @@ const SidebarProvider = React.forwardRef<
               ...style,
             } as React.CSSProperties
           }
-          className={cn("group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-muted", className)}
+          className={cn("group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-surface-muted", className)}
           ref={ref}
           {...props}
         >
@@ -425,7 +425,7 @@ const sidebarMenuButtonVariants = cva(
       variant: {
         default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         outline:
-          "bg-surface-muted shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
+          "bg-surface-muted shadow-[0_0_0_1px_var(--border-default)] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_var(--brand-secondary)]",
       },
       size: {
         default: "h-8 text-sm",

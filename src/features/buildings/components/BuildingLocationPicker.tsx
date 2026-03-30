@@ -211,7 +211,7 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null });
               searchTypes={[]}
               className="w-full"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               Search or drag the pin on the map to change location.
             </p>
           </div>
@@ -229,14 +229,14 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null });
                 >
                     Approximate Location
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-secondary">
                     Check this if the exact location is unknown. The pin will represent a general area (e.g. city center).
                 </p>
             </div>
           </div>
        </div>
 
-       <div className="h-[400px] rounded-xl overflow-hidden border shadow-sm relative bg-muted">
+       <div className="h-[400px] rounded-xl overflow-hidden border shadow-sm relative bg-surface-muted">
           <Map
             {...viewState}
             onMove={evt => setViewState(evt.viewState)}
@@ -257,7 +257,7 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null });
               >
                   <div className="flex flex-col items-center">
                       {locationPrecision === 'approximate' ? (
-                          <div className="w-6 h-6 rounded-full bg-[#EEFF41] border-2 border-background drop-shadow-md transition-transform" />
+                          <div className="w-6 h-6 rounded-full bg-[#EEFF41] border-2 border-surface-default drop-shadow-md transition-transform" />
                       ) : (
                           <MapPin
                             className="h-8 w-8 text-[#EEFF41] fill-[#EEFF41] drop-shadow-md transition-colors"
@@ -274,7 +274,7 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null });
                 e.stopPropagation();
                 setIsSatellite(!isSatellite);
             }}
-            className="absolute top-2 left-2 p-2 bg-background/90 backdrop-blur rounded-md border shadow-sm hover:bg-muted transition-colors z-10 flex items-center gap-2"
+            className="absolute top-2 left-2 p-2 bg-surface-default/90 backdrop-blur rounded-md border shadow-sm hover:bg-surface-muted transition-colors z-10 flex items-center gap-2"
             title={isSatellite ? "Show Map" : "Show Satellite"}
             type="button"
           >

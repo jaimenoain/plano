@@ -329,7 +329,8 @@ toast.error("Failed to add attribute");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <div className="max-w-2xl mx-auto w-full">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="name">Name</Label>
@@ -339,9 +340,10 @@ toast.error("Failed to add attribute");
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Sydney Opera House"
             autoComplete="off"
+            className="max-w-md"
           />
           {finalSlug && (
-            <div className={`flex items-center gap-1.5 mt-1 text-xs transition-colors duration-300 ${isSlugCollision ? 'text-amber-600 dark:text-amber-500' : 'text-muted-foreground'}`}>
+            <div className={`flex items-center gap-1.5 mt-1 text-xs transition-colors duration-300 ${isSlugCollision ? 'text-amber-600 dark:text-amber-500' : 'text-text-secondary'}`}>
               {isSlugCollision && <Info className="h-3.5 w-3.5" />}
               <span>
                 plano.com/b/{finalSlug}
@@ -366,7 +368,7 @@ toast.error("Failed to add attribute");
           </Select>
         </div>
 
-        <div className="space-y-4 border rounded-md p-4 bg-muted/5">
+        <div className="space-y-4 border border-border-default rounded-sm p-4 bg-surface-muted/30">
           <h3 className="text-sm font-semibold">Access & Entry Logistics</h3>
 
           <div className="flex flex-col gap-6">
@@ -410,10 +412,10 @@ toast.error("Failed to add attribute");
                 ? "e.g., Add ticket link, entry prices, or booking instructions..."
                 : "e.g., Closed on public holidays, enter through the east gate..."}
               maxLength={500}
-              className="resize-none"
+              className="resize-none max-w-xl"
               rows={2}
             />
-            <div className="text-xs text-muted-foreground text-right">
+            <div className="text-xs text-text-secondary text-right">
               {access_notes.length}/500
             </div>
           </div>
@@ -431,7 +433,7 @@ toast.error("Failed to add attribute");
                 placeholder="e.g. Eiffel Tower"
                 autoComplete="off"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary">
                 Display name for international users (e.g. 'Eiffel Tower' vs 'Tour Eiffel').
               </p>
             </div>
@@ -443,7 +445,7 @@ toast.error("Failed to add attribute");
                 tags={aliases}
                 setTags={setAliases}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary">
                 Nicknames or alternate spellings for search only (e.g. 'Iron Lady'). Press Enter to add.
               </p>
             </div>
@@ -461,6 +463,7 @@ toast.error("Failed to add attribute");
               onChange={(e) => setYear(e.target.value)}
               placeholder="e.g. 1973"
               autoComplete="off"
+              className="max-w-[8rem]"
             />
           </div>
         )}
@@ -475,13 +478,13 @@ toast.error("Failed to add attribute");
                 setSelectedArchitects={setArchitects}
                 placeholder="Search architects or add new..."
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary">
                 Add multiple architects if applicable. If not found, you can create a new one.
               </p>
             </div>
 
             {isVerifiedArchitect && (
-              <div className="space-y-2 border rounded-md p-4 bg-muted/5">
+              <div className="space-y-2 border border-border-default rounded-sm p-4 bg-surface-muted/30">
                 <ArchitectStatement
                   statement={architect_statement}
                   isEditing={true}
@@ -538,7 +541,7 @@ toast.error("Failed to add attribute");
       <div className="space-y-6">
         <div>
           <h3 className="text-base font-semibold">Functional Classification</h3>
-          <p className="text-sm text-muted-foreground">Define the primary purpose of the building.</p>
+          <p className="text-sm text-text-secondary">Define the primary purpose of the building.</p>
         </div>
 
         <div className="space-y-4">
@@ -571,7 +574,7 @@ toast.error("Failed to add attribute");
                  <Skeleton className="h-8 w-20" />
                </div>
             ) : !functional_category_id ? (
-              <div className="p-4 border border-dashed rounded-md text-sm text-muted-foreground text-center bg-muted/20">
+              <div className="p-4 border-2 border-dashed border-border-default rounded-sm text-sm text-text-secondary text-center bg-surface-muted/20">
                 Please select a category first to see available typologies.
               </div>
             ) : (
@@ -588,7 +591,7 @@ toast.error("Failed to add attribute");
                     <ToggleGroupItem
                       key={typology.id}
                       value={typology.id}
-                      className="h-8 text-sm px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                      className="h-8 text-sm px-3 data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground"
                     >
                       {typology.name}
                     </ToggleGroupItem>
@@ -614,7 +617,7 @@ toast.error("Failed to add attribute");
                             type="button"
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            className="h-8 w-8 text-feedback-success hover:bg-feedback-success/10"
                             onClick={handleAddTypology}
                             disabled={isAddingTypologyLoading}
                         >
@@ -624,7 +627,7 @@ toast.error("Failed to add attribute");
                             type="button"
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="h-8 w-8 text-feedback-destructive hover:bg-feedback-destructive/10"
                             onClick={() => {
                                 setIsAddingTypology(false);
                                 setNewTypologyName("");
@@ -638,7 +641,7 @@ toast.error("Failed to add attribute");
                     <Button
                         type="button"
                         variant="ghost"
-                        className="h-8 text-sm px-2 text-muted-foreground hover:text-foreground ml-1"
+                        className="h-8 text-sm px-2 text-text-secondary hover:text-text-primary ml-1"
                         onClick={() => setIsAddingTypology(true)}
                     >
                         <Plus className="h-3 w-3 mr-1" /> Add another
@@ -647,7 +650,7 @@ toast.error("Failed to add attribute");
               </ToggleGroup>
             )}
             {functional_category_id && (typologies || []).filter(t => t.parent_category_id === functional_category_id).length === 0 && (
-                 <p className="text-sm text-muted-foreground">No typologies found for this category.</p>
+                 <p className="text-sm text-text-secondary">No typologies found for this category.</p>
             )}
           </div>
         </div>
@@ -659,7 +662,7 @@ toast.error("Failed to add attribute");
       <div className="space-y-6">
         <div>
           <h3 className="text-base font-semibold">Characteristics</h3>
-          <p className="text-sm text-muted-foreground">Add tags to describe the building's features.</p>
+          <p className="text-sm text-text-secondary">Add tags to describe the building's features.</p>
         </div>
 
         {isLoadingGroups || isLoadingAttributes ? (
@@ -680,7 +683,7 @@ toast.error("Failed to add attribute");
 
               return (
                 <div key={group.id} className="space-y-3">
-                  <Label className="text-xs uppercase text-muted-foreground tracking-wider font-semibold">
+                  <Label className="text-xs uppercase text-text-secondary tracking-wider font-semibold">
                     {group.name}
                   </Label>
                   <ToggleGroup
@@ -696,7 +699,7 @@ toast.error("Failed to add attribute");
                       <ToggleGroupItem
                         key={attr.id}
                         value={attr.id}
-                        className="h-8 text-sm px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                        className="h-8 text-sm px-3 data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground"
                       >
                         {attr.name}
                       </ToggleGroupItem>
@@ -732,7 +735,7 @@ toast.error("Failed to add attribute");
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="h-8 w-8 text-feedback-destructive hover:bg-feedback-destructive/10"
                           onClick={() => {
                             setAddingAttributeGroupId(null);
                             setNewAttributeName("");
@@ -746,7 +749,7 @@ toast.error("Failed to add attribute");
                       <Button
                         type="button"
                         variant="ghost"
-                        className="h-8 text-sm px-2 text-muted-foreground hover:text-foreground ml-1"
+                        className="h-8 text-sm px-2 text-text-secondary hover:text-text-primary ml-1"
                         onClick={() => setAddingAttributeGroupId(group.id)}
                       >
                         <Plus className="h-3 w-3 mr-1" /> Add another
@@ -760,16 +763,19 @@ toast.error("Failed to add attribute");
         )}
       </div>
 
-      <Button type="submit" className="w-full mt-6" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Saving...
-          </>
-        ) : (
-          submitLabel
-        )}
-      </Button>
+      <div className="flex items-center justify-end gap-3 pt-6 border-t border-border-default mt-6">
+        <Button type="submit" variant="default" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin text-text-secondary" />
+              Saving...
+            </>
+          ) : (
+            submitLabel
+          )}
+        </Button>
+      </div>
     </form>
+    </div>
   );
 }

@@ -237,7 +237,7 @@ toast.error("Failed to save");
              className="w-full h-full object-contain"
            />
         ) : (
-           <div className="w-full h-full flex items-center justify-center text-gray-500">
+           <div className="w-full h-full flex items-center justify-center text-text-secondary">
              No image available
            </div>
         )}
@@ -251,23 +251,23 @@ toast.error("Failed to save");
 
       {/* Color Overlays */}
       <motion.div
-        className="absolute inset-0 bg-green-500 z-[15] pointer-events-none"
+        className="absolute inset-0 bg-brand-primary z-[15] pointer-events-none"
         style={{ opacity: likeOverlayOpacity }}
       />
       <motion.div
-        className="absolute inset-0 bg-red-500 z-[15] pointer-events-none"
+        className="absolute inset-0 bg-feedback-destructive z-[15] pointer-events-none"
         style={{ opacity: nopeOverlayOpacity }}
       />
 
       {/* Swipe Feedback Overlays */}
       <motion.div style={{ opacity: likeOpacity }} className="absolute top-20 left-10 z-50 pointer-events-none">
-        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-          <Bookmark className="w-10 h-10 text-white" />
+        <div className="w-20 h-20 bg-brand-primary rounded-full flex items-center justify-center shadow-lg">
+          <Bookmark className="w-10 h-10 text-text-inverse" />
         </div>
       </motion.div>
       <motion.div style={{ opacity: nopeOpacity }} className="absolute top-20 right-10 z-50 pointer-events-none">
-        <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
-          <EyeOff className="w-10 h-10 text-white" />
+        <div className="w-20 h-20 bg-feedback-destructive rounded-full flex items-center justify-center shadow-lg">
+          <EyeOff className="w-10 h-10 text-text-inverse" />
         </div>
       </motion.div>
 
@@ -279,18 +279,18 @@ toast.error("Failed to save");
             className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm"
             onClick={(e) => e.stopPropagation()}
           >
-              <h3 className="text-white text-2xl font-bold mb-8">Add points? (Optional)</h3>
+              <h3 className="text-text-inverse text-2xl font-bold mb-8">Add points? (Optional)</h3>
               <div className="flex gap-6">
                   {([null, 1, 2, 3] as const).map((val) => (
                       <button
                         key={val ?? 'bookmark'}
                         onClick={(e) => handleRate(val, e)}
-                        className={`w-16 h-16 rounded-full border-2 border-white flex items-center justify-center text-2xl font-bold transition-all duration-300 ${
+                        className={`w-16 h-16 rounded-full border-2 border-text-inverse flex items-center justify-center text-2xl font-bold transition-all duration-300 ${
                             rating === val
-                                ? (val === null
-                                    ? "bg-green-500 text-white border-green-500 scale-110 shadow-[0_0_20px_theme(colors.green.500)]"
-                                    : "bg-primary-foreground text-primary border-primary-foreground scale-110 shadow-[0_0_20px_hsl(var(--primary-foreground))]")
-                                : "text-white hover:bg-white/20 hover:scale-105"
+                                ? val === null
+                                    ? "bg-brand-primary text-brand-primary-foreground border-brand-primary scale-110 shadow-[0_0_20px_var(--brand-primary)]"
+                                    : "bg-brand-primary text-brand-primary-foreground border-brand-primary scale-110 shadow-[0_0_20px_var(--brand-primary)]"
+                                : "text-text-inverse hover:bg-white/20 hover:scale-105"
                         }`}
                       >
                           {val === null ? <Bookmark className="w-8 h-8" /> : val}
@@ -299,7 +299,7 @@ toast.error("Failed to save");
               </div>
               <Button
                 variant="ghost"
-                className="mt-12 text-white/50 hover:text-black hover:bg-white"
+                className="mt-12 text-text-inverse/50 hover:text-text-primary hover:bg-surface-card"
                 onClick={(e) => {
                     e.stopPropagation();
                     if (onSwipeSave) onSwipeSave();
@@ -326,7 +326,7 @@ toast.error("Failed to save");
       <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-20 pointer-events-none" />
 
       {/* Info Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 z-30 text-white pb-24 md:pb-6 pointer-events-none break-words">
+      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 z-30 text-text-inverse pb-24 md:pb-6 pointer-events-none break-words">
         {facepileInteractions.length > 0 && (
           <ContactFacepile interactions={facepileInteractions} />
         )}
@@ -337,14 +337,14 @@ toast.error("Failed to save");
           <h2 className="text-3xl font-bold mb-1 leading-tight drop-shadow-md">{building.name}</h2>
         </Link>
 
-        <div className="text-lg text-gray-200 font-medium mb-1 drop-shadow-md">
+        <div className="text-lg text-text-inverse/90 font-medium mb-1 drop-shadow-md">
           {building.city && building.country
             ? `${building.city}, ${building.country}`
             : building.city || building.country || 'Location unknown'}
         </div>
 
         {architectNames && (
-          <div className="text-sm text-gray-300 font-light drop-shadow-md">
+          <div className="text-sm text-text-inverse/80 font-light drop-shadow-md">
             {architectNames}
           </div>
         )}
@@ -356,7 +356,9 @@ toast.error("Failed to save");
           variant={isSaved ? "default" : "secondary"}
           size="icon"
           className={`h-12 w-12 rounded-full shadow-lg border-none backdrop-blur-md transition-all duration-300 ${
-              isSaved ? "bg-green-500 hover:bg-green-600 text-white" : "bg-white/10 hover:bg-white/20 text-white"
+              isSaved
+                  ? "bg-brand-primary hover:opacity-90 text-text-inverse"
+                  : "bg-white/10 hover:bg-white/20 text-text-inverse"
           }`}
           onClick={handleSave}
         >

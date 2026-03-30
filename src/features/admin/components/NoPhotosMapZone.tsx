@@ -147,7 +147,7 @@ export function NoPhotosMapZone() {
       </CardHeader>
       <CardContent className="h-[500px] p-0 overflow-hidden rounded-b-lg relative">
         {loading && (
-             <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+             <div className="absolute inset-0 flex items-center justify-center bg-surface-default/50 z-10">
                 <Loader2 className="h-8 w-8 animate-spin" />
              </div>
         )}

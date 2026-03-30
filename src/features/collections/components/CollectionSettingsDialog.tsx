@@ -437,7 +437,7 @@ toast.error("Failed to export data");
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="community-images" className="flex flex-col space-y-1">
                   <span>Show Community Images</span>
-                  <span className="font-normal text-xs text-muted-foreground">Display images in map and list</span>
+                  <span className="font-normal text-xs text-text-secondary">Display images in map and list</span>
                 </Label>
                 <Switch
                   id="community-images"
@@ -451,7 +451,7 @@ toast.error("Failed to export data");
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="show-saved-candidates" className="flex flex-col space-y-1">
                   <span>Show Saved Places</span>
-                  <span className="font-normal text-xs text-muted-foreground">Show your saved places as suggestions on the map</span>
+                  <span className="font-normal text-xs text-text-secondary">Show your saved places as suggestions on the map</span>
                 </Label>
                 <Switch
                   id="show-saved-candidates"
@@ -493,7 +493,7 @@ toast.error("Failed to export data");
             <div className="flex items-center justify-between space-x-2">
               <Label htmlFor="public-mode" className="flex flex-col space-y-1">
                 <span>Public Collection</span>
-                <span className="font-normal text-xs text-muted-foreground">Visible to everyone</span>
+                <span className="font-normal text-xs text-text-secondary">Visible to everyone</span>
               </Label>
               <Switch
                 id="public-mode"
@@ -508,7 +508,7 @@ toast.error("Failed to export data");
                <h3 className="text-sm font-medium flex items-center gap-2">
                  <FolderPlus className="h-4 w-4" /> Folders
                </h3>
-               <p className="text-sm text-muted-foreground">
+               <p className="text-sm text-text-secondary">
                  Add this collection to one or more of your folders.
                </p>
                {collectionFolders.length > 0 && (
@@ -534,7 +534,7 @@ toast.error("Failed to export data");
                   <h3 className="text-sm font-medium flex items-center gap-2">
                     <Sparkles className="h-4 w-4" /> Plan Route
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-text-secondary">
                     Generate an optimized route for visiting buildings in this collection.
                   </p>
                   <Button onClick={() => { onPlanRoute(); onOpenChange(false); }} className="w-full sm:w-auto">
@@ -547,7 +547,7 @@ toast.error("Failed to export data");
 
             <div className="space-y-4">
               <h3 className="text-sm font-medium">Export Data</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-text-secondary">
                 Download a CSV file containing all buildings in this collection, including coordinates and notes.
               </p>
               <Button onClick={handleExportData} disabled={downloading} variant="outline" className="w-full sm:w-auto">
@@ -559,11 +559,11 @@ toast.error("Failed to export data");
             <Separator className="my-6" />
 
             {isOwner && (
-              <div className="border border-destructive/50 rounded-md p-4 bg-destructive/5 space-y-4">
-                <h3 className="text-destructive font-medium flex items-center gap-2">
+              <div className="border border-feedback-destructive/50 rounded-md p-4 bg-feedback-destructive/5 space-y-4">
+                <h3 className="text-feedback-destructive font-medium flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" /> Danger Zone
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-text-secondary">
                   Deleting this collection will permanently remove it and all its associations. This action cannot be undone.
                 </p>
                 <Button
@@ -617,7 +617,7 @@ toast.error("Failed to export data");
                     </div>
                 </RadioGroup>
 
-                <div className="text-sm text-muted-foreground bg-secondary/10 p-2 rounded-md border mt-2">
+                <div className="text-sm text-text-secondary bg-surface-muted/10 p-2 rounded-md border mt-2">
                     {METHOD_DESCRIPTIONS[formData.categorization_method]}
                 </div>
 
@@ -643,7 +643,7 @@ toast.error("Failed to export data");
                          </div>
 
                          {formData.categorization_selected_members !== null && (
-                             <ScrollArea className="h-[150px] border rounded-md p-2 bg-secondary/5">
+                             <ScrollArea className="h-[150px] border rounded-md p-2 bg-surface-muted/5">
                                  {contributors.length > 0 ? (
                                      <div className="space-y-2">
                                          {contributors.map(c => {
@@ -663,7 +663,7 @@ toast.error("Failed to export data");
                                          })}
                                      </div>
                                  ) : (
-                                     <div className="text-xs text-muted-foreground py-4 text-center">No collaborators found.</div>
+                                     <div className="text-xs text-text-secondary py-4 text-center">No collaborators found.</div>
                                  )}
                              </ScrollArea>
                          )}
@@ -700,11 +700,11 @@ toast.error("Failed to export data");
                             </Button>
                         </div>
 
-                        <ScrollArea className="h-[200px] border rounded-md bg-secondary/10 p-2">
+                        <ScrollArea className="h-[200px] border rounded-md bg-surface-muted/10 p-2">
                             {formData.custom_categories && formData.custom_categories.length > 0 ? (
                                 <div className="space-y-2">
                                     {formData.custom_categories.map((cat) => (
-                                        <div key={cat.id} className="flex items-center justify-between bg-card p-2 rounded-md shadow-sm border">
+                                        <div key={cat.id} className="flex items-center justify-between bg-surface-card p-2 rounded-md shadow-sm border">
                                             <div className="flex items-center gap-2">
                                                 <div
                                                     className="w-4 h-4 rounded-full border shadow-sm"
@@ -712,14 +712,14 @@ toast.error("Failed to export data");
                                                 />
                                                 <span className="text-sm font-medium">{cat.label}</span>
                                             </div>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeCustomCategory(cat.id)}>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-text-secondary hover:text-feedback-destructive" onClick={() => removeCustomCategory(cat.id)}>
                                                 <X className="h-3 w-3" />
                                             </Button>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-xs gap-2 opacity-50">
+                                <div className="flex flex-col items-center justify-center h-full text-text-secondary text-xs gap-2 opacity-50">
                                     <MapPin className="h-6 w-6" />
                                     <p>No custom categories yet</p>
                                 </div>
@@ -746,10 +746,10 @@ toast.error("Failed to export data");
                 <Label>Current Collaborators</Label>
                 {loadingContributors ? (
                     <div className="flex justify-center py-4">
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
                     </div>
                 ) : contributors.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground text-sm border rounded-md border-dashed">
+                    <div className="text-center py-8 text-text-secondary text-sm border rounded-md border-dashed">
                         No collaborators yet.
                     </div>
                 ) : (
@@ -767,14 +767,14 @@ toast.error("Failed to export data");
                                         </Avatar>
                                         <span className="text-sm font-medium">
                                           {contributor.user.username}
-                                          {isMe && <span className="ml-2 text-xs text-muted-foreground">(You)</span>}
+                                          {isMe && <span className="ml-2 text-xs text-text-secondary">(You)</span>}
                                         </span>
                                     </div>
                                     {isOwner && !isMe && (
                                       <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                          className="h-8 w-8 text-text-secondary hover:text-feedback-destructive"
                                           onClick={() => handleRemoveContributor(contributor.user.id)}
                                       >
                                           <Trash2 className="h-4 w-4" />
@@ -784,7 +784,7 @@ toast.error("Failed to export data");
                                       <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                          className="h-8 w-8 text-text-secondary hover:text-feedback-destructive"
                                           onClick={handleLeaveCollection}
                                           title="Leave Collection"
                                       >
@@ -830,7 +830,7 @@ toast.error("Failed to export data");
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteCollection}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-feedback-destructive text-feedback-destructive-foreground hover:bg-feedback-destructive/90"
               disabled={deleting}
             >
               {deleting ? "Deleting..." : "Delete Collection"}

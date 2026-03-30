@@ -173,21 +173,21 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
         {/* Architect Results */}
         {architects && architects.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider px-1">
               Architects
             </h4>
             {architects.map((architect) => (
               <Link to={`/architect/${architect.id}`} key={architect.id} className="block group">
-                <Card className="flex flex-row overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50 hover:bg-muted/50 bg-muted/30">
+                <Card className="flex flex-row overflow-hidden transition-all duration-200 shadow-none border-transparent hover:border-border-default/50 hover:bg-surface-muted/50 bg-surface-muted/30">
                   <CardContent className="flex items-center gap-3 p-3 w-full">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-muted text-secondary-foreground">
                       <UserRound className="h-4 w-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="line-clamp-1 text-sm font-semibold group-hover:text-primary transition-colors">
+                      <h3 className="line-clamp-1 text-sm font-semibold group-hover:text-brand-primary transition-colors">
                         {architect.name}
                       </h3>
-                      <span className="text-xs text-muted-foreground capitalize">
+                      <span className="text-xs text-text-secondary capitalize">
                         {architect.type}
                       </span>
                     </div>
@@ -202,22 +202,22 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
         {/* Location Suggestions (replaces topLocation) */}
         {suggestions && suggestions.length > 0 ? (
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider px-1">
               Jump to Location
             </h4>
             {suggestions.map((suggestion) => (
               <Card
                 key={suggestion.place_id}
-                className="cursor-pointer overflow-hidden border-transparent bg-muted/30 hover:bg-muted/50 transition-colors"
+                className="cursor-pointer overflow-hidden border-transparent bg-surface-muted/30 hover:bg-surface-muted/50 transition-colors"
                 onClick={() => onLocationClick?.(suggestion.place_id)}
               >
                 <CardContent className="flex items-center gap-3 p-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <MapPin className="h-4 w-4 text-primary" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-primary/10">
+                    <MapPin className="h-4 w-4 text-brand-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{suggestion.description}</p>
-                    <p className="text-xs text-muted-foreground">Location</p>
+                    <p className="text-xs text-text-secondary">Location</p>
                   </div>
                 </CardContent>
               </Card>
@@ -226,20 +226,20 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
           </div>
         ) : topLocation ? (
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider px-1">
               Jump to Location
             </h4>
             <Card
-              className="cursor-pointer overflow-hidden border-transparent bg-muted/30 hover:bg-muted/50 transition-colors"
+              className="cursor-pointer overflow-hidden border-transparent bg-surface-muted/30 hover:bg-surface-muted/50 transition-colors"
               onClick={() => onLocationClick?.(topLocation.place_id)}
             >
               <CardContent className="flex items-center gap-3 p-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <MapPin className="h-4 w-4 text-primary" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-primary/10">
+                  <MapPin className="h-4 w-4 text-brand-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{topLocation.description}</p>
-                  <p className="text-xs text-muted-foreground">Location</p>
+                  <p className="text-xs text-text-secondary">Location</p>
                 </div>
               </CardContent>
             </Card>
@@ -250,22 +250,22 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
         {/* Loading State */}
         {!bounds || isLoading ? (
            <div className="flex items-center justify-center p-8">
-             {(!bounds || isLoading) && <Loader2 className="h-8 w-8 animate-spin text-primary" />}
+             {(!bounds || isLoading) && <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />}
            </div>
         ) : isError ? (
-           <div className="text-center text-destructive p-4">
+           <div className="text-center text-feedback-destructive p-4">
              <p>Failed to load buildings.</p>
            </div>
         ) : buildings.length === 0 ? (
            <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
-             <p className="text-muted-foreground">No buildings found in this area.</p>
+             <p className="text-text-secondary">No buildings found in this area.</p>
              <Button variant="outline" asChild>
                 <Link to="/add-building">Add building</Link>
              </Button>
            </div>
         ) : (
            <>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+              <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider px-1">
                  Buildings
               </h4>
               {buildings.map((building) => {
@@ -273,18 +273,18 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
                 return (
                   <Link to={`/building/${building.slug || building.id}`} key={building.id} className="block group">
                     <Card
-                      className="flex flex-row overflow-hidden transition-all duration-200 hover:shadow-md border-transparent hover:border-border/50 min-h-[7rem]"
+                      className="flex flex-row overflow-hidden transition-all duration-200 shadow-none border-transparent hover:border-border-default/50 min-h-[7rem]"
                       onMouseEnter={() => setHighlightedId(building.id)}
                       onMouseLeave={() => setHighlightedId(null)}
                     >
                       <CardContent className="flex-1 min-w-0 p-3 flex flex-col justify-center">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex flex-col">
-                            <h3 className="line-clamp-2 text-sm font-semibold leading-tight group-hover:text-primary" title={building.name}>
+                            <h3 className="line-clamp-2 text-sm font-semibold leading-tight group-hover:text-brand-primary" title={building.name}>
                                 {building.name}
                             </h3>
                             {building.alt_name && building.alt_name !== building.name && (
-                                <span className="text-xs text-muted-foreground italic truncate max-w-[200px]">
+                                <span className="text-xs text-text-secondary italic truncate max-w-[200px]">
                                     {building.alt_name}
                                 </span>
                             )}
@@ -294,12 +294,12 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
                         {/* Architect, Year, Location */}
                         <div className="mt-1 flex flex-col gap-0.5">
                             {building.architects && building.architects.length > 0 && (
-                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                <p className="text-xs text-text-secondary line-clamp-1">
                                     {building.architects.join(', ')}
                                 </p>
                             )}
                             {(building.city || building.country || building.year_completed) && (
-                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                <p className="text-xs text-text-secondary line-clamp-1">
                                     {[
                                         building.city,
                                         building.country,
@@ -312,14 +312,14 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
                         {( (building.status && building.status !== 'none') || building.rating > 0 ) && (
                             <div className="mt-2 flex items-center gap-2">
                                 {building.status && building.status !== 'none' && (
-                                    <span className="inline-flex items-center rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
+                                    <span className="inline-flex items-center rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
                                         {building.status}
                                     </span>
                                 )}
                                 {building.rating > 0 && (
                                     <div className="flex gap-1" aria-label={`Rating: ${building.rating} stars`}>
                                         {Array.from({ length: building.rating }).map((_, i) => (
-                                            <div key={i} className="h-2 w-2 rounded-full bg-primary" />
+                                            <div key={i} className="h-2 w-2 rounded-full bg-brand-primary" />
                                         ))}
                                     </div>
                                 )}
@@ -327,7 +327,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
                         )}
                       </CardContent>
 
-                      <div className="relative w-28 shrink-0 bg-muted overflow-hidden">
+                      <div className="relative w-28 shrink-0 bg-surface-muted overflow-hidden">
                         {imageUrl ? (
                           <img
                             src={imageUrl}
@@ -336,7 +336,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
                             loading="lazy"
                           />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-muted-foreground text-[10px]">
+                          <div className="flex h-full items-center justify-center text-text-secondary text-[10px]">
                             No Image
                           </div>
                         )}
@@ -348,12 +348,12 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
 
               {/* Infinite Scroll Loader */}
               <div ref={observerTarget} className="flex h-8 w-full items-center justify-center py-2">
-                 {isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                 {isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />}
               </div>
 
               {!hasNextPage && buildings.length > 0 && (
                   <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-text-secondary">
                       Not finding what you're looking for?
                     </p>
                     <Button variant="outline" asChild>

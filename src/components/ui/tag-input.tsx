@@ -36,12 +36,12 @@ export function TagInput({ placeholder, tags, setTags, className }: TagInputProp
     <div className={`space-y-2 ${className}`}>
       <div className="flex flex-wrap gap-2 mb-2">
         {tags.map((tag, index) => (
-          <Badge key={index} variant="secondary" className="flex items-center gap-1">
+          <Badge key={index} variant="default" className="flex items-center gap-1">
             {tag}
             <button
               type="button"
               onClick={() => removeTag(tag)}
-              className="hover:bg-muted rounded-full p-0.5"
+              className="hover:bg-surface-muted rounded-sm p-0.5"
             >
               <X className="h-3 w-3" />
               <span className="sr-only">Remove {tag}</span>

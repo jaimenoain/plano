@@ -9,9 +9,6 @@
     /* ============================================================
        Plano Semantic Design Tokens
        Edit values here — do not edit tailwind.config.ts token values directly.
-       Bridge aliases at the bottom keep shadcn components working
-       until Phase 2 migrates them to semantic names.
-       Remove bridge aliases in Phase 5.
        ============================================================ */
 
     /* --- Brand --- */
@@ -52,39 +49,12 @@
        At 6px: rounded-lg=6px (modals), rounded-md=4px, rounded-sm=2px (cards/buttons/inputs).
        DO NOT set this to 2px — it would make rounded-sm negative. */
     --radius: 6px;
-
-    /* ============================================================
-       Bridge aliases — shadcn/ui compatibility layer
-       These map old shadcn variable names to new semantic tokens.
-       Every existing component that references --primary, --muted, etc.
-       continues to work unchanged through Phase 4.
-       REMOVE THIS ENTIRE BLOCK in Phase 5 Task 5.1.
-       ============================================================ */
-    --background:             var(--surface-default);
-    --foreground:             var(--text-primary);
-    --card:                   var(--surface-card);
-    --card-foreground:        var(--text-primary);
-    --popover:                var(--surface-overlay);
-    --popover-foreground:     var(--text-primary);
-    --primary:                var(--brand-primary);
-    --primary-foreground:     var(--brand-primary-foreground);
-    --secondary:              var(--surface-muted);
-    --secondary-foreground:   var(--text-primary);
-    --muted:                  var(--surface-muted);
-    --muted-foreground:       var(--text-secondary);
-    --accent:                 var(--brand-secondary);
-    --accent-foreground:      var(--brand-secondary-foreground);
-    --destructive:            var(--feedback-destructive);
-    --destructive-foreground: var(--feedback-destructive-foreground);
-    --border:                 var(--border-default);
-    --input:                  var(--border-default);
-    --ring:                   var(--brand-primary);
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border-default;
   }
 
   html {
@@ -98,7 +68,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-surface-default text-text-primary;
     /* Base font size 16px is critical for legibility */
     font-size: 16px; 
     line-height: 1.5;
@@ -107,8 +77,8 @@
   }
 
   ::selection {
-    background-color: hsl(var(--primary-foreground) / 0.5);
-    color: hsl(var(--primary));
+    background-color: var(--brand-primary);
+    color: var(--brand-primary-foreground);
   }
 
   /* Improve form element usability */
@@ -124,15 +94,15 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-darker));
+    background: var(--border-strong);
     border-radius: var(--radius);
   }
 }
 
 @layer utilities {
   .glass {
-    background: hsl(var(--glass-bg));
-    border-color: hsl(var(--glass-border));
+    background: color-mix(in srgb, var(--surface-card) 70%, transparent);
+    border-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
     @apply backdrop-blur-xl border-b;
   }
   

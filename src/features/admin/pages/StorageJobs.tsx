@@ -116,7 +116,7 @@ toast.error(`Failed to queue job: ${error instanceof Error ? error.message : "Un
     <div className="space-y-6 p-6 pb-20">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Storage Management</h1>
-        <p className="text-muted-foreground">
+        <p className="text-text-secondary">
           Manage background jobs for recursive storage deletion.
         </p>
       </div>
@@ -160,7 +160,7 @@ toast.error(`Failed to queue job: ${error instanceof Error ? error.message : "Un
           </Button>
         </div>
 
-        <div className="rounded-md border bg-card">
+        <div className="rounded-md border bg-surface-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -181,7 +181,7 @@ toast.error(`Failed to queue job: ${error instanceof Error ? error.message : "Un
                 </TableRow>
               ) : jobs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-24 text-center text-text-secondary">
                     No jobs found.
                   </TableCell>
                 </TableRow>
@@ -195,13 +195,13 @@ toast.error(`Failed to queue job: ${error instanceof Error ? error.message : "Un
                     </TableCell>
                     <TableCell className="font-mono text-xs">{job.user_id}</TableCell>
                     <TableCell className="text-sm">{job.bucket_name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-text-secondary">
                       {format(new Date(job.created_at), "MMM d, HH:mm")}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-text-secondary">
                       {format(new Date(job.updated_at), "HH:mm:ss")}
                     </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
+                    <TableCell className="max-w-[200px] truncate text-xs text-text-secondary">
                       {job.logs && job.logs.length > 0 ? job.logs[job.logs.length - 1] : '-'}
                     </TableCell>
                   </TableRow>

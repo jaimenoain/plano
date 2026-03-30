@@ -91,7 +91,7 @@ form.setError("professional_email", {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`sm:max-w-md p-0 overflow-hidden border-0 ${showSuccess ? "bg-black" : "bg-background"}`}>
+      <DialogContent className={`sm:max-w-md p-0 overflow-hidden border-0 ${showSuccess ? "bg-black" : "bg-surface-default"}`}>
         {showSuccess ? (
           <div className="flex flex-col items-center justify-center p-12 bg-black text-white min-h-[300px] animate-in fade-in zoom-in duration-300">
             <div className="rounded-full bg-[#eeff41ff]/20 p-4 mb-6">

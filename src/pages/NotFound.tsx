@@ -9,7 +9,7 @@ const ScopeReductionGraphic = () => (
   <div className="w-full max-w-[320px] aspect-[4/3] mx-auto relative mb-8">
     <svg
       viewBox="0 0 400 300"
-      className="w-full h-full text-foreground"
+      className="w-full h-full text-text-primary"
       style={{ overflow: 'visible' }}
     >
       {/* Pattern for grid */}
@@ -23,7 +23,7 @@ const ScopeReductionGraphic = () => (
       <rect width="100%" height="100%" fill="url(#grid)" />
 
       {/* Floor Plan Walls - Black Lines */}
-      <g stroke="currentColor" strokeWidth="3" fill="none" className="text-foreground">
+      <g stroke="currentColor" strokeWidth="3" fill="none" className="text-text-primary">
         {/* Outer Perimeter */}
         <rect x="50" y="50" width="300" height="200" />
 
@@ -80,24 +80,24 @@ const NotFound = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-surface-default flex flex-col">
       <MetaHead title="404: Scope Reduction" />
       <div className="md:hidden">
         <Header showLogo={true} />
       </div>
 
       {/* Main Content - Centered */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 pb-32 md:pb-12 pt-20 md:pt-12 text-center max-w-4xl mx-auto w-full">
+      <main className="flex-1 flex flex-col items-center justify-center py-16 px-8 text-center w-full">
 
         <ScopeReductionGraphic />
 
         <div className="space-y-6 max-w-2xl mx-auto">
-           <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">
+           <h1 className="text-4xl font-bold tracking-tight text-text-primary">
               404: Scope Reduction
            </h1>
 
-           <div className="bg-muted/30 p-6 border border-border/50 rounded-sm">
-             <p className="text-sm md:text-base font-mono text-muted-foreground leading-relaxed">
+           <div className="bg-surface-muted/30 p-6 border border-border-default/50 rounded-sm">
+             <p className="text-sm md:text-base font-mono text-text-secondary leading-relaxed">
                 "We regret to inform you that this page was removed from the project scope during the latest budget review. The client decided a white void was more cost-effective."
              </p>
            </div>

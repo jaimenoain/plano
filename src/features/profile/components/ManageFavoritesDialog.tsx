@@ -163,11 +163,11 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
            <DialogTitle>Manage Favorites ({selected.length}/6)</DialogTitle>
         </DialogHeader>
 
-        <div className="p-4 bg-secondary/30">
+        <div className="p-4 bg-surface-muted/30">
            <div className="relative">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
              <input
-               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+               className="flex h-10 w-full rounded-md border border-border-default bg-surface-default px-3 py-2 pl-9 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                placeholder="Search for buildings..."
                value={query}
                onChange={(e) => {
@@ -177,7 +177,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
              />
              {query && (
                <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                   <X className="h-4 w-4 text-muted-foreground" />
+                   <X className="h-4 w-4 text-text-secondary" />
                </button>
              )}
            </div>
@@ -192,21 +192,21 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
             </div>
 
             {selected.length > 0 && (
-                <div className="px-4 py-2 border-b bg-background/50 backdrop-blur-sm z-10">
-                    <div className="text-[10px] uppercase font-bold text-muted-foreground mb-2 tracking-wider">Selected ({selected.length}/6)</div>
+                <div className="px-4 py-2 border-b bg-surface-default/50 backdrop-blur-sm z-10">
+                    <div className="text-[10px] uppercase font-bold text-text-secondary mb-2 tracking-wider">Selected ({selected.length}/6)</div>
                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x">
                         {selected.map(item => (
                             <div key={item.id} className="relative shrink-0 w-12 snap-start">
-                                <div className="aspect-[2/3] rounded-md overflow-hidden bg-muted border shadow-sm">
+                                <div className="aspect-[2/3] rounded-md overflow-hidden bg-surface-muted border shadow-sm">
                                     {item.image_url ? (
                                         <img src={item.image_url} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full bg-secondary" />
+                                        <div className="w-full h-full bg-surface-muted" />
                                     )}
                                 </div>
                                 <button
                                   onClick={() => toggleSelection(item)}
-                                  className="absolute -top-1.5 -right-1.5 bg-destructive text-white rounded-full p-0.5 shadow-sm hover:scale-110 transition-transform"
+                                  className="absolute -top-1.5 -right-1.5 bg-feedback-destructive text-white rounded-full p-0.5 shadow-sm hover:scale-110 transition-transform"
                                 >
                                     <X className="h-3 w-3" />
                                 </button>
@@ -216,15 +216,15 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                 </div>
             )}
 
-            <ScrollArea className="flex-1 bg-background">
+            <ScrollArea className="flex-1 bg-surface-default">
                <div className="p-2 pb-20">
                   {loading && activeTab === "search" ? (
-                      <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+                      <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-text-secondary" /></div>
                   ) : (
                       <TabsContent value="suggested" className="mt-0 space-y-1">
                           {suggestions.length === 0 && !loading && (
-                              <div className="text-center py-12 px-4 text-muted-foreground text-sm">
-                                  <Circle className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
+                              <div className="text-center py-12 px-4 text-text-secondary text-sm">
+                                  <Circle className="h-8 w-8 mx-auto mb-3 text-text-secondary/30" />
                                   <p>You haven't rated any buildings 10/10 yet.</p>
                                   <Button variant="link" onClick={() => setActiveTab("search")}>Search instead</Button>
                               </div>
@@ -235,7 +235,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
 
                    <TabsContent value="search" className="mt-0 space-y-1">
                       {results.length === 0 && !loading && (
-                          <div className="text-center py-12 px-4 text-muted-foreground text-sm">
+                          <div className="text-center py-12 px-4 text-text-secondary text-sm">
                               {query.length < 2 ? "Type to search buildings..." : "No results found."}
                           </div>
                       )}
@@ -245,7 +245,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
             </ScrollArea>
         </Tabs>
 
-        <div className="p-4 border-t bg-background">
+        <div className="p-4 border-t bg-surface-default">
             <Button onClick={handleSave} disabled={loading} className="w-full">
                 Save Favorites
             </Button>
@@ -265,18 +265,18 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
           onClick={() => !isDisabled && toggle(item)}
           className={cn(
               "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border border-transparent",
-              isSelected ? "bg-primary/5 border-primary/20" : isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary",
+              isSelected ? "bg-brand-primary/5 border-brand-primary/20" : isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-surface-muted",
           )}
         >
-            <div className="h-12 w-8 shrink-0 bg-muted rounded overflow-hidden shadow-sm">
+            <div className="h-12 w-8 shrink-0 bg-surface-muted rounded overflow-hidden shadow-sm">
                 {item.image_url && <img src={item.image_url} className="w-full h-full object-cover" />}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     <span className="font-medium truncate text-sm">{item.title}</span>
-                    {item.year_completed && <span className="text-xs text-muted-foreground shrink-0">({item.year_completed})</span>}
+                    {item.year_completed && <span className="text-xs text-text-secondary shrink-0">({item.year_completed})</span>}
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                <div className="flex items-center gap-2 text-[10px] text-text-secondary mt-0.5">
                     {item.rating && (
                         <span className="flex items-center text-[#595959] gap-0.5 font-medium">
                             <Circle className="h-2.5 w-2.5 fill-current" /> {item.rating}
@@ -286,7 +286,7 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
             </div>
             <div className={cn(
                 "h-5 w-5 rounded-full border flex items-center justify-center transition-colors mr-1",
-                isSelected ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/30"
+                isSelected ? "bg-brand-primary border-brand-primary text-brand-primary-foreground" : "border-text-secondary/30"
             )}>
                 {isSelected && <Check className="h-3 w-3" />}
             </div>

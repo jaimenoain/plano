@@ -94,7 +94,7 @@ export function PortfolioBuildingCard({ building, hideBucketListButton }: Portfo
     <div className="group relative flex flex-col space-y-2">
       <Link
         to={linkUrl}
-        className="relative aspect-[4/3] overflow-hidden rounded-xl bg-muted transition-all hover:scale-[1.02] hover:ring-2 hover:ring-primary/50 hover:shadow-lg"
+        className="relative aspect-[4/3] overflow-hidden rounded-xl bg-surface-muted transition-all hover:scale-[1.02] hover:ring-2 hover:ring-brand-primary/50 shadow-none"
       >
         <img
           src={imageUrl}
@@ -112,7 +112,7 @@ export function PortfolioBuildingCard({ building, hideBucketListButton }: Portfo
               variant={isInWatchlist ? "secondary" : "default"}
               className={`h-8 w-8 rounded-full shadow-lg transition-all ${
                 isInWatchlist
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  ? "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"
                   : "bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm"
               }`}
               onClick={handleToggleWatchlist}

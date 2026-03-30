@@ -21,7 +21,7 @@ function FavoritePoster({ fav, className, onClick }: FavoritePosterProps) {
   return (
     <div
       className={cn(
-        "aspect-[2/3] rounded-lg overflow-hidden bg-secondary shadow-lg hover:shadow-xl transition-all relative group cursor-pointer",
+        "aspect-[2/3] rounded-lg overflow-hidden bg-surface-muted shadow-lg hover:shadow-xl transition-all relative group cursor-pointer",
         className
       )}
       onClick={onClick}
@@ -44,17 +44,17 @@ export function FavoritesSection({ favorites, isOwnProfile, onManage }: Favorite
     return (
       <div className="px-4 py-6">
         <div className="flex items-center gap-2 mb-4">
-          <Heart className="h-4 w-4 text-primary fill-primary" />
-          <h3 className="text-sm font-semibold text-foreground">All-time Favourites</h3>
+          <Heart className="h-4 w-4 text-brand-primary fill-primary" />
+          <h3 className="text-sm font-semibold text-text-primary">All-time Favourites</h3>
         </div>
         <div
           onClick={onManage}
-          className="border-2 border-dashed border-border/50 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-secondary/20 transition-colors group"
+          className="border-2 border-dashed border-border-default/50 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-surface-muted/20 transition-colors group"
         >
-          <div className="w-12 h-12 bg-secondary/30 rounded-full flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-            <Plus className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+          <div className="w-12 h-12 bg-surface-muted/30 rounded-full flex items-center justify-center mb-3 group-hover:bg-brand-primary/20 transition-colors">
+            <Plus className="h-6 w-6 text-text-secondary group-hover:text-brand-primary transition-colors" />
           </div>
-          <p className="text-muted-foreground font-medium group-hover:text-foreground transition-colors">
+          <p className="text-text-secondary font-medium group-hover:text-text-primary transition-colors">
             Add here your top 6 favourite buildings
           </p>
         </div>
@@ -74,11 +74,11 @@ export function FavoritesSection({ favorites, isOwnProfile, onManage }: Favorite
     <div className="px-4 py-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Heart className="h-4 w-4 text-primary fill-primary" />
-          <h3 className="text-sm font-semibold text-foreground">All-time Favourites</h3>
+          <Heart className="h-4 w-4 text-brand-primary fill-primary" />
+          <h3 className="text-sm font-semibold text-text-primary">All-time Favourites</h3>
         </div>
         {isOwnProfile && (
-           <Button variant="ghost" size="sm" onClick={onManage} className="text-xs h-auto p-0 text-muted-foreground hover:text-primary">
+           <Button variant="ghost" size="sm" onClick={onManage} className="text-xs h-auto p-0 text-text-secondary hover:text-brand-primary">
              Edit
            </Button>
         )}

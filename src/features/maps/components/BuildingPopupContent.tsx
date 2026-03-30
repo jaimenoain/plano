@@ -223,12 +223,12 @@ export function BuildingPopupContent({
   if (cluster.is_custom_marker) {
       return (
         <div
-            className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg relative"
+            className="flex w-[200px] flex-col overflow-hidden rounded-md bg-surface-default shadow-lg relative"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
             {/* Image or Icon */}
-            <div className="relative h-[120px] w-full bg-muted flex items-center justify-center">
+            <div className="relative h-[120px] w-full bg-surface-muted flex items-center justify-center">
                 {cluster.image_url ? (
                 <>
                     <img
@@ -238,7 +238,7 @@ export function BuildingPopupContent({
                     />
                 </>
                 ) : (
-                   <MapPin className="h-10 w-10 text-muted-foreground/50" />
+                   <MapPin className="h-10 w-10 text-text-secondary/50" />
                 )}
             </div>
 
@@ -246,11 +246,11 @@ export function BuildingPopupContent({
                 {cluster.name ? (
                 <h3 className="text-sm font-semibold line-clamp-2">{cluster.name}</h3>
                 ) : (
-                <span className="text-xs text-muted-foreground">Unlabeled Marker</span>
+                <span className="text-xs text-text-secondary">Unlabeled Marker</span>
                 )}
 
                 {cluster.notes && (
-                    <p className="text-xs text-muted-foreground line-clamp-3 italic">
+                    <p className="text-xs text-text-secondary line-clamp-3 italic">
                         "{cluster.notes}"
                     </p>
                 )}
@@ -299,7 +299,7 @@ export function BuildingPopupContent({
                           <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10 w-full"
+                              className="h-8 text-feedback-destructive hover:text-feedback-destructive hover:bg-feedback-destructive/10 w-full"
                               onClick={handleRemove}
                           >
                               <Trash2 className="h-4 w-4 mr-1" />
@@ -317,7 +317,7 @@ export function BuildingPopupContent({
   if (cluster.is_candidate) {
       return (
         <div
-            className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg relative"
+            className="flex w-[200px] flex-col overflow-hidden rounded-md bg-surface-default shadow-lg relative"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
@@ -328,7 +328,7 @@ export function BuildingPopupContent({
                 className="absolute inset-0 z-10"
                 aria-label={`View details for ${cluster.name || 'Building'}`}
             />
-            <div className="relative h-[200px] w-full bg-muted">
+            <div className="relative h-[200px] w-full bg-surface-muted">
                 {cluster.image_url ? (
                 <img
                     src={getBuildingImageUrl(cluster.image_url)}
@@ -336,7 +336,7 @@ export function BuildingPopupContent({
                     className="h-full w-full object-cover"
                 />
                 ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                <div className="flex h-full w-full items-center justify-center text-xs text-text-secondary">
                     No Image
                 </div>
                 )}
@@ -350,7 +350,7 @@ export function BuildingPopupContent({
                 {cluster.name ? (
                 <h3 className="text-sm font-semibold line-clamp-2">{cluster.name}</h3>
                 ) : (
-                <span className="text-xs text-muted-foreground">Loading...</span>
+                <span className="text-xs text-text-secondary">Loading...</span>
                 )}
 
                 <div
@@ -376,7 +376,7 @@ export function BuildingPopupContent({
   // Standard Building Logic
   return (
     <div
-      className="flex w-[200px] flex-col overflow-hidden rounded-md bg-background shadow-lg relative"
+      className="flex w-[200px] flex-col overflow-hidden rounded-md bg-surface-default shadow-lg relative"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -389,7 +389,7 @@ export function BuildingPopupContent({
       />
 
       {/* Image */}
-      <div className="relative h-[200px] w-full bg-muted">
+      <div className="relative h-[200px] w-full bg-surface-muted">
         {cluster.image_url ? (
           <img
             src={getBuildingImageUrl(cluster.image_url)}
@@ -397,7 +397,7 @@ export function BuildingPopupContent({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+          <div className="flex h-full w-full items-center justify-center text-xs text-text-secondary">
             No Image
           </div>
         )}
@@ -408,7 +408,7 @@ export function BuildingPopupContent({
         {cluster.name ? (
           <h3 className="text-sm font-semibold line-clamp-2">{cluster.name}</h3>
         ) : (
-          <span className="text-xs text-muted-foreground">Loading details...</span>
+          <span className="text-xs text-text-secondary">Loading details...</span>
         )}
 
         {/* Action Bar */}
@@ -420,7 +420,7 @@ export function BuildingPopupContent({
           >
             <Button
                 variant={isVisited ? "default" : "ghost"}
-                className={`flex-1 h-12 rounded-none ${isVisited ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-muted-foreground hover:bg-primary/10'}`}
+                className={`flex-1 h-12 rounded-none ${isVisited ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-text-secondary hover:bg-brand-primary/10'}`}
                 onClick={handleVisit}
                 title="Mark as visited"
                 disabled={isSaving}
@@ -430,7 +430,7 @@ export function BuildingPopupContent({
 
             <Button
                 variant={isSaved ? "default" : "ghost"}
-                className={`flex-1 h-12 rounded-none border-x ${isSaved ? '' : 'text-muted-foreground hover:bg-primary/10'}`}
+                className={`flex-1 h-12 rounded-none border-x ${isSaved ? '' : 'text-text-secondary hover:bg-brand-primary/10'}`}
                 onClick={handleSave}
                 title="Save"
                 disabled={isSaving}
@@ -440,7 +440,7 @@ export function BuildingPopupContent({
 
             <Button
                 variant={isIgnored ? "destructive" : "ghost"}
-                className={`flex-1 h-12 rounded-none ${isIgnored ? '' : 'text-muted-foreground hover:bg-destructive/10'}`}
+                className={`flex-1 h-12 rounded-none ${isIgnored ? '' : 'text-text-secondary hover:bg-feedback-destructive/10'}`}
                 onClick={handleHide}
                 title="Hide"
                 disabled={isSaving}
@@ -452,7 +452,7 @@ export function BuildingPopupContent({
                 <div className="border-l flex flex-1">
                     <Button
                         variant="ghost"
-                        className="flex-1 h-12 rounded-none text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="flex-1 h-12 rounded-none text-feedback-destructive hover:text-feedback-destructive hover:bg-feedback-destructive/10"
                         onClick={handleRemove}
                         title="Remove from map"
                     >
@@ -527,7 +527,7 @@ export function BuildingPopupContent({
                 <AlertDialogCancel onClick={() => setConfirmOpen(false)}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                     onClick={() => pendingDeletion && pendingDeletion()}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="bg-feedback-destructive text-feedback-destructive-foreground hover:bg-feedback-destructive/90"
                 >
                     Confirm Delete
                 </AlertDialogAction>
