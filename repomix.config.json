@@ -1,0 +1,62 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": "repomix-output.xml",
+    "style": "xml",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "includeFullDirectoryStructure": false,
+    "removeEmptyLines": true,
+    "topFilesLength": 8,
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 50,
+      "includeDiffs": false,
+      "includeLogs": false
+    }
+  },
+  "include": [
+    "docs/**/*",
+    "src/**/*",
+    ".cursor/rules/**/*",
+    ".github/workflows/**/*",
+    "supabase/config.toml",
+    "supabase/functions/**/*",
+    "AGENTS.md",
+    "README.md",
+    "CONTRIBUTING.md",
+    ".ai-status.md",
+    "components.json",
+    "eslint.config.js",
+    "index.html",
+    "package.json",
+    "package-lock.json",
+    "playwright.config.ts",
+    "postcss.config.js",
+    "tailwind.config.ts",
+    "tsconfig.json",
+    "tsconfig.app.json",
+    "tsconfig.node.json",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "public/robots.txt"
+  ],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "repomix-output.xml",
+      "bun.lockb",
+      "coverage/**",
+      "dist/**",
+      "supabase/migrations/**",
+      "supabase/.temp/**",
+      "tests/**",
+      "scripts/**",
+      "docs/**/*.pdf"
+    ]
+  },
+  "security": {
+    "enableSecurityCheck": true
+  }
+}
