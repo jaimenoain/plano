@@ -7,6 +7,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
@@ -168,6 +169,7 @@ export function AppSidebar() {
       <SidebarFooter className="!p-4 border-t border-sidebar-border">
         <UserMenu />
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }

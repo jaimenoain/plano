@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ExploreTutorial } from "@/features/search/components/ExploreTutorial";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useSidebar } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
@@ -212,6 +212,14 @@ toast.error("Failed to skip building");
           showHeader={false}
         >
           {showTutorial && <ExploreTutorial onComplete={() => setShowTutorial(false)} />}
+
+          {/* No mobile Header on Explore — sheet nav needs an explicit opener */}
+          <div className="fixed left-4 top-4 z-50 md:hidden pointer-events-auto">
+            <SidebarTrigger
+              className="bg-surface-card/95 shadow-md border border-border-default"
+              aria-label="Open menu"
+            />
+          </div>
 
           {/* Floating Filter Button */}
           <div className={cn(

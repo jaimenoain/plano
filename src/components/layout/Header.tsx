@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -34,6 +35,8 @@ export function Header({
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hasUnread, setHasUnread] = useState(false);
+  /** Matches MainLayout: AppSidebar mounts when not public logged-out home. */
+  const showAppSidebarTrigger = Boolean(user) || location.pathname !== "/";
 
   useEffect(() => {
     if (!user) return;
@@ -140,7 +143,10 @@ export function Header({
       )}>
 
         {/* Left Slot */}
-        <div className="flex items-center justify-start shrink-0">
+        <div className="flex items-center justify-start shrink-0 gap-2">
+          {showAppSidebarTrigger && (
+            <SidebarTrigger className="-ml-2 shrink-0" aria-label="Open menu" />
+          )}
           {leftContent}
         </div>
 
