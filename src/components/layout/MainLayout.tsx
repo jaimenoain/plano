@@ -9,7 +9,7 @@ import { AppSidebar } from "./AppSidebar";
  */
 export function MainLayout() {
   return (
-    <SidebarProvider defaultOpen={true} open={true} onOpenChange={() => {}}>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset
         className="min-w-0 bg-surface-default"

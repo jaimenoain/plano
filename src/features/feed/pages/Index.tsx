@@ -9,7 +9,6 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { MetaHead } from "@/components/common/MetaHead";
-import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { aggregateFeed } from "@/lib/feed-aggregation";
 import { FeedHeroCard } from "../components/FeedHeroCard";
 import { FeedClusterCard } from "../components/FeedClusterCard";
@@ -29,30 +28,26 @@ function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-surface-default flex flex-col w-full overflow-x-hidden">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-card/90 backdrop-blur-md border-b border-border-default h-16">
-        <div className="container h-full mx-auto px-4 flex items-center justify-between">
-          <div className="flex min-w-0 items-center gap-2">
-            <SidebarTrigger
-              className="shrink-0 border border-border-default bg-surface-card/90 shadow-sm"
-              aria-label="Open menu"
-            />
-            <PlanoLogo className="h-8 w-auto text-text-primary [&_path]:fill-current" />
-          </div>
-
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/auth")}
-            className="h-10 px-4 font-medium bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
-          >
-            Log in
-          </Button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 w-full min-w-0 overflow-x-hidden pt-16 md:pt-20">
+    <AppLayout
+      variant="home"
+      showNav={false}
+      leftAction={
+        <SidebarTrigger
+          className="shrink-0 border border-border-default bg-surface-card/90 shadow-sm"
+          aria-label="Open menu"
+        />
+      }
+      rightAction={
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/auth")}
+          className="h-10 px-4 font-medium bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
+        >
+          Log in
+        </Button>
+      }
+    >
+      <main className="flex-1 w-full min-w-0 overflow-x-hidden">
         <LandingHero />
         <LandingMarquee />
         <div className="container mx-auto py-24 px-4">
@@ -67,7 +62,7 @@ function Landing() {
           <LandingFeatureGrid />
         </div>
       </main>
-    </div>
+    </AppLayout>
   );
 }
 

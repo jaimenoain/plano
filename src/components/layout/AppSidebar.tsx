@@ -147,7 +147,7 @@ export function AppSidebar() {
                       className={cn(
                         "flex items-center gap-3 px-3 py-2 rounded-sm w-full text-sm font-medium text-text-primary transition-colors duration-150",
                         isActive
-                          ? "bg-surface-card border border-border-default border-l-2 border-brand-primary font-semibold"
+                          ? "bg-surface-card border-l-2 border-brand-primary font-semibold"
                           : "bg-transparent hover:bg-surface-card"
                       )}
                     >

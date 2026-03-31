@@ -103,4 +103,31 @@ describe('AppSidebar', () => {
   //     expect(mocks.navigate).toHaveBeenCalledWith('/');
   //   });
   // });
+
+  it('toggles sidebar state when SidebarTrigger is clicked', async () => {
+    render(
+      <BrowserRouter>
+        <SidebarProvider defaultOpen={true}>
+          <AppSidebar />
+        </SidebarProvider>
+      </BrowserRouter>
+    );
+
+    // Sidebar is expanded by default
+    const sidebarWrapper = document.querySelector("[data-state]");
+    expect(sidebarWrapper).toHaveAttribute("data-state", "expanded");
+
+    const trigger = screen.getByLabelText(/toggle sidebar/i);
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      expect(sidebarWrapper).toHaveAttribute("data-state", "collapsed");
+    });
+
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      expect(sidebarWrapper).toHaveAttribute("data-state", "expanded");
+    });
+  });
 });
