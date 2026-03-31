@@ -245,7 +245,7 @@ export default function Index() {
                 {/* Sidebar Column */}
                 <div className="w-72 flex-shrink-0 hidden lg:block sticky top-20">
                   <div className="space-y-4">
-                    <div className="p-5 border border-border-default rounded-sm bg-surface-card shadow-none">
+                    <div className="p-6 border border-border-default rounded-sm bg-surface-card shadow-none">
                       <h3 className="font-semibold mb-2 text-text-primary">Trending</h3>
                       <p className="text-sm text-text-secondary">
                         Discover popular buildings and active discussions in the community.

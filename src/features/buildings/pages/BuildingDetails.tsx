@@ -1312,7 +1312,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
             <div className="mt-12 border-t border-border-default pt-8 space-y-6">
                 {!isEditing && userStatus ? (
                     // Summary View
-                    <div className="bg-surface-card rounded-sm p-5 border border-border-default space-y-4 group">
+                    <div className="bg-surface-card rounded-sm p-6 border border-border-default space-y-4 group">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold uppercase tracking-widest text-text-secondary">
                                 Your Activity
