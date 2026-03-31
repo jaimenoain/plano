@@ -16,7 +16,7 @@ export function SearchModeToggle({
   return (
     <div
       className={cn(
-        "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center bg-surface-default border shadow-lg rounded-full p-1",
+        "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center bg-surface-card border border-border-default shadow-md rounded-sm p-1",
         className
       )}
     >
@@ -24,7 +24,7 @@ export function SearchModeToggle({
         variant={mode === "map" ? "secondary" : "ghost"}
         size="sm"
         className={cn(
-          "rounded-full px-4 gap-2 transition-all",
+          "rounded-sm px-4 gap-2 transition-all",
           mode === "map" && "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"
         )}
         onClick={() => onModeChange("map")}
@@ -36,7 +36,7 @@ export function SearchModeToggle({
         variant={mode === "list" ? "secondary" : "ghost"}
         size="sm"
         className={cn(
-          "rounded-full px-4 gap-2 transition-all",
+          "rounded-sm px-4 gap-2 transition-all",
           mode === "list" && "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"
         )}
         onClick={() => onModeChange("list")}

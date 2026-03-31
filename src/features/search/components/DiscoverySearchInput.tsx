@@ -172,38 +172,38 @@ export function DiscoverySearchInput({
   };
 
   if (!scriptLoaded) {
-     return (
-        <Input
-            value={value}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={placeholder}
-            className={className}
-        />
-     );
+    return (
+      <Input
+        value={value}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder={placeholder}
+        className={cn("h-12", className)}
+      />
+    );
   }
 
   return (
     <div className={cn("relative", className)} ref={commandRef}>
       <Command shouldFilter={false} className="overflow-visible bg-transparent">
         <div className="relative">
-             <Input
-                value={value}
-                onChange={(e) => {
-                    const val = e.target.value;
-                    onSearchChange(val);
-                    setPlacesValue(val);
-                    setOpen(!!val);
-                }}
-                onFocus={() => setOpen(!!value)}
-                placeholder={placeholder}
-                className="w-full"
-                autoComplete="off"
-                onKeyDown={onKeyDown}
-            />
+          <Input
+            value={value}
+            onChange={(e) => {
+              const val = e.target.value;
+              onSearchChange(val);
+              setPlacesValue(val);
+              setOpen(!!val);
+            }}
+            onFocus={() => setOpen(!!value)}
+            placeholder={placeholder}
+            className="w-full h-12"
+            autoComplete="off"
+            onKeyDown={onKeyDown}
+          />
         </div>
 
-        {!disableDropdown && open && (status === "OK") && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95">
+        {!disableDropdown && open && status === "OK" && (
+          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-sm border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95">
             <CommandList>
               <CommandGroup heading="Locations">
                 {data.map(({ place_id, description }) => (
@@ -211,7 +211,7 @@ export function DiscoverySearchInput({
                       key={place_id}
                       value={description}
                       onSelect={() => handleSelect(description)}
-                      className="cursor-pointer"
+                      className="cursor-pointer hover:bg-brand-secondary"
                     >
                       <MapPin className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
                       <span>{description}</span>

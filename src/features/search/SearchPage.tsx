@@ -123,10 +123,10 @@ function SearchPageContent() {
 
         {/* Desktop Sidebar (Fixed) */}
         <div
-            className={`hidden md:flex flex-col w-[400px] bg-surface-default border-r border-border-default absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
+            className={`hidden md:flex flex-col w-[400px] bg-surface-card border-r border-border-default absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
             style={{ left: isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0 }}
         >
-           <div className="p-4 border-b flex items-center gap-2 bg-surface-default/95 backdrop-blur supports-[backdrop-filter]:bg-surface-default/60">
+           <div className="p-4 border-b flex items-center gap-2 bg-surface-card/95 backdrop-blur supports-[backdrop-filter]:bg-surface-card/60">
               <DiscoverySearchInput
                  value={searchValue}
                  onSearchChange={handleSearchChange}
@@ -162,8 +162,8 @@ function SearchPageContent() {
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
             <Button
               onClick={toggleViewMode}
-              className="rounded-full shadow-lg h-12 px-6"
-              variant="default"
+              className="rounded-sm bg-surface-card border border-border-default shadow-md px-6 py-3 flex items-center gap-2"
+              variant="ghost"
               aria-label={viewMode === 'map' ? 'Show list view' : 'Show map view'}
             >
               {viewMode === 'map' ? (
@@ -183,7 +183,7 @@ function SearchPageContent() {
 
         {/* Mobile List Overlay */}
         {isMobile && viewMode === 'list' && (
-           <div className="absolute inset-0 bg-surface-default z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
+           <div className="absolute inset-0 bg-surface-card z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
               <div className="flex-1 overflow-hidden relative">
                  <BuildingSidebar
                     suggestions={suggestions}

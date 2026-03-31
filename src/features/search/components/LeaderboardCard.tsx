@@ -16,7 +16,7 @@ export function LeaderboardCard({ building, rank, type }: LeaderboardCardProps) 
 
   return (
     <div
-      className="group flex items-center gap-4 p-3 rounded-lg hover:bg-surface-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border-default"
+      className="group flex items-center gap-4 p-4 border-b border-border-default hover:bg-brand-secondary transition-colors cursor-pointer"
       onClick={() => navigate(`/building/${building.id}`)}
     >
       <div className={cn(
@@ -58,7 +58,7 @@ export function LeaderboardCard({ building, rank, type }: LeaderboardCardProps) 
           </div>
         ) : (
           <div className="flex flex-col items-end">
-            <div className="flex items-center gap-1 font-semibold text-amber-500">
+            <div className="flex items-center gap-1 font-semibold text-feedback-warning">
                 <Star className="h-3.5 w-3.5 fill-current" />
                 <span>{building.avg_rating || 0}</span>
             </div>

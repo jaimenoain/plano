@@ -363,7 +363,7 @@
 
 ## Phase 11 — Settings
 
-- [ ] **Task 11.1 — Redesign Settings.tsx**
+- [x] **Task 11.1 — Redesign Settings.tsx**
   `max-w-2xl mx-auto` (already present). Page title: `text-4xl font-bold tracking-tight mb-8`. Section dividers: `mt-12 pt-8 border-t border-border-default`. Section headings: `text-xl font-semibold`. Input widths: username `max-w-sm`, bio `max-w-xl`, email `max-w-sm`. Avatar upload: `rounded-full h-24 w-24`. Danger zone: destructive button hover-revealed.
 
 **Checkpoint:** `npm run typecheck && npm run test`
@@ -372,14 +372,14 @@
 
 ## Phase 12 — Search & Explore
 
-- [ ] **Task 12.1 — Fix SearchPage.tsx**
+- [x] **Task 12.1 — Fix SearchPage.tsx**
   Mobile "List" button: `rounded-full bg-dark` → `rounded-sm bg-surface-card border border-border-default shadow-md px-6 py-3`. Selected sidebar item: verify `bg-brand-secondary`. Search input: `h-12 bg-surface-muted border border-border-default rounded-sm`.
 
-- [ ] **Task 12.2 — Redesign search sub-components**
+- [x] **Task 12.2 — Redesign search sub-components**
   Files: `OmniSearchBar`, `DiscoverySearchInput`, `DiscoveryBuildingCard`, `DiscoveryList`, `SearchModeToggle`, `LeaderboardCard`, `LeaderboardDialog`, `ArchitectResultsList`, `UserResultsList`, `ArchitectSearchNudge`, `UserSearchNudge`, `ExploreTutorial`.
   Autocomplete: `bg-surface-overlay shadow-lg rounded-sm border border-border-default`. Items: `hover:bg-brand-secondary`. Result rows: `p-4 border-b border-border-default hover:bg-brand-secondary`. Nudges: `bg-brand-secondary rounded-sm p-4`.
 
-- [ ] **Task 12.3 — Redesign Explore.tsx**
+- [x] **Task 12.3 — Redesign Explore.tsx**
   After Task 3.6 colour fixes: card overlays `text-text-inverse`, building info overlay `bg-gradient-to-t from-black/60 to-transparent`, "World" chip `rounded-sm`.
 
 **Checkpoint:** `npm run typecheck && npm run test`

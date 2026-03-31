@@ -1,0 +1,111 @@
+import { useMemo } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+// 30% buffer
+const BUFFER_RATIO = 0.3;
+const MAX_LAT = 85;
+const MIN_LAT = -85;
+const MAX_LNG = 180;
+const MIN_LNG = -180;
+function calculateFetchBox(bounds) {
+    const latSpan = bounds.north - bounds.south;
+    const lngSpan = bounds.east - bounds.west;
+    const latBuffer = latSpan * BUFFER_RATIO;
+    const lngBuffer = lngSpan * BUFFER_RATIO;
+    const north = Math.min(MAX_LAT, bounds.north + latBuffer);
+    const south = Math.max(MIN_LAT, bounds.south - latBuffer);
+    const east = Math.min(MAX_LNG, bounds.east + lngBuffer);
+    const west = Math.max(MIN_LNG, bounds.west - lngBuffer);
+    return { north, south, east, west };
+}
+function calculateTierRank(item) {
+    // Determine context: Library (User Rating/Status) vs Discover (Global Rank)
+    const userRating = item.rating ?? 0;
+    const status = item.status;
+    // Check if item is in library (rated > 0, or explicitly saved/visited)
+    const isLibraryItem = userRating > 0 || status === 'visited' || status === 'saved' || status === 'pending';
+    if (isLibraryItem) {
+        if (userRating >= 3)
+            return 3;
+        if (userRating >= 1)
+            return 2;
+        // Rating 0, or just saved -> Standard (Rank 1)
+        return 1;
+    }
+    // Discover Context
+    const label = item.tier_rank; // This comes from DB as string
+    if (label === 'Top 1%')
+        return 3;
+    if (label === 'Top 5%' || label === 'Top 10%' || label === 'Top 20%')
+        return 2;
+    // "Standard", or anything else -> 1
+    return 1;
+}
+export function useMapData({ bounds, zoom, filters, mode = 'discover' }) {
+    const fetchBox = useMemo(() => calculateFetchBox(bounds), [bounds]);
+    const { data: clusters, isLoading, isFetching, error } = useQuery({
+        queryKey: ['map-clusters', fetchBox, filters, mode],
+        queryFn: async () => {
+            // Combine all attribute-related filters
+            const allAttributeIds = [
+                ...(filters.attributes || []),
+                ...(filters.materials || []),
+                ...(filters.styles || []),
+                ...(filters.contexts || []),
+            ];
+            // Remove duplicates
+            const uniqueAttributeIds = [...new Set(allAttributeIds)];
+            // Construct filter_criteria based on MapFilters
+            const filterCriteria = {
+                query: filters.query,
+                category_id: filters.category,
+                typology_ids: filters.typologies,
+                attribute_ids: uniqueAttributeIds.length > 0 ? uniqueAttributeIds : undefined,
+                architect_ids: filters.architects?.map((a) => a.id),
+                status: filters.status,
+                min_rating: filters.minRating,
+                // Include other potential fields if needed, relying on JSONB flexibility
+                rated_by: filters.contacts?.map((c) => c.name) || filters.ratedBy,
+                filter_contacts: filters.filterContacts,
+                collections: filters.collections?.map((c) => c.id),
+                hide_visited: filters.hideVisited,
+                hide_saved: filters.hideSaved,
+                hide_hidden: true,
+                hide_without_images: filters.hideWithoutImages,
+                contact_min_rating: filters.contactMinRating,
+                personal_min_rating: filters.personalMinRating,
+                ranking_preference: mode === 'library' ? 'personal' : 'global',
+                access_levels: filters.accessLevels && filters.accessLevels.length > 0 ? filters.accessLevels : undefined,
+                access_logistics: filters.accessLogistics && filters.accessLogistics.length > 0 ? filters.accessLogistics : undefined,
+                access_costs: filters.accessCosts && filters.accessCosts.length > 0 ? filters.accessCosts : undefined,
+            };
+            const { data, error } = await supabase.rpc('get_map_clusters_v2', {
+                min_lat: fetchBox.south,
+                max_lat: fetchBox.north,
+                min_lng: fetchBox.west,
+                max_lng: fetchBox.east,
+                zoom_level: Math.round(zoom),
+                filter_criteria: filterCriteria,
+            });
+            if (error) {
+                throw error;
+            }
+            // Filter out hidden (ignored) items client-side as a safeguard
+            // The RPC should handle this with hide_hidden: true, but we double check
+            const visibleData = data.filter((item) => item.status !== "ignored");
+            // Transform data to inject numeric tier_rank and preserve label
+            const transformedData = visibleData.map((item) => {
+                const rank = calculateTierRank(item);
+                return {
+                    ...item,
+                    tier_rank_label: item.tier_rank, // Preserve original string as label
+                    tier_rank: rank // Inject numeric rank
+                };
+            });
+            return transformedData;
+        },
+        placeholderData: keepPreviousData,
+        staleTime: 1000 * 60 * 5, // 5 minutes cache
+    });
+    return { clusters, isLoading, isFetching, error };
+}

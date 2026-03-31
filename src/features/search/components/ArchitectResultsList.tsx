@@ -36,11 +36,11 @@ export function ArchitectResultsList({ architects, isLoading }: ArchitectResults
   }
 
   return (
-    <div className="flex flex-col gap-2 p-4">
+    <div className="flex flex-col p-4">
       {architects.map((architect) => (
         <div
           key={architect.id}
-          className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border-default/50 group"
+          className="flex items-center justify-between p-4 border-b border-border-default hover:bg-brand-secondary transition-colors cursor-pointer group"
           onClick={() => navigate(`/architect/${architect.id}`)}
         >
           <div className="flex items-center gap-3">

@@ -1,0 +1,42 @@
+export function getBoundsFromBuildings(buildings) {
+    if (!buildings || buildings.length === 0)
+        return null;
+    // Filter out invalid coordinates (0,0 or null/undefined)
+    const validBuildings = buildings.filter(b => b.location_lat !== undefined &&
+        b.location_lng !== undefined &&
+        b.location_lat !== null &&
+        b.location_lng !== null &&
+        !(Math.abs(b.location_lat) < 0.0001 && Math.abs(b.location_lng) < 0.0001) // Treat roughly 0,0 as invalid
+    );
+    if (validBuildings.length === 0)
+        return null;
+    let north = -90;
+    let south = 90;
+    let east = -180;
+    let west = 180;
+    validBuildings.forEach((b) => {
+        if (b.location_lat > north)
+            north = b.location_lat;
+        if (b.location_lat < south)
+            south = b.location_lat;
+        if (b.location_lng > east)
+            east = b.location_lng;
+        if (b.location_lng < west)
+            west = b.location_lng;
+    });
+    return { north, south, east, west };
+}
+const EARTH_RADIUS_METERS = 6371000;
+function deg2rad(deg) {
+    return deg * (Math.PI / 180);
+}
+export function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = EARTH_RADIUS_METERS * c;
+    return d;
+}

@@ -180,7 +180,7 @@ export function OmniSearchBar({
         </div>
 
         {showDropdown && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-md border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95 max-h-[400px] overflow-y-auto">
+          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-sm border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95 max-h-[400px] overflow-y-auto">
             <CommandList>
               {hasPlaces && (
                 <CommandGroup heading="Places">
@@ -189,7 +189,7 @@ export function OmniSearchBar({
                       key={place_id}
                       value={description}
                       onSelect={() => handlePlaceSelect(description)}
-                      className="cursor-pointer"
+                      className="cursor-pointer hover:bg-brand-secondary"
                     >
                       <MapPin className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
                       <span>{description}</span>
@@ -207,7 +207,7 @@ export function OmniSearchBar({
                       key={building.id}
                       value={building.name}
                       onSelect={() => handleBuildingSelect(building)}
-                      className="cursor-pointer"
+                      className="cursor-pointer hover:bg-brand-secondary"
                     >
                       <Building2 className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
                       <div className="flex flex-col">

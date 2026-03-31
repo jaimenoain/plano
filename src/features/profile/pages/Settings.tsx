@@ -415,7 +415,7 @@ toast({
           Back to Profile
         </Button>
 
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary mb-6">
+        <h1 className="text-4xl font-bold tracking-tight leading-tight text-text-primary mb-8">
           Settings
         </h1>
 
@@ -451,7 +451,7 @@ toast({
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           {/* Public Profile Section */}
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-text-primary mb-6">Public Profile</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-6">Public Profile</h2>
             
             <div className="space-y-1.5">
               <Label htmlFor="username">Username</Label>
@@ -460,6 +460,7 @@ toast({
                 value={username}
                 onChange={(e) => setUsername(sanitizeUsername(e.target.value))}
                 placeholder="Your username"
+                className="max-w-sm"
               />
             </div>
 
@@ -470,7 +471,7 @@ toast({
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Tell us about yourself..."
-                className="resize-none min-h-[100px]"
+                className="resize-none min-h-[100px] max-w-xl"
               />
             </div>
 
@@ -497,7 +498,7 @@ toast({
 
           {/* Profile Content Section */}
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-text-primary mb-6 flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-text-primary mb-6 flex items-center gap-2">
               <LayoutTemplate className="h-4 w-4" /> Profile Customization
             </h2>
             <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none space-y-4">
@@ -523,7 +524,7 @@ toast({
             <>
               <div className="mt-12 border-t border-border-default pt-8" />
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-text-primary mb-6 flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-text-primary mb-6 flex items-center gap-2">
                   <Smartphone className="h-4 w-4" /> App Experience
                 </h2>
                 <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none">
@@ -547,7 +548,7 @@ toast({
 
           {/* Account Security Section */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-text-primary mb-6 flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-text-primary mb-6 flex items-center gap-2">
               <Lock className="h-4 w-4" /> Account & Security
             </h2>
 
@@ -560,7 +561,7 @@ toast({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 max-w-sm"
                   placeholder="your@email.com"
                 />
               </div>
@@ -581,7 +582,7 @@ toast({
             </div>
 
             {profile?.verified_architect_id && (
-              <div className="pt-4 mt-4 border-t border-border-default">
+              <div className="pt-4 mt-4 border-t border-border-default group">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-medium text-feedback-destructive">Disconnect Architect Profile</h3>
@@ -592,6 +593,7 @@ toast({
                   <Button
                     type="button"
                     variant="destructive"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-150"
                     onClick={() => setShowDisconnectDialog(true)}
                   >
                     Disconnect

@@ -24,16 +24,31 @@ export function UserSearchNudge({ users, onSingleMatch, onMultipleMatch }: UserS
     const user = users[0];
     return (
       <div className="px-4 py-2 animate-in fade-in slide-in-from-top-2">
-        <Card className="bg-surface-muted/50 border-dashed hover:bg-surface-muted transition-colors cursor-pointer group" onClick={() => user.username && onSingleMatch(user.username)}>
-          <CardContent className="flex items-center gap-3 p-3">
+        <Card
+          className="bg-brand-secondary rounded-sm border border-border-default hover:bg-brand-secondary transition-colors cursor-pointer group"
+          onClick={() => user.username && onSingleMatch(user.username)}
+        >
+          <CardContent className="flex items-center gap-3 p-4">
              <Avatar className="h-8 w-8 border">
                 <AvatarImage src={getAvatarUrl(user)} />
                 <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
              </Avatar>
              <div className="flex-1">
-                <p className="text-sm font-medium">Looking for <span className="text-brand-primary font-semibold group-hover:underline">{user.username}</span>?</p>
+                <p className="text-sm font-medium text-text-primary">
+                  Looking for{" "}
+                  <span className="text-brand-primary font-semibold group-hover:underline">
+                    {user.username}
+                  </span>
+                  ?
+                </p>
              </div>
-             <Button variant="ghost" size="sm" className="h-8 text-xs text-text-secondary group-hover:text-text-primary">View Profile</Button>
+             <Button
+               variant="ghost"
+               size="sm"
+               className="h-8 text-xs text-text-secondary group-hover:text-text-primary"
+             >
+               View Profile
+             </Button>
           </CardContent>
         </Card>
       </div>
@@ -43,8 +58,11 @@ export function UserSearchNudge({ users, onSingleMatch, onMultipleMatch }: UserS
   // Multiple matches
   return (
     <div className="px-4 py-2 animate-in fade-in slide-in-from-top-2">
-      <Card className="bg-surface-muted/50 border-dashed hover:bg-surface-muted transition-colors cursor-pointer group" onClick={onMultipleMatch}>
-        <CardContent className="flex items-center gap-3 p-3">
+      <Card
+        className="bg-brand-secondary rounded-sm border border-border-default hover:bg-brand-secondary transition-colors cursor-pointer group"
+        onClick={onMultipleMatch}
+      >
+        <CardContent className="flex items-center gap-3 p-4">
            <div className="flex -space-x-2 overflow-hidden pl-1">
              {users.slice(0, 3).map((user) => (
                <Avatar key={user.id} className="inline-block h-8 w-8 ring-2 ring-surface-default border">
@@ -54,9 +72,17 @@ export function UserSearchNudge({ users, onSingleMatch, onMultipleMatch }: UserS
              ))}
            </div>
            <div className="flex-1">
-              <p className="text-sm font-medium">{users.length} people found matching your search</p>
+              <p className="text-sm font-medium text-text-primary">
+                {users.length} people found matching your search
+              </p>
            </div>
-           <Button variant="ghost" size="sm" className="h-8 text-xs text-text-secondary group-hover:text-text-primary">View All</Button>
+           <Button
+             variant="ghost"
+             size="sm"
+             className="h-8 text-xs text-text-secondary group-hover:text-text-primary"
+           >
+             View All
+           </Button>
         </CardContent>
       </Card>
     </div>

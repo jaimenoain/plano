@@ -12,11 +12,11 @@ export function UserResultsList({ users, isLoading }: UserResultsListProps) {
     return (
       <div className="flex flex-col gap-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3 p-3">
+          <div key={i} className="flex items-center gap-3 p-4 border-b border-border-default">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex flex-col gap-2">
-               <Skeleton className="h-4 w-32" />
-               <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-20" />
             </div>
           </div>
         ))}
@@ -33,9 +33,11 @@ export function UserResultsList({ users, isLoading }: UserResultsListProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2 p-4">
+    <div className="flex flex-col p-4">
       {users.map((user) => (
-        <UserRow key={user.id} user={user} />
+        <div className="border-b border-border-default hover:bg-brand-secondary transition-colors cursor-pointer">
+          <UserRow key={user.id} user={user} />
+        </div>
       ))}
     </div>
   );

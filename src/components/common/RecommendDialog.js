@@ -1,0 +1,176 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState, useEffect } from "react";
+import { Loader2, Send, Link as LinkIcon, Users, Building2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { UserPicker } from "@/components/common/UserPicker";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
+import { PersonalRatingButton } from "@/features/buildings";
+export function RecommendDialog({ building, trigger, open: controlledOpen, onOpenChange: setControlledOpen, mode = "recommend" }) {
+    const [internalOpen, setInternalOpen] = useState(false);
+    const { user } = useAuth();
+    const { profile } = useUserProfile();
+    const { toast } = useToast();
+    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
+    // Rating state
+    const [userRating, setUserRating] = useState(null);
+    const [userStatus, setUserStatus] = useState(null);
+    const [ratingLoading, setRatingLoading] = useState(false);
+    const isControlled = controlledOpen !== undefined;
+    const open = isControlled ? controlledOpen : internalOpen;
+    const setOpen = isControlled ? setControlledOpen : setInternalOpen;
+    useEffect(() => {
+        if (open && user && building.id) {
+            fetchUserRating();
+        }
+    }, [open, user, building.id]);
+    const fetchUserRating = async () => {
+        if (!user)
+            return;
+        try {
+            const { data, error } = await supabase
+                .from("user_buildings")
+                .select("rating, status")
+                .eq("user_id", user.id)
+                .eq("building_id", building.id)
+                .maybeSingle();
+            if (error)
+                throw error;
+            if (data) {
+                setUserRating(data.rating);
+                let status = null;
+                if (data.status === 'pending')
+                    status = 'pending';
+                else if (data.status === 'visited')
+                    status = 'visited';
+                setUserStatus(status);
+            }
+            else {
+                setUserRating(null);
+                setUserStatus(null);
+            }
+        }
+        catch (_error) {
+        }
+    };
+    const handleRate = async (buildingId, rating) => {
+        if (!user)
+            return;
+        setRatingLoading(true);
+        try {
+            const { data: existingLog } = await supabase
+                .from("user_buildings")
+                .select("id")
+                .eq("user_id", user.id)
+                .eq("building_id", buildingId)
+                .maybeSingle();
+            if (existingLog) {
+                const { error } = await supabase
+                    .from("user_buildings")
+                    .update({ rating, edited_at: new Date().toISOString() })
+                    .eq("id", existingLog.id);
+                if (error)
+                    throw error;
+            }
+            else {
+                const { error } = await supabase
+                    .from("user_buildings")
+                    .insert({
+                    user_id: user.id,
+                    building_id: buildingId,
+                    rating,
+                    status: 'visited', // Default to visited if rating directly
+                    edited_at: new Date().toISOString()
+                });
+                if (error)
+                    throw error;
+                setUserStatus('visited');
+            }
+            setUserRating(rating);
+            if (rating >= 2) {
+                toast({ title: "You just boosted this building's rank!", description: "Thanks for your feedback." });
+            }
+            else {
+                toast({ title: "Rating saved" });
+            }
+        }
+        catch (_error) {
+            toast({ variant: "destructive", title: "Failed to save rating" });
+        }
+        finally {
+            setRatingLoading(false);
+        }
+    };
+    const handleCopyLink = async () => {
+        if (!profile?.username)
+            return;
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set("invited_by", profile.username);
+            const textToShare = mode === "visit_with"
+                ? `I'd like to visit this building with you! ${url.toString()}`
+                : url.toString();
+            await navigator.clipboard.writeText(textToShare);
+            toast({ title: "Link copied to clipboard" });
+        }
+        catch (_e) {
+            toast({ variant: "destructive", title: "Failed to copy link" });
+        }
+    };
+    const handleSend = async () => {
+        if (!user || selectedUsers.length === 0)
+            return;
+        setLoading(true);
+        try {
+            const status = mode === "visit_with" ? "visit_with" : "pending";
+            // Insert recommendation
+            const { data: recommendations, error: recError } = await supabase
+                .from("recommendations")
+                .insert(selectedUsers.map(recipientId => ({
+                recommender_id: user.id,
+                recipient_id: recipientId,
+                building_id: building.id,
+                status: status
+            })))
+                .select();
+            if (recError)
+                throw recError;
+            if (recommendations) {
+                const notifications = recommendations.map(rec => ({
+                    type: (mode === 'visit_with' ? 'visit_request' : 'recommendation'),
+                    actor_id: user.id,
+                    user_id: rec.recipient_id,
+                    resource_id: building.id, // Linking to building (legacy/fallback)
+                    recommendation_id: rec.id
+                }));
+                const { error: notifError } = await supabase
+                    .from("notifications")
+                    .insert(notifications);
+                if (notifError)
+                    throw notifError;
+            }
+            const actionText = mode === "visit_with" ? "Visit request sent!" : "Recommendation sent!";
+            toast({ title: actionText, description: `Sent to ${selectedUsers.length} friend${selectedUsers.length > 1 ? 's' : ''}.` });
+            if (setOpen)
+                setOpen(false);
+            setSelectedUsers([]);
+        }
+        catch (error) {
+            toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Failed to send." });
+        }
+        finally {
+            setLoading(false);
+        }
+    };
+    const title = mode === "visit_with" ? `Visit "${building.name}" with...` : `Recommend "${building.name}"`;
+    const description = mode === "visit_with"
+        ? "Select friends to visit this building with."
+        : "Who do you think would love this building?";
+    const buttonText = mode === "visit_with" ? "Suggest to visit" : "Send Recommendation";
+    const ButtonIcon = mode === "visit_with" ? Users : Send;
+    return (_jsxs(Dialog, { open: open, onOpenChange: setOpen, children: [trigger && _jsx(DialogTrigger, { asChild: true, children: trigger }), _jsxs(DialogContent, { className: "sm:max-w-md", children: [_jsx(DialogHeader, { children: _jsx(DialogTitle, { children: title }) }), _jsxs("div", { className: "space-y-4 py-4", children: [_jsxs("div", { className: "flex gap-4 items-center bg-surface-muted/30 p-3 rounded-lg border", children: [_jsx("div", { className: "h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-surface-default flex items-center justify-center text-text-secondary", children: building.image_url ? (_jsx("img", { src: building.image_url, alt: building.name, className: "h-full w-full object-cover" })) : (_jsx(Building2, { className: "h-8 w-8 opacity-50" })) }), _jsxs("div", { className: "flex-1 min-w-0", children: [_jsx("h4", { className: "font-medium truncate", children: building.name }), _jsx("p", { className: "text-xs text-text-secondary truncate", children: description })] })] }), _jsxs("div", { className: "flex justify-between items-center gap-4", children: [_jsx("p", { className: "text-sm font-medium", children: userStatus === 'pending' ? 'Your Priority' : 'Your Rating' }), _jsx(PersonalRatingButton, { buildingId: building.id, initialRating: userRating, onRate: handleRate, status: userStatus, isLoading: ratingLoading, label: userStatus === 'pending' ? "Priority" : "Rate" })] }), _jsx(UserPicker, { selectedIds: selectedUsers, onSelect: (id) => setSelectedUsers([...selectedUsers, id]), onRemove: (id) => setSelectedUsers(selectedUsers.filter(uid => uid !== id)), modal: true }), _jsxs("div", { className: "flex justify-between pt-2", children: [_jsxs(Button, { variant: "outline", onClick: handleCopyLink, disabled: !profile?.username, className: "gap-2", children: [_jsx(LinkIcon, { className: "h-4 w-4" }), "Copy Link"] }), _jsxs(Button, { onClick: handleSend, disabled: selectedUsers.length === 0 || loading, className: "gap-2", children: [loading ? _jsx(Loader2, { className: "h-4 w-4 animate-spin" }) : _jsx(ButtonIcon, { className: "h-4 w-4" }), buttonText] })] })] })] })] }));
+}

@@ -1,0 +1,40 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { forwardRef } from "react";
+import { cn } from "@/lib/utils";
+import { Check, MapPin, Bed, Utensils, Bus, Camera, GripVertical } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+export const CollectionMarkerCard = forwardRef(({ marker, isHighlighted, setHighlightedId, canEdit, onRemove, onNavigate, isDraggable, dragHandleProps, badgeIndex }, ref) => {
+    let Icon = MapPin;
+    switch (marker.category) {
+        case 'accommodation':
+            Icon = Bed;
+            break;
+        case 'dining':
+            Icon = Utensils;
+            break;
+        case 'transport':
+            Icon = Bus;
+            break;
+        case 'attraction':
+            Icon = Camera;
+            break;
+        case 'other':
+            Icon = MapPin;
+            break;
+    }
+    let displayAddress = marker.address;
+    if (displayAddress && marker.name) {
+        if (displayAddress.startsWith(`${marker.name}, `)) {
+            displayAddress = displayAddress.substring(marker.name.length + 2);
+        }
+        else if (displayAddress.startsWith(`${marker.name},`)) {
+            displayAddress = displayAddress.substring(marker.name.length + 1).trim();
+        }
+    }
+    return (_jsxs(Card, { ref: ref, className: cn("group relative overflow-hidden transition-all duration-200 cursor-pointer shadow-none", isHighlighted ? "border-brand-primary ring-1 ring-brand-primary bg-surface-muted/5" : "hover:border-brand-primary/50"), onMouseEnter: () => setHighlightedId(marker.id), onMouseLeave: () => setHighlightedId(null), onClick: () => {
+            setHighlightedId(marker.id);
+            onNavigate();
+        }, children: [canEdit && onRemove && (_jsx("div", { className: "absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity", onClick: (e) => e.stopPropagation(), children: _jsx(Button, { variant: "secondary", size: "icon", className: "h-6 w-6 rounded-full shadow-sm bg-green-500 hover:bg-green-600 text-white border-none", onClick: onRemove, title: "Remove from map", children: _jsx(Check, { className: "h-3 w-3" }) }) })), _jsxs("div", { className: "flex flex-row min-h-[3.5rem]", children: [isDraggable && (_jsx("div", { className: "flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary hover:bg-surface-muted/50 transition-colors border-r", ...dragHandleProps, onClick: (e) => e.stopPropagation(), children: _jsx(GripVertical, { className: "h-4 w-4" }) })), _jsxs("div", { className: "flex flex-1 items-start p-2 gap-3 min-w-0", children: [_jsx("div", { className: "p-1.5 bg-surface-muted/50 rounded-full shrink-0", children: _jsx(Icon, { className: "w-4 h-4 text-text-secondary" }) }), _jsxs("div", { className: "flex flex-col flex-1 min-w-0", children: [_jsxs("div", { className: "flex items-start gap-2 min-w-0", children: [badgeIndex !== undefined && (_jsx("div", { className: "flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-brand-primary text-[10px] font-bold text-brand-primary-foreground shadow-sm mt-0.5 shrink-0", children: badgeIndex })), _jsx("h3", { className: "font-semibold text-sm leading-tight line-clamp-2", children: marker.name })] }), marker.notes && (_jsxs("div", { className: "text-xs text-text-secondary mt-1 line-clamp-2 italic", children: ["\"", marker.notes, "\""] })), displayAddress && (_jsx("div", { className: "text-xs text-text-secondary mt-1 line-clamp-1", children: displayAddress }))] })] })] })] }));
+});
+CollectionMarkerCard.displayName = "CollectionMarkerCard";

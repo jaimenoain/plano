@@ -1,0 +1,147 @@
+import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
+import { useMemo, useRef, useEffect, useCallback } from 'react';
+import { Marker, useMap, Popup } from 'react-map-gl/maplibre';
+import { BuildingPopupContent } from './BuildingPopupContent';
+import { getPinStyle } from '../utils/pinStyling';
+import { MapPin } from './MapPin';
+import { DAY_COLORS } from '@/features/maps/constants';
+import { Bed, Utensils, Bus, Camera, MapPin as MapPinIcon } from 'lucide-react';
+import '../../../App.css';
+export function MapMarkers({ clusters, highlightedId, setHighlightedId, onRemoveFromCollection, onAddCandidate }) {
+    const { current: map } = useMap();
+    const timeoutRef = useRef(null);
+    // Ref to retain the currently highlighted cluster even if it disappears from the backend clusters array
+    // (e.g., when a filter hides it instantly upon saving)
+    const retainedClusterRef = useRef(null);
+    // Clear timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+    const handleMouseEnter = useCallback((id) => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+        setHighlightedId(id);
+    }, [setHighlightedId]);
+    const handleMouseLeave = useCallback(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+            setHighlightedId(null);
+            timeoutRef.current = null;
+        }, 300);
+    }, [setHighlightedId]);
+    // Find the active cluster based on the highlightedId
+    const activeCluster = useMemo(() => {
+        if (!highlightedId) {
+            retainedClusterRef.current = null;
+            return null;
+        }
+        const found = clusters.find(c => !c.is_cluster && // Only single items
+            String(c.id) === String(highlightedId) // Match the ID directly (ensure string comparison)
+        );
+        if (found) {
+            retainedClusterRef.current = found;
+            return found;
+        }
+        // If not found in current clusters, but we have it in memory for this highlightedId
+        return retainedClusterRef.current;
+    }, [clusters, highlightedId]);
+    // Create a display array that includes the retained cluster if it's missing
+    const displayClusters = useMemo(() => {
+        if (!activeCluster)
+            return clusters;
+        const isStillInClusters = clusters.some(c => String(c.id) === String(activeCluster.id));
+        if (!isStillInClusters) {
+            return [...clusters, activeCluster];
+        }
+        return clusters;
+    }, [clusters, activeCluster]);
+    const markers = useMemo(() => displayClusters.map((cluster) => {
+        // Determine the unique key for the marker
+        const key = cluster.is_cluster
+            ? `cluster-${cluster.id}-${cluster.count}`
+            : `marker-${cluster.id}`;
+        const isCluster = cluster.is_cluster;
+        const buildingUrl = !isCluster ? (cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`) : '#';
+        let pinStyle = getPinStyle(cluster);
+        // Itinerary overrides
+        const itinerarySequence = cluster.itinerary_sequence;
+        const itineraryDayIndex = cluster.itinerary_day_index;
+        if (itinerarySequence !== undefined && itineraryDayIndex !== undefined) {
+            const color = DAY_COLORS[itineraryDayIndex % DAY_COLORS.length];
+            pinStyle = {
+                ...pinStyle,
+                backgroundColor: color,
+                showContent: true,
+                classes: `${pinStyle.classes} text-white font-bold text-sm shadow-sm`,
+                zIndex: 100, // High priority but below hover
+                showDot: false // Hide dot if showing number
+            };
+        }
+        const isHovered = String(highlightedId) === String(cluster.id);
+        // Boost Z-Index if hovered
+        const finalZIndex = isHovered ? 999 : pinStyle.zIndex;
+        // Icon logic for custom markers
+        let MarkerIcon = null;
+        if (cluster.is_custom_marker && cluster.marker_category) {
+            switch (cluster.marker_category) {
+                case 'accommodation':
+                    MarkerIcon = Bed;
+                    break;
+                case 'dining':
+                    MarkerIcon = Utensils;
+                    break;
+                case 'transport':
+                    MarkerIcon = Bus;
+                    break;
+                case 'attraction':
+                    MarkerIcon = Camera;
+                    break;
+                case 'other':
+                    MarkerIcon = MapPinIcon;
+                    break;
+                default: MarkerIcon = MapPinIcon;
+            }
+        }
+        const content = (_jsx(MapPin, { style: pinStyle, isHovered: isHovered, children: cluster.is_cluster ? (_jsx("span", { children: cluster.count })) : (MarkerIcon ? (_jsx(MarkerIcon, { className: "w-3.5 h-3.5 text-white" })) : itinerarySequence !== undefined ? (_jsx("span", { children: itinerarySequence })) : (pinStyle.showContent && (
+            /* Keep existing Rating or fallback dot logic here if needed,
+                or leave empty if the Pin Style handles the visuals (e.g. dots)
+            */
+            // If it's a candidate, show a yellow dot inside
+            cluster.is_candidate ? (_jsx("div", { className: "h-2 w-2 rounded-full bg-yellow-500" })) : null))) }));
+        // Wrap non-cluster content with mouse handlers for hover effect
+        const interactiveContent = (_jsx("div", { onMouseEnter: () => !isCluster && handleMouseEnter(String(cluster.id)), onMouseLeave: () => !isCluster && handleMouseLeave(), className: "cursor-pointer" // Ensure pointer cursor
+            , children: content }));
+        return (_jsx(Marker, { longitude: cluster.lng, latitude: cluster.lat, style: { zIndex: finalZIndex }, onClick: (e) => {
+                e.originalEvent.stopPropagation();
+                if (cluster.is_cluster) {
+                    const expansionZoom = Math.min((map?.getZoom() || 0) + 2, 20);
+                    map?.flyTo({
+                        center: [cluster.lng, cluster.lat],
+                        zoom: expansionZoom,
+                        duration: 500,
+                    });
+                }
+            }, children: isCluster ? (interactiveContent) : (_jsx("a", { href: buildingUrl, target: "_blank", rel: "noopener noreferrer", className: "block text-inherit no-underline", "aria-label": `View details for ${cluster.name || 'Building'}`, onClick: (e) => {
+                    // If it's a custom marker, prevent navigation and just select (highlight)
+                    if (cluster.is_custom_marker) {
+                        e.preventDefault();
+                        handleMouseEnter(String(cluster.id));
+                        return;
+                    }
+                    // On first tap/click, if not already highlighted, prevent navigation and show popup
+                    if (String(highlightedId) !== String(cluster.id)) {
+                        e.preventDefault();
+                        handleMouseEnter(String(cluster.id));
+                    }
+                }, onMouseEnter: () => handleMouseEnter(String(cluster.id)), onMouseLeave: () => handleMouseLeave(), children: content })) }, key));
+    }), [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId]);
+    return (_jsxs(_Fragment, { children: [markers, activeCluster && (_jsx(Popup, { longitude: activeCluster.lng, latitude: activeCluster.lat, offset: 20, closeButton: false, closeOnClick: false, className: "z-[100] map-popup-test", maxWidth: "300px", children: _jsx(BuildingPopupContent, { cluster: activeCluster, onMouseEnter: () => handleMouseEnter(String(activeCluster.id)), onMouseLeave: handleMouseLeave, onRemoveFromCollection: onRemoveFromCollection, onAddCandidate: onAddCandidate }) }))] }));
+}

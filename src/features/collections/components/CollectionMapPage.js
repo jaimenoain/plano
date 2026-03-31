@@ -1,0 +1,757 @@
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { useEffect, useState, useMemo, Suspense } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { parseLocation } from "@/utils/location";
+import { getBoundsFromBuildings } from "@/utils/map";
+import { getBuildingUrl } from "@/utils/url";
+import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ItineraryList } from "@/features/collections/components/ItineraryList";
+import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "@/components/ui/alert-dialog";
+import { useToast } from "@/components/ui/use-toast";
+import { lazyWithRetry } from "@/utils/lazyWithRetry";
+import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
+const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
+const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
+const PlanRouteDialog = lazyWithRetry(() => import("@/features/collections/components/PlanRouteDialog").then(module => ({ default: module.PlanRouteDialog })));
+const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/CollectionMapGL").then(module => ({ default: module.CollectionMapGL })));
+const CollectionBuildingCard = lazyWithRetry(() => import("@/features/collections/components/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
+const CollectionMarkerCard = lazyWithRetry(() => import("@/features/collections/components/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
+export default function CollectionMap() {
+    const { username, slug } = useParams();
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const { toast } = useToast();
+    const [highlightedId, setHighlightedId] = useState(null);
+    const [showSettings, setShowSettings] = useState(false);
+    const [hasSettingsOpened, setHasSettingsOpened] = useState(false);
+    const [showAddBuildings, setShowAddBuildings] = useState(false);
+    const [hasAddBuildingsOpened, setHasAddBuildingsOpened] = useState(false);
+    const [showPlanRoute, setShowPlanRoute] = useState(false);
+    const [hasPlanRouteOpened, setHasPlanRouteOpened] = useState(false);
+    const [viewMode, setViewMode] = useState('map');
+    const [activeTab, setActiveTab] = useState('items');
+    // New States
+    const [showSavedCandidates, setShowSavedCandidates] = useState(false);
+    // New States for Removal
+    const [itemToRemove, setItemToRemove] = useState(null);
+    const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+    const [markerToRemove, setMarkerToRemove] = useState(null);
+    const [showRemoveMarkerConfirm, setShowRemoveMarkerConfirm] = useState(false);
+    // New States for Save All
+    const [showSaveAllConfirm, setShowSaveAllConfirm] = useState(false);
+    const [isSavingAll, setIsSavingAll] = useState(false);
+    // Map Bounds State
+    const [initialBounds, setInitialBounds] = useState(null);
+    const initializeItinerary = useItineraryStore((state) => state.initializeItinerary);
+    useEffect(() => {
+        if (showSettings)
+            setHasSettingsOpened(true);
+    }, [showSettings]);
+    useEffect(() => {
+        if (showAddBuildings)
+            setHasAddBuildingsOpened(true);
+    }, [showAddBuildings]);
+    useEffect(() => {
+        if (showPlanRoute)
+            setHasPlanRouteOpened(true);
+    }, [showPlanRoute]);
+    // 1. Resolve User (Owner)
+    const { data: ownerProfile, isLoading: loadingProfile } = useQuery({
+        queryKey: ["profile", username],
+        queryFn: async () => {
+            if (!username)
+                return null;
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("id, username")
+                .eq("username", username)
+                .single();
+            if (error)
+                throw error;
+            return data;
+        },
+        enabled: !!username
+    });
+    // 2. Fetch Collection
+    const { data: collection, isLoading: loadingCollection } = useQuery({
+        queryKey: ["collection", slug, ownerProfile?.id],
+        queryFn: async () => {
+            if (!ownerProfile?.id || !slug)
+                return null;
+            const { data, error } = await supabase
+                .from("collections")
+                .select("*")
+                .eq("owner_id", ownerProfile.id)
+                .eq("slug", slug)
+                .single();
+            if (error)
+                throw error;
+            return data;
+        },
+        enabled: !!ownerProfile?.id && !!slug
+    });
+    // Check if user is a contributor
+    const { data: isContributor } = useQuery({
+        queryKey: ["is_contributor", collection?.id, user?.id],
+        queryFn: async () => {
+            if (!collection?.id || !user?.id)
+                return false;
+            const { count } = await supabase
+                .from("collection_contributors")
+                .select("*", { count: 'exact', head: true })
+                .eq("collection_id", collection.id)
+                .eq("user_id", user.id);
+            return (count || 0) > 0;
+        },
+        enabled: !!collection?.id && !!user?.id
+    });
+    // Fetch current user's profile to check for admin role
+    const { data: currentUserProfile } = useQuery({
+        queryKey: ["profile", "current", user?.id],
+        queryFn: async () => {
+            if (!user?.id)
+                return null;
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", user.id)
+                .single();
+            if (error)
+                throw error;
+            return data;
+        },
+        enabled: !!user?.id
+    });
+    const isAdmin = currentUserProfile?.role === "admin" || currentUserProfile?.role === "app_admin";
+    const isOwner = user?.id === collection?.owner_id;
+    const canEdit = isOwner || !!isContributor || isAdmin;
+    // 3. Fetch Items and Markers
+    const { data: collectionData, isLoading: loadingItems, refetch: refetchItems } = useQuery({
+        queryKey: ["collection_items", collection?.id],
+        queryFn: async () => {
+            if (!collection?.id)
+                return { items: [], markers: [] };
+            const itemsPromise = supabase
+                .from("collection_items")
+                .select(`
+          id,
+          building_id,
+          note,
+          custom_category_id,
+          is_hidden,
+          building:buildings(
+            id,
+            name,
+            location,
+            city,
+            country,
+            slug,
+            short_id,
+            year_completed,
+            hero_image_url,
+            community_preview_url,
+            location_precision,
+            building_architects(architects(id, name))
+          )
+        `)
+                .eq("collection_id", collection.id)
+                .returns();
+            const markersPromise = supabase
+                .from("collection_markers")
+                .select("*")
+                .eq("collection_id", collection.id);
+            const [itemsResult, markersResult] = await Promise.all([itemsPromise, markersPromise]);
+            if (itemsResult.error)
+                throw itemsResult.error;
+            if (markersResult.error)
+                throw markersResult.error;
+            // Transform and parse location for items
+            const items = itemsResult.data
+                .filter(item => item.building) // Filter out items with deleted buildings
+                .map((item) => {
+                const b = item.building;
+                const location = parseLocation(b.location);
+                return {
+                    id: item.id,
+                    building_id: item.building_id,
+                    note: item.note,
+                    custom_category_id: item.custom_category_id,
+                    is_hidden: item.is_hidden,
+                    building: {
+                        ...b,
+                        location_lat: location?.lat || 0,
+                        location_lng: location?.lng || 0,
+                        building_architects: b.building_architects || [],
+                    }
+                };
+            });
+            return {
+                items,
+                markers: markersResult.data
+            };
+        },
+        enabled: !!collection?.id
+    });
+    const items = collectionData?.items || [];
+    const markers = collectionData?.markers || [];
+    const { photos } = useGooglePlacePhotos(markers);
+    useEffect(() => {
+        if (collection && items) {
+            initializeItinerary(collection.itinerary, items, markers);
+            // If itinerary exists, maybe default to itinerary tab?
+            // For now, let's keep it manual or based on URL logic (not implemented)
+        }
+    }, [collection, items, markers, initializeItinerary]);
+    const existingBuildingIds = useMemo(() => {
+        return new Set(items.map(item => item.building.id) || []);
+    }, [items]);
+    const hiddenBuildingIds = useMemo(() => {
+        return new Set(items.filter(item => item.is_hidden).map(item => item.building.id) || []);
+    }, [items]);
+    // 3b. Fetch Saved Buildings (Candidates)
+    const { data: savedCandidates } = useQuery({
+        queryKey: ["saved_candidates", user?.id],
+        queryFn: async () => {
+            if (!user?.id)
+                return [];
+            // Fetch user buildings that are visited or pending
+            const { data, error } = await supabase
+                .from("user_buildings")
+                .select(`
+          building_id,
+          status,
+          building:buildings(
+            id,
+            name,
+            location,
+            city,
+            country,
+            slug,
+            short_id,
+            year_completed,
+            hero_image_url,
+            community_preview_url,
+            location_precision,
+            building_architects(architects(id, name))
+          )
+        `)
+                .eq("user_id", user.id)
+                .in("status", ["visited", "pending"])
+                .returns();
+            if (error)
+                throw error;
+            // Filter out items already in collection and transform
+            return data
+                .filter((row) => row.building)
+                .map((row) => {
+                const b = row.building;
+                const location = parseLocation(b.location);
+                return {
+                    id: b.id,
+                    name: b.name,
+                    main_image_url: b.hero_image_url || b.community_preview_url,
+                    location_lat: location?.lat || 0,
+                    location_lng: location?.lng || 0,
+                    city: b.city,
+                    country: b.country,
+                    slug: b.slug,
+                    short_id: b.short_id,
+                    year_completed: b.year_completed,
+                    location_precision: b.location_precision,
+                    architects: b.building_architects?.map((ba) => ba.architects).filter(Boolean) || [],
+                    styles: [],
+                    color: null // Let BuildingDiscoveryMap use status color
+                };
+            })
+                .filter(b => b.location_lat !== 0 && b.location_lng !== 0);
+        },
+        enabled: !!user?.id && showSavedCandidates
+    });
+    // 4. Fetch Contributors (Only if needed for status/rating)
+    const shouldFetchStats = collection && ['status', 'rating_member'].includes(collection.categorization_method);
+    const { data: memberIds } = useQuery({
+        queryKey: ["collection_members", collection?.id],
+        queryFn: async () => {
+            if (!collection)
+                return [];
+            // Owner
+            const members = [collection.owner_id];
+            // Contributors
+            const { data } = await supabase
+                .from("collection_contributors")
+                .select("user_id")
+                .eq("collection_id", collection.id);
+            if (data) {
+                members.push(...data.map(d => d.user_id));
+            }
+            return members;
+        },
+        enabled: !!collection && !!shouldFetchStats
+    });
+    // 5. Fetch User Buildings for Stats
+    const { data: statsData } = useQuery({
+        queryKey: ["collection_stats", collection?.id, collection?.categorization_method, collection?.categorization_selected_members, memberIds],
+        queryFn: async () => {
+            if (!items || items.length === 0 || !memberIds || !collection?.id)
+                return [];
+            // Use RPC to fetch stats securely, bypassing direct RLS on user_buildings
+            // This ensures visitors can see the categorization status (visited/rated)
+            // even if they can't access the raw user_buildings records.
+            const { data, error } = await supabase
+                .rpc('get_collection_stats', { collection_uuid: collection.id });
+            if (error)
+                throw error;
+            return data;
+        },
+        enabled: !!items && items.length > 0 && !!memberIds && !!shouldFetchStats && !!collection?.id
+    });
+    // 6. Check Favorite Status
+    const { data: isFavorite, refetch: refetchFavorite } = useQuery({
+        queryKey: ["collection_favorite", collection?.id, user?.id],
+        queryFn: async () => {
+            if (!collection?.id || !user?.id)
+                return false;
+            const { data } = await supabase
+                .from("collection_favorites")
+                .select("id")
+                .eq("collection_id", collection.id)
+                .eq("user_id", user.id)
+                .maybeSingle();
+            return !!data;
+        },
+        enabled: !!collection?.id && !!user?.id && !canEdit
+    });
+    const handleToggleFavorite = async () => {
+        if (!user || !collection)
+            return;
+        if (isFavorite) {
+            const { error } = await supabase.from("collection_favorites").delete().eq("collection_id", collection.id).eq("user_id", user.id);
+            if (!error)
+                toast({ title: "Removed from favorites" });
+        }
+        else {
+            const { error } = await supabase.from("collection_favorites").insert({ collection_id: collection.id, user_id: user.id });
+            if (!error)
+                toast({ title: "Added to favorites" });
+        }
+        refetchFavorite();
+    };
+    const isLoading = loadingProfile || loadingCollection || loadingItems;
+    // 3c. Fetch User Interactions (Personal Status)
+    const { data: userInteractions } = useQuery({
+        queryKey: ["user_interactions", user?.id, collection?.id, items?.length],
+        queryFn: async () => {
+            if (!user?.id || !items || items.length === 0)
+                return [];
+            const buildingIds = items.map(i => i.building.id);
+            const { data, error } = await supabase
+                .from("user_buildings")
+                .select("building_id, rating, status")
+                .eq("user_id", user.id)
+                .in("building_id", buildingIds);
+            if (error)
+                throw error;
+            return data;
+        },
+        enabled: !!user?.id && !!items && items.length > 0
+    });
+    // Create a map for quick lookup
+    const userInteractionMap = useMemo(() => {
+        const map = new Map();
+        userInteractions?.forEach(i => {
+            map.set(i.building_id, { rating: i.rating, status: i.status });
+        });
+        return map;
+    }, [userInteractions]);
+    // Prepare map buildings
+    const mapBuildings = useMemo(() => {
+        const buildingNodes = [];
+        // 1. Process Buildings
+        if (items) {
+            // Filter out hidden items for display
+            const visibleItems = items.filter(item => !item.is_hidden);
+            // Pre-calculate stats map
+            const statsMap = new Map();
+            if (statsData) {
+                // Group by building
+                statsData.forEach((row) => {
+                    if (!statsMap.has(row.building_id)) {
+                        statsMap.set(row.building_id, { visitedCount: 0, maxRating: 0, hasSaved: false });
+                    }
+                    const stat = statsMap.get(row.building_id);
+                    if (row.status === 'visited')
+                        stat.visitedCount++;
+                    if (row.rating && row.rating > stat.maxRating)
+                        stat.maxRating = row.rating;
+                    stat.hasSaved = true; // Present in user_buildings implies saved/interested
+                });
+            }
+            const mappedBuildings = visibleItems.map(item => {
+                let color = null;
+                const interaction = userInteractionMap.get(item.building.id);
+                if (collection?.categorization_method === 'custom') {
+                    if (item.custom_category_id) {
+                        const category = collection.custom_categories?.find(c => c.id === item.custom_category_id);
+                        if (category) {
+                            color = category.color;
+                        }
+                        else {
+                            color = "#9CA3AF";
+                        }
+                    }
+                    else {
+                        color = "#9CA3AF";
+                    }
+                }
+                else if (collection?.categorization_method === 'uniform') {
+                    color = "#000000";
+                }
+                else if (shouldFetchStats && statsData && memberIds) {
+                    const stat = statsMap.get(item.building.id);
+                    const targetUserIds = collection?.categorization_selected_members && collection.categorization_selected_members.length > 0
+                        ? collection.categorization_selected_members
+                        : memberIds;
+                    const targetCount = targetUserIds.length;
+                    if (collection.categorization_method === 'status') {
+                        if (!stat || stat.visitedCount === 0) {
+                            color = "#9E9E9E"; // Not visited (Grey)
+                        }
+                        else {
+                            if (stat.visitedCount >= targetCount && targetCount > 0) {
+                                color = "#4CAF50"; // Visited by All (Green)
+                            }
+                            else if (stat.visitedCount > 0) {
+                                color = "#FF9800"; // Visited by Some (Orange)
+                            }
+                        }
+                    }
+                    else if (collection.categorization_method === 'rating_member') {
+                        if (!stat || !stat.hasSaved) {
+                            // No color (default) or grey?
+                            // If we want to highlight rated ones, unrated/unsaved can be default or grey.
+                            // Let's make them grey to indicate "no data/rating".
+                            color = "#9E9E9E";
+                        }
+                        else {
+                            if (stat.maxRating === 3)
+                                color = "#FFD700"; // Gold
+                            else if (stat.maxRating === 2)
+                                color = "#C0C0C0"; // Silver
+                            else if (stat.maxRating === 1)
+                                color = "#CD7F32"; // Bronze
+                            else
+                                color = "#2196F3"; // Saved (Blue)
+                        }
+                    }
+                }
+                return {
+                    id: item.building.id,
+                    name: item.building.name,
+                    main_image_url: item.building.hero_image_url || item.building.community_preview_url,
+                    location_lat: item.building.location_lat,
+                    location_lng: item.building.location_lng,
+                    city: item.building.city,
+                    country: item.building.country,
+                    slug: item.building.slug,
+                    short_id: item.building.short_id,
+                    year_completed: item.building.year_completed,
+                    location_precision: item.building.location_precision,
+                    architects: item.building.building_architects
+                        ?.map((ba) => ba.architects)
+                        .filter((a) => a != null) ?? null,
+                    styles: null,
+                    color: color,
+                    personal_rating: interaction?.rating || null,
+                    personal_status: interaction?.status || null,
+                };
+            });
+            buildingNodes.push(...mappedBuildings);
+        }
+        // 2. Process Markers
+        if (markers) {
+            const mappedMarkers = markers.map(marker => ({
+                id: marker.id,
+                name: marker.name,
+                location_lat: marker.lat,
+                location_lng: marker.lng,
+                city: null,
+                country: null,
+                architects: [],
+                styles: [],
+                year_completed: null,
+                isMarker: true,
+                markerCategory: marker.category,
+                notes: marker.notes,
+                address: marker.address,
+                google_place_id: marker.google_place_id,
+                website: marker.website,
+                // Use a default marker color if needed, or rely on icon in Map
+                color: "#6B7280",
+                main_image_url: photos[marker.id]?.url || null,
+                image_attribution: photos[marker.id]?.attribution || null
+            }));
+            buildingNodes.push(...mappedMarkers);
+        }
+        return buildingNodes;
+    }, [items, markers, collection, statsData, memberIds, shouldFetchStats, userInteractionMap, photos]);
+    const allMapBuildings = useMemo(() => {
+        if (showSavedCandidates && savedCandidates) {
+            const filteredCandidates = savedCandidates.filter(c => !existingBuildingIds.has(c.id));
+            const dimmedExisting = mapBuildings.map(b => ({ ...b, isDimmed: true }));
+            return [...dimmedExisting, ...filteredCandidates.map(c => ({ ...c, isCandidate: true }))];
+        }
+        return mapBuildings;
+    }, [mapBuildings, savedCandidates, showSavedCandidates, existingBuildingIds]);
+    // Calculate bounds only once when buildings are loaded to prevent map movement on updates
+    useEffect(() => {
+        if (!initialBounds && mapBuildings.length > 0) {
+            setInitialBounds(getBoundsFromBuildings(mapBuildings));
+        }
+    }, [mapBuildings, initialBounds]);
+    // Reset bounds when switching collections
+    useEffect(() => {
+        setInitialBounds(null);
+    }, [slug]);
+    const handleUpdateNote = async (itemId, newNote) => {
+        const { error } = await supabase
+            .from("collection_items")
+            .update({ note: newNote })
+            .eq("id", itemId);
+        if (!error) {
+            refetchItems();
+        }
+    };
+    const handleUpdateCategory = async (itemId, categoryId) => {
+        const { error } = await supabase
+            .from("collection_items")
+            .update({ custom_category_id: categoryId || null })
+            .eq("id", itemId);
+        if (!error) {
+            refetchItems();
+        }
+    };
+    const handleUpdateMarkerNote = async (markerId, newNote) => {
+        const { error } = await supabase
+            .from("collection_markers")
+            .update({ notes: newNote })
+            .eq("id", markerId);
+        if (!error) {
+            refetchItems();
+        }
+        else {
+            toast({
+                title: "Error",
+                description: "Failed to update note.",
+                variant: "destructive"
+            });
+        }
+    };
+    const handleAddToCollection = async (building) => {
+        if (!collection?.id)
+            return;
+        const { error } = await supabase
+            .from("collection_items")
+            .insert({
+            collection_id: collection.id,
+            building_id: building.id
+        });
+        if (error) {
+            toast({
+                title: "Error",
+                description: "Failed to add building to collection.",
+                variant: "destructive"
+            });
+        }
+        else {
+            toast({
+                title: "Added",
+                description: `${building.name} added to collection.`
+            });
+            refetchItems();
+            // Invalidate saved candidates to refresh the list (it should disappear from candidates)
+            queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+        }
+    };
+    const handleUpdateItinerary = async (newItinerary) => {
+        if (!collection?.id)
+            return;
+        const { error } = await supabase
+            .from("collections")
+            .update({ itinerary: newItinerary })
+            .eq("id", collection.id);
+        if (error) {
+            toast({
+                title: "Error",
+                description: "Failed to save itinerary changes.",
+                variant: "destructive"
+            });
+        }
+        else {
+            // No toast for quiet saves
+            // We don't refetch the whole collection to avoid resetting the store unexpectedly,
+            // but we might want to invalidate queries eventually.
+            queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
+        }
+    };
+    const handleRemoveItem = (buildingId) => {
+        const item = items?.find(i => i.building.id === buildingId);
+        if (item) {
+            setItemToRemove(item);
+            setShowRemoveConfirm(true);
+            return;
+        }
+        const marker = markers?.find(m => m.id === buildingId);
+        if (marker) {
+            setMarkerToRemove(marker);
+            setShowRemoveMarkerConfirm(true);
+        }
+    };
+    const handleConfirmRemove = async () => {
+        if (!itemToRemove)
+            return;
+        const { error } = await supabase
+            .from("collection_items")
+            .delete()
+            .eq("id", itemToRemove.id);
+        if (error) {
+            toast({
+                title: "Error",
+                description: "Failed to remove building from collection.",
+                variant: "destructive"
+            });
+        }
+        else {
+            toast({
+                title: "Removed",
+                description: `${itemToRemove.building.name} removed from collection.`
+            });
+            refetchItems();
+            // Invalidate saved candidates so it reappears as a candidate if applicable
+            queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+        }
+        setShowRemoveConfirm(false);
+        setItemToRemove(null);
+    };
+    const handleConfirmRemoveMarker = async () => {
+        if (!markerToRemove)
+            return;
+        const { error } = await supabase
+            .from("collection_markers")
+            .delete()
+            .eq("id", markerToRemove.id);
+        if (error) {
+            toast({
+                title: "Error",
+                description: "Failed to remove marker.",
+                variant: "destructive"
+            });
+        }
+        else {
+            toast({
+                title: "Removed",
+                description: `${markerToRemove.name} removed from map.`
+            });
+            refetchItems();
+        }
+        setShowRemoveMarkerConfirm(false);
+        setMarkerToRemove(null);
+    };
+    const handleSaveAllBuildings = async () => {
+        if (!user?.id) {
+            navigate("/auth");
+            return;
+        }
+        if (!items)
+            return;
+        setIsSavingAll(true);
+        try {
+            // 1. Get all existing interactions for the current user
+            const { data: existingUserBuildings, error: fetchError } = await supabase
+                .from('user_buildings')
+                .select('building_id')
+                .eq('user_id', user.id);
+            if (fetchError)
+                throw fetchError;
+            const existingIds = new Set(existingUserBuildings?.map(row => row.building_id) || []);
+            // 2. Identify new buildings to save (exclude hidden ones in the collection)
+            const buildingsToSave = items
+                .filter(item => !item.is_hidden)
+                .map(item => item.building.id)
+                .filter(id => !existingIds.has(id));
+            if (buildingsToSave.length === 0) {
+                toast({
+                    title: "No new buildings",
+                    description: "You have already saved, visited, or hidden all buildings in this collection."
+                });
+                return;
+            }
+            // 3. Bulk Insert
+            const { error: insertError } = await supabase
+                .from('user_buildings')
+                .insert(buildingsToSave.map(id => ({
+                user_id: user.id,
+                building_id: id,
+                status: 'pending'
+            })));
+            if (insertError)
+                throw insertError;
+            toast({
+                title: "Saved!",
+                description: `Successfully saved ${buildingsToSave.length} buildings to your profile.`
+            });
+            queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+        }
+        catch (_error) {
+            toast({
+                title: "Error",
+                description: "Failed to save buildings.",
+                variant: "destructive"
+            });
+        }
+        finally {
+            setIsSavingAll(false);
+            setShowSaveAllConfirm(false);
+        }
+    };
+    if (isLoading) {
+        return (_jsx(AppLayout, { title: "Collection", showBack: true, children: _jsx("div", { className: "flex items-center justify-center h-[calc(100vh-64px)]", children: _jsx(Loader2, { className: "h-8 w-8 animate-spin text-text-secondary" }) }) }));
+    }
+    if (!collection) {
+        return (_jsx(AppLayout, { title: "Not Found", showBack: true, children: _jsx("div", { className: "flex items-center justify-center h-[calc(100vh-64px)] text-text-secondary", children: "Collection not found" }) }));
+    }
+    return (_jsxs(AppLayout, { title: collection.name, showBack: true, isFullScreen: true, children: [_jsxs("div", { className: "flex flex-col lg:flex-row h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] md:h-[100dvh] overflow-hidden relative", children: [_jsx("div", { className: "lg:hidden", children: _jsx(SearchModeToggle, { mode: viewMode, onModeChange: setViewMode, className: "fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50" }) }), _jsxs("div", { className: cn("w-full lg:w-[450px] bg-surface-default border-r flex-col shrink-0 lg:h-full lg:order-1 lg:flex", viewMode === 'list' ? "h-full flex order-2" : "hidden"), children: [_jsxs("div", { className: "p-4 border-b flex items-center justify-between gap-4", children: [_jsxs("div", { className: "min-w-0 flex-1", children: [_jsx("h1", { className: "font-bold text-xl truncate", children: collection.name }), _jsxs("div", { className: "text-sm text-text-secondary mb-1", children: ["By: ", _jsx(Link, { to: `/profile/${ownerProfile?.username}`, className: "hover:underline text-text-primary", children: ownerProfile?.username })] }), collection.description && _jsx("p", { className: "text-sm text-text-secondary line-clamp-2", children: collection.description }), collection.external_link && (_jsx(Button, { variant: "outline", size: "sm", className: "mt-2 h-8", asChild: true, children: _jsxs("a", { href: collection.external_link, target: "_blank", rel: "noopener noreferrer", children: [_jsx(ExternalLink, { className: "w-3 h-3 mr-2" }), "Visit Link"] }) }))] }), canEdit && (_jsxs("div", { className: "flex items-center gap-2 shrink-0", children: [_jsx(Button, { variant: "ghost", size: "icon", onClick: () => setShowAddBuildings(true), children: _jsx(Plus, { className: "h-5 w-5 text-text-secondary" }) }), _jsx(Button, { variant: "ghost", size: "icon", onClick: () => setShowSettings(true), children: _jsx(Settings, { className: "h-5 w-5 text-text-secondary" }) })] })), !canEdit && (_jsxs("div", { className: "flex items-center gap-2 shrink-0", children: [user && (_jsx(Button, { variant: "ghost", size: "icon", onClick: handleToggleFavorite, className: "text-text-secondary hover:text-feedback-warning", children: _jsx(Star, { className: cn("h-5 w-5", isFavorite && "fill-feedback-warning text-feedback-warning") }) })), _jsx(Button, { variant: "ghost", size: "icon", onClick: () => setShowSettings(true), children: _jsx(ListFilter, { className: "h-5 w-5 text-text-secondary" }) })] }))] }), _jsx("div", { className: "flex-1 overflow-hidden flex flex-col justify-start", children: _jsxs(Tabs, { value: activeTab, onValueChange: (val) => setActiveTab(val), className: "w-full h-full flex-1 flex flex-col min-h-0 justify-start", children: [collection.itinerary && (_jsx("div", { className: "px-4 pt-2 shrink-0", children: _jsxs(TabsList, { className: "w-full grid grid-cols-2", children: [_jsx(TabsTrigger, { value: "items", children: "All Items" }), _jsx(TabsTrigger, { value: "itinerary", children: "Itinerary" })] }) })), _jsx(TabsContent, { value: "items", className: "mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start data-[state=inactive]:hidden", children: _jsx("div", { className: "flex-1 overflow-y-auto", children: _jsxs("div", { className: "p-4 space-y-3 pb-24 lg:pb-4", children: [items && items.filter(i => !i.is_hidden).length > 0 && (_jsx(Suspense, { fallback: _jsx("div", { className: "flex items-center justify-center p-8", children: _jsx(Loader2, { className: "h-6 w-6 animate-spin text-text-secondary" }) }), children: items.filter(i => !i.is_hidden).map(item => (_jsx(CollectionBuildingCard, { item: item, isHighlighted: highlightedId === item.building.id, setHighlightedId: setHighlightedId, canEdit: canEdit, onUpdateNote: (note) => handleUpdateNote(item.id, note), onNavigate: () => {
+                                                                    window.open(getBuildingUrl(item.building.id, item.building.slug, item.building.short_id), '_blank');
+                                                                }, categorizationMethod: collection.categorization_method, customCategories: collection.custom_categories, onUpdateCategory: (catId) => handleUpdateCategory(item.id, catId), showImages: collection.show_community_images ?? true, onRemove: () => handleRemoveItem(item.building.id) }, item.id))) })), markers && markers.length > 0 && (_jsx("div", { className: "mt-4 border-t pt-2", children: _jsx(Accordion, { type: "single", collapsible: true, defaultValue: "markers", children: _jsxs(AccordionItem, { value: "markers", className: "border-none", children: [_jsx(AccordionTrigger, { className: "py-2 hover:no-underline text-sm font-semibold text-text-secondary", children: "Trip Logistics" }), _jsx(AccordionContent, { children: _jsx("div", { className: "space-y-3 pt-2", children: _jsx(Suspense, { fallback: _jsx("div", { className: "p-2 text-center text-xs text-text-secondary", children: "Loading markers..." }), children: markers.map(marker => (_jsx(CollectionMarkerCard, { marker: marker, isHighlighted: highlightedId === marker.id, setHighlightedId: setHighlightedId, canEdit: canEdit, onRemove: () => handleRemoveItem(marker.id), onNavigate: () => {
+                                                                                            // Just highlight
+                                                                                            setHighlightedId(marker.id);
+                                                                                        } }, marker.id))) }) }) })] }) }) })), (!items || items.filter(i => !i.is_hidden).length === 0) && (!markers || markers.length === 0) && (_jsx("div", { className: "text-center py-8 text-text-secondary text-sm", children: "No places in this collection yet." }))] }) }) }), _jsx(TabsContent, { value: "itinerary", className: "mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start data-[state=inactive]:hidden", children: _jsx("div", { className: "flex-1 overflow-y-auto", children: _jsxs("div", { className: "p-4 pb-24 lg:pb-4", children: [_jsx(ItineraryList, { highlightedId: highlightedId, setHighlightedId: setHighlightedId, onUpdateItinerary: canEdit ? handleUpdateItinerary : undefined, canEdit: canEdit, onUpdateNote: handleUpdateNote }), !collection.itinerary && (_jsxs("div", { className: "text-center py-8 text-text-secondary", children: [_jsx("p", { children: "No itinerary generated yet." }), canEdit && (_jsx(Button, { variant: "outline", className: "mt-4", onClick: () => setShowPlanRoute(true), children: "Generate Itinerary" }))] }))] }) }) })] }) })] }), _jsxs("div", { className: cn("flex-1 relative lg:h-full lg:order-2 lg:flex", viewMode === 'map' ? "h-full flex order-1" : "hidden"), children: [_jsx(Suspense, { fallback: _jsx("div", { className: "flex items-center justify-center h-full w-full bg-surface-muted/20", children: _jsx(Loader2, { className: "h-8 w-8 animate-spin text-text-secondary" }) }), children: _jsx(CollectionMapGL, { buildings: allMapBuildings, highlightedId: highlightedId, setHighlightedId: setHighlightedId, onAddCandidate: handleAddToCollection, onRemoveItem: canEdit ? handleRemoveItem : undefined, onUpdateMarkerNote: canEdit ? handleUpdateMarkerNote : undefined, onRemoveMarker: canEdit ? handleRemoveItem : undefined, showSavedCandidates: showSavedCandidates, showItinerary: activeTab === 'itinerary' }) }), collection.itinerary && (_jsx("div", { className: "lg:hidden", children: activeTab !== 'itinerary' && viewMode === 'map' && (_jsx("div", { className: "absolute top-4 right-4 z-[50]", children: _jsxs(Button, { variant: "secondary", className: "shadow-none rounded-full", onClick: () => setActiveTab('itinerary'), children: [_jsx(ListFilter, { className: "w-4 h-4 mr-2" }), "Itinerary"] }) })) }))] })] }), (showPlanRoute || hasPlanRouteOpened) && (_jsx(Suspense, { fallback: null, children: _jsx(PlanRouteDialog, { open: showPlanRoute, onOpenChange: setShowPlanRoute, collectionId: collection.id, hasItinerary: !!collection.itinerary, onPlanGenerated: (action) => {
+                        refetchItems();
+                        queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
+                        if (action === 'created') {
+                            setActiveTab('itinerary');
+                        }
+                        else if (action === 'removed') {
+                            setActiveTab('items');
+                        }
+                    } }) })), (showSettings || hasSettingsOpened) && (_jsx(Suspense, { fallback: null, children: _jsx(CollectionSettingsDialog, { open: showSettings, onOpenChange: setShowSettings, collection: collection, onUpdate: () => {
+                        refetchItems();
+                        window.location.reload();
+                    }, showSavedCandidates: showSavedCandidates, onShowSavedCandidatesChange: setShowSavedCandidates, isOwner: isOwner, canEdit: canEdit, currentUserId: user?.id, onPlanRoute: () => setShowPlanRoute(true), onSaveAll: () => {
+                        setShowSettings(false);
+                        setShowSaveAllConfirm(true);
+                    } }) })), canEdit && (_jsxs(_Fragment, { children: [(showAddBuildings || hasAddBuildingsOpened) && (_jsx(Suspense, { fallback: null, children: _jsx(AddBuildingsToCollectionDialog, { collectionId: collection.id, existingBuildingIds: existingBuildingIds, existingBuildings: mapBuildings.filter(b => !b.isMarker), hiddenBuildingIds: hiddenBuildingIds, open: showAddBuildings, onOpenChange: setShowAddBuildings }) })), _jsx(AlertDialog, { open: showRemoveConfirm, onOpenChange: setShowRemoveConfirm, children: _jsxs(AlertDialogContent, { children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Remove from Map" }), _jsxs(AlertDialogDescription, { children: ["Do you really want to remove ", _jsx("strong", { children: itemToRemove?.building.name }), " from this map?", itemToRemove?.note && (_jsxs(_Fragment, { children: [_jsx("br", {}), _jsx("br", {}), _jsx("strong", { children: "Note:" }), " The note attached to this building will also be deleted."] }))] })] }), _jsxs(AlertDialogFooter, { children: [_jsx(AlertDialogCancel, { onClick: () => setItemToRemove(null), children: "Cancel" }), _jsx(AlertDialogAction, { onClick: handleConfirmRemove, children: "Remove" })] })] }) }), _jsx(AlertDialog, { open: showRemoveMarkerConfirm, onOpenChange: setShowRemoveMarkerConfirm, children: _jsxs(AlertDialogContent, { children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Remove Marker" }), _jsxs(AlertDialogDescription, { children: ["Do you really want to remove ", _jsx("strong", { children: markerToRemove?.name }), " from this map?"] })] }), _jsxs(AlertDialogFooter, { children: [_jsx(AlertDialogCancel, { onClick: () => setMarkerToRemove(null), children: "Cancel" }), _jsx(AlertDialogAction, { onClick: handleConfirmRemoveMarker, children: "Remove" })] })] }) })] })), _jsx(AlertDialog, { open: showSaveAllConfirm, onOpenChange: setShowSaveAllConfirm, children: _jsxs(AlertDialogContent, { children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Save Collection" }), _jsx(AlertDialogDescription, { children: "This will save all buildings from this collection to your profile. Buildings you have already saved, visited, or hidden will be skipped." })] }), _jsxs(AlertDialogFooter, { children: [_jsx(AlertDialogCancel, { disabled: isSavingAll, children: "Cancel" }), _jsx(AlertDialogAction, { onClick: (e) => {
+                                        e.preventDefault();
+                                        handleSaveAllBuildings();
+                                    }, disabled: isSavingAll, children: isSavingAll ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "w-4 h-4 mr-2 animate-spin" }), "Saving..."] })) : "Save All" })] })] }) })] }));
+}

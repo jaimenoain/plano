@@ -323,7 +323,7 @@ toast.error("Failed to save");
       )}
 
       {/* Gradient Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-20 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent z-20 pointer-events-none" />
 
       {/* Info Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 z-30 text-text-inverse pb-24 md:pb-6 pointer-events-none break-words">
