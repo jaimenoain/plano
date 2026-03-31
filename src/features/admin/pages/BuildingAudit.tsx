@@ -107,21 +107,21 @@ toast.error("Failed to revert change");
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Audit Logs</h2>
-        <p className="text-text-secondary">
+        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Audit Logs</h1>
+        <p className="text-sm text-text-secondary">
           Track and revert changes made to buildings.
         </p>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>

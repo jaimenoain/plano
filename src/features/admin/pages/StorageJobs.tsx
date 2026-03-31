@@ -113,15 +113,15 @@ toast.error(`Failed to queue job: ${error instanceof Error ? error.message : "Un
   };
 
   return (
-    <div className="space-y-6 p-6 pb-20">
+    <div className="space-y-6 p-8 pb-20">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Storage Management</h1>
-        <p className="text-text-secondary">
+        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Storage Management</h1>
+        <p className="text-sm text-text-secondary">
           Manage background jobs for recursive storage deletion.
         </p>
       </div>
 
-      <Card>
+      <Card className="bg-surface-card border border-border-default rounded-sm shadow-none">
         <CardHeader>
           <CardTitle>Queue New Deletion</CardTitle>
           <CardDescription>
@@ -160,7 +160,7 @@ toast.error(`Failed to queue job: ${error instanceof Error ? error.message : "Un
           </Button>
         </div>
 
-        <div className="rounded-md border bg-surface-card">
+        <div className="rounded-sm border border-border-default bg-surface-card">
           <Table>
             <TableHeader>
               <TableRow>

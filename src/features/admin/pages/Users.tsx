@@ -137,9 +137,9 @@ toast.error("Action failed");
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">User Roster</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-text-primary">User Roster</h1>
         <Input
           placeholder="Search users..."
           className="max-w-xs"
@@ -148,7 +148,7 @@ toast.error("Action failed");
         />
       </div>
 
-      <div className="rounded-md border bg-surface-card">
+      <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -161,7 +161,7 @@ toast.error("Action failed");
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={4} className="h-24 text-center text-text-secondary">
                   <div className="flex justify-center items-center">
                     <Loader2 className="h-6 w-6 animate-spin mr-2" />
                     Loading...
@@ -176,21 +176,32 @@ toast.error("Action failed");
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user.id} className={user.role === 'suspended' ? "opacity-60 bg-red-500/5" : ""}>
+                <TableRow
+                  key={user.id}
+                  className={user.role === "suspended" ? "opacity-60 bg-feedback-destructive/5" : ""}
+                >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <Avatar>
+                        <Avatar className="h-8 w-8 border border-border-default">
                         <AvatarImage src={user.avatar_url || undefined} />
                         <AvatarFallback>{user.username?.charAt(0).toUpperCase() || "?"}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="font-medium">{user.username || "Unknown"}</span>
-                        <span className="text-xs text-text-secondary">{user.id}</span>
+                        <span className="font-medium text-sm">{user.username || "Unknown"}</span>
+                        <span className="text-xs text-text-secondary font-mono">{user.id}</span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'admin' || user.role === 'app_admin' ? "default" : user.role === 'suspended' ? "destructive" : "secondary"}>
+                    <Badge
+                      variant={
+                        user.role === "admin" || user.role === "app_admin"
+                          ? "default"
+                          : user.role === "suspended"
+                            ? "destructive"
+                            : "secondary"
+                      }
+                    >
                       {user.role || "User"}
                     </Badge>
                   </TableCell>

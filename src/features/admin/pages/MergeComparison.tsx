@@ -277,13 +277,13 @@ toast.error("Failed to load buildings");
     const sourceLocation = sourceBuilding?.location ? parseLocation(sourceBuilding.location) : null;
 
     if (!targetBuilding || !sourceBuilding) {
-        return (
-            <div className="container mx-auto py-8 px-4 max-w-7xl flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-                <AlertTriangle className="h-16 w-16 text-text-secondary opacity-20" />
-                <h2 className="text-xl font-semibold text-text-secondary">Buildings not found</h2>
-                <Button onClick={() => navigate('/admin/merge')}>Return to Merge Tool</Button>
-            </div>
-        );
+      return (
+        <div className="mx-auto flex min-h-[50vh] max-w-7xl flex-col items-center justify-center space-y-4 p-8">
+          <AlertTriangle className="h-16 w-16 text-text-secondary opacity-20" />
+          <h2 className="text-xl font-semibold text-text-secondary">Buildings not found</h2>
+          <Button onClick={() => navigate("/admin/merge")}>Return to Merge Tool</Button>
+        </div>
+      );
     }
 
     return (

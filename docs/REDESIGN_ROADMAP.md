@@ -454,14 +454,14 @@
 
 ## Phase 17 — Admin Pages
 
-- [ ] **Task 17.1 — Redesign AdminLayout**
+- [x] **Task 17.1 — Redesign AdminLayout**
   Per COMPONENT_SPEC §1 and §9.
 
-- [ ] **Task 17.2 — Redesign Admin Dashboard zones**
+- [x] **Task 17.2 — Redesign Admin Dashboard zones**
   Files: `Dashboard.tsx`, `PulseZone`, `ActivityTrendsZone`, `ContentIntelligenceZone`, `UserLeaderboardZone`, `RetentionZone`, `NotificationIntelligenceZone`, `PhotoHeatmapZone`, `SessionDiagnosticZone`, `NoPhotosMapZone`, `BuildingMap`.
   Title: `text-4xl font-bold tracking-tight`. Zones: `bg-surface-card border border-border-default rounded-sm p-6`. Stats: `text-3xl font-bold`. Labels: `text-xs text-text-secondary uppercase tracking-wide`. Charts: `brand-primary` accent.
 
-- [ ] **Task 17.3 — Redesign admin data pages**
+- [x] **Task 17.3 — Redesign admin data pages**
   Files: `Buildings`, `Users`, `Moderation`, `ImageWall`, `PhotoAnalytics`, `BuildingAudit`, `StorageJobs`, `ArchitectClaims`, `MergeBuildings`, `MergeComparison`.
   Tables per §7. Forms per §5. Dialogs per §8. Add empty states to all tables.
 

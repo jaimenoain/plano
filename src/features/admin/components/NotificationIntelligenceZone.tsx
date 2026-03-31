@@ -32,7 +32,7 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
             <BellOff className="h-4 w-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-500">
+            <div className="text-2xl font-bold text-feedback-warning">
               {engagement.active_users_never_read_percent.toFixed(1)}%
             </div>
             <p className="text-xs text-text-secondary">
@@ -47,7 +47,7 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
             <EyeOff className="h-4 w-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">
+            <div className="text-2xl font-bold text-feedback-destructive">
               {engagement.active_ignoring_percent.toFixed(1)}%
             </div>
             <p className="text-xs text-text-secondary">
@@ -62,7 +62,7 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
                 <Bell className="h-4 w-4 text-text-secondary" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold text-green-500">
+                <div className="text-2xl font-bold text-feedback-success">
                     {unread_distribution.find(d => d.bucket === "0")?.count || 0}
                 </div>
                 <p className="text-xs text-text-secondary">

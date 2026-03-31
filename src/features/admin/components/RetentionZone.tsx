@@ -47,9 +47,9 @@ function getShortTimeSince(dateStr: string | undefined): string {
 
 export function RetentionZone({ data }: RetentionZoneProps) {
   const pieData = [
-    { name: 'Active 30d', value: data.user_activity_distribution.active_30d, color: '#22c55e' }, // green-500
-    { name: 'Active 90d', value: data.user_activity_distribution.active_90d, color: '#f59e0b' }, // amber-500
-    { name: 'Inactive', value: data.user_activity_distribution.inactive, color: '#ef4444' }, // red-500
+    { name: 'Active 30d', value: data.user_activity_distribution.active_30d, color: 'var(--feedback-success)' },
+    { name: 'Active 90d', value: data.user_activity_distribution.active_90d, color: 'var(--feedback-warning)' },
+    { name: 'Inactive', value: data.user_activity_distribution.inactive, color: 'var(--feedback-destructive)' },
   ];
 
   // Fill in missing days for the bar chart (0-29)
@@ -103,19 +103,23 @@ export function RetentionZone({ data }: RetentionZoneProps) {
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={barData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border-default" />
                 <XAxis
                   dataKey="day"
-                  stroke="#9ca3af"
+                  stroke="var(--border-strong)"
                   fontSize={12}
                   label={{ value: 'Days Since Last Active', position: 'insideBottom', offset: -5 }}
                 />
-                <YAxis stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="var(--border-strong)" fontSize={12} />
                 <RechartsTooltip
-                  contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
-                  itemStyle={{ color: '#f3f4f6' }}
+                  contentStyle={{
+                    backgroundColor: 'var(--surface-card)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 'var(--radius)',
+                  }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
                 />
-                <Bar dataKey="users" fill="#3b82f6" name="Users" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="users" fill="var(--brand-primary)" name="Users" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

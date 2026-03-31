@@ -25,20 +25,20 @@ export default function PhotoAnalytics() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-default flex items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-text-secondary">Loading analytics...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface-default pb-20">
-      <div className="container py-8 space-y-8">
+    <div className="pb-20">
+      <div className="space-y-8 p-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Photo Analytics</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-text-primary">Photo Analytics</h1>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-8">
           <section className="space-y-4">
             <PhotoHeatmapZone data={heatmapData || []} />
           </section>

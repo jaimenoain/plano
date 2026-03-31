@@ -93,10 +93,10 @@ export function PulseZone({ stats }: PulseZoneProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Pending Reports</CardTitle>
-          <AlertCircle className={`h-4 w-4 ${stats.pending_reports > 0 ? "text-red-500" : "text-text-secondary"}`} />
+          <AlertCircle className={`h-4 w-4 ${stats.pending_reports > 0 ? "text-feedback-destructive" : "text-text-secondary"}`} />
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${stats.pending_reports > 0 ? "text-red-500" : ""}`}>{stats.pending_reports}</div>
+          <div className={`text-2xl font-bold ${stats.pending_reports > 0 ? "text-feedback-destructive" : ""}`}>{stats.pending_reports}</div>
           <p className="text-xs text-text-secondary">Requiring review</p>
         </CardContent>
       </Card>

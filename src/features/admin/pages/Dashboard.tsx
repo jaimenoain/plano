@@ -46,10 +46,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-default pb-20">
-      <div className="container p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="pb-20">
+      <div className="space-y-8 p-4 sm:p-6 lg:p-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-text-primary">Admin Dashboard</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-text-primary">Admin Dashboard</h1>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">
@@ -57,45 +57,46 @@ export default function AdminDashboard() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-4">
+          <TabsContent value="overview" className="space-y-12">
             {/* Zone 1: The Pulse */}
             <section className="space-y-4">
-              <h2 className="text-xl font-semibold tracking-tight text-text-primary">The Pulse</h2>
+              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">The Pulse</h2>
               <PulseZone stats={stats.pulse} />
             </section>
 
             {/* Zone 1.5: Retention Analysis */}
-            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
-              <h2 className="text-xl font-semibold tracking-tight text-text-primary">User Retention</h2>
+            <section className="space-y-4">
+              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">User Retention</h2>
               <RetentionZone data={stats.retention_analysis} />
             </section>
 
             {/* Zone 2: Activity Trends */}
-            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
-              <h2 className="text-xl font-semibold tracking-tight text-text-primary">Activity Trends</h2>
+            <section className="space-y-4">
+              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Activity Trends</h2>
               <ActivityTrendsZone data={stats.activity_trends} />
             </section>
 
             {/* Zone 4: Content Intelligence */}
-            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
-              <h2 className="text-xl font-semibold tracking-tight text-text-primary">Content Intelligence</h2>
+            <section className="space-y-4">
+              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Content Intelligence</h2>
               <ContentIntelligenceZone trendingBuildings={stats.content_intelligence.trending_buildings} />
             </section>
 
             {/* Zone 4.5: Notification Intelligence */}
-            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
-              <h2 className="text-xl font-semibold tracking-tight text-text-primary">Notification Intelligence</h2>
+            <section className="space-y-4">
+              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Notification Intelligence</h2>
               <NotificationIntelligenceZone data={stats.notification_intelligence} />
             </section>
 
             {/* Zone 5: User Leaderboard */}
-            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
-              <h2 className="text-xl font-semibold tracking-tight text-text-primary">User Leaderboard</h2>
+            <section className="space-y-4">
+              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">User Leaderboard</h2>
               <UserLeaderboardZone data={stats.user_leaderboard} />
             </section>
 
             {/* Zone 6: Session Diagnostics & Health */}
-            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
+            <section className="space-y-4">
+              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Diagnostics & Health</h2>
               <SessionDiagnosticZone />
             </section>
           </TabsContent>

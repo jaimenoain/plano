@@ -146,15 +146,15 @@ toast.error("Failed to deny claim");
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Pending Claims</h1>
-        <Badge variant="outline" className="px-3 py-1">
+        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Pending Architect Claims</h1>
+        <Badge variant="outline" className="px-3 py-1 text-xs uppercase tracking-wide">
           {claims.length} Pending
         </Badge>
       </div>
 
-      <div className="rounded-md border bg-surface-card">
+      <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>

@@ -172,12 +172,12 @@ toast.error("Failed to delete content");
   };
 
   return (
-    <div className="space-y-6 p-6">
-       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Moderation Queue</h1>
-       </div>
+    <div className="space-y-6 p-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Moderation Queue</h1>
+      </div>
 
-       <div className="rounded-md border bg-surface-card">
+      <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>

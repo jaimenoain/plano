@@ -108,9 +108,9 @@ toast.error("Failed to delete images");
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Image Wall</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Image Wall</h1>
         <div className="flex gap-2">
             <Button variant="outline" onClick={fetchImages}>
                 <RefreshCw className="h-4 w-4 mr-2" /> Refresh
@@ -130,13 +130,15 @@ toast.error("Failed to delete images");
       ) : images.length === 0 ? (
         <div className="text-center text-text-secondary py-12">No images found.</div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
             {images.map(img => (
                 <div
                     key={img.uniqueKey}
                     className={cn(
-                        "relative group aspect-square rounded-md overflow-hidden border cursor-pointer transition-all",
-                        selectedKeys.has(img.uniqueKey) ? "ring-2 ring-brand-primary border-brand-primary" : "hover:border-brand-primary/50"
+                      "relative group aspect-square cursor-pointer overflow-hidden rounded-sm border border-border-default transition-all",
+                      selectedKeys.has(img.uniqueKey)
+                        ? "ring-2 ring-brand-primary border-brand-primary"
+                        : "hover:border-border-strong"
                     )}
                     onClick={() => toggleSelect(img.uniqueKey)}
                 >

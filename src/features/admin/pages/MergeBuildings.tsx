@@ -198,11 +198,11 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
   );
 
   return (
-    <div className="space-y-8 p-6 max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl space-y-8 p-8">
       <div className="flex justify-between items-center">
         <div>
-            <h1 className="text-2xl font-bold tracking-tight">Merge Buildings</h1>
-            <p className="text-text-secondary">Consolidate duplicate records safely.</p>
+          <h1 className="text-4xl font-bold tracking-tight text-text-primary">Merge Buildings</h1>
+          <p className="text-sm text-text-secondary">Consolidate duplicate records safely.</p>
         </div>
         <Button variant="outline" onClick={fetchPotentialDuplicates} disabled={loadingPotential}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loadingPotential ? "animate-spin" : ""}`} />

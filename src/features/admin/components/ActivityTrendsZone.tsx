@@ -9,19 +9,19 @@ interface ActivityTrendsZoneProps {
 }
 
 const DAU_OPTIONS = [
-  { value: 'logs_users', label: 'Logs', color: '#8884d8' },
-  { value: 'comments_users', label: 'Comments', color: '#82ca9d' },
-  { value: 'likes_users', label: 'Likes', color: '#ffc658' },
-  { value: 'votes_users', label: 'Votes', color: '#ff7300' },
-  { value: 'visited_users', label: 'Visitors', color: '#ff0000' },
+  { value: "logs_users", label: "Logs", colorClass: "bg-brand-primary" },
+  { value: "comments_users", label: "Comments", colorClass: "bg-feedback-success" },
+  { value: "likes_users", label: "Likes", colorClass: "bg-feedback-warning" },
+  { value: "votes_users", label: "Votes", colorClass: "bg-feedback-destructive" },
+  { value: "visited_users", label: "Visitors", colorClass: "bg-text-secondary" },
 ];
 
 const ACTION_OPTIONS = [
-  { value: 'logs', label: 'Logs', color: '#8884d8' },
-  { value: 'comments', label: 'Comments', color: '#82ca9d' },
-  { value: 'likes', label: 'Likes', color: '#ffc658' },
-  { value: 'votes', label: 'Votes', color: '#ff7300' },
-  { value: 'follows', label: 'Follows', color: '#0ea5e9' }, // sky-500
+  { value: "logs", label: "Logs", colorClass: "bg-brand-primary" },
+  { value: "comments", label: "Comments", colorClass: "bg-feedback-success" },
+  { value: "likes", label: "Likes", colorClass: "bg-feedback-warning" },
+  { value: "votes", label: "Votes", colorClass: "bg-feedback-destructive" },
+  { value: "follows", label: "Follows", colorClass: "bg-text-secondary" },
 ];
 
 export function ActivityTrendsZone({ data }: ActivityTrendsZoneProps) {
@@ -48,7 +48,7 @@ export function ActivityTrendsZone({ data }: ActivityTrendsZoneProps) {
               <Tooltip
                 labelFormatter={(value) => new Date(value).toLocaleDateString()}
               />
-              <Area type="monotone" dataKey="count" stroke="#8884d8" fill="#8884d8" name="Logins" />
+              <Area type="monotone" dataKey="count" stroke="var(--brand-primary)" fill="var(--brand-primary)" name="Logins" />
             </AreaChart>
           </ResponsiveContainer>
         </CardContent>
@@ -66,7 +66,7 @@ export function ActivityTrendsZone({ data }: ActivityTrendsZoneProps) {
                 aria-label={`Toggle ${option.label}`}
                 className="h-8 px-2 text-xs"
               >
-                <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: option.color }} />
+                <span className={`mr-2 h-2 w-2 rounded-full ${option.colorClass}`} />
                 {option.label}
               </ToggleGroupItem>
             ))}
@@ -86,11 +86,11 @@ export function ActivityTrendsZone({ data }: ActivityTrendsZoneProps) {
                 labelFormatter={(value) => new Date(value).toLocaleDateString()}
               />
               <Legend />
-              {dauFilters.includes('logs_users') && <Bar dataKey="logs_users" stackId="a" fill="#8884d8" name="Users who Logged" />}
-              {dauFilters.includes('comments_users') && <Bar dataKey="comments_users" stackId="a" fill="#82ca9d" name="Users who Commented" />}
-              {dauFilters.includes('likes_users') && <Bar dataKey="likes_users" stackId="a" fill="#ffc658" name="Users who Liked" />}
-              {dauFilters.includes('votes_users') && <Bar dataKey="votes_users" stackId="a" fill="#ff7300" name="Users who Voted" />}
-              {dauFilters.includes('visited_users') && <Line type="monotone" dataKey="visited_users" stroke="#ff0000" strokeWidth={2} dot={false} name="Unique Visitors" />}
+              {dauFilters.includes('logs_users') && <Bar dataKey="logs_users" stackId="a" fill="var(--brand-primary)" name="Users who Logged" />}
+              {dauFilters.includes('comments_users') && <Bar dataKey="comments_users" stackId="a" fill="var(--feedback-success)" name="Users who Commented" />}
+              {dauFilters.includes('likes_users') && <Bar dataKey="likes_users" stackId="a" fill="var(--feedback-warning)" name="Users who Liked" />}
+              {dauFilters.includes('votes_users') && <Bar dataKey="votes_users" stackId="a" fill="var(--feedback-destructive)" name="Users who Voted" />}
+              {dauFilters.includes('visited_users') && <Line type="monotone" dataKey="visited_users" stroke="var(--text-secondary)" strokeWidth={2} dot={false} name="Unique Visitors" />}
             </ComposedChart>
           </ResponsiveContainer>
         </CardContent>
@@ -108,7 +108,7 @@ export function ActivityTrendsZone({ data }: ActivityTrendsZoneProps) {
                 aria-label={`Toggle ${option.label}`}
                 className="h-8 px-2 text-xs"
               >
-                <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: option.color }} />
+                <span className={`mr-2 h-2 w-2 rounded-full ${option.colorClass}`} />
                 {option.label}
               </ToggleGroupItem>
             ))}
@@ -128,11 +128,11 @@ export function ActivityTrendsZone({ data }: ActivityTrendsZoneProps) {
                 labelFormatter={(value) => new Date(value).toLocaleDateString()}
               />
               <Legend />
-              {actionFilters.includes('logs') && <Bar dataKey="logs" stackId="a" fill="#8884d8" name="Total Logs" />}
-              {actionFilters.includes('comments') && <Bar dataKey="comments" stackId="a" fill="#82ca9d" name="Total Comments" />}
-              {actionFilters.includes('likes') && <Bar dataKey="likes" stackId="a" fill="#ffc658" name="Total Likes" />}
-              {actionFilters.includes('votes') && <Bar dataKey="votes" stackId="a" fill="#ff7300" name="Total Votes" />}
-              {actionFilters.includes('follows') && <Bar dataKey="follows" stackId="a" fill="#0ea5e9" name="Total Follows" />}
+              {actionFilters.includes('logs') && <Bar dataKey="logs" stackId="a" fill="var(--brand-primary)" name="Total Logs" />}
+              {actionFilters.includes('comments') && <Bar dataKey="comments" stackId="a" fill="var(--feedback-success)" name="Total Comments" />}
+              {actionFilters.includes('likes') && <Bar dataKey="likes" stackId="a" fill="var(--feedback-warning)" name="Total Likes" />}
+              {actionFilters.includes('votes') && <Bar dataKey="votes" stackId="a" fill="var(--feedback-destructive)" name="Total Votes" />}
+              {actionFilters.includes('follows') && <Bar dataKey="follows" stackId="a" fill="var(--text-secondary)" name="Total Follows" />}
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
