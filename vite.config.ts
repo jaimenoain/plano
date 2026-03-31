@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import { reactRouter } from "@react-router/dev/vite";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -10,7 +10,7 @@ export default defineConfig(() => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    reactRouter(),
     VitePWA({
       strategies: "generateSW",
       registerType: 'prompt',

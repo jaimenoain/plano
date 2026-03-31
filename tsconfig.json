@@ -4,7 +4,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "~/*": ["./src/*"]
     },
     "noImplicitAny": true,
     "noUnusedParameters": true,
@@ -12,5 +13,6 @@
     "allowJs": true,
     "noUnusedLocals": true,
     "strictNullChecks": true
-  }
+  },
+  "include": ["src", ".react-router/types/**"]
 }
