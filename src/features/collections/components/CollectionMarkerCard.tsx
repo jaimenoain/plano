@@ -42,8 +42,8 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
         <Card
             ref={ref}
             className={cn(
-                "group relative overflow-hidden transition-all duration-200 cursor-pointer shadow-none",
-                isHighlighted ? "border-brand-primary ring-1 ring-brand-primary bg-surface-muted/5" : "hover:border-brand-primary/50"
+                "group relative overflow-hidden transition-all duration-200 cursor-pointer bg-surface-card border border-border-default rounded-sm shadow-none",
+                isHighlighted ? "border-brand-primary ring-1 ring-brand-primary bg-brand-secondary/50" : "hover:border-border-strong"
             )}
             onMouseEnter={() => setHighlightedId(marker.id)}
             onMouseLeave={() => setHighlightedId(null)}
@@ -53,11 +53,14 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
             }}
         >
             {canEdit && onRemove && (
-                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                <div
+                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => e.stopPropagation()}
+                >
                     <Button
                         variant="secondary"
                         size="icon"
-                        className="h-6 w-6 rounded-full shadow-sm bg-green-500 hover:bg-green-600 text-white border-none"
+                        className="h-7 w-7 rounded-sm shadow-none"
                         onClick={onRemove}
                         title="Remove from map"
                     >
@@ -79,18 +82,18 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
 
                 {/* Content Section */}
                 <div className="flex flex-1 items-start p-2 gap-3 min-w-0">
-                    <div className="p-1.5 bg-surface-muted/50 rounded-full shrink-0">
+                    <div className="p-1.5 bg-surface-muted/50 rounded-sm shrink-0">
                         <Icon className="w-4 h-4 text-text-secondary" />
                     </div>
 
                     <div className="flex flex-col flex-1 min-w-0">
                         <div className="flex items-start gap-2 min-w-0">
                             {badgeIndex !== undefined && (
-                                <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-brand-primary text-[10px] font-bold text-brand-primary-foreground shadow-sm mt-0.5 shrink-0">
+                                <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-sm bg-brand-primary text-[10px] font-bold text-brand-primary-foreground mt-0.5 px-1 shrink-0">
                                     {badgeIndex}
                                 </div>
                             )}
-                            <h3 className="font-semibold text-sm leading-tight line-clamp-2">
+                            <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-text-primary">
                                 {marker.name}
                             </h3>
                         </div>

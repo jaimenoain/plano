@@ -131,39 +131,42 @@ toast.error("Failed to create collection");
     <div className={cn("space-y-3", className)}>
       <Label className="text-xs font-medium uppercase text-text-secondary">Save to Collections</Label>
 
-      <div className="border rounded-md bg-surface-default">
+      <div className="border border-border-default rounded-sm bg-surface-card">
         <ScrollArea className="h-[140px] p-2">
-            {loading ? (
-                <div className="flex justify-center py-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
-                </div>
-            ) : collections.length === 0 ? (
-                <div className="text-center py-4 text-xs text-text-secondary">
-                    No collections yet. Create one below.
-                </div>
-            ) : (
-                <div className="space-y-1">
-                    {collections.map(collection => {
-                        const isSelected = selectedCollectionIds.includes(collection.id);
-                        return (
-                            <div
-                                key={collection.id}
-                                className={cn(
-                                    "flex items-center justify-between px-2 py-1.5 rounded-sm cursor-pointer text-sm transition-colors",
-                                    isSelected ? "bg-brand-primary/10 text-brand-primary font-medium" : "hover:bg-surface-muted text-text-secondary"
-                                )}
-                                onClick={() => toggleCollection(collection.id)}
-                            >
-                                <span className="truncate">{collection.name}</span>
-                                {isSelected && <Check className="h-3 w-3 shrink-0" />}
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+          {loading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+            </div>
+          ) : collections.length === 0 ? (
+            <div className="text-center py-4 text-xs text-text-secondary">
+              No collections yet. Create one below.
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {collections.map((collection) => {
+                const isSelected = selectedCollectionIds.includes(collection.id);
+                return (
+                  <button
+                    key={collection.id}
+                    type="button"
+                    className={cn(
+                      "flex w-full items-center justify-between px-2 py-1.5 rounded-sm text-left text-sm transition-colors",
+                      isSelected
+                        ? "bg-brand-secondary text-brand-secondary-foreground font-medium"
+                        : "hover:bg-surface-muted text-text-secondary"
+                    )}
+                    onClick={() => toggleCollection(collection.id)}
+                  >
+                    <span className="truncate">{collection.name}</span>
+                    {isSelected && <Check className="h-3 w-3 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </ScrollArea>
 
-        <div className="border-t p-2 flex gap-2">
+        <div className="border-t border-border-default p-2 flex gap-2">
             <Input
                 placeholder="New collection name..."
                 className="h-8 text-xs"

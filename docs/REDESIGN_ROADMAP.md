@@ -388,7 +388,7 @@
 
 ## Phase 13 — Collections & Folders
 
-- [ ] **Task 13.1 — Redesign collection components**
+- [x] **Task 13.1 — Redesign collection components**
   `CollectionsGrid`: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`. `CollectionBuildingCard`: image-first. `CollectionMarkerCard`, `CollectionSelector`, `BuildingDetailPanel`: token-compliant.
 
 - [ ] **Task 13.2 — Redesign collection dialogs**

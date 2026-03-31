@@ -264,15 +264,16 @@ return;
 
       <ScrollArea className="w-full whitespace-nowrap mb-6">
         <div className="flex space-x-3 px-4 pb-4">
-          {folders.length > 0 && folders.map((folder) => (
-            <FolderCard
-              key={folder.id}
-              folder={folder}
-              to={`/${username || "user"}/folders/${folder.slug}`}
-              className="flex-shrink-0"
-              isDroppable={isOwnProfile}
-            />
-          ))}
+          {folders.length > 0 &&
+            folders.map((folder) => (
+              <FolderCard
+                key={folder.id}
+                folder={folder}
+                to={`/${username || "user"}/folders/${folder.slug}`}
+                className="flex-shrink-0"
+                isDroppable={isOwnProfile}
+              />
+            ))}
 
           {/* New Collection Card */}
           {isOwnProfile && collections.length === 0 && folders.length === 0 && onCreate && (
@@ -281,23 +282,29 @@ return;
               className="flex-shrink-0 w-[160px] h-[100px] border-2 border-dashed border-border-default rounded-sm flex flex-col items-center justify-center gap-2 hover:bg-surface-muted/50 transition-colors group"
             >
               <div className="h-8 w-8 rounded-sm bg-surface-muted flex items-center justify-center group-hover:bg-brand-secondary/30 group-hover:text-brand-primary transition-colors">
-                 <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4" />
               </div>
               <span className="text-sm font-medium text-text-secondary">Create New</span>
             </button>
           )}
-
-          {collections.map((collection) => (
-            <CollectionCard
-              key={collection.id}
-              collection={collection}
-              username={username}
-              isDragEnabled={isOwnProfile}
-            />
-          ))}
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
+
+      {collections.length > 0 && (
+        <div className="px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {collections.map((collection) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                username={username}
+                isDragEnabled={isOwnProfile}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

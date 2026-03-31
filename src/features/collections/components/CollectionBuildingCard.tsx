@@ -81,10 +81,10 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
         <Card
             ref={ref}
             className={cn(
-                "group relative overflow-hidden transition-colors duration-150 cursor-pointer border border-border-default rounded-sm shadow-none bg-surface-card",
+                "group relative overflow-hidden transition-colors duration-150 cursor-pointer bg-surface-card border border-border-default rounded-sm shadow-none",
                 isHighlighted
                     ? "border-brand-primary ring-1 ring-brand-primary bg-brand-secondary/50"
-                    : "hover:border-border-default-strong"
+                    : "hover:border-border-strong"
             )}
             onMouseEnter={() => setHighlightedId(item.building.id)}
             onMouseLeave={() => setHighlightedId(null)}
@@ -103,29 +103,29 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     </Button>
                 </div>
             )}
-            <div className="flex flex-row min-h-[7rem]">
-                {/* Drag Handle */}
-                {isDraggable && (
-                    <div
-                        className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary hover:bg-surface-muted/50 transition-colors border-r border-border-default"
-                        {...dragHandleProps}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <GripVertical className="h-4 w-4" />
-                    </div>
-                )}
+            <div className="flex flex-col min-h-[7rem]">
+                {/* Drag Handle + Content */}
+                <div className="flex items-stretch">
+                    {isDraggable && (
+                        <div
+                            className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary hover:bg-surface-muted/50 transition-colors border-r border-border-default"
+                            {...dragHandleProps}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <GripVertical className="h-4 w-4" />
+                        </div>
+                    )}
 
-                {/* Content Section */}
-                <div className="flex flex-col flex-1 p-3 min-w-0 justify-between relative pl-3">
+                    <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
                     <div>
                         <div className="flex justify-between items-start gap-2 min-w-0">
                              <div className="flex items-start gap-2 min-w-0">
                                 {badgeIndex !== undefined && (
-                                    <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-brand-primary text-[10px] font-bold text-brand-primary-foreground mt-0.5">
+                                    <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-sm bg-brand-primary text-[10px] font-bold text-brand-primary-foreground mt-0.5 px-1">
                                         {badgeIndex}
                                     </div>
                                 )}
-                                <h3 className="font-semibold text-sm leading-tight line-clamp-2">
+                                <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-text-primary">
                                     {item.building.name}
                                 </h3>
                              </div>
@@ -227,20 +227,21 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                             </div>
                         ) : null}
                     </div>
+                    </div>
                 </div>
 
                 {/* Image Section */}
                 {showImages && (
-                    <div className="w-28 shrink-0 relative border-l border-border-default bg-surface-muted">
-                         {imageUrl ? (
+                    <div className="relative w-full border-t border-border-default bg-surface-muted">
+                        {imageUrl ? (
                             <img
                                 src={imageUrl}
                                 alt={item.building.name}
-                                className="absolute inset-0 w-full h-full object-cover"
+                                className="w-full aspect-[4/3] object-cover"
                                 loading="lazy"
                             />
                         ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-text-secondary">
+                            <div className="w-full aspect-[4/3] flex items-center justify-center text-text-secondary bg-surface-muted">
                                 <span className="text-xs">No Image</span>
                             </div>
                         )}
