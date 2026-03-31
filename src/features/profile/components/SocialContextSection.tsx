@@ -19,7 +19,7 @@ export function SocialContextSection({ mutualAffinityUsers, commonFollowers }: S
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full text-sm text-text-secondary">
        {hasCommonFollowers && (
            <CommonFollowersFacepile users={commonFollowers.users} count={commonFollowers.count} />
        )}

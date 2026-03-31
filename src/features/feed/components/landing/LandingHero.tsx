@@ -62,7 +62,7 @@ export const LandingHero = () => {
   };
 
   return (
-    <div className="w-full py-32 flex flex-col items-center justify-center space-y-8 bg-surface-default bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
+    <div className="w-full min-h-[80vh] py-24 md:py-32 flex flex-col items-center justify-center space-y-8 bg-surface-default bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
       {/* Content Container */}
       <div className="w-full max-w-4xl px-4 flex flex-col items-center text-center space-y-8 relative">
 
@@ -93,8 +93,8 @@ export const LandingHero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-text-primary">
+          >
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-text-primary">
             The world's architecture, <br className="hidden md:block" />
             cataloged.
           </h1>
@@ -105,19 +105,19 @@ export const LandingHero = () => {
 
         {/* Search Integration */}
         <motion.div
-          className="w-full max-w-2xl"
+          className="w-full max-w-lg"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           whileHover={{ scale: 1.01 }}
         >
-          <div className="relative rounded-lg bg-surface-card border-2 border-text-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-2">
+          <div className="relative rounded-sm bg-surface-card border border-border-default shadow-sm p-2">
             <DiscoverySearchInput
               value={searchValue}
               onSearchChange={setSearchValue}
               onLocationSelect={handleLocationSelect}
               placeholder="Search for a city, building, or architect..."
-              className="w-full [&_input]:bg-transparent [&_input]:border-none [&_input]:focus-visible:ring-0 [&_input]:text-lg [&_input]:h-12 [&_input]:placeholder:text-text-secondary/70"
+              className="w-full [&_input]:bg-transparent [&_input]:border-none [&_input]:focus-visible:ring-0 [&_input]:text-base [&_input]:h-12 [&_input]:placeholder:text-text-secondary/70"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleSearchSubmit();

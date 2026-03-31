@@ -289,8 +289,15 @@ const { error: notifError } = await supabase
     <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
       <PlanoLogo className="h-8 w-auto mb-6" />
       <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6 text-center">
+        {/* Step indicator */}
+        <div className="flex items-center justify-center gap-2">
+          <div className="h-1.5 w-12 rounded-sm bg-brand-primary" />
+          <div className="h-1.5 w-12 rounded-sm bg-surface-muted" />
+          <div className="h-1.5 w-12 rounded-sm bg-surface-muted" />
+        </div>
+
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-text-primary">Welcome!</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary">Welcome!</h1>
           <p className="text-text-secondary">Let's set up your profile.</p>
         </div>
 
@@ -332,25 +339,27 @@ const { error: notifError } = await supabase
               {username?.[0]?.toUpperCase() || <User className="h-10 w-10 text-text-secondary" />}
             </AvatarFallback>
           </Avatar>
-          <div className="relative">
+          <div className="relative mt-2">
             <input
               type="file"
               id="avatar-upload"
               accept="image/*"
               className="hidden"
+              title="Upload avatar"
               onChange={handleAvatarUpload}
               disabled={uploading}
             />
-            <Button variant="outline" size="sm" asChild>
-              <Label htmlFor="avatar-upload" className="cursor-pointer inline-flex items-center gap-2">
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                Change Photo
-              </Label>
-            </Button>
+            <Label
+              htmlFor="avatar-upload"
+              className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-sm border-2 border-dashed border-border-default text-sm text-text-secondary hover:border-brand-primary"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              Change Photo
+            </Label>
           </div>
         </div>
 
@@ -387,7 +396,7 @@ const { error: notifError } = await supabase
         </div>
 
         <div className="flex flex-col gap-3">
-          <Button onClick={handleSave} disabled={saving} className="w-full">
+          <Button onClick={handleSave} disabled={saving} className="w-full h-10 font-medium rounded-sm">
             {saving ? "Saving..." : "Save and Continue"}
           </Button>
           <Button variant="ghost" onClick={handleSkip} className="w-full">

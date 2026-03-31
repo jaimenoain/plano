@@ -899,14 +899,19 @@ toast({
                 {!canEdit && (
                     <div className="flex items-center gap-2 shrink-0">
                         {user && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={handleToggleFavorite}
-                                className="text-text-secondary hover:text-yellow-500"
-                            >
-                                <Star className={cn("h-5 w-5", isFavorite ? "fill-yellow-500 text-yellow-500" : "")} />
-                            </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleToggleFavorite}
+                            className="text-text-secondary hover:text-feedback-warning"
+                          >
+                            <Star
+                              className={cn(
+                                "h-5 w-5",
+                                isFavorite && "fill-feedback-warning text-feedback-warning",
+                              )}
+                            />
+                          </Button>
                         )}
                          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
                             <ListFilter className="h-5 w-5 text-text-secondary" />

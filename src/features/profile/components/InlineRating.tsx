@@ -47,8 +47,8 @@ export function InlineRating({ rating, onRate, readOnly = false }: InlineRatingP
                 className={cn(
                   "w-4 h-4 transition-colors",
                   isFilled
-                    ? "fill-black text-black"
-                    : "text-text-secondary/20 fill-transparent"
+                    ? "fill-brand-primary text-brand-primary"
+                    : "fill-transparent text-text-secondary/20",
                 )}
               />
             </motion.div>

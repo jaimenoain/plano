@@ -248,9 +248,6 @@ toast({ variant: "destructive", title: "Failed to update rating" });
   const mainTitle = entry.building.name;
   const city = entry.building.city || entry.building.address?.split(',').pop()?.trim() || "";
 
-  // "Active" actions use bolder typography.
-  const actionText = "added photos of";
-
   const handleImageError = (imageId: string) => {
     setFailedImages(prev => {
       const next = new Set(prev);
@@ -399,47 +396,52 @@ toast({ variant: "destructive", title: "Failed to update rating" });
   return (
     <article
       onClick={handleCardClick}
-      className="group relative flex flex-col w-full max-w-full min-w-0 bg-surface-card border border-border-default rounded-sm overflow-hidden shadow-none hover:border-border-default-strong transition-colors cursor-pointer mb-6"
+      className="group relative flex flex-col w-full max-w-full min-w-0 bg-surface-card border border-border-default rounded-sm shadow-none overflow-hidden cursor-pointer mb-6 hover:border-border-strong transition-colors"
     >
       {/* Header */}
-      <div className="p-4 flex items-start gap-3 border-b border-border-default/40">
-        <Avatar className="h-10 w-10 border border-border-default/50 mt-0.5">
+      <div className="p-6 flex items-start gap-3 border-b border-border-default/40">
+        <Avatar className="h-8 w-8 border border-border-default/50 mt-0.5">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback>{userInitial}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-0.5 flex-1 min-w-0 max-w-full overflow-hidden">
-          {/* Line 1: User Action Building */}
-          <div className="text-sm md:text-base text-text-primary leading-snug break-words w-full">
-            <span className="font-bold text-text-primary">{username}</span>
-            <span className="text-text-secondary/60 font-normal"> {actionText} </span>
-            <span className="font-bold text-text-primary">{mainTitle}</span>
+          {/* User row */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-text-primary">{username}</span>
+              <span className="text-xs text-text-secondary">
+                {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
+              </span>
+            </div>
+            {city && <span className="text-xs text-text-secondary">{city}</span>}
           </div>
 
-          {/* Line 2: Metadata */}
-          <div className="text-xs text-text-secondary flex items-center gap-1.5">
-             {city && <span>{city}</span>}
-             {city && (!entry.rating || entry.rating <= 0) && <span>•</span>}
-
-             {/* Rating */}
-             {entry.rating && entry.rating > 0 && (
-                <span className="inline-flex items-center gap-0.5">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                        <Circle
-                            key={i}
-                            className={`w-3 h-3 ${i < entry.rating! ? "fill-brand-primary text-text-primary" : "fill-transparent text-text-secondary/30"}`}
-                        />
-                    ))}
-                </span>
-             )}
-
-             <span>{formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago</span>
+          {/* Building name + rating */}
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-left text-xl font-semibold text-text-primary hover:underline truncate">
+              {mainTitle}
+            </span>
+            {entry.rating && entry.rating > 0 && (
+              <span className="inline-flex items-center gap-0.5">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Circle
+                    key={i}
+                    className={`w-3 h-3 ${
+                      i < entry.rating!
+                        ? "fill-brand-primary text-brand-primary"
+                        : "fill-transparent text-text-secondary/30"
+                    }`}
+                  />
+                ))}
+              </span>
+            )}
           </div>
         </div>
       </div>
 
       {/* Content Body (Review Text) */}
       {entry.content && (
-        <div className="px-4 pt-3 pb-2 flex flex-col gap-2 max-w-full overflow-hidden">
+        <div className="px-6 pt-4 pb-2 flex flex-col gap-3 max-w-full overflow-hidden">
            <p className="text-sm text-text-primary leading-relaxed break-words w-full">
              {entry.content}
            </p>
@@ -452,80 +454,73 @@ toast({ variant: "destructive", title: "Failed to update rating" });
       </div>
 
       {/* Footer */}
-      <div className="p-4 pt-3 flex flex-wrap items-center gap-4 mt-auto border-t border-border-default/50">
+      <div className="p-6 pt-4 flex items-center justify-between mt-auto border-t border-border-default/50">
+        <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onLike?.(entry.id);
             }}
-            className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+            title={`${entry.likes_count} likes`}
           >
             <Heart
-              className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${
+              className={`h-4 w-4 ${
                 entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
               }`}
             />
-            <span className="text-xs font-medium">{entry.likes_count}</span>
           </button>
 
           <button
+            type="button"
             onClick={handleCommentClick}
-            className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+            title={`${entry.comments_count} comments`}
           >
-            <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
-            <span className="text-xs font-medium">{entry.comments_count}</span>
+            <MessageCircle className="h-4 w-4" />
           </button>
+        </div>
 
-           <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2">
+          {(isSaved || isVisited || showRatingInput) && renderRatingControl()}
 
-             {(isSaved || isVisited || showRatingInput) && renderRatingControl()}
+          {(!viewerStatus || isVisited) && (
+            <button
+              type="button"
+              onClick={handleVisit}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:opacity-50"
+              disabled={isSaving}
+              title={isVisited ? "Mark as not visited" : "Mark as visited"}
+            >
+              <Check className={`h-4 w-4 ${isVisited ? "stroke-[3px] text-brand-primary" : ""}`} />
+            </button>
+          )}
 
-             {(!viewerStatus || isVisited) && (
-               <button
-                 onClick={handleVisit}
-                 className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
-                    isVisited
-                      ? "text-brand-primary bg-brand-secondary/40 font-bold ring-1 ring-brand-primary/20"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-muted/50"
-                 } ${isSaving ? 'opacity-50' : ''}`}
-                 disabled={isSaving}
-               >
-                 <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3px]' : ''}`} />
-                 <span className={`text-xs hidden sm:inline ${isVisited ? '' : 'font-medium'}`}>Visited</span>
-               </button>
-             )}
+          {(!viewerStatus || isSaved) && (
+            <button
+              type="button"
+              onClick={handleSave}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:opacity-50"
+              disabled={isSaving}
+              title={isSaved ? "Saved to your list" : "Save to your list"}
+            >
+              <Bookmark className={`h-4 w-4 ${isSaved ? "fill-brand-primary text-brand-primary" : ""}`} />
+            </button>
+          )}
 
-             {(!viewerStatus || isSaved) && (
-               <button
-                 onClick={handleSave}
-                 className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
-                    isSaved
-                      ? "text-brand-primary bg-brand-secondary/40 font-bold ring-1 ring-brand-primary/20"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-muted/50"
-                 } ${isSaving ? 'opacity-50' : ''}`}
-                 disabled={isSaving}
-               >
-                 <Bookmark className={`h-4 w-4 ${isSaved ? "fill-brand-primary" : ""}`} />
-                 <span className={`text-xs hidden sm:inline ${isSaved ? '' : 'font-medium'}`}>Save</span>
-               </button>
-             )}
-
-             {(!viewerStatus || isIgnored) && (
-               <button
-                 onClick={handleHide}
-                 className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-full ${
-                    isIgnored
-                      ? "text-text-secondary bg-surface-muted font-medium ring-1 ring-border-default"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-muted/50"
-                 } ${isSaving ? 'opacity-50' : ''}`}
-                 disabled={isSaving}
-                 title="Hide from map"
-               >
-                 <EyeOff className="h-4 w-4" />
-                 <span className={`text-xs hidden sm:inline ${isIgnored ? '' : 'font-medium'}`}>Hide</span>
-               </button>
-             )}
-           </div>
+          {(!viewerStatus || isIgnored) && (
+            <button
+              type="button"
+              onClick={handleHide}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:opacity-50"
+              disabled={isSaving}
+              title={isIgnored ? "Hidden from your map" : "Hide from map"}
+            >
+              <EyeOff className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
     </article>
   );

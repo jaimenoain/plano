@@ -46,8 +46,8 @@ export function CollectionCard({ collection, username, className, isDragEnabled 
       >
           <Card
             className={cn(
-              "h-[100px] rounded-sm shadow-none border-border-default hover:border-border-default-strong transition-colors overflow-hidden relative",
-              collection.isFavorite && "border-dashed border-brand-primary/20"
+              "h-[100px] bg-surface-card border border-border-default rounded-sm shadow-none hover:border-border-strong transition-colors overflow-hidden relative",
+              collection.isFavorite && "border-dashed border-brand-primary/40"
             )}
           >
               <CardContent className="p-4 h-full flex flex-col justify-between pointer-events-none">

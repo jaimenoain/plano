@@ -14,7 +14,7 @@ export function BuildingHero({ src, alt, className }: BuildingHeroProps) {
       <img
         src={src}
         alt={alt}
-        className="w-full h-[40vh] md:h-[50vh] object-cover transition-opacity duration-700 ease-in-out"
+        className="w-full aspect-[16/9] md:aspect-[21/9] object-cover rounded-sm transition-opacity duration-700 ease-in-out"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 /* Photo overlay — bg-black/60 approved per COMPONENT_SPEC §8 backdrop convention */ via-transparent to-transparent pointer-events-none opacity-50" />
     </div>

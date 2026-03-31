@@ -134,9 +134,13 @@ return true; // Fallback to true on error to avoid blocking UX unnecessarily
 
   const queryClient = useQueryClient();
 
-  const [showYear, setShowYear] = useState(!!initialValues.year_completed);
-  const [showArchitects, setShowArchitects] = useState(initialValues.architects.length > 0);
-  const [showAliases, setShowAliases] = useState(!!initialValues.alt_name || (initialValues.aliases?.length ?? 0) > 0);
+  const [showYear, setShowYear] = useState(mode === 'create' ? true : !!initialValues.year_completed);
+  const [showArchitects, setShowArchitects] = useState(
+    mode === 'create' ? true : initialValues.architects.length > 0
+  );
+  const [showAliases, setShowAliases] = useState(
+    mode === 'create' ? true : (!!initialValues.alt_name || (initialValues.aliases?.length ?? 0) > 0)
+  );
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["functional_categories"],
@@ -495,8 +499,8 @@ toast.error("Failed to add attribute");
           </div>
         )}
 
-        {/* Add Buttons Row */}
-        {(!showYear || !showArchitects || !showAliases) && (
+        {/* Add Buttons Row (edit mode only; creation forms show all sections by default) */}
+        {mode !== 'create' && (!showYear || !showArchitects || !showAliases) && (
             <div className="flex gap-2 flex-wrap">
                 {!showAliases && (
                     <Button
@@ -544,8 +548,8 @@ toast.error("Failed to add attribute");
           <p className="text-sm text-text-secondary">Define the primary purpose of the building.</p>
         </div>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
+        <div className="space-y-6">
+          <div className="space-y-1.5">
             <Label htmlFor="category-select">Category</Label>
             {isLoadingCategories ? (
                <Skeleton className="h-10 w-full" />
@@ -565,7 +569,7 @@ toast.error("Failed to add attribute");
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label>Typology</Label>
             {isLoadingTypologies ? (
                <div className="flex flex-wrap gap-2">

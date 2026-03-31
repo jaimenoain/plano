@@ -82,7 +82,7 @@ export function PersonalRatingButton({
   const renderStars = () => (
     <div className="flex flex-col items-center gap-2">
       <div
-        className="flex items-center gap-1"
+        className="flex items-center gap-1.5"
         onMouseLeave={() => setHoverRating(null)}
       >
         {Array.from({ length: 3 }, (_, i) => i + 1).map((star) => {
@@ -96,7 +96,7 @@ export function PersonalRatingButton({
               type="button"
               disabled={isLoading}
               className={`
-                relative p-0.5 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary
+                relative p-0.5 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2
                 ${isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
               `}
               onMouseEnter={() => setHoverRating(star)}
@@ -109,7 +109,7 @@ export function PersonalRatingButton({
                    <>
                      {/* Pulse/Shockwave Effect */}
                      <motion.div
-                       className="absolute inset-0 rounded-full bg-[#595959]/20"
+                       className="absolute inset-0 rounded-full bg-brand-primary/10"
                        initial={{ scale: 1, opacity: 0.8 }}
                        animate={{ scale: 2.5, opacity: 0 }}
                        exit={{ opacity: 0 }}
@@ -127,8 +127,8 @@ export function PersonalRatingButton({
               >
                   <Circle
                     className={`
-                      w-6 h-6 transition-colors
-                      ${isFilled ? "fill-[#595959] text-[#595959]" : "text-text-secondary/20"}
+                      h-5 w-5 transition-colors
+                      ${isFilled ? "text-brand-primary fill-brand-primary" : "text-text-disabled"}
                     `}
                   />
               </motion.div>

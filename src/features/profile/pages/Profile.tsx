@@ -14,9 +14,17 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
-  LogOut, Building2, Bookmark, Loader2,
+  LogOut,
+  Building2,
+  Bookmark,
+  Loader2,
   Map as MapIcon,
-  Search, X, LayoutGrid, Columns, List,
+  Search,
+  X,
+  LayoutGrid,
+  Columns,
+  List,
+  SlidersHorizontal,
   type LucideIcon,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -38,6 +46,7 @@ import { Switch } from "@/components/ui/switch";
 import { MetaHead } from "@/components/common/MetaHead";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // New Components
 import { UserCard } from "@/features/profile/components/UserCard";
@@ -819,177 +828,218 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
         />
 
         <div className="p-4 sm:p-6 lg:p-8">
-          <div className="max-w-6xl mx-auto mb-6">
-            <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
-              {profile?.username}
-            </h1>
-          </div>
-        {/* 1. Header & User Card */}
-        <UserCard
-          profile={profile}
-          stats={stats}
-          isOwnProfile={isOwnProfile}
-          isFollowing={isFollowing}
-          onFollowToggle={handleFollowToggle}
-          onSignOut={handleSignOut}
-          onOpenUserList={openUserList}
-          // Map tab values to filters for UserCard stats
-          onTabChange={handleFilterChange}
-          onBuildingAdded={handleBuildingAdded}
-          squad={squad}
-        />
-
-        {/* Social Context Section */}
-        {!isOwnProfile && (
-          <div className="max-w-7xl mx-auto">
-            <SocialContextSection
-              mutualAffinityUsers={profileComparison.mutualAffinityUsers}
-              commonFollowers={profileComparison.commonFollowers}
+          <div className="max-w-6xl mx-auto">
+            {/* 1. Header & User Card */}
+            <UserCard
+              profile={profile}
+              stats={stats}
+              isOwnProfile={isOwnProfile}
+              isFollowing={isFollowing}
+              onFollowToggle={handleFollowToggle}
+              onSignOut={handleSignOut}
+              onOpenUserList={openUserList}
+              // Map tab values to filters for UserCard stats
+              onTabChange={handleFilterChange}
+              onBuildingAdded={handleBuildingAdded}
+              squad={squad}
             />
-          </div>
-        )}
 
-        {/* Architect Portfolio (Only visible if user is a verified architect) */}
-        {(() => {
-          return verifiedArchitectId ? (
-          <div className="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-border-default mb-8">
-              <WidgetErrorBoundary>
-                <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
-              </WidgetErrorBoundary>
-            </div>
-          ) : null;
-        })()}
-
-        {/* 2. Favorite Buildings */}
-        {!isOwnProfile && buildingFavorites.length > 0 && (
-          <div className="max-w-7xl mx-auto">
-            <FavoritesSection
-                favorites={buildingFavorites}
-                isOwnProfile={false}
-                onManage={() => {}}
-            />
-          </div>
-        )}
-
-        {/* 3. Highlights (Genres, People, Quotes) */}
-        {!isOwnProfile && (
-          <div className="max-w-7xl mx-auto">
-            <ProfileHighlights
-              favorites={favorites}
-              isOwnProfile={false}
-              onManage={() => {}}
-            />
-          </div>
-        )}
-
-        {/* 4. Collections Grid */}
-        {targetUserId && (
-            <div id="collections-section" className="scroll-mt-24 max-w-7xl mx-auto">
-              <WidgetErrorBoundary>
-              <DndContext sensors={sensors} onDragStart={handleCollectionDragStart} onDragEnd={handleCollectionDragEnd}>
-                  <CollectionsGrid
-                    userId={targetUserId}
-                    username={profile?.username || null}
-                    isOwnProfile={isOwnProfile}
-                    onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
-                    refreshKey={collectionsRefreshKey}
-                  />
-
-                  <DragOverlay dropAnimation={null}>
-                    {activeCollectionData ? (
-                      <div className="scale-105 shadow-xl cursor-grabbing rounded-sm bg-surface-card border overflow-hidden opacity-90 inline-block">
-                        <div className="p-4 h-[100px] w-[180px] flex flex-col justify-between">
-                          <h4 className="font-medium text-sm line-clamp-2 leading-tight">
-                            {activeCollectionData.name}
-                          </h4>
-                        </div>
-                      </div>
-                    ) : null}
-                  </DragOverlay>
-              </DndContext>
-              </WidgetErrorBoundary>
-            </div>
-        )}
-
-        {/* 5. Filter & Content Section */}
-        <div className="mt-12 border-t border-border-default pt-8 px-4 scroll-mt-20 min-h-screen" id="profile-content-start">
-            <div className="sticky top-16 md:top-0 bg-surface-default z-30 pt-2 pb-4 space-y-3 border-b border-border-default -mx-4 px-4 mb-4">
-              <div className="flex flex-wrap items-center justify-between gap-y-2">
-
-                <div className="flex items-center gap-2 md:gap-4 overflow-x-auto max-w-full pb-1 -mb-1 hide-scrollbar">
-                  {/* Filter Toggle */}
-                  <ToggleGroup type="single" value={activeFilter} onValueChange={handleFilterChange} className="justify-start">
-                      <ToggleGroupItem value="all" className="px-3 py-1.5 text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground">
-                          All
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="visited" className="px-3 py-1.5 text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground">
-                          Reviews
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="pending" className="px-3 py-1.5 text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground">
-                          Bucket List
-                      </ToggleGroupItem>
-                  </ToggleGroup>
-
-                  {/* View Toggle */}
-                  <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as 'grid' | 'kanban' | 'list')}>
-                    <ToggleGroupItem value="grid" size="sm" aria-label="Grid View">
-                      <LayoutGrid className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban View">
-                      <Columns className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="list" size="sm" aria-label="List View">
-                      <List className="h-4 w-4" />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="show-community"
-                    checked={showCommunityImages}
-                    onCheckedChange={setShowCommunityImages}
-                  />
-                  <Label htmlFor="show-community" className="text-xs text-text-secondary hidden sm:block">
-                    Community Photos
-                  </Label>
-                </div>
+            {/* Social Context Section */}
+            {!isOwnProfile && (
+              <div className="mt-8">
+                <SocialContextSection
+                  mutualAffinityUsers={profileComparison.mutualAffinityUsers}
+                  commonFollowers={profileComparison.commonFollowers}
+                />
               </div>
+            )}
 
-              {/* Search Input */}
-              <div className="flex gap-2">
+            {/* Architect Portfolio (Only visible if user is a verified architect) */}
+            {verifiedArchitectId && (
+              <div className="mt-12 pt-8 border-t border-border-default mb-8">
+                <WidgetErrorBoundary>
+                  <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
+                </WidgetErrorBoundary>
+              </div>
+            )}
+
+            {/* 2. Favorite Buildings */}
+            {!isOwnProfile && buildingFavorites.length > 0 && (
+              <div className="mt-8">
+                <FavoritesSection
+                  favorites={buildingFavorites}
+                  isOwnProfile={false}
+                  onManage={() => {}}
+                />
+              </div>
+            )}
+
+            {/* 3. Highlights (Genres, People, Quotes) */}
+            {!isOwnProfile && (
+              <div className="mt-8">
+                <ProfileHighlights
+                  favorites={favorites}
+                  isOwnProfile={false}
+                  onManage={() => {}}
+                />
+              </div>
+            )}
+
+            {/* 4. Collections Grid */}
+            {targetUserId && (
+              <div id="collections-section" className="mt-12">
+                <WidgetErrorBoundary>
+                  <DndContext sensors={sensors} onDragStart={handleCollectionDragStart} onDragEnd={handleCollectionDragEnd}>
+                    <CollectionsGrid
+                      userId={targetUserId}
+                      username={profile?.username || null}
+                      isOwnProfile={isOwnProfile}
+                      onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
+                      refreshKey={collectionsRefreshKey}
+                    />
+
+                    <DragOverlay dropAnimation={null}>
+                      {activeCollectionData ? (
+                        <div className="scale-105 shadow-xl cursor-grabbing rounded-sm bg-surface-card border border-border-default overflow-hidden opacity-90 inline-block">
+                          <div className="p-4 h-[100px] w-[180px] flex flex-col justify-between">
+                            <h4 className="font-medium text-sm line-clamp-2 leading-tight text-text-primary">
+                              {activeCollectionData.name}
+                            </h4>
+                          </div>
+                        </div>
+                      ) : null}
+                    </DragOverlay>
+                  </DndContext>
+                </WidgetErrorBoundary>
+              </div>
+            )}
+
+            {/* 5. Filter & Content Section */}
+            <div
+              className="mt-12 border-t border-border-default pt-8 scroll-mt-20 min-h-screen"
+              id="profile-content-start"
+            >
+              <div className="sticky top-16 md:top-0 bg-surface-default z-30 pt-2 pb-4 border-b border-border-default -mx-4 px-4 mb-4 space-y-3">
+                {/* Row 1: Tabs + View mode + Filters */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 md:gap-4 overflow-x-auto max-w-full pb-1 -mb-1 hide-scrollbar">
+                    {/* Filter Tabs */}
+                    <ToggleGroup
+                      type="single"
+                      value={activeFilter}
+                      onValueChange={handleFilterChange}
+                      className="justify-start"
+                    >
+                      <ToggleGroupItem
+                        value="all"
+                        className="px-3 py-1.5 text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground"
+                      >
+                        All
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="visited"
+                        className="px-3 py-1.5 text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground"
+                      >
+                        Reviews
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="pending"
+                        className="px-3 py-1.5 text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground"
+                      >
+                        Bucket List
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+
+                    {/* View Toggle */}
+                    <ToggleGroup
+                      type="single"
+                      value={viewMode}
+                      onValueChange={(v) => v && setViewMode(v as "grid" | "kanban" | "list")}
+                      className="ml-2"
+                    >
+                      <ToggleGroupItem value="grid" size="sm" aria-label="Grid View">
+                        <LayoutGrid className="h-4 w-4" />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban View">
+                        <Columns className="h-4 w-4" />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="list" size="sm" aria-label="List View">
+                        <List className="h-4 w-4" />
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+
+                  {/* Filters Popover (Community Photos) */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="inline-flex items-center gap-2 text-xs text-text-secondary"
+                      >
+                        <SlidersHorizontal className="h-4 w-4" />
+                        <span className="hidden sm:inline">Filters</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="space-y-1">
+                          <Label htmlFor="show-community" className="text-xs font-medium text-text-primary">
+                            Community Photos
+                          </Label>
+                          <p className="text-xs text-text-secondary">
+                            Include photos from the wider Plano community.
+                          </p>
+                        </div>
+                        <Switch
+                          id="show-community"
+                          checked={showCommunityImages}
+                          onCheckedChange={setShowCommunityImages}
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Row 2: Search */}
+                <div className="flex gap-2">
                   <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
-                  <Input
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+                    <Input
                       placeholder="Search reviews..."
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       className="pl-9 bg-surface-muted/50 border-transparent focus:bg-surface-default transition-colors"
-                  />
-                  {searchQuery && (
-                      <button onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <X className="h-4 w-4 text-text-secondary hover:text-text-primary" />
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => handleSearchChange("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                      >
+                        <X className="h-4 w-4 text-text-secondary hover:text-text-primary" />
                       </button>
-                  )}
+                    )}
                   </div>
                   <Button
-                  variant="secondary"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={() => {
-                      if (activeFilter === 'pending') {
-                          navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending`);
+                    variant="secondary"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => {
+                      if (activeFilter === "pending") {
+                        navigate(
+                          `/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending`,
+                        );
                       } else {
-                          navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true`);
+                        navigate(`/search?rated_by=${profile?.username || ""}&open_filters=true`);
                       }
-                  }}
-                  title="View on a map"
-                  aria-label="View on a map"
+                    }}
+                    title="View on a map"
+                    aria-label="View on a map"
                   >
-                  <MapIcon className="h-4 w-4" />
+                    <MapIcon className="h-4 w-4" />
                   </Button>
+                </div>
               </div>
-            </div>
 
             {/* Grid Content */}
             <div className="mt-0">
@@ -1008,7 +1058,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
                         exit="exit"
                         transition={{ duration: 0.25 }}
                       >
-                        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 pb-20">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-20">
                           {filteredContent.map((item) => (
                             <ReviewCard
                               key={item.id}

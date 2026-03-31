@@ -136,8 +136,8 @@ toast({ variant: "destructive", title: "Failed to add building" });
                         variant="ghost"
                         className="h-8 w-8 p-0 text-text-secondary hover:text-brand-primary hover:bg-brand-primary/10"
                         onClick={(e) => {
-                            e.stopPropagation();
-                            handleAdd(building.id, 'pending', building.name);
+                          e.stopPropagation();
+                          handleAdd(building.id, "pending", building.name);
                         }}
                         title="Add to Bucket List"
                       >
@@ -146,10 +146,10 @@ toast({ variant: "destructive", title: "Failed to add building" });
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0 text-text-secondary hover:text-green-600 hover:bg-green-500/10"
+                        className="h-8 w-8 p-0 text-text-secondary hover:text-feedback-success hover:bg-feedback-success/10"
                         onClick={(e) => {
-                            e.stopPropagation();
-                            handleAdd(building.id, 'visited', building.name);
+                          e.stopPropagation();
+                          handleAdd(building.id, "visited", building.name);
                         }}
                         title="Mark as Visited"
                       >

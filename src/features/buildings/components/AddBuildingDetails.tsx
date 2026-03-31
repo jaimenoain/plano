@@ -165,11 +165,11 @@ toast.error(`Failed to save building: ${error instanceof Error ? error.message :
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mb-8">
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">Add Details</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Add Details</h1>
       </div>
 
       <Card>

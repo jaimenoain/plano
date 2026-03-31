@@ -98,8 +98,8 @@ export function PeopleYouMayKnow() {
   if (isLoading || !suggestions || suggestions.length === 0) return null;
 
   return (
-    <div className="p-5 border rounded-xl bg-surface-card shadow-sm space-y-4 max-w-full w-full overflow-hidden">
-      <h3 className="font-semibold">People you may know</h3>
+    <div className="p-6 border border-border-default rounded-sm bg-surface-card shadow-none space-y-4 max-w-full w-full overflow-hidden">
+      <h3 className="font-semibold text-text-primary">People you may know</h3>
       <div className="flex overflow-x-auto gap-4 pb-4 px-1 snap-x hide-scrollbar">
         {suggestions.map((person: PeopleYouMayKnowSuggestion) => (
           <div key={person.id} className="relative flex flex-col items-center justify-between gap-3 min-w-[200px] max-w-[200px] snap-center p-4 border rounded-lg bg-surface-default/50 shrink-0 h-full group">
@@ -144,7 +144,11 @@ export function PeopleYouMayKnow() {
                 </div>
               </div>
             </Link>
-            <FollowButton userId={person.id} isFollower={person.is_follows_me} className="w-full mt-auto" />
+            <FollowButton
+              userId={person.id}
+              isFollower={person.is_follows_me}
+              className="w-full mt-auto bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
+            />
           </div>
         ))}
       </div>

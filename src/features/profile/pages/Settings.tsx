@@ -450,10 +450,10 @@ toast({
 
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           {/* Public Profile Section */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h2 className="text-lg font-semibold text-text-primary mb-6">Public Profile</h2>
             
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
@@ -463,7 +463,7 @@ toast({
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="bio">Bio</Label>
               <Textarea
                 id="bio"
@@ -474,7 +474,7 @@ toast({
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="location">Where do you live?</Label>
               <LocationInput
                 id="location-input"
@@ -496,7 +496,7 @@ toast({
           <div className="mt-12 border-t border-border-default pt-8" />
 
           {/* Profile Content Section */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h2 className="text-lg font-semibold text-text-primary mb-6 flex items-center gap-2">
               <LayoutTemplate className="h-4 w-4" /> Profile Customization
             </h2>
@@ -551,7 +551,7 @@ toast({
               <Lock className="h-4 w-4" /> Account & Security
             </h2>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="email">Email Address</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-text-secondary" />
@@ -569,7 +569,7 @@ toast({
               </p>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="password">New Password</Label>
               <Input
                 id="password"

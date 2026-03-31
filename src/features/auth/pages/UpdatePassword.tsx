@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { updatePasswordSchema } from "@/lib/validations/auth";
+import { PlanoLogo } from "@/components/common/PlanoLogo";
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState("");
@@ -48,22 +49,16 @@ export default function UpdatePassword() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center px-6">
-      <div className="flex items-center gap-3 mb-10">
-        <Building2 className="h-10 w-10 text-brand-primary" />
-        <span className="text-2xl font-bold tracking-tight text-text-primary">
-          Plano
-        </span>
-      </div>
-
-      <div className="w-full max-w-sm">
-        <div className="flex justify-center mb-6">
-          <div className="h-16 w-16 bg-brand-primary/10 rounded-full flex items-center justify-center">
+    <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
+      <PlanoLogo className="h-8 w-auto mb-6" />
+      <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6">
+        <div className="flex justify-center">
+          <div className="h-16 w-16 bg-brand-primary/10 rounded-sm flex items-center justify-center">
             <Lock className="h-8 w-8 text-brand-primary" />
           </div>
         </div>
 
-        <h1 className="text-xl font-semibold text-text-primary text-center mb-6">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary text-center">
           Set new password
         </h1>
 
@@ -77,7 +72,6 @@ export default function UpdatePassword() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="bg-surface-muted border-border-default focus:border-brand-primary"
             />
           </div>
 
@@ -90,13 +84,12 @@ export default function UpdatePassword() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="bg-surface-muted border-border-default focus:border-brand-primary"
             />
           </div>
 
           <Button
             type="submit"
-            className="w-full bg-brand-primary hover:bg-brand-primary/90"
+            className="w-full h-10 font-medium rounded-sm bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover active:scale-[0.98]"
             disabled={loading}
           >
             {loading ? "Updating..." : "Update Password"}

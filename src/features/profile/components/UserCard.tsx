@@ -63,26 +63,28 @@ export function UserCard({
     const totalBuildings = stats.reviews + stats.pending;
 
     return (
-        <div className="px-4 py-6 md:py-10 max-w-7xl mx-auto pb-8 border-b border-border-default">
+        <div className="px-4 py-6 md:py-10 max-w-6xl mx-auto pb-8 border-b border-border-default">
             <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start md:items-center">
 
                 {/* Avatar Section */}
                 <div className="shrink-0 mx-auto md:mx-0">
-                    <Avatar className="h-24 w-24 md:h-40 md:w-40 border-2 border-border-default shadow-none">
+                    <Avatar className="h-20 w-20 md:h-24 md:w-24 rounded-full border-2 border-border-default shadow-none">
                         <AvatarImage src={profile?.avatar_url || undefined} className="object-cover" />
-                        <AvatarFallback className="text-3xl bg-surface-muted">{profile?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="text-3xl bg-surface-muted">
+                            {profile?.username?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
                     </Avatar>
                 </div>
 
                 {/* Info Section */}
                 <div className="flex-1 min-w-0 w-full">
                     {/* Top Row: Name + Actions */}
-                    <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-4 md:mb-6">
-                        <h1 className="text-xl md:text-2xl font-bold truncate min-w-0 max-w-[200px] md:max-w-none text-text-primary">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4 md:mb-6">
+                        <h1 className="text-3xl font-semibold tracking-tight text-text-primary truncate min-w-0 max-w-[200px] md:max-w-none">
                             {profile?.username}
                         </h1>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 md:ml-6">
                             {isOwnProfile ? (
                                 <>
                                     <Button variant="secondary" size="sm" onClick={() => navigate("/settings")} className="h-8">
@@ -139,7 +141,7 @@ export function UserCard({
                     )}
 
                     {/* Stats Row */}
-                    <div className="flex flex-wrap items-center justify-start gap-x-6 gap-y-2 md:gap-10 mb-5 px-2 md:px-0 border-y md:border-none py-3 md:py-0 border-border-default/40">
+                    <div className="mt-4 flex flex-wrap items-center gap-6 mb-5 px-2 md:px-0">
                         <StatItem label="edificios" value={totalBuildings} onClick={() => onTabChange("all")} />
                         <StatItem
                             label="photos"
@@ -162,7 +164,7 @@ export function UserCard({
                     {/* Bio & Online Status */}
                     <div className="text-center md:text-left px-2 md:px-0">
                          {profile?.bio && (
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap mb-2">
+                            <p className="text-base leading-relaxed whitespace-pre-wrap mb-2 text-text-secondary max-w-lg">
                                 {profile.bio}
                             </p>
                         )}

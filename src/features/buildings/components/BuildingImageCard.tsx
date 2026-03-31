@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, MessageCircle, Play } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
+import { Heart, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -83,70 +81,42 @@ setIsLiked(previousIsLiked);
   };
 
   return (
-    <div className="w-full space-y-3 group">
-      <div className="relative rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/5">
-        <img
-          src={isVideo && image.poster ? image.poster : image.url}
-          className={`w-full h-auto max-h-[600px] object-cover cursor-pointer hover:opacity-90 transition-opacity ${isVideoPlaceholder ? 'opacity-50' : ''}`}
-          alt="Building visual"
-          onClick={onOpen}
-        />
+    <button
+      type="button"
+      onClick={onOpen}
+      className="relative aspect-square rounded-sm overflow-hidden group cursor-pointer"
+    >
+      <img
+        src={isVideo && image.poster ? image.poster : image.url}
+        className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${isVideoPlaceholder ? "opacity-50" : ""}`}
+        alt="Building visual"
+      />
 
-        {isVideo && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/40 /* Photo overlay — bg-black/40 approved per COMPONENT_SPEC §8 backdrop convention */ rounded-full p-3 backdrop-blur-sm">
-              <Play className="w-6 h-6 text-white fill-white" />
-            </div>
-          </div>
-        )}
-
-        {image.is_generated && (
-          <div className="absolute top-2 left-2 pointer-events-none">
-            <span className="bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm border border-white/10 uppercase tracking-wider">
-              Render
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between px-1 gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <Avatar className="w-8 h-8 border border-border-default shrink-0">
-            <AvatarImage src={image.user?.avatar_url || undefined} />
-            <AvatarFallback className="text-[10px] bg-surface-muted text-text-secondary border-border-default">
-              {image.user?.username?.[0]?.toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col min-w-0">
-            <span className="text-sm font-medium text-text-primary truncate">
-              {image.user?.username || "Anonymous"}
-            </span>
-            <span className="text-xs text-text-secondary truncate">
-              {format(new Date(image.created_at), 'MMM d, yyyy')}
-            </span>
+      {isVideo && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/40 /* Photo overlay — bg-black/40 approved per COMPONENT_SPEC §8 backdrop convention */ rounded-sm p-2 backdrop-blur-sm">
+            <Play className="w-5 h-5 text-text-inverse fill-text-inverse" />
           </div>
         </div>
+      )}
 
-        <div className="flex items-center gap-4 text-text-secondary shrink-0">
-          {!isVideo && (
-            <button
-              onClick={handleLike}
-              className={`flex items-center gap-1.5 transition-colors hover:text-text-primary ${isLiked ? 'text-feedback-destructive hover:text-feedback-destructive' : ''}`}
-              disabled={isProcessing}
-            >
-              <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
-              <span className="text-sm font-medium">{likesCount}</span>
-            </button>
-          )}
-
-          <button
-            onClick={onOpen}
-            className="flex items-center gap-1.5 transition-colors hover:text-text-primary"
-          >
-            <MessageCircle className="w-6 h-6" />
-          </button>
+      {image.is_generated && (
+        <div className="absolute top-1.5 left-1.5 pointer-events-none">
+          <span className="bg-black/60 text-text-inverse text-[10px] font-bold px-1.5 py-0.5 rounded-sm backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+            Render
+          </span>
         </div>
-      </div>
-    </div>
+      )}
+
+      {!isVideo && (
+        <div className="absolute bottom-2 right-2 bg-surface-card/80 backdrop-blur-sm rounded-sm px-2 py-0.5 text-xs font-medium flex items-center gap-1">
+          <Heart
+            className={`w-3.5 h-3.5 ${isLiked ? "fill-feedback-destructive text-feedback-destructive" : "text-text-secondary"}`}
+            onClick={handleLike}
+          />
+          <span className="text-text-secondary">{likesCount}</span>
+        </div>
+      )}
+    </button>
   );
 }

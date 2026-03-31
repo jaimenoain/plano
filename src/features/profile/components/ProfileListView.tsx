@@ -42,24 +42,21 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
 
   return (
     <div className="-mx-4 overflow-x-auto">
-      <Table className="min-w-full table-fixed text-xs">
+      <Table className="min-w-full table-fixed">
         <TableHeader>
-          <TableRow className="border-b border-border-default/40 hover:bg-transparent h-8">
-            <TableHead className="w-[70px] pl-4 text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">
+          <TableRow className="h-10 hover:bg-transparent">
+            <TableHead className="w-[70px] pl-4">
               {isMobile ? "" : "Photo"}
             </TableHead>
-            <TableHead className={cn(
-              "text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0",
-              isMobile ? "w-auto" : "w-[15%]"
-            )}>Name</TableHead>
-            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Status</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Points</TableHead>}
-            {!isMobile && <TableHead className="w-[15%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Review</TableHead>}
-            {!isMobile && <TableHead className="w-[15%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Architect</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Year</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Location</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Country</TableHead>}
-            {!isMobile && <TableHead className="w-[10%] pr-4 text-right text-text-secondary font-medium text-[10px] uppercase tracking-wider h-8 py-0">Likes</TableHead>}
+            <TableHead className={cn(isMobile ? "w-auto" : "w-[15%]")}>Name</TableHead>
+            {!isMobile && <TableHead className="w-[10%]">Status</TableHead>}
+            {!isMobile && <TableHead className="w-[10%]">Points</TableHead>}
+            {!isMobile && <TableHead className="w-[15%]">Review</TableHead>}
+            {!isMobile && <TableHead className="w-[15%]">Architect</TableHead>}
+            {!isMobile && <TableHead className="w-[10%]">Year</TableHead>}
+            {!isMobile && <TableHead className="w-[10%]">Location</TableHead>}
+            {!isMobile && <TableHead className="w-[10%]">Country</TableHead>}
+            {!isMobile && <TableHead className="w-[10%] pr-4 text-right">Likes</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -76,7 +73,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                 key={review.id}
                 onClick={() => handleRowClick(review)}
                 className={cn(
-                  "cursor-pointer hover:bg-surface-muted/30 border-b border-border-default/30 transition-colors group",
+                  "cursor-pointer transition-colors group",
                   isMobile ? "h-auto" : "h-8"
                 )}
               >
@@ -169,10 +166,10 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                       {review.building.country || "—"}
                     </TableCell>
                     <TableCell className="pr-4 text-right py-1">
-                        <div className="flex items-center justify-end gap-1 text-text-secondary">
-                            <Heart className={cn("w-3 h-3", review.is_liked && "fill-primary text-brand-primary")} />
-                            <span>{review.likes_count}</span>
-                        </div>
+                      <div className="flex items-center justify-end gap-1 text-text-secondary">
+                        <Heart className={cn("w-3 h-3", review.is_liked && "fill-brand-primary text-brand-primary")} />
+                        <span>{review.likes_count}</span>
+                      </div>
                     </TableCell>
                   </>
                 )}

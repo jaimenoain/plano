@@ -31,7 +31,7 @@ function Landing() {
   return (
     <div className="min-h-screen bg-surface-default flex flex-col w-full overflow-x-hidden">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-card/80 backdrop-blur-md border-b border-border-default h-16">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-card/90 backdrop-blur-md border-b border-border-default h-16">
         <div className="container h-full mx-auto px-4 flex items-center justify-between">
           <div className="flex min-w-0 items-center gap-2">
             <SidebarTrigger
@@ -44,7 +44,7 @@ function Landing() {
           <Button
             variant="ghost"
             onClick={() => navigate("/auth")}
-            className="font-semibold bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
+            className="h-10 px-4 font-medium bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
           >
             Log in
           </Button>
@@ -52,7 +52,7 @@ function Landing() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full min-w-0 overflow-x-hidden">
+      <main className="flex-1 w-full min-w-0 overflow-x-hidden pt-16 md:pt-20">
         <LandingHero />
         <LandingMarquee />
         <div className="container mx-auto py-24 px-4">

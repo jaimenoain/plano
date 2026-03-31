@@ -18,6 +18,7 @@ export function FollowButton({ userId, initialIsFollowing, isFollower, className
   const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing ?? false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
     if (initialIsFollowing !== undefined || !user) return;
@@ -98,11 +99,15 @@ export function FollowButton({ userId, initialIsFollowing, isFollower, className
       className={className}
       onClick={handleToggleFollow}
       disabled={isLoading}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
       {isFollowing ? (
         <>
           <UserCheck className="mr-2 h-4 w-4" />
-          Following
+          <span className={isHovering ? "text-feedback-destructive" : undefined}>
+            {isHovering ? "Unfollow" : "Following"}
+          </span>
         </>
       ) : (
         <>

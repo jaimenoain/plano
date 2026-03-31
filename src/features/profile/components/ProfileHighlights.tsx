@@ -23,11 +23,10 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
 
   return (
     <div className="space-y-6 px-4 mb-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
-            <span className="w-1.5 h-4 bg-purple-500 rounded-sm" />
-            Highlights
+        <h3 className="text-sm font-bold uppercase tracking-wide text-text-secondary flex items-center gap-2">
+          <span className="h-6 w-1 bg-brand-primary rounded-sm" />
+          Highlights
         </h3>
         {isOwnProfile && (
             <Button variant="ghost" size="sm" onClick={onManage} className="h-6 text-xs gap-1.5">
@@ -40,14 +39,16 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
       {/* Content */}
       <div className="flex flex-col gap-6">
 
-          {/* 1. Genres (Styles) */}
           {showGenres && (
              <div className="space-y-2">
                  <h4 className="text-xs font-semibold text-text-secondary/80 pl-1">Favorite Styles</h4>
                  {genres.length > 0 ? (
                      <div className="flex flex-wrap gap-2">
                         {genres.map(g => (
-                            <div key={g.id} className="bg-surface-muted/50 border border-border-default/50 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
+                            <div
+                              key={g.id}
+                              className="bg-surface-muted border border-border-default px-3 py-1 rounded-sm text-sm font-medium flex items-center gap-2"
+                            >
                                 <Building2 className="h-3 w-3 text-text-secondary" />
                                 {g.title}
                             </div>
@@ -59,13 +60,15 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
              </div>
           )}
 
-          {/* 2. Quotes */}
           {(quotes.length > 0) && (
              <div className="space-y-2">
                  <h4 className="text-xs font-semibold text-text-secondary/80 pl-1">Favorite Quotes</h4>
                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
                     {quotes.map((q, i) => (
-                        <Card key={i} className="min-w-[260px] max-w-[300px] p-4 bg-gradient-to-br from-surface-muted/50 to-surface-default border-border-default/50 snap-start">
+                        <Card
+                          key={i}
+                          className="min-w-[260px] max-w-[300px] p-4 bg-surface-card border border-border-default rounded-sm shadow-none snap-start"
+                        >
                              <Quote className="h-4 w-4 text-brand-primary/50 mb-2" />
                              <p className="text-sm font-medium italic mb-3 line-clamp-4">"{q.title}"</p>
                              {q.quote_source && (
@@ -77,7 +80,6 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
              </div>
           )}
 
-          {/* 3. People (Architects) */}
           {showPeople && (
              <div className="space-y-2">
                  <h4 className="text-xs font-semibold text-text-secondary/80 pl-1">Favorite Architects</h4>

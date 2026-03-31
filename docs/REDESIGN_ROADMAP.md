@@ -146,17 +146,17 @@
   - [x] `Connect.tsx`
   - [x] `Admin/Dashboard.tsx`
 
-- [ ] **Task 4.2 — Normalise card padding**
+- [x] **Task 4.2 — Normalise card padding**
   Standard cards: `p-6`. Compact variants (kanban items, sidebar list items, compact feed items): `p-4` with comment `/* compact card variant */`. Search for `p-5` in card containers and fix.
 
-- [ ] **Task 4.3 — Normalise form spacing**
+- [x] **Task 4.3 — Normalise form spacing**
   Files: `BuildingForm.tsx`, `AddBuilding.tsx`, `EditBuilding.tsx`, `WriteReview.tsx`, `Settings.tsx`, `EditArchitect.tsx`.
   - Field groups: `gap-6`
   - Label-to-input: `gap-1.5`
   - Section dividers: `mt-12 pt-8 border-t border-border-default`
   - Action row: `pt-6 border-t border-border-default flex items-center justify-end gap-3`
 
-- [ ] **Task 4.4 — Standardise image aspect ratios**
+- [x] **Task 4.4 — Standardise image aspect ratios**
   - Building cards (profile, search, feed discovery): `aspect-[4/3]`
   - Feed hero cards: `aspect-[4/3]`
   - Photo gallery thumbnails: `aspect-square`
@@ -168,13 +168,13 @@
 
 ## Phase 5 — Surface & Border Fixes
 
-- [ ] **Task 5.1 — Add missing borders to surface-card containers**
+- [x] **Task 5.1 — Add missing borders to surface-card containers**
   Run: `grep -rn "bg-surface-card" src/ --include="*.tsx" | grep -v "border"`. Add `border border-border-default` to each hit (unless inside another bordered container or a modal/overlay body).
 
-- [ ] **Task 5.2 — Fix `bg-surface-default` on non-root elements**
+- [x] **Task 5.2 — Fix `bg-surface-default` on non-root elements**
   Run: `grep -rn "bg-surface-default" src/ --include="*.tsx" | grep -v "MainLayout\|min-h-screen\|Index.tsx\|Auth.tsx"`. Replace with `bg-surface-card border border-border-default` or `bg-surface-muted`.
 
-- [ ] **Task 5.3 — Fix `rounded-full` on non-avatar elements**
+- [x] **Task 5.3 — Fix `rounded-full` on non-avatar elements**
   Run: `grep -rn "rounded-full" src/ --include="*.tsx" | grep -vi "avatar"`. Replace with `rounded-sm` unless it's the affinity badge (Task 3.7) or a legitimate circular element.
 
 **Checkpoint:** `npm run typecheck && npm run test`
@@ -183,22 +183,22 @@
 
 ## Phase 6 — Feed & Landing Redesign
 
-- [ ] **Task 6.1 — Redesign Landing page**
+- [x] **Task 6.1 — Redesign Landing page**
   Files: `Index.tsx` (Landing), `LandingHero.tsx`, `LandingMarquee.tsx`, `LandingFeatureGrid.tsx`.
   - Header: `bg-surface-card/90 backdrop-blur-md border-b border-border-default h-16`. Login CTA: `bg-brand-primary text-brand-primary-foreground rounded-sm`.
   - Hero: `min-h-[80vh]`. Headline: `text-4xl md:text-6xl font-bold tracking-tight max-w-4xl`. Search bar: `h-12 rounded-sm shadow-sm max-w-lg`.
   - Marquee: `bg-surface-muted py-6 border-y border-border-default`.
   - Feature grid: `grid-cols-1 md:grid-cols-3 gap-6`. Cards: `bg-surface-card border border-border-default rounded-sm p-8`.
 
-- [ ] **Task 6.2 — Redesign FeedHeroCard**
+- [x] **Task 6.2 — Redesign FeedHeroCard**
   File: `src/features/feed/components/FeedHeroCard.tsx`.
   Container: `bg-surface-card border border-border-default rounded-sm shadow-none overflow-hidden group`. Image: `aspect-[4/3] w-full object-cover`. Content: `p-6 gap-3`. User row: avatar `h-8 w-8 rounded-full`, name `text-sm font-medium`, timestamp `text-xs text-text-secondary`. Building name: `text-xl font-semibold hover:underline`. **Action row: ICON-ONLY, no text labels** — all actions as ghost `h-8 w-8` buttons, tooltips on hover. Author Edit/Delete: `opacity-0 group-hover:opacity-100`.
 
-- [ ] **Task 6.3 — Redesign FeedCompactCard**
+- [x] **Task 6.3 — Redesign FeedCompactCard**
   File: `src/features/feed/components/FeedCompactCard.tsx`.
   Same structure as hero card minus image. Container: `bg-surface-card border border-border-default rounded-sm p-6 shadow-none`.
 
-- [ ] **Task 6.4 — Redesign FeedClusterCard (compact activity items)**
+- [x] **Task 6.4 — Redesign FeedClusterCard (compact activity items)**
   File: `src/features/feed/components/FeedClusterCard.tsx`.
   **Wrap in card containers** — currently renders as naked text. Group sequential items from same user:
   ```
@@ -211,23 +211,23 @@
   ```
   Container: `bg-surface-card border border-border-default rounded-sm p-4 shadow-none`. Activity items: `text-sm text-text-secondary`.
 
-- [ ] **Task 6.5 — Redesign EmptyFeed**
+- [x] **Task 6.5 — Redesign EmptyFeed**
   File: `src/features/feed/components/EmptyFeed.tsx`.
   Per COMPONENT_SPEC §10: `py-16 px-8 gap-4`. Icon `h-12 w-12 text-text-disabled`. Heading `text-lg font-semibold`. Description `text-sm text-text-secondary max-w-sm`. CTA: primary button.
 
-- [ ] **Task 6.6 — Redesign AllCaughtUpDivider**
+- [x] **Task 6.6 — Redesign AllCaughtUpDivider**
   `border-t border-border-default` with centred label: `bg-surface-default px-4 text-xs font-medium text-text-secondary uppercase tracking-wide -translate-y-1/2`.
 
-- [ ] **Task 6.7 — Redesign ExploreTeaserBlock and SuggestedContentBlock**
+- [x] **Task 6.7 — Redesign ExploreTeaserBlock and SuggestedContentBlock**
   `bg-brand-secondary border border-border-default rounded-sm p-6`. CTA: ghost or secondary button (NOT primary).
 
-- [ ] **Task 6.8 — Redesign PeopleYouMayKnow (feed)**
+- [x] **Task 6.8 — Redesign PeopleYouMayKnow (feed)**
   `bg-surface-card border border-border-default rounded-sm p-6`. Follow button: `bg-brand-primary text-brand-primary-foreground rounded-sm` (not the dark button shown in screenshots).
 
-- [ ] **Task 6.9 — Redesign ReviewCard and DiscoveryCard**
+- [x] **Task 6.9 — Redesign ReviewCard and DiscoveryCard**
   Consistent card assembly. Image: `aspect-[4/3]`. Social context facepile: `flex -space-x-2`. "Trending Architecture" section: if using overlay text on images, use `bg-gradient-to-t from-black/60 to-transparent` with `text-text-inverse`.
 
-- [ ] **Task 6.10 — Redesign ContactFacepile**
+- [x] **Task 6.10 — Redesign ContactFacepile**
   `flex -space-x-2 items-center`. Avatars: `h-6 w-6 rounded-full border-2 border-surface-card`. Overflow: `+N` in `text-xs text-text-secondary`.
 
 **Checkpoint:** `npm run typecheck && npm run test`
@@ -236,13 +236,13 @@
 
 ## Phase 7 — Auth & Onboarding
 
-- [ ] **Task 7.1 — Polish Auth.tsx**
+- [x] **Task 7.1 — Polish Auth.tsx**
   Heading: `text-3xl font-bold tracking-tight`. Submit: `bg-brand-primary text-brand-primary-foreground rounded-sm h-10 w-full font-medium hover:bg-brand-primary-hover active:scale-[0.98]`.
 
-- [ ] **Task 7.2 — Polish Onboarding.tsx**
+- [x] **Task 7.2 — Polish Onboarding.tsx**
   Step indicator: `bg-brand-primary` complete, `bg-surface-muted` remaining. Avatar upload: `border-2 border-dashed border-border-default hover:border-brand-primary`. CTA: primary.
 
-- [ ] **Task 7.3 — Polish UpdatePassword.tsx**
+- [x] **Task 7.3 — Polish UpdatePassword.tsx**
   Same card-centred pattern as Auth.
 
 **Checkpoint:** `npm run typecheck && npm run test`
@@ -251,7 +251,7 @@
 
 ## Phase 8 — Building Detail (Major Layout Rethink)
 
-- [ ] **Task 8.1 — Restructure BuildingDetails.tsx layout**
+- [x] **Task 8.1 — Restructure BuildingDetails.tsx layout**
   **The hero image MUST be the first visual element**, above the building name. Move the map to a "Location" section below the photo gallery.
 
   Mobile section order (top to bottom):
@@ -269,10 +269,10 @@
 
   **Demote "Edit Official Data"** from full-width button to ghost icon button (pencil) in the header row. On mobile, put it in "..." overflow menu.
 
-- [ ] **Task 8.2 — Redesign BuildingHeader.tsx**
+- [x] **Task 8.2 — Redesign BuildingHeader.tsx**
   Name: `text-3xl md:text-4xl font-bold tracking-tight`. Alt name: `text-lg text-text-secondary mt-1`. Architect: `text-base hover:underline`. Location: `text-sm text-text-secondary`. Year: `text-sm text-text-secondary font-mono tracking-wide`. Edit: ghost icon button, NOT full-width outlined button.
 
-- [ ] **Task 8.3 — Redesign BuildingAttributes.tsx**
+- [x] **Task 8.3 — Redesign BuildingAttributes.tsx**
   Replace cramped icon+text rows with a definition list:
   ```tsx
   <div className="grid grid-cols-[120px_1fr] gap-y-3 gap-x-4">
@@ -286,19 +286,19 @@
   </div>
   ```
 
-- [ ] **Task 8.4 — Redesign ArchitectStatement.tsx**
+- [x] **Task 8.4 — Redesign ArchitectStatement.tsx**
   Container: `bg-brand-secondary border border-border-default rounded-sm p-6`. Label: `text-xs font-medium text-brand-secondary-foreground uppercase tracking-wide mb-3`. Text: `text-base italic leading-relaxed`. Edit: ghost icon, hover-revealed.
 
-- [ ] **Task 8.5 — Redesign BuildingHero.tsx and photo gallery**
+- [x] **Task 8.5 — Redesign BuildingHero.tsx and photo gallery**
   Hero: `aspect-[16/9] md:aspect-[21/9] w-full object-cover rounded-sm`. Fallback: `bg-surface-muted` with `Building2` icon. Gallery: `grid grid-cols-3 gap-2` mobile, `grid-cols-6 gap-2` desktop — **NOT vertical stream**. Each thumbnail: `aspect-square rounded-sm overflow-hidden cursor-pointer group`. Hover overlay: `opacity-0 group-hover:opacity-100 bg-black/30`.
 
-- [ ] **Task 8.6 — Redesign PersonalRatingButton.tsx**
+- [x] **Task 8.6 — Redesign PersonalRatingButton.tsx**
   Increase star size to `h-5 w-5` (currently too small). Active: `text-brand-primary fill-brand-primary`. Inactive: `text-text-disabled`. Container: `flex items-center gap-1.5`.
 
-- [ ] **Task 8.7 — Redesign ImageDetailsDialog.tsx**
+- [x] **Task 8.7 — Redesign ImageDetailsDialog.tsx**
   Lightbox: backdrop `bg-black/90`. Image `object-contain max-h-[85vh]`. Nav: `bg-surface-card/80 backdrop-blur-sm rounded-sm`. Close: `X` top-right.
 
-- [ ] **Task 8.8 — Redesign BuildingImageCard.tsx**
+- [x] **Task 8.8 — Redesign BuildingImageCard.tsx**
   `aspect-square rounded-sm overflow-hidden group cursor-pointer`. Like count: `absolute bottom-2 right-2 bg-surface-card/80 backdrop-blur-sm rounded-sm px-2 py-0.5 text-xs font-medium`.
 
 **Checkpoint:** `npm run typecheck && npm run test`
@@ -307,14 +307,14 @@
 
 ## Phase 9 — Building Forms
 
-- [ ] **Task 9.1 — Redesign AddBuilding.tsx and EditBuilding.tsx**
+- [x] **Task 9.1 — Redesign AddBuilding.tsx and EditBuilding.tsx**
   Wrap in AppLayout or ensure `min-h-screen bg-surface-default`. Content: `max-w-2xl mx-auto px-4 py-8`. Page title: `text-4xl font-bold tracking-tight mb-8`. Form per COMPONENT_SPEC §5. Input widths: name `max-w-md`, year `max-w-[8rem]`, city/country `max-w-sm`.
 
-- [ ] **Task 9.2 — Redesign WriteReview.tsx and ReviewDetails.tsx**
+- [x] **Task 9.2 — Redesign WriteReview.tsx and ReviewDetails.tsx**
   WriteReview: `max-w-2xl`. Large rating stars `h-10 w-10`. Text area: `max-w-xl min-h-[200px] bg-surface-muted`. Image upload: `border-2 border-dashed border-border-default hover:border-brand-primary rounded-sm p-8`.
   ReviewDetails: `max-w-2xl`. User info, building link, rating, text, images, threaded comments.
 
-- [ ] **Task 9.3 — Redesign BuildingForm.tsx and AddBuildingDetails.tsx**
+- [x] **Task 9.3 — Redesign BuildingForm.tsx and AddBuildingDetails.tsx**
   All per COMPONENT_SPEC §4 and §5. Replace accordion sections with always-visible sections for creation forms.
 
 **Checkpoint:** `npm run typecheck && npm run test`
@@ -323,37 +323,37 @@
 
 ## Phase 10 — Profile Page (Major Layout Fixes)
 
-- [ ] **Task 10.1 — Redesign Profile.tsx layout**
+- [x] **Task 10.1 — Redesign Profile.tsx layout**
   - Constrain width: `max-w-6xl mx-auto`.
   - Profile header: avatar `h-20 w-20 md:h-24 md:w-24 rounded-full border-2 border-border-default`, username `text-3xl font-semibold tracking-tight`, bio `text-base text-text-secondary max-w-lg`, stats row `flex items-center gap-6`.
   - Simplify control bar: Row 1 = tabs + view mode segmented control. Row 2 = search. Move "Community Photos" toggle to filter popover.
   - Tabs: active `border-b-2 border-brand-primary text-text-primary font-semibold`, inactive `text-text-secondary`.
 
-- [ ] **Task 10.2 — Flip building cards to image-first**
+- [x] **Task 10.2 — Flip building cards to image-first**
   All building cards in profile grid: image ABOVE text. Image: `aspect-[4/3] w-full object-cover` at top, bleeding to card edges. Text: `p-4`. Name `text-sm font-semibold`. Architect `text-xs text-text-secondary`. Missing image fallback: `bg-surface-muted aspect-[4/3]` with `Building2` icon `h-8 w-8 text-text-disabled`. Grid: `grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6` — max 4 columns, never 5+.
 
-- [ ] **Task 10.3 — Redesign ProfileKanbanView and KanbanColumn**
+- [x] **Task 10.3 — Redesign ProfileKanbanView and KanbanColumn**
   Columns: `bg-surface-muted border border-border-default rounded-sm min-w-[280px]`. Header: `p-4 border-b border-border-default`. Cards: `bg-surface-card border border-border-default rounded-sm p-3` — image-first.
 
-- [ ] **Task 10.4 — Redesign ProfileListView**
+- [x] **Task 10.4 — Redesign ProfileListView**
   Table per COMPONENT_SPEC §7. Header: `bg-surface-muted text-xs uppercase tracking-wide text-text-secondary`. Rows: `hover:bg-brand-secondary`. Row actions: hover-revealed.
 
-- [ ] **Task 10.5 — Redesign profile sub-components**
-  - [ ] `FavoritesSection.tsx` — horizontal scroll, `w-32`, image `aspect-square rounded-sm`, name `text-xs font-medium truncate`
-  - [ ] `ProfileHighlights.tsx` — accent `border-l-4 border-brand-primary`
-  - [ ] `UserCard.tsx` — `flex items-center gap-3 p-3`, avatar `h-10 w-10 rounded-full`
-  - [ ] `FollowButton.tsx` — not following: primary. Following: secondary. Hover: "Unfollow" `text-feedback-destructive`
-  - [ ] `InlineRating.tsx` — stars `h-4 w-4`
-  - [ ] `InlineReviewEditor.tsx` — `bg-surface-muted border border-border-default rounded-sm`
-  - [ ] `SocialContextSection.tsx` — `text-sm text-text-secondary`
-  - [ ] `DraggableReviewCard.tsx` — image-first card pattern
-  - [ ] `MutualAffinityRow.tsx` — token-compliant
-  - [ ] `RecommendationCard.tsx` — token-compliant
+- [x] **Task 10.5 — Redesign profile sub-components**
+  - [x] `FavoritesSection.tsx` — horizontal scroll, `w-32`, image `aspect-square rounded-sm`, name `text-xs font-medium truncate`
+  - [x] `ProfileHighlights.tsx` — accent `border-l-4 border-brand-primary`
+  - [x] `UserCard.tsx` — `flex items-center gap-3 p-3`, avatar `h-10 w-10 rounded-full`
+  - [x] `FollowButton.tsx` — not following: primary. Following: secondary. Hover: "Unfollow" `text-feedback-destructive`
+  - [x] `InlineRating.tsx` — stars `h-4 w-4`
+  - [x] `InlineReviewEditor.tsx` — `bg-surface-muted border border-border-default rounded-sm`
+  - [x] `SocialContextSection.tsx` — `text-sm text-text-secondary`
+  - [x] `DraggableReviewCard.tsx` — image-first card pattern
+  - [x] `MutualAffinityRow.tsx` — token-compliant
+  - [x] `RecommendationCard.tsx` — token-compliant
 
-- [ ] **Task 10.6 — Redesign CollectionCard with preview images**
+- [x] **Task 10.6 — Redesign CollectionCard with preview images**
   Add 2×2 image mosaic from collection buildings at the top of the card. Below: name `text-xl font-semibold`, meta `text-xs text-text-secondary`. Container: `bg-surface-card border border-border-default rounded-sm overflow-hidden`.
 
-- [ ] **Task 10.7 — Redesign profile dialogs**
+- [x] **Task 10.7 — Redesign profile dialogs**
   Files: `ManageFavoritesDialog`, `ManageFoldersDialog`, `ManageHighlightsDialog`, `AddBuildingDialog`, `AddToFolderDialog`, `BlockUserDialog`, `DisconnectArchitectDialog`.
   All per COMPONENT_SPEC §8: `bg-surface-overlay rounded-lg shadow-lg border border-border-default`. Header `p-6 border-b`. Body `p-6`. Footer `p-6 border-t flex justify-end gap-3`.
 

@@ -42,32 +42,39 @@ export function FeedCompactCard({
   return (
     <div
       onClick={handleCardClick}
-      className="flex items-start gap-3 py-2 px-2 w-full max-w-full overflow-hidden min-w-0 group cursor-pointer hover:bg-surface-muted/50 rounded-lg transition-colors"
+      className="w-full max-w-full min-w-0 cursor-pointer bg-surface-card border border-border-default rounded-sm shadow-none hover:border-border-strong transition-colors"
     >
-      <Avatar className="h-6 w-6 border border-border-default/50 shrink-0 mt-0.5">
-        <AvatarImage src={avatarUrl} />
-        <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
-      </Avatar>
+      <div className="flex items-start gap-3 p-4">
+        <Avatar className="h-6 w-6 border border-border-default/50 shrink-0 mt-0.5">
+          <AvatarImage src={avatarUrl} />
+          <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
+        </Avatar>
 
-      <div className="text-sm text-text-primary/90 flex-1 min-w-0 break-words leading-tight">
-        <span className="font-semibold">{username}</span>
-        <span className="text-text-secondary/60 font-normal"> {actionText} </span>
-        <span className="font-semibold">{mainTitle}</span>
+        <div className="text-sm text-text-primary flex-1 min-w-0 break-words leading-tight">
+          <span className="font-semibold">{username}</span>
+          <span className="text-text-secondary/80 font-normal"> {actionText} </span>
+          <span className="font-semibold">{mainTitle}</span>
 
-        {entry.rating && entry.rating > 0 && (
-          <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Circle
-                key={i}
-                className={`w-2.5 h-2.5 ${i < entry.rating! ? "fill-[#595959] text-[#595959]" : "fill-transparent text-text-secondary/30"}`}
-              />
-            ))}
+          {entry.rating && entry.rating > 0 && (
+            <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Circle
+                  key={i}
+                  className={`w-2.5 h-2.5 ${
+                    i < entry.rating!
+                      ? "fill-brand-primary text-brand-primary"
+                      : "fill-transparent text-text-secondary/30"
+                  }`}
+                />
+              ))}
+            </span>
+          )}
+
+          <span className="text-text-secondary text-xs ml-2">
+            {!(entry.rating && entry.rating > 0) && "• "}
+            {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
           </span>
-        )}
-
-        <span className="text-text-secondary text-xs ml-2">
-          {!(entry.rating && entry.rating > 0) && "• "}{formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-        </span>
+        </div>
       </div>
     </div>
   );

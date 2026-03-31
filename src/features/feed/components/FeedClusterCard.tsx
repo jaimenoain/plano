@@ -35,44 +35,45 @@ export function FeedClusterCard({
   const userInitial = username.charAt(0).toUpperCase();
   const avatarUrl = user.avatar_url || undefined;
 
-  // We rely on the input entries for the count, but we could deduplicate building ids.
-  const uniqueBuildings = Array.from(new Map(entries.map(e => [e.building.id, e.building.name])).values());
-  const uniqueCount = uniqueBuildings.length;
-  const action = entries[0].status || 'saved';
-
   return (
     <div
       onClick={handleClick}
-      className="flex items-start gap-3 py-1.5 px-2 w-full max-w-full overflow-hidden min-w-0 group cursor-pointer hover:bg-surface-muted/50 rounded-lg transition-colors"
+      className="w-full max-w-full min-w-0 cursor-pointer bg-surface-card border border-border-default rounded-sm shadow-none hover:border-border-strong transition-colors"
     >
-      <Avatar className="h-6 w-6 border border-border-default/50 shrink-0 mt-0.5">
-        <AvatarImage src={avatarUrl} />
-        <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
-      </Avatar>
+      <div className="flex items-start gap-3 p-4">
+        <Avatar className="h-6 w-6 border border-border-default/50 shrink-0 mt-0.5">
+          <AvatarImage src={avatarUrl} />
+          <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
+        </Avatar>
 
-      <div className="text-sm text-text-primary/90 flex-1 break-words leading-tight min-w-0">
-        <span className="font-semibold">{username}</span>
-        <span className="text-text-secondary"> {action} </span>
-        {uniqueCount > 2 ? (
-          <>
-            <span className="font-semibold">{uniqueBuildings[0]}</span>
-            <span className="text-text-secondary">, </span>
-            <span className="font-semibold">{uniqueBuildings[1]}</span>
-            <span className="text-text-secondary"> and </span>
-            <span className="font-semibold">{uniqueCount - 2} more</span>
-          </>
-        ) : uniqueCount === 2 ? (
-          <>
-            <span className="font-semibold">{uniqueBuildings[0]}</span>
-            <span className="text-text-secondary"> and </span>
-            <span className="font-semibold">{uniqueBuildings[1]}</span>
-          </>
-        ) : (
-          <span className="font-semibold">{uniqueBuildings[0]}</span>
-        )}
-        <span className="text-text-secondary text-xs ml-2">
-          • {formatDistanceToNow(new Date(timestamp)).replace("about ", "")} ago
-        </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-sm text-text-primary font-semibold truncate">
+                {username}
+              </div>
+              <div className="text-xs text-text-secondary">
+                {formatDistanceToNow(new Date(timestamp)).replace("about ", "")} ago
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 space-y-1.5 text-sm text-text-secondary">
+            {entries.map((entry) => (
+              <div key={entry.id} className="flex items-start gap-1.5">
+                <span className="mt-[2px] text-xs text-text-secondary">•</span>
+                <span className="min-w-0">
+                  <span className="text-text-secondary">
+                    {entry.status === "pending" ? "pending" : "visited"}{" "}
+                  </span>
+                  <span className="font-semibold text-text-primary">
+                    {entry.building.name}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

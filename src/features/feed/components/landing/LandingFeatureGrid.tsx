@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 
 export const LandingFeatureGrid = () => {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
       {/* Card 1: Log Your Journey */}
-      <div className="col-span-1 md:col-span-4 flex flex-col justify-between rounded-sm border border-border-default bg-surface-card p-6 shadow-none">
+      <div className="flex flex-col justify-between rounded-sm border border-border-default bg-surface-card p-8 shadow-none">
         <div className="mb-6 space-y-2">
           <h3 className="text-lg font-bold text-text-primary">Log Your Journey</h3>
           <p className="text-sm text-text-secondary">
@@ -37,7 +37,7 @@ export const LandingFeatureGrid = () => {
       </div>
 
       {/* Card 2: Curate Lists */}
-      <div className="col-span-1 md:col-span-4 flex flex-col justify-between rounded-sm border border-border-default bg-surface-card p-6 shadow-none">
+      <div className="flex flex-col justify-between rounded-sm border border-border-default bg-surface-card p-8 shadow-none">
         <div className="mb-6 space-y-2">
           <h3 className="text-lg font-bold text-text-primary">Curate Lists</h3>
           <p className="text-sm text-text-secondary">
@@ -67,7 +67,7 @@ export const LandingFeatureGrid = () => {
       </div>
 
       {/* Card 3: Follow Architects */}
-      <div className="col-span-1 md:col-span-4 flex flex-col justify-between rounded-sm border border-border-default bg-surface-card p-6 shadow-none">
+      <div className="flex flex-col justify-between rounded-sm border border-border-default bg-surface-card p-8 shadow-none">
         <div className="mb-6 space-y-2">
           <h3 className="text-lg font-bold text-text-primary">Follow Architects</h3>
           <p className="text-sm text-text-secondary">

@@ -9,6 +9,7 @@ import {
   Tag
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export interface BuildingAttributesData {
   typology?: string[] | null;
@@ -52,14 +53,14 @@ export const BuildingAttributes = ({
   };
 
   const fields = [
-    { key: 'year_completed', icon: Calendar, value: building.year_completed?.toString() },
-    { key: 'category', icon: Tag, value: building.category },
-    { key: 'typology', icon: Building2, value: building.typology },
-    { key: 'context', icon: MapIcon, value: building.context },
-    { key: 'intervention', icon: Wrench, value: building.intervention },
-    { key: 'materials', icon: Hammer, value: building.materials },
-    { key: 'styles', icon: Palette, value: building.styles },
-    { key: 'status', icon: Activity, value: building.status },
+    { key: 'year_completed', label: 'Year', icon: Calendar, value: building.year_completed?.toString() },
+    { key: 'category', label: 'Category', icon: Tag, value: building.category },
+    { key: 'typology', label: 'Typology', icon: Building2, value: building.typology },
+    { key: 'context', label: 'Context', icon: MapIcon, value: building.context },
+    { key: 'intervention', label: 'Intervention', icon: Wrench, value: building.intervention },
+    { key: 'materials', label: 'Materials', icon: Hammer, value: building.materials },
+    { key: 'styles', label: 'Styles', icon: Palette, value: building.styles },
+    { key: 'status', label: 'Status', icon: Activity, value: building.status },
   ];
 
   // Filter out empty fields
@@ -68,13 +69,54 @@ export const BuildingAttributes = ({
   if (activeFields.length === 0) return null;
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-primary", className)}>
-      {activeFields.map((field) => (
-        <div key={field.key} className="flex items-center gap-1.5">
-          <field.icon className="w-4 h-4 text-text-secondary" />
-          <span>{getFormattedValue(field.value)}</span>
-        </div>
-      ))}
-    </div>
+    <dl
+      className={cn(
+        "grid grid-cols-[120px_1fr] gap-y-3 gap-x-4 text-sm text-text-primary",
+        className
+      )}
+    >
+      {activeFields.map((field) => {
+        const value = field.value;
+        const isMultiValue = Array.isArray(value) && (value as unknown[]).length > 0;
+
+        if (isMultiValue) {
+          const items = value as unknown[];
+          const isObjectArray =
+            typeof items[0] === "object" &&
+            items[0] !== null &&
+            "name" in (items[0] as { name: string });
+
+          const labels = isObjectArray
+            ? (items as { name: string }[]).map((item) => item.name)
+            : (items as string[]);
+
+          return (
+            <div key={field.key} className="contents">
+              <dt className="text-xs font-medium text-text-secondary uppercase tracking-wide flex items-center gap-1.5">
+                <field.icon className="w-3.5 h-3.5" />
+                {field.label}
+              </dt>
+              <dd className="flex flex-wrap gap-2">
+                {labels.map((label) => (
+                  <Badge key={label} variant="outline" className="text-xs">
+                    {label}
+                  </Badge>
+                ))}
+              </dd>
+            </div>
+          );
+        }
+
+        return (
+          <div key={field.key} className="contents">
+            <dt className="text-xs font-medium text-text-secondary uppercase tracking-wide flex items-center gap-1.5">
+              <field.icon className="w-3.5 h-3.5" />
+              {field.label}
+            </dt>
+            <dd>{getFormattedValue(field.value)}</dd>
+          </div>
+        );
+      })}
+    </dl>
   );
 };

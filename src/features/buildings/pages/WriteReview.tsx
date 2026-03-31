@@ -779,7 +779,7 @@ toast({
 
         {/* Header */}
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+          <h1 className="text-4xl font-bold tracking-tight leading-tight text-text-primary mb-4">
             Write Review
           </h1>
           <p className="text-text-secondary">
@@ -810,7 +810,7 @@ toast({
         <div className="mt-12 border-t border-border-default pt-8" />
 
         {/* Rating */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <label className="text-sm font-medium uppercase text-text-secondary">Add points (Optional)</label>
           <div
             className="flex items-center gap-2"
@@ -825,7 +825,7 @@ toast({
                 onClick={() => setRating(rating === star ? 0 : star)}
               >
                 <Circle
-                  className={`w-8 h-8 transition-colors ${
+                  className={`w-10 h-10 transition-colors ${
                     star <= (hoverRating ?? rating)
                       ? "fill-brand-primary text-text-primary"
                       : "text-text-disabled"
@@ -842,13 +842,13 @@ toast({
         <div className="mt-12 border-t border-border-default pt-8" />
 
         {/* Text Review */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <label className="text-sm font-medium uppercase text-text-secondary">Review (Optional)</label>
           <Textarea
             placeholder="What did you think about this building?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[150px] resize-none max-w-xl"
+            className="min-h-[200px] resize-none max-w-xl bg-surface-muted"
           />
         </div>
 
@@ -1127,7 +1127,7 @@ toast({
         <div
           className="fixed inset-0 z-[100] bg-surface-default/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-brand-primary m-4 rounded-sm animate-in fade-in duration-200 pointer-events-none"
         >
-          <div className="bg-surface-card p-8 rounded-sm mb-4 shadow-lg">
+          <div className="bg-surface-card border border-border-default p-8 rounded-sm mb-4 shadow-lg">
              <Upload className="w-12 h-12 text-brand-primary" />
           </div>
           <h2 className="text-2xl font-bold">Drop media here</h2>

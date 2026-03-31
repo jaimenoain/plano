@@ -30,6 +30,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getBuildingImageUrl } from "@/utils/image";
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
@@ -400,11 +401,21 @@ toast.error("Location search failed. Please click on the map to set the location
   };
 
   if (step === 2 && finalLocationData) {
-    return <div className="container max-w-2xl py-8"><AddBuildingDetails locationData={finalLocationData} onBack={() => setStep(1)} /></div>;
+    return (
+      <AppLayout title="Add Building" showBack>
+        <div className="min-h-screen bg-surface-default">
+          <div className="max-w-2xl mx-auto px-4 py-8">
+            <AddBuildingDetails locationData={finalLocationData} onBack={() => setStep(1)} />
+          </div>
+        </div>
+      </AppLayout>
+    );
   }
 
   return (
-    <div className="container max-w-4xl py-8 space-y-6">
+    <AppLayout title="Add Building" showBack>
+    <div className="min-h-screen bg-surface-default">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
       <div>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
           Add Building
@@ -785,7 +796,8 @@ toast.error("Location search failed. Please click on the map to set the location
             </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
+    </div>
+    </AppLayout>
   );
 }

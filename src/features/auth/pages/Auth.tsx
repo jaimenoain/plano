@@ -213,7 +213,9 @@ export default function Auth() {
             </div>
           </div>
 
-          <h1 className="text-xl font-semibold text-text-primary">Check your email</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
+            Check your email
+          </h1>
 
           <p className="text-text-secondary">
             We've sent a {isResetPassword ? "password reset" : "confirmation"} link to{" "}
@@ -222,7 +224,7 @@ export default function Auth() {
 
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full h-10 font-medium rounded-sm"
             onClick={() => {
               setCheckEmail(false);
               setIsSignUp(false);
@@ -241,7 +243,7 @@ export default function Auth() {
       <PlanoLogo className="h-8 w-auto mb-6" />
 
       <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6">
-        <h1 className="text-xl font-semibold text-text-primary text-center">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary text-center">
           {isResetPassword
             ? "Reset your password"
             : isSignUp
@@ -363,7 +365,12 @@ export default function Auth() {
             </div>
           )}
 
-          <Button type="submit" className="w-full" variant="default" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full h-10 font-medium rounded-sm bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover active:scale-[0.98]"
+            variant="default"
+            disabled={loading}
+          >
             {loading
               ? "Loading..."
               : isResetPassword

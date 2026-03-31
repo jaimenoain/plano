@@ -55,11 +55,11 @@ export function DraggableReviewCard({ review, className, showCommunityImages, is
       />
 
       {isUpdating && (
-        <div className="absolute inset-0 bg-surface-default/50 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-10">
-           <div className="bg-surface-default shadow-sm border px-3 py-1.5 rounded-full flex items-center gap-2">
-              <Loader2 className="w-3 h-3 animate-spin text-brand-primary" />
-              <span className="text-xs font-medium">Saving...</span>
-           </div>
+        <div className="absolute inset-0 bg-surface-default/50 backdrop-blur-[1px] flex items-center justify-center rounded-sm z-10">
+          <div className="bg-surface-card border border-border-default rounded-sm px-3 py-1.5 flex items-center gap-2 shadow-none">
+            <Loader2 className="w-3 h-3 animate-spin text-brand-primary" />
+            <span className="text-xs font-medium text-text-primary">Saving...</span>
+          </div>
         </div>
       )}
     </motion.div>

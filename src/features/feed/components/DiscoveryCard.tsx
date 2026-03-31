@@ -261,12 +261,12 @@ toast.error("Failed to save");
 
       {/* Swipe Feedback Overlays */}
       <motion.div style={{ opacity: likeOpacity }} className="absolute top-20 left-10 z-50 pointer-events-none">
-        <div className="w-20 h-20 bg-brand-primary rounded-full flex items-center justify-center shadow-lg">
+        <div className="w-20 h-20 bg-brand-primary rounded-sm flex items-center justify-center shadow-lg">
           <Bookmark className="w-10 h-10 text-text-inverse" />
         </div>
       </motion.div>
       <motion.div style={{ opacity: nopeOpacity }} className="absolute top-20 right-10 z-50 pointer-events-none">
-        <div className="w-20 h-20 bg-feedback-destructive rounded-full flex items-center justify-center shadow-lg">
+        <div className="w-20 h-20 bg-feedback-destructive rounded-sm flex items-center justify-center shadow-lg">
           <EyeOff className="w-10 h-10 text-text-inverse" />
         </div>
       </motion.div>
@@ -285,7 +285,7 @@ toast.error("Failed to save");
                       <button
                         key={val ?? 'bookmark'}
                         onClick={(e) => handleRate(val, e)}
-                        className={`w-16 h-16 rounded-full border-2 border-text-inverse flex items-center justify-center text-2xl font-bold transition-all duration-300 ${
+                        className={`w-16 h-16 rounded-sm border-2 border-text-inverse flex items-center justify-center text-2xl font-bold transition-all duration-300 ${
                             rating === val
                                 ? val === null
                                     ? "bg-brand-primary text-brand-primary-foreground border-brand-primary scale-110 shadow-[0_0_20px_var(--brand-primary)]"
@@ -355,7 +355,7 @@ toast.error("Failed to save");
         <Button
           variant={isSaved ? "default" : "secondary"}
           size="icon"
-          className={`h-12 w-12 rounded-full shadow-lg border-none backdrop-blur-md transition-all duration-300 ${
+          className={`h-12 w-12 rounded-sm shadow-lg border-none backdrop-blur-md transition-all duration-300 ${
               isSaved
                   ? "bg-brand-primary hover:opacity-90 text-text-inverse"
                   : "bg-white/10 hover:bg-white/20 text-text-inverse"

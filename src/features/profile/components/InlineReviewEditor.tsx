@@ -56,10 +56,10 @@ export function InlineReviewEditor({ initialContent, isOwnProfile, onSave }: Inl
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Write a review..."
-          className="min-h-[80px] text-xs resize-none bg-surface-default z-10 relative"
+          className="min-h-[80px] text-xs resize-none bg-surface-muted border border-border-default rounded-sm z-10 relative"
           autoFocus
           onKeyDown={handleKeyDown}
-          onClick={(e) => e.stopPropagation()} // Prevent row click
+          onClick={(e) => e.stopPropagation()}
         />
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <Button

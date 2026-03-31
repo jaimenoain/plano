@@ -482,22 +482,31 @@ toast({ variant: "destructive", title: "Failed to save" });
   };
 
   const Media = !hideBuildingInfo && (
-        mediaItems.length > 0 ? (
-          <div className={`relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${!isCompact ? 'md:w-[280px] md:shrink-0 aspect-[4/3] md:aspect-auto' : 'aspect-[4/3]'}`}>
-             <div className="absolute inset-0 w-full h-full">
-               {renderMediaGrid()}
-             </div>
-          </div>
-        ) : (posterUrl && showCommunityImages) ? (
-          // OPTION B: Building Poster (Fallback)
-          <div className={`relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden aspect-[4/3] ${!isCompact ? 'md:aspect-auto md:w-[280px] md:shrink-0' : ''}`}>
-            <img
-              src={posterUrl}
-              alt={mainTitle || ""}
-              className={`w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 ${!isCompact ? 'md:absolute md:inset-0' : ''}`}
-            />
-          </div>
-        ) : null
+    mediaItems.length > 0 ? (
+      <div
+        className={`relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
+          !isCompact ? "md:w-[280px] md:shrink-0 aspect-[4/3] md:aspect-auto" : "aspect-[4/3]"
+        }`}
+      >
+        <div className="absolute inset-0 w-full h-full">
+          {renderMediaGrid()}
+        </div>
+      </div>
+    ) : posterUrl && showCommunityImages ? (
+      <div
+        className={`relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden aspect-[4/3] ${
+          !isCompact ? "md:aspect-auto md:w-[280px] md:shrink-0" : ""
+        }`}
+      >
+        <img
+          src={posterUrl}
+          alt={mainTitle || ""}
+          className={`w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 ${
+            !isCompact ? "md:absolute md:inset-0" : ""
+          }`}
+        />
+      </div>
+    ) : null
   );
 
   const ContentBody = isCompact ? (
@@ -540,43 +549,48 @@ toast({ variant: "destructive", title: "Failed to save" });
   );
 
   const Footer = (
-        <div className={`flex w-full max-w-full min-w-0 items-center gap-2 md:gap-4 flex-wrap ${isCompact ? 'p-2.5 md:p-4 pt-3 mt-auto border-t border-border-default/50' : 'mt-auto pt-3 border-t border-border-default/50'}`}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onLike?.(entry.id);
-              // Trigger PWA interaction check on like
-              window.dispatchEvent(new CustomEvent('pwa-interaction'));
-            }}
-            className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like"
-          >
-            <Heart
-              className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${
-                entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
-              }`}
-            />
-            <span className="text-xs font-medium">{entry.likes_count}</span>
-          </button>
-           
-          <button
-            onClick={handleCommentClick}
-            className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment"
-          >
-            <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
-            <span className="text-xs font-medium">{entry.comments_count}</span>
-          </button>
+    <div
+      className={`flex w-full max-w-full min-w-0 items-center gap-2 md:gap-4 flex-wrap ${
+        isCompact ? "p-2.5 md:p-4 pt-3 mt-auto border-t border-border-default/50" : "mt-auto pt-3 border-t border-border-default/50"
+      }`}
+    >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onLike?.(entry.id);
+          window.dispatchEvent(new CustomEvent("pwa-interaction"));
+        }}
+        className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like"
+      >
+        <Heart
+          className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${
+            entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
+          }`}
+        />
+        <span className="text-xs font-medium">{entry.likes_count}</span>
+      </button>
 
-          {!isCompact && (
-             <button
-               onClick={handleSave}
-               className={`flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors ml-auto ${isSaving ? 'opacity-50' : ''}`}
-               disabled={isSaving}
-             >
-               <Bookmark className="h-4 w-4" />
-               <span className="text-xs font-medium">Save</span>
-             </button>
-          )}
-        </div>
+      <button
+        onClick={handleCommentClick}
+        className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment"
+      >
+        <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
+        <span className="text-xs font-medium">{entry.comments_count}</span>
+      </button>
+
+      {!isCompact && (
+        <button
+          onClick={handleSave}
+          className={`flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors ml-auto ${
+            isSaving ? "opacity-50" : ""
+          }`}
+          disabled={isSaving}
+        >
+          <Bookmark className="h-4 w-4" />
+          <span className="text-xs font-medium">Save</span>
+        </button>
+      )}
+    </div>
   );
 
   return (
@@ -586,30 +600,31 @@ toast({ variant: "destructive", title: "Failed to save" });
     >
       <article
         onClick={handleCardClick}
-        // MERGE FIX: Check hasMedia instead of just posterUrl to support gallery-only layouts
-        className={`group/card relative flex flex-col ${!isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ''} h-full bg-surface-card border border-border-default rounded-sm overflow-hidden shadow-none hover:border-border-default-strong transition-colors cursor-pointer min-w-0 w-full max-w-full ${isArchitectOfBuilding ? "border-l-2 border-l-brand-primary" : ""}`}
+        className={`group/card relative flex flex-col ${
+          !isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ""
+        } h-full bg-surface-card border border-border-default rounded-sm overflow-hidden shadow-none hover:border-border-strong transition-colors cursor-pointer min-w-0 w-full max-w-full ${
+          isArchitectOfBuilding ? "border-l-2 border-l-brand-primary" : ""
+        }`}
       >
         {isCompact ? (
-          // COMPACT LAYOUT: Header -> Text -> Media -> Footer
           <>
-              {Header}
-              <div className={`flex flex-col flex-1 min-w-0 p-2.5 md:p-4 md:pt-3 gap-2`}>
-                  {ContentBody}
-              </div>
-              {Media}
-              {Footer}
+            {Media}
+            {Header}
+            <div className="flex flex-col flex-1 min-w-0 p-2.5 md:p-4 md:pt-3 gap-2">
+              {ContentBody}
+            </div>
+            {Footer}
           </>
         ) : (
-          // DEFAULT LAYOUT: Header -> Media -> (Text + Footer)
           <>
-              <div className="flex flex-col flex-1 min-w-0">
-                 {Header}
-                 <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
-                     {ContentBody}
-                     {Footer}
-                 </div>
+            <div className="flex flex-col flex-1 min-w-0">
+              {Header}
+              <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
+                {ContentBody}
+                {Footer}
               </div>
-              {Media}
+            </div>
+            {Media}
           </>
         )}
       </article>

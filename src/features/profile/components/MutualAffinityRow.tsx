@@ -32,7 +32,9 @@ export function MutualAffinityRow({ users }: MutualAffinityRowProps) {
                             <div className="relative">
                                 <Avatar className="h-14 w-14 border-2 border-transparent group-hover:border-brand-primary/50 transition-colors">
                                     <AvatarImage src={user.avatar_url || undefined} alt={user.username || "User"} />
-                                    <AvatarFallback className="bg-surface-muted text-secondary-foreground">{user.username?.charAt(0).toUpperCase() || "?"}</AvatarFallback>
+                                    <AvatarFallback className="bg-surface-muted text-text-secondary">
+                                      {user.username?.charAt(0).toUpperCase() || "?"}
+                                    </AvatarFallback>
                                 </Avatar>
                                 <div className={cn(
                                     "absolute -bottom-2 -right-1 flex items-center justify-center rounded-full text-[10px] font-bold h-6 w-8 border-2 border-surface-default shadow-sm",

@@ -51,6 +51,7 @@ import { BuildingImageCard } from "../components/BuildingImageCard";
 import { BuildingHeader } from "../components/BuildingHeader";
 import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingHero } from "../components/BuildingHero";
+import { BuildingAttributes } from "../components/BuildingAttributes";
 
 // --- Types ---
 interface BuildingDetails {
@@ -1004,7 +1005,15 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
     return `https://www.google.com/search?${params.toString()}`;
   }, [building]);
 
-  if (loading || !building) return <AppLayout title="Loading..."><div className="p-8"><Loader2 className="animate-spin" /></div></AppLayout>;
+  if (loading || !building) {
+    return (
+      <AppLayout title="Loading...">
+        <div className="p-8">
+          <Loader2 className="animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title={building.name} showBack>
@@ -1013,303 +1022,81 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
       <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
 
       <div className="p-4 sm:p-6 lg:p-8">
-      {/* Building Header - Mobile Only */}
-      <BuildingHeader
-        building={building}
-        showEditLink={!!user}
-        className="lg:hidden pb-0"
-        isEditing={isOfficialEditing}
-        nameValue={draftOfficialData.name}
-        yearValue={draftOfficialData.year_completed}
-        onNameChange={(val) => setDraftOfficialData(prev => ({ ...prev, name: val }))}
-        onYearChange={(val) => setDraftOfficialData(prev => ({ ...prev, year_completed: val }))}
-      />
+        <div className="max-w-4xl mx-auto space-y-12">
+          {/* 2. Building header */}
+          <section className="space-y-4">
+            <BuildingHeader
+              building={building}
+              showEditLink={!!user}
+              isEditing={isOfficialEditing}
+              nameValue={draftOfficialData.name}
+              yearValue={draftOfficialData.year_completed}
+              onNameChange={(val) =>
+                setDraftOfficialData((prev) => ({ ...prev, name: val }))
+              }
+              onYearChange={(val) =>
+                setDraftOfficialData((prev) => ({
+                  ...prev,
+                  year_completed: val,
+                }))
+              }
+            />
 
-      {canEditOfficialData && (
-        <div className="lg:hidden mt-2 mb-2 flex justify-end">
-            {isOfficialEditing ? (
-                <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setIsOfficialEditing(false)} disabled={isSavingOfficial}>
-                        Cancel
-                    </Button>
-                    <Button size="sm" onClick={handleSaveOfficialData} disabled={isSavingOfficial}>
-                        {isSavingOfficial && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                        Save Changes
-                    </Button>
-                </div>
-            ) : (
-                <Button variant="outline" size="sm" onClick={() => setIsOfficialEditing(true)} className="gap-2 w-full">
-                    <Pencil className="w-4 h-4" />
-                    Edit Official Data
-                </Button>
-            )}
-        </div>
-      )}
-
-      <ArchitectStatement
-        statement={draftOfficialData.architect_statement}
-        isEditing={isOfficialEditing}
-        onChange={(val) => setDraftOfficialData(prev => ({ ...prev, architect_statement: val }))}
-        className="lg:hidden mt-4"
-      />
-
-      <div className="lg:grid lg:grid-cols-2 lg:gap-8 max-w-7xl mx-auto pt-4">
-        
-        {/* LEFT: Visuals & Map (Map-First Experience ) */}
-        <div className="space-y-6">
-            <div className="space-y-2 group">
-                {/* Map Integration */}
-                {building.location_precision === 'approximate' && (
-                    <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-500 dark:text-amber-400">
-                        <AlertTriangle className="h-4 w-4 stroke-amber-500 dark:stroke-amber-400" />
-                        <AlertDescription className="ml-2">
-                            Exact location not verified. This marker indicates the general village/locality.
-                        </AlertDescription>
-                    </Alert>
-                )}
-
-                {coordinates ? (
-                  <WidgetErrorBoundary>
-                    <BuildingLocationMap
-                      lat={coordinates.lat}
-                      lng={coordinates.lng}
-                      status={userStatus}
-                      rating={myRating}
-                      tierRank={building.tier_rank}
-                      locationPrecision={building.location_precision}
-                      isExpanded={isMapExpanded}
-                      onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
-                      className={isMapExpanded ? "" : "h-48 w-full"}
-                    />
-                  </WidgetErrorBoundary>
-                ) : (
-                <div className="h-48 bg-surface-muted/20 rounded-sm border border-dashed border-border-default flex items-center justify-center flex-col gap-2 text-text-secondary">
-                    <MapPin className="w-6 h-6 opacity-50" />
-                    <span className="text-xs uppercase tracking-widest">Location Unavailable</span>
-                </div>
-                )}
-
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-text-secondary w-full">
-                        <MapPin className="w-4 h-4 shrink-0" />
-                        {isOfficialEditing ? (
-                            <div className="flex gap-2 w-full max-w-sm">
-                                <Input
-                                    value={draftOfficialData.city}
-                                    onChange={(e) => setDraftOfficialData(prev => ({ ...prev, city: e.target.value }))}
-                                    placeholder="City"
-                                    className="h-8 text-sm"
-                                />
-                                <Input
-                                    value={draftOfficialData.country}
-                                    onChange={(e) => setDraftOfficialData(prev => ({ ...prev, country: e.target.value }))}
-                                    placeholder="Country"
-                                    className="h-8 text-sm"
-                                />
-                            </div>
-                        ) : (
-                            <span className="text-sm font-medium">
-                                {[building.city, building.country].filter(Boolean).join(", ") || building.address}
-                            </span>
-                        )}
-
-                        {user && !isOfficialEditing && (
-                            <Link
-                                to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}
-                                className="hidden group-hover:inline-flex items-center justify-center p-1 rounded hover:bg-surface-muted text-text-secondary/50 hover:text-text-primary transition-colors ml-1"
-                                title="Edit building"
-                            >
-                                <Pencil className="w-3 h-3" />
-                            </Link>
-                        )}
-                    </div>
-                    {coordinates && (
-                        <>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="shrink-0 h-8"
-                                onClick={() => {
-                                    if (building.location_precision === 'approximate') {
-                                        setShowDirectionsAlert(true);
-                                    } else {
-                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, '_blank');
-                                    }
-                                }}
-                            >
-                                {building.status === 'Lost'
-                                    ? (building.location_precision === 'approximate' ? "Navigate to Site (Approximate)" : "Navigate to Site")
-                                    : (building.location_precision === 'approximate' ? "Get Directions (Approximate)" : "Get Directions")}
-                            </Button>
-
-                            <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This building's location is approximate. The directions will guide you to the general vicinity (e.g. village center).
-                                            <br/><br/>
-                                            Please look around when you arrive.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => {
-                                            window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, '_blank');
-                                        }}>
-                                            {building.status === 'Lost' ? "Navigate to Site" : "Get Directions"}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </>
-                    )}
-                </div>
-
-                {(building.status === 'Lost' || building.status === 'Unbuilt' || building.status === 'Under Construction') && (
-                    <Alert className="mt-4 border-feedback-destructive/50 bg-feedback-destructive/10 text-feedback-destructive dark:text-red-400">
-                        <AlertTriangle className="h-4 w-4 stroke-destructive dark:stroke-red-400" />
-                        <AlertDescription className="ml-2 font-medium">
-                            {building.status === 'Lost'
-                                ? "This building is lost to time. It no longer stands at this location."
-                                : building.status === 'Unbuilt'
-                                ? "This project was never built."
-                                : "This building is under construction."}
-                        </AlertDescription>
-                    </Alert>
-                )}
-            </div>
-
-            <div className="mt-12 border-t border-border-default pt-8 space-y-6">
-            <WidgetErrorBoundary>
-            {displayImages.length > 0 ? (
-                (() => {
-                    const officialCount = displayImages.filter(img => img.is_official).length;
-                    const showTabs = officialCount > 0 && officialCount < displayImages.length;
-
-                    if (showTabs) {
-                        return (
-                            <Tabs defaultValue="all" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 mb-4">
-                                    <TabsTrigger value="all">All Photos</TabsTrigger>
-                                    <TabsTrigger value="official">Official Lookbook</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="all" className="space-y-6 mt-0">
-                                    {displayImages.map((img) => (
-                                        <BuildingImageCard
-                                            key={img.id}
-                                            image={img}
-                                            initialIsLiked={likedImageIds.has(img.id)}
-                                            onOpen={() => setSelectedImage(img)}
-                                        />
-                                    ))}
-                                </TabsContent>
-                                <TabsContent value="official" className="space-y-6 mt-0">
-                                    {displayImages.filter(img => img.is_official).map((img) => (
-                                        <BuildingImageCard
-                                            key={img.id}
-                                            image={img}
-                                            initialIsLiked={likedImageIds.has(img.id)}
-                                            onOpen={() => setSelectedImage(img)}
-                                        />
-                                    ))}
-                                </TabsContent>
-                            </Tabs>
-                        );
-                    } else {
-                        return (
-                            <div className="space-y-6">
-                                {displayImages.map((img) => (
-                                    <BuildingImageCard
-                                        key={img.id}
-                                        image={img}
-                                        initialIsLiked={likedImageIds.has(img.id)}
-                                        onOpen={() => setSelectedImage(img)}
-                                    />
-                                ))}
-                            </div>
-                        );
-                    }
-                })()
-            ) : (
-                <div className="aspect-[16/9] md:aspect-[21/9] rounded-sm overflow-hidden shadow-none border border-border-default relative group">
-                    <div className="w-full h-full bg-surface-muted flex flex-col items-center justify-center text-text-secondary text-center p-6">
-                        <ImageIcon className="w-12 h-12 text-text-secondary/20 mb-3" />
-                        <h3 className="font-medium text-text-secondary mb-1">No image yet</h3>
-                        <p className="text-xs text-text-secondary/50 max-w-[200px] mb-4">Be the first to add a photo of this building</p>
-                        <Button variant="outline" size="sm" asChild>
-                            <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}>
-                                <ImagePlus className="w-4 h-4 mr-2" />
-                                Upload photo
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
-            )}
-            </WidgetErrorBoundary>
-
-            <div className="flex justify-center pt-2">
-                 <a
-                    href={googleSearchUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-xs text-text-secondary hover:text-brand-primary hover:underline transition-colors"
-                >
-                    <Search className="w-3 h-3" />
-                    Search for photos on Google
-                    <ExternalLink className="w-3 h-3 opacity-50" />
-                </a>
-            </div>
-            </div>
-        </div>
-
-        {/* RIGHT: Data & Actions */}
-        <div className="space-y-8 mt-6 lg:mt-0">
-            
-            {/* Header Info - Desktop Only */}
-      <div className="hidden lg:block space-y-4">
-        <BuildingHeader
-            building={building}
-            showEditLink={!!user}
-            isEditing={isOfficialEditing}
-            nameValue={draftOfficialData.name}
-            yearValue={draftOfficialData.year_completed}
-            onNameChange={(val) => setDraftOfficialData(prev => ({ ...prev, name: val }))}
-            onYearChange={(val) => setDraftOfficialData(prev => ({ ...prev, year_completed: val }))}
-        />
-
-        {canEditOfficialData && (
-             <div className="flex justify-end">
+            {canEditOfficialData && (
+              <div className="flex justify-end">
                 {isOfficialEditing ? (
-                    <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setIsOfficialEditing(false)} disabled={isSavingOfficial}>
-                            Cancel
-                        </Button>
-                        <Button size="sm" onClick={handleSaveOfficialData} disabled={isSavingOfficial}>
-                            {isSavingOfficial && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Save Changes
-                        </Button>
-                    </div>
-                ) : (
-                    <Button variant="outline" size="sm" onClick={() => setIsOfficialEditing(true)} className="gap-2">
-                        <Pencil className="w-4 h-4" />
-                        Edit Official Data
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsOfficialEditing(false)}
+                      disabled={isSavingOfficial}
+                    >
+                      Cancel
                     </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveOfficialData}
+                      disabled={isSavingOfficial}
+                    >
+                      {isSavingOfficial && (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      )}
+                      Save Changes
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsOfficialEditing(true)}
+                    aria-label="Edit official data"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
                 )}
-             </div>
-        )}
+              </div>
+            )}
 
-        <ArchitectStatement
-            statement={draftOfficialData.architect_statement}
-            isEditing={isOfficialEditing}
-            onChange={(val) => setDraftOfficialData(prev => ({ ...prev, architect_statement: val }))}
-            className="mt-6"
-        />
+            <ArchitectStatement
+              statement={draftOfficialData.architect_statement}
+              isEditing={isOfficialEditing}
+              onChange={(val) =>
+                setDraftOfficialData((prev) => ({
+                  ...prev,
+                  architect_statement: val,
+                }))
+              }
+              className="mt-4"
+            />
+          </section>
 
-      </div>
-
-            {/* ACTION CENTER: Contextual Rating UI [cite: 52] */}
-            <div className="mt-12 border-t border-border-default pt-8 space-y-6">
+          {/* 3–4. Action bar + Details */}
+          <section className="mt-12 pt-8 border-t border-border-default">
+            <div className="grid gap-8 lg:grid-cols-2 items-start">
+              {/* 3. Your Activity */}
+              <div className="space-y-6">
+                {/* ACTION CENTER: Contextual Rating UI */}
                 {!isEditing && userStatus ? (
                     // Summary View
                     <div className="bg-surface-card rounded-sm p-6 border border-border-default space-y-4 group">
@@ -1491,12 +1278,13 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                         Add media
                                      </Button>
                                      <input
-                                        id="hidden-file-input"
-                                        type="file"
-                                        multiple
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleImageSelect}
+                                       id="hidden-file-input"
+                                       type="file"
+                                       multiple
+                                       accept="image/*"
+                                       className="hidden"
+                                       onChange={handleImageSelect}
+                                       aria-label="Upload photos of this building"
                                      />
 
                                      <Button
@@ -1535,10 +1323,11 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                                                 </button>
 
                                                 <button
-                                                    onClick={() => removePendingImage(img.id)}
-                                                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                  onClick={() => removePendingImage(img.id)}
+                                                  className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                  aria-label="Remove pending image"
                                                 >
-                                                    <Trash2 className="w-3 h-3" />
+                                                  <Trash2 className="w-3 h-3" />
                                                 </button>
                                             </div>
                                         ))}
@@ -1668,175 +1457,524 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                         )}
                     </div>
                 )}
+              </div>
+
+              {/* 4. Details */}
+              <div className="space-y-4">
+                <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-primary">
+                  Details
+                </h2>
+                <BuildingAttributes building={building} />
+              </div>
             </div>
+          </section>
 
+          {/* 6. Photos grid */}
+          <section className="mt-12 pt-8 border-t border-border-default space-y-4">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-primary">
+              Photos
+            </h2>
+            <WidgetErrorBoundary>
+              {displayImages.length > 0 ? (
+                (() => {
+                  const officialCount = displayImages.filter(
+                    (img) => img.is_official
+                  ).length;
+                  const showTabs =
+                    officialCount > 0 && officialCount < displayImages.length;
 
-            {/* Top Community Resources */}
-            {(linksLoading || topLinks.length > 0) && (
-                <WidgetErrorBoundary>
-                <div className="mt-12 border-t border-border-default pt-8">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-4">
-                        Top Community Resources
-                    </h3>
-                    <div className="space-y-2">
-                        {linksLoading ? (
-                            <>
-                                <Skeleton className="h-12 w-full rounded-sm" />
-                                <Skeleton className="h-12 w-full rounded-sm" />
-                            </>
-                        ) : (
-                            topLinks.map(link => {
-                                let domain = "";
-                                try {
-                                    domain = new URL(link.url).hostname;
-                                } catch { }
-                                const displayDomain = domain || link.url;
-                                const hasTitle = !!link.title;
+                  if (showTabs) {
+                    return (
+                      <Tabs defaultValue="all" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-4">
+                          <TabsTrigger value="all">All Photos</TabsTrigger>
+                          <TabsTrigger value="official">
+                            Official Lookbook
+                          </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="all" className="mt-0">
+                          <div className="grid grid-cols-3 gap-2">
+                            {displayImages.map((img) => (
+                              <BuildingImageCard
+                                key={img.id}
+                                image={img}
+                                initialIsLiked={likedImageIds.has(img.id)}
+                                onOpen={() => setSelectedImage(img)}
+                              />
+                            ))}
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="official" className="mt-0">
+                          <div className="grid grid-cols-3 gap-2">
+                            {displayImages
+                              .filter((img) => img.is_official)
+                              .map((img) => (
+                                <BuildingImageCard
+                                  key={img.id}
+                                  image={img}
+                                  initialIsLiked={likedImageIds.has(img.id)}
+                                  onOpen={() => setSelectedImage(img)}
+                                />
+                              ))}
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    );
+                  }
 
-                                const isLiked = likedLinkIds.has(link.link_id);
-
-                                return (
-                                    <div
-                                        key={link.link_id}
-                                        className="flex items-center justify-between p-3 rounded-sm bg-surface-muted/50 hover:bg-surface-muted transition-colors border border-transparent hover:border-border-default group"
-                                    >
-                                        <a
-                                            href={link.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex-1 flex flex-col gap-0.5 overflow-hidden cursor-pointer"
-                                        >
-                                            <span className="font-medium truncate pr-2 text-sm group-hover:text-brand-primary transition-colors">
-                                                {hasTitle ? link.title : displayDomain}
-                                            </span>
-                                            <div className="flex items-center gap-2 text-xs text-text-secondary">
-                                                {hasTitle && (
-                                                    <span className="truncate max-w-[150px]">{displayDomain}</span>
-                                                )}
-                                                {hasTitle && link.user_username && <span>•</span>}
-                                                {link.user_username && (
-                                                    <span>shared by @{link.user_username}</span>
-                                                )}
-                                            </div>
-                                        </a>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className={`h-8 px-2 gap-1.5 text-xs hover:bg-transparent ${isLiked ? 'text-pink-500 hover:text-pink-600' : 'text-text-secondary hover:text-pink-500'}`}
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    handleLinkLike(link.link_id);
-                                                }}
-                                            >
-                                                <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-current" : ""}`} />
-                                                <span>{link.like_count}</span>
-                                            </Button>
-
-                                            <a
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="p-1.5 rounded-md hover:bg-surface-default text-text-secondary/50 hover:text-text-primary transition-colors"
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                            </a>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
+                  return (
+                    <div className="grid grid-cols-3 gap-2">
+                      {displayImages.map((img) => (
+                        <BuildingImageCard
+                          key={img.id}
+                          image={img}
+                          initialIsLiked={likedImageIds.has(img.id)}
+                          onOpen={() => setSelectedImage(img)}
+                        />
+                      ))}
                     </div>
+                  );
+                })()
+              ) : (
+                <div className="aspect-[16/9] md:aspect-[21/9] rounded-sm overflow-hidden shadow-none border border-border-default relative group">
+                  <div className="w-full h-full bg-surface-muted flex flex-col items-center justify-center text-text-secondary text-center p-6">
+                    <ImageIcon className="w-12 h-12 text-text-secondary/20 mb-3" />
+                    <h3 className="font-medium text-text-secondary mb-1">
+                      No image yet
+                    </h3>
+                    <p className="text-xs text-text-secondary/50 max-w-[200px] mb-4">
+                      Be the first to add a photo of this building
+                    </p>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        to={
+                          getBuildingUrl(
+                            building.id,
+                            building.slug,
+                            building.short_id
+                          ) + "/review"
+                        }
+                      >
+                        <ImagePlus className="w-4 h-4 mr-2" />
+                        Upload photo
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
-                </WidgetErrorBoundary>
-            )}
+              )}
+            </WidgetErrorBoundary>
 
-
-            {/* Community Activity */}
-            <div className="mt-12 border-t border-border-default pt-8">
-                <h3 className="text-lg font-bold mb-4">Community Notes</h3>
-                <div className="space-y-4">
-                    {entries.length === 0 ? (
-                        <p className="text-text-secondary text-sm">No one has visited this building yet.</p>
-                    ) : (
-                        entries.map(entry => (
-                            <div key={entry.id} className={`flex gap-4 p-4 bg-surface-muted/10 rounded-sm ${entry.user.is_architect_of_building ? 'border-l-2 border-l-[#eeff41ff] bg-surface-default border-t border-r border-b border-border-default/50' : ''}`}>
-                                <Avatar>
-                                    <AvatarImage src={entry.user.avatar_url || undefined} />
-                                    <AvatarFallback>{entry.user.username?.[0]}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <Link to={`/profile/${entry.user.username || entry.user_id}`} className="font-bold text-sm hover:underline">
-                                            {entry.user.username}
-                                        </Link>
-                                        {entry.user.is_verified_architect && (
-                                            <div
-                                                className="inline-flex items-center text-text-primary ml-1 align-middle"
-                                                data-testid="verified-badge-icon"
-                                                title="Verified Architect"
-                                            >
-                                                <BadgeCheck className="w-4 h-4" />
-                                            </div>
-                                        )}
-                                        {entry.status === 'visited' && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">Visited</Badge>}
-                                        {entry.status === 'pending' && <Badge variant="outline" className="text-[10px] h-5 px-1.5">Saved</Badge>}
-                                        <Link to={`/review/${entry.id}`} className="text-xs text-text-secondary hover:underline">
-                                            {formatDistanceToNow(new Date(entry.created_at))} ago
-                                        </Link>
-                                    </div>
-
-                                    <Link to={`/review/${entry.id}`} className="block group">
-                                        {entry.rating && (
-                                            <div className="flex items-center gap-0.5 my-1 group-hover:opacity-80 transition-opacity">
-                                                {[...Array(3)].map((_, i) => (
-                                                    <Circle
-                                                      key={i}
-                                                      className={`w-3 h-3 ${i < entry.rating! ? "fill-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`}
-                                                    />
-                                                ))}
-                                            </div>
-                                        )}
-                                        {entry.content && <p className="text-sm mt-1 text-text-secondary group-hover:text-text-primary transition-colors">{entry.content}</p>}
-                                    </Link>
-
-                                    {entry.images && entry.images.length > 0 && (
-                                        <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
-                                            {entry.images.map((img) => {
-                                                const publicUrl = getBuildingImageUrl(img.storage_path);
-                                                if (!publicUrl) return null;
-
-                                                const displayImg: DisplayImage = {
-                                                    id: img.id,
-                                                    url: publicUrl,
-                                                    likes_count: 0, // Not available in this view
-                                                    created_at: img.created_at || entry.created_at,
-                                                    user: entry.user
-                                                };
-
-                                                return (
-                                                    <img
-                                                        key={img.id}
-                                                        src={publicUrl}
-                                                        className="h-24 w-24 object-cover rounded-md border bg-surface-muted cursor-pointer hover:opacity-90 transition-opacity"
-                                                        alt="Review photo"
-                                                        onClick={() => setSelectedImage(displayImg)}
-                                                    />
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+            <div className="flex justify-center pt-2">
+              <a
+                href={googleSearchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs text-text-secondary hover:text-brand-primary hover:underline transition-colors"
+              >
+                <Search className="w-3 h-3" />
+                Search for photos on Google
+                <ExternalLink className="w-3 h-3 opacity-50" />
+              </a>
             </div>
+          </section>
 
+          {/* 7. Location */}
+          <section className="mt-12 pt-8 border-t border-border-default space-y-6">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-primary">
+              Location
+            </h2>
+
+            <div className="space-y-4 group">
+              {building.location_precision === "approximate" && (
+                <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-500">
+                  <AlertTriangle className="h-4 w-4 stroke-amber-500" />
+                  <AlertDescription className="ml-2">
+                    Exact location not verified. This marker indicates the
+                    general village/locality.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {coordinates ? (
+                <WidgetErrorBoundary>
+                  <BuildingLocationMap
+                    lat={coordinates.lat}
+                    lng={coordinates.lng}
+                    status={userStatus}
+                    rating={myRating}
+                    tierRank={building.tier_rank}
+                    locationPrecision={building.location_precision}
+                    isExpanded={isMapExpanded}
+                    onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
+                    className={isMapExpanded ? "" : "h-48 w-full"}
+                  />
+                </WidgetErrorBoundary>
+              ) : (
+                <div className="h-48 bg-surface-muted/20 rounded-sm border border-dashed border-border-default flex items-center justify-center flex-col gap-2 text-text-secondary">
+                  <MapPin className="w-6 h-6 opacity-50" />
+                  <span className="text-xs uppercase tracking-widest">
+                    Location Unavailable
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-text-secondary w-full">
+                  <MapPin className="w-4 h-4 shrink-0" />
+                  {isOfficialEditing ? (
+                    <div className="flex gap-2 w-full max-w-sm">
+                      <Input
+                        value={draftOfficialData.city}
+                        onChange={(e) =>
+                          setDraftOfficialData((prev) => ({
+                            ...prev,
+                            city: e.target.value,
+                          }))
+                        }
+                        placeholder="City"
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        value={draftOfficialData.country}
+                        onChange={(e) =>
+                          setDraftOfficialData((prev) => ({
+                            ...prev,
+                            country: e.target.value,
+                          }))
+                        }
+                        placeholder="Country"
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-sm font-medium">
+                      {[building.city, building.country]
+                        .filter(Boolean)
+                        .join(", ") || building.address}
+                    </span>
+                  )}
+
+                  {user && !isOfficialEditing && (
+                    <Link
+                      to={
+                        getBuildingUrl(
+                          building.id,
+                          building.slug,
+                          building.short_id
+                        ) + "/edit"
+                      }
+                      className="hidden group-hover:inline-flex items-center justify-center p-1 rounded-sm hover:bg-surface-muted text-text-secondary/50 hover:text-text-primary transition-colors ml-1"
+                      title="Edit building"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Link>
+                  )}
+                </div>
+                {coordinates && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 h-8"
+                      onClick={() => {
+                        if (building.location_precision === "approximate") {
+                          setShowDirectionsAlert(true);
+                        } else {
+                          window.open(
+                            `https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`,
+                            "_blank"
+                          );
+                        }
+                      }}
+                    >
+                      {building.status === "Lost"
+                        ? building.location_precision === "approximate"
+                          ? "Navigate to Site (Approximate)"
+                          : "Navigate to Site"
+                        : building.location_precision === "approximate"
+                        ? "Get Directions (Approximate)"
+                        : "Get Directions"}
+                    </Button>
+
+                    <AlertDialog
+                      open={showDirectionsAlert}
+                      onOpenChange={setShowDirectionsAlert}
+                    >
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This building&apos;s location is approximate. The
+                            directions will guide you to the general vicinity
+                            (e.g. village center).
+                            <br />
+                            <br />
+                            Please look around when you arrive.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              window.open(
+                                `https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`,
+                                "_blank"
+                              );
+                            }}
+                          >
+                            {building.status === "Lost"
+                              ? "Navigate to Site"
+                              : "Get Directions"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
+              </div>
+
+              {(building.status === "Lost" ||
+                building.status === "Unbuilt" ||
+                building.status === "Under Construction") && (
+                <Alert className="mt-4 border-feedback-destructive/50 bg-feedback-destructive/10 text-feedback-destructive">
+                  <AlertTriangle className="h-4 w-4 stroke-feedback-destructive" />
+                  <AlertDescription className="ml-2 font-medium">
+                    {building.status === "Lost"
+                      ? "This building is lost to time. It no longer stands at this location."
+                      : building.status === "Unbuilt"
+                      ? "This project was never built."
+                      : "This building is under construction."}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </section>
+
+          {/* Top Community Resources */}
+          {(linksLoading || topLinks.length > 0) && (
+            <section className="mt-12 pt-8 border-t border-border-default">
+              <WidgetErrorBoundary>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-primary mb-4">
+                    Top Community Resources
+                  </h2>
+                  <div className="space-y-2">
+                    {linksLoading ? (
+                      <>
+                        <Skeleton className="h-12 w-full rounded-sm" />
+                        <Skeleton className="h-12 w-full rounded-sm" />
+                      </>
+                    ) : (
+                      topLinks.map((link) => {
+                        let domain = "";
+                        try {
+                          domain = new URL(link.url).hostname;
+                        } catch {
+                          // ignore
+                        }
+                        const displayDomain = domain || link.url;
+                        const hasTitle = !!link.title;
+
+                        const isLiked = likedLinkIds.has(link.link_id);
+
+                        return (
+                          <div
+                            key={link.link_id}
+                            className="flex items-center justify-between p-3 rounded-sm bg-surface-muted/50 hover:bg-surface-muted transition-colors border border-transparent hover:border-border-default group"
+                          >
+                            <a
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex flex-col gap-0.5 overflow-hidden cursor-pointer"
+                            >
+                              <span className="font-medium truncate pr-2 text-sm group-hover:text-brand-primary transition-colors">
+                                {hasTitle ? link.title : displayDomain}
+                              </span>
+                              <div className="flex items-center gap-2 text-xs text-text-secondary">
+                                {hasTitle && (
+                                  <span className="truncate max-w-[150px]">
+                                    {displayDomain}
+                                  </span>
+                                )}
+                                {hasTitle && link.user_username && <span>•</span>}
+                                {link.user_username && (
+                                  <span>shared by @{link.user_username}</span>
+                                )}
+                              </div>
+                            </a>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-8 px-2 gap-1.5 text-xs hover:bg-transparent ${
+                                  isLiked
+                                    ? "text-pink-500 hover:text-pink-600"
+                                    : "text-text-secondary hover:text-pink-500"
+                                }`}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleLinkLike(link.link_id);
+                                }}
+                                aria-label={
+                                  isLiked ? "Unlike community resource" : "Like community resource"
+                                }
+                              >
+                                <Heart
+                                  className={`w-3.5 h-3.5 ${
+                                    isLiked ? "fill-current" : ""
+                                  }`}
+                                />
+                                <span>{link.like_count}</span>
+                              </Button>
+
+                              <a
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-md hover:bg-surface-default text-text-secondary/50 hover:text-text-primary transition-colors"
+                                aria-label="Open resource"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </WidgetErrorBoundary>
+            </section>
+          )}
+
+          {/* 8. Community Notes */}
+          <section className="mt-12 pt-8 border-t border-border-default">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-primary mb-4">
+              Community Notes
+            </h2>
+            <div className="space-y-4">
+              {entries.length === 0 ? (
+                <p className="text-text-secondary text-sm">
+                  No one has visited this building yet.
+                </p>
+              ) : (
+                entries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className={`flex gap-4 p-4 bg-surface-muted/10 rounded-sm ${
+                      entry.user.is_architect_of_building
+                        ? "border-l-2 border-l-[#eeff41ff] bg-surface-default border-t border-r border-b border-border-default/50"
+                        : ""
+                    }`}
+                  >
+                    <Avatar>
+                      <AvatarImage src={entry.user.avatar_url || undefined} />
+                      <AvatarFallback>
+                        {entry.user.username?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          to={`/profile/${entry.user.username || entry.user_id}`}
+                          className="font-bold text-sm hover:underline"
+                        >
+                          {entry.user.username}
+                        </Link>
+                        {entry.user.is_verified_architect && (
+                          <div
+                            className="inline-flex items-center text-text-primary ml-1 align-middle"
+                            data-testid="verified-badge-icon"
+                            title="Verified Architect"
+                          >
+                            <BadgeCheck className="w-4 h-4" />
+                          </div>
+                        )}
+                        {entry.status === "visited" && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] h-5 px-1.5"
+                          >
+                            Visited
+                          </Badge>
+                        )}
+                        {entry.status === "pending" && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-5 px-1.5"
+                          >
+                            Saved
+                          </Badge>
+                        )}
+                        <Link
+                          to={`/review/${entry.id}`}
+                          className="text-xs text-text-secondary hover:underline"
+                        >
+                          {formatDistanceToNow(new Date(entry.created_at))} ago
+                        </Link>
+                      </div>
+
+                      <Link
+                        to={`/review/${entry.id}`}
+                        className="block group"
+                      >
+                        {entry.rating && (
+                          <div className="flex items-center gap-0.5 my-1 group-hover:opacity-80 transition-opacity">
+                            {[...Array(3)].map((_, i) => (
+                              <Circle
+                                key={i}
+                                className={`w-3 h-3 ${
+                                  i < entry.rating!
+                                    ? "fill-brand-primary text-text-primary"
+                                    : "fill-transparent text-text-secondary/20"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {entry.content && (
+                          <p className="text-sm mt-1 text-text-secondary group-hover:text-text-primary transition-colors">
+                            {entry.content}
+                          </p>
+                        )}
+                      </Link>
+
+                      {entry.images && entry.images.length > 0 && (
+                        <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+                          {entry.images.map((img) => {
+                            const publicUrl = getBuildingImageUrl(
+                              img.storage_path
+                            );
+                            if (!publicUrl) return null;
+
+                            const displayImg: DisplayImage = {
+                              id: img.id,
+                              url: publicUrl,
+                              likes_count: 0,
+                              created_at: img.created_at || entry.created_at,
+                              user: entry.user,
+                            };
+
+                            return (
+                              <img
+                                key={img.id}
+                                src={publicUrl}
+                                className="h-24 w-24 object-cover rounded-md border bg-surface-muted cursor-pointer hover:opacity-90 transition-opacity"
+                                alt="Review photo"
+                                onClick={() => setSelectedImage(displayImg)}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
         </div>
-      </div>
-
       </div>
 
       <ImageDetailsDialog

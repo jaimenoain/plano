@@ -60,8 +60,8 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
   const imageUrl = getBuildingImageUrl(building.main_image_url);
 
   return (
-    <div className="bg-surface-card border border-border-default/50 rounded-lg overflow-hidden flex flex-col h-full animate-in fade-in zoom-in-95 duration-300">
-      <div className="relative aspect-[2/3] group cursor-pointer overflow-hidden">
+    <div className="bg-surface-card border border-border-default rounded-sm overflow-hidden flex flex-col h-full shadow-none animate-in fade-in zoom-in-95 duration-300">
+      <div className="relative aspect-[4/3] group cursor-pointer overflow-hidden">
         <Link to={getBuildingUrl(building.id, building.slug, building.short_id)}>
             {imageUrl ? (
             <img
@@ -82,11 +82,13 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
             <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="hover:underline">
                  <h3 className="font-semibold leading-tight line-clamp-1" title={building.name}>{building.name}</h3>
             </Link>
-            <p className="text-xs text-text-secondary mt-0.5">{year_completed} • {formatDistanceToNow(new Date(recommendation.created_at))} ago</p>
+            <p className="text-xs text-text-secondary mt-0.5">
+              {year_completed ?? "—"} • {formatDistanceToNow(new Date(recommendation.created_at))} ago
+            </p>
         </div>
 
         {/* Recommender Info - More prominent in body */}
-        <div className="flex items-center gap-3 bg-surface-muted/30 p-2 rounded-md my-1">
+        <div className="flex items-center gap-3 bg-surface-muted/30 p-2 rounded-sm my-1">
              <Avatar className="h-8 w-8">
                 <AvatarImage src={recommender.avatar_url || undefined} />
                 <AvatarFallback className="text-xs">{recommender.username?.charAt(0)}</AvatarFallback>
@@ -103,17 +105,20 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={"secondary"}
+                  variant={interaction.rating ? "secondary" : "ghost"}
                   size={interaction.rating ? "default" : "icon"}
-                  className={cn("h-8 w-full rounded-md transition-colors",
+                  className={cn(
+                    "h-8 w-full rounded-sm transition-colors",
                     interaction.rating
-                      ? "bg-brand-primary/10 text-[#595959] hover:bg-brand-primary/20 hover:text-[#595959] border-brand-primary/20 border"
-                      : "hover:bg-brand-primary hover:text-brand-primary-foreground"
+                      ? "bg-brand-secondary text-text-primary border border-border-default"
+                      : "hover:bg-brand-primary hover:text-brand-primary-foreground",
                   )}
                   onClick={() => onRate(building)}
                 >
                   {interaction.rating ? (
-                    <span className="flex items-center gap-1 font-bold"><Circle className="h-3 w-3 fill-current" /> {interaction.rating}</span>
+                    <span className="flex items-center gap-1 font-bold">
+                      <Circle className="h-3 w-3 fill-brand-primary text-brand-primary" /> {interaction.rating}
+                    </span>
                   ) : (
                     <Circle className="h-4 w-4" />
                   )}
@@ -127,14 +132,22 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={interaction.status === 'pending' ? "default" : "secondary"}
+                  variant={interaction.status === "pending" ? "default" : "secondary"}
                   size="icon"
-                  className={cn("h-8 w-full rounded-md transition-colors",
-                    interaction.status === 'pending' ? "bg-blue-600 hover:bg-blue-700 text-white" : "hover:bg-brand-primary hover:text-brand-primary-foreground"
+                  className={cn(
+                    "h-8 w-full rounded-sm transition-colors",
+                    interaction.status === "pending"
+                      ? "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover"
+                      : "hover:bg-brand-primary hover:text-brand-primary-foreground",
                   )}
                   onClick={() => onWatchlist(building)}
                 >
-                    <Bookmark className={cn("h-4 w-4", interaction.status === 'pending' && "fill-current")} />
+                  <Bookmark
+                    className={cn(
+                      "h-4 w-4",
+                      interaction.status === "pending" && "fill-brand-primary-foreground",
+                    )}
+                  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

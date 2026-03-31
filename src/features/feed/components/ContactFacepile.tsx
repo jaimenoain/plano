@@ -43,7 +43,10 @@ export function ContactFacepile({ interactions, className }: ContactFacepileProp
     <div className={`flex items-center gap-2 mb-2 min-w-0 ${className || ""}`}>
       <div className="flex -space-x-2 shrink-0">
         {displayUsers.map((user) => (
-          <Avatar key={user.id} className="h-6 w-6 border-2 border-black">
+          <Avatar
+            key={user.id}
+            className="h-6 w-6 rounded-full border-2 border-surface-card"
+          >
             <AvatarImage src={user.avatar_url || ""} alt={user.username || "User"} />
             <AvatarFallback className="bg-surface-muted text-[10px] text-text-secondary">
               {(user.first_name?.[0] || user.username?.[0] || "?").toUpperCase()}
@@ -51,7 +54,7 @@ export function ContactFacepile({ interactions, className }: ContactFacepileProp
           </Avatar>
         ))}
       </div>
-      <span className="text-xs text-white/90 font-medium drop-shadow-md truncate">
+      <span className="text-xs text-text-secondary font-medium truncate">
         {text}
       </span>
     </div>

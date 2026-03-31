@@ -75,8 +75,8 @@ export const BuildingHeader = ({
 
     return (
         <div className={`${className || ""} group`}>
-            <div className="flex justify-between items-start">
-                <div className="flex flex-col items-start gap-2 mb-2 w-full">
+            <div className="flex justify-between items-start gap-4">
+                <div className="flex flex-col items-start gap-2 mb-2 w-full min-w-0">
                     <PopularityBadge rank={building.tier_rank} city={building.city} />
 
                     {isEditing ? (
@@ -93,11 +93,13 @@ export const BuildingHeader = ({
                     )}
 
                     {building.alt_name && building.alt_name !== building.name && !isEditing && (
-                        <h2 className="text-xl text-text-secondary font-medium">{building.alt_name}</h2>
+                        <p className="text-lg text-text-secondary mt-1">
+                            {building.alt_name}
+                        </p>
                     )}
                 </div>
             </div>
-            <div className="flex flex-wrap gap-4 text-sm text-text-secondary items-center">
+            <div className="flex flex-wrap gap-4 text-sm text-text-secondary items-center mt-2">
                 {isEditing && (
                     <div className="flex items-center gap-1.5">
                         <Calendar className="w-4 h-4 text-text-secondary" />

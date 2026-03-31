@@ -529,14 +529,13 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
             image={review.images.length > 0 ? review.images[0].url : undefined}
         />
 
-        <div className="container max-w-5xl mx-auto px-4 py-6">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary mb-6">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+            <h1 className="text-4xl font-bold tracking-tight leading-tight text-text-primary mb-6">
               Visit Log
             </h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-                
-                {/* --- Left/Center Column: Review Content --- */}
-                <div className="md:col-span-2 space-y-6">
+            <div className="space-y-8">
+                {/* --- Review Content --- */}
+                <div className="space-y-6">
                     
                     {/* Header Card */}
                     <Card className="border-border-default/50 shadow-sm bg-surface-card/50 backdrop-blur-sm">
@@ -555,13 +554,19 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                                                 {review.user.username}
                                             </Link>
                                             {isBucketList ? (
-                                                <Badge variant="outline" className="text-xs font-normal text-text-secondary border-blue-500/30 text-blue-500">
-                                                    Wants to visit
-                                                </Badge>
+                                              <Badge
+                                                variant="outline"
+                                                className="text-xs font-normal text-text-secondary border-border-default"
+                                              >
+                                                Wants to visit
+                                              </Badge>
                                             ) : (
-                                                <Badge variant="outline" className="text-xs font-normal text-text-secondary">
-                                                    Visited
-                                                </Badge>
+                                              <Badge
+                                                variant="outline"
+                                                className="text-xs font-normal text-text-secondary border-border-default"
+                                              >
+                                                Visited
+                                              </Badge>
                                             )}
                                         </div>
                                         <div className="text-xs text-text-secondary flex items-center gap-1">
@@ -773,9 +778,6 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                     </div>
 
                 </div>
-
-                {/* --- Right Column: Sidebar --- */}
-                <div className="md:col-span-1 space-y-6">
 
                     {/* Building Card */}
                     <Card className="overflow-hidden border-border-default/50 shadow-sm">

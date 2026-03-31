@@ -8,14 +8,14 @@ export function AllCaughtUpDivider() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="flex flex-col items-center justify-center py-12 px-4 space-y-4 text-center w-full max-w-xl mx-auto"
+      className="relative flex items-center justify-center w-full"
     >
-      <CheckCircle2 className="w-12 h-12 text-text-disabled" />
-      <div className="space-y-1">
-        <h3 className="text-xl font-bold text-text-primary">You're all caught up!</h3>
-        <p className="text-sm text-text-secondary">
-          Here's some inspiration from the community.
-        </p>
+      <div className="w-full border-t border-border-default" />
+      <div className="absolute -translate-y-1/2 px-4 bg-surface-default flex items-center gap-2">
+        <CheckCircle2 className="w-4 h-4 text-text-secondary" />
+        <span className="text-xs font-medium text-text-secondary uppercase tracking-wide">
+          You're all caught up
+        </span>
       </div>
     </motion.div>
   );

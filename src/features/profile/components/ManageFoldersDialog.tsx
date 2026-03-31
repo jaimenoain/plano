@@ -331,8 +331,10 @@ toast({ variant: "destructive", description: "Failed to delete folder." });
 
   const renderIcon = (source: string) => {
       switch(source) {
-          case 'favorite': return <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />;
-          case 'contributed': return <Users className="h-3 w-3 text-blue-500" />;
+          case 'favorite':
+            return <Star className="h-3 w-3 text-feedback-warning fill-feedback-warning" />;
+          case 'contributed':
+            return <Users className="h-3 w-3 text-brand-primary" />;
           default: return null;
       }
   };

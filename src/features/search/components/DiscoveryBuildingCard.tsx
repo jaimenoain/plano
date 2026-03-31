@@ -35,11 +35,11 @@ export function DiscoveryBuildingCard({
   const isHidden = userStatus === 'ignored';
 
   const ImageComponent = imageUrl && (
-    <div className="w-32 h-32 relative shrink-0">
+    <div className="relative w-32 shrink-0 aspect-[4/3] overflow-hidden">
       <img
         src={imageUrl}
         alt={building.name}
-        className="w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover"
         loading="lazy"
       />
     </div>
