@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { ShieldAlert } from "lucide-react";
 
 export default function Unauthorized() {

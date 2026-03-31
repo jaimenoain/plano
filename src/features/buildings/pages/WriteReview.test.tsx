@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import WriteReview from './WriteReview';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 
 // Hoist mocks
 const { mockInvoke, mockSupabaseFrom } = vi.hoisted(() => {
@@ -13,8 +13,8 @@ const { mockInvoke, mockSupabaseFrom } = vi.hoisted(() => {
 });
 
 // Mock Modules
-vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-router-dom')>();
+vi.mock('react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router')>();
   return {
     ...actual,
     useParams: () => ({ id: 'b1' }),

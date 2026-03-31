@@ -1,5 +1,5 @@
 import type { MutualAffinityUser } from "@/features/profile/hooks/useProfileComparison";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";

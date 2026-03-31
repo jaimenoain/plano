@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { ProfileListView } from './ProfileListView';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import { FeedReview } from '@/types/feed';
 
 const mocks = vi.hoisted(() => ({
@@ -42,8 +42,8 @@ const mockData: FeedReview[] = [
 ];
 
 // Mock useNavigate
-vi.mock('react-router-dom', async () => {
-    const actual = await vi.importActual('react-router-dom');
+vi.mock('react-router', async () => {
+    const actual = await vi.importActual('react-router');
     return {
         ...actual,
         useNavigate: () => vi.fn(),

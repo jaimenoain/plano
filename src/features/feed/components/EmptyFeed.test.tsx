@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { EmptyFeed } from "./EmptyFeed";
 import { describe, it, expect, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // @vitest-environment happy-dom
 

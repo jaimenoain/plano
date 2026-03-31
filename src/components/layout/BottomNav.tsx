@@ -1,5 +1,5 @@
 import { Activity, Users, User, Play, Search } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
 
 // Core navigation items

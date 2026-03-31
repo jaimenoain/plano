@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router";
 import { Loader2, MapPin, Send, Check, Bookmark, Image as ImageIcon, Heart, ExternalLink, Circle, AlertTriangle, Search, EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon, Users, X, Pencil, BadgeCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

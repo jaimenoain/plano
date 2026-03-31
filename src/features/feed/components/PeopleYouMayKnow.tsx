@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/features/profile/components/FollowButton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { MutualFacepile } from "@/features/connect/components/MutualFacepile";
 import { X } from "lucide-react";
 

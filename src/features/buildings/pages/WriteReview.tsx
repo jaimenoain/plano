@@ -1,6 +1,6 @@
 // Implements "Write Review" page with rating, text, and image upload
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import {
   Circle,
   Upload,

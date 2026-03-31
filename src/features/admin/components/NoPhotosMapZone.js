@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { parseLocation } from "@/utils/location";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 const CIRCLE_LAYER = {
     id: 'no-photos-circles',
     type: 'circle',

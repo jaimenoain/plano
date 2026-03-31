@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { render, screen, cleanup } from '@testing-library/react';
 import { BuildingHeader } from './BuildingHeader';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { describe, it, expect, afterEach } from 'vitest';
 
 describe('BuildingHeader', () => {

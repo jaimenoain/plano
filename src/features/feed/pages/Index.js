@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { EmptyFeed } from "../components/EmptyFeed";
 import { PeopleYouMayKnow } from "../components/PeopleYouMayKnow";

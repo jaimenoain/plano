@@ -1,7 +1,7 @@
 import { render, screen, cleanup } from "@testing-library/react";
 import { CollectionCard } from "./CollectionCard";
 import { describe, it, expect, afterEach } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 
 describe("CollectionCard", () => {
   afterEach(() => {

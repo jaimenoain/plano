@@ -1,6 +1,6 @@
 import { MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ReviewCard } from "./ReviewCard";

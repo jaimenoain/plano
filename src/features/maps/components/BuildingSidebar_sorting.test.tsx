@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BuildingSidebar } from './BuildingSidebar';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import * as ReactQuery from '@tanstack/react-query';
 import * as MapContext from '../providers/MapContext';
 

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Building2, MapPinPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DiscoveryBuilding } from "./types";

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { DiscoveryBuildingCard } from './DiscoveryBuildingCard';
 import { DiscoveryBuilding } from './types';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 
 // Mocks
 vi.mock('@/features/profile/hooks/useUserBuildingStatuses', () => ({

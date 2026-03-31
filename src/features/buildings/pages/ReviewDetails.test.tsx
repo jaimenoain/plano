@@ -2,7 +2,7 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import ReviewDetails from "./ReviewDetails";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { HelmetProvider } from "react-helmet-async";
 

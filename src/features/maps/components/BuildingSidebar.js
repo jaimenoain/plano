@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, MapPin, UserRound } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { getBuildingImageUrl } from '@/utils/image';
 import { Button } from '@/components/ui/button';
 import { getBoundsFromBuildings } from '@/utils/map';

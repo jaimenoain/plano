@@ -11,7 +11,7 @@ import { Loader2, MapPin, ArrowRight, Building2, Layers } from "lucide-react";
 import MapGL, { Marker, NavigationControl } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { AddBuildingDetails } from "../components/AddBuildingDetails";
 import { Badge } from "@/components/ui/badge";

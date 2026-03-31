@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { DiscoverySearchInput } from "@/features/search/components/DiscoverySearchInput";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Star } from "lucide-react";

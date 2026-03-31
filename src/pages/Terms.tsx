@@ -1,4 +1,4 @@
-import { ScrollRestoration } from "react-router-dom";
+import { ScrollRestoration } from "react-router";
 
 export default function Terms() {
   return (

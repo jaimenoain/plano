@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { BlockUserDialog } from "./BlockUserDialog";
 import { AddBuildingDialog } from "./AddBuildingDialog";
 

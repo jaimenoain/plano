@@ -6,7 +6,7 @@ import { LogOut, MoreHorizontal, Ban } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { BlockUserDialog } from "./BlockUserDialog";
 import { AddBuildingDialog } from "./AddBuildingDialog";
 export function UserCard({ profile, stats, isOwnProfile, isFollowing, onFollowToggle, onSignOut, onOpenUserList, onTabChange, onBuildingAdded, squad: _squad = [] }) {

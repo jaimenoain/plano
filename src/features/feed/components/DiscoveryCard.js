@@ -7,7 +7,7 @@ import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { ContactFacepile } from "./ContactFacepile";
 export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, onSwipeHide, onSkip }) {

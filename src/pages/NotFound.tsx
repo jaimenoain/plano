@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { MetaHead } from "@/components/common/MetaHead";
 import { ArrowLeft, Home } from "lucide-react";
 

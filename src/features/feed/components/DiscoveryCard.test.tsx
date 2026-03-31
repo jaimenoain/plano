@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { DiscoveryCard } from './DiscoveryCard';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 
 // Mock dependencies
 vi.mock('@/features/auth/hooks/useAuth', () => ({

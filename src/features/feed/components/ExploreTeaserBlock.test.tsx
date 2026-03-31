@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ExploreTeaserBlock } from "./ExploreTeaserBlock";
 import { useDiscoveryFeed } from "@/features/feed/hooks/useDiscoveryFeed";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 
 // @vitest-environment happy-dom
 

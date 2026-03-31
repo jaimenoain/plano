@@ -1,5 +1,5 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import { NavLink as RouterNavLink } from "react-router-dom";
+import { NavLink as RouterNavLink } from "react-router";
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 const NavLink = forwardRef(({ className, activeClassName, pendingClassName, to, ...props }, ref) => {

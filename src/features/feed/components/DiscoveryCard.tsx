@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { toast } from "sonner";
 import { DiscoveryFeedItem } from "../hooks/useDiscoveryFeed";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { ContactFacepile } from "./ContactFacepile";
 

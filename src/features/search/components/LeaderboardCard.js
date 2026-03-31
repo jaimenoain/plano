@@ -1,7 +1,7 @@
 import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
 import { cn } from "@/lib/utils";
 import { Eye, Star, MapPin } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { getBuildingImageUrl } from "@/utils/image";
 export function LeaderboardCard({ building, rank, type }) {
     const navigate = useNavigate();

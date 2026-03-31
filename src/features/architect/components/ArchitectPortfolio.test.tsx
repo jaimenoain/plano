@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ArchitectPortfolio } from "./ArchitectPortfolio";
 import { useArchitectPortfolio } from "@/features/architect/hooks/useArchitectPortfolio";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 import '@testing-library/jest-dom/vitest';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 

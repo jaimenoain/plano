@@ -1,7 +1,7 @@
 import { Heart, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { FavoriteItem } from "./types";
 import { cn } from "@/lib/utils";
 

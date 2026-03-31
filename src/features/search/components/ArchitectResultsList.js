@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PencilRuler, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 export function ArchitectResultsList({ architects, isLoading }) {
     const navigate = useNavigate();
     if (isLoading) {

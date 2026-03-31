@@ -12,7 +12,9 @@ export default defineConfig(() => ({
   plugins: [
     react(),
     VitePWA({
+      strategies: "generateSW",
       registerType: 'prompt',
+      devOptions: { enabled: false },
       includeAssets: ['robots.txt', 'android-chrome-192x192.png', 'android-chrome-512x512.png', 'apple-touch-icon.png'],
       manifest: {
         name: "Plano — The world's architecture, cataloged.",

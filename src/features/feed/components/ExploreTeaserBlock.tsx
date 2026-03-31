@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { ArrowRight, MapPin, Loader2 } from "lucide-react";
 import { useDiscoveryFeed } from "../hooks/useDiscoveryFeed";
 import { getBuildingImageUrl } from "@/utils/image";

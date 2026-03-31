@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useBlocker, useBeforeUnload } from "react-router-dom";
+import { useBlocker, useBeforeUnload } from "react-router";
 import {
   AlertDialog,
   AlertDialogAction,

@@ -10,6 +10,8 @@ interface MetaHeadProps {
   noIndex?: boolean;
 }
 
+const SITE_URL = "https://plano.app";
+
 export function MetaHead({
   title,
   description = "Track your architecture visits, rate buildings, and discover what friends are exploring.",
@@ -20,10 +22,10 @@ export function MetaHead({
   noIndex = false,
 }: MetaHeadProps) {
   // Ensure image is absolute URL
-  const getAbsoluteImageUrl = (img: string) => {
+  const getAbsoluteImageUrl = (img: string): string | undefined => {
     if (!img) return undefined;
     if (img.startsWith("http")) return img;
-    return `${window.location.origin}${img.startsWith("/") ? "" : "/"}${img}`;
+    return `${SITE_URL}${img.startsWith("/") ? "" : "/"}${img}`;
   };
 
   const absoluteImage = getAbsoluteImageUrl(image || "/cover.jpg");

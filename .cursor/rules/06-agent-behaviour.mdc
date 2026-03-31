@@ -165,3 +165,22 @@ Phase X — [Phase Name]
 ```
 
 Keep it accurate. This file is the only persistent memory between sessions.
+
+---
+
+## 10. Plan Execution — No Unnecessary Pauses
+
+When executing a multi-step plan, complete all steps sequentially and autonomously without stopping between them.
+
+**Only pause mid-plan when:**
+- A hard blocker is encountered that prevents continuing (missing dependency, failed build, ambiguous requirement).
+- A decision is required that cannot be inferred from context or these rules.
+- An action would permanently destroy or delete data or files.
+
+**Never:**
+- Ask for confirmation before starting a plan that has already been presented and approved.
+- Stop between steps to report that a step completed successfully.
+- Summarise intermediate progress or ask "shall I continue?" or "shall I proceed?".
+- Re-state the plan before executing it.
+
+Once a plan is approved, execute it in full. Deliver a single summary when everything is done.

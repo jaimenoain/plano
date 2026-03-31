@@ -2,7 +2,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 import { FolderCard } from "./FolderCard";
 import { UserFolder } from "@/features/collections/types";
 import { describe, it, expect, afterEach } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 
 describe("FolderCard", () => {
   afterEach(() => {

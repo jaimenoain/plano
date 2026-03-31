@@ -5,7 +5,7 @@ import { DndContext } from '@dnd-kit/core';
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import React from 'react';
 import { FeedReview } from '@/types/feed';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 
 // Mock hooks
 vi.mock('@/features/auth/hooks/useAuth', () => ({

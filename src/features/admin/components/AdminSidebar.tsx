@@ -12,7 +12,7 @@ import {
   Trash2,
   FileCheck,
 } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
   Sidebar,
   SidebarContent,

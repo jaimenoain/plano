@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SimpleProfile } from "@/features/profile/hooks/useProfileComparison";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 interface CommonFollowersFacepileProps {
   users: SimpleProfile[];

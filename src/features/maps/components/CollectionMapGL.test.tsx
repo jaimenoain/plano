@@ -57,8 +57,8 @@ const {
 MockMapMarkers.mockImplementation(() => <div data-testid="map-markers">MapMarkers</div>);
 MockItineraryRoutes.mockImplementation(() => <div data-testid="itinerary-routes">ItineraryRoutes</div>);
 
-// Mock react-router-dom
-vi.mock('react-router-dom', () => ({
+// Mock react-router
+vi.mock('react-router', () => ({
   useSearchParams: () => [new URLSearchParams(), mockSetSearchParams],
   useLocation: () => ({ pathname: '/collection' }),
   useNavigate: () => vi.fn(),

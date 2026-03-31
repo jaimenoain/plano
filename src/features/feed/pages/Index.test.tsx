@@ -16,7 +16,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import Index from './Index';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useFeed } from '../hooks/useFeed';

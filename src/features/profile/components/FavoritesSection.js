@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { Heart, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 function FavoritePoster({ fav, className, onClick }) {
     return (_jsxs("button", { type: "button", className: cn("flex flex-col items-start gap-1 w-32 text-left group cursor-pointer", className), onClick: onClick, children: [_jsx("div", { className: "aspect-square w-full rounded-sm overflow-hidden bg-surface-muted border border-border-default shadow-none", children: fav.image_url ? (_jsx("img", { src: fav.image_url, className: "h-full w-full object-cover transition-transform duration-300 group-hover:scale-105", alt: fav.title })) : (_jsx("div", { className: "h-full w-full bg-surface-muted" })) }), _jsx("span", { className: "text-xs font-medium text-text-primary truncate w-full", children: fav.title })] }));

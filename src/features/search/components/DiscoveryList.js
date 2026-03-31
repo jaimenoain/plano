@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Building2, MapPinPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DiscoveryBuildingCard } from "./DiscoveryBuildingCard";

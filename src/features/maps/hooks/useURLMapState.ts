@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { z } from 'zod';
 import { useMemo, useCallback } from 'react';
 import { MapMode, MapFilters, type MichelinRating } from '@/types/plano-map';

@@ -2,7 +2,7 @@
 import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { FeedHeroCard } from './FeedHeroCard';
 import { vi, describe, it, expect, afterEach } from 'vitest';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mocks

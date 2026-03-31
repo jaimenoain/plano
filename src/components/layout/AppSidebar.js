@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, useSidebar, } from "@/components/ui/sidebar";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Activity, Users, User as UserIcon, Play, Search, ChevronsUpDown, Settings, LogOut, Bell, } from "lucide-react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 export function BlockUserDialog({ open, onOpenChange, userId, username }) {
     const [reason, setReason] = useState("");
     const [reportAbuse, setReportAbuse] = useState(false);

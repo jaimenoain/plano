@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useDiscoveryFeed } from "@/features/feed/hooks/useDiscoveryFeed";

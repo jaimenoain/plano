@@ -3,7 +3,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useBuildingImages } from "@/features/buildings";
 import { getBuildingImageUrl } from "@/utils/image";
 import { ExternalLink, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { BuildingAttributes } from "@/features/buildings/components/BuildingAttributes";
 export function BuildingDetailPanel({ building }) {
     const { data: images } = useBuildingImages(building.id);
