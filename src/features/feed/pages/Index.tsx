@@ -44,7 +44,7 @@ function Landing() {
           <Button
             variant="ghost"
             onClick={() => navigate("/auth")}
-            className="font-semibold bg-text-brand-primary text-text-inverse hover:opacity-90"
+            className="font-semibold bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
           >
             Log in
           </Button>
@@ -150,9 +150,9 @@ export default function Index() {
             {socialReviews.length === 0 ? (
               <EmptyFeed />
             ) : (
-              <div className="flex flex-col lg:flex-row gap-8 items-start">
+              <div className="flex gap-8 items-start max-w-5xl mx-auto">
                 {/* Feed Column */}
-                <div className="w-full flex-1 flex flex-col gap-3 min-w-0 max-w-full">
+                <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-3">
                   {/* Social Feed Items */}
                   {aggregatedReviews.map((item, index) => {
                     const key = item.type === 'cluster' ? `cluster-${item.entries[0].id}` : item.entry.id;
@@ -243,20 +243,21 @@ export default function Index() {
                 </div>
 
                 {/* Sidebar Column */}
-                <div className="hidden lg:block lg:w-1/3 sticky top-20">
-                   <div className="space-y-4">
-                      <div className="p-5 border border-border-default rounded-sm bg-surface-card shadow-none">
-                         <h3 className="font-semibold mb-2 text-text-primary">Trending</h3>
-                         <p className="text-sm text-text-secondary">
-                           Discover popular buildings and active discussions in the community.
-                           <br/><br/>
-                           (Coming soon)
-                         </p>
-                      </div>
-                      <WidgetErrorBoundary>
-                        <PeopleYouMayKnow />
-                      </WidgetErrorBoundary>
-                   </div>
+                <div className="w-72 flex-shrink-0 hidden lg:block sticky top-20">
+                  <div className="space-y-4">
+                    <div className="p-5 border border-border-default rounded-sm bg-surface-card shadow-none">
+                      <h3 className="font-semibold mb-2 text-text-primary">Trending</h3>
+                      <p className="text-sm text-text-secondary">
+                        Discover popular buildings and active discussions in the community.
+                        <br />
+                        <br />
+                        (Coming soon)
+                      </p>
+                    </div>
+                    <WidgetErrorBoundary>
+                      <PeopleYouMayKnow />
+                    </WidgetErrorBoundary>
+                  </div>
                 </div>
               </div>
             )}

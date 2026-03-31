@@ -406,7 +406,9 @@ toast.error("Location search failed. Please click on the map to set the location
   return (
     <div className="container max-w-4xl py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Add a Building</h1>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+          Add Building
+        </h1>
         <p className="text-text-secondary mt-2">
           Pinpoint the location on the map.
         </p>

@@ -14,13 +14,13 @@
 
 ## Phase 0 — Foundation Verification
 
-- [ ] **Task 0.1 — Remove non-token shadows from `tailwind.config.ts`**
+- [x] **Task 0.1 — Remove non-token shadows from `tailwind.config.ts`**
   Search for `shadow-subtle` and `shadow-card` in the codebase. Replace each usage with `shadow-sm` or `shadow-md` from the token scale. Remove the custom entries from the config.
 
-- [ ] **Task 0.2 — Verify radius derivations in `src/index.css`**
+- [x] **Task 0.2 — Verify radius derivations in `src/index.css`**
   Confirm `rounded-sm` = 2px, `rounded-md` = 4px, `rounded-lg` = 6px via the `calc(var(--radius) - Xpx)` chain in `tailwind.config.ts`. Fix any step that doesn't match `DESIGN_TOKENS §5`.
 
-- [ ] **Task 0.3 — Audit Shadcn base primitives**
+- [x] **Task 0.3 — Audit Shadcn base primitives**
   Files: `src/components/ui/button.tsx`, `card.tsx`, `badge.tsx`, `input.tsx`.
   - Badge: must use `rounded-sm` (NOT `rounded-full`), include `uppercase tracking-wide text-xs font-medium`.
   - Card: default `shadow-none`, hover `hover:border-border-strong`.
@@ -33,16 +33,16 @@
 
 ## Phase 1 — Layout Shell
 
-- [ ] **Task 1.1 — Fix `BottomNav.tsx`**
+- [x] **Task 1.1 — Fix `BottomNav.tsx`**
   - Replace `bg-black/90` and `border-white/10` with `bg-surface-card border-t border-border-default` for standard variant. For Explore dark variant, use `bg-neutral-950 border-t border-white/10` with comment `/* palette-neutral-950 */`.
   - Replace `rounded-full` active indicator dot with `border-t-2 border-brand-primary` at the TOP of the active nav item (mirrors sidebar's `border-l-2` accent).
   - Active icon: `strokeWidth={2.5} text-text-primary`. Inactive: `strokeWidth={2} text-text-secondary`.
   - Label: `text-xs font-medium`. Active: `text-text-primary`. Inactive: `text-text-secondary`.
 
-- [ ] **Task 1.2 — Fix `Header.tsx`**
+- [x] **Task 1.2 — Fix `Header.tsx`**
   Remove any `shadow-sm`. Keep `bg-surface-card border-b border-border-default h-16`. Borders provide hierarchy, not shadows.
 
-- [ ] **Task 1.3 — Add feed max-width**
+- [x] **Task 1.3 — Add feed max-width**
   File: `src/features/feed/pages/Index.tsx` (authenticated view).
   Wrap the feed column in `max-w-2xl mx-auto`. If keeping the right sidebar, use:
   ```tsx
@@ -52,7 +52,7 @@
   </div>
   ```
 
-- [ ] **Task 1.4 — Fix Landing header button**
+- [x] **Task 1.4 — Fix Landing header button**
   File: `src/features/feed/pages/Index.tsx` (Landing component).
   Replace `bg-text-brand-primary` / `bg-foreground text-background` with `bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm`.
 
@@ -62,34 +62,34 @@
 
 ## Phase 2 — Typography Normalisation
 
-- [ ] **Task 2.1 — Normalise page titles**
+- [x] **Task 2.1 — Normalise page titles**
   For each page below, add or fix the visible `h1` to use `text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary`:
-  - [ ] `Settings.tsx` (currently `text-2xl`)
-  - [ ] `Notifications.tsx` (currently sr-only — make visible)
-  - [ ] `Connect.tsx` (add explicit h1 in content)
-  - [ ] `UserPhotoGallery.tsx` — "Photos"
-  - [ ] `FolderView.tsx` — folder name
-  - [ ] `BuildingDetails.tsx` — building name (currently `text-lg`–`text-2xl`)
-  - [ ] `AddBuilding.tsx` — "Add Building"
-  - [ ] `EditBuilding.tsx` — "Edit Building"
-  - [ ] `WriteReview.tsx` — "Write Review"
-  - [ ] `ReviewDetails.tsx` — building name as h1
-  - [ ] `ArchitectDetails.tsx` — architect name (currently `text-xl`–`text-3xl`)
-  - [ ] `ArchitectDashboard.tsx` — "Dashboard"
-  - [ ] `Profile.tsx` — username as `text-3xl font-semibold tracking-tight`
+  - [x] `Settings.tsx` (currently `text-2xl`)
+  - [x] `Notifications.tsx` (currently sr-only — make visible)
+  - [x] `Connect.tsx` (add explicit h1 in content)
+  - [x] `UserPhotoGallery.tsx` — "Photos"
+  - [x] `FolderView.tsx` — folder name
+  - [x] `BuildingDetails.tsx` — building name (currently `text-lg`–`text-2xl`)
+  - [x] `AddBuilding.tsx` — "Add Building"
+  - [x] `EditBuilding.tsx` — "Edit Building"
+  - [x] `WriteReview.tsx` — "Write Review"
+  - [x] `ReviewDetails.tsx` — building name as h1
+  - [x] `ArchitectDetails.tsx` — architect name (currently `text-xl`–`text-3xl`)
+  - [x] `ArchitectDashboard.tsx` — "Dashboard"
+  - [x] `Profile.tsx` — username as `text-3xl font-semibold tracking-tight`
 
-- [ ] **Task 2.2 — Normalise section headings**
+- [x] **Task 2.2 — Normalise section headings**
   Within each page, in-page sections should use `text-2xl md:text-3xl font-semibold tracking-tight text-text-primary`. Key files:
-  - [ ] `BuildingDetails.tsx` — "Photos", "Location", "Community Notes", "Nearby"
-  - [ ] `Profile.tsx` — "Collections", "Favourites", "Highlights"
-  - [ ] `Settings.tsx` — form sections
-  - [ ] `Connect.tsx` — "People You May Know", "Your Contacts"
-  - [ ] `Admin/Dashboard.tsx` — zone headings
+  - [x] `BuildingDetails.tsx` — "Photos", "Location", "Community Notes", "Nearby"
+  - [x] `Profile.tsx` — "Collections", "Favourites", "Highlights"
+  - [x] `Settings.tsx` — form sections
+  - [x] `Connect.tsx` — "People You May Know", "Your Contacts"
+  - [x] `Admin/Dashboard.tsx` — zone headings
 
-- [ ] **Task 2.3 — Normalise badge and table header typography**
-  - [ ] `src/components/ui/badge.tsx` — default must include `uppercase tracking-wide text-xs font-medium`
-  - [ ] `src/components/ui/table.tsx` — `TableHead` must include `text-xs font-medium uppercase tracking-wide text-text-secondary`
-  - [ ] Search for custom badge-like `<span>` or `<div>` elements bypassing the Badge component and normalise
+- [x] **Task 2.3 — Normalise badge and table header typography**
+  - [x] `src/components/ui/badge.tsx` — default must include `uppercase tracking-wide text-xs font-medium`
+  - [x] `src/components/ui/table.tsx` — `TableHead` must include `text-xs font-medium uppercase tracking-wide text-text-secondary`
+  - [x] Search for custom badge-like `<span>` or `<div>` elements bypassing the Badge component and normalise
 
 **Checkpoint:** `npm run typecheck && npm run test`
 

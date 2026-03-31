@@ -196,7 +196,7 @@ setError("Failed to load folder");
                </div>
                <div className="flex items-start justify-between">
                    <div>
-                       <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+                       <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight mb-2 flex items-center gap-3 text-text-primary">
                            <Folder className="h-8 w-8 text-text-secondary" />
                            {folder.name}
                        </h1>

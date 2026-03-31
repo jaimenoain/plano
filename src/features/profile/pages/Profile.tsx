@@ -819,6 +819,11 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
         />
 
         <div className="p-4 sm:p-6 lg:p-8">
+          <div className="max-w-6xl mx-auto mb-6">
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
+              {profile?.username}
+            </h1>
+          </div>
         {/* 1. Header & User Card */}
         <UserCard
           profile={profile}

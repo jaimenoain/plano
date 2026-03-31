@@ -16,17 +16,18 @@ export function BottomNav() {
   const isExplore = location.pathname === "/explore";
 
   return (
-    <nav className={cn(
-      "fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t",
-      isExplore
-        ? "bg-black/90 border-white/10 backdrop-blur-xl"
-        : "glass border-border-default"
-    )}>
-      {/* Increased height to h-20 to accommodate larger text/icons comfortably */}
+    <nav
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t",
+        isExplore
+          ? "bg-[#0A0A0A] border-white/10 backdrop-blur-xl" /* palette-neutral-950 */
+          : "bg-surface-card border-border-default"
+      )}
+    >
       <div className="flex items-center justify-around h-20 max-w-lg mx-auto px-2 pb-2">
         {navItems.map(({ icon: Icon, label, path }) => {
           const isActive = location.pathname === path;
-          
+
           return (
             <Link
               key={path}
@@ -34,24 +35,23 @@ export function BottomNav() {
               aria-label={label}
               className={cn(
                 "flex flex-col items-center justify-center gap-1.5 transition-all duration-300 relative",
-                // Minimum touch target width for accessibility, flex-1 allows shrinking on small screens
-                "flex-1 min-w-0 min-h-[64px] rounded-sm",
-                isActive
-                  ? (isExplore ? "text-brand-primary" : "text-brand-primary")
-                  : (isExplore ? "text-text-secondary hover:text-text-inverse" : "text-text-secondary hover:text-brand-primary")
+                "flex-1 min-w-0 min-h-[64px] rounded-sm border-t-2",
+                isActive ? "border-brand-primary" : "border-transparent"
               )}
             >
-              <div className="relative flex flex-col items-center">
-                <Icon 
-                  className={cn("transition-all duration-300", isActive ? "h-6 w-6" : "h-6 w-6")}
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-                {isActive && (
-                  <div className="absolute -bottom-3 w-1.5 h-1.5 bg-brand-primary rounded-full" />
+              <Icon
+                className={cn(
+                  "h-6 w-6 transition-all duration-300",
+                  isActive ? "text-text-primary" : "text-text-secondary"
                 )}
-              </div>
-              {/* Increased font size for readability */}
-              <span className={cn("text-xs font-medium tracking-wide", isActive ? "opacity-100" : "opacity-80")}>
+                strokeWidth={isActive ? 2.5 : 2}
+              />
+              <span
+                className={cn(
+                  "text-xs font-medium tracking-wide",
+                  isActive ? "text-text-primary" : "text-text-secondary"
+                )}
+              >
                 {label}
               </span>
             </Link>

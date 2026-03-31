@@ -415,7 +415,9 @@ toast({
           Back to Profile
         </Button>
 
-        <h1 className="text-2xl font-bold mb-6 text-text-primary">Settings</h1>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary mb-6">
+          Settings
+        </h1>
 
         <div className="flex flex-col items-center mb-8">
             <Avatar className="h-24 w-24 mb-4">

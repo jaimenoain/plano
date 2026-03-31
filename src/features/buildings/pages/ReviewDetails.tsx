@@ -530,6 +530,9 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
         />
 
         <div className="container max-w-5xl mx-auto px-4 py-6">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary mb-6">
+              Visit Log
+            </h1>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
                 
                 {/* --- Left/Center Column: Review Content --- */}

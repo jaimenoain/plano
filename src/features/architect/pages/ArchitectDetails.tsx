@@ -83,7 +83,9 @@ export default function ArchitectDetails() {
     return (
       <AppLayout showBack>
         <div className="px-4 py-6 md:px-6 flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
-          <h1 className="text-2xl font-bold">Architect not found</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+            Architect not found
+          </h1>
           <p className="text-text-secondary">
             The architect you are looking for does not exist or an error occurred.
           </p>
@@ -101,6 +103,10 @@ export default function ArchitectDetails() {
         title={architect.name}
       />
       <div className="px-4 py-6 md:py-10 max-w-7xl mx-auto animate-fade-in space-y-8">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+          {architect.name}
+        </h1>
+        
         <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start md:items-center">
 
           {/* Avatar Section */}
@@ -115,7 +121,7 @@ export default function ArchitectDetails() {
           <div className="flex-1 min-w-0 w-full">
             {/* Top Row: Name + Actions */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-4 md:mb-6">
-              <h1 className="text-xl md:text-2xl font-bold truncate min-w-0 max-w-[200px] md:max-w-none">
+              <h2 className="text-xl md:text-2xl font-bold truncate min-w-0 max-w-[200px] md:max-w-none">
                 <span className="flex items-center gap-2">
                   {architect.name}
                   {claimStatus.is_verified && (
@@ -124,7 +130,7 @@ export default function ArchitectDetails() {
                     </div>
                   )}
                 </span>
-              </h1>
+              </h2>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 w-full md:w-auto mt-2 md:mt-0">
                 {user && !claimStatus.is_verified && claimStatus.my_claim_status !== 'pending' && (

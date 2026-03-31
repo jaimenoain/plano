@@ -83,11 +83,13 @@ export const BuildingHeader = ({
                         <Input
                             value={nameValue}
                             onChange={(e) => onNameChange?.(e.target.value)}
-                            className="text-3xl sm:text-4xl font-extrabold tracking-tight h-auto px-3 py-2 w-full max-w-md"
+                            className="text-3xl md:text-4xl font-bold tracking-tight leading-tight h-auto px-3 py-2 w-full max-w-md"
                             placeholder="Official Building Name"
                         />
                     ) : (
-                        <h1 className="text-4xl font-extrabold tracking-tight">{building.name}</h1>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+                            {building.name}
+                        </h1>
                     )}
 
                     {building.alt_name && building.alt_name !== building.name && !isEditing && (

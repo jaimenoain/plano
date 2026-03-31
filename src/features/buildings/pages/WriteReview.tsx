@@ -779,8 +779,12 @@ toast({
 
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold">{buildingName}</h1>
-          <p className="text-text-secondary">Share your experience</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+            Write Review
+          </h1>
+          <p className="text-text-secondary">
+            {buildingName ? `Share your experience of ${buildingName}` : "Share your experience"}
+          </p>
         </div>
 
         {/* Status */}

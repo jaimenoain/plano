@@ -238,7 +238,7 @@ toast.error("Failed to load dashboard data");
     return (
       <div className="container max-w-7xl mx-auto py-8 px-4 space-y-8">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-64" />
           <Skeleton className="h-4 w-96" />
         </div>
         <div className="grid gap-4 md:grid-cols-3">
@@ -253,7 +253,9 @@ toast.error("Failed to load dashboard data");
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Architect Dashboard</h1>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+          Architect Dashboard
+        </h1>
         <p className="text-text-secondary mt-2">
           Track the impact of your work and see how the community engages with your projects.
         </p>

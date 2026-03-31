@@ -270,6 +270,9 @@ export default function UserPhotoGallery() {
   return (
     <AppLayout title={`${profileUsername}'s Photos`} showBack showLogo={false}>
       <div className="p-4 sm:p-6 lg:p-8">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary mb-6">
+          Photos
+        </h1>
         {photos.length > 0 && (
           <div className="flex justify-end mb-4">
             <Select value={sortOrder} onValueChange={handleSortChange}>

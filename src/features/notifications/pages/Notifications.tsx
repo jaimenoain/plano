@@ -288,7 +288,9 @@ export default function Notifications() {
 
       <ScrollArea className="h-full pb-20">
         <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto flex flex-col">
-          <h1 className="text-2xl font-semibold text-text-primary sr-only">Notifications</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+            Notifications
+          </h1>
           {notifications.length > 0 ? (
             <>
               {newNotifications.length > 0 && (

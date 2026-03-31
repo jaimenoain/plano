@@ -14,10 +14,6 @@ export default {
       },
     },
     extend: {
-      boxShadow: {
-        subtle: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-        card: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-      },
       fontFamily: {
         sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
         mono: ['Space Mono', 'monospace'],
