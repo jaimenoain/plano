@@ -94,7 +94,7 @@ setIsLiked(previousIsLiked);
 
         {isVideo && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/40 rounded-full p-3 backdrop-blur-sm">
+            <div className="bg-black/40 /* Photo overlay — bg-black/40 approved per COMPONENT_SPEC §8 backdrop convention */ rounded-full p-3 backdrop-blur-sm">
               <Play className="w-6 h-6 text-white fill-white" />
             </div>
           </div>
@@ -131,7 +131,7 @@ setIsLiked(previousIsLiked);
           {!isVideo && (
             <button
               onClick={handleLike}
-              className={`flex items-center gap-1.5 transition-colors hover:text-text-primary ${isLiked ? 'text-red-500 hover:text-red-600' : ''}`}
+              className={`flex items-center gap-1.5 transition-colors hover:text-text-primary ${isLiked ? 'text-feedback-destructive hover:text-feedback-destructive' : ''}`}
               disabled={isProcessing}
             >
               <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />

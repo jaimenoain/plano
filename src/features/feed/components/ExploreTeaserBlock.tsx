@@ -69,12 +69,12 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
              </div>
 
              {/* Content */}
-             <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+             <div className="absolute bottom-0 left-0 right-0 p-4 text-text-inverse">
                <h3 className="font-bold text-lg leading-tight mb-1 line-clamp-2 drop-shadow-md">
                  {building.name}
                </h3>
-               <div className="flex items-center gap-1 text-sm text-gray-200 font-medium drop-shadow-md">
-                 <MapPin className="w-3.5 h-3.5 shrink-0 text-white/80" />
+               <div className="flex items-center gap-1 text-sm text-text-inverse/80 font-medium drop-shadow-md">
+                 <MapPin className="w-3.5 h-3.5 shrink-0 text-text-inverse/80" />
                  <span className="truncate">
                    {building.city || building.country || "Unknown Location"}
                  </span>

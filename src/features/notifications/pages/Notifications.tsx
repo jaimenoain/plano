@@ -175,14 +175,14 @@ export default function Notifications() {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'like': return <Heart className="h-4 w-4 text-red-500 fill-red-500" />;
-      case 'comment': return <MessageCircle className="h-4 w-4 text-blue-500 fill-blue-500" />;
-      case 'follow': return <UserPlus className="h-4 w-4 text-green-500 fill-green-500" />;
-      case 'friend_joined': return <UserPlus className="h-4 w-4 text-blue-400" />;
-      case 'suggest_follow': return <Sparkles className="h-4 w-4 text-yellow-500 fill-yellow-500" />;
+      case 'like': return <Heart className="h-4 w-4 text-feedback-destructive fill-feedback-destructive" />;
+      case 'comment': return <MessageCircle className="h-4 w-4 text-brand-primary fill-brand-primary" />;
+      case 'follow': return <UserPlus className="h-4 w-4 text-feedback-success fill-feedback-success" />;
+      case 'friend_joined': return <UserPlus className="h-4 w-4 text-brand-primary" />;
+      case 'suggest_follow': return <Sparkles className="h-4 w-4 text-feedback-warning fill-feedback-warning" />;
       case 'recommendation': return <Sparkles className="h-4 w-4 text-brand-primary fill-brand-primary" />;
       case 'visit_request': return <Users className="h-4 w-4 text-brand-primary" />;
-      case 'architect_verification': return <ShieldCheck className="h-4 w-4 text-green-600" />;
+      case 'architect_verification': return <ShieldCheck className="h-4 w-4 text-feedback-success" />;
       default: return <Bell className="h-4 w-4" />;
     }
   };

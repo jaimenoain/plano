@@ -11,18 +11,28 @@ export function StatusBadge({ status, isOwnProfile, onClick }: StatusBadgeProps)
   const currentStatus = status || 'visited';
   const isVisited = currentStatus === 'visited';
   const isLost = currentStatus === 'lost';
+  const isPending = currentStatus === 'pending';
 
   const getStyles = () => {
     if (isLost) {
       return cn(
-        "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-        isOwnProfile ? "hover:bg-slate-200 dark:hover:bg-slate-700" : "opacity-80"
+        "bg-surface-muted text-text-disabled border border-border-default",
+        isOwnProfile ? "hover:bg-surface-muted/80" : "opacity-80"
       );
     }
-    return cn(
-      "bg-surface-muted text-secondary-foreground",
-      isOwnProfile ? "hover:bg-surface-muted/80" : "opacity-80"
-    );
+    if (isVisited) {
+      return cn(
+        "bg-brand-secondary text-brand-secondary-foreground border border-border-default",
+        isOwnProfile ? "hover:bg-brand-secondary" : "opacity-80"
+      );
+    }
+    if (isPending) {
+      return cn(
+        "bg-surface-muted text-text-secondary border border-border-default",
+        isOwnProfile ? "hover:bg-surface-muted/80" : "opacity-80"
+      );
+    }
+    return "bg-surface-muted text-text-secondary border border-border-default";
   };
 
   return (
@@ -33,7 +43,7 @@ export function StatusBadge({ status, isOwnProfile, onClick }: StatusBadgeProps)
         if (isOwnProfile) onClick();
       }}
       className={cn(
-        "relative px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-300 select-none overflow-hidden flex items-center justify-center border border-transparent",
+        "relative px-2 py-0.5 rounded-sm text-xs font-medium uppercase tracking-wide transition-colors duration-300 select-none overflow-hidden flex items-center justify-center",
         isOwnProfile ? "cursor-pointer" : "cursor-default",
         getStyles()
       )}

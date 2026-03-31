@@ -70,8 +70,8 @@ export function BuildingMap({
     dotBgClass = "bg-gray-600";
   } else if (status === 'pending') {
     strokeClass = "text-gray-500";
-    fillClass = "fill-[#EEFF41]";
-    dotBgClass = "bg-[#EEFF41]";
+    fillClass = "fill-brand-primary";
+    dotBgClass = "bg-brand-primary";
   } else if (socialContext) {
     strokeClass = "text-gray-500";
     fillClass = "fill-gray-300"; // Light Grey

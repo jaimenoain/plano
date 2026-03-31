@@ -54,7 +54,7 @@ export function MutualAffinityRow({ users }: MutualAffinityRowProps) {
 }
 
 function getScoreColor(score: number) {
-    if (score >= 0.7) return "bg-green-500 text-white border-green-600";
-    if (score >= 0.4) return "bg-zinc-500 text-white border-zinc-600";
-    return "bg-red-500 text-white border-red-600";
+    if (score >= 0.75) return "bg-brand-primary text-brand-primary-foreground border-border-default";
+    if (score >= 0.5) return "bg-brand-secondary text-brand-secondary-foreground border-border-default";
+    return "bg-surface-muted text-text-secondary border border-border-default";
 }

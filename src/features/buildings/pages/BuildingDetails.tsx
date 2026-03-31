@@ -1232,7 +1232,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
                     }
                 })()
             ) : (
-                <div className="aspect-[4/3] rounded-sm overflow-hidden shadow-none border border-border-default relative group">
+                <div className="aspect-[16/9] md:aspect-[21/9] rounded-sm overflow-hidden shadow-none border border-border-default relative group">
                     <div className="w-full h-full bg-surface-muted flex flex-col items-center justify-center text-text-secondary text-center p-6">
                         <ImageIcon className="w-12 h-12 text-text-secondary/20 mb-3" />
                         <h3 className="font-medium text-text-secondary mb-1">No image yet</h3>
@@ -1674,7 +1674,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
             {/* Top Community Resources */}
             {(linksLoading || topLinks.length > 0) && (
                 <WidgetErrorBoundary>
-                <div className="pt-4 border-t border-dashed">
+                <div className="mt-12 border-t border-border-default pt-8">
                     <h3 className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-4">
                         Top Community Resources
                     </h3>
@@ -1753,7 +1753,7 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
 
 
             {/* Community Activity */}
-            <div className="pt-4 border-t border-dashed">
+            <div className="mt-12 border-t border-border-default pt-8">
                 <h3 className="text-lg font-bold mb-4">Community Notes</h3>
                 <div className="space-y-4">
                     {entries.length === 0 ? (

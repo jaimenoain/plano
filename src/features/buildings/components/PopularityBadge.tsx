@@ -11,18 +11,18 @@ export function PopularityBadge({ rank, city }: PopularityBadgeProps) {
     return null;
   }
 
-  let badgeClass = "";
+  let badgeClass = "rounded-sm px-2 py-0.5 text-xs font-medium uppercase tracking-wide";
   let icon = null;
 
   if (rank === "Top 1%") {
-    badgeClass = "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100/90";
-    icon = <Trophy className="w-3 h-3 mr-1 fill-amber-500 text-amber-600" />;
+    badgeClass += " bg-brand-primary text-brand-primary-foreground";
+    icon = <Trophy className="w-3 h-3 mr-1" />;
   } else if (rank === "Top 5%") {
-    badgeClass = "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-100/90";
-    icon = <Gem className="w-3 h-3 mr-1 fill-slate-400 text-slate-500" />;
+    badgeClass += " bg-brand-secondary text-brand-secondary-foreground";
+    icon = <Gem className="w-3 h-3 mr-1" />;
   } else if (rank === "Top 10%") {
-    badgeClass = "bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-50/90";
-    icon = <Sparkles className="w-3 h-3 mr-1 fill-orange-300 text-orange-400" />;
+    badgeClass += " bg-surface-muted text-text-secondary border border-border-default";
+    icon = <Sparkles className="w-3 h-3 mr-1" />;
   }
 
   const text = city ? `${rank} in ${city}` : rank;

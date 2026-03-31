@@ -97,38 +97,38 @@
 
 ## Phase 3 — Raw Colour Purge
 
-- [ ] **Task 3.1 — Fix Notifications icon colours**
+- [x] **Task 3.1 — Fix Notifications icon colours**
   File: `src/features/notifications/pages/Notifications.tsx`.
   In `getIcon`: `text-red-500` → `text-feedback-destructive`, `text-blue-500` → `text-brand-primary`, `text-green-500` → `text-feedback-success`, `text-yellow-500` → `text-feedback-warning`. Same for `fill-*` variants.
 
-- [ ] **Task 3.2 — Fix Landing and feed components**
+- [x] **Task 3.2 — Fix Landing and feed components**
   Files: `LandingHero.tsx`, `LandingFeatureGrid.tsx`, `ExploreTeaserBlock.tsx`, `SuggestedContentBlock.tsx`.
   Search for `text-<colour>-<shade>` / `bg-<colour>-<shade>`. Replace with semantic tokens per Colour Migration Map (see Appendix).
 
-- [ ] **Task 3.3 — Fix building form/detail hex values**
+- [x] **Task 3.3 — Fix building form/detail hex values**
   Files: `BuildingDetails.tsx`, `AddBuilding.tsx`, `BuildingForm.tsx`.
   `#595959` → `text-text-secondary`. `#EEFF41` / `bg-[#EEFF41]` → `bg-brand-primary`. `fill-[#595959]` → `fill-text-secondary`.
 
-- [ ] **Task 3.4 — Fix PopularityBadge**
+- [x] **Task 3.4 — Fix PopularityBadge**
   File: `src/features/buildings/components/PopularityBadge.tsx`.
   Replace custom colour scale: top_1 = `bg-brand-primary text-brand-primary-foreground`, top_5 = `bg-brand-secondary text-brand-secondary-foreground`, top_10/20 = `bg-surface-muted text-text-secondary border border-border-default`. All: `rounded-sm px-2 py-0.5 text-xs font-medium uppercase tracking-wide`.
 
-- [ ] **Task 3.5 — Fix StatusBadge**
+- [x] **Task 3.5 — Fix StatusBadge**
   File: `src/features/profile/components/StatusBadge.tsx`.
   Visited = `bg-brand-secondary text-brand-secondary-foreground`. Pending/Saved = `bg-surface-muted text-text-secondary border border-border-default`. Ignored = `bg-surface-muted text-text-disabled border border-border-default`. All: `rounded-sm px-2 py-0.5 text-xs font-medium uppercase tracking-wide`.
 
-- [ ] **Task 3.6 — Fix Explore page raw background**
+- [x] **Task 3.6 — Fix Explore page raw background**
   File: `src/features/explore/pages/Explore.tsx`.
   `bg-black` → `bg-[#0A0A0A]` with comment `/* palette-neutral-950 */`. `text-white` → `text-text-inverse`. "World" chip: `rounded-full` → `rounded-sm`. Bookmark icon: replace grey circle with `bg-surface-card/20 backdrop-blur-sm rounded-sm h-10 w-10`.
 
-- [ ] **Task 3.7 — Fix affinity percentage badges**
+- [x] **Task 3.7 — Fix affinity percentage badges**
   File: `src/features/profile/components/SocialContextSection.tsx` (or wherever "HIGH AFFINITY" renders).
   Replace green/orange badges: >75% = `bg-brand-primary text-brand-primary-foreground`, 50–75% = `bg-brand-secondary text-brand-secondary-foreground`, <50% = `bg-surface-muted text-text-secondary border border-border-default`. Keep `rounded-full` here (circular overlay on avatar).
 
-- [ ] **Task 3.8 — Sweep remaining raw palette colours**
+- [x] **Task 3.8 — Sweep remaining raw palette colours**
   Run: `grep -rn "text-red-\|text-blue-\|text-green-\|text-yellow-\|text-gray-\|bg-red-\|bg-blue-\|bg-green-\|bg-yellow-\|bg-gray-" src/ --include="*.tsx" | grep -v "test\|\.test\."`. Fix every hit using the Colour Migration Map.
 
-- [ ] **Task 3.9 — Document image overlay raw blacks**
+- [x] **Task 3.9 — Document image overlay raw blacks**
   Files: `BuildingImageCard.tsx`, `BuildingHero.tsx`, `UserPhotoGallery.tsx`.
   Add code comments to `bg-black/40`, `bg-black/50`, `bg-black/60` photo overlays: `/* Photo overlay — bg-black/N approved per COMPONENT_SPEC §8 backdrop convention */`. No class changes needed.
 
@@ -138,13 +138,13 @@
 
 ## Phase 4 — Spacing Rhythm
 
-- [ ] **Task 4.1 — Normalise section dividers**
+- [x] **Task 4.1 — Normalise section dividers**
   Major page sections must use `mt-12 pt-8 border-t border-border-default`. Search for inconsistent `mt-8` / `mt-10` without `border-t`. Fix in:
-  - [ ] `BuildingDetails.tsx`
-  - [ ] `Profile.tsx`
-  - [ ] `Settings.tsx`
-  - [ ] `Connect.tsx`
-  - [ ] `Admin/Dashboard.tsx`
+  - [x] `BuildingDetails.tsx`
+  - [x] `Profile.tsx`
+  - [x] `Settings.tsx`
+  - [x] `Connect.tsx`
+  - [x] `Admin/Dashboard.tsx`
 
 - [ ] **Task 4.2 — Normalise card padding**
   Standard cards: `p-6`. Compact variants (kanban items, sidebar list items, compact feed items): `p-4` with comment `/* compact card variant */`. Search for `p-5` in card containers and fix.

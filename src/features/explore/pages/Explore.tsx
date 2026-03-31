@@ -234,7 +234,7 @@ toast.error("Failed to skip building");
                         className={
                           locationFilter.label
                             ? "rounded-sm shadow-lg border border-border-default bg-brand-primary text-brand-primary-foreground pl-3 pr-4 h-10 gap-2 text-sm font-medium hover:opacity-90"
-                            : "rounded-full shadow-lg bg-black/50 backdrop-blur-md text-text-inverse border border-white/20 hover:bg-black/70 pl-3 pr-4 h-10 gap-2"
+                            : "rounded-sm shadow-lg bg-black/50 backdrop-blur-md text-text-inverse border border-white/20 hover:bg-black/70 pl-3 pr-4 h-10 gap-2"
                         }
                     >
                         <MapPin
@@ -291,7 +291,7 @@ toast.error("Failed to skip building");
           </div>
 
           {/* Vertical Snap Container */}
-          <div className="relative h-[calc(100vh-80px)] md:h-screen w-full bg-black text-white overflow-hidden">
+          <div className="relative h-[calc(100vh-80px)] md:h-screen w-full bg-[#0A0A0A] /* palette-neutral-950 */ text-text-inverse overflow-hidden">
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}

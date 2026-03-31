@@ -65,37 +65,37 @@ export default function AdminDashboard() {
             </section>
 
             {/* Zone 1.5: Retention Analysis */}
-            <section className="space-y-4">
+            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
               <h2 className="text-xl font-semibold tracking-tight text-text-primary">User Retention</h2>
               <RetentionZone data={stats.retention_analysis} />
             </section>
 
             {/* Zone 2: Activity Trends */}
-            <section className="space-y-4">
+            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
               <h2 className="text-xl font-semibold tracking-tight text-text-primary">Activity Trends</h2>
               <ActivityTrendsZone data={stats.activity_trends} />
             </section>
 
             {/* Zone 4: Content Intelligence */}
-            <section className="space-y-4">
+            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
               <h2 className="text-xl font-semibold tracking-tight text-text-primary">Content Intelligence</h2>
               <ContentIntelligenceZone trendingBuildings={stats.content_intelligence.trending_buildings} />
             </section>
 
             {/* Zone 4.5: Notification Intelligence */}
-            <section className="space-y-4">
+            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
               <h2 className="text-xl font-semibold tracking-tight text-text-primary">Notification Intelligence</h2>
               <NotificationIntelligenceZone data={stats.notification_intelligence} />
             </section>
 
             {/* Zone 5: User Leaderboard */}
-            <section className="space-y-4">
+            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
               <h2 className="text-xl font-semibold tracking-tight text-text-primary">User Leaderboard</h2>
               <UserLeaderboardZone data={stats.user_leaderboard} />
             </section>
 
             {/* Zone 6: Session Diagnostics & Health */}
-            <section className="space-y-4">
+            <section className="mt-12 pt-8 border-t border-border-default space-y-4">
               <SessionDiagnosticZone />
             </section>
           </TabsContent>

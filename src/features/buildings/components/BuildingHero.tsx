@@ -16,7 +16,7 @@ export function BuildingHero({ src, alt, className }: BuildingHeroProps) {
         alt={alt}
         className="w-full h-[40vh] md:h-[50vh] object-cover transition-opacity duration-700 ease-in-out"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none opacity-50" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 /* Photo overlay — bg-black/60 approved per COMPONENT_SPEC §8 backdrop convention */ via-transparent to-transparent pointer-events-none opacity-50" />
     </div>
   );
 }

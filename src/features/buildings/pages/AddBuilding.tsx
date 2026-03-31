@@ -614,10 +614,10 @@ toast.error("Location search failed. Please click on the map to set the location
               >
                 <div className="flex flex-col items-center">
                     {locationPrecision === 'approximate' ? (
-                        <div className="w-6 h-6 rounded-full bg-[#EEFF41] border-2 border-surface-default drop-shadow-md transition-transform" />
+                        <div className="w-6 h-6 rounded-full bg-brand-primary border-2 border-surface-default drop-shadow-md transition-transform" />
                     ) : (
                         <MapPin
-                            className="h-8 w-8 text-[#EEFF41] fill-[#EEFF41] drop-shadow-md transition-colors"
+                            className="h-8 w-8 text-brand-primary fill-brand-primary drop-shadow-md transition-colors"
                         />
                     )}
                     <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
@@ -664,9 +664,9 @@ toast.error("Location search failed. Please click on the map to set the location
           <div className="absolute top-4 left-4 bg-surface-default/95 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-xs space-y-1">
              <div className="flex items-center gap-2">
                  {locationPrecision === 'approximate' ? (
-                     <div className="w-3 h-3 rounded-full bg-[#EEFF41] border border-surface-default" />
+                     <div className="w-3 h-3 rounded-full bg-brand-primary border border-surface-default" />
                  ) : (
-                     <MapPin className="h-3 w-3 text-[#EEFF41] fill-[#EEFF41]" />
+                     <MapPin className="h-3 w-3 text-brand-primary fill-brand-primary" />
                  )}
                  <span>Selected Location</span>
              </div>

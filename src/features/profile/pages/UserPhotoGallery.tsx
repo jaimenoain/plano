@@ -317,7 +317,7 @@ export default function UserPhotoGallery() {
                     {/* Like Button */}
                     <button
                       onClick={(e) => handleLike(e, photo.id)}
-                      className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors backdrop-blur-sm group/btn z-10 flex items-center gap-1.5"
+                      className="absolute top-2 right-2 p-2 rounded-full bg-black/40 /* Photo overlay — bg-black/40 approved per COMPONENT_SPEC §8 backdrop convention */ hover:bg-black/60 transition-colors backdrop-blur-sm group/btn z-10 flex items-center gap-1.5"
                     >
                       <Heart
                          className={cn(
@@ -331,7 +331,7 @@ export default function UserPhotoGallery() {
                     </button>
 
                     {photo.building && (
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 /* Photo overlay — bg-black/50 approved per COMPONENT_SPEC §8 backdrop convention */ opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                          <p className="text-text-inverse text-xs truncate font-medium">{photo.building.name}</p>
                       </div>
                     )}

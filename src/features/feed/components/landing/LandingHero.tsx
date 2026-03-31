@@ -38,8 +38,8 @@ const FloatingCard = ({ name, rating, className, delay = 0 }: FloatingCardProps)
         }}
       >
         <span className="font-semibold text-sm">{name}</span>
-        <div className="flex items-center gap-1 bg-surface-muted/50 px-1.5 py-0.5 rounded">
-          <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+        <div className="flex items-center gap-1 bg-surface-muted/50 px-1.5 py-0.5 rounded-sm">
+          <Star className="w-3 h-3 fill-feedback-warning text-feedback-warning" />
           <span className="text-xs font-medium">{rating}</span>
         </div>
       </motion.div>

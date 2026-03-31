@@ -852,7 +852,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
         {/* Architect Portfolio (Only visible if user is a verified architect) */}
         {(() => {
           return verifiedArchitectId ? (
-            <div className="max-w-7xl mx-auto px-4 mt-8 mb-8">
+          <div className="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-border-default mb-8">
               <WidgetErrorBoundary>
                 <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
               </WidgetErrorBoundary>
