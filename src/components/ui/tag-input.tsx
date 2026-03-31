@@ -34,9 +34,13 @@ export function TagInput({ placeholder, tags, setTags, className }: TagInputProp
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <div className="flex flex-wrap gap-2 mb-2">
+      <div className="mb-2 flex flex-wrap gap-2">
         {tags.map((tag, index) => (
-          <Badge key={index} variant="default" className="flex items-center gap-1">
+          <Badge
+            key={index}
+            variant="default"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium uppercase tracking-wide"
+          >
             {tag}
             <button
               type="button"

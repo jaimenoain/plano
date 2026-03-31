@@ -38,7 +38,7 @@ export function NavigationBlocker({ isDirty }: NavigationBlockerProps) {
 
   return (
     <AlertDialog open={blocker.state === "blocked"}>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-sm">
         <AlertDialogHeader>
           <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
           <AlertDialogDescription>

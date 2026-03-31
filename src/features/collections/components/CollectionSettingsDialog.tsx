@@ -418,8 +418,8 @@ toast.error("Failed to export data");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-[500px] flex flex-col h-full">
-        <SheetHeader>
+      <SheetContent side="right" className="w-full sm:max-w-[500px] flex flex-col h-full bg-surface-overlay border-l border-border-default shadow-lg">
+        <SheetHeader className="border-b border-border-default pb-4">
           <SheetTitle>Collection Settings</SheetTitle>
           <SheetDescription>Manage your collection preferences and collaborators.</SheetDescription>
         </SheetHeader>

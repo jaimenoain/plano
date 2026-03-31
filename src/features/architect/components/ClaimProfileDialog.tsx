@@ -91,20 +91,20 @@ form.setError("professional_email", {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`sm:max-w-md p-0 overflow-hidden border-0 ${showSuccess ? "bg-black" : "bg-surface-default"}`}>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         {showSuccess ? (
-          <div className="flex flex-col items-center justify-center p-12 bg-black text-white min-h-[300px] animate-in fade-in zoom-in duration-300">
-            <div className="rounded-full bg-[#eeff41ff]/20 p-4 mb-6">
-              <Check className="h-10 w-10 text-[#eeff41ff]" />
+          <div className="flex flex-col items-center justify-center p-12 bg-surface-card text-text-primary min-h-[300px] animate-in fade-in zoom-in duration-300">
+            <div className="rounded-full bg-brand-secondary p-4 mb-6">
+              <Check className="h-10 w-10 text-brand-primary" />
             </div>
-            <h3 className="text-2xl font-bold mb-2 text-[#eeff41ff]">Claim Request Sent</h3>
-            <p className="text-gray-400 text-center text-sm max-w-[240px]">
+            <h3 className="text-2xl font-bold mb-2 text-brand-primary">Claim Request Sent</h3>
+            <p className="text-sm text-text-secondary text-center max-w-[240px]">
               We'll review your request and get back to you shortly.
             </p>
           </div>
         ) : (
           <div className="p-6">
-            <DialogHeader className="mb-6">
+            <DialogHeader className="mb-6 border-b border-border-default pb-4">
               <DialogTitle className="text-xl">Claim {architectName}</DialogTitle>
               <DialogDescription>
                 Verify your professional identity to manage this profile.
@@ -125,7 +125,7 @@ form.setError("professional_email", {
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end gap-3 pt-2">
+                <div className="flex items-center justify-end gap-3 pt-6 border-t border-border-default">
                   <Button
                     type="button"
                     variant="ghost"

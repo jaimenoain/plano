@@ -187,7 +187,7 @@ setError("Failed to load folder");
           description={folder.description || `View ${folder.name} folder on Plano.`}
        />
 
-       <div className="max-w-7xl mx-auto px-4 py-6">
+       <div className="max-w-4xl mx-auto px-4 py-6">
            {/* Header */}
            <div className="mb-8">
                <div className="flex items-center gap-2 text-sm text-text-secondary mb-2 cursor-pointer hover:text-text-primary w-fit" onClick={handleBack}>
@@ -196,7 +196,7 @@ setError("Failed to load folder");
                </div>
                <div className="flex items-start justify-between">
                    <div>
-                       <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight mb-2 flex items-center gap-3 text-text-primary">
+                       <h1 className="text-4xl font-bold tracking-tight leading-tight mb-2 flex items-center gap-3 text-text-primary">
                            <Folder className="h-8 w-8 text-text-secondary" />
                            {folder.name}
                        </h1>
@@ -216,7 +216,7 @@ setError("Failed to load folder");
 
            {/* Content */}
            {collections.length > 0 ? (
-               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
                    {collections.map(collection => (
                        <CollectionCard
                            key={collection.id}

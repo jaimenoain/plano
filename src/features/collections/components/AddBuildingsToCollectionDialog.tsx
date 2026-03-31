@@ -465,8 +465,8 @@ toast.error("Failed to add building");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
-        <DialogHeader className="p-4 pb-2 shrink-0 border-b">
+      <DialogContent className="max-w-5xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-surface-overlay border border-border-default rounded-lg shadow-lg">
+        <DialogHeader className="p-4 pb-2 shrink-0 border-b border-border-default">
           <DialogTitle>Add to Collection</DialogTitle>
         </DialogHeader>
 

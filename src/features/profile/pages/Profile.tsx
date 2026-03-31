@@ -1041,7 +1041,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
                 </div>
               </div>
 
-            {/* Grid Content */}
+          {/* Grid Content */}
             <div className="mt-0">
               {contentLoading ? (
                 <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-text-secondary" /></div>
@@ -1152,6 +1152,7 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
                   </div>
               )}
             </div>
+        </div>
         </div>
         </div>
 

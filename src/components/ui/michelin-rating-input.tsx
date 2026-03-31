@@ -18,7 +18,7 @@ export function MichelinRatingInput({
   const [hovered, setHovered] = React.useState<number | null>(null)
 
   return (
-    <div className={cn("flex gap-4 items-center", className)}>
+    <div className={cn("flex items-center gap-4", className)}>
       {[1, 2, 3].map((rating) => {
         const isActive = hovered !== null ? rating <= hovered : rating <= value
 
@@ -38,7 +38,7 @@ export function MichelinRatingInput({
             }}
             onMouseEnter={() => !disabled && setHovered(rating)}
             onMouseLeave={() => !disabled && setHovered(null)}
-            className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded-sm hover:bg-surface-muted transition-colors focus-visible:ring-2 focus-visible:ring-brand-primary"
+            className="rounded-sm p-1 focus:outline-none transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
           >
              <RatingCircle active={isActive} />
           </motion.button>
@@ -56,14 +56,14 @@ function RatingCircle({ active }: { active: boolean }) {
             height="48"
             viewBox="0 0 24 24"
             className={cn(
-                "transition-colors duration-200",
-                active
-                  ? "fill-brand-primary stroke-brand-primary"
-                  : "fill-transparent stroke-text-disabled"
+              "transition-colors duration-200",
+              active
+                ? "fill-brand-primary stroke-brand-primary"
+                : "fill-transparent stroke-text-disabled"
             )}
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ strokeWidth: 1.5 }}
+            strokeWidth={1.5}
         >
             <circle cx="12" cy="12" r="10" />
         </svg>

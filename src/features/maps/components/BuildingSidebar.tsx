@@ -168,8 +168,9 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
   }, [data?.pages]);
 
   return (
-    <ScrollArea className="h-full w-full">
-      <div className={cn("space-y-4 p-4", className)}>
+    <div className={cn("h-full w-80 bg-surface-card border-l border-border-default", className)}>
+      <ScrollArea className="h-full w-full">
+        <div className="space-y-4 p-4">
         {/* Architect Results */}
         {architects && architects.length > 0 && (
           <div className="space-y-2">
@@ -363,7 +364,8 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
               )}
            </>
         )}
-      </div>
-    </ScrollArea>
+        </div>
+      </ScrollArea>
+    </div>
   );
 }

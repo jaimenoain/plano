@@ -229,8 +229,8 @@ toast({ variant: "destructive", description: "Failed to delete collection." });
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md bg-surface-overlay border border-border-default rounded-lg shadow-lg p-0">
+          <DialogHeader className="p-6 border-b border-border-default">
             <DialogTitle>
               {view === "list" && "Manage Collections"}
               {view === "create" && "New Collection"}
@@ -244,7 +244,7 @@ toast({ variant: "destructive", description: "Failed to delete collection." });
           </DialogHeader>
 
           {view === "list" ? (
-            <div className="space-y-4">
+            <div className="space-y-4 p-6">
               <Button onClick={startCreate} className="w-full">
                 <Plus className="mr-2 h-4 w-4" /> Create New Collection
               </Button>
@@ -281,7 +281,7 @@ toast({ variant: "destructive", description: "Failed to delete collection." });
               )}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 p-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
@@ -349,7 +349,7 @@ toast({ variant: "destructive", description: "Failed to delete collection." });
                 </div>
               )}
 
-              <DialogFooter className="gap-2 sm:gap-0 mt-4">
+              <DialogFooter className="gap-2 sm:gap-0 mt-4 border-t border-border-default pt-4">
                  <Button variant="outline" onClick={() => setView("list")} disabled={processing}>
                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                  </Button>

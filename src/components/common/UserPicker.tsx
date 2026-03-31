@@ -82,12 +82,16 @@ export function UserPicker({ selectedIds, onSelect, onRemove, className, modal }
         {selectedUsers.length > 0 && (
             <div className="flex flex-wrap gap-2">
                 {selectedUsers.map(u => (
-                    <Badge key={u.id} variant="secondary" className="pl-1 pr-3 py-1.5 gap-2 rounded-full text-sm">
+                    <Badge
+                      key={u.id}
+                      variant="secondary"
+                      className="flex items-center gap-2 px-2 py-0.5 rounded-sm text-xs font-medium uppercase tracking-wide"
+                    >
                         <Avatar className="h-7 w-7">
                             <AvatarImage src={u.avatar_url || undefined} />
                             <AvatarFallback className="text-xs">{u.username.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <span>{u.username}</span>
+                        <span className="truncate max-w-[8rem]">{u.username}</span>
                         <X
                             className="h-4 w-4 cursor-pointer hover:text-feedback-destructive transition-colors"
                             onClick={() => onRemove(u.id)}
@@ -109,7 +113,10 @@ export function UserPicker({ selectedIds, onSelect, onRemove, className, modal }
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent
+          className="w-[300px] p-0 bg-surface-overlay border border-border-default rounded-sm shadow-lg"
+          align="start"
+        >
           <Command shouldFilter={false}>
             <CommandInput
                 placeholder="Search friends..."

@@ -61,7 +61,7 @@ export function PwaPrompt() {
           // Check if toast is already active to avoid duplicates
           // (Sonner handles this by ID, but good to be explicit)
           toast.custom((t) => (
-            <div className="bg-surface-default border border-border-default p-4 rounded-lg shadow-lg flex flex-col gap-3 w-full max-w-sm pointer-events-auto">
+            <div className="bg-surface-card border border-border-default p-4 rounded-md shadow-lg flex flex-col gap-3 w-full max-w-sm pointer-events-auto">
               <div className="flex flex-col gap-1">
                 <h3 className="font-semibold text-text-primary">Install PLANO</h3>
                 <p className="text-sm text-text-secondary">
@@ -130,7 +130,7 @@ export function PwaPrompt() {
 
           <div className="p-4 flex flex-col gap-6">
             <div className="flex items-center gap-4">
-               <div className="bg-surface-muted p-3 rounded-xl">
+               <div className="bg-surface-muted p-3 rounded-sm border border-border-default">
                  <Share className="w-6 h-6 text-text-primary" />
                </div>
                <div className="flex-1">
@@ -140,7 +140,7 @@ export function PwaPrompt() {
             </div>
 
             <div className="flex items-center gap-4">
-               <div className="bg-surface-muted p-3 rounded-xl">
+               <div className="bg-surface-muted p-3 rounded-sm border border-border-default">
                  <SquarePlus className="w-6 h-6 text-text-primary" />
                </div>
                <div className="flex-1">

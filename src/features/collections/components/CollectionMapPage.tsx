@@ -856,7 +856,7 @@ toast({
 
   return (
     <AppLayout title={collection.name} showBack isFullScreen>
-      <div className="flex flex-col lg:flex-row h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] md:h-[100dvh] overflow-hidden relative">
+      <div className="flex flex-col lg:flex-row-reverse h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] md:h-[100dvh] overflow-hidden relative">
         <div className="lg:hidden">
           <SearchModeToggle
             mode={viewMode}
@@ -867,8 +867,8 @@ toast({
 
         {/* Sidebar List */}
         <div className={cn(
-          "w-full lg:w-[450px] bg-surface-default border-r flex-col shrink-0 lg:h-full lg:order-1 lg:flex",
-          viewMode === 'list' ? "h-full flex order-2" : "hidden"
+          "w-full lg:w-80 bg-surface-card border-t lg:border-t-0 lg:border-l border-border-default flex-col shrink-0 lg:h-full lg:flex",
+          viewMode === 'list' ? "h-full flex order-2 lg:order-2" : "hidden lg:flex lg:order-2"
         )}>
             <div className="p-4 border-b flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
@@ -1036,8 +1036,8 @@ onUpdateNote={handleUpdateNote}
 
         {/* Map */}
         <div className={cn(
-          "flex-1 relative lg:h-full lg:order-2 lg:flex",
-          viewMode === 'map' ? "h-full flex order-1" : "hidden"
+          "flex-1 relative lg:h-full lg:flex",
+          viewMode === 'map' ? "h-full flex order-1 lg:order-1" : "hidden lg:flex lg:order-1"
         )}>
             <Suspense fallback={
                 <div className="flex items-center justify-center h-full w-full bg-surface-muted/20">

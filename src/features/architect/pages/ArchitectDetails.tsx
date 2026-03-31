@@ -103,7 +103,7 @@ export default function ArchitectDetails() {
         title={architect.name}
       />
       <div className="px-4 py-6 md:py-10 max-w-7xl mx-auto animate-fade-in space-y-8">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+        <h1 className="text-4xl font-bold tracking-tight text-text-primary">
           {architect.name}
         </h1>
         

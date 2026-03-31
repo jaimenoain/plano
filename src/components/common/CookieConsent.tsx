@@ -25,7 +25,7 @@ export function CookieConsent() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-default bg-surface-default p-4 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-default bg-surface-card p-4 shadow-lg"
       role="dialog"
       aria-label="Cookie preferences"
     >

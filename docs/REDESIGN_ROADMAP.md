@@ -391,16 +391,16 @@
 - [x] **Task 13.1 — Redesign collection components**
   `CollectionsGrid`: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`. `CollectionBuildingCard`: image-first. `CollectionMarkerCard`, `CollectionSelector`, `BuildingDetailPanel`: token-compliant.
 
-- [ ] **Task 13.2 — Redesign collection dialogs**
+- [x] **Task 13.2 — Redesign collection dialogs**
   `CreateCollectionDialog`, `CollectionSettingsDialog`, `ManageCollectionDialog`, `AddBuildingsToCollectionDialog`, `PlanRouteDialog` — all per COMPONENT_SPEC §8.
 
-- [ ] **Task 13.3 — Redesign CollectionMapPage.tsx**
+- [x] **Task 13.3 — Redesign CollectionMapPage.tsx**
   Full-width map. Sidebar `w-80 bg-surface-card border-l border-border-default`. Route overlays `brand-primary`.
 
-- [ ] **Task 13.4 — Redesign itinerary components**
+- [x] **Task 13.4 — Redesign itinerary components**
   `ItineraryList`, `SortableItineraryItem`: stops `bg-surface-card border border-border-default rounded-sm p-4 mb-2`. `ItineraryGenerationOverlay`: `bg-black/60` backdrop, `bg-surface-card rounded-lg shadow-lg p-8` loading card.
 
-- [ ] **Task 13.5 — Redesign FolderView.tsx and FolderCard.tsx**
+- [x] **Task 13.5 — Redesign FolderView.tsx and FolderCard.tsx**
   FolderView: `max-w-4xl mx-auto`, title `text-4xl font-bold tracking-tight`. FolderCard: `bg-surface-card border border-border-default rounded-sm p-6`.
 
 **Checkpoint:** `npm run typecheck && npm run test`
@@ -409,7 +409,7 @@
 
 ## Phase 14 — Map Components
 
-- [ ] **Task 14.1 — Redesign map UI components**
+- [x] **Task 14.1 — Redesign map UI components**
   Files: `PlanoMap`, `MapControls`, `BuildingSidebar`, `BuildingPopupContent`, `FilterDrawer`, `MapMarkers`, `MapPin`, `CollectionMapGL`, `ItineraryRoutes`, `QualityRatingFilter`, `FolderAndCollectionMultiSelect`.
   - Controls: `bg-surface-card/90 backdrop-blur-sm border border-border-default rounded-sm shadow-md`.
   - Sidebar: `w-80 bg-surface-card border-l border-border-default`. Items: `p-4 border-b hover:bg-brand-secondary`.
@@ -422,16 +422,16 @@
 
 ## Phase 15 — Connect, Notifications, Architect
 
-- [ ] **Task 15.1 — Redesign Connect.tsx**
+- [x] **Task 15.1 — Redesign Connect.tsx**
   `max-w-2xl mx-auto`. Title: `text-4xl font-bold tracking-tight`. Section divider between PYMK and Contacts. `UserRow`: `flex items-center gap-4 p-4 border-b border-border-default hover:bg-brand-secondary`.
 
-- [ ] **Task 15.2 — Redesign Notifications.tsx**
+- [x] **Task 15.2 — Redesign Notifications.tsx**
   (Icons fixed in Task 3.1.) Visible h1: `text-4xl font-bold tracking-tight mb-6`. Unread: `bg-brand-secondary`. Read: transparent. Empty state per §10.
 
-- [ ] **Task 15.3 — Redesign NotificationSettingsDialog.tsx**
+- [x] **Task 15.3 — Redesign NotificationSettingsDialog.tsx**
   Per COMPONENT_SPEC §8. Toggle rows: `flex items-center justify-between py-3 border-b border-border-default`.
 
-- [ ] **Task 15.4 — Redesign architect pages**
+- [x] **Task 15.4 — Redesign architect pages**
   `ArchitectDetails`: name `text-4xl font-bold tracking-tight`, portfolio `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`, image-first building cards.
   `ArchitectDashboard`, `EditArchitect`: form pages per §5.
   `ClaimProfileDialog`: per §8.
@@ -442,10 +442,10 @@
 
 ## Phase 16 — Common & Custom UI
 
-- [ ] **Task 16.1 — Redesign common components**
+- [x] **Task 16.1 — Redesign common components**
   `RecommendDialog`, `UserPicker`: per §8. `CookieConsent`: `bg-surface-card border-t border-border-default p-4 shadow-lg`. `NavigationBlocker`: per §8, `max-w-sm`. `PwaPrompt`: toast-style. `RouteLoadingFallback`: `Loader2 text-brand-primary animate-spin`. Error boundaries: §10 with `AlertTriangle text-feedback-destructive`.
 
-- [ ] **Task 16.2 — Redesign custom UI components**
+- [x] **Task 16.2 — Redesign custom UI components**
   `segmented-control`: `bg-surface-muted rounded-sm p-0.5`, active `bg-surface-card shadow-sm rounded-sm`. `tag-input`: tags `bg-surface-muted border border-border-default rounded-sm px-2 py-0.5 text-xs`. `michelin-rating-input`: large stars. `LocationInput`: dropdown `bg-surface-overlay shadow-lg rounded-sm`. `VideoPlayer`: controls `bg-black/60 backdrop-blur-sm rounded-sm p-2`. All: `rounded-sm`, semantic tokens, hover/focus-visible/disabled states.
 
 **Checkpoint:** `npm run typecheck && npm run test`

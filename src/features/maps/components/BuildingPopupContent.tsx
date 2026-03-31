@@ -223,7 +223,7 @@ export function BuildingPopupContent({
   if (cluster.is_custom_marker) {
       return (
         <div
-            className="flex w-[200px] flex-col overflow-hidden rounded-md bg-surface-default shadow-lg relative"
+            className="flex w-[200px] flex-col overflow-hidden rounded-sm bg-surface-card border border-border-default shadow-lg relative max-w-xs"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
@@ -255,7 +255,7 @@ export function BuildingPopupContent({
                     </p>
                 )}
 
-                <div className="flex flex-col gap-2 pt-2 border-t">
+                <div className="flex flex-col gap-2 pt-2 border-t border-border-default">
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -317,7 +317,7 @@ export function BuildingPopupContent({
   if (cluster.is_candidate) {
       return (
         <div
-            className="flex w-[200px] flex-col overflow-hidden rounded-md bg-surface-default shadow-lg relative"
+            className="flex w-[200px] flex-col overflow-hidden rounded-sm bg-surface-card border border-border-default shadow-lg relative max-w-xs"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
@@ -376,7 +376,7 @@ export function BuildingPopupContent({
   // Standard Building Logic
   return (
     <div
-      className="flex w-[200px] flex-col overflow-hidden rounded-md bg-surface-default shadow-lg relative"
+      className="flex w-[200px] flex-col overflow-hidden rounded-sm bg-surface-card border border-border-default shadow-lg relative max-w-xs"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

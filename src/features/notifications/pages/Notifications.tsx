@@ -229,8 +229,8 @@ export default function Notifications() {
           key={n.id}
           onClick={() => handleNotificationClick(n)}
           className={cn(
-            "flex items-center gap-4 px-4 py-4 border-b border-border-default last:border-0 cursor-pointer transition-colors hover:bg-surface-muted/30",
-            !n.is_read && "bg-surface-muted/10"
+            "flex items-center gap-4 px-4 py-4 border-b border-border-default last:border-0 cursor-pointer transition-colors hover:bg-brand-secondary",
+            !n.is_read && "bg-brand-secondary"
           )}
         >
           <div className="relative">
@@ -288,7 +288,7 @@ export default function Notifications() {
 
       <ScrollArea className="h-full pb-20">
         <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto flex flex-col">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary">
+          <h1 className="text-4xl font-bold tracking-tight mb-6 text-text-primary">
             Notifications
           </h1>
           {notifications.length > 0 ? (

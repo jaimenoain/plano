@@ -99,7 +99,7 @@ export function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className={cn("relative group bg-black overflow-hidden max-w-full", className)}
+      className={cn("relative group bg-black overflow-hidden max-w-full rounded-sm", className)}
       onMouseEnter={() => setIsControlsVisible(true)}
       onMouseLeave={() => setIsControlsVisible(false)}
       onClick={togglePlay}
@@ -117,11 +117,9 @@ export function VideoPlayer({
         onPause={() => setIsPlaying(false)}
       />
 
-      {/* Play/Pause Overlay (Center) - Only show when paused and not hovering? Or always? */}
-      {/* Requirement: Minimalist. Maybe just show play button when paused. */}
       {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20">
-          <div className="bg-black/40 rounded-full p-4 backdrop-blur-sm">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="rounded-sm bg-black/60 p-3 backdrop-blur-sm">
             <Play className="w-8 h-8 text-white fill-white" />
           </div>
         </div>
@@ -130,13 +128,13 @@ export function VideoPlayer({
       {/* Controls Bar */}
       <div
         className={cn(
-          "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between transition-opacity duration-300",
+          "absolute bottom-0 left-0 right-0 flex items-center justify-between bg-black/60 p-2 backdrop-blur-sm transition-opacity duration-300",
           isControlsVisible || !isPlaying ? "opacity-100" : "opacity-0"
         )}
       >
         <button
           onClick={togglePlay}
-          className="text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+          className="rounded-sm p-2 text-white transition-colors hover:bg-white/20"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? (
@@ -149,7 +147,7 @@ export function VideoPlayer({
         <div className="flex items-center gap-1">
             <button
                 onClick={toggleMute}
-                className="text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+                className="rounded-sm p-2 text-white transition-colors hover:bg-white/20"
                 aria-label={isMuted ? "Unmute" : "Mute"}
             >
                 {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
@@ -157,7 +155,7 @@ export function VideoPlayer({
 
             <button
                 onClick={toggleFullscreen}
-                className="text-white hover:bg-white/20 rounded-full p-3 transition-colors"
+                className="rounded-sm p-2 text-white transition-colors hover:bg-white/20"
                 aria-label="Toggle Fullscreen"
             >
                 <Maximize2 className="w-6 h-6" />

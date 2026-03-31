@@ -122,7 +122,7 @@ toast({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="border-b border-border-default p-6">
           <DialogTitle>Notification Settings</DialogTitle>
         </DialogHeader>
 
@@ -131,7 +131,7 @@ toast({
             <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
           </div>
         ) : (
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 p-6">
             <p className="text-sm text-text-secondary">
               Choose which notifications you want to receive. Changes will apply to future notifications.
             </p>
@@ -143,7 +143,10 @@ toast({
                 </h4>
                 <div className="space-y-3">
                   {group.types.map((type) => (
-                    <div key={type.id} className="flex items-center justify-between">
+                    <div
+                      key={type.id}
+                      className="flex items-center justify-between py-3 border-b border-border-default"
+                    >
                       <Label htmlFor={`notif-${type.id}`} className="text-sm font-normal cursor-pointer flex-1">
                         {type.label}
                       </Label>
@@ -160,7 +163,7 @@ toast({
           </div>
         )}
 
-        <div className="flex justify-end gap-2 pt-2 border-t mt-2">
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-border-default">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancel
           </Button>

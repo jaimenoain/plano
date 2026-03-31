@@ -243,7 +243,7 @@ function CollectionMapGLContent({
                 e.stopPropagation();
                 setIsSatellite(!isSatellite);
             }}
-            className="p-2 bg-surface-default/90 backdrop-blur rounded-md border shadow-sm hover:bg-surface-muted transition-colors flex items-center gap-2"
+            className="p-2 bg-surface-card/90 backdrop-blur-sm border border-border-default rounded-sm shadow-md hover:bg-surface-muted transition-colors flex items-center gap-2"
             title={isSatellite ? "Show Map" : "Show Satellite"}
           >
             <Layers className="w-4 h-4" />
@@ -257,7 +257,7 @@ function CollectionMapGLContent({
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
             }}
-            className="absolute top-2 right-2 p-2 bg-surface-default/90 backdrop-blur rounded-md border shadow-sm hover:bg-surface-muted transition-colors z-[60]"
+            className="absolute top-2 right-2 p-2 bg-surface-card/90 backdrop-blur-sm border border-border-default rounded-sm shadow-md hover:bg-surface-muted transition-colors z-[60]"
             title={isExpanded ? "Collapse Map" : "Expand Map"}
         >
             {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}

@@ -139,15 +139,15 @@ toast({ variant: "destructive", description: "Failed to create collection." });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md bg-surface-overlay border border-border-default rounded-lg shadow-lg p-0">
+        <DialogHeader className="p-6 border-b border-border-default">
           <DialogTitle>New Collection</DialogTitle>
           <DialogDescription>
             Create a new collection to organize your favorite buildings.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 p-6">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input
@@ -214,7 +214,7 @@ toast({ variant: "destructive", description: "Failed to create collection." });
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="p-6 border-t border-border-default">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={processing}>
             Cancel
           </Button>

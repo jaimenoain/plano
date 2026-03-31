@@ -341,7 +341,12 @@ const handleModeChange = (newMode: string) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className="h-9 w-9 relative" aria-label="Filters">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 relative bg-surface-card/90 backdrop-blur-sm border border-border-default rounded-sm shadow-md hover:bg-surface-muted"
+          aria-label="Filters"
+        >
           <ListFilter className="h-4 w-4" />
           {activeFilterCount > 0 && (
             <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-brand-primary text-[8px] text-brand-primary-foreground">
@@ -350,7 +355,7 @@ const handleModeChange = (newMode: string) => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-[340px] sm:w-[380px] overflow-y-auto">
+      <SheetContent side="right" className="w-[340px] sm:w-[380px] overflow-y-auto">
         <SheetHeader className="flex flex-row items-center justify-between space-y-0">
           <SheetTitle>Filters</SheetTitle>
           {activeFilterCount > 0 && (
