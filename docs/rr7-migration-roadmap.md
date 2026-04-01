@@ -163,18 +163,22 @@ changes. Everything stays CSR — no loaders yet. This is a structural migration
 
 - [x] Create `react-router.config.ts` at the project root:
   ```ts
+  import { vercelPreset } from "@vercel/react-router/vite";
   import type { Config } from "@react-router/dev/config";
 
   export default {
     ssr: true,
     // Required: source files live in src/, not app/ (RR7's default)
     appDirectory: "src",
+    presets: [vercelPreset()],
   } satisfies Config;
   ```
   > Without `appDirectory: "src"`, RR7 looks for routes, entry files, and root in an
   > `app/` folder at the project root. Since this project's source is in `src/`, all
   > file paths in `routes.ts`, `root.tsx`, and the entry files must be under `src/` and
-  > this config option must be set to match.
+  > this config option must be set to match. The `vercelPreset` ensures the build output
+  > is wired correctly for Vercel's React Router support so that all routes resolve
+  > through the RR7 server entry instead of falling through to a platform 404.
 
 ### 2.2 Migrate the route tree to `app/routes.ts`
 
@@ -936,7 +940,7 @@ highest-impact SEO change in the entire migration.
 
 ### 6.1 Add Vercel config
 
-- [ ] Create `vercel.json` at the project root:
+- [x] Create `vercel.json` at the project root:
   ```json
   {
     "framework": "react-router",
@@ -946,7 +950,7 @@ highest-impact SEO change in the entire migration.
 
 ### 6.2 Update CI
 
-- [ ] Update `.github/workflows/ci.yml` to read Supabase credentials from GitHub secrets
+- [x] Update `.github/workflows/ci.yml` to read Supabase credentials from GitHub secrets
   rather than hardcoded placeholder values:
   ```yaml
   - name: Production build (SSR)
