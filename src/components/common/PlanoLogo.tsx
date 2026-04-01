@@ -20,7 +20,7 @@ export const PlanoLogo = ({ className, viewBox = "-30 0 358.401 85", ...props }:
         y="44"
         width="358.401"
         height="41"
-        fill="#eeff41"
+        fill="#BEFF00"
       />
 
       {/* Text Layer (Foreground) */}
