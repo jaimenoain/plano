@@ -39,7 +39,9 @@ import {
   CollectionItemWithBuilding,
   ItineraryStop,
   Itinerary,
+  CollectionMarker,
 } from "@/features/collections/types";
+import type { ItineraryBuilding } from "@/features/itinerary/stores/useItineraryStore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
@@ -652,8 +654,8 @@ export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinera
     const buildingDetails = useItineraryStore((state) => state.buildingDetails);
     const markerDetails = useItineraryStore((state) => state.markerDetails);
 
-    let activeBuilding = null;
-    let activeMarker = null;
+    let activeBuilding: ItineraryBuilding | null = null;
+    let activeMarker: CollectionMarker | null = null;
 
     if (activeStop) {
         if (activeStop.type === 'building') {
@@ -664,28 +666,31 @@ export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinera
     }
 
     // Construct active item for display
-    const activeDisplayItem: CollectionItemWithBuilding | null = activeBuilding ? {
-        id: activeBuilding.collection_item_id || "temp-overlay-id",
-        building_id: activeBuilding.id,
-        note: activeBuilding.note || null,
-        custom_category_id: null,
-        is_hidden: false,
-        building: {
-          id: activeBuilding.id,
-          name: activeBuilding.name,
-          location_lat: activeBuilding.location_lat,
-          location_lng: activeBuilding.location_lng,
-          city: activeBuilding.city || null,
-          country: activeBuilding.country || null,
-          year_completed: activeBuilding.year_completed || null,
-          hero_image_url: activeBuilding.hero_image_url || null,
-          community_preview_url: activeBuilding.community_preview_url || null,
-          location_precision: activeBuilding.location_precision || "approximate",
-          building_architects: activeBuilding.building_architects || [],
-          slug: activeBuilding.slug || null,
-          short_id: activeBuilding.short_id || null
+    const activeDisplayItem: CollectionItemWithBuilding | null = activeBuilding
+      ? {
+          id: activeBuilding.collection_item_id || "temp-overlay-id",
+          building_id: activeBuilding.id,
+          note: activeBuilding.note || null,
+          custom_category_id: null,
+          is_hidden: false,
+          building: {
+            id: activeBuilding.id,
+            name: activeBuilding.name,
+            address: activeBuilding.address,
+            location_lat: activeBuilding.location_lat,
+            location_lng: activeBuilding.location_lng,
+            city: activeBuilding.city ?? null,
+            country: activeBuilding.country ?? null,
+            year_completed: activeBuilding.year_completed ?? null,
+            hero_image_url: activeBuilding.hero_image_url ?? null,
+            community_preview_url: activeBuilding.community_preview_url ?? null,
+            location_precision: activeBuilding.location_precision ?? "approximate",
+            building_architects: activeBuilding.building_architects ?? [],
+            slug: activeBuilding.slug ?? null,
+            short_id: activeBuilding.short_id ?? null,
+          },
         }
-    } : null;
+      : null;
 
     const dayIds = days.map(d => `day-${d.dayNumber}`);
 

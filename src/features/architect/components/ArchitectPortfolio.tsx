@@ -29,14 +29,14 @@ export function ArchitectPortfolio({ architectId, isOwnProfile }: ArchitectPortf
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {buildings.map((building) => {
             // Map PortfolioBuilding to SmartBuilding expected format for a premium visual grid
-            let main_image_url = null;
+            let main_image_url: string | null = null;
             const selectedImage = building.hero_image_url || building.community_preview_url;
 
             if (selectedImage) {
               if (selectedImage.startsWith('http')) {
                 main_image_url = selectedImage;
               } else {
-                main_image_url = getBuildingImageUrl(selectedImage);
+                main_image_url = getBuildingImageUrl(selectedImage) ?? null;
               }
             }
 

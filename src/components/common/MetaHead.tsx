@@ -1,4 +1,4 @@
-import { Helmet } from "react-helmet-async";
+import { useEffect } from "react";
 
 interface MetaHeadProps {
   title?: string;
@@ -10,8 +10,6 @@ interface MetaHeadProps {
   noIndex?: boolean;
 }
 
-const SITE_URL = "https://plano.app";
-
 export function MetaHead({
   title,
   description = "Track your architecture visits, rate buildings, and discover what friends are exploring.",
@@ -21,45 +19,17 @@ export function MetaHead({
   structuredData,
   noIndex = false,
 }: MetaHeadProps) {
-  // Ensure image is absolute URL
-  const getAbsoluteImageUrl = (img: string): string | undefined => {
-    if (!img) return undefined;
-    if (img.startsWith("http")) return img;
-    return `${SITE_URL}${img.startsWith("/") ? "" : "/"}${img}`;
-  };
+  void description;
+  void image;
+  void type;
+  void canonicalUrl;
+  void structuredData;
+  void noIndex;
 
-  const absoluteImage = getAbsoluteImageUrl(image || "/cover.jpg");
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.title = title ? `${title} | Plano` : "Plano";
+  }, [title]);
 
-  return (
-    <Helmet>
-      {/* Standard Metadata */}
-      <title>{title ? `${title} | Plano` : "Plano"}</title>
-      <meta name="description" content={description} />
-
-      {/* Robots */}
-      {noIndex && <meta name="robots" content="noindex, follow" />}
-
-      {/* Canonical URL */}
-      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
-
-      {/* Structured Data */}
-      {structuredData && (
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
-      )}
-
-      {/* Open Graph / Facebook */}
-      <meta property="og:type" content={type} />
-      <meta property="og:title" content={title ? `${title} | Plano` : "Plano"} />
-      <meta property="og:description" content={description} />
-      {absoluteImage && <meta property="og:image" content={absoluteImage} />}
-
-      {/* Twitter */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title ? `${title} | Plano` : "Plano"} />
-      <meta name="twitter:description" content={description} />
-      {absoluteImage && <meta name="twitter:image" content={absoluteImage} />}
-    </Helmet>
-  );
+  return null;
 }

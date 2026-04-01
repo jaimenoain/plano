@@ -37,7 +37,8 @@ describe('BuildingHeader', () => {
         expect(names).toHaveLength(1);
         expect(screen.getByText('Alt Name')).toBeTruthy();
         const subtitle = screen.getByText('Alt Name');
-        expect(subtitle.tagName).toBe('H2');
+        expect(subtitle.tagName).toBe('P');
+        expect(subtitle.className).toContain('text-lg');
         expect(subtitle.className).toContain('text-text-secondary');
     });
 

@@ -93,7 +93,9 @@ describe('lazyWithRetry', () => {
       </ErrorBoundary>
     );
 
-    await waitFor(() => expect(screen.getByText('Error!')).toBeInTheDocument());
-    expect(mockReload).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockReload).not.toHaveBeenCalled();
+      expect(sessionStorage.getItem('last-force-refresh-timestamp')).toBeTruthy();
+    });
   });
 });

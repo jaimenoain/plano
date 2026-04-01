@@ -1,0 +1,1 @@
+import{j as r}from"./jsx-runtime-BGX7M3z7.js";import{a as t}from"./createLucideIcon-DW1NPM-1.js";function o({className:e,...s}){return r.jsx("div",{className:t("animate-pulse rounded-sm bg-surface-muted",e),...s})}export{o as S};

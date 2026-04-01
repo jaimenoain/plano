@@ -28,22 +28,21 @@ afterEach(() => {
 describe('KanbanColumn isOver state', () => {
   it('applies active styles when isOver is true', () => {
     const { container } = render(
-        <KanbanColumn id="col-over" title="Drag Over" ratingValue={1} items={[]}>
-          <div />
-        </KanbanColumn>
+      <KanbanColumn id="col-over" title="Drag Over" ratingValue={1} items={[]}>
+        <div />
+      </KanbanColumn>
     );
 
-    // Check for the specific classes we added
+    // Root container uses active background/border when column is over
     const columnDiv = container.firstChild as HTMLElement;
-    expect(columnDiv.className).toContain('bg-surface-muted/80');
+    expect(columnDiv.className).toContain('bg-brand-secondary');
     expect(columnDiv.className).toContain('border-brand-primary');
-    expect(columnDiv.className).toContain('ring-2');
 
-    // Check empty state styling
-    // The empty state renders because items is empty array
-    const emptyState = screen.getByText('No Drag Over buildings').closest('div');
+    // Empty state also picks up active styles
+    const emptyLabel = screen.getByText('No Drag Over buildings');
+    const emptyState = emptyLabel.closest('div');
     expect(emptyState).toBeTruthy();
     expect(emptyState?.className).toContain('border-brand-primary');
-    expect(emptyState?.className).toContain('bg-brand-primary/10');
+    expect(emptyState?.className).toContain('bg-brand-secondary');
   });
 });

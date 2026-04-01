@@ -146,7 +146,7 @@ toast({ variant: "destructive", title: "Failed to save" });
   let subTitle = entry.building.address;
 
   if (variant === 'compact') {
-      const parts = [];
+      const parts: (string | number)[] = [];
       if (architectNames.length > 0) {
           parts.push(architectNames.slice(0, 2).join(", "));
       }

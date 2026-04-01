@@ -9,7 +9,6 @@ import {
 import type { LoaderFunctionArgs } from "react-router";
 import { useLoaderData } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HelmetProvider } from "react-helmet-async";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,6 +24,7 @@ import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
 import { logDiagnosticError } from "@/features/admin/api/diagnostics";
 import { setSentryUser } from "@/lib/sentry";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import type { Session } from "@supabase/supabase-js";
 import "./index.css";
 
@@ -102,16 +102,18 @@ function AppShell() {
   }, []);
 
   return (
-    <TooltipProvider>
-      <PwaProvider>
-        <GoogleAnalytics />
-        <CookieConsent />
-        <PwaPrompt />
-        <Toaster />
-        <Sonner />
-        <Outlet />
-      </PwaProvider>
-    </TooltipProvider>
+    <SidebarProvider defaultOpen={true}>
+      <TooltipProvider>
+        <PwaProvider>
+          <GoogleAnalytics />
+          <CookieConsent />
+          <PwaPrompt />
+          <Toaster />
+          <Sonner />
+          <Outlet />
+        </PwaProvider>
+      </TooltipProvider>
+    </SidebarProvider>
   );
 }
 
@@ -123,11 +125,9 @@ export default function Root() {
     <StrictMode>
       <AppErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <HelmetProvider>
-            <AuthProvider initialSession={session}>
-              <AppShell />
-            </AuthProvider>
-          </HelmetProvider>
+          <AuthProvider initialSession={session}>
+            <AppShell />
+          </AuthProvider>
         </QueryClientProvider>
       </AppErrorBoundary>
     </StrictMode>

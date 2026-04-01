@@ -152,7 +152,7 @@ export default function Index() {
                   {aggregatedReviews.map((item, index) => {
                     const key = item.type === 'cluster' ? `cluster-${item.entries[0].id}` : item.entry.id;
 
-                    let card = null;
+                    let card: React.ReactNode | null = null;
                     if (item.type === 'hero') {
                         card = <FeedHeroCard key={key} entry={item.entry} onLike={socialFeed.toggleLike} onImageLike={socialFeed.toggleImageLike} />;
                     } else if (item.type === 'compact') {

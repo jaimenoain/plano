@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useMemo, useRef, useEffect, useCallback } from 'react';
 import { Marker, useMap, Popup } from 'react-map-gl/maplibre';
 import { ClusterResponse } from '../hooks/useMapData';
 import { BuildingPopupContent } from './BuildingPopupContent';
@@ -123,7 +123,7 @@ export function MapMarkers({
         const finalZIndex = isHovered ? 999 : pinStyle.zIndex;
 
         // Icon logic for custom markers
-        let MarkerIcon = null;
+        let MarkerIcon: React.ComponentType<{ className?: string }> | null = null;
         if (cluster.is_custom_marker && cluster.marker_category) {
              switch (cluster.marker_category) {
                 case 'accommodation': MarkerIcon = Bed; break;

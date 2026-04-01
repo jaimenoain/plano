@@ -356,10 +356,13 @@ export default function BuildingDetails() {
               .select("collection_id, collections(owner_id)")
               .eq("building_id", resolvedBuildingId);
 
-          const myCollectionIds = collectionItems
-              // @ts-expect-error -- legacy Supabase row typing
-              ?.filter(item => item.collections?.owner_id === user.id)
-              .map(item => item.collection_id) || [];
+          const myCollectionIds =
+            (collectionItems ?? [])
+              .filter(
+                (item: { collections: { owner_id: string } | null; collection_id: string }) =>
+                  item.collections?.owner_id === user.id,
+              )
+              .map((item) => item.collection_id) || [];
 
           setSelectedCollectionIds(myCollectionIds);
           setInitialCollectionIds(myCollectionIds);
@@ -402,7 +405,9 @@ export default function BuildingDetails() {
             .eq("follower_id", user.id);
 
           if (followsData) {
-            followedIds = new Set(followsData.map(f => f.following_id));
+            followedIds = new Set<string>(
+              (followsData as { following_id: string }[]).map((f) => f.following_id),
+            );
           }
         }
 
@@ -520,7 +525,9 @@ export default function BuildingDetails() {
                     .eq("user_id", user.id)
                     .in("image_id", imageIds);
 
-                const likedSet = new Set(likesData?.map((l: { image_id: string }) => l.image_id) || []);
+                const likedSet = new Set<string>(
+                  (likesData as { image_id: string }[] | null | undefined)?.map((l) => l.image_id) || [],
+                );
                 setLikedImageIds(likedSet);
             }
         }
@@ -609,7 +616,7 @@ toast({ variant: "destructive", title: "Failed to like link" });
 
       // Check if user is toggling off the current status
       if (userStatus === newStatus) {
-          const parts = [];
+          const parts: string[] = [];
           if (note) parts.push("your review");
           if (selectedCollectionIds.length > 0) parts.push(`associations with ${selectedCollectionIds.length} collections`);
           if (userImages.length > 0) parts.push(`your ${userImages.length} saved photos/videos`);

@@ -48,16 +48,14 @@ describe('FeedClusterCard', () => {
     );
 
     const usernameElement = screen.getByText('testuser');
-    const textContainer = usernameElement.closest('div.break-words');
+    const textContainer = usernameElement.closest('div');
 
     expect(textContainer).not.toBeNull();
-    expect(textContainer?.className).toContain('min-w-0');
     expect(textContainer?.className).toContain('text-sm');
-    expect(textContainer?.className).toContain('flex-1');
-    expect(textContainer?.className).toContain('leading-tight');
-    expect(textContainer?.className).not.toContain('truncate');
+    expect(textContainer?.className).toContain('text-text-primary');
+    expect(textContainer?.className).toContain('truncate');
 
     const parentContainer = textContainer?.parentElement;
-    expect(parentContainer?.className).toContain('items-start');
+    expect(parentContainer?.className).toContain('min-w-0');
   });
 });

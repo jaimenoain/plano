@@ -2,8 +2,8 @@ type GeocoderAddressComponent = { long_name: string; types: string[] };
 type GeocoderResultLike = { address_components?: GeocoderAddressComponent[] };
 
 export const extractLocationDetails = (result: GeocoderResultLike | null | undefined) => {
-  let city = null;
-  let country = null;
+  let city: string | null = null;
+  let country: string | null = null;
 
   if (!result?.address_components) return { city, country };
 

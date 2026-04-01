@@ -54,8 +54,8 @@ interface GoogleGeocoderResult {
 }
 
 const extractLocationDetails = (result: GoogleGeocoderResult) => {
-  let city = null;
-  let country = null;
+  let city: string | null = null;
+  let country: string | null = null;
 
   if (!result || !result.address_components) return { city, country };
 
@@ -95,11 +95,11 @@ interface NearbyBuilding {
 }
 
 export default function AddBuilding() {
-  const [step, setStep] = useState<1 | 2>(1);
-  const [selectedAddress, setSelectedAddress] = useState("");
+  const [step, setStep] = useState<1 | 2 | null>(1);
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [locationPrecision, setLocationPrecision] = useState<'exact' | 'approximate'>('exact');
   const [potentialName, setPotentialName] = useState<string | undefined>(undefined);
-  const [nameInput, setNameInput] = useState("");
+  const [nameInput, setNameInput] = useState<string>("");
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
@@ -165,7 +165,11 @@ return new Map();
   });
 
   // Default to London, but this will be overridden if we can get user location or just start somewhere generic
-  const [viewState, setViewState] = useState({
+  const [viewState, setViewState] = useState<{
+    latitude: number;
+    longitude: number;
+    zoom: number;
+  }>({
     latitude: 51.5074,
     longitude: -0.1278,
     zoom: 12
@@ -389,8 +393,8 @@ toast.error("Location search failed. Please click on the map to set the location
         setFinalLocationData({
             lat: markerPosition.lat,
             lng: markerPosition.lng,
-            address: selectedAddress,
-            name: nameInput,
+            address: selectedAddress ?? "",
+            name: nameInput ?? "",
             city: extractedLocation.city,
             country: extractedLocation.country,
             precision: locationPrecision
@@ -447,7 +451,7 @@ toast.error("Location search failed. Please click on the map to set the location
               <div className="space-y-2">
                 <Label>Location Search</Label>
                 <LocationInput
-                  value={selectedAddress}
+                  value={selectedAddress ?? ""}
                   onLocationSelected={handleLocationSelected}
                   placeholder="Search for address..."
                   searchTypes={[]}

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
 import { BuildingDetailPanel } from "@/features/collections/components/BuildingDetailPanel";
 import { DiscoveryList } from "@/features/search/components/DiscoveryList";
-import { DiscoveryBuilding } from "@/features/search/components/types";
+import { DiscoveryBuilding, type StyleSummary } from "@/features/search/components/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
@@ -258,9 +258,9 @@ export function AddBuildingsToCollectionDialog({
 
       // Global search if query exists
       if (debouncedSearchQuery && debouncedSearchQuery.trim().length > 0) {
-        const results = await searchBuildingsRpc({
-            query_text: debouncedSearchQuery,
-            p_limit: 50
+        const results: DiscoveryBuilding[] = await searchBuildingsRpc({
+          query_text: debouncedSearchQuery,
+          p_limit: 50,
         });
 
         // Map results to include proper image URLs
@@ -290,12 +290,11 @@ export function AddBuildingsToCollectionDialog({
           )
         `)
         .eq("user_id", user.id)
-        .neq("status", "ignored")
-        .returns<UserBuildingResponse[]>();
+        .neq("status", "ignored");
 
       if (error) throw error;
 
-      const buildings = data
+      const buildings: DiscoveryBuilding[] = (data as UserBuildingResponse[])
         .filter(item => item.building) // Ensure building exists
         .map((item) => {
           const b = item.building!;
@@ -304,10 +303,13 @@ export function AddBuildingsToCollectionDialog({
             ...b,
             rating: item.rating,
             main_image_url: b.hero_image_url ? getBuildingImageUrl(b.hero_image_url) : null,
-            architects: b.building_architects?.map((ba) => ba.architect).filter(Boolean) || [],
+            architects:
+              (b.building_architects ?? [])
+                .map((ba) => ba.architect)
+                .filter((a): a is { id: string; name: string } => a != null),
             location_lat: location?.lat || 0,
             location_lng: location?.lng || 0,
-            styles: [] as { name: string }[],
+            styles: [] as StyleSummary[],
           };
       });
 

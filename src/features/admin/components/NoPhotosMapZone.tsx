@@ -82,8 +82,10 @@ export function NoPhotosMapZone() {
 
         if (reviewError) throw reviewError;
 
-        const buildingsWithPublicPhotos = new Set(
-            publicReviews?.map(r => r.building_id).filter(Boolean)
+        const buildingsWithPublicPhotos = new Set<string>(
+            (publicReviews ?? [])
+              .map((r: { building_id: string | null }) => r.building_id)
+              .filter((id): id is string => Boolean(id))
         );
 
         // Step 2: Fetch buildings

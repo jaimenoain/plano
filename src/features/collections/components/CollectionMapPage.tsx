@@ -45,32 +45,10 @@ const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/C
 const CollectionBuildingCard = lazyWithRetry(() => import("@/features/collections/components/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
 const CollectionMarkerCard = lazyWithRetry(() => import("@/features/collections/components/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 
-interface CollectionItemResponse {
-  id: string;
-  building_id: string;
-  note: string | null;
-  custom_category_id: string | null;
-  is_hidden: boolean;
-  building: {
-    id: string;
-    name: string;
-    location: unknown | null;
-    city: string | null;
-    country: string | null;
-    slug: string | null;
-    short_id: number | null;
-    year_completed: number | null;
-    hero_image_url: string | null;
-    community_preview_url: string | null;
-    location_precision: "exact" | "approximate";
-    building_architects: {
-      architects: {
-        id: string;
-        name: string;
-      } | null;
-    }[];
-  } | null;
-}
+// Note: The shape returned from Supabase for collection items is documented here
+// for reference only. We no longer use this interface directly in code, but keep
+// it for developers working with the underlying SQL/selects.
+// type CollectionItemResponse = { ... }
 
 interface SavedCandidateResponse {
   building_id: string;
@@ -241,8 +219,7 @@ export default function CollectionMap() {
             building_architects(architects(id, name))
           )
         `)
-        .eq("collection_id", collection.id)
-        .returns<CollectionItemResponse[]>();
+        .eq("collection_id", collection.id);
 
       const markersPromise = supabase
         .from("collection_markers")
@@ -283,8 +260,8 @@ export default function CollectionMap() {
     enabled: !!collection?.id
   });
 
-  const items = collectionData?.items || [];
-  const markers = collectionData?.markers || [];
+  const items: CollectionItemWithBuilding[] = collectionData?.items ?? [];
+  const markers: CollectionMarker[] = collectionData?.markers ?? [];
 
   const { photos } = useGooglePlacePhotos(markers);
 
@@ -296,12 +273,14 @@ export default function CollectionMap() {
       }
   }, [collection, items, markers, initializeItinerary]);
 
-  const existingBuildingIds = useMemo(() => {
-    return new Set(items.map(item => item.building.id) || []);
+  const existingBuildingIds = useMemo<Set<string>>(() => {
+    return new Set<string>(items.map((item) => item.building.id));
   }, [items]);
 
-  const hiddenBuildingIds = useMemo(() => {
-    return new Set(items.filter(item => item.is_hidden).map(item => item.building.id) || []);
+  const hiddenBuildingIds = useMemo<Set<string>>(() => {
+    return new Set<string>(
+      items.filter((item) => item.is_hidden).map((item) => item.building.id),
+    );
   }, [items]);
 
   // 3b. Fetch Saved Buildings (Candidates)
@@ -331,13 +310,12 @@ export default function CollectionMap() {
           )
         `)
         .eq("user_id", user.id)
-        .in("status", ["visited", "pending"])
-        .returns<SavedCandidateResponse[]>();
+        .in("status", ["visited", "pending"]);
 
       if (error) throw error;
 
       // Filter out items already in collection and transform
-      return data
+      return (data as SavedCandidateResponse[])
         .filter((row) => row.building)
         .map((row) => {
             const b = row.building!;
@@ -457,9 +435,9 @@ export default function CollectionMap() {
 
   // Create a map for quick lookup
   const userInteractionMap = useMemo(() => {
-    const map = new Map<string, { rating: number | null, status: string | null }>();
-    userInteractions?.forEach(i => {
-        map.set(i.building_id, { rating: i.rating, status: i.status });
+    const map = new Map<string, { rating: number | null; status: string | null }>();
+    userInteractions?.forEach((i) => {
+      map.set(i.building_id, { rating: i.rating, status: i.status });
     });
     return map;
   }, [userInteractions]);
@@ -489,8 +467,8 @@ export default function CollectionMap() {
             });
         }
 
-        const mappedBuildings = visibleItems.map(item => {
-        let color = null;
+        const mappedBuildings: DiscoveryBuilding[] = visibleItems.map((item) => {
+        let color: string | null = null;
         const interaction = userInteractionMap.get(item.building.id);
 
         if (collection?.categorization_method === 'custom') {

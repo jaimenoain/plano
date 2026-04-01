@@ -117,7 +117,7 @@ describe('AppSidebar', () => {
     const sidebarWrapper = document.querySelector("[data-state]");
     expect(sidebarWrapper).toHaveAttribute("data-state", "expanded");
 
-    const trigger = screen.getByLabelText(/toggle sidebar/i);
+    const [trigger] = screen.getAllByLabelText(/toggle sidebar/i);
     fireEvent.click(trigger);
 
     await waitFor(() => {

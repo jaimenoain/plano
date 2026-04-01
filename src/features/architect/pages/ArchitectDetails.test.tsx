@@ -103,7 +103,7 @@ describe('ArchitectDetails', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Test Architect')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Test Architect', level: 1 })).toBeInTheDocument();
     });
 
     expect(screen.getByText('Test City')).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe('ArchitectDetails', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Test Architect')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Test Architect', level: 1 })).toBeInTheDocument();
     });
 
     expect(screen.queryByRole('button', { name: /claim profile/i })).not.toBeInTheDocument();

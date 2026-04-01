@@ -91,28 +91,34 @@ export default function EditArchitect() {
         setIsLoadingAffiliations(true);
         try {
             if (architect.type === 'individual') {
-                // Fetch studios this individual belongs to
                 const { data, error } = await supabase
                     .from('architect_affiliations')
                     .select('studio:architects!architect_affiliations_studio_id_fkey(id, name, type)')
                     .eq('individual_id', id);
 
                 if (error) throw error;
-                // @ts-expect-error -- legacy Supabase row typing
-                setAffiliations(data.map(d => d.studio).filter(Boolean));
+
+                const studios = (data ?? [])
+                  .map((d: any) => d.studio as SelectArchitect | null)
+                  .filter((studio): studio is SelectArchitect => Boolean(studio));
+
+                setAffiliations(studios);
             } else {
-                // Fetch individuals that belong to this studio
                 const { data, error } = await supabase
                     .from('architect_affiliations')
                     .select('individual:architects!architect_affiliations_individual_id_fkey(id, name, type)')
                     .eq('studio_id', id);
 
                 if (error) throw error;
-                // @ts-expect-error -- legacy Supabase row typing
-                setAffiliations(data.map(d => d.individual).filter(Boolean));
+
+                const individuals = (data ?? [])
+                  .map((d: any) => d.individual as SelectArchitect | null)
+                  .filter((individual): individual is SelectArchitect => Boolean(individual));
+
+                setAffiliations(individuals);
             }
         } catch (_e) {
-} finally {
+        } finally {
             setIsLoadingAffiliations(false);
         }
     };
@@ -140,7 +146,7 @@ export default function EditArchitect() {
       toast.success("Architect updated successfully");
       navigate(`/architect/${id}`);
     } catch (_error) {
-toast.error("Failed to update architect");
+      toast.error("Failed to update architect");
     } finally {
       setIsSubmitting(false);
     }

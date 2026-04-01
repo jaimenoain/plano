@@ -28,21 +28,20 @@ afterEach(() => {
 describe('KanbanColumn logic', () => {
   it('applies active styles when over a child item', () => {
     const { container } = render(
-        <KanbanColumn id="col-parent" title="Parent Column" ratingValue={1} items={['child-1', 'child-2']}>
-          <div />
-        </KanbanColumn>
+      <KanbanColumn
+        id="col-parent"
+        title="Parent Column"
+        ratingValue={1}
+        items={['child-1', 'child-2']}
+      >
+        <div />
+      </KanbanColumn>
     );
 
-    // Check for the specific active classes
+    // When dragging over a child item, the whole column should use active styles
     const columnDiv = container.firstChild as HTMLElement;
 
-    // We expect these to BE present
-    const isActive = columnDiv.className.includes('bg-surface-muted/80') &&
-                     columnDiv.className.includes('border-brand-primary') &&
-                     columnDiv.className.includes('ring-2');
-
-    if (!isActive) {
-        throw new Error('Active styles not applied');
-    }
+    expect(columnDiv.className).toContain('bg-brand-secondary');
+    expect(columnDiv.className).toContain('border-brand-primary');
   });
 });

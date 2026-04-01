@@ -159,7 +159,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
           } catch (_e) {}
 
           // Try to restore from localStorage first
-          let savedState = null;
+          let savedState: string | null = null;
           try {
               savedState = localStorage.getItem(LOCAL_STORAGE_MAP_KEY);
           } catch {

@@ -54,8 +54,10 @@ describe('BuildingAttributes Component', () => {
   it('renders correctly with full data', () => {
     render(<BuildingAttributes building={fullBuilding} />);
 
-    expect(screen.getByText('Residential, Commercial')).toBeInTheDocument();
-    expect(screen.getByText('Concrete, Glass')).toBeInTheDocument();
+    expect(screen.getByText('Residential')).toBeInTheDocument();
+    expect(screen.getByText('Commercial')).toBeInTheDocument();
+    expect(screen.getByText('Concrete')).toBeInTheDocument();
+    expect(screen.getByText('Glass')).toBeInTheDocument();
     expect(screen.getByText('Modern')).toBeInTheDocument();
     expect(screen.getByText('Urban')).toBeInTheDocument();
     expect(screen.getByText('New Build')).toBeInTheDocument();
@@ -67,8 +69,9 @@ describe('BuildingAttributes Component', () => {
   it('handles array of strings and objects correctly', () => {
     render(<BuildingAttributes building={fullBuilding} />);
 
-    // Typology (string array)
-    expect(screen.getByText('Residential, Commercial')).toBeInTheDocument();
+    // Typology (string array rendered as separate badges)
+    expect(screen.getByText('Residential')).toBeInTheDocument();
+    expect(screen.getByText('Commercial')).toBeInTheDocument();
 
     // Styles (object array)
     expect(screen.getByText('Modern')).toBeInTheDocument();

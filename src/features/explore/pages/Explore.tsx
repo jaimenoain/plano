@@ -76,9 +76,9 @@ export default function Explore() {
 
   // Place details handler
   const handlePlaceDetails = (details: google.maps.GeocoderResult) => {
-    let city = null;
-    let country = null;
-    let region = null;
+    let city: string | null = null;
+    let country: string | null = null;
+    let region: string | null = null;
     let label = details.formatted_address;
 
     details.address_components.forEach(comp => {

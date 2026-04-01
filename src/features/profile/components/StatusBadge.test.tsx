@@ -38,8 +38,9 @@ describe('StatusBadge', () => {
     const button = badgeText.closest('button');
     expect(button).not.toBeNull();
 
-    // Check for the appropriate styling defined in the component
-    expect(button?.className).toContain('bg-slate-100');
-    expect(button?.className).toContain('text-slate-700');
+    // Check for the appropriate styling defined in the component (semantic tokens)
+    expect(button?.className).toContain('bg-surface-muted');
+    expect(button?.className).toContain('text-text-disabled');
+    expect(button?.className).toContain('border-border-default');
   });
 });

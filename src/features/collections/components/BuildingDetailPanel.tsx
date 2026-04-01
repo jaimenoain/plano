@@ -27,18 +27,18 @@ interface BuildingDetailPanelProps {
 export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
   const { data: images } = useBuildingImages(building.id);
 
-  const allImages = [];
+  const allImages: { id: string; url: string }[] = [];
 
   if (building.hero_image_url) {
     allImages.push({ id: 'hero', url: building.hero_image_url });
   }
 
   if (images) {
-    images.forEach(img => {
-       const url = getBuildingImageUrl(img.storage_path);
-       if (url !== building.hero_image_url) {
-         allImages.push({ id: img.id, url });
-       }
+    images.forEach((img) => {
+      const url = getBuildingImageUrl(img.storage_path);
+      if (url && url !== building.hero_image_url) {
+        allImages.push({ id: img.id, url });
+      }
     });
   }
 

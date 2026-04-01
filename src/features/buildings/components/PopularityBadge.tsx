@@ -12,7 +12,7 @@ export function PopularityBadge({ rank, city }: PopularityBadgeProps) {
   }
 
   let badgeClass = "rounded-sm px-2 py-0.5 text-xs font-medium uppercase tracking-wide";
-  let icon = null;
+  let icon: JSX.Element | null = null;
 
   if (rank === "Top 1%") {
     badgeClass += " bg-brand-primary text-brand-primary-foreground";

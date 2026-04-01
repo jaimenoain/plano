@@ -54,7 +54,7 @@ describe('BuildingForm', () => {
     selected_attribute_ids: [],
   };
 
-  it('hides alt_name and aliases by default', () => {
+  it('hides alt_name and aliases by default in edit mode', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <BuildingForm
@@ -62,6 +62,7 @@ describe('BuildingForm', () => {
           onSubmit={async () => {}}
           isSubmitting={false}
           submitLabel="Save"
+          mode="edit"
         />
       </QueryClientProvider>
     );
@@ -70,7 +71,7 @@ describe('BuildingForm', () => {
     expect(screen.queryByText(/Search Aliases \(Hidden\)/i)).toBeNull();
   });
 
-  it('renders alt_name and aliases when data is provided', () => {
+  it('renders alt_name and aliases when data is provided in edit mode', () => {
     const valuesWithAlt = { ...initialValues, alt_name: 'Test Alt' };
     render(
       <QueryClientProvider client={queryClient}>
@@ -79,6 +80,7 @@ describe('BuildingForm', () => {
           onSubmit={async () => {}}
           isSubmitting={false}
           submitLabel="Save"
+          mode="edit"
         />
       </QueryClientProvider>
     );
@@ -90,7 +92,7 @@ describe('BuildingForm', () => {
     expect(screen.getByText(/Nicknames or alternate spellings for search only/i)).toBeTruthy();
   });
 
-  it('shows alt_name and aliases when "Add Aliases" is clicked', () => {
+  it('shows alt_name and aliases when "Add Aliases" is clicked in edit mode', () => {
     const { getByRole, getByLabelText, queryByRole } = render(
       <QueryClientProvider client={queryClient}>
         <BuildingForm
@@ -98,6 +100,7 @@ describe('BuildingForm', () => {
           onSubmit={async () => {}}
           isSubmitting={false}
           submitLabel="Save"
+          mode="edit"
         />
       </QueryClientProvider>
     );

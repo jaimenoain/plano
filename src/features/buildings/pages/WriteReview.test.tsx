@@ -124,9 +124,11 @@ describe('WriteReview Page', () => {
     );
 
     try {
-      // Wait for building name to load
+      // Wait for building context to load
       await waitFor(() => {
-        expect(screen.getByText('Test Building')).toBeTruthy();
+        expect(
+          screen.getByText((text) => text.includes('Test Building'))
+        ).toBeTruthy();
       });
 
       // Find and click "Add link" button
@@ -173,7 +175,9 @@ describe('WriteReview Page', () => {
 
     try {
       await waitFor(() => {
-        expect(screen.getByText('Test Building')).toBeTruthy();
+        expect(
+          screen.getByText((text) => text.includes('Test Building'))
+        ).toBeTruthy();
       });
 
       // Check if input exists already

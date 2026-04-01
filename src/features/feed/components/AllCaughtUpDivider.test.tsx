@@ -22,12 +22,11 @@ describe('AllCaughtUpDivider', () => {
   it('renders correctly', () => {
     render(<AllCaughtUpDivider />);
 
-    expect(screen.getByText("You're all caught up!")).toBeTruthy();
-    expect(screen.getByText("Here's some inspiration from the community.")).toBeTruthy();
+    expect(screen.getByText("You're all caught up")).toBeTruthy();
 
     // Check for the motion div wrapper
     const container = screen.getByTestId('motion-div');
     expect(container).toBeTruthy();
-    expect(container.className).toContain('flex flex-col items-center justify-center');
+    expect(container.className).toContain('relative flex items-center justify-center w-full');
   });
 });

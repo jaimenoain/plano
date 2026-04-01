@@ -12,9 +12,9 @@ describe('PopularityBadge', () => {
     render(<PopularityBadge rank="Top 1%" city="New York" />);
     const badge = screen.getByText('Top 1% in New York');
     expect(badge).toBeDefined();
-    // Check for gold class (partial match)
     const badgeElement = badge.closest('div'); // Badge renders a div
-    expect(badgeElement?.className).toContain('bg-amber-100');
+    expect(badgeElement?.className).toContain('bg-brand-primary');
+    expect(badgeElement?.className).toContain('text-brand-primary-foreground');
   });
 
   it('renders Top 1% badge correctly without city', () => {
@@ -28,7 +28,8 @@ describe('PopularityBadge', () => {
     const badge = screen.getByText('Top 5% in London');
     expect(badge).toBeDefined();
     const badgeElement = badge.closest('div');
-    expect(badgeElement?.className).toContain('bg-slate-100');
+    expect(badgeElement?.className).toContain('bg-brand-secondary');
+    expect(badgeElement?.className).toContain('text-brand-secondary-foreground');
   });
 
   it('renders Top 10% badge correctly', () => {
@@ -36,7 +37,9 @@ describe('PopularityBadge', () => {
     const badge = screen.getByText('Top 10% in Paris');
     expect(badge).toBeDefined();
     const badgeElement = badge.closest('div');
-    expect(badgeElement?.className).toContain('bg-orange-50');
+    expect(badgeElement?.className).toContain('bg-surface-muted');
+    expect(badgeElement?.className).toContain('text-text-secondary');
+    expect(badgeElement?.className).toContain('border-border-default');
   });
 
   it('does not render for "Standard" rank', () => {
