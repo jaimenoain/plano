@@ -298,9 +298,9 @@
       "_map-pin-BMh_64S5.js"
     ]
   },
-  "_MapMarkers-!~{03g}~.js": {
+  "_MapMarkers-!~{03h}~.js": {
     "file": "assets/MapMarkers-tn0RQdqM.css",
-    "src": "_MapMarkers-!~{03g}~.js"
+    "src": "_MapMarkers-!~{03h}~.js"
   },
   "_MapMarkers-fMg3os6M.js": {
     "file": "assets/MapMarkers-fMg3os6M.js",
@@ -1429,6 +1429,10 @@
       "_createLucideIcon-DW1NPM-1.js"
     ]
   },
+  "_structuredData-CILYkED6.js": {
+    "file": "assets/structuredData-CILYkED6.js",
+    "name": "structuredData"
+  },
   "_supabaseFallback-BmAOAjxh.js": {
     "file": "assets/supabaseFallback-BmAOAjxh.js",
     "name": "supabaseFallback",
@@ -2229,7 +2233,7 @@
     ]
   },
   "src/features/architect/pages/ArchitectDetails.tsx?__react-router-build-client-route": {
-    "file": "assets/ArchitectDetails-BwPvp0kM.js",
+    "file": "assets/ArchitectDetails-CIE095PV.js",
     "name": "ArchitectDetails",
     "src": "src/features/architect/pages/ArchitectDetails.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -2246,13 +2250,13 @@
       "_skeleton-DwO7YI_w.js",
       "_index-CD2lY8gX.js",
       "_avatar-D_DzzFzj.js",
-      "_MetaHead-499kqxBF.js",
       "_image-9FBRHUB8.js",
       "_client-ZqQ_0Zzc.js",
       "_dialog-XAuAk5Ib.js",
       "_input-CpsBbMAw.js",
       "_check-CNO5gjQD.js",
       "_types-D3upOYGZ.js",
+      "_structuredData-CILYkED6.js",
       "_badge-check--MClszam.js",
       "_map-CR0xobrD.js",
       "_globe-BuzS2VuI.js",
@@ -2526,7 +2530,7 @@
     ]
   },
   "src/features/buildings/pages/BuildingDetails.tsx?__react-router-build-client-route": {
-    "file": "assets/BuildingDetails-BqNDvYzZ.js",
+    "file": "assets/BuildingDetails-Qj-8hkDr.js",
     "name": "BuildingDetails",
     "src": "src/features/buildings/pages/BuildingDetails.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -2552,7 +2556,6 @@
       "_use-toast-D8g-0JG3.js",
       "_QueryClientProvider-DZwVaG6c.js",
       "_avatar-D_DzzFzj.js",
-      "_MetaHead-499kqxBF.js",
       "_WidgetErrorBoundary-Jo0mgdGq.js",
       "_UserPicker-88bHMd50.js",
       "_location-BxOo93J3.js",
@@ -2573,6 +2576,7 @@
       "_search-BCr5HNQj.js",
       "_calendar-kms4HOUT.js",
       "_ArchitectStatement-BcFO322M.js",
+      "_structuredData-CILYkED6.js",
       "_loader-circle-BaTQ4vmE.js",
       "_pencil-C_dJAyPe.js",
       "_circle-B1P2_9YW.js",
@@ -3540,7 +3544,7 @@
     ]
   },
   "src/features/profile/pages/Profile.tsx?__react-router-build-client-route": {
-    "file": "assets/Profile-Dt66--Yw.js",
+    "file": "assets/Profile-B7DaYvdA.js",
     "name": "Profile",
     "src": "src/features/profile/pages/Profile.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -3567,7 +3571,6 @@
       "_plus-BwPCTjus.js",
       "_label-BAGcP98o.js",
       "_switch-Cd8UHA0K.js",
-      "_MetaHead-499kqxBF.js",
       "_WidgetErrorBoundary-Jo0mgdGq.js",
       "_toggle-group-A4YZl6Ja.js",
       "_popover-DnR6Ftvl.js",
