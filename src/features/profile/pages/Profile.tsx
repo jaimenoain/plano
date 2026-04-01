@@ -68,7 +68,6 @@ import { handleDragEndLogic } from "@/utils/kanbanLogic";
 import { ProfileListView } from "@/features/profile/components/ProfileListView";
 import { ArchitectPortfolio } from "@/features/architect/components/ArchitectPortfolio";
 import { profileLoader } from "./Profile.loader";
-import { buildingDescription } from "@/features/buildings/utils/structuredData";
 
 export { profileLoader as loader } from "./Profile.loader";
 
@@ -111,7 +110,7 @@ const ITEMS_PER_PAGE = 15;
 export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
   const usernameFromParams = params.username;
 
-  if (!data || !(data as any).profile) {
+  if (!data || !data.profile) {
     const fallback = usernameFromParams ?? "Profile";
     return [{ title: `${fallback} | Plano` }];
   }
@@ -853,12 +852,6 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
 
   // Filter only building favorites for the FavoritesSection
   const buildingFavorites = favorites.filter(f => !f.type || f.type === 'building');
-
-  const avatarUrl = profile?.avatar_url
-    ? (profile.avatar_url.startsWith("http")
-        ? profile.avatar_url
-        : supabase.storage.from("avatars").getPublicUrl(profile.avatar_url).data.publicUrl)
-    : undefined;
 
   return (
     <>

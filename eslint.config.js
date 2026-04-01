@@ -12,6 +12,8 @@ export default tseslint.config(
       "supabase/**",
       "coverage/**",
       "repomix-output.xml",
+      ".react-router/types/**",
+      "**/*.timestamp-*.mjs",
     ],
   },
   {
@@ -29,7 +31,7 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       // Many screens intentionally pin effect deps to avoid refetch loops; fix incrementally per screen.
       "react-hooks/exhaustive-deps": "off",
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      "react-refresh/only-export-components": ["off", { allowConstantExport: true }],
 
       // Prevent Phase 0 regressions
       "no-console": "error",

@@ -26,14 +26,11 @@ import { architectStructuredData } from "@/features/buildings/utils/structuredDa
 export { architectLoader as loader } from "./ArchitectDetails.loader";
 
 export const meta: MetaFunction<typeof architectLoader> = ({ data }) => {
-  if (!data || !(data as any).architect) {
+  if (!data || !data.architect) {
     return [{ title: "Plano" }];
   }
 
-  const { architect } = data as {
-    architect: { id: string; name: string };
-    linkedUser: { username: string } | null;
-  };
+  const { architect } = data;
 
   const title = `${architect.name} | Plano`;
   const description = `Explore buildings and works by ${architect.name} on Plano.`;

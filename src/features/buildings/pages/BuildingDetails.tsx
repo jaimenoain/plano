@@ -38,7 +38,6 @@ import { formatDistanceToNow } from "date-fns";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { PersonalRatingButton } from "../components/PersonalRatingButton";
 import { UserPicker } from "@/components/common/UserPicker";
-import { fetchBuildingDetails } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
 import { getBuildingImageUrl } from "@/utils/image";
 import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
@@ -92,14 +91,11 @@ export interface BuildingDetails {
 }
 
 export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
-  if (!data || !(data as any).building) {
+  if (!data || !data.building) {
     return [{ title: "Plano" }];
   }
 
-  const { building, heroImageUrl } = data as {
-    building: BuildingDetails;
-    heroImageUrl: string | null;
-  };
+  const { building, heroImageUrl } = data;
 
   const description = buildingDescription(building);
   const image = heroImageUrl ?? "https://plano.app/cover.jpg";

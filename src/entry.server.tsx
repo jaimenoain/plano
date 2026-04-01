@@ -1,12 +1,24 @@
 import { PassThrough } from "node:stream";
 import { renderToPipeableStream } from "react-dom/server";
-import { ServerRouter } from "react-router";
-import type { EntryContext } from "react-router";
+import { ServerRouter, type EntryContext } from "react-router";
+
+interface LocalStorageLike {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+  clear(): void;
+  key(index: number): string | null;
+  readonly length: number;
+}
 
 // Temporary SSR guard: some client libraries still touch localStorage during
 // module initialisation. Provide a no-op shim so the server renderer doesn't crash.
-if (typeof globalThis !== "undefined" && typeof (globalThis as any).localStorage === "undefined") {
-  (globalThis as any).localStorage = {
+if (
+  typeof globalThis !== "undefined" &&
+  typeof (globalThis as { localStorage?: LocalStorageLike }).localStorage ===
+    "undefined"
+) {
+  (globalThis as { localStorage?: LocalStorageLike }).localStorage = {
     getItem: () => null,
     setItem: () => {},
     removeItem: () => {},

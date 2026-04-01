@@ -99,7 +99,7 @@ export default function EditArchitect() {
                 if (error) throw error;
 
                 const studios = (data ?? [])
-                  .map((d: any) => d.studio as SelectArchitect | null)
+                  .map((d: { studio: SelectArchitect | null }) => d.studio)
                   .filter((studio): studio is SelectArchitect => Boolean(studio));
 
                 setAffiliations(studios);
@@ -112,7 +112,7 @@ export default function EditArchitect() {
                 if (error) throw error;
 
                 const individuals = (data ?? [])
-                  .map((d: any) => d.individual as SelectArchitect | null)
+                  .map((d: { individual: SelectArchitect | null }) => d.individual)
                   .filter((individual): individual is SelectArchitect => Boolean(individual));
 
                 setAffiliations(individuals);

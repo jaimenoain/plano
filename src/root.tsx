@@ -5,9 +5,9 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
+  type LoaderFunctionArgs,
 } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
-import { useLoaderData } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";

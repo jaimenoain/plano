@@ -30,7 +30,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
-import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
+import { useItineraryStore, type ItineraryBuilding } from "@/features/itinerary/stores/useItineraryStore";
 import { SortableItineraryItem } from "./SortableItineraryItem";
 import { CollectionBuildingCard } from "./CollectionBuildingCard";
 import { CollectionMarkerCard } from "./CollectionMarkerCard";
@@ -41,7 +41,6 @@ import {
   Itinerary,
   CollectionMarker,
 } from "@/features/collections/types";
-import type { ItineraryBuilding } from "@/features/itinerary/stores/useItineraryStore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
