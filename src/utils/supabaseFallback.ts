@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { DiscoveryBuilding, DiscoveryBuildingMapPin, LeaderboardData } from "@/features/search/components/types";
 
 export const searchBuildingsRpc = async (params: {
@@ -189,8 +190,10 @@ return new Map();
     return map;
 };
 
-export const fetchBuildingDetails = async (id: string) => {
-    let query = supabase.from("buildings").select(`
+export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) => {
+    const db = client ?? supabase;
+
+    let query = db.from("buildings").select(`
       *,
       alt_name,
       aliases,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate, Link, Navigate } from "react-router";
+import { useParams, useNavigate, Link, Navigate, useLoaderData } from "react-router";
 import { useArchitect } from "@/features/architect/hooks/useArchitect";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -14,12 +14,20 @@ import { MapPin, Globe, Map as MapIcon, BadgeCheck } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 import { supabase } from "@/integrations/supabase/client";
 import { ClaimProfileDialog } from "@/features/architect/components/ClaimProfileDialog";
+import { architectLoader } from "./ArchitectDetails.loader";
+
+export { architectLoader as loader } from "./ArchitectDetails.loader";
 
 export default function ArchitectDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { architect, buildings, linkedUser, loading, error } = useArchitect(id);
+  const { architect: loaderArchitect, linkedUser: loaderLinkedUser } =
+    useLoaderData<typeof architectLoader>();
+  const { architect, buildings, linkedUser, loading, error } = useArchitect(id, {
+    initialArchitect: loaderArchitect,
+    initialLinkedUser: loaderLinkedUser,
+  });
 
   const [claimStatus, setClaimStatus] = useState<{
     is_verified: boolean;
@@ -101,6 +109,8 @@ export default function ArchitectDetails() {
     <AppLayout showBack>
       <MetaHead
         title={architect.name}
+        description={`Explore buildings and works by ${architect.name} on Plano.`}
+        canonicalUrl={`https://plano.app/architect/${architect.id}`}
       />
       <div className="px-4 py-6 md:py-10 max-w-7xl mx-auto animate-fade-in space-y-8">
         <h1 className="text-4xl font-bold tracking-tight text-text-primary">

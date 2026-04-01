@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useLoaderData } from "react-router";
 import { 
   Loader2, MapPin, Send,
   Check, Bookmark, Image as ImageIcon,
@@ -52,6 +52,9 @@ import { BuildingHeader } from "../components/BuildingHeader";
 import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingHero } from "../components/BuildingHero";
 import { BuildingAttributes } from "../components/BuildingAttributes";
+import { buildingLoader } from "./BuildingDetails.loader";
+
+export { buildingLoader as loader } from "./BuildingDetails.loader";
 
 // --- Types ---
 interface BuildingDetails {
@@ -158,9 +161,11 @@ export default function BuildingDetails() {
   const { profile } = useUserProfile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  const [building, setBuilding] = useState<BuildingDetails | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { building: initialBuilding, heroImageUrl: initialHeroImageUrl } =
+    useLoaderData<typeof buildingLoader>();
+
+  const [building, setBuilding] = useState<BuildingDetails | null>(initialBuilding);
+  const [loading, setLoading] = useState(false);
   const [isCreator, setIsCreator] = useState(false);
 
   // User Interaction State
@@ -196,7 +201,7 @@ export default function BuildingDetails() {
       architect_statement: ""
   });
   const [isSavingOfficial, setIsSavingOfficial] = useState(false);
-  const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
+  const [heroImageUrl, setHeroImageUrl] = useState<string | null>(initialHeroImageUrl);
 
   // New State for Edit View Enhancement
   const [userLinks, setUserLinks] = useState<{id: string, url: string, title: string}[]>([]);
@@ -275,47 +280,26 @@ export default function BuildingDetails() {
   }, [isMapExpanded]);
 
   useEffect(() => {
-    if (id) fetchBuildingData();
+    if (id) fetchUserSpecificData();
   }, [id, user]);
 
-  const fetchBuildingData = async () => {
+  const fetchUserSpecificData = async () => {
     setLoading(true);
-    if (!id) return;
+    if (!id || !building) return;
 
     try {
-      // 1. Fetch Building (with fallback logic in utility)
-      const data = await fetchBuildingDetails(id);
-      const resolvedBuildingId = data.id;
+      const resolvedBuildingId = building.id;
 
-      const sanitizedBuilding = {
-        ...data,
-        architects: (data as { architects?: Architect[] }).architects || [],
-      };
-
-      setBuilding(sanitizedBuilding as unknown as BuildingDetails);
-
-      if (data.hero_image_id) {
-          const { data: heroImageData } = await supabase
-            .from("review_images")
-            .select("storage_path")
-            .eq("id", data.hero_image_id)
-            .single();
-
-          if (heroImageData) {
-             setHeroImageUrl(getBuildingImageUrl(heroImageData.storage_path) ?? null);
-          }
-      }
-
-      if (user && data.created_by === user.id) {
+      if (user && building.created_by === user.id) {
           setIsCreator(true);
       }
 
       const tasks: Promise<void>[] = [];
 
       // Check if ANY architect of this building has been verified globally
-      if (sanitizedBuilding.architects && sanitizedBuilding.architects.length > 0) {
+      if (building.architects && building.architects.length > 0) {
           tasks.push((async () => {
-              const architectIds = sanitizedBuilding.architects.map((a: Architect) => a.id);
+              const architectIds = building.architects.map((a: Architect) => a.id);
               const { data: verifiedProfiles } = await supabase
                   .from('profiles')
                   .select('id')
@@ -663,7 +647,7 @@ toast({ variant: "destructive", title: "Failed to like link" });
           toast({ title });
       } catch (_error) {
 toast({ variant: "destructive", title: "Failed to save status" });
-          fetchBuildingData(); // Revert
+          fetchUserSpecificData(); // Revert
       }
   };
 
@@ -700,7 +684,7 @@ toast({ variant: "destructive", title: "Failed to save status" });
            }
        } catch (_error) {
 toast({ variant: "destructive", title: "Failed to save rating" });
-           fetchBuildingData();
+           fetchUserSpecificData();
        }
   };
 
@@ -841,7 +825,7 @@ toast({ variant: "destructive", title: "Error processing image" });
           setIsEditing(false);
           queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
           queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
-          fetchBuildingData();
+          fetchUserSpecificData();
       } catch (_error: unknown) {
 toast({ variant: "destructive", title: "Failed to save note" });
       } finally {

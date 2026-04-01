@@ -12,7 +12,7 @@ import {
   DragStartEvent
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams, useSearchParams, useLoaderData } from "react-router";
 import {
   LogOut,
   Building2,
@@ -62,6 +62,9 @@ import { ProfileKanbanView } from "@/features/profile/components/ProfileKanbanVi
 import { handleDragEndLogic } from "@/utils/kanbanLogic";
 import { ProfileListView } from "@/features/profile/components/ProfileListView";
 import { ArchitectPortfolio } from "@/features/architect/components/ArchitectPortfolio";
+import { profileLoader } from "./Profile.loader";
+
+export { profileLoader as loader } from "./Profile.loader";
 
 // --- Types ---
 interface Profile {
@@ -107,7 +110,8 @@ export default function Profile() {
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'grid' | 'kanban' | 'list'>('grid');
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const { profile: loaderProfile } = useLoaderData<typeof profileLoader>();
+  const [profile, setProfile] = useState<Profile | null>(loaderProfile as Profile | null);
   const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0, photos: 0, maps: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -1013,8 +1017,10 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
                     />
                     {searchQuery && (
                       <button
+                        type="button"
                         onClick={() => handleSearchChange("")}
                         className="absolute right-3 top-1/2 -translate-y-1/2"
+                        aria-label="Clear search"
                       >
                         <X className="h-4 w-4 text-text-secondary hover:text-text-primary" />
                       </button>

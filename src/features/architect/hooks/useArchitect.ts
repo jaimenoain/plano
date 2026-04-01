@@ -28,6 +28,11 @@ interface UseArchitectResult {
   error: Error | null;
 }
 
+interface UseArchitectOptions {
+  initialArchitect?: Architect | null;
+  initialLinkedUser?: { username: string } | null;
+}
+
 type BuildingArchitectNestedRow = {
   building:
     | {
@@ -51,11 +56,18 @@ type BuildingArchitectNestedRow = {
     | null;
 };
 
-export function useArchitect(architectId: string | undefined | null): UseArchitectResult {
-  const [architect, setArchitect] = useState<Architect | null>(null);
+export function useArchitect(
+  architectId: string | undefined | null,
+  options: UseArchitectOptions = {},
+): UseArchitectResult {
+  const { initialArchitect = null, initialLinkedUser = null } = options;
+
+  const [architect, setArchitect] = useState<Architect | null>(initialArchitect);
   const [buildings, setBuildings] = useState<ArchitectBuilding[]>([]);
-  const [linkedUser, setLinkedUser] = useState<{ username: string | null } | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [linkedUser, setLinkedUser] = useState<{ username: string | null } | null>(
+    initialLinkedUser ? { username: initialLinkedUser.username } : null,
+  );
+  const [loading, setLoading] = useState<boolean>(!initialArchitect);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -70,32 +82,34 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
 
     let isMounted = true;
 
-    const fetchArchitectData = async () => {
+    const fetchArchitectData = async (id: string, { skipArchitect }: { skipArchitect?: boolean } = {}) => {
       setLoading(true);
       setError(null);
       try {
-        // Fetch architect details (table not in generated Database until `npm run gen-types`)
-        const { data: architectData, error: architectError } = await supabase
-          .from("architects")
-          .select("*")
-          .eq("id", architectId)
-          .single();
+        if (!skipArchitect) {
+          // Fetch architect details (table not in generated Database until `npm run gen-types`)
+          const { data: architectData, error: architectError } = await supabase
+            .from("architects")
+            .select("*")
+            .eq("id", id)
+            .single();
 
-        if (architectError) throw architectError;
+          if (architectError) throw architectError;
 
-        if (isMounted) {
+          if (isMounted) {
             setArchitect(architectData as Architect);
-        }
+          }
 
-        // Check if there is a linked user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("verified_architect_id", architectId)
-          .maybeSingle();
+          // Check if there is a linked user profile
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("verified_architect_id", id)
+            .maybeSingle();
 
-        if (!profileError && profileData && isMounted) {
+          if (!profileError && profileData && isMounted) {
             setLinkedUser({ username: profileData.username });
+          }
         }
 
         // Fetch associated buildings
@@ -112,13 +126,13 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
               status
             )
           `)
-          .eq("architect_id", architectId);
+          .eq("architect_id", id);
 
         if (buildingsError) throw buildingsError;
 
         if (isMounted) {
-            // Transform data to extract the nested building object
-            const formattedBuildings = (buildingsData || [])
+          // Transform data to extract the nested building object
+          const formattedBuildings = (buildingsData || [])
             .map((item: BuildingArchitectNestedRow) => {
               const raw = item.building;
               const b = Array.isArray(raw) ? raw[0] : raw;
@@ -131,42 +145,42 @@ export function useArchitect(architectId: string | undefined | null): UseArchite
                 country: b.country,
                 year_completed: b.year_completed,
                 main_image_url: b.main_image_url || null,
-                status: b.status || null
+                status: b.status || null,
               };
             })
             .filter((b): b is ArchitectBuilding => b !== null);
 
-            setBuildings(formattedBuildings);
+          setBuildings(formattedBuildings);
         }
       } catch (err: unknown) {
         if (isMounted) {
-            const code =
-              typeof err === "object" && err !== null && "code" in err
-                ? String((err as { code?: string }).code)
-                : undefined;
-            if (code === "PGRST116") {
-                setError(new Error("Architect not found"));
-            } else {
-                setError(err instanceof Error ? err : new Error("Unknown error"));
-            }
+          const code =
+            typeof err === "object" && err !== null && "code" in err
+              ? String((err as { code?: string }).code)
+              : undefined;
+          if (code === "PGRST116") {
+            setError(new Error("Architect not found"));
+          } else {
+            setError(err instanceof Error ? err : new Error("Unknown error"));
+          }
 
-            setArchitect(null);
-            setBuildings([]);
-            setLinkedUser(null);
+          setArchitect(null);
+          setBuildings([]);
+          setLinkedUser(null);
         }
       } finally {
         if (isMounted) {
-            setLoading(false);
+          setLoading(false);
         }
       }
     };
 
-    fetchArchitectData();
+    void fetchArchitectData(architectId, { skipArchitect: !!initialArchitect });
 
     return () => {
-        isMounted = false;
+      isMounted = false;
     };
-  }, [architectId]);
+  }, [architectId, initialArchitect]);
 
   return { architect, buildings, linkedUser, loading, error };
 }

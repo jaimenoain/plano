@@ -575,11 +575,11 @@ Used exclusively in loaders and actions — never imported by components.
 
 ### 3.4 Auth flow verification
 
-- [ ] Sign in persists across page refreshes (cookie is set, not localStorage).
-- [ ] Sign out clears the session and redirects correctly.
-- [ ] Unauthenticated users are redirected to `/auth` from all previously protected pages.
-- [ ] Admin guard still works correctly.
-- [ ] Cookie `SameSite` and `Secure` attributes are correct for `plano.app`.
+- [x] Sign in persists across page refreshes (cookie is set, not localStorage).
+- [x] Sign out clears the session and redirects correctly.
+- [x] Unauthenticated users are redirected to `/auth` from all previously protected pages.
+- [x] Admin guard still works correctly.
+- [x] Cookie `SameSite` and `Secure` attributes are correct for `plano.app`.
 
 ---
 
@@ -599,10 +599,10 @@ Each loader follows the same three steps:
 only two: the building record and its hero image. All other calls (reviews feed, user
 status, links, collections, follows) stay as client-side fetches — unchanged.
 
-- [ ] Audit `fetchBuildingDetails` in `src/utils/supabaseFallback.ts` for any browser-only
+- [x] Audit `fetchBuildingDetails` in `src/utils/supabaseFallback.ts` for any browser-only
   APIs (`window`, `localStorage`, `document`). Fix any found before proceeding.
 
-- [ ] Add an optional `client` parameter to `fetchBuildingDetails` so the loader can pass
+- [x] Add an optional `client` parameter to `fetchBuildingDetails` so the loader can pass
   a server client without touching `localStorage`:
   ```ts
   export async function fetchBuildingDetails(id: string, client?: SupabaseClient) {
@@ -611,7 +611,7 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
   }
   ```
 
-- [ ] Create `src/features/buildings/pages/BuildingDetails.loader.ts`:
+- [x] Create `src/features/buildings/pages/BuildingDetails.loader.ts`:
   ```ts
   import type { LoaderFunctionArgs } from "react-router";
   import { createSupabaseServerClient } from "~/lib/supabase.server";
@@ -638,7 +638,7 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
   }
   ```
 
-- [ ] Update `BuildingDetails.tsx` to export the loader, initialise state from loader
+- [x] Update `BuildingDetails.tsx` to export the loader, initialise state from loader
   data, and pass SEO props to `MetaHead`:
   ```tsx
   export { buildingLoader as loader } from "./BuildingDetails.loader";
@@ -674,9 +674,9 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
 
 ### 4.2 ArchitectDetails loader
 
-- [ ] Audit `useArchitect` hook for any browser-only APIs. Fix any found before proceeding.
+- [x] Audit `useArchitect` hook for any browser-only APIs. Fix any found before proceeding.
 
-- [ ] Create `src/features/architect/pages/ArchitectDetails.loader.ts`:
+- [x] Create `src/features/architect/pages/ArchitectDetails.loader.ts`:
   ```ts
   import type { LoaderFunctionArgs } from "react-router";
   import { createSupabaseServerClient } from "~/lib/supabase.server";
@@ -704,7 +704,7 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
   }
   ```
 
-- [ ] Update `src/features/architect/hooks/useArchitect.ts` to accept initial data from
+- [x] Update `src/features/architect/hooks/useArchitect.ts` to accept initial data from
   the loader. The hook should use the initial values as its starting state and skip the
   first fetch if they are already present:
   ```ts
@@ -735,7 +735,7 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
   }
   ```
 
-- [ ] Update `ArchitectDetails.tsx` to export the loader and initialise with loader data:
+- [x] Update `ArchitectDetails.tsx` to export the loader and initialise with loader data:
   ```tsx
   export { architectLoader as loader } from "./ArchitectDetails.loader";
 
@@ -764,7 +764,7 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
 
 ### 4.3 Profile loader
 
-- [ ] Create `src/features/profile/pages/Profile.loader.ts`:
+- [x] Create `src/features/profile/pages/Profile.loader.ts`:
   ```ts
   import type { LoaderFunctionArgs } from "react-router";
   import { createSupabaseServerClient } from "~/lib/supabase.server";
@@ -787,7 +787,7 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
   }
   ```
 
-- [ ] Update `Profile.tsx` to export the loader, initialise profile state from loader
+- [x] Update `Profile.tsx` to export the loader, initialise profile state from loader
   data, and pass all SEO props to `MetaHead` on first render:
   ```tsx
   export { profileLoader as loader } from "./Profile.loader";
