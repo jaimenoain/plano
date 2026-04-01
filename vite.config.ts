@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import { reactRouter } from "@react-router/dev/vite";
-import { vercelPreset } from "@vercel/react-router/vite";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -11,9 +10,7 @@ export default defineConfig(() => ({
     port: 8080,
   },
   plugins: [
-    reactRouter({
-      presets: [vercelPreset()],
-    }),
+    reactRouter(),
     VitePWA({
       strategies: "generateSW",
       registerType: "prompt",
