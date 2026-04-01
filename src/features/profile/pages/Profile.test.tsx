@@ -4,7 +4,6 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import Profile from './Profile';
 import { BrowserRouter } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { HelmetProvider } from 'react-helmet-async';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Mock IntersectionObserver
@@ -182,15 +181,13 @@ describe('Profile Integration', () => {
 
   it('updates status optimistically and shows toast', async () => {
     render(
-      <HelmetProvider>
-        <TooltipProvider>
-            <BrowserRouter>
-            <SidebarProvider>
-                <Profile />
-            </SidebarProvider>
-            </BrowserRouter>
-        </TooltipProvider>
-      </HelmetProvider>
+      <TooltipProvider>
+        <BrowserRouter>
+          <SidebarProvider>
+            <Profile />
+          </SidebarProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     );
 
     // Wait for content to load

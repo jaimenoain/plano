@@ -4,7 +4,6 @@ import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import Profile from './Profile';
 import { BrowserRouter } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { HelmetProvider } from 'react-helmet-async';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Mock IntersectionObserver
@@ -180,15 +179,13 @@ describe('Profile Likes Integration', () => {
 
   it('calculates total likes as sum of review likes and image likes', async () => {
     render(
-      <HelmetProvider>
-        <TooltipProvider>
-            <BrowserRouter>
-            <SidebarProvider>
-                <Profile />
-            </SidebarProvider>
-            </BrowserRouter>
-        </TooltipProvider>
-      </HelmetProvider>
+      <TooltipProvider>
+        <BrowserRouter>
+          <SidebarProvider>
+            <Profile />
+          </SidebarProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     );
 
     // Wait for content to load

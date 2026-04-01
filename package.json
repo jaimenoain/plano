@@ -74,7 +74,6 @@
     "react-dom": "^18.3.1",
     "react-error-boundary": "^6.1.0",
     "react-force-graph-2d": "^1.29.0",
-    "react-helmet-async": "^2.0.5",
     "react-hook-form": "^7.61.1",
     "react-map-gl": "^7.1.7",
     "react-player": "^3.4.0",

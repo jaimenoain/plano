@@ -4,7 +4,6 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import Profile from './Profile';
 import { BrowserRouter } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mocks
@@ -188,15 +187,13 @@ describe('Profile Regression Tests', () => {
   const renderProfileWithUrl = (url: string = '/profile/testuser') => {
       window.history.pushState({}, 'Test page', url);
        return render(
-        <HelmetProvider>
-            <QueryClientProvider client={queryClient}>
-                <SidebarProvider>
-                    <BrowserRouter>
-                        <Profile />
-                    </BrowserRouter>
-                </SidebarProvider>
-            </QueryClientProvider>
-        </HelmetProvider>
+        <QueryClientProvider client={queryClient}>
+          <SidebarProvider>
+            <BrowserRouter>
+              <Profile />
+            </BrowserRouter>
+          </SidebarProvider>
+        </QueryClientProvider>
       );
   };
 

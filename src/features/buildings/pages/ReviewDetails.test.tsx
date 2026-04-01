@@ -4,7 +4,6 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import ReviewDetails from "./ReviewDetails";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { HelmetProvider } from "react-helmet-async";
 
 // Mock Supabase client
 vi.mock("@/integrations/supabase/client", () => ({
@@ -112,13 +111,11 @@ describe("ReviewDetails", () => {
     });
 
     render(
-      <HelmetProvider>
-        <MemoryRouter initialEntries={["/review/test-review-id"]}>
-          <Routes>
-            <Route path="/review/:id" element={<ReviewDetails />} />
-          </Routes>
-        </MemoryRouter>
-      </HelmetProvider>
+      <MemoryRouter initialEntries={["/review/test-review-id"]}>
+        <Routes>
+          <Route path="/review/:id" element={<ReviewDetails />} />
+        </Routes>
+      </MemoryRouter>
     );
 
     // Wait for data loading

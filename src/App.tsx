@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route, Outlet, ScrollRestoration } from "react-router";
 import { AuthProvider, useAuth } from "@/features/auth/hooks/useAuth";
-import { HelmetProvider } from "react-helmet-async";
 
 import Index from "@/features/feed/pages/Index";
 import Auth from "@/features/auth/pages/Auth";
@@ -214,11 +213,9 @@ const App = () => {
   return (
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <HelmetProvider>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </HelmetProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </QueryClientProvider>
     </AppErrorBoundary>
   );

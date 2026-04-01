@@ -4,7 +4,6 @@ import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import UserPhotoGallery from './UserPhotoGallery';
 import { BrowserRouter } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { HelmetProvider } from 'react-helmet-async';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Mock mocks
@@ -116,15 +115,13 @@ describe('UserPhotoGallery', () => {
 
     it('renders initial photos', async () => {
         render(
-            <HelmetProvider>
-                <TooltipProvider>
-                    <BrowserRouter>
-                        <SidebarProvider>
-                            <UserPhotoGallery />
-                        </SidebarProvider>
-                    </BrowserRouter>
-                </TooltipProvider>
-            </HelmetProvider>
+            <TooltipProvider>
+                <BrowserRouter>
+                    <SidebarProvider>
+                        <UserPhotoGallery />
+                    </SidebarProvider>
+                </BrowserRouter>
+            </TooltipProvider>
         );
 
         await waitFor(() => {

@@ -824,7 +824,7 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
 
 ### 5.1 Add structured data helpers
 
-- [ ] Create `src/features/buildings/utils/structuredData.ts` with helpers for all
+- [x] Create `src/features/buildings/utils/structuredData.ts` with helpers for all
   three SSR page types:
   ```ts
   const SITE_URL = "https://plano.app";
@@ -888,7 +888,7 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
 `meta` export runs on the server and inlines meta tags in the initial HTML — this is the
 highest-impact SEO change in the entire migration.
 
-- [ ] Replace `<MetaHead>` in `BuildingDetails.tsx` with a `meta` export:
+- [x] Replace `<MetaHead>` in `BuildingDetails.tsx` with a `meta` export:
   ```tsx
   import type { MetaFunction } from "react-router";
 
@@ -915,9 +915,9 @@ highest-impact SEO change in the entire migration.
   };
   ```
 
-- [ ] Apply the same `meta` export pattern to `ArchitectDetails.tsx`.
-- [ ] Apply the same `meta` export pattern to `Profile.tsx`.
-- [ ] Remove `react-helmet-async` and `<HelmetProvider>` from `app/root.tsx` and
+- [x] Apply the same `meta` export pattern to `ArchitectDetails.tsx`.
+- [x] Apply the same `meta` export pattern to `Profile.tsx`.
+- [x] Remove `react-helmet-async` and `<HelmetProvider>` from `app/root.tsx` and
   uninstall the package:
   ```bash
   npm uninstall react-helmet-async
@@ -925,7 +925,7 @@ highest-impact SEO change in the entire migration.
 
 ### 5.3 Update `og-tags` edge function documentation
 
-- [ ] Update `docs/LAUNCH_HOSTING.md`: Googlebot now receives full HTML from the SSR
+- [x] Update `docs/LAUNCH_HOSTING.md`: Googlebot now receives full HTML from the SSR
   app directly. Remove the "do not send Googlebot here" caveat from the `og-tags`
   section. The function remains useful for social preview bots (Slack, Discord, etc.)
   but is no longer required for SEO.

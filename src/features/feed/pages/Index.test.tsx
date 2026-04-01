@@ -11,7 +11,6 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
-import { HelmetProvider } from 'react-helmet-async';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -73,7 +72,7 @@ describe('Index Page', () => {
     const { getByTestId } = render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
-          <HelmetProvider><SidebarProvider><Index /></SidebarProvider></HelmetProvider>
+          <SidebarProvider><Index /></SidebarProvider>
         </MemoryRouter>
       </QueryClientProvider>
     );

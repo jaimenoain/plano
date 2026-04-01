@@ -14,9 +14,9 @@ Route **link-expanding and social preview** user agents to:
 
 Example: `?path=%2Fbuilding%2F123%2Fslug-here`
 
-### User agents (do **not** send **Googlebot** here)
+### User agents
 
-Use this list for **OG / preview only**. **Googlebot** should receive the normal SPA (`index.html` + JS) so indexing sees rendered content; rely on the **sitemap** for discovery.
+Use this list for **OG / preview only**. The main SSR app already returns full HTML (including meta tags and JSON-LD) to Googlebot, so this function is now primarily for social preview bots (Slack, Discord, etc.).
 
 Suggested matchers (tune for your platform):
 

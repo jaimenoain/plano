@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link, useLoaderData } from "react-router";
+import { useParams, Link, useLoaderData, type MetaFunction } from "react-router";
 import { 
   Loader2, MapPin, Send,
   Check, Bookmark, Image as ImageIcon,
@@ -35,7 +35,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MetaHead } from "@/components/common/MetaHead";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { PersonalRatingButton } from "../components/PersonalRatingButton";
 import { UserPicker } from "@/components/common/UserPicker";
@@ -53,11 +52,15 @@ import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingHero } from "../components/BuildingHero";
 import { BuildingAttributes } from "../components/BuildingAttributes";
 import { buildingLoader } from "./BuildingDetails.loader";
+import {
+  buildingStructuredData,
+  buildingDescription,
+} from "@/features/buildings/utils/structuredData";
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
 
 // --- Types ---
-interface BuildingDetails {
+export interface BuildingDetails {
   id: string;
   short_id?: number | null;
   slug?: string | null;
@@ -87,6 +90,41 @@ interface BuildingDetails {
   architect_statement?: string | null;
   hero_image_id: string | null;
 }
+
+export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
+  if (!data || !(data as any).building) {
+    return [{ title: "Plano" }];
+  }
+
+  const { building, heroImageUrl } = data as {
+    building: BuildingDetails;
+    heroImageUrl: string | null;
+  };
+
+  const description = buildingDescription(building);
+  const image = heroImageUrl ?? "https://plano.app/cover.jpg";
+  const shortIdPart =
+    building.short_id !== undefined && building.short_id !== null
+      ? String(building.short_id)
+      : String(building.id);
+  const slugPart = building.slug ?? "";
+  const canonical = `https://plano.app/building/${shortIdPart}/${slugPart}`;
+
+  return [
+    { title: `${building.name} | Plano` },
+    { name: "description", content: description },
+    { property: "og:title", content: `${building.name} | Plano` },
+    { property: "og:description", content: description },
+    { property: "og:image", content: image },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: `${building.name} | Plano` },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: image },
+    { tagName: "link", rel: "canonical", href: canonical },
+    { "script:ld+json": buildingStructuredData(building) },
+  ];
+};
 
 interface TopLink {
   link_id: string;
@@ -1008,8 +1046,6 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
 
   return (
     <AppLayout title={building.name} showBack>
-      <MetaHead title={building.name} />
-
       <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
 
       <div className="p-4 sm:p-6 lg:p-8">

@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate, Link, Navigate, useLoaderData } from "react-router";
+import {
+  useParams,
+  useNavigate,
+  Link,
+  Navigate,
+  useLoaderData,
+  type MetaFunction,
+} from "react-router";
 import { useArchitect } from "@/features/architect/hooks/useArchitect";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -9,14 +16,42 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MetaHead } from "@/components/common/MetaHead";
 import { MapPin, Globe, Map as MapIcon, BadgeCheck } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 import { supabase } from "@/integrations/supabase/client";
 import { ClaimProfileDialog } from "@/features/architect/components/ClaimProfileDialog";
 import { architectLoader } from "./ArchitectDetails.loader";
+import { architectStructuredData } from "@/features/buildings/utils/structuredData";
 
 export { architectLoader as loader } from "./ArchitectDetails.loader";
+
+export const meta: MetaFunction<typeof architectLoader> = ({ data }) => {
+  if (!data || !(data as any).architect) {
+    return [{ title: "Plano" }];
+  }
+
+  const { architect } = data as {
+    architect: { id: string; name: string };
+    linkedUser: { username: string } | null;
+  };
+
+  const title = `${architect.name} | Plano`;
+  const description = `Explore buildings and works by ${architect.name} on Plano.`;
+  const canonical = `https://plano.app/architect/${architect.id}`;
+
+  return [
+    { title },
+    { name: "description", content: description },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+    { tagName: "link", rel: "canonical", href: canonical },
+    { "script:ld+json": architectStructuredData(architect) },
+  ];
+};
 
 export default function ArchitectDetails() {
   const { id } = useParams<{ id: string }>();
@@ -107,11 +142,6 @@ export default function ArchitectDetails() {
 
   return (
     <AppLayout showBack>
-      <MetaHead
-        title={architect.name}
-        description={`Explore buildings and works by ${architect.name} on Plano.`}
-        canonicalUrl={`https://plano.app/architect/${architect.id}`}
-      />
       <div className="px-4 py-6 md:py-10 max-w-7xl mx-auto animate-fade-in space-y-8">
         <h1 className="text-4xl font-bold tracking-tight text-text-primary">
           {architect.name}

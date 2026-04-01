@@ -12,7 +12,13 @@ import {
   DragStartEvent
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useNavigate, useParams, useSearchParams, useLoaderData } from "react-router";
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+  useLoaderData,
+  type MetaFunction,
+} from "react-router";
 import {
   LogOut,
   Building2,
@@ -43,7 +49,6 @@ import { FavoritesSection } from "@/features/profile/components/FavoritesSection
 import { FavoriteItem } from "@/features/profile/components/types";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { MetaHead } from "@/components/common/MetaHead";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -63,6 +68,7 @@ import { handleDragEndLogic } from "@/utils/kanbanLogic";
 import { ProfileListView } from "@/features/profile/components/ProfileListView";
 import { ArchitectPortfolio } from "@/features/architect/components/ArchitectPortfolio";
 import { profileLoader } from "./Profile.loader";
+import { buildingDescription } from "@/features/buildings/utils/structuredData";
 
 export { profileLoader as loader } from "./Profile.loader";
 
@@ -101,6 +107,38 @@ const variants = {
 };
 
 const ITEMS_PER_PAGE = 15;
+
+export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
+  const usernameFromParams = params.username;
+
+  if (!data || !(data as any).profile) {
+    const fallback = usernameFromParams ?? "Profile";
+    return [{ title: `${fallback} | Plano` }];
+  }
+
+  const { profile } = data as { profile: Profile | null };
+  if (!profile?.username) {
+    return [{ title: "Plano" }];
+  }
+
+  const username = profile.username;
+  const title = `${username} (@${username}) | Plano`;
+  const description =
+    profile.bio || `Check out ${username}'s reviews on Plano.`;
+  const canonical = `https://plano.app/profile/${username}`;
+
+  return [
+    { title },
+    { name: "description", content: description },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+    { tagName: "link", rel: "canonical", href: canonical },
+  ];
+};
 
 export default function Profile() {
   const { user: currentUser, loading: authLoading, signOut } = useAuth();
@@ -825,11 +863,6 @@ toast({ variant: "destructive", description: "Failed to add to folder" });
   return (
     <>
       <AppLayout title="Profile" showLogo={false} showBack={!isOwnProfile} fullWidth>
-        <MetaHead
-          title={`${profile?.username} (@${profile?.username})`}
-          description={profile?.bio || `Check out ${profile?.username}'s reviews and watchlist on Plano.`}
-          image={avatarUrl}
-        />
 
         <div className="p-4 sm:p-6 lg:p-8">
           <div className="max-w-6xl mx-auto">

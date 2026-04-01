@@ -4,7 +4,6 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import BuildingDetails from './BuildingDetails';
 import { BrowserRouter, Routes, Route } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { HelmetProvider } from 'react-helmet-async';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as supabaseFallback from '@/utils/supabaseFallback';
@@ -181,17 +180,15 @@ describe('BuildingDetails Rating Hover', () => {
 
   it('fills circles on hover', async () => {
     const { container } = render(
-      <HelmetProvider>
-        <TooltipProvider>
-            <QueryClientProvider client={queryClient}>
-                <BrowserRouter>
-                    <SidebarProvider>
-                        <BuildingDetails />
-                    </SidebarProvider>
-                </BrowserRouter>
-            </QueryClientProvider>
-        </TooltipProvider>
-      </HelmetProvider>
+      <TooltipProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <SidebarProvider>
+              <BuildingDetails />
+            </SidebarProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </TooltipProvider>
     );
 
     // Wait for content to load
