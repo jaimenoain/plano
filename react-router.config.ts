@@ -5,6 +5,6 @@ export default {
   ssr: true,
   appDirectory: "src",
   routes: "app/routes.ts",
-  presets: [vercelPreset()],
+  presets: [vercelPreset],
 } satisfies Config;
 
