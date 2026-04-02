@@ -2,14 +2,14 @@ import { handleRequest } from "@vercel/react-router/entry.server";
 import { UNSAFE_withComponentProps, useLoaderData, UNSAFE_withHydrateFallbackProps, Outlet, Links, Meta, ScrollRestoration, Scripts, useSearchParams, useNavigate, Link, useParams, useLocation, Navigate, data, useBlocker, useBeforeUnload } from "react-router";
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import * as React from "react";
-import React__default, { useState, createContext, useEffect, useContext, useRef, StrictMode, useMemo, useCallback, forwardRef, Fragment as Fragment$1, lazy, Suspense } from "react";
+import React__default, { useState, createContext, useEffect, useContext, useRef, StrictMode, useMemo, useLayoutEffect, useImperativeHandle, memo, forwardRef, cloneElement, useCallback, Fragment as Fragment$1, lazy, Suspense } from "react";
 import { QueryClientProvider, QueryClient, useQuery, useQueryClient, useInfiniteQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import * as ToastPrimitives from "@radix-ui/react-toast";
 import { cva } from "class-variance-authority";
-import { X, Share, SquarePlus, AlertTriangle, Loader2, PanelLeft, Check, Mail, UserPlus, EyeOff, Eye, Lock, Search, MapPin as MapPin$1, User, Upload, ShieldAlert, RefreshCw, Merge, Circle, Layers, Minimize2, Maximize2, ArrowLeft, ArrowRight, Pencil, Save, Image as Image$1, ArrowLeftRight, Trash2, LayoutDashboard, Building2, Users as Users$1, FileCheck, Map as Map$2, History, Settings as Settings$1, LogOut, Activity, Play, Share2, MessageSquare, AlertCircle, RefreshCcw, CheckCircle, Terminal, FileWarning, BellOff, Bell, ChevronDown, ChevronUp, Info, Plus, CheckCircle2, UserX, Ban, RotateCcw, ShieldCheck, ChevronRight, ChevronsUpDown, Pause, VolumeX, Volume2, Sparkles, UserCheck, Heart, MessageCircle, BadgeCheck, Bookmark, Star, MoveUp, ExternalLink, Camera, Bus, Utensils, Bed, UserRound, PencilRuler, Folder, ListFilter, List, Home, MoreHorizontal, Quote, Edit2, Globe, Clock, LayoutGrid, Columns, SlidersHorizontal, LayoutTemplate, Smartphone, Database, Download, GripVertical, MessageSquarePlus, Footprints, Car, Bike, ChevronLeft, Send, Trophy, Gem, Ticket, Store, DoorOpen, Unlock, Calendar, Tag, Wrench, Hammer, Palette, ImagePlus, Link as Link$1 } from "lucide-react";
+import { X, Share, SquarePlus, AlertTriangle, Loader2, PanelLeft, Check, Mail, UserPlus, EyeOff, Eye, Lock, Search, MapPin as MapPin$1, User, Upload, ShieldAlert, RefreshCw, Merge, Circle, Layers, Minimize2, Maximize2, ArrowLeft, ArrowRight, Pencil, Save, Image as Image$1, ArrowLeftRight, Trash2, LayoutDashboard, Building2, Users as Users$1, FileCheck, Map as Map$3, History, Settings as Settings$1, LogOut, Activity, Play, Share2, MessageSquare, AlertCircle, RefreshCcw, CheckCircle, Terminal, FileWarning, BellOff, Bell, ChevronDown, ChevronUp, Info, Plus, CheckCircle2, UserX, Ban, RotateCcw, ShieldCheck, ChevronRight, ChevronsUpDown, Pause, VolumeX, Volume2, Sparkles, UserCheck, Heart, MessageCircle, BadgeCheck, Bookmark, Star, MoveUp, ExternalLink, Camera, Bus, Utensils, Bed, UserRound, PencilRuler, Folder, ListFilter, List, Home, MoreHorizontal, Quote, Edit2, Globe, Clock, LayoutGrid, Columns, SlidersHorizontal, LayoutTemplate, Smartphone, Database, Download, GripVertical, MessageSquarePlus, Footprints, Car, Bike, ChevronLeft, Send, Trophy, Gem, Ticket, Store, DoorOpen, Unlock, Calendar, Tag, Wrench, Hammer, Palette, ImagePlus, Link as Link$1 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Toaster as Toaster$2, toast as toast$1 } from "sonner";
 import { createClient } from "@supabase/supabase-js";
@@ -31,7 +31,7 @@ import { Command as Command$1 } from "cmdk";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
-import Map$1, { NavigationControl, Marker, Source, Layer, useMap, Popup, GeolocateControl } from "react-map-gl/maplibre";
+import { createPortal } from "react-dom";
 import maplibregl from "maplibre-gl";
 import useEmblaCarousel from "embla-carousel-react";
 import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip as Tooltip$1, Area, ComposedChart, Legend, Bar, Line, BarChart, PieChart, Pie, Cell } from "recharts";
@@ -43,7 +43,6 @@ import * as SwitchPrimitives from "@radix-ui/react-switch";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { createPortal } from "react-dom";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
@@ -1989,7 +1988,7 @@ const Onboarding = UNSAFE_withComponentProps(function Onboarding2() {
   } = useToast();
   const [username, setUsername] = useState("");
   const [country, setCountry] = useState("");
-  const [location, setLocation] = useState("");
+  const [location2, setLocation] = useState("");
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -2151,7 +2150,7 @@ const Onboarding = UNSAFE_withComponentProps(function Onboarding2() {
     } = await supabase.from("profiles").update({
       username,
       country,
-      location,
+      location: location2,
       avatar_url: avatarUrl,
       updated_at: (/* @__PURE__ */ new Date()).toISOString()
     }).eq("id", user.id);
@@ -2308,7 +2307,7 @@ const Onboarding = UNSAFE_withComponentProps(function Onboarding2() {
             htmlFor: "location",
             children: "Where do you live?"
           }), /* @__PURE__ */ jsx(LocationInput, {
-            value: location,
+            value: location2,
             onLocationSelected: (address, code) => {
               setLocation(address);
               if (code) setCountry(code);
@@ -3086,8 +3085,1309 @@ function ArchitectSelect$1({ selectedArchitects, setSelectedArchitects, placehol
   const showCreateOption = inputValue.trim() !== "" && !suggestions.some((s) => s.name.toLowerCase() === inputValue.trim().toLowerCase());
   return jsxs(Fragment, { children: [jsxs(Command, { onKeyDown: handleKeyDown, className: cn("overflow-visible bg-transparent", className), shouldFilter: false, children: [jsx("div", { className: "group border border-border-default bg-surface-muted px-3 py-2 text-sm rounded-sm focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2", children: jsxs("div", { className: "flex flex-wrap gap-1", children: [selectedArchitects.map((architect) => jsxs(Badge, { variant: "secondary", children: [architect.name, jsx("button", { type: "button", className: "ml-1 rounded-sm outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2", onClick: () => handleUnselect(architect.id), children: jsx(X, { className: "h-3 w-3 text-text-secondary hover:text-text-primary" }) })] }, architect.id)), jsx(Command$1.Input, { ref: inputRef, value: inputValue, onValueChange: setInputValue, onBlur: () => setTimeout(() => setOpen(false), 200), onFocus: () => setOpen(true), placeholder, autoComplete: "off", className: "ml-2 flex-1 bg-transparent outline-none placeholder:text-text-disabled min-w-[50px]" })] }) }), jsx("div", { className: "relative mt-2", children: open && (filteredSuggestions.length > 0 || inputValue.length > 0) && jsx("div", { className: "absolute top-0 z-10 w-full rounded-sm border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95", children: jsxs(CommandList, { children: [isLoading && jsxs(CommandItem, { disabled: true, children: [jsx(Loader2, { className: "mr-2 h-4 w-4 animate-spin" }), "Loading..."] }), jsxs(CommandGroup, { className: "h-full overflow-auto max-h-[200px]", children: [filteredSuggestions.map((suggestion) => jsx(CommandItem, { value: suggestion.name, onSelect: () => handleSelect(suggestion), children: jsxs("div", { className: "flex items-center justify-between w-full", children: [jsx("span", { children: suggestion.name }), jsx(Badge, { variant: "outline", className: "text-[10px] h-5 px-1", children: suggestion.type })] }) }, suggestion.id)), showCreateOption && !isLoading && jsxs(CommandItem, { value: inputValue, onSelect: initiateCreate, className: "text-blue-500 font-medium", children: ['+ Create "', inputValue, '"'] })] })] }) }) })] }), jsx(Dialog, { open: showCreateDialog, onOpenChange: setShowCreateDialog, children: jsxs(DialogContent, { children: [jsxs(DialogHeader, { children: [jsx(DialogTitle, { children: "Add New Architect" }), jsxs(DialogDescription, { children: ["Is ", jsx("strong", { children: newArchitectName }), " an individual person or a studio/firm?"] })] }), jsx("div", { className: "grid gap-4 py-4", children: jsxs(RadioGroup, { value: newArchitectType, onValueChange: (v) => setNewArchitectType(v), children: [jsxs("div", { className: "flex items-center space-x-2 border border-border-default p-3 rounded-sm cursor-pointer hover:bg-surface-muted/50", onClick: () => setNewArchitectType("individual"), children: [jsx(RadioGroupItem, { value: "individual", id: "r1" }), jsx(Label, { htmlFor: "r1", className: "cursor-pointer", children: "Individual Architect" })] }), jsxs("div", { className: "flex items-center space-x-2 border border-border-default p-3 rounded-sm cursor-pointer hover:bg-surface-muted/50", onClick: () => setNewArchitectType("studio"), children: [jsx(RadioGroupItem, { value: "studio", id: "r2" }), jsx(Label, { htmlFor: "r2", className: "cursor-pointer", children: "Architecture Studio/Firm" })] })] }) }), jsxs(DialogFooter, { children: [jsx(Button, { variant: "outline", onClick: () => setShowCreateDialog(false), children: "Cancel" }), jsxs(Button, { onClick: handleCreateConfirm, disabled: isCreating, children: [isCreating && jsx(Loader2, { className: "mr-2 h-4 w-4 animate-spin" }), "Create"] })] })] }) })] });
 }
+const MountedMapsContext = React.createContext(null);
+function useMap$1() {
+  var _a;
+  const maps = (_a = useContext(MountedMapsContext)) === null || _a === void 0 ? void 0 : _a.maps;
+  const currentMap = useContext(MapContext$1);
+  const mapsWithCurrent = useMemo(() => {
+    return { ...maps, current: currentMap === null || currentMap === void 0 ? void 0 : currentMap.map };
+  }, [maps, currentMap]);
+  return mapsWithCurrent;
+}
+function arePointsEqual(a, b) {
+  const ax = Array.isArray(a) ? a[0] : a ? a.x : 0;
+  const ay = Array.isArray(a) ? a[1] : a ? a.y : 0;
+  const bx = Array.isArray(b) ? b[0] : b ? b.x : 0;
+  const by = Array.isArray(b) ? b[1] : b ? b.y : 0;
+  return ax === bx && ay === by;
+}
+function deepEqual(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (!a || !b) {
+    return false;
+  }
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) {
+      return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEqual(a[i], b[i])) {
+        return false;
+      }
+    }
+    return true;
+  } else if (Array.isArray(b)) {
+    return false;
+  }
+  if (typeof a === "object" && typeof b === "object") {
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+    if (aKeys.length !== bKeys.length) {
+      return false;
+    }
+    for (const key of aKeys) {
+      if (!b.hasOwnProperty(key)) {
+        return false;
+      }
+      if (!deepEqual(a[key], b[key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+function cloneTransform(tr) {
+  const newTransform = tr.clone();
+  newTransform.pixelsToGLUnits = tr.pixelsToGLUnits;
+  return newTransform;
+}
+function syncProjection(src, dest) {
+  if (!src.getProjection) {
+    return;
+  }
+  const srcProjection = src.getProjection();
+  const destProjection = dest.getProjection();
+  if (!deepEqual(srcProjection, destProjection)) {
+    dest.setProjection(srcProjection);
+  }
+}
+function transformToViewState(tr) {
+  return {
+    longitude: tr.center.lng,
+    latitude: tr.center.lat,
+    zoom: tr.zoom,
+    pitch: tr.pitch,
+    bearing: tr.bearing,
+    padding: tr.padding
+  };
+}
+function applyViewStateToTransform(tr, props) {
+  const v = props.viewState || props;
+  let changed = false;
+  if ("zoom" in v) {
+    const zoom = tr.zoom;
+    tr.zoom = v.zoom;
+    changed = changed || zoom !== tr.zoom;
+  }
+  if ("bearing" in v) {
+    const bearing = tr.bearing;
+    tr.bearing = v.bearing;
+    changed = changed || bearing !== tr.bearing;
+  }
+  if ("pitch" in v) {
+    const pitch = tr.pitch;
+    tr.pitch = v.pitch;
+    changed = changed || pitch !== tr.pitch;
+  }
+  if (v.padding && !tr.isPaddingEqual(v.padding)) {
+    changed = true;
+    tr.padding = v.padding;
+  }
+  if ("longitude" in v && "latitude" in v) {
+    const center = tr.center;
+    tr.center = new center.constructor(v.longitude, v.latitude);
+    changed = changed || center !== tr.center;
+  }
+  return changed;
+}
+const refProps = ["type", "source", "source-layer", "minzoom", "maxzoom", "filter", "layout"];
+function normalizeStyle(style) {
+  if (!style) {
+    return null;
+  }
+  if (typeof style === "string") {
+    return style;
+  }
+  if ("toJS" in style) {
+    style = style.toJS();
+  }
+  if (!style.layers) {
+    return style;
+  }
+  const layerIndex = {};
+  for (const layer of style.layers) {
+    layerIndex[layer.id] = layer;
+  }
+  const layers = style.layers.map((layer) => {
+    let normalizedLayer = null;
+    if ("interactive" in layer) {
+      normalizedLayer = Object.assign({}, layer);
+      delete normalizedLayer.interactive;
+    }
+    const layerRef = layerIndex[layer.ref];
+    if (layerRef) {
+      normalizedLayer = normalizedLayer || Object.assign({}, layer);
+      delete normalizedLayer.ref;
+      for (const propName of refProps) {
+        if (propName in layerRef) {
+          normalizedLayer[propName] = layerRef[propName];
+        }
+      }
+    }
+    return normalizedLayer || layer;
+  });
+  return { ...style, layers };
+}
+const DEFAULT_STYLE = { version: 8, sources: {}, layers: [] };
+const pointerEvents = {
+  mousedown: "onMouseDown",
+  mouseup: "onMouseUp",
+  mouseover: "onMouseOver",
+  mousemove: "onMouseMove",
+  click: "onClick",
+  dblclick: "onDblClick",
+  mouseenter: "onMouseEnter",
+  mouseleave: "onMouseLeave",
+  mouseout: "onMouseOut",
+  contextmenu: "onContextMenu",
+  touchstart: "onTouchStart",
+  touchend: "onTouchEnd",
+  touchmove: "onTouchMove",
+  touchcancel: "onTouchCancel"
+};
+const cameraEvents = {
+  movestart: "onMoveStart",
+  move: "onMove",
+  moveend: "onMoveEnd",
+  dragstart: "onDragStart",
+  drag: "onDrag",
+  dragend: "onDragEnd",
+  zoomstart: "onZoomStart",
+  zoom: "onZoom",
+  zoomend: "onZoomEnd",
+  rotatestart: "onRotateStart",
+  rotate: "onRotate",
+  rotateend: "onRotateEnd",
+  pitchstart: "onPitchStart",
+  pitch: "onPitch",
+  pitchend: "onPitchEnd"
+};
+const otherEvents = {
+  wheel: "onWheel",
+  boxzoomstart: "onBoxZoomStart",
+  boxzoomend: "onBoxZoomEnd",
+  boxzoomcancel: "onBoxZoomCancel",
+  resize: "onResize",
+  load: "onLoad",
+  render: "onRender",
+  idle: "onIdle",
+  remove: "onRemove",
+  data: "onData",
+  styledata: "onStyleData",
+  sourcedata: "onSourceData",
+  error: "onError"
+};
+const settingNames = [
+  "minZoom",
+  "maxZoom",
+  "minPitch",
+  "maxPitch",
+  "maxBounds",
+  "projection",
+  "renderWorldCopies"
+];
+const handlerNames = [
+  "scrollZoom",
+  "boxZoom",
+  "dragRotate",
+  "dragPan",
+  "keyboard",
+  "doubleClickZoom",
+  "touchZoomRotate",
+  "touchPitch"
+];
+class Mapbox {
+  constructor(MapClass, props, container) {
+    this._map = null;
+    this._internalUpdate = false;
+    this._inRender = false;
+    this._hoveredFeatures = null;
+    this._deferredEvents = {
+      move: false,
+      zoom: false,
+      pitch: false,
+      rotate: false
+    };
+    this._onEvent = (e) => {
+      const cb = this.props[otherEvents[e.type]];
+      if (cb) {
+        cb(e);
+      } else if (e.type === "error") {
+        console.error(e.error);
+      }
+    };
+    this._onPointerEvent = (e) => {
+      if (e.type === "mousemove" || e.type === "mouseout") {
+        this._updateHover(e);
+      }
+      const cb = this.props[pointerEvents[e.type]];
+      if (cb) {
+        if (this.props.interactiveLayerIds && e.type !== "mouseover" && e.type !== "mouseout") {
+          e.features = this._hoveredFeatures || this._queryRenderedFeatures(e.point);
+        }
+        cb(e);
+        delete e.features;
+      }
+    };
+    this._onCameraEvent = (e) => {
+      if (!this._internalUpdate) {
+        const cb = this.props[cameraEvents[e.type]];
+        if (cb) {
+          cb(e);
+        }
+      }
+      if (e.type in this._deferredEvents) {
+        this._deferredEvents[e.type] = false;
+      }
+    };
+    this._MapClass = MapClass;
+    this.props = props;
+    this._initialize(container);
+  }
+  get map() {
+    return this._map;
+  }
+  get transform() {
+    return this._renderTransform;
+  }
+  setProps(props) {
+    const oldProps = this.props;
+    this.props = props;
+    const settingsChanged = this._updateSettings(props, oldProps);
+    if (settingsChanged) {
+      this._createShadowTransform(this._map);
+    }
+    const sizeChanged = this._updateSize(props);
+    const viewStateChanged = this._updateViewState(props, true);
+    this._updateStyle(props, oldProps);
+    this._updateStyleComponents(props, oldProps);
+    this._updateHandlers(props, oldProps);
+    if (settingsChanged || sizeChanged || viewStateChanged && !this._map.isMoving()) {
+      this.redraw();
+    }
+  }
+  static reuse(props, container) {
+    const that = Mapbox.savedMaps.pop();
+    if (!that) {
+      return null;
+    }
+    const map = that.map;
+    const oldContainer = map.getContainer();
+    container.className = oldContainer.className;
+    while (oldContainer.childNodes.length > 0) {
+      container.appendChild(oldContainer.childNodes[0]);
+    }
+    map._container = container;
+    const resizeObserver = map._resizeObserver;
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      resizeObserver.observe(container);
+    }
+    that.setProps({ ...props, styleDiffing: false });
+    map.resize();
+    const { initialViewState } = props;
+    if (initialViewState) {
+      if (initialViewState.bounds) {
+        map.fitBounds(initialViewState.bounds, { ...initialViewState.fitBoundsOptions, duration: 0 });
+      } else {
+        that._updateViewState(initialViewState, false);
+      }
+    }
+    if (map.isStyleLoaded()) {
+      map.fire("load");
+    } else {
+      map.once("styledata", () => map.fire("load"));
+    }
+    map._update();
+    return that;
+  }
+  /* eslint-disable complexity,max-statements */
+  _initialize(container) {
+    const { props } = this;
+    const { mapStyle = DEFAULT_STYLE } = props;
+    const mapOptions = {
+      ...props,
+      ...props.initialViewState,
+      accessToken: props.mapboxAccessToken || getAccessTokenFromEnv() || null,
+      container,
+      style: normalizeStyle(mapStyle)
+    };
+    const viewState = mapOptions.initialViewState || mapOptions.viewState || mapOptions;
+    Object.assign(mapOptions, {
+      center: [viewState.longitude || 0, viewState.latitude || 0],
+      zoom: viewState.zoom || 0,
+      pitch: viewState.pitch || 0,
+      bearing: viewState.bearing || 0
+    });
+    if (props.gl) {
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = () => {
+        HTMLCanvasElement.prototype.getContext = getContext;
+        return props.gl;
+      };
+    }
+    const map = new this._MapClass(mapOptions);
+    if (viewState.padding) {
+      map.setPadding(viewState.padding);
+    }
+    if (props.cursor) {
+      map.getCanvas().style.cursor = props.cursor;
+    }
+    this._createShadowTransform(map);
+    const renderMap = map._render;
+    map._render = (arg) => {
+      this._inRender = true;
+      renderMap.call(map, arg);
+      this._inRender = false;
+    };
+    const runRenderTaskQueue = map._renderTaskQueue.run;
+    map._renderTaskQueue.run = (arg) => {
+      runRenderTaskQueue.call(map._renderTaskQueue, arg);
+      this._onBeforeRepaint();
+    };
+    map.on("render", () => this._onAfterRepaint());
+    const fireEvent = map.fire;
+    map.fire = this._fireEvent.bind(this, fireEvent);
+    map.on("resize", () => {
+      this._renderTransform.resize(map.transform.width, map.transform.height);
+    });
+    map.on("styledata", () => {
+      this._updateStyleComponents(this.props, {});
+      syncProjection(map.transform, this._renderTransform);
+    });
+    map.on("sourcedata", () => this._updateStyleComponents(this.props, {}));
+    for (const eventName in pointerEvents) {
+      map.on(eventName, this._onPointerEvent);
+    }
+    for (const eventName in cameraEvents) {
+      map.on(eventName, this._onCameraEvent);
+    }
+    for (const eventName in otherEvents) {
+      map.on(eventName, this._onEvent);
+    }
+    this._map = map;
+  }
+  /* eslint-enable complexity,max-statements */
+  recycle() {
+    const container = this.map.getContainer();
+    const children = container.querySelector("[mapboxgl-children]");
+    children === null || children === void 0 ? void 0 : children.remove();
+    Mapbox.savedMaps.push(this);
+  }
+  destroy() {
+    this._map.remove();
+  }
+  // Force redraw the map now. Typically resize() and jumpTo() is reflected in the next
+  // render cycle, which is managed by Mapbox's animation loop.
+  // This removes the synchronization issue caused by requestAnimationFrame.
+  redraw() {
+    const map = this._map;
+    if (!this._inRender && map.style) {
+      if (map._frame) {
+        map._frame.cancel();
+        map._frame = null;
+      }
+      map._render();
+    }
+  }
+  _createShadowTransform(map) {
+    const renderTransform = cloneTransform(map.transform);
+    map.painter.transform = renderTransform;
+    this._renderTransform = renderTransform;
+  }
+  /* Trigger map resize if size is controlled
+     @param {object} nextProps
+     @returns {bool} true if size has changed
+   */
+  _updateSize(nextProps) {
+    const { viewState } = nextProps;
+    if (viewState) {
+      const map = this._map;
+      if (viewState.width !== map.transform.width || viewState.height !== map.transform.height) {
+        map.resize();
+        return true;
+      }
+    }
+    return false;
+  }
+  // Adapted from map.jumpTo
+  /* Update camera to match props
+     @param {object} nextProps
+     @param {bool} triggerEvents - should fire camera events
+     @returns {bool} true if anything is changed
+   */
+  _updateViewState(nextProps, triggerEvents) {
+    if (this._internalUpdate) {
+      return false;
+    }
+    const map = this._map;
+    const tr = this._renderTransform;
+    const { zoom, pitch, bearing } = tr;
+    const isMoving = map.isMoving();
+    if (isMoving) {
+      tr.cameraElevationReference = "sea";
+    }
+    const changed = applyViewStateToTransform(tr, {
+      ...transformToViewState(map.transform),
+      ...nextProps
+    });
+    if (isMoving) {
+      tr.cameraElevationReference = "ground";
+    }
+    if (changed && triggerEvents) {
+      const deferredEvents = this._deferredEvents;
+      deferredEvents.move = true;
+      deferredEvents.zoom || (deferredEvents.zoom = zoom !== tr.zoom);
+      deferredEvents.rotate || (deferredEvents.rotate = bearing !== tr.bearing);
+      deferredEvents.pitch || (deferredEvents.pitch = pitch !== tr.pitch);
+    }
+    if (!isMoving) {
+      applyViewStateToTransform(map.transform, nextProps);
+    }
+    return changed;
+  }
+  /* Update camera constraints and projection settings to match props
+     @param {object} nextProps
+     @param {object} currProps
+     @returns {bool} true if anything is changed
+   */
+  _updateSettings(nextProps, currProps) {
+    const map = this._map;
+    let changed = false;
+    for (const propName of settingNames) {
+      if (propName in nextProps && !deepEqual(nextProps[propName], currProps[propName])) {
+        changed = true;
+        const setter = map[`set${propName[0].toUpperCase()}${propName.slice(1)}`];
+        setter === null || setter === void 0 ? void 0 : setter.call(map, nextProps[propName]);
+      }
+    }
+    return changed;
+  }
+  /* Update map style to match props
+     @param {object} nextProps
+     @param {object} currProps
+     @returns {bool} true if style is changed
+   */
+  _updateStyle(nextProps, currProps) {
+    if (nextProps.cursor !== currProps.cursor) {
+      this._map.getCanvas().style.cursor = nextProps.cursor || "";
+    }
+    if (nextProps.mapStyle !== currProps.mapStyle) {
+      const { mapStyle = DEFAULT_STYLE, styleDiffing = true } = nextProps;
+      const options = {
+        diff: styleDiffing
+      };
+      if ("localIdeographFontFamily" in nextProps) {
+        options.localIdeographFontFamily = nextProps.localIdeographFontFamily;
+      }
+      this._map.setStyle(normalizeStyle(mapStyle), options);
+      return true;
+    }
+    return false;
+  }
+  /* Update fog, light and terrain to match props
+     @param {object} nextProps
+     @param {object} currProps
+     @returns {bool} true if anything is changed
+   */
+  _updateStyleComponents(nextProps, currProps) {
+    const map = this._map;
+    let changed = false;
+    if (map.isStyleLoaded()) {
+      if ("light" in nextProps && map.setLight && !deepEqual(nextProps.light, currProps.light)) {
+        changed = true;
+        map.setLight(nextProps.light);
+      }
+      if ("fog" in nextProps && map.setFog && !deepEqual(nextProps.fog, currProps.fog)) {
+        changed = true;
+        map.setFog(nextProps.fog);
+      }
+      if ("terrain" in nextProps && map.setTerrain && !deepEqual(nextProps.terrain, currProps.terrain)) {
+        if (!nextProps.terrain || map.getSource(nextProps.terrain.source)) {
+          changed = true;
+          map.setTerrain(nextProps.terrain);
+        }
+      }
+    }
+    return changed;
+  }
+  /* Update interaction handlers to match props
+     @param {object} nextProps
+     @param {object} currProps
+     @returns {bool} true if anything is changed
+   */
+  _updateHandlers(nextProps, currProps) {
+    var _a, _b;
+    const map = this._map;
+    let changed = false;
+    for (const propName of handlerNames) {
+      const newValue = (_a = nextProps[propName]) !== null && _a !== void 0 ? _a : true;
+      const oldValue = (_b = currProps[propName]) !== null && _b !== void 0 ? _b : true;
+      if (!deepEqual(newValue, oldValue)) {
+        changed = true;
+        if (newValue) {
+          map[propName].enable(newValue);
+        } else {
+          map[propName].disable();
+        }
+      }
+    }
+    return changed;
+  }
+  _queryRenderedFeatures(point) {
+    const map = this._map;
+    const tr = map.transform;
+    const { interactiveLayerIds = [] } = this.props;
+    try {
+      map.transform = this._renderTransform;
+      return map.queryRenderedFeatures(point, {
+        layers: interactiveLayerIds.filter(map.getLayer.bind(map))
+      });
+    } catch (_a) {
+      return [];
+    } finally {
+      map.transform = tr;
+    }
+  }
+  _updateHover(e) {
+    var _a;
+    const { props } = this;
+    const shouldTrackHoveredFeatures = props.interactiveLayerIds && (props.onMouseMove || props.onMouseEnter || props.onMouseLeave);
+    if (shouldTrackHoveredFeatures) {
+      const eventType = e.type;
+      const wasHovering = ((_a = this._hoveredFeatures) === null || _a === void 0 ? void 0 : _a.length) > 0;
+      const features = this._queryRenderedFeatures(e.point);
+      const isHovering = features.length > 0;
+      if (!isHovering && wasHovering) {
+        e.type = "mouseleave";
+        this._onPointerEvent(e);
+      }
+      this._hoveredFeatures = features;
+      if (isHovering && !wasHovering) {
+        e.type = "mouseenter";
+        this._onPointerEvent(e);
+      }
+      e.type = eventType;
+    } else {
+      this._hoveredFeatures = null;
+    }
+  }
+  _fireEvent(baseFire, event, properties) {
+    const map = this._map;
+    const tr = map.transform;
+    const eventType = typeof event === "string" ? event : event.type;
+    if (eventType === "move") {
+      this._updateViewState(this.props, false);
+    }
+    if (eventType in cameraEvents) {
+      if (typeof event === "object") {
+        event.viewState = transformToViewState(tr);
+      }
+      if (this._map.isMoving()) {
+        map.transform = this._renderTransform;
+        baseFire.call(map, event, properties);
+        map.transform = tr;
+        return map;
+      }
+    }
+    baseFire.call(map, event, properties);
+    return map;
+  }
+  // All camera manipulations are complete, ready to repaint
+  _onBeforeRepaint() {
+    const map = this._map;
+    this._internalUpdate = true;
+    for (const eventType in this._deferredEvents) {
+      if (this._deferredEvents[eventType]) {
+        map.fire(eventType);
+      }
+    }
+    this._internalUpdate = false;
+    const tr = this._map.transform;
+    map.transform = this._renderTransform;
+    this._onAfterRepaint = () => {
+      syncProjection(this._renderTransform, tr);
+      map.transform = tr;
+    };
+  }
+}
+Mapbox.savedMaps = [];
+function getAccessTokenFromEnv() {
+  let accessToken = null;
+  if (typeof location !== "undefined") {
+    const match = /access_token=([^&\/]*)/.exec(location.search);
+    accessToken = match && match[1];
+  }
+  try {
+    accessToken = accessToken || process.env.MapboxAccessToken;
+  } catch (_a) {
+  }
+  try {
+    accessToken = accessToken || process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
+  } catch (_b) {
+  }
+  return accessToken;
+}
+const skipMethods = [
+  "setMaxBounds",
+  "setMinZoom",
+  "setMaxZoom",
+  "setMinPitch",
+  "setMaxPitch",
+  "setRenderWorldCopies",
+  "setProjection",
+  "setStyle",
+  "addSource",
+  "removeSource",
+  "addLayer",
+  "removeLayer",
+  "setLayerZoomRange",
+  "setFilter",
+  "setPaintProperty",
+  "setLayoutProperty",
+  "setLight",
+  "setTerrain",
+  "setFog",
+  "remove"
+];
+function createRef(mapInstance) {
+  if (!mapInstance) {
+    return null;
+  }
+  const map = mapInstance.map;
+  const result = {
+    getMap: () => map,
+    // Overwrite getters to use our shadow transform
+    getCenter: () => mapInstance.transform.center,
+    getZoom: () => mapInstance.transform.zoom,
+    getBearing: () => mapInstance.transform.bearing,
+    getPitch: () => mapInstance.transform.pitch,
+    getPadding: () => mapInstance.transform.padding,
+    getBounds: () => mapInstance.transform.getBounds(),
+    project: (lnglat) => {
+      const tr = map.transform;
+      map.transform = mapInstance.transform;
+      const result2 = map.project(lnglat);
+      map.transform = tr;
+      return result2;
+    },
+    unproject: (point) => {
+      const tr = map.transform;
+      map.transform = mapInstance.transform;
+      const result2 = map.unproject(point);
+      map.transform = tr;
+      return result2;
+    },
+    // options diverge between mapbox and maplibre
+    queryTerrainElevation: (lnglat, options) => {
+      const tr = map.transform;
+      map.transform = mapInstance.transform;
+      const result2 = map.queryTerrainElevation(lnglat, options);
+      map.transform = tr;
+      return result2;
+    },
+    queryRenderedFeatures: (geometry, options) => {
+      const tr = map.transform;
+      map.transform = mapInstance.transform;
+      const result2 = map.queryRenderedFeatures(geometry, options);
+      map.transform = tr;
+      return result2;
+    }
+  };
+  for (const key of getMethodNames(map)) {
+    if (!(key in result) && !skipMethods.includes(key)) {
+      result[key] = map[key].bind(map);
+    }
+  }
+  return result;
+}
+function getMethodNames(obj) {
+  const result = /* @__PURE__ */ new Set();
+  let proto = obj;
+  while (proto) {
+    for (const key of Object.getOwnPropertyNames(proto)) {
+      if (key[0] !== "_" && typeof obj[key] === "function" && key !== "fire" && key !== "setEventedParent") {
+        result.add(key);
+      }
+    }
+    proto = Object.getPrototypeOf(proto);
+  }
+  return Array.from(result);
+}
+const useIsomorphicLayoutEffect = typeof document !== "undefined" ? useLayoutEffect : useEffect;
+const globalSettings = [
+  "baseApiUrl",
+  "maxParallelImageRequests",
+  "workerClass",
+  "workerCount",
+  "workerUrl"
+];
+function setGlobals(mapLib2, props) {
+  for (const key of globalSettings) {
+    if (key in props) {
+      mapLib2[key] = props[key];
+    }
+  }
+  const { RTLTextPlugin = "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.3/mapbox-gl-rtl-text.js" } = props;
+  if (RTLTextPlugin && mapLib2.getRTLTextPluginStatus && mapLib2.getRTLTextPluginStatus() === "unavailable") {
+    mapLib2.setRTLTextPlugin(RTLTextPlugin, (error) => {
+      if (error) {
+        console.error(error);
+      }
+    }, true);
+  }
+}
+const MapContext$1 = React.createContext(null);
+function Map$2(props, ref, defaultLib) {
+  const mountedMapsContext = useContext(MountedMapsContext);
+  const [mapInstance, setMapInstance] = useState(null);
+  const containerRef = useRef();
+  const { current: contextValue } = useRef({ mapLib: null, map: null });
+  useEffect(() => {
+    const mapLib2 = props.mapLib;
+    let isMounted = true;
+    let mapbox;
+    Promise.resolve(mapLib2 || defaultLib).then((module) => {
+      if (!isMounted) {
+        return;
+      }
+      if (!module) {
+        throw new Error("Invalid mapLib");
+      }
+      const mapboxgl = "Map" in module ? module : module.default;
+      if (!mapboxgl.Map) {
+        throw new Error("Invalid mapLib");
+      }
+      setGlobals(mapboxgl, props);
+      if (!mapboxgl.supported || mapboxgl.supported(props)) {
+        if (props.reuseMaps) {
+          mapbox = Mapbox.reuse(props, containerRef.current);
+        }
+        if (!mapbox) {
+          mapbox = new Mapbox(mapboxgl.Map, props, containerRef.current);
+        }
+        contextValue.map = createRef(mapbox);
+        contextValue.mapLib = mapboxgl;
+        setMapInstance(mapbox);
+        mountedMapsContext === null || mountedMapsContext === void 0 ? void 0 : mountedMapsContext.onMapMount(contextValue.map, props.id);
+      } else {
+        throw new Error("Map is not supported by this browser");
+      }
+    }).catch((error) => {
+      const { onError } = props;
+      if (onError) {
+        onError({
+          type: "error",
+          target: null,
+          originalEvent: null,
+          error
+        });
+      } else {
+        console.error(error);
+      }
+    });
+    return () => {
+      isMounted = false;
+      if (mapbox) {
+        mountedMapsContext === null || mountedMapsContext === void 0 ? void 0 : mountedMapsContext.onMapUnmount(props.id);
+        if (props.reuseMaps) {
+          mapbox.recycle();
+        } else {
+          mapbox.destroy();
+        }
+      }
+    };
+  }, []);
+  useIsomorphicLayoutEffect(() => {
+    if (mapInstance) {
+      mapInstance.setProps(props);
+    }
+  });
+  useImperativeHandle(ref, () => contextValue.map, [mapInstance]);
+  const style = useMemo(() => ({
+    position: "relative",
+    width: "100%",
+    height: "100%",
+    ...props.style
+  }), [props.style]);
+  const CHILD_CONTAINER_STYLE = {
+    height: "100%"
+  };
+  return React.createElement("div", { id: props.id, ref: containerRef, style }, mapInstance && React.createElement(
+    MapContext$1.Provider,
+    { value: contextValue },
+    React.createElement("div", { "mapboxgl-children": "", style: CHILD_CONTAINER_STYLE }, props.children)
+  ));
+}
+const unitlessNumber = /box|flex|grid|column|lineHeight|fontWeight|opacity|order|tabSize|zIndex/;
+function applyReactStyle(element, styles) {
+  if (!element || !styles) {
+    return;
+  }
+  const style = element.style;
+  for (const key in styles) {
+    const value = styles[key];
+    if (Number.isFinite(value) && !unitlessNumber.test(key)) {
+      style[key] = `${value}px`;
+    } else {
+      style[key] = value;
+    }
+  }
+}
+function Marker$1(props, ref) {
+  const { map, mapLib: mapLib2 } = useContext(MapContext$1);
+  const thisRef = useRef({ props });
+  thisRef.current.props = props;
+  const marker = useMemo(() => {
+    let hasChildren = false;
+    React.Children.forEach(props.children, (el) => {
+      if (el) {
+        hasChildren = true;
+      }
+    });
+    const options = {
+      ...props,
+      element: hasChildren ? document.createElement("div") : null
+    };
+    const mk = new mapLib2.Marker(options);
+    mk.setLngLat([props.longitude, props.latitude]);
+    mk.getElement().addEventListener("click", (e) => {
+      var _a, _b;
+      (_b = (_a = thisRef.current.props).onClick) === null || _b === void 0 ? void 0 : _b.call(_a, {
+        type: "click",
+        target: mk,
+        originalEvent: e
+      });
+    });
+    mk.on("dragstart", (e) => {
+      var _a, _b;
+      const evt = e;
+      evt.lngLat = marker.getLngLat();
+      (_b = (_a = thisRef.current.props).onDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, evt);
+    });
+    mk.on("drag", (e) => {
+      var _a, _b;
+      const evt = e;
+      evt.lngLat = marker.getLngLat();
+      (_b = (_a = thisRef.current.props).onDrag) === null || _b === void 0 ? void 0 : _b.call(_a, evt);
+    });
+    mk.on("dragend", (e) => {
+      var _a, _b;
+      const evt = e;
+      evt.lngLat = marker.getLngLat();
+      (_b = (_a = thisRef.current.props).onDragEnd) === null || _b === void 0 ? void 0 : _b.call(_a, evt);
+    });
+    return mk;
+  }, []);
+  useEffect(() => {
+    marker.addTo(map.getMap());
+    return () => {
+      marker.remove();
+    };
+  }, []);
+  const { longitude, latitude, offset, style, draggable = false, popup = null, rotation = 0, rotationAlignment = "auto", pitchAlignment = "auto" } = props;
+  useEffect(() => {
+    applyReactStyle(marker.getElement(), style);
+  }, [style]);
+  useImperativeHandle(ref, () => marker, []);
+  if (marker.getLngLat().lng !== longitude || marker.getLngLat().lat !== latitude) {
+    marker.setLngLat([longitude, latitude]);
+  }
+  if (offset && !arePointsEqual(marker.getOffset(), offset)) {
+    marker.setOffset(offset);
+  }
+  if (marker.isDraggable() !== draggable) {
+    marker.setDraggable(draggable);
+  }
+  if (marker.getRotation() !== rotation) {
+    marker.setRotation(rotation);
+  }
+  if (marker.getRotationAlignment() !== rotationAlignment) {
+    marker.setRotationAlignment(rotationAlignment);
+  }
+  if (marker.getPitchAlignment() !== pitchAlignment) {
+    marker.setPitchAlignment(pitchAlignment);
+  }
+  if (marker.getPopup() !== popup) {
+    marker.setPopup(popup);
+  }
+  return createPortal(props.children, marker.getElement());
+}
+const _Marker = memo(forwardRef(Marker$1));
+function getClassList(className) {
+  return new Set(className ? className.trim().split(/\s+/) : []);
+}
+function Popup$1(props, ref) {
+  const { map, mapLib: mapLib2 } = useContext(MapContext$1);
+  const container = useMemo(() => {
+    return document.createElement("div");
+  }, []);
+  const thisRef = useRef({ props });
+  thisRef.current.props = props;
+  const popup = useMemo(() => {
+    const options = { ...props };
+    const pp = new mapLib2.Popup(options);
+    pp.setLngLat([props.longitude, props.latitude]);
+    pp.once("open", (e) => {
+      var _a, _b;
+      (_b = (_a = thisRef.current.props).onOpen) === null || _b === void 0 ? void 0 : _b.call(_a, e);
+    });
+    return pp;
+  }, []);
+  useEffect(() => {
+    const onClose = (e) => {
+      var _a, _b;
+      (_b = (_a = thisRef.current.props).onClose) === null || _b === void 0 ? void 0 : _b.call(_a, e);
+    };
+    popup.on("close", onClose);
+    popup.setDOMContent(container).addTo(map.getMap());
+    return () => {
+      popup.off("close", onClose);
+      if (popup.isOpen()) {
+        popup.remove();
+      }
+    };
+  }, []);
+  useEffect(() => {
+    applyReactStyle(popup.getElement(), props.style);
+  }, [props.style]);
+  useImperativeHandle(ref, () => popup, []);
+  if (popup.isOpen()) {
+    if (popup.getLngLat().lng !== props.longitude || popup.getLngLat().lat !== props.latitude) {
+      popup.setLngLat([props.longitude, props.latitude]);
+    }
+    if (props.offset && !deepEqual(popup.options.offset, props.offset)) {
+      popup.setOffset(props.offset);
+    }
+    if (popup.options.anchor !== props.anchor || popup.options.maxWidth !== props.maxWidth) {
+      popup.options.anchor = props.anchor;
+      popup.setMaxWidth(props.maxWidth);
+    }
+    if (popup.options.className !== props.className) {
+      const prevClassList = getClassList(popup.options.className);
+      const nextClassList = getClassList(props.className);
+      for (const c of prevClassList) {
+        if (!nextClassList.has(c)) {
+          popup.removeClassName(c);
+        }
+      }
+      for (const c of nextClassList) {
+        if (!prevClassList.has(c)) {
+          popup.addClassName(c);
+        }
+      }
+      popup.options.className = props.className;
+    }
+  }
+  return createPortal(props.children, container);
+}
+const _Popup = memo(forwardRef(Popup$1));
+function useControl(onCreate, arg1, arg2, arg3) {
+  const context = useContext(MapContext$1);
+  const ctrl = useMemo(() => onCreate(context), []);
+  useEffect(() => {
+    const opts = arg1;
+    const onAdd = typeof arg1 === "function" && false ? arg1 : null;
+    const onRemove = typeof arg1 === "function" ? arg1 : null;
+    const { map } = context;
+    if (!map.hasControl(ctrl)) {
+      map.addControl(ctrl, opts === null || opts === void 0 ? void 0 : opts.position);
+      if (onAdd) {
+        onAdd(context);
+      }
+    }
+    return () => {
+      if (onRemove) {
+        onRemove(context);
+      }
+      if (map.hasControl(ctrl)) {
+        map.removeControl(ctrl);
+      }
+    };
+  }, []);
+  return ctrl;
+}
+function AttributionControl(props) {
+  const ctrl = useControl(({ mapLib: mapLib2 }) => new mapLib2.AttributionControl(props), {
+    position: props.position
+  });
+  useEffect(() => {
+    applyReactStyle(ctrl._container, props.style);
+  }, [props.style]);
+  return null;
+}
+memo(AttributionControl);
+function FullscreenControl(props) {
+  const ctrl = useControl(({ mapLib: mapLib2 }) => new mapLib2.FullscreenControl({
+    container: props.containerId && document.getElementById(props.containerId)
+  }), { position: props.position });
+  useEffect(() => {
+    applyReactStyle(ctrl._controlContainer, props.style);
+  }, [props.style]);
+  return null;
+}
+memo(FullscreenControl);
+function GeolocateControl$1(props, ref) {
+  const thisRef = useRef({ props });
+  const ctrl = useControl(({ mapLib: mapLib2 }) => {
+    const gc = new mapLib2.GeolocateControl(props);
+    const setupUI = gc._setupUI;
+    gc._setupUI = (args) => {
+      if (!gc._container.hasChildNodes()) {
+        setupUI(args);
+      }
+    };
+    gc.on("geolocate", (e) => {
+      var _a, _b;
+      (_b = (_a = thisRef.current.props).onGeolocate) === null || _b === void 0 ? void 0 : _b.call(_a, e);
+    });
+    gc.on("error", (e) => {
+      var _a, _b;
+      (_b = (_a = thisRef.current.props).onError) === null || _b === void 0 ? void 0 : _b.call(_a, e);
+    });
+    gc.on("outofmaxbounds", (e) => {
+      var _a, _b;
+      (_b = (_a = thisRef.current.props).onOutOfMaxBounds) === null || _b === void 0 ? void 0 : _b.call(_a, e);
+    });
+    gc.on("trackuserlocationstart", (e) => {
+      var _a, _b;
+      (_b = (_a = thisRef.current.props).onTrackUserLocationStart) === null || _b === void 0 ? void 0 : _b.call(_a, e);
+    });
+    gc.on("trackuserlocationend", (e) => {
+      var _a, _b;
+      (_b = (_a = thisRef.current.props).onTrackUserLocationEnd) === null || _b === void 0 ? void 0 : _b.call(_a, e);
+    });
+    return gc;
+  }, { position: props.position });
+  thisRef.current.props = props;
+  useImperativeHandle(ref, () => ctrl, []);
+  useEffect(() => {
+    applyReactStyle(ctrl._container, props.style);
+  }, [props.style]);
+  return null;
+}
+const _GeolocateControl = memo(forwardRef(GeolocateControl$1));
+function NavigationControl$1(props) {
+  const ctrl = useControl(({ mapLib: mapLib2 }) => new mapLib2.NavigationControl(props), {
+    position: props.position
+  });
+  useEffect(() => {
+    applyReactStyle(ctrl._container, props.style);
+  }, [props.style]);
+  return null;
+}
+const _NavigationControl = memo(NavigationControl$1);
+function ScaleControl(props) {
+  const ctrl = useControl(({ mapLib: mapLib2 }) => new mapLib2.ScaleControl(props), {
+    position: props.position
+  });
+  const propsRef = useRef(props);
+  const prevProps = propsRef.current;
+  propsRef.current = props;
+  const { style } = props;
+  if (props.maxWidth !== void 0 && props.maxWidth !== prevProps.maxWidth) {
+    ctrl.options.maxWidth = props.maxWidth;
+  }
+  if (props.unit !== void 0 && props.unit !== prevProps.unit) {
+    ctrl.setUnit(props.unit);
+  }
+  useEffect(() => {
+    applyReactStyle(ctrl._container, style);
+  }, [style]);
+  return null;
+}
+memo(ScaleControl);
+function assert(condition, message) {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+function updateLayer(map, id, props, prevProps) {
+  assert(props.id === prevProps.id, "layer id changed");
+  assert(props.type === prevProps.type, "layer type changed");
+  if (props.type === "custom" || prevProps.type === "custom") {
+    return;
+  }
+  const { layout = {}, paint = {}, filter, minzoom, maxzoom, beforeId } = props;
+  if (beforeId !== prevProps.beforeId) {
+    map.moveLayer(id, beforeId);
+  }
+  if (layout !== prevProps.layout) {
+    const prevLayout = prevProps.layout || {};
+    for (const key in layout) {
+      if (!deepEqual(layout[key], prevLayout[key])) {
+        map.setLayoutProperty(id, key, layout[key]);
+      }
+    }
+    for (const key in prevLayout) {
+      if (!layout.hasOwnProperty(key)) {
+        map.setLayoutProperty(id, key, void 0);
+      }
+    }
+  }
+  if (paint !== prevProps.paint) {
+    const prevPaint = prevProps.paint || {};
+    for (const key in paint) {
+      if (!deepEqual(paint[key], prevPaint[key])) {
+        map.setPaintProperty(id, key, paint[key]);
+      }
+    }
+    for (const key in prevPaint) {
+      if (!paint.hasOwnProperty(key)) {
+        map.setPaintProperty(id, key, void 0);
+      }
+    }
+  }
+  if (!deepEqual(filter, prevProps.filter)) {
+    map.setFilter(id, filter);
+  }
+  if (minzoom !== prevProps.minzoom || maxzoom !== prevProps.maxzoom) {
+    map.setLayerZoomRange(id, minzoom, maxzoom);
+  }
+}
+function createLayer(map, id, props) {
+  if (map.style && map.style._loaded && (!("source" in props) || map.getSource(props.source))) {
+    const options = { ...props, id };
+    delete options.beforeId;
+    map.addLayer(options, props.beforeId);
+  }
+}
+let layerCounter = 0;
+function Layer$1(props) {
+  const map = useContext(MapContext$1).map.getMap();
+  const propsRef = useRef(props);
+  const [, setStyleLoaded] = useState(0);
+  const id = useMemo(() => props.id || `jsx-layer-${layerCounter++}`, []);
+  useEffect(() => {
+    if (map) {
+      const forceUpdate = () => setStyleLoaded((version) => version + 1);
+      map.on("styledata", forceUpdate);
+      forceUpdate();
+      return () => {
+        map.off("styledata", forceUpdate);
+        if (map.style && map.style._loaded && map.getLayer(id)) {
+          map.removeLayer(id);
+        }
+      };
+    }
+    return void 0;
+  }, [map]);
+  const layer = map && map.style && map.getLayer(id);
+  if (layer) {
+    try {
+      updateLayer(map, id, props, propsRef.current);
+    } catch (error) {
+      console.warn(error);
+    }
+  } else {
+    createLayer(map, id, props);
+  }
+  propsRef.current = props;
+  return null;
+}
+let sourceCounter = 0;
+function createSource(map, id, props) {
+  if (map.style && map.style._loaded) {
+    const options = { ...props };
+    delete options.id;
+    delete options.children;
+    map.addSource(id, options);
+    return map.getSource(id);
+  }
+  return null;
+}
+function updateSource(source, props, prevProps) {
+  assert(props.id === prevProps.id, "source id changed");
+  assert(props.type === prevProps.type, "source type changed");
+  let changedKey = "";
+  let changedKeyCount = 0;
+  for (const key in props) {
+    if (key !== "children" && key !== "id" && !deepEqual(prevProps[key], props[key])) {
+      changedKey = key;
+      changedKeyCount++;
+    }
+  }
+  if (!changedKeyCount) {
+    return;
+  }
+  const type = props.type;
+  if (type === "geojson") {
+    source.setData(props.data);
+  } else if (type === "image") {
+    source.updateImage({
+      url: props.url,
+      coordinates: props.coordinates
+    });
+  } else if ("setCoordinates" in source && changedKeyCount === 1 && changedKey === "coordinates") {
+    source.setCoordinates(props.coordinates);
+  } else if ("setUrl" in source && changedKey === "url") {
+    source.setUrl(props.url);
+  } else if ("setTiles" in source && changedKey === "tiles") {
+    source.setTiles(props.tiles);
+  } else {
+    console.warn(`Unable to update <Source> prop: ${changedKey}`);
+  }
+}
+function Source$1(props) {
+  const map = useContext(MapContext$1).map.getMap();
+  const propsRef = useRef(props);
+  const [, setStyleLoaded] = useState(0);
+  const id = useMemo(() => props.id || `jsx-source-${sourceCounter++}`, []);
+  useEffect(() => {
+    if (map) {
+      const forceUpdate = () => setTimeout(() => setStyleLoaded((version) => version + 1), 0);
+      map.on("styledata", forceUpdate);
+      forceUpdate();
+      return () => {
+        var _a;
+        map.off("styledata", forceUpdate);
+        if (map.style && map.style._loaded && map.getSource(id)) {
+          const allLayers = (_a = map.getStyle()) === null || _a === void 0 ? void 0 : _a.layers;
+          if (allLayers) {
+            for (const layer of allLayers) {
+              if (layer.source === id) {
+                map.removeLayer(layer.id);
+              }
+            }
+          }
+          map.removeSource(id);
+        }
+      };
+    }
+    return void 0;
+  }, [map]);
+  let source = map && map.style && map.getSource(id);
+  if (source) {
+    updateSource(source, props, propsRef.current);
+  } else {
+    source = createSource(map, id, props);
+  }
+  propsRef.current = props;
+  return source && React.Children.map(props.children, (child) => child && cloneElement(child, {
+    source: id
+  })) || null;
+}
+function useMap() {
+  return useMap$1();
+}
+const mapLib = import("maplibre-gl");
+const Map$1 = (() => {
+  return React.forwardRef(function Map2(props, ref) {
+    return Map$2(props, ref, mapLib);
+  });
+})();
+const Marker = _Marker;
+const Popup = _Popup;
+const NavigationControl = _NavigationControl;
+const GeolocateControl = _GeolocateControl;
+const Layer = Layer$1;
+const Source = Source$1;
 function useUserLocation() {
-  const [location, setLocation] = useState(null);
+  const [location2, setLocation] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const requestLocation = (options) => {
@@ -3120,7 +4420,7 @@ function useUserLocation() {
       });
     });
   };
-  return { location, error, isLoading, requestLocation };
+  return { location: location2, error, isLoading, requestLocation };
 }
 const SATELLITE_MAP_STYLE = {
   version: 8,
@@ -3227,12 +4527,12 @@ function BuildingMap({ lat, lng, className, status, socialContext, isExpanded, o
     onToggleExpand();
   }, className: "absolute top-2 right-2 p-2 bg-surface-default/90 backdrop-blur rounded-md border shadow-sm hover:bg-surface-muted transition-colors z-10", title: isExpanded ? "Collapse Map" : "Expand Map", children: isExpanded ? jsx(Minimize2, { className: "w-4 h-4" }) : jsx(Maximize2, { className: "w-4 h-4" }) })] });
 }
-function parseLocation(location) {
+function parseLocation(location2) {
   var _a;
-  if (!location)
+  if (!location2)
     return null;
-  if (typeof location === "object" && location !== null) {
-    const geo = location;
+  if (typeof location2 === "object" && location2 !== null) {
+    const geo = location2;
     if (Array.isArray(geo.coordinates) && geo.coordinates.length >= 2) {
       const lng = Number(geo.coordinates[0]);
       const lat = Number(geo.coordinates[1]);
@@ -3241,8 +4541,8 @@ function parseLocation(location) {
       }
     }
   }
-  if (typeof location === "string") {
-    let text = location;
+  if (typeof location2 === "string") {
+    let text = location2;
     if (text.length >= 42 && /^[0-9a-fA-F]+$/.test(text)) {
       try {
         const bytes = (_a = text.match(/.{1,2}/g)) == null ? void 0 : _a.map((byte) => parseInt(byte, 16));
@@ -4122,7 +5422,7 @@ const items = [
   {
     title: "Photo Analytics",
     url: "/admin/photos",
-    icon: Map$2
+    icon: Map$3
   },
   {
     title: "Storage Jobs",
@@ -4141,14 +5441,14 @@ const items = [
   }
 ];
 function AdminSidebar() {
-  const location = useLocation();
+  const location2 = useLocation();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
-  return jsxs(Sidebar, { collapsible: "icon", children: [jsx(SidebarHeader, { children: jsx(SidebarMenu, { children: jsx(SidebarMenuItem, { children: jsx(SidebarMenuButton, { size: "lg", asChild: true, children: jsxs(Link, { to: "/admin", children: [jsx("div", { className: "flex aspect-square size-8 items-center justify-center rounded-lg bg-brand-primary text-brand-primary-foreground", children: jsx(LayoutDashboard, { className: "size-4" }) }), jsxs("div", { className: "flex flex-col gap-0.5 leading-none", children: [jsx("span", { className: "font-semibold", children: "Plano Admin" }), jsx("span", { className: "", children: "Console" })] })] }) }) }) }) }), jsx(SidebarContent, { children: jsxs(SidebarGroup, { children: [jsx(SidebarGroupLabel, { children: "Management" }), jsx(SidebarGroupContent, { children: jsx(SidebarMenu, { children: items.map((item) => jsx(SidebarMenuItem, { children: jsx(SidebarMenuButton, { asChild: true, isActive: location.pathname === item.url, tooltip: item.title, children: jsxs(Link, { to: item.url, children: [jsx(item.icon, {}), jsx("span", { children: item.title })] }) }) }, item.title)) }) })] }) }), jsx(SidebarFooter, { children: jsx(SidebarMenu, { children: jsx(SidebarMenuItem, { children: jsxs(SidebarMenuButton, { onClick: handleSignOut, children: [jsx(LogOut, {}), jsx("span", { children: "Sign out" })] }) }) }) }), jsx(SidebarRail, {})] });
+  return jsxs(Sidebar, { collapsible: "icon", children: [jsx(SidebarHeader, { children: jsx(SidebarMenu, { children: jsx(SidebarMenuItem, { children: jsx(SidebarMenuButton, { size: "lg", asChild: true, children: jsxs(Link, { to: "/admin", children: [jsx("div", { className: "flex aspect-square size-8 items-center justify-center rounded-lg bg-brand-primary text-brand-primary-foreground", children: jsx(LayoutDashboard, { className: "size-4" }) }), jsxs("div", { className: "flex flex-col gap-0.5 leading-none", children: [jsx("span", { className: "font-semibold", children: "Plano Admin" }), jsx("span", { className: "", children: "Console" })] })] }) }) }) }) }), jsx(SidebarContent, { children: jsxs(SidebarGroup, { children: [jsx(SidebarGroupLabel, { children: "Management" }), jsx(SidebarGroupContent, { children: jsx(SidebarMenu, { children: items.map((item) => jsx(SidebarMenuItem, { children: jsx(SidebarMenuButton, { asChild: true, isActive: location2.pathname === item.url, tooltip: item.title, children: jsxs(Link, { to: item.url, children: [jsx(item.icon, {}), jsx("span", { children: item.title })] }) }) }, item.title)) }) })] }) }), jsx(SidebarFooter, { children: jsx(SidebarMenu, { children: jsx(SidebarMenuItem, { children: jsxs(SidebarMenuButton, { onClick: handleSignOut, children: [jsx(LogOut, {}), jsx("span", { children: "Sign out" })] }) }) }) }), jsx(SidebarRail, {})] });
 }
 const AdminLayout = UNSAFE_withComponentProps(function AdminLayout2() {
   return /* @__PURE__ */ jsxs(SidebarProvider, {
@@ -4270,10 +5570,10 @@ const navItems$1 = [
   { icon: User, label: "You", path: "/profile" }
 ];
 function BottomNav() {
-  const location = useLocation();
-  const isExplore = location.pathname === "/explore";
+  const location2 = useLocation();
+  const isExplore = location2.pathname === "/explore";
   return jsx("nav", { className: cn("fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t", isExplore ? "bg-[#0A0A0A] border-white/10 backdrop-blur-xl" : "bg-surface-card border-border-default"), children: jsx("div", { className: "flex items-center justify-around h-20 max-w-lg mx-auto px-2 pb-2", children: navItems$1.map(({ icon: Icon, label, path }) => {
-    const isActive = location.pathname === path;
+    const isActive = location2.pathname === path;
     return jsxs(Link, { to: path, "aria-label": label, className: cn("flex flex-col items-center justify-center gap-1.5 transition-all duration-300 relative", "flex-1 min-w-0 min-h-[64px] rounded-sm border-t-2", isActive ? "border-brand-primary" : "border-transparent"), children: [jsx(Icon, { className: cn("h-6 w-6 transition-all duration-300", isActive ? "text-text-primary" : "text-text-secondary"), strokeWidth: isActive ? 2.5 : 2 }), jsx("span", { className: cn("text-xs font-medium tracking-wide", isActive ? "text-text-primary" : "text-text-secondary"), children: label })] }, path);
   }) }) });
 }
@@ -7027,9 +8327,9 @@ function UserMenu() {
   return jsx(SidebarMenu, { children: jsx(SidebarMenuItem, { children: jsxs(DropdownMenu, { children: [jsx(DropdownMenuTrigger, { asChild: true, children: jsxs("button", { className: "flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-card transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2", children: [jsxs(Avatar, { className: "h-7 w-7 flex-shrink-0", children: [jsx(AvatarImage, { src: (profile == null ? void 0 : profile.avatar_url) || "", alt: (profile == null ? void 0 : profile.username) || (user == null ? void 0 : user.email) || "" }), jsx(AvatarFallback, { className: "text-xs", children: ((profile == null ? void 0 : profile.username) || (user == null ? void 0 : user.email) || "U").charAt(0).toUpperCase() })] }), jsxs("div", { className: "grid flex-1 text-left leading-tight min-w-0", children: [jsx("span", { className: "truncate font-semibold text-sm", children: (profile == null ? void 0 : profile.username) || "User" }), jsx("span", { className: "truncate text-xs text-text-secondary", children: (user == null ? void 0 : user.email) || "" })] }), jsx(ChevronsUpDown, { className: "ml-auto h-4 w-4 flex-shrink-0 text-text-secondary" })] }) }), jsxs(DropdownMenuContent, { className: "w-56", side: isMobile ? "bottom" : "right", align: "end", sideOffset: 4, children: [jsx(DropdownMenuItem, { asChild: true, children: jsxs(Link, { to: "/profile", className: "flex items-center gap-2 cursor-pointer", children: [jsx(User, { className: "h-4 w-4" }), "Your profile"] }) }), jsx(DropdownMenuItem, { asChild: true, children: jsxs(Link, { to: "/settings", className: "flex items-center gap-2 cursor-pointer", children: [jsx(Settings$1, { className: "h-4 w-4" }), "Edit profile"] }) }), jsx(DropdownMenuSeparator, {}), jsxs(DropdownMenuItem, { onClick: handleSignOut, className: "gap-2 cursor-pointer text-feedback-destructive focus:text-feedback-destructive", children: [jsx(LogOut, { className: "h-4 w-4" }), "Sign out"] })] })] }) }) });
 }
 function AppSidebar() {
-  const location = useLocation();
+  const location2 = useLocation();
   return jsxs(Sidebar, { collapsible: "offcanvas", className: "border-r border-sidebar-border bg-sidebar", children: [jsx(SidebarHeader, { className: "!p-6", children: jsx(Link, { to: "/", className: "inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary rounded-sm", children: jsx(PlanoLogo, { className: "h-8 w-auto" }) }) }), jsx(SidebarContent, { children: jsx(SidebarGroup, { className: "!p-0", children: jsx(SidebarGroupContent, { children: jsx(SidebarMenu, { className: "px-3 py-4", children: navItems.map((item) => {
-    const isActive = location.pathname === item.path;
+    const isActive = location2.pathname === item.path;
     return jsx(SidebarMenuItem, { children: jsxs(Link, { to: item.path, className: cn("flex items-center gap-3 px-3 py-2 rounded-sm w-full text-sm font-medium text-text-primary transition-colors duration-150", isActive ? "bg-surface-card border border-border-default border-l-2 border-brand-primary font-semibold" : "bg-transparent hover:bg-surface-card"), children: [jsx(item.icon, { className: "h-5 w-5 flex-shrink-0", strokeWidth: isActive ? 2.5 : 2 }), jsx("span", { children: item.label })] }) }, item.path);
   }) }) }) }) }), jsx(SidebarFooter, { className: "!p-4 border-t border-sidebar-border", children: jsx(UserMenu, {}) }), jsx(SidebarRail, {})] });
 }
@@ -7073,7 +8373,7 @@ const route20 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePrope
   MainLayout
 }, Symbol.toStringTag, { value: "Module" }));
 function Header({ title, variant = "default", searchBar, leftAction, rightAction, showBack = false, showLogo = true, action }) {
-  const location = useLocation();
+  const location2 = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hasUnread, setHasUnread] = useState(false);
@@ -7085,8 +8385,8 @@ function Header({ title, variant = "default", searchBar, leftAction, rightAction
       setHasUnread(!!count2 && count2 > 0);
     };
     checkUnread();
-  }, [user, location.pathname]);
-  const showBadge = hasUnread && location.pathname !== "/notifications";
+  }, [user, location2.pathname]);
+  const showBadge = hasUnread && location2.pathname !== "/notifications";
   const effectiveVariant = variant !== "default" ? variant : showLogo ? "home" : "default";
   let leftContent = leftAction;
   if (!leftContent && showBack) {
@@ -7770,19 +9070,19 @@ function aggregateFeed(reviews) {
         var _a;
         return r.building.city || (r.building.address ? (_a = r.building.address.split(",").pop()) == null ? void 0 : _a.trim() : null);
       }).filter(Boolean));
-      let location = void 0;
+      let location2 = void 0;
       if (cities.size === 1) {
-        location = Array.from(cities)[0];
+        location2 = Array.from(cities)[0];
       } else if (cities.size > 1) {
-        location = void 0;
+        location2 = void 0;
       } else {
-        location = void 0;
+        location2 = void 0;
       }
       aggregated.push({
         type: "cluster",
         entries: [...pendingCluster],
         user: pendingCluster[0].user,
-        location,
+        location: location2,
         timestamp: pendingCluster[0].edited_at || pendingCluster[0].created_at
         // Use the most recent timestamp (assuming sort desc)
       });
@@ -8231,8 +9531,8 @@ const FloatingCard = ({ name, rating, className, delay = 0 }) => {
 const LandingHero = () => {
   const [searchValue, setSearchValue] = useState("");
   const navigate = useNavigate();
-  const handleLocationSelect = (location) => {
-    navigate(`/search?lat=${location.lat}&lng=${location.lng}`);
+  const handleLocationSelect = (location2) => {
+    navigate(`/search?lat=${location2.lat}&lng=${location2.lng}`);
   };
   const handleSearchSubmit = () => {
     if (searchValue.trim()) {
@@ -8678,7 +9978,7 @@ const Index = UNSAFE_withComponentProps(function Index2() {
     loading: authLoading
   } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
+  const location2 = useLocation();
   const {
     isMobile: _isMobile
   } = useSidebar();
@@ -8691,10 +9991,10 @@ const Index = UNSAFE_withComponentProps(function Index2() {
   });
   useEffect(() => {
     var _a;
-    if ((_a = location.state) == null ? void 0 : _a.reviewPosted) {
+    if ((_a = location2.state) == null ? void 0 : _a.reviewPosted) {
       setShowGroupActivity(true);
     }
-  }, [location.state]);
+  }, [location2.state]);
   useEffect(() => {
     var _a;
     if (user && !authLoading) {
@@ -9884,7 +11184,7 @@ function BuildingPopupContent({ cluster, onMouseEnter, onMouseLeave, onRemoveFro
       e.stopPropagation();
       const url = cluster.google_place_id ? `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${cluster.google_place_id}` : `https://www.google.com/maps/search/?api=1&query=${cluster.lat},${cluster.lng}`;
       window.open(url, "_blank");
-    }, children: [jsx(Map$2, { className: "h-3 w-3 mr-1" }), "Google Maps"] }), cluster.website && jsx(Button, { variant: "outline", size: "sm", className: "h-8 w-8 p-0 shrink-0", onClick: (e) => {
+    }, children: [jsx(Map$3, { className: "h-3 w-3 mr-1" }), "Google Maps"] }), cluster.website && jsx(Button, { variant: "outline", size: "sm", className: "h-8 w-8 p-0 shrink-0", onClick: (e) => {
       e.stopPropagation();
       let url = cluster.website;
       if (!url.startsWith("http"))
@@ -12155,11 +13455,11 @@ function SearchPageContent() {
   const handleSearchChange = (value) => {
     setSearchValue(value);
   };
-  const handleLocationSelect = (location, bounds) => {
+  const handleLocationSelect = (location2, bounds) => {
     if (bounds) {
       fitMapBounds(bounds);
     } else {
-      moveMap(location.lat, location.lng, 14);
+      moveMap(location2.lat, location2.lng, 14);
     }
     if (isMobile) {
       setViewMode("map");
@@ -12258,7 +13558,7 @@ function SearchPageContent() {
               className: "mr-2 h-4 w-4"
             }), "List"]
           }) : /* @__PURE__ */ jsxs(Fragment, {
-            children: [/* @__PURE__ */ jsx(Map$2, {
+            children: [/* @__PURE__ */ jsx(Map$3, {
               className: "mr-2 h-4 w-4"
             }), "Map"]
           })
@@ -14837,7 +16137,7 @@ function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refreshKey 
     return jsx("div", { className: "h-32 w-full animate-pulse bg-surface-muted/20 rounded-sm mx-4" });
   if (collections.length === 0 && folders.length === 0 && !isOwnProfile)
     return null;
-  return jsxs("div", { className: "w-full mb-6", children: [jsxs("div", { className: "flex items-center justify-between px-4 mb-3", children: [jsxs("h3", { className: "font-semibold text-lg flex items-center gap-2", children: [jsx(Map$2, { className: "h-4 w-4 text-text-secondary" }), "Collections"] }), isOwnProfile && jsxs("div", { className: "flex items-center gap-1", children: [jsxs(Button, { variant: "ghost", size: "sm", onClick: () => setShowManageFolders(true), className: "h-8 text-xs text-text-secondary hover:text-brand-primary", children: [jsx(Folder, { className: "h-3 w-3 mr-1" }), " Organize"] }), onCreate && jsxs(Button, { variant: "ghost", size: "sm", onClick: onCreate, className: "h-8 text-xs text-text-secondary hover:text-brand-primary", children: [jsx(Plus, { className: "h-3 w-3 mr-1" }), " New"] })] })] }), jsx(ManageFoldersDialog, { open: showManageFolders, onOpenChange: setShowManageFolders, userId, onUpdate: fetchData }), jsxs(ScrollArea, { className: "w-full whitespace-nowrap mb-6", children: [jsxs("div", { className: "flex space-x-3 px-4 pb-4", children: [folders.length > 0 && folders.map((folder) => jsx(FolderCard, { folder, to: `/${username || "user"}/folders/${folder.slug}`, className: "flex-shrink-0", isDroppable: isOwnProfile }, folder.id)), isOwnProfile && collections.length === 0 && folders.length === 0 && onCreate && jsxs("button", { onClick: onCreate, className: "flex-shrink-0 w-[160px] h-[100px] border-2 border-dashed border-border-default rounded-sm flex flex-col items-center justify-center gap-2 hover:bg-surface-muted/50 transition-colors group", children: [jsx("div", { className: "h-8 w-8 rounded-sm bg-surface-muted flex items-center justify-center group-hover:bg-brand-secondary/30 group-hover:text-brand-primary transition-colors", children: jsx(Plus, { className: "h-4 w-4" }) }), jsx("span", { className: "text-sm font-medium text-text-secondary", children: "Create New" })] }), collections.map((collection) => jsx(CollectionCard, { collection, username, isDragEnabled: isOwnProfile }, collection.id))] }), jsx(ScrollBar, { orientation: "horizontal" })] })] });
+  return jsxs("div", { className: "w-full mb-6", children: [jsxs("div", { className: "flex items-center justify-between px-4 mb-3", children: [jsxs("h3", { className: "font-semibold text-lg flex items-center gap-2", children: [jsx(Map$3, { className: "h-4 w-4 text-text-secondary" }), "Collections"] }), isOwnProfile && jsxs("div", { className: "flex items-center gap-1", children: [jsxs(Button, { variant: "ghost", size: "sm", onClick: () => setShowManageFolders(true), className: "h-8 text-xs text-text-secondary hover:text-brand-primary", children: [jsx(Folder, { className: "h-3 w-3 mr-1" }), " Organize"] }), onCreate && jsxs(Button, { variant: "ghost", size: "sm", onClick: onCreate, className: "h-8 text-xs text-text-secondary hover:text-brand-primary", children: [jsx(Plus, { className: "h-3 w-3 mr-1" }), " New"] })] })] }), jsx(ManageFoldersDialog, { open: showManageFolders, onOpenChange: setShowManageFolders, userId, onUpdate: fetchData }), jsxs(ScrollArea, { className: "w-full whitespace-nowrap mb-6", children: [jsxs("div", { className: "flex space-x-3 px-4 pb-4", children: [folders.length > 0 && folders.map((folder) => jsx(FolderCard, { folder, to: `/${username || "user"}/folders/${folder.slug}`, className: "flex-shrink-0", isDroppable: isOwnProfile }, folder.id)), isOwnProfile && collections.length === 0 && folders.length === 0 && onCreate && jsxs("button", { onClick: onCreate, className: "flex-shrink-0 w-[160px] h-[100px] border-2 border-dashed border-border-default rounded-sm flex flex-col items-center justify-center gap-2 hover:bg-surface-muted/50 transition-colors group", children: [jsx("div", { className: "h-8 w-8 rounded-sm bg-surface-muted flex items-center justify-center group-hover:bg-brand-secondary/30 group-hover:text-brand-primary transition-colors", children: jsx(Plus, { className: "h-4 w-4" }) }), jsx("span", { className: "text-sm font-medium text-text-secondary", children: "Create New" })] }), collections.map((collection) => jsx(CollectionCard, { collection, username, isDragEnabled: isOwnProfile }, collection.id))] }), jsx(ScrollBar, { orientation: "horizontal" })] })] });
 }
 const collectionSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be at most 100 characters"),
@@ -15230,7 +16530,7 @@ function ProfileListView({ data: data2, isOwnProfile, onUpdate }) {
   };
   return jsx("div", { className: "-mx-4 overflow-x-auto", children: jsxs(Table, { className: "min-w-full table-fixed", children: [jsx(TableHeader, { children: jsxs(TableRow, { className: "h-10 hover:bg-transparent", children: [jsx(TableHead, { className: "w-[70px] pl-4", children: isMobile ? "" : "Photo" }), jsx(TableHead, { className: cn(isMobile ? "w-auto" : "w-[15%]"), children: "Name" }), !isMobile && jsx(TableHead, { className: "w-[10%]", children: "Status" }), !isMobile && jsx(TableHead, { className: "w-[10%]", children: "Points" }), !isMobile && jsx(TableHead, { className: "w-[15%]", children: "Review" }), !isMobile && jsx(TableHead, { className: "w-[15%]", children: "Architect" }), !isMobile && jsx(TableHead, { className: "w-[10%]", children: "Year" }), !isMobile && jsx(TableHead, { className: "w-[10%]", children: "Location" }), !isMobile && jsx(TableHead, { className: "w-[10%]", children: "Country" }), !isMobile && jsx(TableHead, { className: "w-[10%] pr-4 text-right", children: "Likes" })] }) }), jsx(TableBody, { children: data2.map((review) => {
     const architectNames = review.building.architects && review.building.architects.length > 0 ? review.building.architects.map((a) => typeof a === "string" ? a : a.name).join(", ") : "—";
-    const location = review.building.city || getCityFromAddress(review.building.address);
+    const location2 = review.building.city || getCityFromAddress(review.building.address);
     const imageUrl = getBuildingImageUrl(review.building.main_image_url);
     return jsxs(TableRow, { onClick: () => handleRowClick(review), className: cn("cursor-pointer transition-colors group", isMobile ? "h-auto" : "h-8"), children: [jsx(TableCell, { className: "pl-4 py-1", children: imageUrl ? jsxs(HoverCard, { openDelay: 0, closeDelay: 0, children: [jsx(HoverCardTrigger, { asChild: true, children: jsx("div", { className: "flex items-center", children: jsx("img", { src: imageUrl, alt: review.building.name, className: "w-8 h-8 rounded-md object-cover border border-border-default/50" }) }) }), jsx(HoverCardContent, { className: "w-80 p-0 overflow-hidden rounded-md border-0 shadow-lg", side: "right", children: jsx("img", { src: imageUrl, alt: review.building.name, className: "w-full h-auto object-cover" }) })] }) : jsx("div", { className: "w-8 h-8 rounded-md bg-surface-muted/50" }) }), jsx(TableCell, { className: cn("font-medium text-text-primary py-1", !isMobile && "truncate"), children: jsxs("div", { className: "flex flex-col gap-1", children: [jsx("span", { className: "truncate", children: review.building.name }), isMobile && jsxs("div", { className: "flex items-center gap-2 mt-0.5", children: [jsx(StatusBadge, { status: review.status, isOwnProfile: isOwnProfile && review.status !== "lost", onClick: () => {
       if (review.status === "lost")
@@ -15244,7 +16544,7 @@ function ProfileListView({ data: data2, isOwnProfile, onUpdate }) {
       const currentStatus = review.status || "visited";
       const newStatus = currentStatus === "visited" ? "pending" : "visited";
       onUpdate(review.id, { status: newStatus });
-    } }) }), jsx(TableCell, { className: "py-1", children: jsx(InlineRating, { rating: review.rating, onRate: (rating) => onUpdate(review.id, { rating }), readOnly: !isOwnProfile }) }), jsx(TableCell, { className: "text-text-secondary py-1", children: jsx(InlineReviewEditor, { initialContent: review.content, isOwnProfile, onSave: (content) => onUpdate(review.id, { content }) }) }), jsx(TableCell, { className: "text-text-secondary py-1 truncate", children: architectNames }), jsx(TableCell, { className: "text-text-secondary py-1", children: review.building.year_completed || "—" }), jsx(TableCell, { className: "text-text-secondary py-1 truncate", children: location }), jsx(TableCell, { className: "text-text-secondary py-1 truncate", children: review.building.country || "—" }), jsx(TableCell, { className: "pr-4 text-right py-1", children: jsxs("div", { className: "flex items-center justify-end gap-1 text-text-secondary", children: [jsx(Heart, { className: cn("w-3 h-3", review.is_liked && "fill-brand-primary text-brand-primary") }), jsx("span", { children: review.likes_count })] }) })] })] }, review.id);
+    } }) }), jsx(TableCell, { className: "py-1", children: jsx(InlineRating, { rating: review.rating, onRate: (rating) => onUpdate(review.id, { rating }), readOnly: !isOwnProfile }) }), jsx(TableCell, { className: "text-text-secondary py-1", children: jsx(InlineReviewEditor, { initialContent: review.content, isOwnProfile, onSave: (content) => onUpdate(review.id, { content }) }) }), jsx(TableCell, { className: "text-text-secondary py-1 truncate", children: architectNames }), jsx(TableCell, { className: "text-text-secondary py-1", children: review.building.year_completed || "—" }), jsx(TableCell, { className: "text-text-secondary py-1 truncate", children: location2 }), jsx(TableCell, { className: "text-text-secondary py-1 truncate", children: review.building.country || "—" }), jsx(TableCell, { className: "pr-4 text-right py-1", children: jsxs("div", { className: "flex items-center justify-end gap-1 text-text-secondary", children: [jsx(Heart, { className: cn("w-3 h-3", review.is_liked && "fill-brand-primary text-brand-primary") }), jsx("span", { children: review.likes_count })] }) })] })] }, review.id);
   }) })] }) });
 }
 function useArchitectPortfolio(architectId) {
@@ -16303,7 +17603,7 @@ const Profile = UNSAFE_withComponentProps(function Profile2() {
                   },
                   title: "View on a map",
                   "aria-label": "View on a map",
-                  children: /* @__PURE__ */ jsx(Map$2, {
+                  children: /* @__PURE__ */ jsx(Map$3, {
                     className: "h-4 w-4"
                   })
                 })]
@@ -17121,7 +18421,7 @@ const Settings = UNSAFE_withComponentProps(function Settings2() {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [country, setCountry] = useState("");
-  const [location, setLocation] = useState("");
+  const [location2, setLocation] = useState("");
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -17193,7 +18493,7 @@ const Settings = UNSAFE_withComponentProps(function Settings2() {
     if (username !== initialState.username) return true;
     if (bio !== initialState.bio) return true;
     if (country !== initialState.country) return true;
-    if (location !== initialState.location) return true;
+    if (location2 !== initialState.location) return true;
     if (avatarUrl !== initialState.avatarUrl) return true;
     if (email !== initialState.email) return true;
     if (newPassword !== "") return true;
@@ -17207,7 +18507,7 @@ const Settings = UNSAFE_withComponentProps(function Settings2() {
       username,
       bio: bio || void 0,
       country: country || void 0,
-      location: location || void 0,
+      location: location2 || void 0,
       avatar_url: avatarUrl === "" ? null : avatarUrl
     });
     if (!parsed.success) {
@@ -17256,7 +18556,7 @@ const Settings = UNSAFE_withComponentProps(function Settings2() {
         username,
         bio,
         country,
-        location,
+        location: location2,
         avatarUrl,
         email
       });
@@ -17509,7 +18809,7 @@ const Settings = UNSAFE_withComponentProps(function Settings2() {
                 children: "Where do you live?"
               }), /* @__PURE__ */ jsx(LocationInput, {
                 id: "location-input",
-                value: location,
+                value: location2,
                 onLocationSelected: (address, code) => {
                   setLocation(address);
                   if (code) {
@@ -17733,7 +19033,7 @@ const route33 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePrope
   default: Settings
 }, Symbol.toStringTag, { value: "Module" }));
 function SearchModeToggle({ mode, onModeChange, className }) {
-  return jsxs("div", { className: cn("fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center bg-surface-card border border-border-default shadow-md rounded-sm p-1", className), children: [jsxs(Button, { variant: mode === "map" ? "secondary" : "ghost", size: "sm", className: cn("rounded-sm px-4 gap-2 transition-all", mode === "map" && "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"), onClick: () => onModeChange("map"), children: [jsx(Map$2, { className: "h-4 w-4" }), jsx("span", { className: "font-medium", children: "Map" })] }), jsxs(Button, { variant: mode === "list" ? "secondary" : "ghost", size: "sm", className: cn("rounded-sm px-4 gap-2 transition-all", mode === "list" && "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"), onClick: () => onModeChange("list"), children: [jsx(List, { className: "h-4 w-4" }), jsx("span", { className: "font-medium", children: "List" })] })] });
+  return jsxs("div", { className: cn("fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center bg-surface-card border border-border-default shadow-md rounded-sm p-1", className), children: [jsxs(Button, { variant: mode === "map" ? "secondary" : "ghost", size: "sm", className: cn("rounded-sm px-4 gap-2 transition-all", mode === "map" && "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"), onClick: () => onModeChange("map"), children: [jsx(Map$3, { className: "h-4 w-4" }), jsx("span", { className: "font-medium", children: "Map" })] }), jsxs(Button, { variant: mode === "list" ? "secondary" : "ghost", size: "sm", className: cn("rounded-sm px-4 gap-2 transition-all", mode === "list" && "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"), onClick: () => onModeChange("list"), children: [jsx(List, { className: "h-4 w-4" }), jsx("span", { className: "font-medium", children: "List" })] })] });
 }
 const useItineraryStore = create((set, get) => ({
   daysCount: 0,
@@ -18668,16 +19968,16 @@ function useGooglePlacePhotos(markers) {
   }, [markers, isLoaded, photos]);
   return { photos };
 }
-const CollectionSettingsDialog = lazyWithRetry(() => import("./CollectionSettingsDialog-VMrlgBQw.js").then((module) => ({
+const CollectionSettingsDialog = lazyWithRetry(() => import("./CollectionSettingsDialog-CwDqWOCZ.js").then((module) => ({
   default: module.CollectionSettingsDialog
 })));
-const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("./AddBuildingsToCollectionDialog-VPcGbqXb.js").then((module) => ({
+const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("./AddBuildingsToCollectionDialog-C1_EW0P6.js").then((module) => ({
   default: module.AddBuildingsToCollectionDialog
 })));
-const PlanRouteDialog = lazyWithRetry(() => import("./PlanRouteDialog-6olRh6W6.js").then((module) => ({
+const PlanRouteDialog = lazyWithRetry(() => import("./PlanRouteDialog-Cz2xRxSW.js").then((module) => ({
   default: module.PlanRouteDialog
 })));
-const CollectionMapGL = lazyWithRetry(() => import("./CollectionMapGL-CIo1IbXU.js").then((module) => ({
+const CollectionMapGL = lazyWithRetry(() => import("./CollectionMapGL-BAtGomSp.js").then((module) => ({
   default: module.CollectionMapGL
 })));
 const CollectionBuildingCard = lazyWithRetry(() => Promise.resolve().then(() => CollectionBuildingCard$2).then((module) => ({
@@ -18830,7 +20130,7 @@ const CollectionMapPage = UNSAFE_withComponentProps(function CollectionMap() {
       if (markersResult.error) throw markersResult.error;
       const items22 = itemsResult.data.filter((item) => item.building).map((item) => {
         const b = item.building;
-        const location = parseLocation(b.location);
+        const location2 = parseLocation(b.location);
         return {
           id: item.id,
           building_id: item.building_id,
@@ -18839,8 +20139,8 @@ const CollectionMapPage = UNSAFE_withComponentProps(function CollectionMap() {
           is_hidden: item.is_hidden,
           building: {
             ...b,
-            location_lat: (location == null ? void 0 : location.lat) || 0,
-            location_lng: (location == null ? void 0 : location.lng) || 0,
+            location_lat: (location2 == null ? void 0 : location2.lat) || 0,
+            location_lng: (location2 == null ? void 0 : location2.lng) || 0,
             building_architects: b.building_architects || []
           }
         };
@@ -18899,13 +20199,13 @@ const CollectionMapPage = UNSAFE_withComponentProps(function CollectionMap() {
       return data2.filter((row) => row.building).map((row) => {
         var _a;
         const b = row.building;
-        const location = parseLocation(b.location);
+        const location2 = parseLocation(b.location);
         return {
           id: b.id,
           name: b.name,
           main_image_url: b.hero_image_url || b.community_preview_url,
-          location_lat: (location == null ? void 0 : location.lat) || 0,
-          location_lng: (location == null ? void 0 : location.lng) || 0,
+          location_lat: (location2 == null ? void 0 : location2.lat) || 0,
+          location_lng: (location2 == null ? void 0 : location2.lng) || 0,
           city: b.city,
           country: b.country,
           slug: b.slug,
@@ -20510,7 +21810,7 @@ const BuildingAttributes = ({ building, className }) => {
     { key: "year_completed", label: "Year", icon: Calendar, value: (_a = building.year_completed) == null ? void 0 : _a.toString() },
     { key: "category", label: "Category", icon: Tag, value: building.category },
     { key: "typology", label: "Typology", icon: Building2, value: building.typology },
-    { key: "context", label: "Context", icon: Map$2, value: building.context },
+    { key: "context", label: "Context", icon: Map$3, value: building.context },
     { key: "intervention", label: "Intervention", icon: Wrench, value: building.intervention },
     { key: "materials", label: "Materials", icon: Hammer, value: building.materials },
     { key: "styles", label: "Styles", icon: Palette, value: building.styles },
@@ -24399,7 +25699,7 @@ const ArchitectDetails = UNSAFE_withComponentProps(function ArchitectDetails2() 
                   to: `/search?filters=${encodeURIComponent(JSON.stringify({
                     query: architect.name
                   }))}`,
-                  children: [/* @__PURE__ */ jsx(Map$2, {
+                  children: [/* @__PURE__ */ jsx(Map$3, {
                     className: "h-4 w-4 md:mr-2"
                   }), /* @__PURE__ */ jsx("span", {
                     className: "hidden md:inline",
@@ -26171,29 +27471,35 @@ export {
   CommandGroup as a7,
   CommandItem as a8,
   CommandEmpty as a9,
+  routeDiscovery as aA,
+  routes as aB,
+  ssr as aC,
   DialogPortal as aa,
   DialogOverlay as ab,
   SegmentedControl as ac,
   useItineraryStore as ad,
-  DAY_COLORS as ae,
-  MapErrorBoundary as af,
-  useURLMapState as ag,
-  useStableMapUpdate as ah,
-  getBoundsFromBuildings as ai,
-  SATELLITE_MAP_STYLE as aj,
-  MapMarkers as ak,
-  allowedActionOrigins as al,
-  serverManifest as am,
-  assetsBuildDirectory as an,
-  basename as ao,
-  entry as ap,
-  future as aq,
-  isSpaMode as ar,
-  prerender as as,
-  publicPath as at,
-  routeDiscovery as au,
-  routes as av,
-  ssr as aw,
+  useMap as ae,
+  Source as af,
+  Layer as ag,
+  DAY_COLORS as ah,
+  MapErrorBoundary as ai,
+  useURLMapState as aj,
+  useStableMapUpdate as ak,
+  getBoundsFromBuildings as al,
+  Map$1 as am,
+  SATELLITE_MAP_STYLE as an,
+  GeolocateControl as ao,
+  NavigationControl as ap,
+  MapMarkers as aq,
+  allowedActionOrigins as ar,
+  serverManifest as as,
+  assetsBuildDirectory as at,
+  basename as au,
+  entry as av,
+  future as aw,
+  isSpaMode as ax,
+  prerender as ay,
+  publicPath as az,
   AvatarFallback as b,
   DialogContent as c,
   DialogHeader as d,

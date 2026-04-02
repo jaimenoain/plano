@@ -9,6 +9,11 @@ export default defineConfig(() => ({
     host: "::",
     port: 8080,
   },
+  // Node ESM cannot resolve `react-map-gl/maplibre` (directory + internal package.json);
+  // bundling the package fixes Vercel serverless crashes (ERR_UNSUPPORTED_DIR_IMPORT).
+  ssr: {
+    noExternal: ["react-map-gl"],
+  },
   plugins: [
     reactRouter(),
     VitePWA({

@@ -8,6 +8,7 @@ export default tseslint.config(
   {
     ignores: [
       "dist",
+      "build",
       "scripts/**",
       "supabase/**",
       "coverage/**",
