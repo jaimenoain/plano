@@ -94,7 +94,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
           throw error;
       }
 
-      return data as Building[];
+      return (data as unknown as Building[]) ?? [];
     },
     getNextPageParam: (lastPage, allPages) => {
       // If the last page has fewer items than PAGE_SIZE, we've reached the end

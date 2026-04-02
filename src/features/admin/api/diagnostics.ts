@@ -69,29 +69,22 @@ export async function fetchDiagnosticLogs(): Promise<DiagnosticLog[]> {
     throw error;
   }
 
-  type AuditRow = {
-    id: string;
-    created_at: string;
-    admin_id?: string | null;
-    details?: {
-      error_type?: string;
-      message?: string;
-      stack_trace?: string | null;
-      user_agent?: string | null;
-      url?: string | null;
-    } | null;
-  };
-
-  return (data ?? []).map((log: AuditRow) => ({
+  return (data ?? []).map((log) => {
+    const details =
+      log.details && typeof log.details === "object" && !Array.isArray(log.details)
+        ? (log.details as Record<string, unknown>)
+        : null;
+    return {
       id: log.id,
       created_at: log.created_at,
-      error_type: log.details?.error_type || 'Unknown',
-      message: log.details?.message || 'No message',
-      stack_trace: log.details?.stack_trace || null,
-      user_agent: log.details?.user_agent || null,
-      url: log.details?.url || null,
-      user_id: log.admin_id ?? null
-  }));
+      error_type: (details?.error_type as string | undefined) || "Unknown",
+      message: (details?.message as string | undefined) || "No message",
+      stack_trace: (details?.stack_trace as string | null | undefined) ?? null,
+      user_agent: (details?.user_agent as string | null | undefined) ?? null,
+      url: (details?.url as string | null | undefined) ?? null,
+      user_id: log.admin_id ?? null,
+    };
+  });
 }
 
 export async function fetchIncompleteSessions(): Promise<IncompleteSession[]> {

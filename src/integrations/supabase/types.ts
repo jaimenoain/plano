@@ -1,3 +1,5 @@
+import type { PlanoPublicFunctions, PlanoPublicTables } from "./plano-tables.types"
+
 export type Json =
   | string
   | number
@@ -6,7 +8,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+type DatabaseCore = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
@@ -1212,10 +1214,12 @@ export type Database = {
           created_at: string
           email_session_verdicts: boolean | null
           favorites: Json | null
+          first_name: string | null
           id: string
           invited_by: string | null
           language: string | null
           last_digest_sent_at: string | null
+          last_name: string | null
           last_online: string | null
           location: string | null
           notification_preferences: Json | null
@@ -1225,6 +1229,7 @@ export type Database = {
           subscribed_platforms: string[] | null
           updated_at: string | null
           username: string | null
+          verified_architect_id: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1233,10 +1238,12 @@ export type Database = {
           created_at?: string
           email_session_verdicts?: boolean | null
           favorites?: Json | null
+          first_name?: string | null
           id: string
           invited_by?: string | null
           language?: string | null
           last_digest_sent_at?: string | null
+          last_name?: string | null
           last_online?: string | null
           location?: string | null
           notification_preferences?: Json | null
@@ -1246,6 +1253,7 @@ export type Database = {
           subscribed_platforms?: string[] | null
           updated_at?: string | null
           username?: string | null
+          verified_architect_id?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1254,10 +1262,12 @@ export type Database = {
           created_at?: string
           email_session_verdicts?: boolean | null
           favorites?: Json | null
+          first_name?: string | null
           id?: string
           invited_by?: string | null
           language?: string | null
           last_digest_sent_at?: string | null
+          last_name?: string | null
           last_online?: string | null
           location?: string | null
           notification_preferences?: Json | null
@@ -1267,29 +1277,30 @@ export type Database = {
           subscribed_platforms?: string[] | null
           updated_at?: string | null
           username?: string | null
+          verified_architect_id?: string | null
         }
         Relationships: []
       }
       recommendations: {
         Row: {
+          building_id: string
           created_at: string
-          film_id: string
           id: string
           recipient_id: string
           recommender_id: string
           status: string
         }
         Insert: {
+          building_id: string
           created_at?: string
-          film_id: string
           id?: string
           recipient_id: string
           recommender_id: string
           status?: string
         }
         Update: {
+          building_id?: string
           created_at?: string
-          film_id?: string
           id?: string
           recipient_id?: string
           recommender_id?: string
@@ -1297,10 +1308,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "recommendations_film_id_fkey"
-            columns: ["film_id"]
+            foreignKeyName: "recommendations_building_id_fkey"
+            columns: ["building_id"]
             isOneToOne: false
-            referencedRelation: "films"
+            referencedRelation: "buildings"
             referencedColumns: ["id"]
           },
           {
@@ -2200,6 +2211,15 @@ export type Database = {
     CompositeTypes: {
       [_ in never]: never
     }
+  }
+}
+
+export type Database = Omit<DatabaseCore, "public"> & {
+  public: Omit<DatabaseCore["public"], "Tables" | "Functions"> & {
+    /** Plano definitions replace legacy rows for same table name (no `&` merge). */
+    Tables: Omit<DatabaseCore["public"]["Tables"], keyof PlanoPublicTables> &
+      PlanoPublicTables
+    Functions: DatabaseCore["public"]["Functions"] & PlanoPublicFunctions
   }
 }
 

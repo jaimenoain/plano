@@ -112,7 +112,8 @@ export const getMapPinsRpc = async (params: {
   if (error) throw error;
 
   // Map snake_case to camelCase
-  return (data || []).map((pin: unknown) => {
+  const rows = Array.isArray(data) ? data : [];
+  return rows.map((pin: unknown) => {
     const p = pin as Record<string, unknown> & { is_candidate?: boolean };
     return {
       ...p,
@@ -169,7 +170,7 @@ export const findNearbyBuildingsRpc = async (params: {
     try {
         const { data, error } = await supabase.rpc('find_nearby_buildings', params);
         if (error) throw error;
-        return data;
+        return (data as unknown as unknown[]) ?? [];
     } catch (_error) {
 return [];
     }

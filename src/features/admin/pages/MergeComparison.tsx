@@ -121,10 +121,11 @@ export default function MergeComparison() {
             if (images) {
                 const imgMap: Record<string, string[]> = {};
                 images.forEach((img) => {
-                    if (img.storage_path) {
-                        if (!imgMap[img.building_id]) imgMap[img.building_id] = [];
+                    const bid = img.building_id;
+                    if (img.storage_path && bid) {
+                        if (!imgMap[bid]) imgMap[bid] = [];
                         const fullUrl = getBuildingImageUrl(img.storage_path);
-                        if (fullUrl) imgMap[img.building_id].push(fullUrl);
+                        if (fullUrl) imgMap[bid].push(fullUrl);
                     }
                 });
                 setReviewImages(imgMap);

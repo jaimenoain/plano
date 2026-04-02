@@ -79,7 +79,7 @@ interface Liker {
 interface ReviewLink {
   id: string;
   url: string;
-  title: string;
+  title: string | null;
   likes_count: number;
   is_liked: boolean;
 }
@@ -174,7 +174,7 @@ export default function ReviewDetails() {
                 content: reviewData.content,
                 rating: reviewData.rating,
                 tags: reviewData.tags,
-                created_at: reviewData.created_at,
+                created_at: reviewData.created_at ?? "",
                 user_id: reviewData.user_id,
                 building_id: reviewData.building_id,
                 status: reviewData.status,
@@ -279,7 +279,7 @@ export default function ReviewDetails() {
             if (commentsError) throw commentsError;
 
             let formattedComments: Comment[] = [];
-            if (commentsData.length > 0) {
+            if (commentsData && commentsData.length > 0) {
                 const commentIds = commentsData.map(c => c.id);
                 const { data: likesData } = await supabase
                     .from("comment_likes")

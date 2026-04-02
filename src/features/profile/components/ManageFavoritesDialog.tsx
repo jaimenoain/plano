@@ -110,7 +110,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
            }));
 
            if (user && mapped.length > 0) {
-             const buildingIds = mapped.map((r) => r.id);
+             const buildingIds = mapped.map((r) => String(r.id));
              const { data: userRatings } = await supabase
                .from("user_buildings")
                .select("rating, building_id")

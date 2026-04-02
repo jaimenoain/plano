@@ -9,7 +9,7 @@ interface UserSearchProps {
   excludeIds?: string[];
 }
 
-type ProfileRow = { id: string; username: string; avatar_url: string | null };
+type ProfileRow = { id: string; username: string | null; avatar_url: string | null };
 
 export function UserSearch({ onSelect, excludeIds = [] }: UserSearchProps) {
   const [query, setQuery] = useState("");
@@ -61,7 +61,7 @@ export function UserSearch({ onSelect, excludeIds = [] }: UserSearchProps) {
               key={u.id}
               className="flex items-center gap-3 p-3 hover:bg-brand-secondary cursor-pointer transition-colors"
               onClick={() => {
-                onSelect(u.id, u.username);
+                onSelect(u.id, u.username ?? "");
                 setQuery("");
                 setResults([]);
               }}

@@ -127,7 +127,7 @@ export default function Settings() {
           .eq("id", user.id)
           .single();
         if (data?.favorites != null && Array.isArray(data.favorites)) {
-          setFavorites(data.favorites as FavoriteItem[]);
+          setFavorites(data.favorites as unknown as FavoriteItem[]);
         } else {
           setFavorites([]);
         }

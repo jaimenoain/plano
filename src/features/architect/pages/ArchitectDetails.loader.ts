@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "react-router";
+import { data, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 
 export async function architectLoader({ request, params }: LoaderFunctionArgs) {
@@ -20,6 +20,6 @@ export async function architectLoader({ request, params }: LoaderFunctionArgs) {
     .eq("verified_architect_id", architect.id)
     .maybeSingle();
 
-  return Response.json({ architect, linkedUser }, { headers });
+  return data({ architect, linkedUser }, { headers });
 }
 

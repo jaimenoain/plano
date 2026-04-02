@@ -53,16 +53,18 @@ export default function EditBuilding() {
   }, [id, user]);
 
   const fetchBuilding = async () => {
+    if (!id) return;
     try {
       setLoading(true);
 
       let query = supabase.from('buildings').select('*');
 
-      const idIsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id!);
+      const idIsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (idIsUuid) {
           query = query.eq('id', id);
       } else {
-          query = query.eq('short_id', parseInt(id!));
+          const shortNum = parseInt(id, 10);
+          query = query.eq('short_id', shortNum);
       }
 
       const { data, error } = await query.single();
@@ -134,13 +136,17 @@ export default function EditBuilding() {
       const lat = coords ? coords.lat : null;
       const lng = coords ? coords.lng : null;
 
+      const precRaw = data.location_precision;
+      const precision: LocationData["precision"] =
+        precRaw === "approximate" || precRaw === "exact" ? precRaw : "exact";
+
       setLocationData({
           lat,
           lng,
           address: data.address || "",
           city: data.city,
           country: data.country,
-          precision: data.location_precision || 'exact'
+          precision,
       });
 
     } catch (_error) {
@@ -167,7 +173,8 @@ toast.error("Error loading building");
 
         if (error) throw error;
 
-        const others = (data || []).filter((b: { id: string }) => b.id !== buildingId);
+        const nearby = (data as unknown as NearbyBuilding[]) || [];
+        const others = nearby.filter((b) => b.id !== buildingId);
         setDuplicates(others);
 
       } catch (_error) {

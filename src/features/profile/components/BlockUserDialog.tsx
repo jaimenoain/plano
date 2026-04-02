@@ -38,7 +38,7 @@ export function BlockUserDialog({ open, onOpenChange, userId, username }: BlockU
                 p_target_id: userId,
                 p_reason: reason,
                 p_report_abuse: reportAbuse,
-                p_report_details: details || null
+                p_report_details: details.trim() ? details : undefined
             });
 
             if (error) throw error;

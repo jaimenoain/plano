@@ -456,7 +456,12 @@ export default function CollectionMap() {
 
         if (statsData) {
             // Group by building
-            statsData.forEach((row: { building_id: string; status: string | null; rating: number | null }) => {
+            const statRows = statsData as unknown as {
+              building_id: string;
+              status: string | null;
+              rating: number | null;
+            }[];
+            statRows.forEach((row) => {
                 if (!statsMap.has(row.building_id)) {
                     statsMap.set(row.building_id, { visitedCount: 0, maxRating: 0, hasSaved: false });
                 }

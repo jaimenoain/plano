@@ -126,8 +126,8 @@
       "_lock-CxwTO-N5.js"
     ]
   },
-  "_CollectionMapPage-UHJ8kDAQ.js": {
-    "file": "assets/CollectionMapPage-UHJ8kDAQ.js",
+  "_CollectionMapPage-DSE41Tp0.js": {
+    "file": "assets/CollectionMapPage-DSE41Tp0.js",
     "name": "CollectionMapPage",
     "imports": [
       "_preload-helper-D7HrI6pR.js",
@@ -1794,7 +1794,7 @@
     ]
   },
   "src/features/admin/pages/BuildingAudit.tsx?__react-router-build-client-route": {
-    "file": "assets/BuildingAudit-CPxi1bBy.js",
+    "file": "assets/BuildingAudit-CwmVmScg.js",
     "name": "BuildingAudit",
     "src": "src/features/admin/pages/BuildingAudit.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -2009,7 +2009,7 @@
     ]
   },
   "src/features/admin/pages/MergeComparison.tsx?__react-router-build-client-route": {
-    "file": "assets/MergeComparison-DEqMF8Cc.js",
+    "file": "assets/MergeComparison-CSiEkwuR.js",
     "name": "MergeComparison",
     "src": "src/features/admin/pages/MergeComparison.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -2384,7 +2384,7 @@
     ]
   },
   "src/features/auth/pages/Onboarding.tsx?__react-router-build-client-route": {
-    "file": "assets/Onboarding-BSu_ZWgf.js",
+    "file": "assets/Onboarding-BXJf3S6v.js",
     "name": "Onboarding",
     "src": "src/features/auth/pages/Onboarding.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -2530,7 +2530,7 @@
     ]
   },
   "src/features/buildings/pages/BuildingDetails.tsx?__react-router-build-client-route": {
-    "file": "assets/BuildingDetails-Qj-8hkDr.js",
+    "file": "assets/BuildingDetails-BvtRaW_E.js",
     "name": "BuildingDetails",
     "src": "src/features/buildings/pages/BuildingDetails.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -2638,7 +2638,7 @@
     ]
   },
   "src/features/buildings/pages/EditBuilding.tsx?__react-router-build-client-route": {
-    "file": "assets/EditBuilding-P9qHH2fK.js",
+    "file": "assets/EditBuilding-DyT7WbZw.js",
     "name": "EditBuilding",
     "src": "src/features/buildings/pages/EditBuilding.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -2720,7 +2720,7 @@
     ]
   },
   "src/features/buildings/pages/ReviewDetails.tsx?__react-router-build-client-route": {
-    "file": "assets/ReviewDetails-Dcvn0ua3.js",
+    "file": "assets/ReviewDetails-D7YLpfw_.js",
     "name": "ReviewDetails",
     "src": "src/features/buildings/pages/ReviewDetails.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -2793,7 +2793,7 @@
     ]
   },
   "src/features/buildings/pages/WriteReview.tsx?__react-router-build-client-route": {
-    "file": "assets/WriteReview-DuHFYlH5.js",
+    "file": "assets/WriteReview-D8Xp5RVf.js",
     "name": "WriteReview",
     "src": "src/features/buildings/pages/WriteReview.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -2953,12 +2953,12 @@
     ]
   },
   "src/features/collections/components/CollectionMapPage.tsx?__react-router-build-client-route": {
-    "file": "assets/CollectionMapPage-CK6Q3ZA4.js",
+    "file": "assets/CollectionMapPage-C2jKsh6W.js",
     "name": "CollectionMapPage",
     "src": "src/features/collections/components/CollectionMapPage.tsx?__react-router-build-client-route",
     "isEntry": true,
     "imports": [
-      "_CollectionMapPage-UHJ8kDAQ.js",
+      "_CollectionMapPage-DSE41Tp0.js",
       "_preload-helper-D7HrI6pR.js",
       "_chunk-UVKPFVEO-BFPHDmND.js",
       "_index-caxmlYbZ.js",
@@ -3329,7 +3329,7 @@
     ]
   },
   "src/features/maps/components/CollectionMapGL.js": {
-    "file": "assets/CollectionMapGL-tjsnKAu0.js",
+    "file": "assets/CollectionMapGL-CMJfyGTl.js",
     "name": "CollectionMapGL",
     "src": "src/features/maps/components/CollectionMapGL.js",
     "isDynamicEntry": true,
@@ -3340,7 +3340,7 @@
       "_chunk-UVKPFVEO-BFPHDmND.js",
       "_maplibre-gl-u2SCRRel.js",
       "_MapMarkers-fMg3os6M.js",
-      "_CollectionMapPage-UHJ8kDAQ.js",
+      "_CollectionMapPage-DSE41Tp0.js",
       "_accordion-DkrSfpZX.js",
       "_satelliteMapStyle-CNcmqsvl.js",
       "_minimize-2-BA2jDpXa.js",
@@ -3422,7 +3422,7 @@
     ]
   },
   "src/features/notifications/pages/Notifications.tsx?__react-router-build-client-route": {
-    "file": "assets/Notifications-BZM1pbjQ.js",
+    "file": "assets/Notifications-BbHhq-oM.js",
     "name": "Notifications",
     "src": "src/features/notifications/pages/Notifications.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -3544,7 +3544,7 @@
     ]
   },
   "src/features/profile/pages/Profile.tsx?__react-router-build-client-route": {
-    "file": "assets/Profile-B7DaYvdA.js",
+    "file": "assets/Profile-BjkiE1Hn.js",
     "name": "Profile",
     "src": "src/features/profile/pages/Profile.tsx?__react-router-build-client-route",
     "isEntry": true,

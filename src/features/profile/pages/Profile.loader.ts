@@ -1,11 +1,11 @@
-import type { LoaderFunctionArgs } from "react-router";
+import { data, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 
 export async function profileLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   if (!params.username) {
     // /profile with no username requires auth — no SSR needed
-    return Response.json({ profile: null }, { headers });
+    return data({ profile: null }, { headers });
   }
 
   const supabase = createSupabaseServerClient(request, headers);
@@ -15,6 +15,6 @@ export async function profileLoader({ request, params }: LoaderFunctionArgs) {
     .ilike("username", params.username)
     .maybeSingle();
 
-  return Response.json({ profile }, { headers });
+  return data({ profile }, { headers });
 }
 

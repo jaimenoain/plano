@@ -47,7 +47,7 @@ interface Notification {
 const NOTIFICATION_QUERY = `
   *,
   actor:notifications_actor_id_fkey(username, avatar_url),
-  architect:architects(name),
+  architect:notifications_architect_id_fkey(name),
   resource:notifications_resource_id_fkey(
     id,
     user_id,
@@ -107,8 +107,8 @@ export default function Notifications() {
       if (unreadResult.error) throw unreadResult.error;
       if (readResult.error) throw readResult.error;
 
-      const unreadNotifications = (unreadResult.data ?? []) as Notification[];
-      const readNotifications = (readResult.data ?? []) as Notification[];
+      const unreadNotifications = (unreadResult.data ?? []) as unknown as Notification[];
+      const readNotifications = (readResult.data ?? []) as unknown as Notification[];
 
       setNotifications([...unreadNotifications, ...readNotifications]);
       setHasMore(readNotifications.length === 20);
@@ -150,7 +150,7 @@ export default function Notifications() {
 
       if (error) throw error;
 
-      const moreNotifications = (data ?? []) as Notification[];
+      const moreNotifications = (data ?? []) as unknown as Notification[];
       setNotifications(prev => [...prev, ...moreNotifications]);
       setHasMore(moreNotifications.length === 20);
 

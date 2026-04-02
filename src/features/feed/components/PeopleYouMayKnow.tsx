@@ -37,10 +37,11 @@ export function PeopleYouMayKnow() {
       });
       if (error) throw error;
 
-      if (!data || data.length === 0 || !user) return data || [];
+      const rpcRows = (data as unknown as { id: string }[]) ?? [];
+      if (!rpcRows.length || !user) return rpcRows;
 
       // Fetch mutual follows details
-      const suggestionIds = data.map((s: { id: string }) => s.id);
+      const suggestionIds = rpcRows.map((s) => s.id);
 
       // Get my following list first to filter mutuals
       const { data: followingData } = await supabase
@@ -51,7 +52,14 @@ export function PeopleYouMayKnow() {
       const myFollowingIds = followingData?.map(f => f.following_id) || [];
 
       if (myFollowingIds.length === 0) {
-        return data.map((s: { id: string }) => ({ ...s, mutual_follows: [] as { id: string; username: string | null; avatar_url: string | null }[] }));
+        return rpcRows.map((s) => ({
+          ...s,
+          mutual_follows: [] as {
+            id: string;
+            username: string | null;
+            avatar_url: string | null;
+          }[],
+        }));
       }
 
       const { data: mutualsData } = await supabase
@@ -64,7 +72,7 @@ export function PeopleYouMayKnow() {
         .in('follower_id', myFollowingIds);
 
       const mutualRows = (mutualsData ?? []) as unknown as MutualFollowRow[];
-      return data.map((s: { id: string }) => {
+      return rpcRows.map((s) => {
         const mutuals = mutualRows
             .filter((m) => m.following_id === s.id)
             .map((m) => {

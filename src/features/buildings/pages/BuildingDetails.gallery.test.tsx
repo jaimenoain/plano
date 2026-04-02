@@ -25,6 +25,10 @@ const mocks = vi.hoisted(() => {
     upsert: vi.fn(),
     user: { id: 'user-123', email: 'test@example.com' },
     getBuildingReviews: vi.fn(),
+    loaderData: {
+      building: null as Record<string, unknown> | null,
+      heroImageUrl: null as string | null,
+    },
   };
 });
 
@@ -37,6 +41,7 @@ vi.mock('react-router', async (importOriginal) => {
         return { id: 'b1' };
     },
     useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    useLoaderData: () => mocks.loaderData,
   };
 });
 
@@ -150,8 +155,7 @@ describe('BuildingDetails Gallery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock building details
-    vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue({
+    const building = {
         id: 'b1',
         name: 'Test Building',
         address: '123 Main St',
@@ -164,7 +168,10 @@ describe('BuildingDetails Gallery', () => {
         location: { type: 'Point', coordinates: [0, 0] },
         created_by: 'other-user',
         styles: [],
-    } as any);
+    };
+    vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue(building as any);
+    mocks.loaderData.building = building;
+    mocks.loaderData.heroImageUrl = null;
 
     // Mock reviews with mixed official images
     mocks.getBuildingReviews.mockResolvedValue({
@@ -203,17 +210,15 @@ describe('BuildingDetails Gallery', () => {
 
   it('renders "Official Lookbook" tab when official images exist', async () => {
     render(
-      <HelmetProvider>
-        <TooltipProvider>
-            <QueryClientProvider client={queryClient}>
-                <BrowserRouter>
-                    <SidebarProvider>
-                        <BuildingDetails />
-                    </SidebarProvider>
-                </BrowserRouter>
-            </QueryClientProvider>
-        </TooltipProvider>
-      </HelmetProvider>
+      <TooltipProvider>
+          <QueryClientProvider client={queryClient}>
+              <BrowserRouter>
+                  <SidebarProvider>
+                      <BuildingDetails />
+                  </SidebarProvider>
+              </BrowserRouter>
+          </QueryClientProvider>
+      </TooltipProvider>
     );
 
     // Wait for data load
@@ -236,17 +241,15 @@ describe('BuildingDetails Gallery', () => {
 
   it('filters images correctly when switching to "Official Lookbook"', async () => {
     render(
-      <HelmetProvider>
-        <TooltipProvider>
-            <QueryClientProvider client={queryClient}>
-                <BrowserRouter>
-                    <SidebarProvider>
-                        <BuildingDetails />
-                    </SidebarProvider>
-                </BrowserRouter>
-            </QueryClientProvider>
-        </TooltipProvider>
-      </HelmetProvider>
+      <TooltipProvider>
+          <QueryClientProvider client={queryClient}>
+              <BrowserRouter>
+                  <SidebarProvider>
+                      <BuildingDetails />
+                  </SidebarProvider>
+              </BrowserRouter>
+          </QueryClientProvider>
+      </TooltipProvider>
     );
 
     await waitFor(() => {

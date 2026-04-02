@@ -23,7 +23,12 @@ const mocks = vi.hoisted(() => {
     toast: vi.fn(),
     update: vi.fn(),
     upsert: vi.fn(),
-    user: { id: 'user-123', email: 'test@example.com' } // Stable user object
+    user: { id: 'user-123', email: 'test@example.com' }, // Stable user object
+    /** Mirrors loader output — BuildingDetails reads `useLoaderData`, not `fetchBuildingDetails` in the client. */
+    loaderData: {
+      building: null as Record<string, unknown> | null,
+      heroImageUrl: null as string | null,
+    },
   };
 });
 
@@ -36,6 +41,7 @@ vi.mock('react-router', async (importOriginal) => {
         return { id: 'b1' };
     },
     useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    useLoaderData: () => mocks.loaderData,
   };
 });
 
@@ -175,8 +181,7 @@ describe('BuildingDetails Interaction', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Setup specific mock implementation
-    vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue({
+    const building = {
         id: 'b1',
         name: 'Test Building',
         address: '123 Main St',
@@ -189,7 +194,10 @@ describe('BuildingDetails Interaction', () => {
         location: { type: 'Point', coordinates: [0, 0] },
         created_by: 'other-user',
         styles: [],
-    } as any);
+    };
+    vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue(building as any);
+    mocks.loaderData.building = building;
+    mocks.loaderData.heroImageUrl = null;
   });
 
   afterEach(() => {
@@ -250,8 +258,7 @@ describe('BuildingDetails Interaction', () => {
   });
 
   it('renders lost to time message and Navigate to Site button when status is lost', async () => {
-    // Setup specific mock implementation for a Lost building
-    vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue({
+    const lostBuilding = {
         id: 'b1',
         name: 'Test Lost Building',
         address: '123 Main St',
@@ -265,20 +272,21 @@ describe('BuildingDetails Interaction', () => {
         location: { type: 'Point', coordinates: [0, 0] },
         created_by: 'other-user',
         styles: [],
-    } as any);
+    };
+    vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue(lostBuilding as any);
+    mocks.loaderData.building = lostBuilding;
+    mocks.loaderData.heroImageUrl = null;
 
     render(
-      <HelmetProvider>
-        <TooltipProvider>
-            <QueryClientProvider client={queryClient}>
-                <BrowserRouter>
-                    <SidebarProvider>
-                        <BuildingDetails />
-                    </SidebarProvider>
-                </BrowserRouter>
-            </QueryClientProvider>
-        </TooltipProvider>
-      </HelmetProvider>
+      <TooltipProvider>
+          <QueryClientProvider client={queryClient}>
+              <BrowserRouter>
+                  <SidebarProvider>
+                      <BuildingDetails />
+                  </SidebarProvider>
+              </BrowserRouter>
+          </QueryClientProvider>
+      </TooltipProvider>
     );
 
     await waitFor(async () => {

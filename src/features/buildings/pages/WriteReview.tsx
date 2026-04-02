@@ -195,21 +195,25 @@ export default function WriteReview() {
                 // Process Links (Nested)
                 const existingLinks = userBuilding.review_links;
                 if (existingLinks) {
-                  setLinks(existingLinks);
+                  setLinks(
+                    existingLinks.map((l) => ({
+                      id: l.id,
+                      url: l.url,
+                      title: l.title ?? "",
+                    })),
+                  );
                   if (existingLinks.length > 0) setShowLinks(true);
                 }
 
                 // Process Images (Nested)
                 const remoteImages = userBuilding.review_images;
                 if (remoteImages) {
-                  const loadedImages: ReviewImage[] = remoteImages.map(
-                    (img: { id: string; storage_path: string; is_generated?: boolean }) => ({
+                  const loadedImages: ReviewImage[] = remoteImages.map((img) => ({
                     id: img.id,
                     preview: getBuildingImageUrl(img.storage_path) || "",
                     storage_path: img.storage_path,
-                    is_generated: img.is_generated
-                  })
-                  );
+                    is_generated: img.is_generated ?? undefined,
+                  }));
                   setImages(loadedImages);
                 }
               }

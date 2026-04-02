@@ -68,8 +68,8 @@ export interface BuildingDetails {
   aliases?: string[] | null;
   tier_rank?: string | null;
   location: unknown; // PostGIS point / GeoJSON — parsed via parseLocation
-  location_precision?: 'exact' | 'approximate';
-  address: string;
+  location_precision?: "exact" | "approximate" | string | null;
+  address: string | null;
   city: string | null;
   country: string | null;
   architects: Architect[];
@@ -95,7 +95,8 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
     return [{ title: "Plano" }];
   }
 
-  const { building, heroImageUrl } = data;
+  const { building: rawBuilding, heroImageUrl } = data;
+  const building = rawBuilding as BuildingDetails;
 
   const description = buildingDescription(building);
   const image = heroImageUrl ?? "https://plano.app/cover.jpg";
@@ -198,7 +199,9 @@ export default function BuildingDetails() {
   const { building: initialBuilding, heroImageUrl: initialHeroImageUrl } =
     useLoaderData<typeof buildingLoader>();
 
-  const [building, setBuilding] = useState<BuildingDetails | null>(initialBuilding);
+  const [building, setBuilding] = useState<BuildingDetails | null>(
+    () => initialBuilding as BuildingDetails,
+  );
   const [loading, setLoading] = useState(false);
   const [isCreator, setIsCreator] = useState(false);
 
@@ -386,11 +389,23 @@ export default function BuildingDetails() {
           setInitialCollectionIds(myCollectionIds);
 
           if (userEntry) {
-              setUserStatus(userEntry.status);
+              const st = userEntry.status;
+              if (st === "visited" || st === "pending" || st === "ignored") {
+                setUserStatus(st);
+              } else {
+                setUserStatus(null);
+              }
               setMyRating(userEntry.rating || 0);
               setNote(userEntry.content || "");
               // setTags(userEntry.tags || []); // Deprecated
-              setUserImages(userEntry.images || []);
+              setUserImages(
+                (userEntry.images ?? []).map((img) => ({
+                  id: img.id,
+                  storage_path: img.storage_path,
+                  is_generated: img.is_generated ?? undefined,
+                  is_official: img.is_official,
+                })),
+              );
               setIsEditing(false);
               if (userEntry.content || (myCollectionIds.length > 0)) {
                   setShowNoteEditor(true);
@@ -405,7 +420,15 @@ export default function BuildingDetails() {
                 .from("review_links")
                 .select("id, url, title")
                 .eq("review_id", userEntry.id);
-              if (userLinksData) setUserLinks(userLinksData);
+              if (userLinksData) {
+                setUserLinks(
+                  userLinksData.map((l) => ({
+                    id: l.id,
+                    url: l.url,
+                    title: l.title ?? "",
+                  })),
+                );
+              }
           } else {
               setIsEditing(true);
           }
@@ -437,7 +460,7 @@ export default function BuildingDetails() {
         if (entriesError) {
 // toast({ variant: "destructive", title: "Could not load activity feed" });
         } else if (entriesData) {
-            const rawEntries = entriesData as RpcBuildingReviewRow[];
+            const rawEntries = entriesData as unknown as RpcBuildingReviewRow[];
 // Determine Social Context
             if (followedIds.size > 0) {
                 const friendEntry = rawEntries.find((e) => followedIds.has(e.user_id));
@@ -570,10 +593,11 @@ toast({ variant: "destructive", title: "Error", description: "Building not found
         });
 
       if (!linksError && linksData) {
-          setTopLinks(linksData);
+          const links = linksData as unknown as TopLink[];
+          setTopLinks(links);
 
-          if (user && linksData.length > 0) {
-              const linkIds = linksData.map((l: { link_id: string }) => l.link_id);
+          if (user && links.length > 0) {
+              const linkIds = links.map((l) => l.link_id);
               const { data: likes } = await supabase
                   .from('link_likes')
                   .select('link_id')
@@ -953,7 +977,18 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
 
           toast({ title: "Building updated successfully" });
           setIsOfficialEditing(false);
-          fetchBuildingData();
+          setBuilding((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  name: draftOfficialData.name,
+                  year_completed: draftOfficialData.year_completed,
+                  city: draftOfficialData.city || null,
+                  country: draftOfficialData.country || null,
+                  architect_statement: draftOfficialData.architect_statement || null,
+                }
+              : null,
+          );
       } catch (_error) {
 toast({ variant: "destructive", title: "Failed to update building" });
       } finally {

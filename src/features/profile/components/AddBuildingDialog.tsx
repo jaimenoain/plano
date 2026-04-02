@@ -29,7 +29,7 @@ export function AddBuildingDialog({ onBuildingAdded, className }: AddBuildingDia
         query_text: debouncedQuery,
       });
       if (error) throw error;
-      return data;
+      return (data as unknown as { id: string; name: string }[]) ?? [];
     },
     enabled: debouncedQuery.length >= 2,
     staleTime: 1000 * 60 * 5, // 5 minutes

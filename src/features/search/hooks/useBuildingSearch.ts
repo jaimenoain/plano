@@ -47,7 +47,8 @@ interface ContactInteractionData {
 interface BuildingMapSearchRow {
   id: string;
   location: unknown;
-  status: DiscoveryBuilding["status"] | null;
+  /** DB returns plain string; narrowed again in filter layer if needed */
+  status: string | null;
   name: string;
   main_image_url?: string | null;
   slug?: string | null;
@@ -960,7 +961,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
           }
 
           // Sanitize RPC results to remove invalid locations
-          return (data as MapItem[]).filter(b =>
+          return (data as unknown as MapItem[]).filter(b =>
             isValidCoordinate(b.lat, b.lng)
           );
         } catch {

@@ -21,12 +21,21 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import type { Json } from "@/integrations/supabase/types";
 
 interface AuditLogView {
   old_data?: Record<string, unknown> | null;
   new_data?: Record<string, unknown> | null;
   table_name?: string;
   operation?: string;
+}
+
+function jsonObjectOrNull(value: Json | null | undefined): Record<string, unknown> | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return null;
 }
 
 export default function BuildingAudit() {
@@ -136,7 +145,7 @@ toast.error("Failed to revert change");
             {logs?.map((log) => (
               <TableRow key={log.id}>
                 <TableCell className="whitespace-nowrap">
-                  {format(new Date(log.created_at), "MMM d, HH:mm")}
+                  {format(new Date(log.created_at ?? ""), "MMM d, HH:mm")}
                 </TableCell>
                 <TableCell>
                   {log.profiles?.username || "System"}
@@ -145,7 +154,12 @@ toast.error("Failed to revert change");
                   {log.buildings?.name || "Unknown"}
                 </TableCell>
                 <TableCell className="max-w-[300px]">
-                    {renderDiff(log)}
+                    {renderDiff({
+                      table_name: log.table_name,
+                      operation: log.operation,
+                      old_data: jsonObjectOrNull(log.old_data),
+                      new_data: jsonObjectOrNull(log.new_data),
+                    })}
                 </TableCell>
                 <TableCell className="text-right">
                     <Dialog>

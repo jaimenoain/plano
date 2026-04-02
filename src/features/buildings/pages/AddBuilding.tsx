@@ -260,11 +260,12 @@ return new Map();
             const [locationResult, nameResult] = await Promise.all([locationCheckPromise, nameCheckPromise]);
 
             if (!locationResult.error) {
-                locationData = locationResult.data || [];
+                locationData =
+                  (locationResult.data as unknown as NearbyBuilding[]) || [];
             }
 
             if (!nameResult.error) {
-                nameData = nameResult.data || [];
+                nameData = (nameResult.data as unknown as NearbyBuilding[]) || [];
             }
         } catch (_err) {
           void _err;

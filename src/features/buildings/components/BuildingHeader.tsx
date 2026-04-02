@@ -17,8 +17,8 @@ interface BuildingDetails {
   aliases?: string[] | null;
   tier_rank?: string | null;
   location: unknown; // PostGIS / GeoJSON — parsed via parseLocation
-  location_precision?: 'exact' | 'approximate';
-  address: string;
+  location_precision?: "exact" | "approximate" | string | null;
+  address: string | null;
   city: string | null;
   country: string | null;
   architects: Architect[];

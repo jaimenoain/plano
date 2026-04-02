@@ -25,7 +25,11 @@ export default function Onboarding() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   
-  const [inviter, setInviter] = useState<{ id: string; username: string; avatar_url: string | null } | null>(null);
+  const [inviter, setInviter] = useState<{
+    id: string;
+    username: string | null;
+    avatar_url: string | null;
+  } | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [loadingInitialData, setLoadingInitialData] = useState(true);
@@ -155,7 +159,7 @@ export default function Onboarding() {
       setIsFollowing(true);
       toast({
         title: "Following",
-        description: `You are now following ${inviter.username}`,
+        description: `You are now following ${inviter.username ?? "this user"}`,
       });
     } catch (_error) {
       toast({
@@ -306,10 +310,12 @@ const { error: notifError } = await supabase
             <div className="flex items-center gap-3">
               <Avatar>
                 <AvatarImage src={inviter.avatar_url || undefined} />
-                <AvatarFallback>{inviter.username[0]}</AvatarFallback>
+                <AvatarFallback>{(inviter.username ?? "?")[0]}</AvatarFallback>
               </Avatar>
               <div className="space-y-0.5">
-                <p className="text-sm font-medium text-text-primary">Follow {inviter.username}</p>
+                <p className="text-sm font-medium text-text-primary">
+                  Follow {inviter.username ?? "this user"}
+                </p>
                 <p className="text-xs text-text-secondary">They invited you!</p>
               </div>
             </div>

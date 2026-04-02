@@ -95,17 +95,16 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   const saveToSupabase = async (status: 'pending' | 'ignored', ratingValue?: number | null) => {
       if (!user) return;
       try {
-        const updateData: Record<string, unknown> = {
+        const { error } = await supabase.from("user_buildings").upsert(
+          {
             user_id: user.id,
             building_id: building.id,
-            status: status,
-            edited_at: new Date().toISOString()
-        };
-        if (ratingValue !== undefined) {
-            updateData.rating = ratingValue;
-        }
-
-        const { error } = await supabase.from("user_buildings").upsert(updateData, { onConflict: 'user_id, building_id' });
+            status,
+            edited_at: new Date().toISOString(),
+            ...(ratingValue !== undefined ? { rating: ratingValue } : {}),
+          },
+          { onConflict: "user_id, building_id" },
+        );
         if (error) throw error;
       } catch (_error) {
 toast.error("Failed to save");

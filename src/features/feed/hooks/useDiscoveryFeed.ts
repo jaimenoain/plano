@@ -78,7 +78,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
 
       if (error) throw error;
 
-      const buildings = data as DiscoveryFeedItem[];
+      const buildings = data as unknown as DiscoveryFeedItem[];
 
       if (buildings.length > 0) {
         const buildingIds = buildings.map(b => b.id);
@@ -178,7 +178,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
           if (interactions) {
             const interactionsMap: Record<string, ContactInteraction[]> = {};
 
-            (interactions as UserBuildingInteractionRow[]).forEach((item) => {
+            (interactions as unknown as UserBuildingInteractionRow[]).forEach((item) => {
               const userProfile = Array.isArray(item.user) ? item.user[0] : item.user;
 
               const interaction: ContactInteraction = {

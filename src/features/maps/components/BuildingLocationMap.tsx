@@ -15,7 +15,7 @@ interface BuildingLocationMapProps {
   status?: 'visited' | 'pending' | 'ignored' | null;
   rating?: number;
   tierRank?: string | null;
-  locationPrecision?: 'exact' | 'approximate';
+  locationPrecision?: "exact" | "approximate" | string | null;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
 }

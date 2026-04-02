@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -135,7 +136,7 @@ toast.error("Failed to dismiss report");
     if (!window.confirm("Are you sure? This will delete the content permanently.")) return;
 
     try {
-        let deleteError = null;
+        let deleteError: PostgrestError | null = null;
         if (report.contentType === 'review') {
             const { error } = await supabase.from('user_buildings').delete().eq('id', report.reported_id);
             deleteError = error;
