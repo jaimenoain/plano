@@ -972,7 +972,7 @@ highest-impact SEO change in the entire migration.
 - [x] `curl https://plano.app/building/1/some-slug` returns HTML with `<title>` matching the building name.
 - [x] `curl https://plano.app/architect/<id>` returns HTML with `<title>` matching the architect name.
 - [x] `curl https://plano.app/profile/<username>` returns HTML with `<title>` matching the username.
-- [ ] Google Search Console — submit updated sitemap and use URL Inspection to confirm all three page types are indexable.
+- [x] Google Search Console — submit updated sitemap and use URL Inspection to confirm all three page types are indexable.
 - [ ] Auth: sign in, sign out, protected-page redirect, and admin guard all work correctly.
 - [ ] Cookie auth: session persists across a hard page refresh.
 - [ ] PWA: service worker registers successfully; install prompt appears.

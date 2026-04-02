@@ -1,3 +1,3 @@
-/** GA4 measurement ID — override with `VITE_GA_MEASUREMENT_ID` in env if it changes. */
-export const GA_MEASUREMENT_ID: string =
-  (import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined) || "G-V8H7C4CD0G";
+/** GA4 measurement ID from `VITE_GA_MEASUREMENT_ID`. Undefined when unset or empty — analytics stays off. */
+const raw = (import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined)?.trim();
+export const GA_MEASUREMENT_ID: string | undefined = raw || undefined;

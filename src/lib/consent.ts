@@ -18,6 +18,7 @@ export function setConsent(status: "granted" | "denied"): void {
 }
 
 export function loadAnalytics(): void {
+  if (!GA_MEASUREMENT_ID) return;
   if (document.querySelector('script[src*="googletagmanager"]')) return;
 
   const script = document.createElement("script");

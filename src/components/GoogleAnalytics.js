@@ -7,6 +7,8 @@ export const GoogleAnalytics = () => {
     useEffect(() => {
         if (loading)
             return;
+        if (!GA_MEASUREMENT_ID)
+            return;
         if (getConsent() !== "granted")
             return;
         loadAnalytics();

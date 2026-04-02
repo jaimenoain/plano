@@ -702,8 +702,8 @@
       "_search-BCr5HNQj.js"
     ]
   },
-  "_consent-OhvVQMta.js": {
-    "file": "assets/consent-OhvVQMta.js",
+  "_consent-BiZg5Yvu.js": {
+    "file": "assets/consent-BiZg5Yvu.js",
     "name": "consent"
   },
   "_core.esm-DhmK2DuD.js": {
@@ -1714,7 +1714,7 @@
     ]
   },
   "src/entry.client.tsx": {
-    "file": "assets/entry.client-CCjdijUu.js",
+    "file": "assets/entry.client-C9YWh-LF.js",
     "name": "entry.client",
     "src": "src/entry.client.tsx",
     "isEntry": true,
@@ -1723,7 +1723,7 @@
       "_index-caxmlYbZ.js",
       "_index-CD2lY8gX.js",
       "_chunk-UVKPFVEO-BFPHDmND.js",
-      "_consent-OhvVQMta.js"
+      "_consent-BiZg5Yvu.js"
     ]
   },
   "src/features/admin/components/AdminLayout.tsx?__react-router-build-client-route": {
@@ -3982,7 +3982,7 @@
     ]
   },
   "src/root.tsx?__react-router-build-client-route": {
-    "file": "assets/root-BcxSb5BC.js",
+    "file": "assets/root-CzVxjrhq.js",
     "name": "root",
     "src": "src/root.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -4009,7 +4009,7 @@
       "_index-CYHzQQnn.js",
       "_usePwaInstall-B3GJnSE2.js",
       "_useAuth-DUueS4ZC.js",
-      "_consent-OhvVQMta.js",
+      "_consent-BiZg5Yvu.js",
       "_drawer-CRWpJJ8B.js",
       "_react-error-boundary-ogQOnTTL.js",
       "_sentry-RK2FgH0O.js",

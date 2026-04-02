@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "react-router dev",
     "build": "vite build",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest run",
