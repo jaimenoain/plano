@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { Calendar } from "lucide-react";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
@@ -134,7 +135,9 @@ export const BuildingHeader = ({
                     {accessSynthesis && (
                         <div className="flex items-center gap-2">
                             <Badge variant={accessBadgeVariant()} className="flex items-center gap-1.5 w-fit">
-                                <accessSynthesis.icon className="w-3.5 h-3.5" />
+                                {createElement(accessSynthesis.icon, {
+                                  className: "w-3.5 h-3.5",
+                                })}
                                 {accessSynthesis.label}
                             </Badge>
                         </div>

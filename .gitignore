@@ -26,3 +26,4 @@ test-results/
 *.tsbuildinfo
 .env
 .react-router/
+.vercel

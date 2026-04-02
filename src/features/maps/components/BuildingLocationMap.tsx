@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Map, { Marker, NavigationControl, GeolocateControl, MapRef } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -35,6 +35,11 @@ export function BuildingLocationMap({
 }: BuildingLocationMapProps) {
   const mapRef = useRef<MapRef>(null);
   const [isSatellite, setIsSatellite] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const isApproximate = locationPrecision === 'approximate';
 
@@ -54,22 +59,41 @@ export function BuildingLocationMap({
   // Get the style from the utility
   const pinStyle = getPinStyle(pinData as ClusterResponse);
 
+  const outerClass =
+    isExpanded
+      ? "fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      : `relative rounded-xl overflow-hidden border border-white/10 ${className || ""}`;
+
+  const innerClass =
+    isExpanded
+      ? "relative w-full h-full max-w-7xl max-h-[90vh] bg-surface-default rounded-xl overflow-hidden shadow-2xl border border-white/10"
+      : "w-full h-full";
+
+  if (!isClient) {
+    return (
+      <div
+        className={outerClass}
+        onClick={isExpanded && onToggleExpand ? onToggleExpand : undefined}
+        data-testid="map-backdrop"
+      >
+        <div
+          className={`${innerClass} flex min-h-48 items-center justify-center bg-surface-muted`}
+          onClick={isExpanded ? (e) => e.stopPropagation() : undefined}
+          data-testid="map-inner-container"
+          aria-hidden
+        />
+      </div>
+    );
+  }
+
   return (
     <div
-      className={
-        isExpanded
-          ? "fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-          : `relative rounded-xl overflow-hidden border border-white/10 ${className || ""}`
-      }
+      className={outerClass}
       onClick={isExpanded && onToggleExpand ? onToggleExpand : undefined}
       data-testid="map-backdrop"
     >
       <div
-        className={
-          isExpanded
-            ? "relative w-full h-full max-w-7xl max-h-[90vh] bg-surface-default rounded-xl overflow-hidden shadow-2xl border border-white/10"
-            : "w-full h-full"
-        }
+        className={innerClass}
         onClick={isExpanded ? (e) => e.stopPropagation() : undefined}
         data-testid="map-inner-container"
       >

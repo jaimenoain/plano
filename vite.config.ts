@@ -52,6 +52,7 @@ export default defineConfig(() => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "~": path.resolve(__dirname, "./src"),
       // react-map-gl resolves mapbox-gl; we use maplibre-gl as the implementation
       "mapbox-gl": "maplibre-gl",
     },

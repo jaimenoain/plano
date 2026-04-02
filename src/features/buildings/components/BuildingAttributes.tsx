@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import {
   Building2,
   Activity,
@@ -93,7 +94,7 @@ export const BuildingAttributes = ({
           return (
             <div key={field.key} className="contents">
               <dt className="text-xs font-medium text-text-secondary uppercase tracking-wide flex items-center gap-1.5">
-                <field.icon className="w-3.5 h-3.5" />
+                {createElement(field.icon, { className: "w-3.5 h-3.5" })}
                 {field.label}
               </dt>
               <dd className="flex flex-wrap gap-2">
@@ -110,7 +111,7 @@ export const BuildingAttributes = ({
         return (
           <div key={field.key} className="contents">
             <dt className="text-xs font-medium text-text-secondary uppercase tracking-wide flex items-center gap-1.5">
-              <field.icon className="w-3.5 h-3.5" />
+              {createElement(field.icon, { className: "w-3.5 h-3.5" })}
               {field.label}
             </dt>
             <dd>{getFormattedValue(field.value)}</dd>

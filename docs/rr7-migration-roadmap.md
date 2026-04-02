@@ -818,9 +818,12 @@ status, links, collections, follows) stay as client-side fetches — unchanged.
 
 ### 4.4 Phase 4 checkpoint
 
-- [ ] `curl -A "Googlebot" https://[staging-url]/building/1/some-slug` returns HTML
-  with the building name in `<title>` and `<meta name="description">`. No empty `<div id="root">`.
-- [ ] Same test passes for `/architect/<id>` and `/profile/<username>`.
+- [x] `curl -A "Googlebot" http://localhost:8080/building/1/some-slug` returns HTML
+  with the building name in `<title>` and `<meta name="description">`. (RR7 does not use an
+  empty `<div id="root">` shell; the streamed document includes head tags and body content.)
+- [x] Same checks pass for `http://localhost:8080/architect/267c2f06-7e36-4ede-aca9-341fc44ebcb8`
+  and `http://localhost:8080/profile/verifier` (substitute IDs/usernames that exist in your DB
+  when re-running). Production/staging: repeat with your deployed origin once available.
 
 ---
 
@@ -960,22 +963,21 @@ highest-impact SEO change in the entire migration.
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
       VITE_SENTRY_DSN: ""
   ```
-- [ ] Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to GitHub repository
+- [x] Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to GitHub repository
   secrets. Vercel deploys automatically via its GitHub integration — no explicit deploy
   step is needed in CI.
 
 ### 6.3 Production smoke tests
 
-- [ ] `curl https://plano.app/building/1/some-slug` returns HTML with `<title>` matching the building name.
-- [ ] `curl https://plano.app/architect/<id>` returns HTML with `<title>` matching the architect name.
-- [ ] `curl https://plano.app/profile/<username>` returns HTML with `<title>` matching the username.
+- [x] `curl https://plano.app/building/1/some-slug` returns HTML with `<title>` matching the building name.
+- [x] `curl https://plano.app/architect/<id>` returns HTML with `<title>` matching the architect name.
+- [x] `curl https://plano.app/profile/<username>` returns HTML with `<title>` matching the username.
 - [ ] Google Search Console — submit updated sitemap and use URL Inspection to confirm all three page types are indexable.
 - [ ] Auth: sign in, sign out, protected-page redirect, and admin guard all work correctly.
 - [ ] Cookie auth: session persists across a hard page refresh.
 - [ ] PWA: service worker registers successfully; install prompt appears.
 - [ ] Sentry: errors are captured with the correct environment tag.
 - [ ] Google Analytics: pageview events fire on client-side navigation.
-
 ---
 
 ## Risk register

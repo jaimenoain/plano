@@ -5,12 +5,13 @@ export async function architectLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
 
-  const { data: architect } = await supabase
+  const { data: architect, error: architectError } = await supabase
     .from("architects")
-    .select("id, name, type, nationality, bio")
+    .select("id, name, type, bio")
     .eq("id", params.id!)
     .maybeSingle();
 
+  if (architectError) throw architectError;
   if (!architect) throw new Response("Not found", { status: 404 });
 
   // Fetched here to support the existing redirect-to-profile logic

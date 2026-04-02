@@ -140,6 +140,7 @@ export function AppSidebar() {
             <SidebarMenu className="px-3 py-4">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
+                const NavIcon = item.icon;
                 return (
                   <SidebarMenuItem key={item.path}>
                     <Link
@@ -151,7 +152,7 @@ export function AppSidebar() {
                           : "bg-transparent hover:bg-surface-card"
                       )}
                     >
-                      <item.icon
+                      <NavIcon
                         className="h-5 w-5 flex-shrink-0"
                         strokeWidth={isActive ? 2.5 : 2}
                       />

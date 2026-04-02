@@ -267,6 +267,7 @@ export default function BuildingDetails() {
   // Map state
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
+  const [interactiveUiReady, setInteractiveUiReady] = useState(false);
 
   // Navigation Logic
   const selectedIndex = useMemo(() => {
@@ -319,6 +320,10 @@ export default function BuildingDetails() {
   useEffect(() => {
     if (id) fetchUserSpecificData();
   }, [id, user]);
+
+  useEffect(() => {
+    setInteractiveUiReady(true);
+  }, []);
 
   const fetchUserSpecificData = async () => {
     setLoading(true);
@@ -1070,6 +1075,30 @@ toast({ variant: "destructive", title: "Failed to update lookbook status" });
       <AppLayout title="Loading...">
         <div className="p-8">
           <Loader2 className="animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!interactiveUiReady) {
+    return (
+      <AppLayout title={building.name} showBack>
+        <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <BuildingHeader
+              building={building}
+              showEditLink={false}
+              isEditing={false}
+              nameValue={draftOfficialData.name}
+              yearValue={draftOfficialData.year_completed}
+              onNameChange={() => {}}
+              onYearChange={() => {}}
+            />
+            <p className="text-base text-text-secondary leading-relaxed">
+              {buildingDescription(building)}
+            </p>
+          </div>
         </div>
       </AppLayout>
     );

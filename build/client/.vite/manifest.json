@@ -2530,7 +2530,7 @@
     ]
   },
   "src/features/buildings/pages/BuildingDetails.tsx?__react-router-build-client-route": {
-    "file": "assets/BuildingDetails-BvtRaW_E.js",
+    "file": "assets/BuildingDetails-DVTONBxl.js",
     "name": "BuildingDetails",
     "src": "src/features/buildings/pages/BuildingDetails.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -3982,7 +3982,7 @@
     ]
   },
   "src/root.tsx?__react-router-build-client-route": {
-    "file": "assets/root-xzF8rSaW.js",
+    "file": "assets/root-BcxSb5BC.js",
     "name": "root",
     "src": "src/root.tsx?__react-router-build-client-route",
     "isEntry": true,
@@ -4026,7 +4026,7 @@
       "_skeleton-DwO7YI_w.js"
     ],
     "css": [
-      "assets/root-OZnGVFml.css"
+      "assets/root-BqBIMuMb.css"
     ]
   }
 }
