@@ -13,7 +13,7 @@ import { setSentryUser } from "@/lib/sentry";
  * Desktop: `open` is controlled so off-canvas collapse cannot leave nav stuck off-screen.
  * Mobile: sheet visibility still uses `openMobile` inside SidebarProvider.
  */
-export function MainLayout() {
+function MainLayout() {
   const { user, loading: authLoading } = useAuth();
 
   useLoginTracker();
@@ -54,3 +54,6 @@ export function MainLayout() {
     </SidebarProvider>
   );
 }
+
+export { MainLayout };
+export default MainLayout;

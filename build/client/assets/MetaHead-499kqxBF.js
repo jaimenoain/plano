@@ -1,1 +1,0 @@
-import{r}from"./index-caxmlYbZ.js";function u({title:e,description:t="Track your architecture visits, rate buildings, and discover what friends are exploring.",image:n="/cover.jpg",type:a="website",canonicalUrl:o,structuredData:i,noIndex:c=!1}){return r.useEffect(()=>{typeof document>"u"||(document.title=e?`${e} | Plano`:"Plano")},[e]),null}export{u as M};
