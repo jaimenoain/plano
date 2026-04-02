@@ -973,11 +973,11 @@ highest-impact SEO change in the entire migration.
 - [x] `curl https://plano.app/architect/<id>` returns HTML with `<title>` matching the architect name.
 - [x] `curl https://plano.app/profile/<username>` returns HTML with `<title>` matching the username.
 - [x] Google Search Console — submit updated sitemap and use URL Inspection to confirm all three page types are indexable.
-- [ ] Auth: sign in, sign out, protected-page redirect, and admin guard all work correctly.
-- [ ] Cookie auth: session persists across a hard page refresh.
-- [ ] PWA: service worker registers successfully; install prompt appears.
-- [ ] Sentry: errors are captured with the correct environment tag.
-- [ ] Google Analytics: pageview events fire on client-side navigation.
+- [x] Auth: sign in, sign out, protected-page redirect, and admin guard all work correctly.
+- [x] Cookie auth: session persists across a hard page refresh.
+- [x] PWA: service worker registers successfully; install prompt appears.
+- [x] Sentry: errors are captured with the correct environment tag.
+- [x] Google Analytics: pageview events fire on client-side navigation.
 ---
 
 ## Risk register
