@@ -1,7 +1,6 @@
+import { handleRequest } from "@vercel/react-router/entry.server";
+import { UNSAFE_withComponentProps, useLoaderData, UNSAFE_withHydrateFallbackProps, Outlet, Links, Meta, ScrollRestoration, Scripts, useSearchParams, useNavigate, Link, useParams, useLocation, Navigate, data, useBlocker, useBeforeUnload } from "react-router";
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
-import { PassThrough } from "node:stream";
-import { renderToPipeableStream } from "react-dom/server";
-import { ServerRouter, UNSAFE_withComponentProps, useLoaderData, UNSAFE_withHydrateFallbackProps, Outlet, Links, Meta, ScrollRestoration, Scripts, useSearchParams, useNavigate, Link, useParams, useLocation, Navigate, data, useBlocker, useBeforeUnload } from "react-router";
 import * as React from "react";
 import React__default, { useState, createContext, useEffect, useContext, useRef, StrictMode, useMemo, useCallback, forwardRef, Fragment as Fragment$1, lazy, Suspense } from "react";
 import { QueryClientProvider, QueryClient, useQuery, useQueryClient, useInfiniteQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
@@ -72,27 +71,6 @@ if (typeof globalThis !== "undefined" && typeof globalThis.localStorage === "und
       return 0;
     }
   };
-}
-function handleRequest(request, responseStatusCode, responseHeaders, routerContext) {
-  return new Promise((resolve, reject) => {
-    const { pipe } = renderToPipeableStream(
-      /* @__PURE__ */ jsx(ServerRouter, { context: routerContext, url: request.url }),
-      {
-        onShellReady() {
-          responseHeaders.set("Content-Type", "text/html");
-          const stream = new PassThrough();
-          resolve(
-            new Response(stream, {
-              status: responseStatusCode,
-              headers: responseHeaders
-            })
-          );
-          pipe(stream);
-        },
-        onShellError: reject
-      }
-    );
-  });
 }
 const entryServer = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -913,10 +891,8 @@ function usePresenceTracker() {
     };
   }, [session]);
 }
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-if (!SUPABASE_URL) throw new Error("Missing env var: VITE_SUPABASE_URL");
-if (!SUPABASE_ANON_KEY) throw new Error("Missing env var: VITE_SUPABASE_PUBLISHABLE_KEY");
+const SUPABASE_URL = "https://lnqxtomyucnnrgeapnzt.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_DDF6xljkgHcBcrQ7yaw6gQ_HnQbPwp7";
 function createSupabaseServerClient(request, responseHeaders) {
   return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
@@ -18692,16 +18668,16 @@ function useGooglePlacePhotos(markers) {
   }, [markers, isLoaded, photos]);
   return { photos };
 }
-const CollectionSettingsDialog = lazyWithRetry(() => import("./CollectionSettingsDialog-DAzfamab.js").then((module) => ({
+const CollectionSettingsDialog = lazyWithRetry(() => import("./CollectionSettingsDialog-VMrlgBQw.js").then((module) => ({
   default: module.CollectionSettingsDialog
 })));
-const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("./AddBuildingsToCollectionDialog-D7txHZ_y.js").then((module) => ({
+const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("./AddBuildingsToCollectionDialog-VPcGbqXb.js").then((module) => ({
   default: module.AddBuildingsToCollectionDialog
 })));
-const PlanRouteDialog = lazyWithRetry(() => import("./PlanRouteDialog-Bm70VbfT.js").then((module) => ({
+const PlanRouteDialog = lazyWithRetry(() => import("./PlanRouteDialog-6olRh6W6.js").then((module) => ({
   default: module.PlanRouteDialog
 })));
-const CollectionMapGL = lazyWithRetry(() => import("./CollectionMapGL-DCaB7x_W.js").then((module) => ({
+const CollectionMapGL = lazyWithRetry(() => import("./CollectionMapGL-CIo1IbXU.js").then((module) => ({
   default: module.CollectionMapGL
 })));
 const CollectionBuildingCard = lazyWithRetry(() => Promise.resolve().then(() => CollectionBuildingCard$2).then((module) => ({

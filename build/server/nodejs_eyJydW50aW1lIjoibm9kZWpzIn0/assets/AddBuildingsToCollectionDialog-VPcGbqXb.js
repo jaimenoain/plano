@@ -1,7 +1,7 @@
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { s as supabase, O as getBuildingImageUrl, P as Carousel, Q as CarouselContent, U as CarouselItem, V as CarouselPrevious, W as CarouselNext, X as BuildingAttributes, Y as useUserBuildingStatuses, Z as Card, _ as cn, v as Badge, A as Avatar, a as AvatarImage, b as AvatarFallback, $ as getBuildingUrl, a0 as Skeleton, B as Button, a1 as useAuth, a2 as useDebounce, a3 as searchBuildingsRpc, M as parseLocation, D as Dialog, c as DialogContent, d as DialogHeader, e as DialogTitle, T as Tabs, n as TabsList, o as TabsTrigger, p as TabsContent, I as Input, S as ScrollArea, a4 as config, a5 as Command, a6 as CommandList, a7 as CommandGroup, a8 as CommandItem, a9 as CommandEmpty } from "./server-build-C6QCVg9l.js";
+import { s as supabase, O as getBuildingImageUrl, P as Carousel, Q as CarouselContent, U as CarouselItem, V as CarouselPrevious, W as CarouselNext, X as BuildingAttributes, Y as useUserBuildingStatuses, Z as Card, _ as cn, v as Badge, A as Avatar, a as AvatarImage, b as AvatarFallback, $ as getBuildingUrl, a0 as Skeleton, B as Button, a1 as useAuth, a2 as useDebounce, a3 as searchBuildingsRpc, M as parseLocation, D as Dialog, c as DialogContent, d as DialogHeader, e as DialogTitle, T as Tabs, n as TabsList, o as TabsTrigger, p as TabsContent, I as Input, S as ScrollArea, a4 as config, a5 as Command, a6 as CommandList, a7 as CommandGroup, a8 as CommandItem, a9 as CommandEmpty } from "./server-build-Cm5adl7p.js";
 import { ExternalLink, MapPin, Circle, EyeOff, Building2, MapPinPlus, PlusCircle, Search, X, Check, Plus, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -12,8 +12,7 @@ import "react-map-gl/maplibre";
 import "maplibre-gl";
 import "react-error-boundary";
 import { Command as Command$1 } from "cmdk";
-import "node:stream";
-import "react-dom/server";
+import "@vercel/react-router/entry.server";
 import "@radix-ui/react-tooltip";
 import "tailwind-merge";
 import "@radix-ui/react-toast";

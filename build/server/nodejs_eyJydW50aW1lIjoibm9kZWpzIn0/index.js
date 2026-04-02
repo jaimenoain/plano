@@ -1,8 +1,7 @@
-import { al, am, an, ao, ap, aq, ar, as, at, au, av, aw } from "./assets/server-build-C6QCVg9l.js";
-import "react/jsx-runtime";
-import "node:stream";
-import "react-dom/server";
+import { al, am, an, ao, ap, aq, ar, as, at, au, av, aw } from "./assets/server-build-Cm5adl7p.js";
+import "@vercel/react-router/entry.server";
 import "react-router";
+import "react/jsx-runtime";
 import "react";
 import "@tanstack/react-query";
 import "@radix-ui/react-tooltip";

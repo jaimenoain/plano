@@ -4,11 +4,17 @@ import {
   serializeCookieHeader,
 } from "@supabase/ssr";
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY!;
+// Use Vite-inlined `import.meta.env` so SSR bundles get URL/key from the build
+// (Vercel build env). `process.env.VITE_*` is often unset in the serverless runtime.
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 if (!SUPABASE_URL) throw new Error("Missing env var: VITE_SUPABASE_URL");
-if (!SUPABASE_ANON_KEY) throw new Error("Missing env var: VITE_SUPABASE_PUBLISHABLE_KEY");
+if (!SUPABASE_ANON_KEY)
+  throw new Error("Missing env var: VITE_SUPABASE_PUBLISHABLE_KEY");
 
 /**
  * Server client is intentionally untyped: merging the legacy snapshot with Plano tables
