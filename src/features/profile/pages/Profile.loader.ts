@@ -9,11 +9,31 @@ export async function profileLoader({ request, params }: LoaderFunctionArgs) {
   }
 
   const supabase = createSupabaseServerClient(request, headers);
-  const { data: profile } = await supabase
+  headers.set(
+    "Cache-Control",
+    "public, s-maxage=60, stale-while-revalidate=300",
+  );
+  const usernameParam = params.username;
+  const isUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      usernameParam,
+    );
+
+  let query = supabase
     .from("profiles")
-    .select("id, username, avatar_url, bio")
-    .ilike("username", params.username)
-    .maybeSingle();
+    .select("id, username, avatar_url, bio");
+
+  if (isUuid) {
+    query = query.eq("id", usernameParam);
+  } else {
+    query = query.ilike("username", usernameParam);
+  }
+
+  const { data: profile } = await query.maybeSingle();
+
+  if (!profile) {
+    throw new Response("Not found", { status: 404 });
+  }
 
   return data({ profile }, { headers });
 }

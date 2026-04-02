@@ -5,6 +5,9 @@ import {
   Link,
   Navigate,
   useLoaderData,
+  useRouteError,
+  isRouteErrorResponse,
+  useRevalidator,
   type MetaFunction,
 } from "react-router";
 import { useArchitect } from "@/features/architect/hooks/useArchitect";
@@ -21,9 +24,72 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { supabase } from "@/integrations/supabase/client";
 import { ClaimProfileDialog } from "@/features/architect/components/ClaimProfileDialog";
 import { architectLoader } from "./ArchitectDetails.loader";
-import { architectStructuredData } from "@/features/buildings/utils/structuredData";
+import {
+  architectStructuredData,
+  SITE_URL,
+} from "@/features/buildings/utils/structuredData";
 
 export { architectLoader as loader } from "./ArchitectDetails.loader";
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const { id } = useParams<{ id: string }>();
+  const revalidator = useRevalidator();
+
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return (
+      <AppLayout showBack>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+            Architect not found
+          </h1>
+          <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+            We couldn&apos;t find an architect at this URL
+            {id ? (
+              <>
+                {" "}
+                <span className="font-mono text-text-primary">({id})</span>
+              </>
+            ) : null}
+            . The profile may have been removed or the link is incorrect.
+          </p>
+          <Button asChild size="lg" variant="default" className="min-w-[200px]">
+            <Link to="/explore">Browse buildings</Link>
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout showBack>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+          Something went wrong
+        </h1>
+        <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+          An unexpected error occurred while loading this architect. You can try
+          again or return to explore.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button
+            type="button"
+            size="lg"
+            variant="default"
+            className="min-w-[200px]"
+            onClick={() => revalidator.revalidate()}
+            disabled={revalidator.state === "loading"}
+          >
+            Try again
+          </Button>
+          <Button asChild size="lg" variant="outline" className="min-w-[200px]">
+            <Link to="/explore">Browse buildings</Link>
+          </Button>
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
 
 export const meta: MetaFunction<typeof architectLoader> = ({ data }) => {
   if (!data || !data.architect) {
@@ -34,7 +100,7 @@ export const meta: MetaFunction<typeof architectLoader> = ({ data }) => {
 
   const title = `${architect.name} | Plano`;
   const description = `Explore buildings and works by ${architect.name} on Plano.`;
-  const canonical = `https://plano.app/architect/${architect.id}`;
+  const canonical = `${SITE_URL}/architect/${architect.id}`;
 
   return [
     { title },

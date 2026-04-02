@@ -1,6 +1,10 @@
 export const getBuildingUrl = (id: string, slug?: string | null, shortId?: number | null) => {
-  if (shortId && slug) {
-    return `/building/${shortId}/${slug}`;
+  if (shortId !== undefined && shortId !== null) {
+    const s = slug?.trim();
+    if (s) {
+      return `/building/${shortId}/${s}`;
+    }
+    return `/building/${shortId}`;
   }
   return `/building/${id}`;
 };

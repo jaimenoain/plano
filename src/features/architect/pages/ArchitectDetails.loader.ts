@@ -4,6 +4,10 @@ import { createSupabaseServerClient } from "~/lib/supabase.server";
 export async function architectLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
+  headers.set(
+    "Cache-Control",
+    "public, s-maxage=600, stale-while-revalidate=86400",
+  );
 
   const { data: architect, error: architectError } = await supabase
     .from("architects")

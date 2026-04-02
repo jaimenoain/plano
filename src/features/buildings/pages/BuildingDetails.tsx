@@ -1,5 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link, useLoaderData, type MetaFunction } from "react-router";
+import {
+  useParams,
+  Link,
+  useLoaderData,
+  useRouteError,
+  isRouteErrorResponse,
+  useRevalidator,
+  type MetaFunction,
+} from "react-router";
 import { 
   Loader2, MapPin, Send,
   Check, Bookmark, Image as ImageIcon,
@@ -52,11 +60,76 @@ import { BuildingHero } from "../components/BuildingHero";
 import { BuildingAttributes } from "../components/BuildingAttributes";
 import { buildingLoader } from "./BuildingDetails.loader";
 import {
+  buildingAbsoluteUrl,
   buildingStructuredData,
   buildingDescription,
+  SITE_URL,
 } from "@/features/buildings/utils/structuredData";
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const { id, slug } = useParams();
+  const revalidator = useRevalidator();
+
+  const pathHint =
+    id && slug ? `${id}/${slug}` : id ?? null;
+
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return (
+      <AppLayout showBack>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+            Building not found
+          </h1>
+          <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+            We couldn&apos;t find a building at this URL
+            {pathHint ? (
+              <>
+                {" "}
+                <span className="font-mono text-text-primary">({pathHint})</span>
+              </>
+            ) : null}
+            . It may have been removed or the link is incorrect.
+          </p>
+          <Button asChild size="lg" variant="default" className="min-w-[200px]">
+            <Link to="/explore">Browse buildings</Link>
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout showBack>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+          Something went wrong
+        </h1>
+        <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+          An unexpected error occurred while loading this building. You can try
+          again or go back to explore.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button
+            type="button"
+            size="lg"
+            variant="default"
+            className="min-w-[200px]"
+            onClick={() => revalidator.revalidate()}
+            disabled={revalidator.state === "loading"}
+          >
+            Try again
+          </Button>
+          <Button asChild size="lg" variant="outline" className="min-w-[200px]">
+            <Link to="/explore">Browse buildings</Link>
+          </Button>
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
 
 // --- Types ---
 export interface BuildingDetails {
@@ -99,13 +172,8 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
   const building = rawBuilding as BuildingDetails;
 
   const description = buildingDescription(building);
-  const image = heroImageUrl ?? "https://plano.app/cover.jpg";
-  const shortIdPart =
-    building.short_id !== undefined && building.short_id !== null
-      ? String(building.short_id)
-      : String(building.id);
-  const slugPart = building.slug ?? "";
-  const canonical = `https://plano.app/building/${shortIdPart}/${slugPart}`;
+  const image = heroImageUrl ?? `${SITE_URL}/cover.jpg`;
+  const canonical = buildingAbsoluteUrl(building);
 
   return [
     { title: `${building.name} | Plano` },

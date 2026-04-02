@@ -17,6 +17,10 @@ import {
   useParams,
   useSearchParams,
   useLoaderData,
+  useRouteError,
+  isRouteErrorResponse,
+  useRevalidator,
+  Link,
   type MetaFunction,
 } from "react-router";
 import {
@@ -68,8 +72,75 @@ import { handleDragEndLogic } from "@/utils/kanbanLogic";
 import { ProfileListView } from "@/features/profile/components/ProfileListView";
 import { ArchitectPortfolio } from "@/features/architect/components/ArchitectPortfolio";
 import { profileLoader } from "./Profile.loader";
+import {
+  profileStructuredData,
+  SITE_URL,
+} from "@/features/buildings/utils/structuredData";
 
 export { profileLoader as loader } from "./Profile.loader";
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const { username } = useParams<{ username?: string }>();
+  const revalidator = useRevalidator();
+
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return (
+      <AppLayout showBack title="Profile not found" showLogo={false}>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+            Profile not found
+          </h1>
+          <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+            We couldn&apos;t find a profile for
+            {username ? (
+              <>
+                {" "}
+                <span className="font-mono text-text-primary">{username}</span>
+              </>
+            ) : (
+              " this URL"
+            )}
+            . The user may have changed their username or the account may no
+            longer be available.
+          </p>
+          <Button asChild size="lg" variant="default" className="min-w-[200px]">
+            <Link to="/">Back to home</Link>
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout showBack title="Error" showLogo={false}>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+          Something went wrong
+        </h1>
+        <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+          An unexpected error occurred while loading this profile. You can try
+          again or return home.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button
+            type="button"
+            size="lg"
+            variant="default"
+            className="min-w-[200px]"
+            onClick={() => revalidator.revalidate()}
+            disabled={revalidator.state === "loading"}
+          >
+            Try again
+          </Button>
+          <Button asChild size="lg" variant="outline" className="min-w-[200px]">
+            <Link to="/">Back to home</Link>
+          </Button>
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
 
 // --- Types ---
 interface Profile {
@@ -117,14 +188,15 @@ export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
 
   const { profile } = data as { profile: Profile | null };
   if (!profile?.username) {
-    return [{ title: "Plano" }];
+    const fallback = usernameFromParams ?? "Profile";
+    return [{ title: `${fallback} | Plano` }];
   }
 
   const username = profile.username;
   const title = `${username} (@${username}) | Plano`;
   const description =
     profile.bio || `Check out ${username}'s reviews on Plano.`;
-  const canonical = `https://plano.app/profile/${username}`;
+  const canonical = `${SITE_URL}/profile/${username}`;
 
   return [
     { title },
@@ -136,6 +208,13 @@ export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
     { tagName: "link", rel: "canonical", href: canonical },
+    {
+      "script:ld+json": profileStructuredData({
+        username,
+        avatar_url: profile.avatar_url,
+        bio: profile.bio,
+      }),
+    },
   ];
 };
 
