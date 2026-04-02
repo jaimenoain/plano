@@ -1,4 +1,10 @@
 {
   "framework": "react-router",
-  "regions": ["lhr1"]
+  "regions": ["lhr1"],
+  "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap"
+    }
+  ]
 }

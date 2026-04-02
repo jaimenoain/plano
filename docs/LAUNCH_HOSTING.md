@@ -26,9 +26,11 @@ Suggested matchers (tune for your platform):
 
 ## Sitemap routing (`sitemap`)
 
-Proxy **`GET /sitemap.xml`** to:
+Production serves **`/sitemap.xml`** via a Vercel rewrite in [`vercel.json`](../vercel.json): requests to `/sitemap.xml` are proxied to the Supabase Edge Function:
 
 `https://<project-ref>.supabase.co/functions/v1/sitemap`
+
+(`<project-ref>` for Plano is `lnqxtomyucnnrgeapnzt`, matching the rewrite destination in `vercel.json`.)
 
 ## `robots.txt`
 
