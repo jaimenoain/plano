@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Map as MapIcon, List as ListIcon } from "lucide-react";
+import { Map as MapIcon, List as ListIcon, Loader2 } from "lucide-react";
+import { ClientOnly } from "@/components/common/ClientOnly";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { Bounds } from "@/utils/map";
@@ -15,6 +16,19 @@ import { DiscoverySearchInput, Suggestion } from "@/features/search/components/D
 import { useArchitectSearch } from "@/features/search/hooks/useArchitectSearch";
 
 const SIDEBAR_EXPANDED_OFFSET = 208; // Approx 13rem
+
+/** SSR/hydration skeleton: matches PlanoMap outer shell (`h-full w-full bg-surface-default`) to avoid layout shift. */
+function MapLoadingPlaceholder() {
+  return (
+    <div
+      className="relative z-0 flex h-full w-full items-center justify-center overflow-hidden bg-surface-default"
+      aria-busy="true"
+      aria-label="Loading map"
+    >
+      <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
+    </div>
+  );
+}
 
 function SearchPageContent() {
   const { state, isMobile } = useSidebar();
@@ -154,7 +168,9 @@ function SearchPageContent() {
             marginLeft: isMobile ? 0 : 400 + (isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0)
           }}
         >
-           <PlanoMap showEmptyMessage={true} />
+          <ClientOnly fallback={<MapLoadingPlaceholder />}>
+            <PlanoMap showEmptyMessage={true} />
+          </ClientOnly>
         </div>
 
         {/* Mobile Toggle Button */}

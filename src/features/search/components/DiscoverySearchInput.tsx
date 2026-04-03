@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Bounds } from "@/utils/map";
+import { ClientOnly } from "@/components/common/ClientOnly";
 
 export interface Suggestion {
   place_id: string;
@@ -34,7 +35,25 @@ interface DiscoverySearchInputProps {
   onPlaceDetails?: (details: google.maps.GeocoderResult) => void;
 }
 
-export function DiscoverySearchInput({
+/** Non-interactive shell for SSR and pre-hydration: matches the idle `!scriptLoaded` input visually. */
+function StaticSearchFallback({
+  value,
+  placeholder = "Search...",
+  className,
+}: Pick<DiscoverySearchInputProps, "value" | "placeholder" | "className">) {
+  return (
+    <Input
+      readOnly
+      aria-readonly="true"
+      tabIndex={-1}
+      value={value}
+      placeholder={placeholder}
+      className={cn("h-12", className)}
+    />
+  );
+}
+
+function DiscoverySearchInputInner({
   value,
   onSearchChange,
   onLocationSelect,
@@ -223,5 +242,21 @@ export function DiscoverySearchInput({
         )}
       </Command>
     </div>
+  );
+}
+
+export function DiscoverySearchInput(props: DiscoverySearchInputProps) {
+  return (
+    <ClientOnly
+      fallback={
+        <StaticSearchFallback
+          value={props.value}
+          placeholder={props.placeholder}
+          className={props.className}
+        />
+      }
+    >
+      <DiscoverySearchInputInner {...props} />
+    </ClientOnly>
   );
 }

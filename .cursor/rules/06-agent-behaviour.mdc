@@ -170,7 +170,7 @@ Keep it accurate. This file is the only persistent memory between sessions.
 
 ## 10. Plan Execution — No Unnecessary Pauses
 
-When executing a multi-step plan, complete all steps sequentially and autonomously without stopping between them.
+When executing the steps of a single task or plan, complete all steps sequentially and autonomously without stopping between them.
 
 **Only pause mid-plan when:**
 - A hard blocker is encountered that prevents continuing (missing dependency, failed build, ambiguous requirement).

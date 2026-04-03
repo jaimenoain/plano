@@ -10,7 +10,7 @@ alwaysApply: true
 Every feature task from Phase 2 onwards is a **Vertical Slice** — a single, cohesive implementation that delivers complete, end-to-end business value touching all layers:
 
 ```
-Database (schema + RLS) → App (TanStack Query + Supabase client + Zod) → UI (routes + components)
+Database (schema + RLS) → Backend (server actions / API) → Frontend (UI + state)
 ```
 
 Building "the DB layer" as one task and "the UI" as a separate disconnected task is **FORBIDDEN**. The only exception is Phase 1 (Walking Skeleton), which is structural setup only.
@@ -26,7 +26,7 @@ A Vertical Slice that is too thick will fail. If a single feature requires any o
 ### Correct Thin Slice split pattern
 
 ```
-Slice 1 — The Core:     Schema + Supabase-backed mutation/query + minimal UI (prove data saves)
+Slice 1 — The Core:     Schema + basic server action + minimal UI (prove data saves)
 Slice 2 — The Polish:   Advanced UI + 3rd-party integration + edge case states
 ```
 
@@ -40,23 +40,23 @@ Every phase MUST contain these tasks in this order:
 Before building anything new, review `.ai-status.md` (`KNOWN_ISSUES`) and the current codebase. Resolve any critical blocking issues. Log non-blocking issues without fixing them.
 
 ### [MANUAL TASK — SECRETS] — if the phase involves new 3rd-party integrations
-Provide step-by-step instructions for configuring secrets. Reference the **hosting platform** for Vite env vars, Supabase Dashboard for Vault entries. Consolidate ALL secrets for the phase into a single manual block placed before any Cursor tasks.
+Provide step-by-step instructions for configuring secrets. Reference the Vercel Dashboard for env vars, Supabase Dashboard for Vault entries. Consolidate ALL secrets for the phase into a single manual block placed before any Cursor tasks.
 
 **Secrets placement decision:**
-- Consumed by Vite build / client → hosting platform environment variables (and local `.env`, not committed)
-- Consumed by Supabase Edge Functions or pg functions → Supabase Vault (+ hosting/CI secrets if needed)
+- Consumed by Next.js / Vercel → Vercel Environment Variables
+- Consumed by Supabase Edge Functions or pg functions → Supabase Vault (+ Vercel)
 - Never in `.ai-status.md`, never in chat, never committed to the repo
 
 ### Task X.97 — Autonomous Build & Integrity Check
 Before handing off to the user, Cursor MUST autonomously run:
-- `npm run build`
-- `npm run typecheck`
-- `npm run lint`
+- `turbo run build`
+- `turbo run typecheck`
+- `turbo run lint`
 
 Fix all failures before proceeding. Never ask the user to run these commands.
 
 ### Task X.98 — User Acceptance Testing (Manual)
-Provide a bulleted test plan. Instruct the user to test on the deployed preview/production URL (or localhost). If tests fail, the user asks Cursor for fixes.
+Provide a bulleted test plan. Instruct the user to test on the live Vercel deployment (or localhost if not yet deployed). If tests fail, the user asks Cursor for fixes.
 
 ### Task X.99 — Phase Review & Spec Sync
 
@@ -74,15 +74,6 @@ Cursor performs a full documentation sync before closing the phase:
 
 4. **`.ai-status.md`:** Mark the phase as complete. Update `CURRENT_ARCHITECTURE_SNAPSHOT` to reflect the full post-phase state.
 
-## Cursor Batch Grouping
-
-After defining all slices in a phase, annotate which consecutive Cursor-only tasks can be submitted as a single queue (no manual checkpoint between them). Label these `CURSOR BATCH 1`, `CURSOR BATCH 2`, etc.
-
-Rules:
-- Any `[MANUAL TASK]` breaks a batch — it cannot be inside a Cursor batch.
-- Deferrable migration application steps do NOT break a batch. Annotate them `[DEFERRABLE]` and batch the migration application into a single manual checkpoint immediately before Task X.98.
-- Do not split tasks just to create more batches. If two tasks can run sequentially in Cursor with no manual intervention, they belong in the same batch.
-
 ## Per-Task Requirements
 
 Every implementation task MUST contain:
@@ -93,25 +84,16 @@ Cursor writes a timestamped SQL file to `supabase/migrations/`. Lists all tables
 **Data & Security Layer:**
 Explicitly list all RLS access patterns. Apply the full RLS checklist from `01-database.mdc`. Default Deny. Predicate Distinction. Sub-select auth form. Tenant isolation check for all tenant-scoped tables.
 
-**App / logic layer:**
-TanStack Query queries and mutations, Supabase client calls, and Zod-validated payloads. Typed results at boundaries; `invalidateQueries` (or equivalent cache updates) after successful writes where needed.
+**Backend/Logic Layer:**
+Specific Server Actions or API routes required. All validated with Zod. All returning typed result objects.
 
 **Frontend/UI Layer:**
-Must be fully self-contained — Cursor must be able to implement the UI from this task block alone without relying on external spec files. Inline the following directly in the task:
-- Exact component tree (parent → children, file paths)
-- All discrete UI states: `idle`, `loading`, `pending`, `error`, `empty`, `success`
-- All props and data bindings: which query or mutation feeds which prop
-- All interaction handlers
+Read and apply the design system before building any UI. The task description provides the goal and scope boundaries — the design system files provide the implementation detail:
 
-For visual styling, reference `@docs/DESIGN_TOKENS.md` and `@tailwind.config.ts` as context
-files. All color, spacing, typography, and radius values MUST come from the token definitions
-in those files — never invented inline. If a required token is missing, flag it as a design
-gap rather than substituting an arbitrary value.
-
-All UI structure must be inlined explicitly in the task prompt. If `@docs/DATA_CONTRACT.md` is directly
-referenceable in the Cursor context window, use `@docs/DATA_CONTRACT.md` for DTO shapes
-rather than duplicating them inline — but never assume Cursor has access to documents not
-explicitly referenced in the prompt.
+- Read `docs/DESIGN_TOKENS.md` for all colour, spacing, typography, radius, and shadow values. Read `docs/COMPONENT_SPEC.md` for token assembly rules on named component types. All visual values MUST come from these files — never invented inline. If a required token is missing, flag it as a design gap rather than substituting an arbitrary value.
+- Read `docs/DATA_CONTRACT.md` for DTO shapes and field names relevant to the task. Do not duplicate DTO definitions inline when the contract is accessible.
+- Implement all discrete UI states: `idle`, `loading`, `pending`, `error`, `empty`, `success`. Derive component structure, props, and data bindings from the contract and the codebase — not from inlined specifications in the task.
+- Use your engineering judgment on component composition, layout structure, and interaction patterns. The task defines *what* to build; the design system and codebase define *how* it should look and behave.
 
 **Active Memory Update:**
 Every task MUST end with an instruction to:
@@ -120,7 +102,7 @@ Every task MUST end with an instruction to:
    - A new table or column
    - A renamed or retyped field
    - A new or modified DTO
-   - A new Supabase Edge Function, RPC, or materially changed client access pattern documented in the contract
+   - A new API route or changed route signature
 
    Do not defer this to Task X.99. Task X.99 is a completeness check, not the primary sync mechanism. A contract that lags behind the implementation by multiple tasks causes downstream prompts to be generated against a stale schema, producing hallucinated field names and broken type bindings.
 
@@ -129,9 +111,11 @@ A specific, verifiable outcome — not "feature is implemented."
 
 ## Zero-Knowledge Prompt Rule
 
-Each Cursor prompt runs in a stateless context. It has no memory of previous prompts. The only shared state between prompts is the codebase itself and the `.cursor/rules/` directory.
+Cursor has no memory of previous prompts or tasks. The only shared state between tasks is the codebase itself, the spec documents, and the `.cursor/rules/` directory.
 
-Write every prompt as if it is the only prompt Cursor will ever see. Re-declare all feature-specific requirements, DTO shapes, and UI states directly in the prompt, but DO NOT re-declare universal architectural constraints that are already enforced by the `.mdc` rule files. Never reference "as discussed earlier" or "from the previous task."
+Never assume context from a previous task. Never reference "as discussed earlier" or "from the previous task." Instead, read the relevant spec files fresh: `docs/DATA_CONTRACT.md` for schemas and DTOs, `docs/DESIGN_TOKENS.md` and `docs/COMPONENT_SPEC.md` for visual rules, `docs/PRD.md` for business logic. The codebase and these files are your complete context — not prior conversation history.
+
+Do NOT re-declare universal architectural constraints that are already enforced by the `.mdc` rule files.
 
 ## The Production-First Mandate
 
