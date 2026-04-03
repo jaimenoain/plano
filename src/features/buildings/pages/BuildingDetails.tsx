@@ -68,6 +68,19 @@ import {
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
 
+export function HydrateFallback() {
+  return (
+    <AppLayout showBack title="Loading...">
+      <Skeleton className="aspect-[21/9] w-full rounded-sm" />
+      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+        <Skeleton className="h-10 w-2/5 max-w-md" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-11/12" />
+      </div>
+    </AppLayout>
+  );
+}
+
 export function ErrorBoundary() {
   const error = useRouteError();
   const { id, slug } = useParams();

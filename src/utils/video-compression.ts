@@ -1,11 +1,12 @@
-import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+type FFmpegInstance = InstanceType<
+  (typeof import('@ffmpeg/ffmpeg'))['FFmpeg']
+>;
 
 export class VideoCompressionService {
-  private static instance: FFmpeg | null = null;
+  private static instance: FFmpegInstance | null = null;
   private static isLoading = false;
 
-  private static async load() {
+  private static async load(): Promise<FFmpegInstance> {
     if (this.instance) return this.instance;
 
     if (this.isLoading) {
@@ -16,7 +17,11 @@ export class VideoCompressionService {
     }
 
     this.isLoading = true;
-    const ffmpeg = new FFmpeg();
+
+    const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+    const { toBlobURL } = await import('@ffmpeg/util');
+
+    const ffmpeg: InstanceType<typeof FFmpeg> = new FFmpeg();
 
     try {
       // Using the default CDN (unpkg) for ffmpeg-core.
@@ -29,11 +34,14 @@ export class VideoCompressionService {
 
       this.instance = ffmpeg;
     } catch (_error) {
-throw new Error('Video compression engine failed to load. Please try again or check browser compatibility.');
+      throw new Error('Video compression engine failed to load. Please try again or check browser compatibility.');
     } finally {
       this.isLoading = false;
     }
 
+    if (!this.instance) {
+      throw new Error('Video compression engine failed to load. Please try again or check browser compatibility.');
+    }
     return this.instance;
   }
 
@@ -42,6 +50,8 @@ throw new Error('Video compression engine failed to load. Please try again or ch
     onProgress?: (progress: number) => void
   ): Promise<File> {
     const ffmpeg = await this.load();
+    const { fetchFile } = await import('@ffmpeg/util');
+
     const inputName = 'input.mp4';
     const outputName = 'output.mp4';
 

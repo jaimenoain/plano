@@ -9,8 +9,13 @@ export default defineConfig(() => ({
     host: "::",
     port: 8080,
   },
-  // Node ESM cannot resolve `react-map-gl/maplibre` (directory + internal package.json);
-  // bundling the package fixes Vercel serverless crashes (ERR_UNSUPPORTED_DIR_IMPORT).
+  // react-map-gl uses the `react-map-gl/maplibre` subpath export, which Node's ESM
+  // resolver cannot treat as a package entry (ERR_UNSUPPORTED_DIR_IMPORT). Bundling
+  // the package via noExternal fixes SSR on Vercel. The package is safe to load in
+  // Node as long as no map component actually renders on the server — each surface
+  // must use an isClient guard, <ClientOnly>, or an auth/loader gate that prevents
+  // the map tree from rendering during SSR. Do not remove noExternal without first
+  // converting all map imports to dynamic client-only imports.
   ssr: {
     noExternal: ["react-map-gl"],
   },

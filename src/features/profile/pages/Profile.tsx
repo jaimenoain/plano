@@ -38,6 +38,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +79,27 @@ import {
 } from "@/features/buildings/utils/structuredData";
 
 export { profileLoader as loader } from "./Profile.loader";
+
+export function HydrateFallback() {
+  return (
+    <AppLayout title="Profile" showLogo={false} showBack>
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="max-w-6xl mx-auto flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
+          <Skeleton className="h-20 w-20 shrink-0 rounded-full" />
+          <div className="flex-1 w-full space-y-4 text-center sm:text-left">
+            <Skeleton className="h-8 w-48 mx-auto sm:mx-0" />
+            <div className="flex flex-wrap justify-center sm:justify-start gap-x-6 gap-y-2">
+              <Skeleton className="h-6 w-14" />
+              <Skeleton className="h-6 w-14" />
+              <Skeleton className="h-6 w-14" />
+              <Skeleton className="h-6 w-14" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();

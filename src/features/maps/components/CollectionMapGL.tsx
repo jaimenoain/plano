@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router';
 import MapGL, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
 import maplibregl, { type GeolocateControl as MaplibreGeolocateControl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Layers, Maximize2, Minimize2 } from "lucide-react";
+import { Layers, Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { useURLMapState } from '@/features/maps/hooks/useURLMapState';
 import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { MapErrorBoundary } from './MapErrorBoundary';
@@ -76,6 +76,11 @@ function CollectionMapGLContent({
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasFittedBounds, setHasFittedBounds] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const geolocateControlRef = useRef<MaplibreGeolocateControl | null>(null);
 
@@ -202,6 +207,18 @@ function CollectionMapGLContent({
 
   const handleRemove = onRemoveItem;
 
+  if (!isClient) {
+    return (
+      <div className="relative h-full w-full overflow-hidden bg-surface-default">
+        <div
+          className="flex h-full min-h-[240px] w-full items-center justify-center bg-surface-muted"
+          aria-hidden
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
+        </div>
+      </div>
+    );
+  }
 
   const mapContent = (
     <div className={`relative h-full w-full overflow-hidden bg-surface-default ${isExpanded ? "fixed inset-0 z-[9999]" : ""}`}>

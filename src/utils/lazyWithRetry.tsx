@@ -21,12 +21,17 @@ export const lazyWithRetry = <T extends ComponentType<unknown>>(
         err.message?.includes('error loading dynamically imported module');
 
       if (isChunkLoadError) {
-        const storageKey = 'last-force-refresh-timestamp';
+        // SSR: lazy factories run on the server; `window` is undefined — rethrow (no reload path).
+        if (typeof window === "undefined") {
+          throw error;
+        }
+
+        const storageKey = "last-force-refresh-timestamp";
         const now = Date.now();
         const lastRefresh = window.sessionStorage.getItem(storageKey);
 
         // If we haven't refreshed recently (within 10 seconds), try refreshing
-        if (!lastRefresh || (now - parseInt(lastRefresh, 10)) > 10000) {
+        if (!lastRefresh || now - parseInt(lastRefresh, 10) > 10000) {
           window.sessionStorage.setItem(storageKey, now.toString());
           window.location.reload();
 

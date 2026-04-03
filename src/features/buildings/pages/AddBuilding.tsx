@@ -111,6 +111,11 @@ export default function AddBuilding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [mapsLoaded, setMapsLoaded] = useState(false);
+  const [isMapClient, setIsMapClient] = useState(false);
+
+  useEffect(() => {
+    setIsMapClient(true);
+  }, []);
 
   // Handle name param for pre-filling
   useEffect(() => {
@@ -597,118 +602,126 @@ toast.error("Location search failed. Please click on the map to set the location
 
         {/* Map Area */}
         <div className="h-[600px] rounded-xl overflow-hidden border shadow-sm relative bg-surface-muted">
-          <MapGL
-            {...viewState}
-            onMove={evt => setViewState(evt.viewState)}
-            onClick={handleMapClick}
-            mapLib={maplibregl}
-            style={{ width: "100%", height: "100%" }}
-            mapStyle={isSatellite ? SATELLITE_MAP_STYLE : DEFAULT_MAP_STYLE}
-            cursor="crosshair"
-          >
-            <NavigationControl position="top-right" />
-
-            {/* User Pin */}
-            {markerPosition && (
-              <Marker
-                longitude={markerPosition.lng}
-                latitude={markerPosition.lat}
-                anchor="bottom"
-                draggable
-                onDragEnd={(e) => {
-                    const { lat, lng } = e.lngLat;
-                    setMarkerPosition({ lat, lng });
-                    // Trigger reverse geocode for dragged pin
-                    getGeocode({ location: { lat, lng } }).then(results => {
-                        if (results && results.length > 0) {
-                            setSelectedAddress(results[0].formatted_address);
-                            const details = extractLocationDetails(results[0]);
-                            setExtractedLocation(details);
-                        }
-                    });
-                }}
+          {!isMapClient ? (
+            <div className="flex h-full w-full items-center justify-center" aria-hidden>
+              <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
+            </div>
+          ) : (
+            <>
+              <MapGL
+                {...viewState}
+                onMove={evt => setViewState(evt.viewState)}
+                onClick={handleMapClick}
+                mapLib={maplibregl}
+                style={{ width: "100%", height: "100%" }}
+                mapStyle={isSatellite ? SATELLITE_MAP_STYLE : DEFAULT_MAP_STYLE}
+                cursor="crosshair"
               >
-                <div className="flex flex-col items-center">
-                    {locationPrecision === 'approximate' ? (
-                        <div className="w-6 h-6 rounded-full bg-brand-primary border-2 border-surface-default drop-shadow-md transition-transform" />
-                    ) : (
-                        <MapPin
-                            className="h-8 w-8 text-brand-primary fill-brand-primary drop-shadow-md transition-colors"
-                        />
-                    )}
-                    <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
-                </div>
-              </Marker>
-            )}
+                <NavigationControl position="top-right" />
 
-            {/* Duplicates */}
-            {duplicates.map((building) => {
-              const status = userBuildingsMap?.get(building.id);
-              const pinColor = status === 'visited' ? 'bg-green-500' : status === 'pending' ? 'bg-yellow-500' : 'bg-blue-500';
-              const label = status === 'visited' ? 'V' : status === 'pending' ? 'P' : 'B';
+                {/* User Pin */}
+                {markerPosition && (
+                  <Marker
+                    longitude={markerPosition.lng}
+                    latitude={markerPosition.lat}
+                    anchor="bottom"
+                    draggable
+                    onDragEnd={(e) => {
+                        const { lat, lng } = e.lngLat;
+                        setMarkerPosition({ lat, lng });
+                        // Trigger reverse geocode for dragged pin
+                        getGeocode({ location: { lat, lng } }).then(results => {
+                            if (results && results.length > 0) {
+                                setSelectedAddress(results[0].formatted_address);
+                                const details = extractLocationDetails(results[0]);
+                                setExtractedLocation(details);
+                            }
+                        });
+                    }}
+                  >
+                    <div className="flex flex-col items-center">
+                        {locationPrecision === 'approximate' ? (
+                            <div className="w-6 h-6 rounded-full bg-brand-primary border-2 border-surface-default drop-shadow-md transition-transform" />
+                        ) : (
+                            <MapPin
+                                className="h-8 w-8 text-brand-primary fill-brand-primary drop-shadow-md transition-colors"
+                            />
+                        )}
+                        <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
+                    </div>
+                  </Marker>
+                )}
 
-              return (
-              <Marker
-                key={building.id}
-                longitude={building.location_lng}
-                latitude={building.location_lat}
-                anchor="bottom"
-                onClick={(e) => {
-                    e.originalEvent.stopPropagation();
-                    navigate(`/building/${building.id}`);
-                }}
-                className="cursor-pointer hover:z-10"
-              >
-                 <div className="group relative flex flex-col items-center">
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap">
-                        <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg">
-                            {building.name} {status && `(${status})`}
+                {/* Duplicates */}
+                {duplicates.map((building) => {
+                  const status = userBuildingsMap?.get(building.id);
+                  const pinColor = status === 'visited' ? 'bg-green-500' : status === 'pending' ? 'bg-yellow-500' : 'bg-blue-500';
+                  const label = status === 'visited' ? 'V' : status === 'pending' ? 'P' : 'B';
+
+                  return (
+                  <Marker
+                    key={building.id}
+                    longitude={building.location_lng}
+                    latitude={building.location_lat}
+                    anchor="bottom"
+                    onClick={(e) => {
+                        e.originalEvent.stopPropagation();
+                        navigate(`/building/${building.id}`);
+                    }}
+                    className="cursor-pointer hover:z-10"
+                  >
+                     <div className="group relative flex flex-col items-center">
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap">
+                            <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg">
+                                {building.name} {status && `(${status})`}
+                            </div>
+                            <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-foreground"></div>
                         </div>
-                        <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-foreground"></div>
-                    </div>
 
-                    <div className={`w-6 h-6 rounded-full ${pinColor} border-2 border-white shadow-none flex items-center justify-center text-white text-[10px] font-bold`}>
-                        {label}
-                    </div>
+                        <div className={`w-6 h-6 rounded-full ${pinColor} border-2 border-white shadow-none flex items-center justify-center text-white text-[10px] font-bold`}>
+                            {label}
+                        </div>
+                     </div>
+                  </Marker>
+                )})}
+              </MapGL>
+
+              {/* Overlay Legend or Status */}
+              <div className="absolute top-4 left-4 bg-surface-default/95 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-xs space-y-1">
+                 <div className="flex items-center gap-2">
+                     {locationPrecision === 'approximate' ? (
+                         <div className="w-3 h-3 rounded-full bg-brand-primary border border-surface-default" />
+                     ) : (
+                         <MapPin className="h-3 w-3 text-brand-primary fill-brand-primary" />
+                     )}
+                     <span>Selected Location</span>
                  </div>
-              </Marker>
-            )})}
-          </MapGL>
-
-          {/* Overlay Legend or Status */}
-          <div className="absolute top-4 left-4 bg-surface-default/95 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-xs space-y-1">
-             <div className="flex items-center gap-2">
-                 {locationPrecision === 'approximate' ? (
-                     <div className="w-3 h-3 rounded-full bg-brand-primary border border-surface-default" />
-                 ) : (
-                     <MapPin className="h-3 w-3 text-brand-primary fill-brand-primary" />
+                 <div className="flex items-center gap-2">
+                     <div className="w-3 h-3 rounded-full bg-blue-500 border border-white"></div>
+                     <span>Existing Building</span>
+                 </div>
+                 {checkingDuplicates && (
+                     <div className="flex items-center gap-2 text-text-secondary pt-1 border-t mt-1">
+                         <Loader2 className="h-3 w-3 animate-spin" />
+                         <span>Checking nearby...</span>
+                     </div>
                  )}
-                 <span>Selected Location</span>
-             </div>
-             <div className="flex items-center gap-2">
-                 <div className="w-3 h-3 rounded-full bg-blue-500 border border-white"></div>
-                 <span>Existing Building</span>
-             </div>
-             {checkingDuplicates && (
-                 <div className="flex items-center gap-2 text-text-secondary pt-1 border-t mt-1">
-                     <Loader2 className="h-3 w-3 animate-spin" />
-                     <span>Checking nearby...</span>
-                 </div>
-             )}
-          </div>
+              </div>
 
-          <div className="absolute bottom-4 left-4 z-10">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsSatellite(!isSatellite)}
-              className="bg-surface-default/90 backdrop-blur shadow-sm hover:bg-surface-muted"
-            >
-              <Layers className="h-4 w-4 mr-2" />
-              {isSatellite ? "Map" : "Satellite"}
-            </Button>
-          </div>
+              <div className="absolute bottom-4 left-4 z-10">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsSatellite(!isSatellite)}
+                  className="bg-surface-default/90 backdrop-blur shadow-sm hover:bg-surface-muted"
+                >
+                  <Layers className="h-4 w-4 mr-2" />
+                  {isSatellite ? "Map" : "Satellite"}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

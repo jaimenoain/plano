@@ -31,6 +31,36 @@ import {
 
 export { architectLoader as loader } from "./ArchitectDetails.loader";
 
+export function HydrateFallback() {
+  return (
+    <AppLayout showBack>
+      <div className="px-4 py-6 md:px-6 max-w-7xl mx-auto space-y-8">
+        <Skeleton className="h-10 w-1/2 max-w-xs" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <Skeleton className="aspect-[4/3] w-full rounded-none" />
+              <div className="p-4 space-y-2">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <Skeleton className="aspect-[4/3] w-full rounded-none" />
+              <div className="p-4 space-y-2">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
+
 export function ErrorBoundary() {
   const error = useRouteError();
   const { id } = useParams<{ id: string }>();

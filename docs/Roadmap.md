@@ -22,7 +22,7 @@ for the widespread `react-map-gl` import graph.
 
 ---
 
-### [ ] P1-1 — Guard `@ffmpeg/ffmpeg` against SSR import
+### [x] P1-1 — Guard `@ffmpeg/ffmpeg` against SSR import
 
 **What this is:** `src/utils/video-compression.ts` starts with a top-level
 `import { FFmpeg } from '@ffmpeg/ffmpeg'`. That module is imported by
@@ -66,7 +66,7 @@ server bundle unnecessarily and is a maintenance hazard.
 
 ---
 
-### [ ] P1-2 — Add `HydrateFallback` to the three server-loader routes
+### [x] P1-2 — Add `HydrateFallback` to the three server-loader routes
 
 **What this is:** `Profile.tsx`, `BuildingDetails.tsx`, and `ArchitectDetails.tsx`
 each export a `loader` but no `HydrateFallback`. In RR7, the `HydrateFallback` is
@@ -113,7 +113,7 @@ after Phase 0 is confirmed stable.
 
 ---
 
-### [ ] P1-3 — Add `ErrorBoundary` export to `root.tsx`
+### [x] P1-3 — Add `ErrorBoundary` export to `root.tsx`
 
 **What this is:** `root.tsx` wraps the entire tree in `<AppErrorBoundary>` (a
 `react-error-boundary` class wrapper), which catches React render errors. However,
@@ -165,7 +165,7 @@ are edits to the same area of the route files.
 
 ---
 
-### [ ] P1-4 — Audit map components in SSR-rendered routes and document the `noExternal` strategy
+### [x] P1-4 — Audit map components in SSR-rendered routes and document the `noExternal` strategy
 
 **What this is:** There are **15+ files** across the codebase that import from
 `react-map-gl/maplibre`. Converting them all to dynamic/lazy imports is not in
@@ -236,9 +236,11 @@ needed.
 **Dependencies:** P0-1 (uses `ClientOnly` if new guards are needed). Can be done
 in parallel with P1-2 and P1-3.
 
+**P1-4 decision — `react-map-gl` and SSR:** Keep `ssr.noExternal: ['react-map-gl']` in `vite.config.ts` so Node can resolve the `maplibre` subpath (see comment above `noExternal` in that file). Every map surface must avoid mounting MapLibre during SSR: `SearchPage` wraps `PlanoMap` in `<ClientOnly>` (covers `MapMarkers` and `ItineraryRoutes`); `BuildingLocationMap` already uses `isClient`; **P1-4** adds `isClient` to **`CollectionMapGL`** (collection map route) and the map column on **`AddBuilding`** (public SSR). **`BuildingLocationPicker`:** EditBuilding only renders the form after client `useEffect` fetch (`loading` gate), so the map is not in the SSR tree; admin `Buildings` usage stays behind auth and is out of scope for guards this phase. Admin-only **`BuildingMap`**, **`PhotoHeatmapZone`**, **`NoPhotosMapZone`:** noted; no guard added this phase.
+
 ---
 
-### [ ] P1-5 — Extend the server environment shim
+### [x] P1-5 — Extend the server environment shim
 
 **What this is:** `src/entry-server-localstorage-shim.ts` currently polyfills only
 `localStorage`. This was enough to unblock Phase 0, but any dependency that reads
@@ -292,6 +294,8 @@ the existing shim. This task runs a targeted audit and adds any missing polyfill
   complete — no additional globals found at server scope."
 
 **Dependencies:** None — independent investigation and fix task.
+
+**P1-5 audit — server globals:** Grep for `sessionStorage`, `matchMedia`, `IntersectionObserver`, `ResizeObserver`, `BroadcastChannel`, and `navigator` in `src/`. Unsafe SSR path: **`lazyWithRetry`** catch block used `window.sessionStorage` / `reload` when a lazy import fails (e.g. chunk error) while the factory still runs on the server — guarded with `typeof window === "undefined"` → rethrow. All other hits are in `useEffect`/event handlers or already guarded (`isMobileDevice`, try/catch in map code). **`logDiagnosticError`** now uses `typeof navigator` / `typeof window` before reading UA/URL so a mistaken server call cannot throw. **No new shims** in `entry-server-localstorage-shim.ts` (localStorage-only shim remains sufficient).
 
 ---
 

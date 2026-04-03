@@ -43,8 +43,10 @@ export async function logDiagnosticError(
           error_type: errorType,
           message: message,
           stack_trace: stackTrace,
-          user_agent: navigator.userAgent,
-          url: window.location.href
+          user_agent:
+            typeof navigator !== "undefined" ? navigator.userAgent : null,
+          url:
+            typeof window !== "undefined" ? window.location.href : null,
       }
     });
 
