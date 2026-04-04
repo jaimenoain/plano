@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
 import { cn } from "@/lib/utils";
-
 interface AppLayoutProps {
   children: ReactNode;
   title?: string;
@@ -18,7 +17,6 @@ interface AppLayoutProps {
   showHeader?: boolean;
   fullWidth?: boolean;
 }
-
 export function AppLayout({ 
   children, 
   title, 
@@ -35,23 +33,26 @@ export function AppLayout({
   fullWidth = false
 }: AppLayoutProps) {
   void fullWidth;
-
   return (
     <>
+      {/* Header is mobile-only — desktop navigation lives in AppSidebar */}
       {showHeader && (
-        <Header
-          title={title}
-          variant={variant}
-          searchBar={searchBar}
-          leftAction={leftAction}
-          rightAction={rightAction}
-          showLogo={showLogo}
-          showBack={showBack}
-          action={headerAction}
-        />
+        <div className="md:hidden">
+          <Header
+            title={title}
+            variant={variant}
+            searchBar={searchBar}
+            leftAction={leftAction}
+            rightAction={rightAction}
+            showLogo={showLogo}
+            showBack={showBack}
+            action={headerAction}
+          />
+        </div>
       )}
       <div className={cn(
-        showHeader && "pt-16",
+        // Only add top padding on mobile where the fixed header lives
+        showHeader && "pt-16 md:pt-0",
         "w-full min-w-0",
         isFullScreen && "h-full flex flex-col flex-1",
         showNav && "pb-20 md:pb-0"
