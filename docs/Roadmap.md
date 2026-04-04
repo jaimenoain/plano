@@ -299,7 +299,7 @@ the existing shim. This task runs a targeted audit and adds any missing polyfill
 
 ---
 
-### [ ] P1-6 — Phase 1 QA report
+### [x] P1-6 — Phase 1 QA report
 
 **What this is:** A structured verification pass after all P1-1 through P1-5 are
 merged. Produces the report to paste into the planning chat before Phase 2
@@ -308,8 +308,7 @@ merged. Produces the report to paste into the planning chat before Phase 2
 **Concrete actions:**
 
 - **Build gate:** `npm run build` — exits 0. Paste the final line.
-- **Type gate:** `npm run typecheck` — exits 0. List any new type errors introduced
-  this phase.
+- **Type gate:** `npm run typecheck` — exits 0. List any new type errors introduced this phase.
 - **Test gate:** `npm run test` — passes (≥ 322). List any new failures.
 - **Lint gate:** `npm run lint` — exits 0. Note any new warnings.
 - **`@ffmpeg` verification (P1-1):** Navigate to `/building/:id/review` in dev.
@@ -372,5 +371,7 @@ merged. Produces the report to paste into the planning chat before Phase 2
 **Anything unexpected that needs discussion before Phase 2 (migration cleanup):**
 [Free text — leave blank if none]
 ```
+
+**P1-6 sign-off:** Automated gates passed (`npm run typecheck`, `npm run build`, `npm run test` ≥322, `npm run lint`). **HydrateFallback (P1-2) manual check (Slow 3G, hard navigation):** loading window showed **blank**, not the route skeletons — treat as follow-up UX (Suspense / framework hydration timing), not a blocker for closing Phase 1 per operator sign-off.
 
 **Dependencies:** P1-1 through P1-5 all merged.
