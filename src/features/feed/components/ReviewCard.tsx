@@ -12,6 +12,7 @@ import { getBuildingUrl } from "@/utils/url";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { SuggestedContentBlock } from "./SuggestedContentBlock";
 import { FollowButton } from "@/features/profile/components/FollowButton";
+import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
 
 function getCityFromAddress(address: string | null | undefined): string {
   if (!address) return "";
@@ -55,7 +56,7 @@ interface ReviewCardProps {
 export function ReviewCard({ 
   entry,
   onLike,
-  onImageLike: _onImageLike,
+  onImageLike,
   onComment, 
   isDetailView = false, 
   hideUser = false,
@@ -69,15 +70,13 @@ export function ReviewCard({
   const { toast } = useToast();
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
-   
-  // FIXED: Safety Check - Prevent crash if building data is missing
+
   if (!entry.building) return null;
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return;
     if (!entry.building?.id) return;
-
     setIsSaving(true);
     try {
       const { error } = await supabase.from("user_buildings").upsert({
@@ -86,12 +85,10 @@ export function ReviewCard({
           status: 'pending',
           edited_at: new Date().toISOString()
       }, { onConflict: 'user_id, building_id' });
-
       if (error) throw error;
-
       toast({ title: "Saved to your list" });
     } catch (_error) {
-toast({ variant: "destructive", title: "Failed to save" });
+      toast({ variant: "destructive", title: "Failed to save" });
     } finally {
       setIsSaving(false);
     }
@@ -103,7 +100,6 @@ toast({ variant: "destructive", title: "Failed to save" });
     if (isDetailView) return;
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('.video-container')) return;
-
     if (entry.building.id) {
         navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
     } else {
@@ -124,58 +120,37 @@ toast({ variant: "destructive", title: "Failed to save" });
     }
   };
 
-  // Safe user access
   const username = entry.user?.username || "Unknown User";
   const avatarUrl = entry.user?.avatar_url || undefined;
   const isVerifiedArchitect = entry.user?.is_verified_architect || false;
   const isArchitectOfBuilding = entry.user?.is_architect_of_building || false;
   const userInitial = username.charAt(0).toUpperCase();
 
-  // Title Logic
   const mainTitle = entry.building.name;
-
-  // Metadata Logic: Architect • Year, fallback to Address
   const architects = entry.building.architects;
   const year_completed = entry.building.year_completed;
-
-  // Helper to extract names from potentially mixed type
   const architectNames = architects
     ? architects.map((a) => (typeof a === "string" ? a : a.name)).filter(Boolean)
     : [];
 
   let subTitle = entry.building.address;
-
   if (variant === 'compact') {
       const parts: (string | number)[] = [];
-      if (architectNames.length > 0) {
-          parts.push(architectNames.slice(0, 2).join(", "));
-      }
-      if (year_completed) {
-          parts.push(year_completed);
-      }
-
-      if (parts.length > 0) {
-          subTitle = parts.join(" • ");
-      } else {
-          subTitle = entry.building.address;
-      }
+      if (architectNames.length > 0) parts.push(architectNames.slice(0, 2).join(", "));
+      if (year_completed) parts.push(year_completed);
+      subTitle = parts.length > 0 ? parts.join(" • ") : entry.building.address;
   } else {
       const architectsList = architectNames.slice(0, 2).join(", ");
-
       if (architectsList) {
           subTitle = architectsList;
-          if (year_completed) {
-              subTitle += ` • ${year_completed}`;
-          }
+          if (year_completed) subTitle += ` • ${year_completed}`;
       } else if (year_completed) {
           subTitle = `${year_completed}`;
-          if (entry.building.address) {
-              subTitle += ` • ${entry.building.address}`;
-          }
+          if (entry.building.address) subTitle += ` • ${entry.building.address}`;
       }
   }
 
-  // Construct Mixed Media List
+  // ── Media preparation ──────────────────────────────────────────────────────
   interface MediaItem {
     id: string;
     type: 'video' | 'image';
@@ -184,8 +159,6 @@ toast({ variant: "destructive", title: "Failed to save" });
   }
 
   const mediaItems: MediaItem[] = [];
-  
-  // 1. Video (First priority)
   if (entry.video_url) {
       mediaItems.push({
           id: `video-${entry.id}`,
@@ -194,24 +167,30 @@ toast({ variant: "destructive", title: "Failed to save" });
           poster: (entry.images && entry.images.length > 0) ? entry.images[0].url : posterUrl || undefined
       });
   }
-
-  // 2. Images
   if (entry.images && entry.images.length > 0) {
       entry.images.forEach(img => {
-          mediaItems.push({
-              id: img.id,
-              type: 'image',
-              url: img.url
-          });
+          mediaItems.push({ id: img.id, type: 'image', url: img.url });
       });
   }
 
+  // Use carousel when there are multiple user-uploaded images and no video
+  const imageOnlyItems = mediaItems.filter(m => m.type === 'image');
+  const hasVideo = mediaItems.some(m => m.type === 'video');
+  const useCarousel = !hasVideo && imageOnlyItems.length > 1;
+
+  // Carousel-compatible images (ReviewImage shape expected by FeedPhotoCarousel)
+  const carouselImages = (entry.images || []).map(img => ({
+    id: img.id,
+    url: img.url,
+    likes_count: img.likes_count,
+    is_liked: img.is_liked,
+  }));
+
   const hasMedia = !hideBuildingInfo && (mediaItems.length > 0 || !!posterUrl);
   const isCompact = variant === 'compact';
-
   const flexDirection = imagePosition === 'right' ? 'md:flex-row' : 'md:flex-row-reverse';
 
-  // --- 1. DETAIL VIEW (List View) ---
+  // ── Detail view ────────────────────────────────────────────────────────────
   if (isDetailView) {
     return (
       <article className="px-4 py-4 hairline">
@@ -224,9 +203,7 @@ toast({ variant: "destructive", title: "Failed to save" });
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-text-primary truncate">
-                {username}
-              </p>
+              <p className="text-sm font-medium text-text-primary truncate">{username}</p>
               <p className="text-xs text-text-secondary">
                 {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace("about ", "")}
               </p>
@@ -234,12 +211,11 @@ toast({ variant: "destructive", title: "Failed to save" });
           </div>
         ) : (
           <div className="mb-3">
-             <p className="text-xs text-text-secondary">
-               {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace("about ", "")}
-             </p>
+            <p className="text-xs text-text-secondary">
+              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace("about ", "")}
+            </p>
           </div>
         )}
-
         <div className="flex gap-3">
           {!hideBuildingInfo && (
             mediaItems.length > 0 && mediaItems[0].type === 'video' ? (
@@ -271,53 +247,32 @@ toast({ variant: "destructive", title: "Failed to save" });
               </div>
             )
           )}
-
           <div className="flex-1 min-w-0">
             {!hideBuildingInfo && (
               <div className="mb-2">
-                <h3 className="text-base font-semibold text-text-primary truncate">
-                  {mainTitle}
-                </h3>
-                {subTitle && (
-                  <p className="text-xs text-text-secondary truncate">{subTitle}</p>
-                )}
+                <h3 className="text-base font-semibold text-text-primary truncate">{mainTitle}</h3>
+                {subTitle && <p className="text-xs text-text-secondary truncate">{subTitle}</p>}
               </div>
             )}
-             
             {entry.rating && entry.rating > 0 && (
               <div className="flex items-center gap-1 mb-2">
-                 <RatingCircles rating={entry.rating} />
+                <RatingCircles rating={entry.rating} />
               </div>
             )}
-
             {entry.content && (
-              <p className="text-sm text-text-secondary mb-2 break-words">
-                {entry.content}
-              </p>
+              <p className="text-sm text-text-secondary mb-2 break-words">{entry.content}</p>
             )}
           </div>
         </div>
-
         <div className="flex items-center gap-6 mt-3 pt-2">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onLike?.(entry.id);
-              window.dispatchEvent(new CustomEvent('pwa-interaction'));
-            }}
+            onClick={(e) => { e.stopPropagation(); onLike?.(entry.id); window.dispatchEvent(new CustomEvent('pwa-interaction')); }}
             className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors"
           >
-            <Heart
-              className={`h-4 w-4 ${
-                entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
-              }`}
-            />
+            <Heart className={`h-4 w-4 ${entry.is_liked ? "fill-brand-primary text-brand-primary" : ""}`} />
             <span className="text-xs">{entry.likes_count}</span>
           </button>
-          <button
-            onClick={handleCommentClick}
-            className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors"
-          >
+          <button onClick={handleCommentClick} className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors">
             <MessageCircle className="h-4 w-4" />
             <span className="text-xs">{entry.comments_count}</span>
           </button>
@@ -326,60 +281,9 @@ toast({ variant: "destructive", title: "Failed to save" });
     );
   }
 
-  // Define components for render
+  // ── Non-detail view ────────────────────────────────────────────────────────
   const city = getCityFromAddress(entry.building.address);
   const action = entry.status === 'pending' ? 'saved' : 'visited';
-
-  const Header = !hideUser && (
-        <div className={`p-3 md:p-4 flex items-center gap-3 border-b border-border-default/40`}>
-          <Avatar className="h-10 w-10 border border-border-default/50 shrink-0">
-            <AvatarImage src={avatarUrl} />
-            <AvatarFallback>{userInitial}</AvatarFallback>
-          </Avatar>
-          <div className="text-sm md:text-base text-text-primary leading-snug min-w-0 max-w-full flex-1 break-words">
-            <div className="flex flex-col gap-0.5 md:block min-w-0">
-                {/* Row 1: User + Follow */}
-                <div className="flex items-center gap-2 min-w-0 md:inline md:gap-0">
-                    <span className="font-semibold truncate md:text-clip min-w-0">{username}</span>
-                    {isVerifiedArchitect && (
-                      <div className="inline-flex items-center text-text-primary ml-1 align-middle" title="Verified Architect">
-                        <BadgeCheck className="w-4 h-4" />
-                      </div>
-                    )}
-                    {entry.is_suggested && entry.user_id && (
-                      <span className="md:inline-block md:ml-2 min-w-0">
-                          <FollowButton
-                            userId={entry.user_id}
-                            hideIfFollowing
-                            className="h-5 text-[10px] px-2"
-                          />
-                      </span>
-                    )}
-                </div>
-
-                {/* Row 2: Action + Building */}
-                <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
-                    <span className="text-text-secondary/60 font-normal md:ml-1 shrink-0"> {action} </span>
-                    <span className="font-semibold text-text-primary truncate block md:inline md:w-auto md:max-w-none min-w-0 flex-1 md:flex-none">{mainTitle}</span>
-                    {city && <span className="text-text-secondary hidden md:inline"> in {city}</span>}
-                </div>
-
-                {/* Row 3: Rating + Time */}
-                <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
-                    {entry.rating && entry.rating > 0 && (
-                         <span className="inline-flex items-center gap-0.5 align-middle md:ml-2 shrink-0">
-                             <RatingCircles rating={entry.rating} />
-                         </span>
-                    )}
-                    <span className="text-text-secondary text-xs md:ml-2 shrink min-w-0 truncate">
-                      {!(entry.rating && entry.rating > 0) && <span className="hidden md:inline">• </span>}
-                      {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-                    </span>
-                </div>
-            </div>
-          </div>
-        </div>
-  );
 
   const renderMediaItem = (item: MediaItem, className?: string, overlay?: React.ReactNode) => (
     <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden ${className || ''}`}>
@@ -410,88 +314,75 @@ toast({ variant: "destructive", title: "Failed to save" });
           )
         )}
       </div>
-      {overlay && (
-        <div className="absolute inset-0 z-10">
-          {overlay}
-        </div>
-      )}
+      {overlay && <div className="absolute inset-0 z-10">{overlay}</div>}
     </div>
   );
 
-  const renderMediaGrid = () => {
-    if (mediaItems.length === 0) return null;
-
-    if (mediaItems.length === 1) {
-      return renderMediaItem(mediaItems[0]);
-    }
-
-    if (mediaItems.length === 2) {
-      return (
-        <div className="w-full h-full grid grid-cols-2 gap-0.5">
-          {mediaItems.map(item => renderMediaItem(item))}
-        </div>
-      );
-    }
-
-    if (mediaItems.length === 3) {
-      return (
-        <div className="w-full h-full flex flex-col gap-0.5">
-          <div className="flex-1 min-h-0">
-            {renderMediaItem(mediaItems[0])}
+  const Header = !hideUser && (
+    <div className="p-3 md:p-4 flex items-center gap-3 border-b border-border-default/40">
+      <Avatar className="h-10 w-10 border border-border-default/50 shrink-0">
+        <AvatarImage src={avatarUrl} />
+        <AvatarFallback>{userInitial}</AvatarFallback>
+      </Avatar>
+      <div className="text-sm md:text-base text-text-primary leading-snug min-w-0 max-w-full flex-1 break-words">
+        <div className="flex flex-col gap-0.5 md:block min-w-0">
+          <div className="flex items-center gap-2 min-w-0 md:inline md:gap-0">
+            <span className="font-semibold truncate md:text-clip min-w-0">{username}</span>
+            {isVerifiedArchitect && (
+              <div className="inline-flex items-center text-text-primary ml-1 align-middle" title="Verified Architect">
+                <BadgeCheck className="w-4 h-4" />
+              </div>
+            )}
+            {entry.is_suggested && entry.user_id && (
+              <span className="md:inline-block md:ml-2 min-w-0">
+                <FollowButton userId={entry.user_id} hideIfFollowing className="h-5 text-[10px] px-2" />
+              </span>
+            )}
           </div>
-          <div className="flex-1 min-h-0 grid grid-cols-2 gap-0.5">
-            {mediaItems.slice(1, 3).map(item => renderMediaItem(item))}
+          <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
+            <span className="text-text-secondary/60 font-normal md:ml-1 shrink-0"> {action} </span>
+            <span className="font-semibold text-text-primary truncate block md:inline md:w-auto md:max-w-none min-w-0 flex-1 md:flex-none">{mainTitle}</span>
+            {city && <span className="text-text-secondary hidden md:inline"> in {city}</span>}
           </div>
-        </div>
-      );
-    }
-
-    // 4+ Items
-    return (
-      <div className="w-full h-full flex flex-col gap-0.5 rounded-sm overflow-hidden">
-        <div className="flex-[2] min-h-0">
-          {renderMediaItem(mediaItems[0])}
-        </div>
-        <div className="flex-1 min-h-0 grid grid-cols-3 md:grid-cols-4 gap-0.5">
-          {mediaItems.slice(1, 5).map((item, index) => {
-            // Hide the 4th thumbnail (index 3) on mobile to maintain strictly 3 columns
-            const isFourthThumbnail = index === 3;
-
-            let overlay: React.ReactNode = undefined;
-            if (index === 2 && mediaItems.length > 4) {
-              // 3rd thumbnail on mobile
-              overlay = (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-text-inverse font-semibold text-lg pointer-events-none md:hidden">
-                  +{mediaItems.length - 4}
-                </div>
-              );
-            } else if (index === 3 && mediaItems.length > 5) {
-              // 4th thumbnail on desktop
-              overlay = (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm hidden md:flex items-center justify-center text-text-inverse font-semibold text-lg pointer-events-none">
-                  +{mediaItems.length - 5}
-                </div>
-              );
-            }
-
-            return renderMediaItem(item, isFourthThumbnail ? 'hidden md:block' : undefined, overlay);
-          })}
+          <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
+            {entry.rating && entry.rating > 0 && (
+              <span className="inline-flex items-center gap-0.5 align-middle md:ml-2 shrink-0">
+                <RatingCircles rating={entry.rating} />
+              </span>
+            )}
+            <span className="text-text-secondary text-xs md:ml-2 shrink min-w-0 truncate">
+              {!(entry.rating && entry.rating > 0) && <span className="hidden md:inline">• </span>}
+              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
+            </span>
+          </div>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
+  // ── Media block: carousel for multi-image, existing logic otherwise ────────
   const Media = !hideBuildingInfo && (
     mediaItems.length > 0 ? (
-      <div
-        className={`relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
-          !isCompact ? "md:w-[280px] md:shrink-0 aspect-[4/3] md:aspect-auto" : "aspect-[4/3]"
-        }`}
-      >
-        <div className="absolute inset-0 w-full h-full">
-          {renderMediaGrid()}
+      useCarousel ? (
+        // Multi-image, no video: full-bleed carousel
+        <FeedPhotoCarousel
+          images={carouselImages}
+          reviewId={entry.id}
+          onImageLike={onImageLike}
+          className="w-full"
+        />
+      ) : (
+        // Single image or video: keep the side-panel layout
+        <div
+          className={`relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
+            !isCompact ? "md:w-[280px] md:shrink-0 aspect-[4/3] md:aspect-auto" : "aspect-[4/3]"
+          }`}
+        >
+          <div className="absolute inset-0 w-full h-full">
+            {renderMediaItem(mediaItems[0])}
+          </div>
         </div>
-      </div>
+      )
     ) : posterUrl && showCommunityImages ? (
       <div
         className={`relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden aspect-[4/3] ${
@@ -510,42 +401,28 @@ toast({ variant: "destructive", title: "Failed to save" });
   );
 
   const ContentBody = isCompact ? (
-      <>
-        {/* Building Name (Context) - Only if NOT hidden */}
-        {!hideBuildingInfo && (
-          <div className="mb-1">
-            <h3 className="text-base font-bold text-text-primary line-clamp-2 leading-tight">
-              {mainTitle}
-            </h3>
-            {subTitle && (
-              <p className="text-xs text-text-secondary line-clamp-1 truncate">
-                {subTitle}
-              </p>
-            )}
-
-            {hideUser && entry.rating && entry.rating > 0 && (
-                <div className="flex items-center gap-1 mt-1">
-                    <RatingCircles rating={entry.rating} />
-                </div>
-            )}
-          </div>
-        )}
-
-        {/* Review Text: Only show if exists */}
-        {entry.content && (
-           <p className="text-sm font-medium text-text-primary line-clamp-3 leading-relaxed">
-             "{entry.content}"
-           </p>
-        )}
-      </>
+    <>
+      {!hideBuildingInfo && (
+        <div className="mb-1">
+          <h3 className="text-base font-bold text-text-primary line-clamp-2 leading-tight">{mainTitle}</h3>
+          {subTitle && <p className="text-xs text-text-secondary line-clamp-1 truncate">{subTitle}</p>}
+          {hideUser && entry.rating && entry.rating > 0 && (
+            <div className="flex items-center gap-1 mt-1"><RatingCircles rating={entry.rating} /></div>
+          )}
+        </div>
+      )}
+      {entry.content && (
+        <p className="text-sm font-medium text-text-primary line-clamp-3 leading-relaxed">
+          "{entry.content}"
+        </p>
+      )}
+    </>
   ) : (
-      <>
-        {entry.content && (
-           <p className="text-sm text-text-primary mb-2 leading-relaxed break-words">
-             {entry.content}
-           </p>
-        )}
-      </>
+    <>
+      {entry.content && (
+        <p className="text-sm text-text-primary mb-2 leading-relaxed break-words">{entry.content}</p>
+      )}
+    </>
   );
 
   const Footer = (
@@ -555,21 +432,12 @@ toast({ variant: "destructive", title: "Failed to save" });
       }`}
     >
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onLike?.(entry.id);
-          window.dispatchEvent(new CustomEvent("pwa-interaction"));
-        }}
+        onClick={(e) => { e.stopPropagation(); onLike?.(entry.id); window.dispatchEvent(new CustomEvent("pwa-interaction")); }}
         className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like"
       >
-        <Heart
-          className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${
-            entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
-          }`}
-        />
+        <Heart className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${entry.is_liked ? "fill-brand-primary text-brand-primary" : ""}`} />
         <span className="text-xs font-medium">{entry.likes_count}</span>
       </button>
-
       <button
         onClick={handleCommentClick}
         className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment"
@@ -577,13 +445,10 @@ toast({ variant: "destructive", title: "Failed to save" });
         <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
         <span className="text-xs font-medium">{entry.comments_count}</span>
       </button>
-
       {!isCompact && (
         <button
           onClick={handleSave}
-          className={`flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors ml-auto ${
-            isSaving ? "opacity-50" : ""
-          }`}
+          className={`flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors ml-auto ${isSaving ? "opacity-50" : ""}`}
           disabled={isSaving}
         >
           <Bookmark className="h-4 w-4" />
@@ -593,16 +458,14 @@ toast({ variant: "destructive", title: "Failed to save" });
     </div>
   );
 
+  // When carousel is used, the card is always full-width vertical (not side-by-side)
+  const cardLayoutClass = !isCompact && hasMedia && !useCarousel ? `${flexDirection} md:min-h-[220px]` : "";
+
   return (
-    <SuggestedContentBlock
-      isSuggested={entry.is_suggested}
-      suggestionReason={entry.suggestion_reason}
-    >
+    <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
       <article
         onClick={handleCardClick}
-        className={`group/card relative flex flex-col ${
-          !isCompact && hasMedia ? `${flexDirection} md:min-h-[220px]` : ""
-        } h-full bg-surface-card border border-border-default rounded-sm overflow-hidden shadow-none hover:border-border-strong transition-colors cursor-pointer min-w-0 w-full max-w-full ${
+        className={`group/card relative flex flex-col ${cardLayoutClass} h-full bg-surface-card border border-border-default rounded-sm overflow-hidden shadow-none hover:border-border-strong transition-colors cursor-pointer min-w-0 w-full max-w-full ${
           isArchitectOfBuilding ? "border-l-2 border-l-brand-primary" : ""
         }`}
       >
