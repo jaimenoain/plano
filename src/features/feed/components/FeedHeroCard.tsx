@@ -11,6 +11,9 @@ import { useState } from "react";
 import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
+
+// ─── Single-image subcomponent (unchanged) ────────────────────────────────────
 
 interface FeedHeroSingleImageProps {
   image: { id: string; url: string };
@@ -70,6 +73,8 @@ function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
   );
 }
 
+// ─── Card props ───────────────────────────────────────────────────────────────
+
 interface FeedHeroCardProps {
   entry: FeedReview;
   onLike?: (reviewId: string) => void;
@@ -77,11 +82,13 @@ interface FeedHeroCardProps {
   onComment?: (reviewId: string) => void;
 }
 
+// ─── Main card ────────────────────────────────────────────────────────────────
+
 export function FeedHeroCard({
   entry,
   onLike,
-  onImageLike: _onImageLike, // kept for prop compatibility
-  onComment
+  onImageLike,
+  onComment,
 }: FeedHeroCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -96,16 +103,15 @@ export function FeedHeroCard({
 
   const viewerStatus = entry.building ? statuses[entry.building.id] : undefined;
   const viewerRating = entry.building ? ratings[entry.building.id] : undefined;
-
-  const isSaved = viewerStatus === 'pending';
-  const isVisited = viewerStatus === 'visited';
-  const isIgnored = viewerStatus === 'ignored';
+  const isSaved = viewerStatus === "pending";
+  const isVisited = viewerStatus === "visited";
+  const isIgnored = viewerStatus === "ignored";
 
   const navigateToReview = () => {
     if (!entry.building?.id) return;
     const url = entry.building.slug
-        ? `/building/${entry.building.id}/${entry.building.slug}/review`
-        : `/building/${entry.building.id}/review`;
+      ? `/building/${entry.building.id}/${entry.building.slug}/review`
+      : `/building/${entry.building.id}/review`;
     navigate(url);
   };
 
@@ -113,28 +119,20 @@ export function FeedHeroCard({
     e.stopPropagation();
     if (!user) return;
     if (!entry.building?.id) return;
-
-    if (isIgnored) {
-        navigateToReview();
-        return;
-    }
-
+    if (isIgnored) { navigateToReview(); return; }
     setIsSaving(true);
     try {
-        const { error } = await supabase.from("user_buildings").upsert({
-            user_id: user.id,
-            building_id: entry.building.id,
-            status: 'ignored',
-            edited_at: new Date().toISOString()
-        }, { onConflict: 'user_id, building_id' });
-
-        if (error) throw error;
-        toast({ title: "Building hidden" });
-        queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch (_error) {
-toast({ variant: "destructive", title: "Failed to update status" });
+      const { error } = await supabase.from("user_buildings").upsert(
+        { user_id: user.id, building_id: entry.building.id, status: "ignored", edited_at: new Date().toISOString() },
+        { onConflict: "user_id, building_id" }
+      );
+      if (error) throw error;
+      toast({ title: "Building hidden" });
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+    } catch {
+      toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
   };
 
@@ -142,30 +140,21 @@ toast({ variant: "destructive", title: "Failed to update status" });
     e.stopPropagation();
     if (!user) return;
     if (!entry.building?.id) return;
-
-    if (isSaved) {
-        navigateToReview();
-        return;
-    }
-
+    if (isSaved) { navigateToReview(); return; }
     setIsSaving(true);
     try {
-        // Save (upsert pending)
-        const { error } = await supabase.from("user_buildings").upsert({
-            user_id: user.id,
-            building_id: entry.building.id,
-            status: 'pending',
-            edited_at: new Date().toISOString()
-        }, { onConflict: 'user_id, building_id' });
-
-        if (error) throw error;
-        toast({ title: "Saved to your list" });
-        queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-        setShowRatingInput(true);
-    } catch (_error) {
-toast({ variant: "destructive", title: "Failed to update status" });
+      const { error } = await supabase.from("user_buildings").upsert(
+        { user_id: user.id, building_id: entry.building.id, status: "pending", edited_at: new Date().toISOString() },
+        { onConflict: "user_id, building_id" }
+      );
+      if (error) throw error;
+      toast({ title: "Saved to your list" });
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+      setShowRatingInput(true);
+    } catch {
+      toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
   };
 
@@ -173,72 +162,58 @@ toast({ variant: "destructive", title: "Failed to update status" });
     e.stopPropagation();
     if (!user) return;
     if (!entry.building?.id) return;
-
-    if (isVisited) {
-        navigateToReview();
-        return;
-    }
-
+    if (isVisited) { navigateToReview(); return; }
     setIsSaving(true);
     try {
-        // Mark Visited (upsert visited)
-        const { error } = await supabase.from("user_buildings").upsert({
-            user_id: user.id,
-            building_id: entry.building.id,
-            status: 'visited',
-            edited_at: new Date().toISOString()
-        }, { onConflict: 'user_id, building_id' });
-
-        if (error) throw error;
-        toast({ title: "Marked as visited" });
-        queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-        setShowRatingInput(true);
-    } catch (_error) {
-toast({ variant: "destructive", title: "Failed to update status" });
+      const { error } = await supabase.from("user_buildings").upsert(
+        { user_id: user.id, building_id: entry.building.id, status: "visited", edited_at: new Date().toISOString() },
+        { onConflict: "user_id, building_id" }
+      );
+      if (error) throw error;
+      toast({ title: "Marked as visited" });
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+      setShowRatingInput(true);
+    } catch {
+      toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
   };
 
   const handleRate = async (newRating: number) => {
     if (!user || !entry.building?.id) return;
-
     try {
-        const { error } = await supabase.from("user_buildings").upsert({
-            user_id: user.id,
-            building_id: entry.building.id,
-            rating: newRating,
-            edited_at: new Date().toISOString()
-        }, { onConflict: 'user_id, building_id' });
-
-        if (error) throw error;
-        queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch (_err) {
-toast({ variant: "destructive", title: "Failed to update rating" });
+      const { error } = await supabase.from("user_buildings").upsert(
+        { user_id: user.id, building_id: entry.building.id, rating: newRating, edited_at: new Date().toISOString() },
+        { onConflict: "user_id, building_id" }
+      );
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+    } catch {
+      toast({ variant: "destructive", title: "Failed to update rating" });
     }
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest('button')) return;
-
+    if (target.closest("button")) return;
     if (entry.building.id) {
-        navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
     } else {
-        navigate(`/review/${entry.id}`);
+      navigate(`/review/${entry.id}`);
     }
   };
 
   const handleCommentClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onComment) {
-        onComment(entry.id);
+      onComment(entry.id);
     } else {
-        if (entry.building.id) {
-            navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
-        } else {
-            navigate(`/review/${entry.id}`);
-        }
+      if (entry.building.id) {
+        navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+      } else {
+        navigate(`/review/${entry.id}`);
+      }
     }
   };
 
@@ -246,153 +221,83 @@ toast({ variant: "destructive", title: "Failed to update rating" });
   const avatarUrl = entry.user?.avatar_url || undefined;
   const userInitial = username.charAt(0).toUpperCase();
   const mainTitle = entry.building.name;
-  const city = entry.building.city || entry.building.address?.split(',').pop()?.trim() || "";
+  const city = entry.building.city || entry.building.address?.split(",").pop()?.trim() || "";
 
   const handleImageError = (imageId: string) => {
-    setFailedImages(prev => {
+    setFailedImages((prev) => {
       const next = new Set(prev);
       next.add(imageId);
       return next;
     });
   };
 
-  // Image Grid Logic
-  const images = (entry.images || []).filter(img => !failedImages.has(img.id));
-  const count = images.length;
+  // ── Image rendering ──────────────────────────────────────────────────────────
+  // Single image: use FeedHeroSingleImage (preserves adaptive aspect-ratio logic).
+  // Multiple images: use FeedPhotoCarousel (full-bleed carousel with per-image likes).
+  const allImages = entry.images || [];
+  // For single-image path we still need to track failures to fall back gracefully.
+  const singleImages = allImages.filter((img) => !failedImages.has(img.id));
 
   const renderImages = () => {
-    if (count === 0) return null;
+    if (allImages.length === 0) return null;
 
-    if (count === 1) {
+    // Multi-image: hand off entirely to the carousel (it manages its own error state)
+    if (allImages.length > 1) {
       return (
-        <FeedHeroSingleImage
-          key={images[0].id}
-          image={images[0]}
-          onError={handleImageError}
+        <FeedPhotoCarousel
+          images={allImages}
+          reviewId={entry.id}
+          onImageLike={onImageLike}
+          className="w-full"
         />
       );
     }
 
-    if (count === 2) {
+    // Single image: use existing adaptive-aspect component
+    if (singleImages.length === 1) {
       return (
-        <div className="flex flex-col gap-0.5">
-          {images.map((img) => (
-            <FeedHeroSingleImage
-              key={img.id}
-              image={img}
-              onError={handleImageError}
-            />
-          ))}
-        </div>
-      );
-    }
-
-    if (count >= 3 && count <= 5) {
-      return (
-        <div className="flex flex-col gap-0.5">
-          {/* First Image - Full Width */}
-          <div className="relative w-full aspect-[4/3] min-w-0 overflow-hidden">
-            <img
-              src={images[0].url}
-              onError={() => handleImageError(images[0].id)}
-              className="w-full h-full object-cover max-w-full"
-              alt="Building"
-            />
-          </div>
-          {/* Remaining Images - Side by Side */}
-          <div
-            className={cn(
-              "grid gap-0.5",
-              count === 3 && "grid-cols-2",
-              count === 4 && "grid-cols-3",
-              count === 5 && "grid-cols-2 sm:grid-cols-4"
-            )}
-          >
-            {images.slice(1).map((img) => (
-              <div key={img.id} className="relative w-full aspect-square min-w-0 overflow-hidden">
-                <img
-                  src={img.url}
-                  onError={() => handleImageError(img.id)}
-                  className="w-full h-full object-cover max-w-full"
-                  alt="Building"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (count > 5) {
-      const remaining = count - 5;
-      return (
-        <div className="flex flex-col gap-0.5">
-          {/* First Image - Full Width */}
-          <div className="relative w-full aspect-[4/3] min-w-0 overflow-hidden">
-            <img
-              src={images[0].url}
-              onError={() => handleImageError(images[0].id)}
-              className="w-full h-full object-cover max-w-full"
-              alt="Building"
-            />
-          </div>
-          {/* Row 2: 4 images + box = 5 columns */}
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-0.5">
-            {images.slice(1, 5).map((img) => (
-              <div key={img.id} className="relative w-full aspect-square min-w-0 overflow-hidden">
-                <img
-                  src={img.url}
-                  onError={() => handleImageError(img.id)}
-                  className="w-full h-full object-cover max-w-full"
-                  alt="Building"
-                />
-              </div>
-            ))}
-            {/* The "More" Box */}
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/review/${entry.id}`);
-              }}
-              className="relative w-full aspect-square bg-surface-muted flex items-center justify-center text-text-secondary font-medium text-sm border-l border-surface-default cursor-pointer hover:bg-surface-muted/80 transition-colors min-w-0 overflow-hidden"
-            >
-              +{remaining}
-            </div>
-          </div>
-        </div>
+        <FeedHeroSingleImage
+          image={singleImages[0]}
+          onError={handleImageError}
+        />
       );
     }
 
     return null;
   };
 
+  // ── Rating control ───────────────────────────────────────────────────────────
   const renderRatingControl = () => {
-     // 3 circles (values 1-3)
-     const options = [1, 2, 3];
-     return (
-         <div className="flex items-center gap-1 mr-2 bg-surface-muted/80 backdrop-blur-sm px-2.5 py-1.5 rounded-sm animate-in fade-in slide-in-from-right-5 duration-200 border border-border-default/50 shadow-none" onClick={(e) => e.stopPropagation()}>
-             {options.map((val) => {
-                 const isFilled = (viewerRating || 0) >= val;
-                 return (
-                     <button
-                        key={val}
-                        onClick={() => handleRate(val)}
-                        className="focus:outline-none transition-transform active:scale-90 hover:scale-110"
-                     >
-                         <Circle
-                            className={`w-3.5 h-3.5 transition-colors ${
-                                isFilled
-                                ? "fill-brand-primary text-brand-primary"
-                                : "text-text-secondary/40 hover:text-brand-primary/70"
-                            }`}
-                         />
-                     </button>
-                 );
-             })}
-         </div>
-     );
+    const options = [1, 2, 3];
+    return (
+      <div
+        className="flex items-center gap-1 mr-2 bg-surface-muted/80 backdrop-blur-sm px-2.5 py-1.5 rounded-sm animate-in fade-in slide-in-from-right-5 duration-200 border border-border-default/50 shadow-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {options.map((val) => {
+          const isFilled = (viewerRating || 0) >= val;
+          return (
+            <button
+              key={val}
+              onClick={() => handleRate(val)}
+              className="focus:outline-none transition-transform active:scale-90 hover:scale-110"
+            >
+              <Circle
+                className={cn(
+                  "w-3.5 h-3.5 transition-colors",
+                  isFilled
+                    ? "fill-brand-primary text-brand-primary"
+                    : "text-text-secondary/40 hover:text-brand-primary/70"
+                )}
+              />
+            </button>
+          );
+        })}
+      </div>
+    );
   };
 
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <article
       onClick={handleCardClick}
@@ -415,7 +320,6 @@ toast({ variant: "destructive", title: "Failed to update rating" });
             </div>
             {city && <span className="text-xs text-text-secondary">{city}</span>}
           </div>
-
           {/* Building name + rating */}
           <div className="mt-2 flex items-center gap-2">
             <span className="text-left text-xl font-semibold text-text-primary hover:underline truncate">
@@ -426,11 +330,12 @@ toast({ variant: "destructive", title: "Failed to update rating" });
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Circle
                     key={i}
-                    className={`w-3 h-3 ${
+                    className={cn(
+                      "w-3 h-3",
                       i < entry.rating!
                         ? "fill-brand-primary text-brand-primary"
                         : "fill-transparent text-text-secondary/30"
-                    }`}
+                    )}
                   />
                 ))}
               </span>
@@ -439,16 +344,16 @@ toast({ variant: "destructive", title: "Failed to update rating" });
         </div>
       </div>
 
-      {/* Content Body (Review Text) */}
+      {/* Review text */}
       {entry.content && (
         <div className="px-6 pt-4 pb-2 flex flex-col gap-3 max-w-full overflow-hidden">
-           <p className="text-sm text-text-primary leading-relaxed break-words w-full">
-             {entry.content}
-           </p>
+          <p className="text-sm text-text-primary leading-relaxed break-words w-full">
+            {entry.content}
+          </p>
         </div>
       )}
 
-      {/* Hero Images (UGC) - Full Bleed */}
+      {/* Images — full bleed */}
       <div className="w-full bg-surface-muted overflow-hidden min-w-0">
         {renderImages()}
       </div>
@@ -458,20 +363,17 @@ toast({ variant: "destructive", title: "Failed to update rating" });
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onLike?.(entry.id);
-            }}
+            onClick={(e) => { e.stopPropagation(); onLike?.(entry.id); }}
             className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
             title={`${entry.likes_count} likes`}
           >
             <Heart
-              className={`h-4 w-4 ${
+              className={cn(
+                "h-4 w-4",
                 entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
-              }`}
+              )}
             />
           </button>
-
           <button
             type="button"
             onClick={handleCommentClick}
@@ -484,7 +386,6 @@ toast({ variant: "destructive", title: "Failed to update rating" });
 
         <div className="flex items-center gap-2">
           {(isSaved || isVisited || showRatingInput) && renderRatingControl()}
-
           {(!viewerStatus || isVisited) && (
             <button
               type="button"
@@ -493,10 +394,9 @@ toast({ variant: "destructive", title: "Failed to update rating" });
               disabled={isSaving}
               title={isVisited ? "Mark as not visited" : "Mark as visited"}
             >
-              <Check className={`h-4 w-4 ${isVisited ? "stroke-[3px] text-brand-primary" : ""}`} />
+              <Check className={cn("h-4 w-4", isVisited ? "stroke-[3px] text-brand-primary" : "")} />
             </button>
           )}
-
           {(!viewerStatus || isSaved) && (
             <button
               type="button"
@@ -505,10 +405,11 @@ toast({ variant: "destructive", title: "Failed to update rating" });
               disabled={isSaving}
               title={isSaved ? "Saved to your list" : "Save to your list"}
             >
-              <Bookmark className={`h-4 w-4 ${isSaved ? "fill-brand-primary text-brand-primary" : ""}`} />
+              <Bookmark
+                className={cn("h-4 w-4", isSaved ? "fill-brand-primary text-brand-primary" : "")}
+              />
             </button>
           )}
-
           {(!viewerStatus || isIgnored) && (
             <button
               type="button"
