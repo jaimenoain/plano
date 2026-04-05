@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router";
+import React, { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { EmptyFeed } from "../components/EmptyFeed";
+import { ColdStartFeed } from "../components/ColdStartFeed";
+import { FeedCollectionCard } from "../components/FeedCollectionCard";
 import { PeopleYouMayKnow } from "../components/PeopleYouMayKnow";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
@@ -9,18 +10,22 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { MetaHead } from "@/components/common/MetaHead";
-import { aggregateFeed } from "@/lib/feed-aggregation";
+import {
+  aggregateFeed,
+  type AggregatedFeedItem,
+  type RowCell,
+} from "@/lib/feed-aggregation";
 import { FeedHeroCard } from "../components/FeedHeroCard";
 import { FeedClusterCard } from "../components/FeedClusterCard";
 import { FeedCompactCard } from "../components/FeedCompactCard";
+import { FeedActivityCard } from "../components/FeedActivityCard";
+import { SectionDivider } from "../components/SectionDivider";
 import { LandingHero } from "../components/landing/LandingHero";
 import { LandingMarquee } from "../components/landing/LandingMarquee";
 import { LandingFeatureGrid } from "../components/landing/LandingFeatureGrid";
 import { useFeed } from "../hooks/useFeed";
 import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
-import { AllCaughtUpDivider } from "../components/AllCaughtUpDivider";
-import { ExploreTeaserBlock } from "../components/ExploreTeaserBlock";
-import { ReviewCard } from "../components/ReviewCard";
+import { useCollectionsFeed } from "../hooks/useCollectionsFeed";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 
 // --- New Landing Page Component ---
@@ -71,18 +76,10 @@ function Landing() {
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { isMobile: _isMobile } = useSidebar();
-  const [showGroupActivity, setShowGroupActivity] = useState(true);
   const { containerRef: loadMoreRef, isVisible: isLoadMoreVisible } = useIntersectionObserver({
     rootMargin: "200px",
   });
-
-  useEffect(() => {
-    if (location.state?.reviewPosted) {
-      setShowGroupActivity(true);
-    }
-  }, [location.state]);
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -92,34 +89,120 @@ export default function Index() {
     }
   }, [user, authLoading, navigate]);
 
-  // Social Feed
-  const socialFeed = useFeed({ showGroupActivity });
+  const socialFeed = useFeed({ showGroupActivity: true });
+  const collectionsFeed = useCollectionsFeed({ enabled: !!user });
+  const discoveryFeed = useSuggestedFeed({ enabled: !!user });
 
-  // Discovery Feed (Suggested)
-  // Enable fetching only when social feed is exhausted or empty (though EmptyFeed handles empty case)
-  // We want to append discovery content after social content.
-  const shouldFetchDiscovery = !!user && (!socialFeed.hasNextPage && !socialFeed.isLoading);
-  const discoveryFeed = useSuggestedFeed({ enabled: shouldFetchDiscovery });
-
-  // Load More Logic
   useEffect(() => {
-    if (isLoadMoreVisible) {
-      if (socialFeed.hasNextPage && !socialFeed.isFetchingNextPage && !socialFeed.isError) {
-        socialFeed.fetchNextPage();
-      } else if (!socialFeed.hasNextPage && discoveryFeed.hasNextPage && !discoveryFeed.isFetchingNextPage && !discoveryFeed.isError) {
-        discoveryFeed.fetchNextPage();
-      }
+    if (!isLoadMoreVisible) return;
+
+    if (socialFeed.hasNextPage && !socialFeed.isFetchingNextPage && !socialFeed.isError) {
+      void socialFeed.fetchNextPage();
+    } else if (
+      !socialFeed.hasNextPage &&
+      collectionsFeed.hasNextPage &&
+      !collectionsFeed.isFetchingNextPage &&
+      !collectionsFeed.isError
+    ) {
+      void collectionsFeed.fetchNextPage();
+    } else if (
+      !socialFeed.hasNextPage &&
+      !collectionsFeed.hasNextPage &&
+      discoveryFeed.hasNextPage &&
+      !discoveryFeed.isFetchingNextPage &&
+      !discoveryFeed.isError
+    ) {
+      void discoveryFeed.fetchNextPage();
     }
   }, [
     isLoadMoreVisible,
-    socialFeed.hasNextPage, socialFeed.isFetchingNextPage, socialFeed.isError, socialFeed.fetchNextPage,
-    discoveryFeed.hasNextPage, discoveryFeed.isFetchingNextPage, discoveryFeed.isError, discoveryFeed.fetchNextPage
+    socialFeed.hasNextPage,
+    socialFeed.isFetchingNextPage,
+    socialFeed.isError,
+    socialFeed.fetchNextPage,
+    collectionsFeed.hasNextPage,
+    collectionsFeed.isFetchingNextPage,
+    collectionsFeed.isError,
+    collectionsFeed.fetchNextPage,
+    discoveryFeed.hasNextPage,
+    discoveryFeed.isFetchingNextPage,
+    discoveryFeed.isError,
+    discoveryFeed.fetchNextPage,
   ]);
 
   const socialReviews = useMemo(() => socialFeed.data?.pages.flatMap((page) => page) || [], [socialFeed.data]);
   const aggregatedReviews = useMemo(() => aggregateFeed(socialReviews), [socialReviews]);
 
-  const discoveryReviews = useMemo(() => discoveryFeed.data?.pages.flatMap((page) => page) || [], [discoveryFeed.data]);
+  const collectionItems = useMemo(
+    () => collectionsFeed.data?.pages.flatMap((p) => p) || [],
+    [collectionsFeed.data]
+  );
+
+  const discoveryReviews = useMemo(
+    () => discoveryFeed.data?.pages.flatMap((page) => page) || [],
+    [discoveryFeed.data]
+  );
+
+  const loadMoreActive =
+    socialFeed.hasNextPage || collectionsFeed.hasNextPage || discoveryFeed.hasNextPage;
+
+  const renderRowCell = (cell: RowCell) => {
+    if (cell.type === "compact") {
+      return <FeedCompactCard entry={cell.entry} onLike={socialFeed.toggleLike} />;
+    }
+    return (
+      <FeedActivityCard
+        entry={cell.entry}
+        activityStatus={cell.activityStatus}
+        onLike={socialFeed.toggleLike}
+        size="compact"
+      />
+    );
+  };
+
+  const renderSocialCard = (item: AggregatedFeedItem): React.ReactNode => {
+    switch (item.type) {
+      case "hero":
+        return (
+          <FeedHeroCard
+            entry={item.entry}
+            onLike={socialFeed.toggleLike}
+            onImageLike={socialFeed.toggleImageLike}
+          />
+        );
+      case "activity":
+        return (
+          <FeedActivityCard
+            entry={item.entry}
+            activityStatus={item.activityStatus}
+            onLike={socialFeed.toggleLike}
+            size="hero"
+          />
+        );
+      case "compact":
+        return <FeedCompactCard entry={item.entry} onLike={socialFeed.toggleLike} />;
+      case "cluster":
+        return (
+          <FeedClusterCard
+            entries={item.entries}
+            user={item.user}
+            location={item.location}
+            timestamp={item.timestamp}
+          />
+        );
+      case "row":
+        return (
+          <div className="grid grid-cols-2 gap-2.5 w-full">
+            {renderRowCell(item.left)}
+            {renderRowCell(item.right)}
+          </div>
+        );
+      default: {
+        const _exhaustive: never = item;
+        return _exhaustive;
+      }
+    }
+  };
 
   if (authLoading) {
     return (
@@ -135,129 +218,184 @@ export default function Index() {
 
   return (
     <AppLayout variant="home">
-        <MetaHead title="Home" />
-        {socialFeed.isLoading ? (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
-          </div>
-        ) : (
-          <div className="p-4 sm:p-6 lg:p-8 pb-24 mx-auto w-full">
-            {socialReviews.length === 0 ? (
-              <EmptyFeed />
-            ) : (
-              <div className="flex gap-8 items-start max-w-5xl mx-auto">
-                {/* Feed Column */}
-                <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-3">
-                  {/* Social Feed Items */}
-                  {aggregatedReviews.map((item, index) => {
-                    const key = item.type === 'cluster' ? `cluster-${item.entries[0].id}` : item.entry.id;
-
-                    let card: React.ReactNode | null = null;
-                    if (item.type === 'hero') {
-                        card = <FeedHeroCard key={key} entry={item.entry} onLike={socialFeed.toggleLike} onImageLike={socialFeed.toggleImageLike} />;
-                    } else if (item.type === 'compact') {
-                        card = <FeedCompactCard key={key} entry={item.entry} onLike={socialFeed.toggleLike} />;
-                    } else if (item.type === 'cluster') {
-                        card = <FeedClusterCard key={key} entries={item.entries} user={item.user} location={item.location} timestamp={item.timestamp} />;
-                    }
-
-                    return (
-                        <React.Fragment key={key}>
-                            {card}
-                            {/* Interruptor every 10 items */}
-                            {(index + 1) % 10 === 0 && (
-                                <div key={`explore-teaser-${key}-${index}`} className="py-2">
-                                    <WidgetErrorBoundary>
-                                      <ExploreTeaserBlock />
-                                    </WidgetErrorBoundary>
-                                </div>
-                            )}
-                        </React.Fragment>
-                    );
-                  })}
-
-                  {/* Transition to Discovery */}
-                  {!socialFeed.hasNextPage && (
-                      <>
-                        <div className="mt-12 border-t border-border-default pt-8">
-                          <AllCaughtUpDivider />
-                        </div>
-
-                        <div className="py-2">
-                            <WidgetErrorBoundary>
-                              <ExploreTeaserBlock />
-                            </WidgetErrorBoundary>
-                        </div>
-
-                        {/* Discovery Feed Items */}
-                        <WidgetErrorBoundary>
-                        <div className="flex flex-col gap-6 mt-6">
-                            {discoveryReviews.map((post) => (
-                                <ReviewCard
-                                    key={`discovery-${post.id}`}
-                                    entry={post}
-                                    onLike={discoveryFeed.toggleLike}
-                                    onImageLike={discoveryFeed.toggleImageLike}
-                                    showCommunityImages={true}
-                                />
-                            ))}
-                            {/* Loader for initial fetch of discovery feed */}
-                            {discoveryFeed.isLoading && (
-                                <div className="flex items-center justify-center py-8">
-                                    <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
-                                </div>
-                            )}
-                        </div>
-                        </WidgetErrorBoundary>
-                      </>
-                  )}
-
-                  {/* Load More Trigger / Loader */}
-                  {(socialFeed.hasNextPage || discoveryFeed.hasNextPage) && (
-                    <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
-                      {(socialFeed.isFetchingNextPage || discoveryFeed.isFetchingNextPage) ? (
-                        <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
-                      ) : (socialFeed.isError || discoveryFeed.isError) ? (
-                         <Button
-                          variant="ghost"
-                          onClick={() => socialFeed.hasNextPage ? socialFeed.fetchNextPage() : discoveryFeed.fetchNextPage()}
-                          className="text-text-secondary hover:text-text-primary"
-                        >
-                          Error loading more. Click to retry.
-                        </Button>
-                      ) : (
-                         <Button
-                          variant="ghost"
-                          className="text-text-secondary hover:text-text-primary opacity-0"
-                        >
-                          Load More
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Sidebar Column */}
-                <div className="w-72 flex-shrink-0 hidden lg:block sticky top-20">
-                  <div className="space-y-4">
-                    <div className="p-6 border border-border-default rounded-sm bg-surface-card shadow-none">
-                      <h3 className="font-semibold mb-2 text-text-primary">Trending</h3>
-                      <p className="text-sm text-text-secondary">
-                        Discover popular buildings and active discussions in the community.
-                        <br />
-                        <br />
-                        (Coming soon)
-                      </p>
-                    </div>
-                    <WidgetErrorBoundary>
-                      <PeopleYouMayKnow />
-                    </WidgetErrorBoundary>
+      <MetaHead title="Home" />
+      {socialFeed.isLoading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
+        </div>
+      ) : (
+        <div className="p-4 sm:p-6 lg:p-8 pb-24 mx-auto w-full">
+          {socialReviews.length === 0 ? (
+            <div className="flex gap-8 items-start max-w-5xl mx-auto">
+              <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-3">
+                <ColdStartFeed
+                  discoveryReviews={discoveryReviews}
+                  onLike={discoveryFeed.toggleLike}
+                  onImageLike={discoveryFeed.toggleImageLike}
+                  isDiscoveryLoading={discoveryFeed.isLoading}
+                />
+                {loadMoreActive && (
+                  <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
+                    {socialFeed.isFetchingNextPage ||
+                    collectionsFeed.isFetchingNextPage ||
+                    discoveryFeed.isFetchingNextPage ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
+                    ) : socialFeed.isError || collectionsFeed.isError || discoveryFeed.isError ? (
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          if (socialFeed.isError && socialFeed.hasNextPage) {
+                            void socialFeed.fetchNextPage();
+                          } else if (collectionsFeed.isError && collectionsFeed.hasNextPage) {
+                            void collectionsFeed.fetchNextPage();
+                          } else if (discoveryFeed.isError && discoveryFeed.hasNextPage) {
+                            void discoveryFeed.fetchNextPage();
+                          }
+                        }}
+                        className="text-text-secondary hover:text-text-primary"
+                      >
+                        Error loading more. Click to retry.
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" className="text-text-secondary hover:text-text-primary opacity-0">
+                        Load More
+                      </Button>
+                    )}
                   </div>
+                )}
+              </div>
+              <div className="w-72 flex-shrink-0 hidden lg:block sticky top-20">
+                <div className="space-y-4">
+                  <div className="p-6 border border-border-default rounded-sm bg-surface-card shadow-none">
+                    <h3 className="font-semibold mb-2 text-text-primary">Trending</h3>
+                    <p className="text-sm text-text-secondary">
+                      Discover popular buildings and active discussions in the community.
+                      <br />
+                      <br />
+                      (Coming soon)
+                    </p>
+                  </div>
+                  <WidgetErrorBoundary>
+                    <PeopleYouMayKnow />
+                  </WidgetErrorBoundary>
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </AppLayout>
+            </div>
+          ) : (
+            <div className="flex gap-8 items-start max-w-5xl mx-auto">
+              <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-3">
+                {(() => {
+                  const feedNodes: React.ReactNode[] = [];
+                  let collectionCursor = 0;
+                  let discoveryCursor = 0;
+                  let hasShownDivider = false;
+
+                  aggregatedReviews.forEach((item, index) => {
+                    const key =
+                      item.type === "cluster"
+                        ? `cluster-${item.entries[0].id}`
+                        : item.type === "row"
+                          ? `row-${item.left.entry.id}-${item.right.entry.id}`
+                          : item.entry
+                            ? item.entry.id
+                            : `item-${index}`;
+
+                    feedNodes.push(
+                      <React.Fragment key={key}>{renderSocialCard(item)}</React.Fragment>
+                    );
+
+                    const n = index + 1;
+
+                    if (n % 4 === 0 && collectionCursor < collectionItems.length) {
+                      const col = collectionItems[collectionCursor];
+                      collectionCursor += 1;
+                      feedNodes.push(
+                        <WidgetErrorBoundary key={`collection-inject-${col.id}-${n}`}>
+                          <FeedCollectionCard collection={col} />
+                        </WidgetErrorBoundary>
+                      );
+                    }
+
+                    if (n % 8 === 0) {
+                      if (!hasShownDivider) {
+                        hasShownDivider = true;
+                        feedNodes.push(
+                          <SectionDivider
+                            key="feed-section-from-community"
+                            label="From the community"
+                            href="/explore"
+                          />
+                        );
+                      }
+                      if (discoveryCursor < discoveryReviews.length) {
+                        const post = discoveryReviews[discoveryCursor];
+                        discoveryCursor += 1;
+                        feedNodes.push(
+                          <FeedHeroCard
+                            key={`discovery-inject-${post.id}-${n}`}
+                            entry={post}
+                            onLike={discoveryFeed.toggleLike}
+                            onImageLike={discoveryFeed.toggleImageLike}
+                          />
+                        );
+                      }
+                    }
+                  });
+
+                  return feedNodes;
+                })()}
+
+                {loadMoreActive && (
+                  <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
+                    {socialFeed.isFetchingNextPage ||
+                    collectionsFeed.isFetchingNextPage ||
+                    discoveryFeed.isFetchingNextPage ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
+                    ) : socialFeed.isError || collectionsFeed.isError || discoveryFeed.isError ? (
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          if (socialFeed.isError && socialFeed.hasNextPage) {
+                            void socialFeed.fetchNextPage();
+                          } else if (collectionsFeed.isError && collectionsFeed.hasNextPage) {
+                            void collectionsFeed.fetchNextPage();
+                          } else if (discoveryFeed.isError && discoveryFeed.hasNextPage) {
+                            void discoveryFeed.fetchNextPage();
+                          }
+                        }}
+                        className="text-text-secondary hover:text-text-primary"
+                      >
+                        Error loading more. Click to retry.
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" className="text-text-secondary hover:text-text-primary opacity-0">
+                        Load More
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="w-72 flex-shrink-0 hidden lg:block sticky top-20">
+                <div className="space-y-4">
+                  <div className="p-6 border border-border-default rounded-sm bg-surface-card shadow-none">
+                    <h3 className="font-semibold mb-2 text-text-primary">Trending</h3>
+                    <p className="text-sm text-text-secondary">
+                      Discover popular buildings and active discussions in the community.
+                      <br />
+                      <br />
+                      (Coming soon)
+                    </p>
+                  </div>
+                  <WidgetErrorBoundary>
+                    <PeopleYouMayKnow />
+                  </WidgetErrorBoundary>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </AppLayout>
   );
 }

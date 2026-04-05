@@ -1,14 +1,90 @@
 import { FeedReview } from "@/types/feed";
 import { differenceInHours } from "date-fns";
 
+export type RowCell =
+  | { type: "compact"; entry: FeedReview }
+  | {
+      type: "activity";
+      entry: FeedReview;
+      activityStatus: "visited" | "pending";
+    };
+
 export type AggregatedFeedItem =
-  | { type: 'hero'; entry: FeedReview }
-  | { type: 'compact'; entry: FeedReview }
-  | { type: 'cluster'; entries: FeedReview[]; user: FeedReview['user']; location?: string; timestamp: string };
+  | { type: "hero"; entry: FeedReview }
+  | { type: "compact"; entry: FeedReview }
+  | {
+      type: "cluster";
+      entries: FeedReview[];
+      user: FeedReview["user"];
+      location?: string;
+      timestamp: string;
+    }
+  | {
+      type: "activity";
+      entry: FeedReview;
+      activityStatus: "visited" | "pending";
+    }
+  | { type: "row"; left: RowCell; right: RowCell };
 
 const getReviewDate = (review: FeedReview) => {
   return review.edited_at ? new Date(review.edited_at) : new Date(review.created_at);
 };
+
+/** Pairs adjacent `compact+compact` or `activity+activity` into `row` items; never pairs across other types. */
+export function collapseIntoRows(items: AggregatedFeedItem[]): AggregatedFeedItem[] {
+  const out: AggregatedFeedItem[] = [];
+  let i = 0;
+  while (i < items.length) {
+    const cur = items[i];
+
+    if (cur.type === "hero" || cur.type === "cluster" || cur.type === "row") {
+      out.push(cur);
+      i += 1;
+      continue;
+    }
+
+    if (cur.type === "compact") {
+      const next = items[i + 1];
+      if (next?.type === "compact") {
+        out.push({
+          type: "row",
+          left: { type: "compact", entry: cur.entry },
+          right: { type: "compact", entry: next.entry },
+        });
+        i += 2;
+      } else {
+        out.push(cur);
+        i += 1;
+      }
+      continue;
+    }
+
+    if (cur.type === "activity") {
+      const next = items[i + 1];
+      if (next?.type === "activity") {
+        out.push({
+          type: "row",
+          left: {
+            type: "activity",
+            entry: cur.entry,
+            activityStatus: cur.activityStatus,
+          },
+          right: {
+            type: "activity",
+            entry: next.entry,
+            activityStatus: next.activityStatus,
+          },
+        });
+        i += 2;
+      } else {
+        out.push(cur);
+        i += 1;
+      }
+      continue;
+    }
+  }
+  return out;
+}
 
 export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
   const aggregated: AggregatedFeedItem[] = [];
@@ -18,73 +94,74 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
     if (pendingCluster.length === 0) return;
 
     if (pendingCluster.length < 2) {
-      pendingCluster.forEach(entry => {
-        aggregated.push({ type: 'compact', entry });
+      pendingCluster.forEach((entry) => {
+        aggregated.push({ type: "compact", entry });
       });
     } else {
-      // Check for location consistency
-      // We look at the city of the buildings.
-      // If all valid cities are the same, use that city.
-      // If mixed, use undefined.
-
       const cities = new Set(
         pendingCluster
-          .map(r => r.building.city || (r.building.address ? r.building.address.split(',').pop()?.trim() : null))
-          .filter(Boolean)
+          .map((r) =>
+            r.building.city ||
+            (r.building.address ? r.building.address.split(",").pop()?.trim() : null),
+          )
+          .filter(Boolean),
       );
 
       let location: string | undefined = undefined;
       if (cities.size === 1) {
         location = Array.from(cities)[0] as string;
       } else if (cities.size > 1) {
-          // Mixed locations
-          location = undefined;
+        location = undefined;
       } else {
-          // No location data
-          location = undefined;
+        location = undefined;
       }
 
       aggregated.push({
-        type: 'cluster',
+        type: "cluster",
         entries: [...pendingCluster],
         user: pendingCluster[0].user,
         location,
-        timestamp: pendingCluster[0].edited_at || pendingCluster[0].created_at // Use the most recent timestamp (assuming sort desc)
+        timestamp: pendingCluster[0].edited_at || pendingCluster[0].created_at,
       });
     }
     pendingCluster = [];
   };
 
   for (const review of reviews) {
-    // Rule A: Gold Dust Exemption
-    // If user uploaded images, it is NEVER aggregated.
-    // Check if review has images AND they are not just stock images (logic is handled in Index.tsx data mapping,
-    // but here we check review.images array which contains user uploads).
-    const hasUserImages = review.images && review.images.length > 0;
+    // Rule 0 — Activity Exemption (before Gold Dust / clustering)
+    const noContent = !review.content;
+    const noRating = !review.rating;
+    const noImages = !review.images || review.images.length === 0;
+    const activityStatusOk =
+      review.status === "visited" || review.status === "pending";
+    const hasMainImage = !!review.building.main_image_url;
 
-    if (hasUserImages) {
-      // Flush any pending cluster first
+    if (noContent && noRating && noImages && activityStatusOk && hasMainImage) {
       flushCluster();
-      aggregated.push({ type: 'hero', entry: review });
+      aggregated.push({
+        type: "activity",
+        entry: review,
+        activityStatus: review.status === "visited" ? "visited" : "pending",
+      });
       continue;
     }
 
-    // Rule B: Clustering
-    // Check if matches pending cluster
+    const hasUserImages = review.images && review.images.length > 0;
+
+    if (hasUserImages) {
+      flushCluster();
+      aggregated.push({ type: "hero", entry: review });
+      continue;
+    }
+
     if (pendingCluster.length > 0) {
       const lastInCluster = pendingCluster[pendingCluster.length - 1];
 
-      // Check User
-      const sameUser = review.user_id === lastInCluster.user_id; // Using user_id is safer than username
+      const sameUser = review.user_id === lastInCluster.user_id;
 
-      // Check Time (within 4 hours of the *previous* item in the cluster, chaining them)
-      // Assuming reviews are sorted DESC (newest first).
-      // So 'review' is OLDER than 'lastInCluster'.
-      // differenceInHours(earlier, later) returns negative?
-      // differenceInHours(dateLeft, dateRight) -> number of hours
-      // We want absolute difference.
-
-      const timeDiff = Math.abs(differenceInHours(getReviewDate(review), getReviewDate(lastInCluster)));
+      const timeDiff = Math.abs(
+        differenceInHours(getReviewDate(review), getReviewDate(lastInCluster)),
+      );
       const withinTime = timeDiff < 4;
       const sameStatus = review.status === lastInCluster.status;
 
@@ -99,8 +176,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
     }
   }
 
-  // Final flush
   flushCluster();
 
-  return aggregated;
+  return collapseIntoRows(aggregated);
 }

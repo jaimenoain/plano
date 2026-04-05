@@ -48,11 +48,7 @@ export function FeedActivityCard({
     entry.building.address?.split(",").pop()?.trim() ||
     "";
 
-  // main_image_url is confirmed in DATA_CONTRACT.md as part of ReviewBuilding
-  // (see P7-99 step 1). The cast below will be removed once the type is updated.
-  const mainImageUrl = (
-    entry.building as FeedReview["building"] & { main_image_url?: string }
-  ).main_image_url;
+  const mainImageUrl = entry.building.main_image_url;
 
   // Action copy per spec — no inline building name (that lives in the card body).
   const actionCopy =
@@ -117,7 +113,7 @@ export function FeedActivityCard({
           )}
         >
           <AvatarImage src={avatarUrl} />
-          <AvatarFallback className={isHero ? "text-[11px]" : "text-[10px]"}>
+          <AvatarFallback className={isHero ? "text-2xs-plus" : "text-2xs"}>
             {userInitial}
           </AvatarFallback>
         </Avatar>
@@ -135,7 +131,7 @@ export function FeedActivityCard({
         <span
           className={cn(
             "text-text-disabled whitespace-nowrap shrink-0",
-            isHero ? "text-xs" : "text-[10px]",
+            isHero ? "text-xs" : "text-2xs",
           )}
         >
           {formatDistanceToNow(
@@ -189,7 +185,7 @@ export function FeedActivityCard({
           pending  → bg-surface-muted border border-border-default text-text-secondary
                      (quiet muted chip — no neon; this action has not been confirmed)
 
-        Badge typography: 11px, font-medium, tracking-wide, uppercase, rounded-sm (2px).
+        Badge typography: text-2xs-plus, font-medium, tracking-wide, uppercase, rounded-sm.
         Matches DESIGN_TOKENS §9 Badge/tag row.
 
         No Michelin-circle widget. This is a pure status event. (C7-1 spec.)
@@ -221,10 +217,10 @@ export function FeedActivityCard({
           {activityStatus === "visited" ? (
             /*
              * Visited — brand-primary (neon) background.
-             * brand-primary-foreground (#171717) on the neon surface per
-             * DESIGN_TOKENS §2: "dark on neon" rule. Checkmark icon 10×10.
+             * brand-primary-foreground on the neon surface (DESIGN_TOKENS §2 dark-on-neon).
+             * Checkmark uses w-2.5 h-2.5.
              */
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-brand-primary text-brand-primary-foreground text-[11px] font-medium tracking-wide uppercase">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-brand-primary text-brand-primary-foreground text-2xs-plus font-medium tracking-wide uppercase">
               <Check className="w-2.5 h-2.5" strokeWidth={2.5} />
               Visited
             </span>
@@ -234,7 +230,7 @@ export function FeedActivityCard({
              * text-secondary matches the "quiet" read level; no neon here
              * (bucket-list is aspirational, not confirmed — restraint is right).
              */
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-surface-muted border border-border-default text-text-secondary text-[11px] font-medium tracking-wide uppercase">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-surface-muted border border-border-default text-text-secondary text-2xs-plus font-medium tracking-wide uppercase">
               <Bookmark className="w-2.5 h-2.5" strokeWidth={1.8} />
               Bucket list
             </span>
@@ -250,7 +246,7 @@ export function FeedActivityCard({
         Like count: shown only when > 0, following the prototype pattern.
         Bookmark: local toggle only (saves the activity post to reading list).
 
-        Icon sizing: 15×15 px matches the prototype's IconBtn icon dimensions.
+        Icon sizing: h-3.5 w-3.5 (matches compact action icons in FeedHeroCard).
         Padding: px-2 py-1 on the bar; px-2 h-8 on each button — mirrors FeedHeroCard.
 
         Like active state: fill-brand-primary text-brand-primary (matches FeedHeroCard
@@ -267,7 +263,7 @@ export function FeedActivityCard({
         >
           <Heart
             className={cn(
-              "h-[15px] w-[15px]",
+              "h-3.5 w-3.5",
               entry.is_liked
                 ? "fill-brand-primary text-brand-primary"
                 : "",
@@ -288,7 +284,7 @@ export function FeedActivityCard({
         >
           <Bookmark
             className={cn(
-              "h-[15px] w-[15px]",
+              "h-3.5 w-3.5",
               saved ? "fill-text-primary text-text-primary" : "",
             )}
             strokeWidth={1.8}

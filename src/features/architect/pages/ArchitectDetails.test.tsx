@@ -31,6 +31,22 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+vi.mock('react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router')>();
+  return {
+    ...actual,
+    useLoaderData: () => ({
+      architect: {
+        id: 'arch-123',
+        name: 'Test Architect',
+        type: 'individual',
+        bio: 'Test Bio',
+      },
+      linkedUser: null as { username: string } | null,
+    }),
+  };
+});
+
 // Mock AppLayout to simplify rendering
 vi.mock('@/components/layout/AppLayout', () => ({
   AppLayout: ({ children }: any) => <div data-testid="app-layout">{children}</div>,

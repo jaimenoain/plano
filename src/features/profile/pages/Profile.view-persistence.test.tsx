@@ -33,7 +33,13 @@ const mocks = vi.hoisted(() => {
     navigate: vi.fn(),
     signOut: vi.fn(),
     mockSupabase,
-    mockChain
+    mockChain,
+    loaderProfile: {
+      id: 'user-123',
+      username: 'testuser',
+      avatar_url: null as string | null,
+      bio: 'Bio',
+    },
   };
 });
 
@@ -43,6 +49,7 @@ vi.mock('react-router', async (importOriginal) => {
     ...actual,
     useNavigate: () => mocks.navigate,
     useParams: () => ({ username: 'testuser' }),
+    useLoaderData: () => ({ profile: mocks.loaderProfile }),
   };
 });
 

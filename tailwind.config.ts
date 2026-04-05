@@ -14,6 +14,18 @@ export default {
       },
     },
     extend: {
+      fontSize: {
+        /** 10px — micro labels (avatar fallbacks, section dividers) */
+        "2xs": ["0.625rem", { lineHeight: "0.875rem" }],
+        /** 11px — uppercase status / meta beside tokens */
+        "2xs-plus": ["0.6875rem", { lineHeight: "0.875rem" }],
+      },
+      spacing: {
+        /** 168px — collection feed mosaic tile (2×2 preview grid) */
+        "collection-mosaic": "10.5rem",
+        /** 1.5px — hairline gutter between mosaic cells */
+        "mosaic-gap": "1.5px",
+      },
       fontFamily: {
         sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
         mono: ['Space Mono', 'monospace'],

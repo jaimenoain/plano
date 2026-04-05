@@ -1309,6 +1309,7 @@ export type PlanoPublicFunctions = {
   get_building_top_links: { Args: RpcArgs; Returns: Json }
   get_buildings_list: { Args: RpcArgs; Returns: Json }
   get_collection_stats: { Args: RpcArgs; Returns: Json }
+  get_collections_feed: { Args: RpcArgs; Returns: Json }
   get_discovery_feed: { Args: RpcArgs; Returns: Json }
   get_discovery_filters: { Args: Record<string, never>; Returns: Json }
   get_feed: { Args: RpcArgs; Returns: Json }

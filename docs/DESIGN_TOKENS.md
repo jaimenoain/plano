@@ -90,6 +90,8 @@ Dark mode: not configured.
 |---|---|---|
 | `font-sans` | `'Space Grotesk', sans-serif` | Geometric, architectural. Sharp letterforms with no humanist curves. Google Fonts. |
 | `font-mono` | `'Space Mono', monospace` | Sibling to Space Grotesk — used for building IDs, coordinates, metadata codes. Google Fonts. |
+| `font-size-2xs` | `0.625rem` | 10px — micro labels (avatar fallbacks, section dividers); Tailwind `text-2xs` |
+| `font-size-2xs-plus` | `0.6875rem` | 11px — uppercase meta / status chips; Tailwind `text-2xs-plus` |
 | `font-size-xs` | `0.75rem` | 12px — captions, timestamps, badge labels |
 | `font-size-sm` | `0.875rem` | 14px — secondary text, table cells, form labels |
 | `font-size-base` | `1rem` | 16px — body copy |
@@ -164,6 +166,13 @@ The spacious density directive means Cursor should default to the higher end of 
 | `spacing-20` | `5rem` | 80px |
 | `spacing-24` | `6rem` | 96px |
 | `spacing-32` | `8rem` | 128px |
+
+Named layout tokens (exact measures, not constrained to the 4px grid):
+
+| Token | Value | Pixels | Usage |
+|---|---|---|---|
+| `collection-mosaic` | `10.5rem` | 168px | Feed collection card 2×2 preview (`w-collection-mosaic` / `h-collection-mosaic`) |
+| `mosaic-gap` | `1.5px` | 1.5px | Gutter between mosaic cells (`gap-mosaic-gap`) |
 
 ---
 
@@ -261,6 +270,8 @@ theme: {
       mono: ['Space Mono', 'monospace'],
     },
     fontSize: {
+      '2xs':      ['0.625rem',  { lineHeight: '0.875rem' }],
+      '2xs-plus': ['0.6875rem', { lineHeight: '0.875rem' }],
       'xs':   ['0.75rem',  { lineHeight: '1rem' }],
       'sm':   ['0.875rem', { lineHeight: '1.25rem' }],
       'base': ['1rem',     { lineHeight: '1.5rem' }],
@@ -269,6 +280,10 @@ theme: {
       '2xl':  ['1.5rem',   { lineHeight: '2rem' }],
       '3xl':  ['2rem',     { lineHeight: '2.4rem' }],
       '4xl':  ['2.5rem',   { lineHeight: '3rem' }],
+    },
+    spacing: {
+      'collection-mosaic': '10.5rem',
+      'mosaic-gap': '1.5px',
     },
     borderRadius: {
       'none': '0px',

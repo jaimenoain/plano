@@ -32,6 +32,12 @@ const mocks = vi.hoisted(() => {
     mockSupabase,
     mockChain,
     stableAuthUser,
+    loaderProfile: {
+      id: 'user-123',
+      username: 'testuser',
+      avatar_url: null as string | null,
+      bio: 'Bio',
+    },
   };
 });
 
@@ -41,6 +47,7 @@ vi.mock('react-router', async (importOriginal) => {
     ...actual,
     useNavigate: () => mocks.navigate,
     useParams: () => ({ username: 'testuser' }),
+    useLoaderData: () => ({ profile: mocks.loaderProfile }),
   };
 });
 

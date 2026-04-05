@@ -52,12 +52,12 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
   // Local optimistic state — mirrors the prototype's CollectionCard pattern.
   // No onLike prop per the locked interface; the parent (P7-3) wires persistence
   // at the feed-aggregation layer if needed.
-  const [isLiked, setIsLiked] = useState(collection.is_liked ?? false);
-  const [likesCount, setLikesCount] = useState(collection.likes_count ?? 0);
+  const [isLiked, setIsLiked] = useState(collection.isLiked ?? false);
+  const [likesCount, setLikesCount] = useState(collection.likesCount ?? 0);
   const [isSaved, setIsSaved] = useState(false);
 
   const username = collection.owner?.username ?? "unknown";
-  const avatarUrl = collection.owner?.avatar_url ?? undefined;
+  const avatarUrl = collection.owner?.avatarUrl ?? undefined;
   const userInitial = username.charAt(0).toUpperCase();
 
   // ── Navigation ───────────────────────────────────────────────────────────────
@@ -87,16 +87,16 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
   // Always produce exactly 4 slots. Slots beyond previewBuildings.length receive
   // null (rendered as bg-surface-muted fills, per spec).
   const slots = Array.from({ length: 4 }).map(
-    (_, i) => collection.previewBuildings?.[i]?.main_image_url ?? null
+    (_, i) => collection.previewBuildings?.[i]?.mainImageUrl ?? null
   );
 
   // ── Timestamp ─────────────────────────────────────────────────────────────────
-  const timestamp = collection.updated_at
-    ? formatDistanceToNow(new Date(collection.updated_at)).replace("about ", "") + " ago"
+  const timestamp = collection.updatedAt
+    ? formatDistanceToNow(new Date(collection.updatedAt)).replace("about ", "") + " ago"
     : "";
 
   // ── First tag (optional Badge) ────────────────────────────────────────────────
-  const primaryTag = collection.tags?.[0] ?? null;
+  const primaryTagBadge = collection.primaryTag ?? null;
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
@@ -110,51 +110,38 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
         "hover:border-border-strong transition-colors"
       )}
     >
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      {/* Mirrors FeedHeroCard header spacing: px-[14px] py-[9px] matches
-          CardHeader in PlanoFeed.jsx (padding: "9px 14px"). */}
-      <div className="flex items-center gap-[9px] px-[14px] py-[9px] border-b border-border-default">
+      {/* ── Header — padding/gap match FeedHeroCard (token scale) ───────────── */}
+      <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border-default">
         <Avatar className="h-7 w-7 shrink-0 border border-border-default/50">
           <AvatarImage src={avatarUrl} />
-          <AvatarFallback className="text-[10px] font-medium text-text-secondary bg-surface-muted">
+          <AvatarFallback className="text-2xs font-medium text-text-secondary bg-surface-muted">
             {userInitial}
           </AvatarFallback>
         </Avatar>
 
         {/* Username + action copy */}
-        <div className="flex-1 min-w-0 text-xs text-text-secondary leading-[1.35]">
+        <div className="flex-1 min-w-0 text-xs text-text-secondary leading-snug">
           <span className="font-semibold text-text-primary">{username}</span>
           {" "}updated a collection
         </div>
 
         {/* Timestamp — right-aligned, disabled tone */}
-        <span className="text-[11px] text-text-disabled whitespace-nowrap shrink-0">
+        <span className="text-2xs-plus text-text-disabled whitespace-nowrap shrink-0">
           {timestamp}
         </span>
       </div>
 
-      {/* ── Body ───────────────────────────────────────────────────────────── */}
-      {/* Horizontal flex: 168 px mosaic | flex-1 metadata panel */}
+      {/* ── Body — mosaic uses `collection-mosaic` + `mosaic-gap` tokens ─────── */}
       <div className="flex min-h-0">
 
-        {/* Left: 2×2 photo mosaic — 168×168 px, 1.5 px gap, zero card borders */}
-        {/* Grid cells are square: (168 − 1.5) ÷ 2 = 83.25 px per axis */}
-        <div
-          className="grid grid-cols-2 grid-rows-2 shrink-0"
-          style={{
-            width: 168,
-            height: 168,
-            gap: 1.5,
-          }}
-        >
+        <div className="grid grid-cols-2 grid-rows-2 shrink-0 w-collection-mosaic h-collection-mosaic gap-mosaic-gap">
           {slots.map((url, i) => (
             <MosaicCell key={i} mainImageUrl={url} />
           ))}
         </div>
 
         {/* Right: collection metadata — vertically centred, left-aligned */}
-        {/* padding: "16px 16px 14px" from PlanoFeed prototype */}
-        <div className="flex flex-col justify-center gap-2 px-4 pt-4 pb-[14px] flex-1 min-w-0">
+        <div className="flex flex-col justify-center gap-2 px-4 pt-4 pb-3.5 flex-1 min-w-0">
 
           {/* Collection name — text-base font-semibold, per C7-2 spec */}
           <p className="text-base font-semibold text-text-primary leading-tight truncate">
@@ -163,7 +150,7 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
 
           {/* Building count + visibility — text-sm text-text-secondary */}
           <p className="text-sm text-text-secondary">
-            {collection.building_count ?? 0} buildings · Public
+            {collection.buildingCount ?? 0} buildings · Public
           </p>
 
           {/* Optional description — truncated to 2 lines */}
@@ -175,17 +162,17 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
 
           {/* Optional tag Badge — variant="outline" + bg-surface-muted per spec */}
           {/* Typography: xs, font-medium, tracking-wide, uppercase — Badge/tag row */}
-          {primaryTag && (
+          {primaryTagBadge && (
             <Badge
               variant="outline"
               className={cn(
                 "self-start",
                 "rounded-sm px-2 py-0.5",
                 "bg-surface-muted border-border-default",
-                "text-[11px] font-medium tracking-wide uppercase text-text-secondary"
+                "text-2xs-plus font-medium tracking-wide uppercase text-text-secondary"
               )}
             >
-              {primaryTag}
+              {primaryTagBadge}
             </Badge>
           )}
         </div>
@@ -194,15 +181,14 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
       {/* ── Action bar ─────────────────────────────────────────────────────── */}
       {/* Like (with count) + bookmark only. No comment button — no thread on a
           collection update. No status/save/hide row — per C7-2 spec. */}
-      {/* padding: "2px 6px" from PlanoFeed ActionBar */}
-      <div className="flex items-center px-[6px] py-[2px] border-t border-border-default">
+      <div className="flex items-center px-1.5 py-0.5 border-t border-border-default">
 
         {/* Like button with count */}
         <button
           type="button"
           onClick={handleLike}
           className={cn(
-            "inline-flex items-center gap-[5px]",
+            "inline-flex items-center gap-1.5",
             "h-8 px-2 rounded-sm",
             "text-xs font-medium",
             "text-text-secondary",
@@ -215,7 +201,7 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
         >
           <Heart
             className={cn(
-              "h-[15px] w-[15px]",
+              "h-3.5 w-3.5",
               isLiked
                 ? "fill-feedback-destructive text-feedback-destructive"
                 : "text-text-secondary"
@@ -247,7 +233,7 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
         >
           <Bookmark
             className={cn(
-              "h-[15px] w-[15px]",
+              "h-3.5 w-3.5",
               isSaved ? "fill-brand-primary text-brand-primary" : ""
             )}
           />

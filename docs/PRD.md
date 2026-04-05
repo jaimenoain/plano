@@ -534,6 +534,8 @@ The Explore page shall display a location-filterable feed of community activity 
 **FR-10.1.3 Suggested Content**
 The system shall algorithmically surface content from non-contacts via the `get_suggested_posts` RPC and display it as inline suggestion blocks within the home feed.
 
+In addition to review-based cards, the home feed surfaces non-review activity from the people the user follows (for example, visited and bucket-list status changes on buildings with no review body) and public collection updates from those accounts, using dedicated card types (`FeedActivityCard` and `FeedCollectionCard`) interleaved with the existing review cards.
+
 ### 10.2 Feed Aggregation
 
 #### Requirements
@@ -1064,6 +1066,7 @@ The following remote procedure calls (RPCs) shall be implemented as PostgreSQL f
 | Buildings | `merge_buildings` | Merge duplicate building records. |
 | Collections | `get_collection_stats` | Collection analytics. |
 | Collections | `get_collection_buildings` | Buildings in a collection with coordinates. |
+| Collections | `get_collections_feed` | Paginated public collections from accounts the user follows (home feed). |
 | Social | `get_people_you_may_know` | User suggestions algorithm. |
 | Social | `get_inviter_facepile` | Referral attribution display. |
 | Admin | `get_admin_pulse` | Dashboard pulse metrics. |

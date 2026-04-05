@@ -19,6 +19,12 @@ const mocks = vi.hoisted(() => {
     navigate: vi.fn(),
     signOut: vi.fn(),
     toast: vi.fn(),
+    loaderProfile: {
+      id: 'user-123',
+      username: 'testuser',
+      avatar_url: null as string | null,
+      bio: 'Bio',
+    },
   };
 });
 
@@ -29,6 +35,7 @@ vi.mock('react-router', async (importOriginal) => {
     useNavigate: () => mocks.navigate,
     useParams: () => ({ username: 'testuser' }),
     useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    useLoaderData: () => ({ profile: mocks.loaderProfile }),
   };
 });
 

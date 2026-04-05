@@ -99,3 +99,51 @@ export interface RawFeedRow {
   suggestion_reason?: string | null;
   group_id?: string | null;
 }
+
+/** Preview row from `get_collections_feed` buildings subquery (snake_case). */
+export interface CollectionPreviewBuilding {
+  building_id: string;
+  name: string;
+  main_image_url: string | null;
+}
+
+/** Raw JSON row from `get_collections_feed` RPC (snake_case). */
+export interface RawCollectionFeedRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  updated_at: string;
+  owner_id: string;
+  primary_tag: string | null;
+  owner: {
+    username: string | null;
+    avatar_url: string | null;
+  };
+  preview_buildings: CollectionPreviewBuilding[];
+  building_count: number;
+}
+
+/** CamelCase DTO for collection feed cards and `useCollectionsFeed`. */
+export interface FeedCollection {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  updatedAt: string;
+  ownerId: string;
+  primaryTag: string | null;
+  owner: {
+    id: string;
+    username: string | null;
+    avatarUrl: string | null;
+  };
+  previewBuildings: Array<{
+    buildingId: string;
+    name: string;
+    mainImageUrl: string | null;
+  }>;
+  buildingCount: number;
+  isLiked?: boolean;
+  likesCount?: number;
+}

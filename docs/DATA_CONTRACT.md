@@ -1177,6 +1177,8 @@ interface BuildingSummaryDTO {
   city: string | null;
   country: string | null;
   heroImageUrl: string | null;
+  /** Mapped: `main_image_url` on `buildings`; included on feed / `ReviewBuilding` joins from `get_feed` (hero image for activity cards). */
+  mainImageUrl?: string | null;
   tierRank: string | null;
 }
 
@@ -2290,6 +2292,7 @@ CREATE POLICY "collection_markers_delete" ON collection_markers
 | DELETE | /collections/:id/favorite | Unfavorite collection | supabase (client-side) |
 | GET | (RPC) get_collection_stats | Collection analytics | supabase (RPC) |
 | GET | (RPC) get_collection_buildings | Buildings with coordinates | supabase (RPC) |
+| GET | (RPC) get_collections_feed | Collections feed (public lists from followed users) | supabase (RPC) |
 | POST | (edge fn) generate-itinerary | AI itinerary generation | supabase-edge-function |
 | POST | (edge fn) calculate-route | Route calculation | supabase-edge-function |
 
@@ -2335,6 +2338,50 @@ interface CollectionContributorDTO {
   userId: string;                       // Mapped: user_id
   role: 'admin' | 'editor' | 'contributor' | 'viewer';
   user: { id: string; username: string; avatarUrl: string | null };
+}
+
+/** Preview row from `get_collections_feed` buildings subquery (snake_case JSON). */
+interface CollectionPreviewBuilding {
+  building_id: string;
+  name: string;
+  main_image_url: string | null;
+}
+
+/** Raw JSON row from `get_collections_feed` RPC (snake_case). Authenticated only. */
+interface RawCollectionFeedRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  updated_at: string;
+  owner_id: string;
+  primary_tag: string | null;
+  owner: {
+    username: string | null;
+    avatar_url: string | null;
+  };
+  preview_buildings: CollectionPreviewBuilding[];
+  building_count: number;
+}
+
+/** CamelCase DTO for home-feed collection cards / `useCollectionsFeed`. */
+interface FeedCollection {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  updatedAt: string;
+  ownerId: string;
+  primaryTag: string | null;
+  owner: { id: string; username: string | null; avatarUrl: string | null };
+  previewBuildings: Array<{
+    buildingId: string;
+    name: string;
+    mainImageUrl: string | null;
+  }>;
+  buildingCount: number;
+  isLiked?: boolean;
+  likesCount?: number;
 }
 
 interface CollectionMarkerDTO {
@@ -3287,6 +3334,7 @@ CREATE TABLE public.spatial_ref_sys (
 | Buildings | `merge_buildings` | admin | Merge duplicate records |
 | Collections | `get_collection_stats` | authenticated | Collection analytics |
 | Collections | `get_collection_buildings` | authenticated | Buildings with coordinates |
+| Collections | `get_collections_feed` | authenticated | Home feed: public collections owned by followed users |
 | Social | `get_people_you_may_know` | authenticated | User suggestions |
 | Social | `get_inviter_facepile` | anon | Referral attribution |
 | Admin | `get_admin_pulse` | admin | Dashboard metrics |

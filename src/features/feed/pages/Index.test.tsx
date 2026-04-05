@@ -1,83 +1,108 @@
-Object.defineProperty(window, 'matchMedia', {
+import type { ReactNode } from "react";
+
+Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), // Deprecated
-    removeListener: vi.fn(), // Deprecated
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
 });
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-import Index from './Index';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useFeed } from '../hooks/useFeed';
-import { useSuggestedFeed } from '../hooks/useSuggestedFeed';
-import { useDiscoveryFeed } from '../hooks/useDiscoveryFeed';
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import Index from "./Index";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useFeed } from "../hooks/useFeed";
+import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
+import { useCollectionsFeed } from "../hooks/useCollectionsFeed";
 
-// Mock the hooks
-vi.mock('@/features/auth/hooks/useAuth');
-vi.mock('../hooks/useFeed');
-vi.mock('../hooks/useSuggestedFeed');
-vi.mock('../hooks/useDiscoveryFeed');
-vi.mock('@/hooks/useIntersectionObserver', () => ({
-  useIntersectionObserver: () => ({ containerRef: null, isVisible: false })
+vi.mock("@/features/auth/hooks/useAuth");
+vi.mock("../hooks/useFeed");
+vi.mock("../hooks/useSuggestedFeed");
+vi.mock("../hooks/useCollectionsFeed");
+vi.mock("@/hooks/useIntersectionObserver", () => ({
+  useIntersectionObserver: () => ({ containerRef: null, isVisible: false }),
 }));
-vi.mock('@/components/layout/AppLayout', () => ({ AppLayout: ({ children }: any) => <div data-testid="app-layout">{children}</div> }));
-vi.mock('../components/ExploreTeaserBlock', () => ({ ExploreTeaserBlock: () => <div data-testid="explore-teaser" /> }));
-vi.mock('../components/AllCaughtUpDivider', () => ({ AllCaughtUpDivider: () => <div data-testid="all-caught-up" /> }));
-vi.mock('../components/ReviewCard', () => ({ ReviewCard: () => <div data-testid="review-card" /> }));
+vi.mock("@/components/layout/AppLayout", () => ({
+  AppLayout: ({ children }: { children: ReactNode }) => (
+    <div data-testid="app-layout">{children}</div>
+  ),
+}));
 
 const queryClient = new QueryClient();
 
-describe('Index Page', () => {
+const minimalFeedReview = {
+  id: "r1",
+  content: "Nice building",
+  rating: 4,
+  created_at: new Date().toISOString(),
+  status: "published",
+  user: { username: "archfan", avatar_url: null },
+  building: { id: "b1", name: "Test Building", main_image_url: null as string | null },
+  likes_count: 0,
+  comments_count: 0,
+  is_liked: false,
+  images: [] as { id: string; url: string; likes_count: number; is_liked: boolean }[],
+};
+
+describe("Index Page", () => {
   beforeEach(() => {
-    (useAuth as any).mockReturnValue({
-      user: { id: 'test-user', user_metadata: { onboarding_completed: true } },
+    (useAuth as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({
+      user: { id: "test-user", user_metadata: { onboarding_completed: true } },
       loading: false,
     });
 
-    (useFeed as any).mockReturnValue({
-      data: { pages: [[{ type: 'compact', entry: { id: 'test', building: { id: 'b', name: 'B' }, user: { id: 'u', username: 'U' } } }]] },
+    (useFeed as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({
+      data: { pages: [[minimalFeedReview]] },
       isLoading: false,
       hasNextPage: false,
       isFetchingNextPage: false,
       isError: false,
       fetchNextPage: vi.fn(),
+      toggleLike: vi.fn(),
+      toggleImageLike: vi.fn(),
     });
 
-    (useSuggestedFeed as any).mockReturnValue({
+    (useSuggestedFeed as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({
       data: { pages: [[]] },
       isLoading: false,
       hasNextPage: false,
       isFetchingNextPage: false,
       isError: false,
       fetchNextPage: vi.fn(),
+      toggleLike: vi.fn(),
+      toggleImageLike: vi.fn(),
     });
 
-    (useDiscoveryFeed as any).mockReturnValue({
+    (useCollectionsFeed as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({
       data: { pages: [[]] },
-      isLoading: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      isError: false,
+      fetchNextPage: vi.fn(),
     });
   });
 
-  it('renders ExploreTeaserBlock after AllCaughtUpDivider', () => {
-    const { getByTestId } = render(
+  it("renders aggregated social content when the user has feed items", () => {
+    render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
-          <SidebarProvider><Index /></SidebarProvider>
+          <SidebarProvider>
+            <Index />
+          </SidebarProvider>
         </MemoryRouter>
       </QueryClientProvider>
     );
 
-    expect(getByTestId('all-caught-up')).toBeTruthy();
-    expect(getByTestId('explore-teaser')).toBeTruthy();
+    expect(screen.getByTestId("app-layout")).toBeTruthy();
+    expect(screen.getByText("Test Building")).toBeTruthy();
   });
 });

@@ -3,12 +3,12 @@ import { UNSAFE_withComponentProps, useLoaderData, UNSAFE_withHydrateFallbackPro
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import * as React from "react";
 import React__default, { useState, createContext, useEffect, useContext, useRef, StrictMode, useMemo, useLayoutEffect, useImperativeHandle, memo, forwardRef, cloneElement, useCallback, Fragment as Fragment$1, lazy, Suspense, createElement } from "react";
-import { X, Share, SquarePlus, AlertTriangle, Loader2, PanelLeft, Check, Mail, UserPlus, EyeOff, Eye, Lock, Search, MapPin as MapPin$1, User, Upload, ShieldAlert, RefreshCw, Merge, Circle, Layers, Minimize2, Maximize2, ArrowLeft, ArrowRight, Pencil, Save, Image as Image$1, ArrowLeftRight, Trash2, LayoutDashboard, Building2, Users as Users$1, FileCheck, Map as Map$3, History, Settings as Settings$1, LogOut, Activity, Play, Share2, MessageSquare, AlertCircle, RefreshCcw, CheckCircle, Terminal, FileWarning, BellOff, Bell, ChevronDown, ChevronUp, Info, Plus, CheckCircle2, UserX, Ban, RotateCcw, ShieldCheck, ChevronRight, Pause, VolumeX, Volume2, Sparkles, UserCheck, Heart, ChevronLeft, MessageCircle, BadgeCheck, Bookmark, Star, MoveUp, ExternalLink, Camera, Bus, Utensils, Bed, UserRound, PencilRuler, Folder, ListFilter, List, ChevronsUpDown, Home, MoreHorizontal, Quote, Edit2, Globe, Clock, LayoutGrid, Columns, SlidersHorizontal, LayoutTemplate, Smartphone, Database, Download, GripVertical, MessageSquarePlus, Footprints, Car, Bike, Send, Trophy, Gem, Ticket, Store, DoorOpen, Unlock, Calendar, Tag, Wrench, Hammer, Palette, ImagePlus, Link as Link$1 } from "lucide-react";
+import { X, Share, SquarePlus, AlertTriangle, Loader2, PanelLeft, Check, Mail, UserPlus, EyeOff, Eye, Lock, Search, MapPin as MapPin$1, User, Upload, ShieldAlert, RefreshCw, Merge, Circle, Layers, Minimize2, Maximize2, ArrowLeft, ArrowRight, Pencil, Save, Image as Image$1, ArrowLeftRight, Trash2, LayoutDashboard, Building2, Users as Users$1, FileCheck, Map as Map$3, History, Settings as Settings$1, LogOut, Activity, Play, Share2, MessageSquare, AlertCircle, RefreshCcw, CheckCircle, Terminal, FileWarning, BellOff, Bell, ChevronDown, ChevronUp, Info, Plus, CheckCircle2, UserX, Ban, RotateCcw, ShieldCheck, ChevronRight, Heart, ChevronLeft, MessageCircle, Bookmark, UserCheck, Star, MoveUp, ExternalLink, Camera, Bus, Utensils, Bed, UserRound, PencilRuler, Folder, ListFilter, List, ChevronsUpDown, Sparkles, Home, Pause, VolumeX, Volume2, BadgeCheck, MoreHorizontal, Quote, Edit2, Globe, Clock, LayoutGrid, Columns, SlidersHorizontal, LayoutTemplate, Smartphone, Database, Download, GripVertical, MessageSquarePlus, Footprints, Car, Bike, Send, Trophy, Gem, Ticket, Store, DoorOpen, Unlock, Calendar, Tag, Wrench, Hammer, Palette, ImagePlus, Link as Link$1 } from "lucide-react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { QueryClientProvider, QueryClient, useQuery, useQueryClient, useInfiniteQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
+import { QueryClientProvider, QueryClient, useQuery, useQueryClient, useMutation, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as ToastPrimitives from "@radix-ui/react-toast";
 import { useTheme } from "next-themes";
@@ -11212,444 +11212,35 @@ function AppLayout({
     showNav && /* @__PURE__ */ jsx("div", { className: "md:hidden", children: /* @__PURE__ */ jsx(BottomNav, {}) })
   ] });
 }
-function useSuggestedFeed(options = {}) {
+function useUserBuildingStatuses() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const LIMIT = 10;
-  const { enabled = true } = options;
-  const queryKey = ["suggested_feed", user == null ? void 0 : user.id];
-  const query = useInfiniteQuery({
-    queryKey,
-    queryFn: async ({ pageParam = 0 }) => {
-      if (!user) return [];
-      const { data: data2, error } = await supabase.rpc("get_suggested_posts", {
-        p_limit: LIMIT,
-        p_offset: pageParam
-      });
-      if (error) throw error;
-      const posts = data2 || [];
-      if (posts.length === 0) return [];
-      const reviewIds = posts.map((p) => p.id);
-      const { data: imagesData } = await supabase.from("review_images").select("*").in("review_id", reviewIds);
-      let likedImageIds = /* @__PURE__ */ new Set();
-      const imageRows = imagesData || [];
-      if (imageRows.length > 0) {
-        const imageIds = imageRows.map((img) => img.id);
-        const { data: likesData } = await supabase.from("image_likes").select("image_id").eq("user_id", user.id).in("image_id", imageIds);
-        if (likesData) {
-          likedImageIds = new Set(
-            likesData.map((l) => l.image_id)
-          );
-        }
+  const { data: data2 } = useQuery({
+    queryKey: ["user-building-statuses", user == null ? void 0 : user.id],
+    queryFn: async () => {
+      if (!user) return { statuses: {}, ratings: {} };
+      const { data: rows, error } = await supabase.from("user_buildings").select("building_id, status, rating").eq("user_id", user.id);
+      if (error) {
+        return { statuses: {}, ratings: {} };
       }
-      const imagesMap = imageRows.reduce((acc, img) => {
-        if (!acc[img.review_id]) {
-          acc[img.review_id] = [];
+      const statusMap = {};
+      const ratingMap = {};
+      const list = rows ?? [];
+      list.forEach((item) => {
+        statusMap[item.building_id] = item.status;
+        if (item.rating !== null) {
+          ratingMap[item.building_id] = item.rating;
         }
-        acc[img.review_id].push({
-          id: img.id,
-          url: getBuildingImageUrl(img.storage_path) || "",
-          likes_count: img.likes_count || 0,
-          is_liked: likedImageIds.has(img.id)
-        });
-        return acc;
-      }, {});
-      return posts.map((post) => {
-        const buildingData = post.building_data;
-        const userData = post.user_data;
-        return {
-          id: post.id,
-          content: post.content,
-          rating: post.rating,
-          tags: post.tags,
-          created_at: post.created_at,
-          edited_at: post.edited_at,
-          status: post.status,
-          user_id: post.user_id,
-          group_id: post.group_id,
-          user: {
-            username: (userData == null ? void 0 : userData.username) || null,
-            avatar_url: (userData == null ? void 0 : userData.avatar_url) || null
-          },
-          building: {
-            id: buildingData == null ? void 0 : buildingData.id,
-            short_id: buildingData == null ? void 0 : buildingData.short_id,
-            slug: buildingData == null ? void 0 : buildingData.slug,
-            name: (buildingData == null ? void 0 : buildingData.name) || "Unknown Building",
-            address: (buildingData == null ? void 0 : buildingData.address) || null,
-            city: (buildingData == null ? void 0 : buildingData.city) || null,
-            country: (buildingData == null ? void 0 : buildingData.country) || null,
-            main_image_url: (buildingData == null ? void 0 : buildingData.main_image_url) || null,
-            architects: (buildingData == null ? void 0 : buildingData.architects) || null,
-            year_completed: (buildingData == null ? void 0 : buildingData.year_completed) || null
-          },
-          likes_count: post.likes_count || 0,
-          comments_count: post.comments_count || 0,
-          is_liked: post.is_liked,
-          images: imagesMap[post.id] || [],
-          is_suggested: post.is_suggested,
-          suggestion_reason: post.suggestion_reason
-        };
       });
+      return { statuses: statusMap, ratings: ratingMap };
     },
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length < LIMIT) return void 0;
-      return allPages.length * LIMIT;
-    },
-    enabled: !!user && enabled,
-    initialPageParam: 0
+    enabled: !!user,
+    staleTime: 5 * 60 * 1e3
+    // 5 minutes
   });
-  const toggleLike = async (reviewId) => {
-    if (!user) return;
-    const currentData = queryClient.getQueryData(queryKey);
-    if (!currentData) return;
-    const review = currentData.pages.flatMap((p) => p).find((r) => r.id === reviewId);
-    if (!review) return;
-    queryClient.setQueryData(queryKey, (oldData) => {
-      if (!oldData) return void 0;
-      return {
-        ...oldData,
-        pages: oldData.pages.map(
-          (page) => page.map(
-            (r) => r.id === reviewId ? {
-              ...r,
-              is_liked: !r.is_liked,
-              likes_count: r.is_liked ? r.likes_count - 1 : r.likes_count + 1
-            } : r
-          )
-        )
-      };
-    });
-    try {
-      if (review.is_liked) {
-        await supabase.from("likes").delete().eq("interaction_id", reviewId).eq("user_id", user.id);
-      } else {
-        await supabase.from("likes").insert({ interaction_id: reviewId, user_id: user.id });
-      }
-    } catch {
-      queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData) return void 0;
-        return {
-          ...oldData,
-          pages: oldData.pages.map(
-            (page) => page.map(
-              (r) => r.id === reviewId ? { ...r, is_liked: review.is_liked, likes_count: review.likes_count } : r
-            )
-          )
-        };
-      });
-    }
-  };
-  const toggleImageLike = async (reviewId, imageId) => {
-    var _a;
-    if (!user) return;
-    const currentData = queryClient.getQueryData(queryKey);
-    if (!currentData) return;
-    const review = currentData.pages.flatMap((p) => p).find((r) => r.id === reviewId);
-    if (!review) return;
-    const image = (_a = review.images) == null ? void 0 : _a.find((i) => i.id === imageId);
-    if (!image) return;
-    queryClient.setQueryData(queryKey, (oldData) => {
-      if (!oldData) return void 0;
-      return {
-        ...oldData,
-        pages: oldData.pages.map(
-          (page) => page.map((r) => {
-            var _a2;
-            if (r.id === reviewId) {
-              return {
-                ...r,
-                images: (_a2 = r.images) == null ? void 0 : _a2.map((img) => {
-                  if (img.id === imageId) {
-                    return {
-                      ...img,
-                      is_liked: !img.is_liked,
-                      likes_count: img.is_liked ? img.likes_count - 1 : img.likes_count + 1
-                    };
-                  }
-                  return img;
-                })
-              };
-            }
-            return r;
-          })
-        )
-      };
-    });
-    try {
-      if (image.is_liked) {
-        await supabase.from("image_likes").delete().eq("user_id", user.id).eq("image_id", imageId);
-      } else {
-        await supabase.from("image_likes").insert({ user_id: user.id, image_id: imageId });
-      }
-    } catch {
-      queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData) return void 0;
-        return {
-          ...oldData,
-          pages: oldData.pages.map(
-            (page) => page.map((r) => {
-              var _a2;
-              if (r.id === reviewId) {
-                return {
-                  ...r,
-                  images: (_a2 = r.images) == null ? void 0 : _a2.map((img) => {
-                    if (img.id === imageId) {
-                      return {
-                        ...img,
-                        is_liked: image.is_liked,
-                        likes_count: image.likes_count
-                      };
-                    }
-                    return img;
-                  })
-                };
-              }
-              return r;
-            })
-          )
-        };
-      });
-    }
-  };
   return {
-    ...query,
-    toggleLike,
-    toggleImageLike
+    statuses: (data2 == null ? void 0 : data2.statuses) || {},
+    ratings: (data2 == null ? void 0 : data2.ratings) || {}
   };
-}
-function VideoPlayer({
-  src,
-  poster,
-  className,
-  autoPlayOnVisible = false,
-  muted = true,
-  objectFit = "contain"
-}) {
-  const videoRef = useRef(null);
-  const containerRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(muted);
-  const [isControlsVisible, setIsControlsVisible] = useState(false);
-  const [_hasInteracted, setHasInteracted] = useState(false);
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return void 0;
-    if (autoPlayOnVisible) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry2) => {
-            if (entry2.isIntersecting) {
-              video.play().catch(() => {
-                setIsPlaying(false);
-              });
-              setIsPlaying(true);
-            } else {
-              video.pause();
-              setIsPlaying(false);
-            }
-          });
-          return void 0;
-        },
-        { threshold: 0.6 }
-        // 60% visibility required
-      );
-      if (containerRef.current) {
-        observer.observe(containerRef.current);
-      }
-      return () => observer.disconnect();
-    }
-    return void 0;
-  }, [autoPlayOnVisible]);
-  const togglePlay = (e) => {
-    e == null ? void 0 : e.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-    if (isPlaying) {
-      video.pause();
-    } else {
-      video.play();
-    }
-    setIsPlaying(!isPlaying);
-    setHasInteracted(true);
-  };
-  const toggleMute = (e) => {
-    e.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = !isMuted;
-    setIsMuted(!isMuted);
-  };
-  const toggleFullscreen = (e) => {
-    e.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      video.requestFullscreen();
-    }
-  };
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      ref: containerRef,
-      className: cn("relative group bg-black overflow-hidden max-w-full rounded-sm", className),
-      onMouseEnter: () => setIsControlsVisible(true),
-      onMouseLeave: () => setIsControlsVisible(false),
-      onClick: togglePlay,
-      children: [
-        /* @__PURE__ */ jsx(
-          "video",
-          {
-            ref: videoRef,
-            src,
-            poster,
-            className: cn("w-full h-full max-w-full", `object-${objectFit}`),
-            playsInline: true,
-            loop: true,
-            muted: isMuted,
-            preload: "metadata",
-            onPlay: () => setIsPlaying(true),
-            onPause: () => setIsPlaying(false)
-          }
-        ),
-        !isPlaying && /* @__PURE__ */ jsx("div", { className: "pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20", children: /* @__PURE__ */ jsx("div", { className: "rounded-sm bg-black/60 p-3 backdrop-blur-sm", children: /* @__PURE__ */ jsx(Play, { className: "w-8 h-8 text-white fill-white" }) }) }),
-        /* @__PURE__ */ jsxs(
-          "div",
-          {
-            className: cn(
-              "absolute bottom-0 left-0 right-0 flex items-center justify-between bg-black/60 p-2 backdrop-blur-sm transition-opacity duration-300",
-              isControlsVisible || !isPlaying ? "opacity-100" : "opacity-0"
-            ),
-            children: [
-              /* @__PURE__ */ jsx(
-                "button",
-                {
-                  onClick: togglePlay,
-                  className: "rounded-sm p-2 text-white transition-colors hover:bg-white/20",
-                  "aria-label": isPlaying ? "Pause" : "Play",
-                  children: isPlaying ? /* @__PURE__ */ jsx(Pause, { className: "w-6 h-6 fill-white" }) : /* @__PURE__ */ jsx(Play, { className: "w-6 h-6 fill-white" })
-                }
-              ),
-              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1", children: [
-                /* @__PURE__ */ jsx(
-                  "button",
-                  {
-                    onClick: toggleMute,
-                    className: "rounded-sm p-2 text-white transition-colors hover:bg-white/20",
-                    "aria-label": isMuted ? "Unmute" : "Mute",
-                    children: isMuted ? /* @__PURE__ */ jsx(VolumeX, { className: "w-6 h-6" }) : /* @__PURE__ */ jsx(Volume2, { className: "w-6 h-6" })
-                  }
-                ),
-                /* @__PURE__ */ jsx(
-                  "button",
-                  {
-                    onClick: toggleFullscreen,
-                    className: "rounded-sm p-2 text-white transition-colors hover:bg-white/20",
-                    "aria-label": "Toggle Fullscreen",
-                    children: /* @__PURE__ */ jsx(Maximize2, { className: "w-6 h-6" })
-                  }
-                )
-              ] })
-            ]
-          }
-        )
-      ]
-    }
-  );
-}
-function SuggestedContentBlock({
-  children,
-  suggestionReason,
-  isSuggested
-}) {
-  if (!isSuggested) {
-    return /* @__PURE__ */ jsx(Fragment, { children });
-  }
-  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3 p-4 md:p-6 rounded-sm bg-brand-secondary border border-border-default mb-6 min-w-0 w-full max-w-full overflow-hidden", children: [
-    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
-      /* @__PURE__ */ jsx(Sparkles, { className: "h-3.5 w-3.5 text-brand-secondary-foreground" }),
-      /* @__PURE__ */ jsxs("span", { className: "text-xs font-medium text-brand-secondary-foreground", children: [
-        "Suggested ",
-        suggestionReason && `• ${suggestionReason}`
-      ] })
-    ] }),
-    /* @__PURE__ */ jsx("div", { className: "relative min-w-0 w-full", children })
-  ] });
-}
-function FollowButton({ userId, initialIsFollowing, isFollower, className, hideIfFollowing }) {
-  const { user } = useAuth();
-  const { toast: toast2 } = useToast();
-  const [isFollowing, setIsFollowing] = useState(initialIsFollowing ?? false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-  useEffect(() => {
-    if (initialIsFollowing !== void 0 || !user) return;
-    const checkStatus = async () => {
-      try {
-        const { data: data2 } = await supabase.from("follows").select("follower_id").eq("follower_id", user.id).eq("following_id", userId).maybeSingle();
-        setIsFollowing(!!data2);
-      } catch (_error) {
-      }
-    };
-    checkStatus();
-  }, [userId, user, initialIsFollowing]);
-  const handleToggleFollow = async (e) => {
-    e.stopPropagation();
-    if (!user) return;
-    if (user.id === userId) return;
-    setIsLoading(true);
-    try {
-      if (isFollowing) {
-        const { error } = await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", userId);
-        if (error) throw error;
-        setIsFollowing(false);
-        toast2({ title: "Unfollowed user" });
-      } else {
-        const { error } = await supabase.from("follows").insert({ follower_id: user.id, following_id: userId });
-        if (error) throw error;
-        setIsFollowing(true);
-        await supabase.from("notifications").insert({
-          actor_id: user.id,
-          user_id: userId,
-          type: "follow",
-          is_read: false
-        });
-        toast2({ title: "Following user" });
-        window.dispatchEvent(new CustomEvent("pwa-interaction"));
-      }
-    } catch (error) {
-      toast2({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  if (!user || user.id === userId) return null;
-  if (isFollowing && hideIfFollowing) return null;
-  return /* @__PURE__ */ jsx(
-    Button,
-    {
-      variant: isFollowing ? "secondary" : "default",
-      size: "sm",
-      className,
-      onClick: handleToggleFollow,
-      disabled: isLoading,
-      onMouseEnter: () => setIsHovering(true),
-      onMouseLeave: () => setIsHovering(false),
-      children: isFollowing ? /* @__PURE__ */ jsxs(Fragment, { children: [
-        /* @__PURE__ */ jsx(UserCheck, { className: "mr-2 h-4 w-4" }),
-        /* @__PURE__ */ jsx("span", { className: isHovering ? "text-feedback-destructive" : void 0, children: isHovering ? "Unfollow" : "Following" })
-      ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
-        /* @__PURE__ */ jsx(UserPlus, { className: "mr-2 h-4 w-4" }),
-        isFollower ? "Follow Back" : "Follow"
-      ] })
-    }
-  );
 }
 function FeedPhotoCarousel({
   images,
@@ -11797,673 +11388,6 @@ function FeedPhotoCarousel({
       ]
     }
   );
-}
-function getCityFromAddress$1(address) {
-  if (!address) return "";
-  const parts = address.split(",").map((p) => p.trim());
-  if (parts.length >= 2) {
-    return parts[parts.length - 2];
-  }
-  return parts[0];
-}
-const RatingCircles = ({ rating }) => {
-  return /* @__PURE__ */ jsx("div", { className: "flex items-center gap-0.5", children: Array.from({ length: 3 }).map((_, i) => /* @__PURE__ */ jsx(
-    Circle,
-    {
-      className: `w-3 h-3 ${i < rating ? "fill-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`
-    },
-    i
-  )) });
-};
-function ReviewCard({
-  entry: entry2,
-  onLike,
-  onImageLike,
-  onComment,
-  isDetailView = false,
-  hideUser = false,
-  hideBuildingInfo = false,
-  imagePosition = "left",
-  variant = "default",
-  showCommunityImages = true
-}) {
-  var _a, _b, _c, _d;
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast: toast2 } = useToast();
-  const [failedImages, setFailedImages] = useState(/* @__PURE__ */ new Set());
-  const [isSaving, setIsSaving] = useState(false);
-  if (!entry2.building) return null;
-  const handleSave = async (e) => {
-    var _a2;
-    e.stopPropagation();
-    if (!user) return;
-    if (!((_a2 = entry2.building) == null ? void 0 : _a2.id)) return;
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("user_buildings").upsert({
-        user_id: user.id,
-        building_id: entry2.building.id,
-        status: "pending",
-        edited_at: (/* @__PURE__ */ new Date()).toISOString()
-      }, { onConflict: "user_id, building_id" });
-      if (error) throw error;
-      toast2({ title: "Saved to your list" });
-    } catch (_error) {
-      toast2({ variant: "destructive", title: "Failed to save" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-  const posterUrl = getBuildingImageUrl(entry2.building.main_image_url);
-  const handleCardClick = (e) => {
-    if (isDetailView) return;
-    const target = e.target;
-    if (target.closest("button") || target.closest(".video-container")) return;
-    if (entry2.building.id) {
-      navigate(getBuildingUrl(entry2.building.id, entry2.building.slug, entry2.building.short_id));
-    } else {
-      navigate(`/review/${entry2.id}`);
-    }
-  };
-  const handleCommentClick = (e) => {
-    e.stopPropagation();
-    if (onComment) {
-      onComment(entry2.id);
-    } else {
-      if (entry2.building.id) {
-        navigate(getBuildingUrl(entry2.building.id, entry2.building.slug, entry2.building.short_id));
-      } else {
-        navigate(`/review/${entry2.id}`);
-      }
-    }
-  };
-  const username = ((_a = entry2.user) == null ? void 0 : _a.username) || "Unknown User";
-  const avatarUrl = ((_b = entry2.user) == null ? void 0 : _b.avatar_url) || void 0;
-  const isVerifiedArchitect = ((_c = entry2.user) == null ? void 0 : _c.is_verified_architect) || false;
-  const isArchitectOfBuilding = ((_d = entry2.user) == null ? void 0 : _d.is_architect_of_building) || false;
-  const userInitial = username.charAt(0).toUpperCase();
-  const mainTitle = entry2.building.name;
-  const architects = entry2.building.architects;
-  const year_completed = entry2.building.year_completed;
-  const architectNames = architects ? architects.map((a) => typeof a === "string" ? a : a.name).filter(Boolean) : [];
-  let subTitle = entry2.building.address;
-  if (variant === "compact") {
-    const parts = [];
-    if (architectNames.length > 0) parts.push(architectNames.slice(0, 2).join(", "));
-    if (year_completed) parts.push(year_completed);
-    subTitle = parts.length > 0 ? parts.join(" • ") : entry2.building.address;
-  } else {
-    const architectsList = architectNames.slice(0, 2).join(", ");
-    if (architectsList) {
-      subTitle = architectsList;
-      if (year_completed) subTitle += ` • ${year_completed}`;
-    } else if (year_completed) {
-      subTitle = `${year_completed}`;
-      if (entry2.building.address) subTitle += ` • ${entry2.building.address}`;
-    }
-  }
-  const mediaItems = [];
-  if (entry2.video_url) {
-    mediaItems.push({
-      id: `video-${entry2.id}`,
-      type: "video",
-      url: entry2.video_url,
-      poster: entry2.images && entry2.images.length > 0 ? entry2.images[0].url : posterUrl || void 0
-    });
-  }
-  if (entry2.images && entry2.images.length > 0) {
-    entry2.images.forEach((img) => {
-      mediaItems.push({ id: img.id, type: "image", url: img.url });
-    });
-  }
-  const imageOnlyItems = mediaItems.filter((m) => m.type === "image");
-  const hasVideo = mediaItems.some((m) => m.type === "video");
-  const useCarousel2 = !hasVideo && imageOnlyItems.length > 1;
-  const carouselImages = (entry2.images || []).map((img) => ({
-    id: img.id,
-    url: img.url,
-    likes_count: img.likes_count,
-    is_liked: img.is_liked
-  }));
-  const hasMedia = !hideBuildingInfo && (mediaItems.length > 0 || !!posterUrl);
-  const isCompact = variant === "compact";
-  const flexDirection = imagePosition === "right" ? "md:flex-row" : "md:flex-row-reverse";
-  if (isDetailView) {
-    return /* @__PURE__ */ jsxs("article", { className: "px-4 py-4 hairline", children: [
-      !hideUser ? /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3 mb-3", children: [
-        /* @__PURE__ */ jsxs(Avatar, { className: "h-9 w-9", children: [
-          /* @__PURE__ */ jsx(AvatarImage, { src: avatarUrl }),
-          /* @__PURE__ */ jsx(AvatarFallback, { className: "bg-surface-muted text-text-primary text-sm", children: userInitial })
-        ] }),
-        /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
-          /* @__PURE__ */ jsx("p", { className: "text-sm font-medium text-text-primary truncate", children: username }),
-          /* @__PURE__ */ jsx("p", { className: "text-xs text-text-secondary", children: formatDistanceToNow(new Date(entry2.edited_at || entry2.created_at), { addSuffix: true }).replace("about ", "") })
-        ] })
-      ] }) : /* @__PURE__ */ jsx("div", { className: "mb-3", children: /* @__PURE__ */ jsx("p", { className: "text-xs text-text-secondary", children: formatDistanceToNow(new Date(entry2.edited_at || entry2.created_at), { addSuffix: true }).replace("about ", "") }) }),
-      /* @__PURE__ */ jsxs("div", { className: "flex gap-3", children: [
-        !hideBuildingInfo && (mediaItems.length > 0 && mediaItems[0].type === "video" ? /* @__PURE__ */ jsx("div", { className: "w-32 h-24 bg-black rounded-sm flex-shrink-0 video-container", children: /* @__PURE__ */ jsx(
-          VideoPlayer,
-          {
-            src: mediaItems[0].url,
-            poster: mediaItems[0].poster,
-            className: "w-full h-full",
-            autoPlayOnVisible: false,
-            muted: true,
-            objectFit: "cover"
-          }
-        ) }) : mediaItems.length > 0 ? /* @__PURE__ */ jsx(
-          "img",
-          {
-            src: mediaItems[0].url,
-            alt: entry2.building.name,
-            className: "w-32 h-24 object-cover rounded-sm flex-shrink-0"
-          }
-        ) : posterUrl ? /* @__PURE__ */ jsx(
-          "img",
-          {
-            src: posterUrl,
-            alt: entry2.building.name,
-            className: "w-32 h-24 object-cover rounded-sm flex-shrink-0"
-          }
-        ) : /* @__PURE__ */ jsx("div", { className: "w-32 h-24 bg-surface-muted rounded-sm flex-shrink-0 flex items-center justify-center", children: /* @__PURE__ */ jsx("span", { className: "text-xs text-text-secondary", children: "No image" }) })),
-        /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
-          !hideBuildingInfo && /* @__PURE__ */ jsxs("div", { className: "mb-2", children: [
-            /* @__PURE__ */ jsx("h3", { className: "text-base font-semibold text-text-primary truncate", children: mainTitle }),
-            subTitle && /* @__PURE__ */ jsx("p", { className: "text-xs text-text-secondary truncate", children: subTitle })
-          ] }),
-          entry2.rating && entry2.rating > 0 && /* @__PURE__ */ jsx("div", { className: "flex items-center gap-1 mb-2", children: /* @__PURE__ */ jsx(RatingCircles, { rating: entry2.rating }) }),
-          entry2.content && /* @__PURE__ */ jsx("p", { className: "text-sm text-text-secondary mb-2 break-words", children: entry2.content })
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-6 mt-3 pt-2", children: [
-        /* @__PURE__ */ jsxs(
-          "button",
-          {
-            onClick: (e) => {
-              e.stopPropagation();
-              onLike == null ? void 0 : onLike(entry2.id);
-              window.dispatchEvent(new CustomEvent("pwa-interaction"));
-            },
-            className: "flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors",
-            children: [
-              /* @__PURE__ */ jsx(Heart, { className: `h-4 w-4 ${entry2.is_liked ? "fill-brand-primary text-brand-primary" : ""}` }),
-              /* @__PURE__ */ jsx("span", { className: "text-xs", children: entry2.likes_count })
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxs("button", { onClick: handleCommentClick, className: "flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors", children: [
-          /* @__PURE__ */ jsx(MessageCircle, { className: "h-4 w-4" }),
-          /* @__PURE__ */ jsx("span", { className: "text-xs", children: entry2.comments_count })
-        ] })
-      ] })
-    ] });
-  }
-  const city = getCityFromAddress$1(entry2.building.address);
-  const action = entry2.status === "pending" ? "saved" : "visited";
-  const renderMediaItem = (item, className, overlay) => /* @__PURE__ */ jsxs("div", { className: `relative w-full h-full min-w-0 overflow-hidden ${""}`, children: [
-    /* @__PURE__ */ jsx("div", { className: "absolute inset-0 w-full h-full", children: item.type === "video" ? /* @__PURE__ */ jsx("div", { className: "w-full h-full video-container overflow-hidden", children: /* @__PURE__ */ jsx(
-      VideoPlayer,
-      {
-        src: item.url,
-        poster: item.poster,
-        className: "w-full h-full transition-transform duration-500 hover:scale-105",
-        autoPlayOnVisible: true,
-        muted: true,
-        objectFit: "cover"
-      }
-    ) }) : !failedImages.has(item.id) ? /* @__PURE__ */ jsx(
-      "img",
-      {
-        src: item.url,
-        alt: "Review photo",
-        className: "w-full h-full object-cover transition-transform duration-500 hover:scale-105",
-        onError: () => setFailedImages((prev) => new Set(prev).add(item.id))
-      }
-    ) : /* @__PURE__ */ jsx("div", { className: "w-full h-full flex items-center justify-center text-text-secondary bg-surface-muted/50", children: /* @__PURE__ */ jsx(Image$1, { className: "w-4 h-4 opacity-50" }) }) }),
-    overlay
-  ] }, item.id);
-  const Header2 = !hideUser && /* @__PURE__ */ jsxs("div", { className: "p-3 md:p-4 flex items-center gap-3 border-b border-border-default/40", children: [
-    /* @__PURE__ */ jsxs(Avatar, { className: "h-10 w-10 border border-border-default/50 shrink-0", children: [
-      /* @__PURE__ */ jsx(AvatarImage, { src: avatarUrl }),
-      /* @__PURE__ */ jsx(AvatarFallback, { children: userInitial })
-    ] }),
-    /* @__PURE__ */ jsx("div", { className: "text-sm md:text-base text-text-primary leading-snug min-w-0 max-w-full flex-1 break-words", children: /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-0.5 md:block min-w-0", children: [
-      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 min-w-0 md:inline md:gap-0", children: [
-        /* @__PURE__ */ jsx("span", { className: "font-semibold truncate md:text-clip min-w-0", children: username }),
-        isVerifiedArchitect && /* @__PURE__ */ jsx("div", { className: "inline-flex items-center text-text-primary ml-1 align-middle", title: "Verified Architect", children: /* @__PURE__ */ jsx(BadgeCheck, { className: "w-4 h-4" }) }),
-        entry2.is_suggested && entry2.user_id && /* @__PURE__ */ jsx("span", { className: "md:inline-block md:ml-2 min-w-0", children: /* @__PURE__ */ jsx(FollowButton, { userId: entry2.user_id, hideIfFollowing: true, className: "h-5 text-[10px] px-2" }) })
-      ] }),
-      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 min-w-0 md:inline md:gap-0", children: [
-        /* @__PURE__ */ jsxs("span", { className: "text-text-secondary/60 font-normal md:ml-1 shrink-0", children: [
-          " ",
-          action,
-          " "
-        ] }),
-        /* @__PURE__ */ jsx("span", { className: "font-semibold text-text-primary truncate block md:inline md:w-auto md:max-w-none min-w-0 flex-1 md:flex-none", children: mainTitle }),
-        city && /* @__PURE__ */ jsxs("span", { className: "text-text-secondary hidden md:inline", children: [
-          " in ",
-          city
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 min-w-0 md:inline md:gap-0", children: [
-        entry2.rating && entry2.rating > 0 && /* @__PURE__ */ jsx("span", { className: "inline-flex items-center gap-0.5 align-middle md:ml-2 shrink-0", children: /* @__PURE__ */ jsx(RatingCircles, { rating: entry2.rating }) }),
-        /* @__PURE__ */ jsxs("span", { className: "text-text-secondary text-xs md:ml-2 shrink min-w-0 truncate", children: [
-          !(entry2.rating && entry2.rating > 0) && /* @__PURE__ */ jsx("span", { className: "hidden md:inline", children: "• " }),
-          formatDistanceToNow(new Date(entry2.edited_at || entry2.created_at)).replace("about ", ""),
-          " ago"
-        ] })
-      ] })
-    ] }) })
-  ] });
-  const Media = !hideBuildingInfo && (mediaItems.length > 0 ? useCarousel2 ? (
-    // Multi-image, no video: full-bleed carousel
-    /* @__PURE__ */ jsx(
-      FeedPhotoCarousel,
-      {
-        images: carouselImages,
-        reviewId: entry2.id,
-        onImageLike,
-        className: "w-full"
-      }
-    )
-  ) : (
-    // Single image or video: keep the side-panel layout
-    /* @__PURE__ */ jsx(
-      "div",
-      {
-        className: `relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${!isCompact ? "md:w-[280px] md:shrink-0 aspect-[4/3] md:aspect-auto" : "aspect-[4/3]"}`,
-        children: /* @__PURE__ */ jsx("div", { className: "absolute inset-0 w-full h-full", children: renderMediaItem(mediaItems[0]) })
-      }
-    )
-  ) : posterUrl && showCommunityImages ? /* @__PURE__ */ jsx(
-    "div",
-    {
-      className: `relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden aspect-[4/3] ${!isCompact ? "md:aspect-auto md:w-[280px] md:shrink-0" : ""}`,
-      children: /* @__PURE__ */ jsx(
-        "img",
-        {
-          src: posterUrl,
-          alt: mainTitle || "",
-          className: `w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 ${!isCompact ? "md:absolute md:inset-0" : ""}`
-        }
-      )
-    }
-  ) : null);
-  const ContentBody = isCompact ? /* @__PURE__ */ jsxs(Fragment, { children: [
-    !hideBuildingInfo && /* @__PURE__ */ jsxs("div", { className: "mb-1", children: [
-      /* @__PURE__ */ jsx("h3", { className: "text-base font-bold text-text-primary line-clamp-2 leading-tight", children: mainTitle }),
-      subTitle && /* @__PURE__ */ jsx("p", { className: "text-xs text-text-secondary line-clamp-1 truncate", children: subTitle }),
-      hideUser && entry2.rating && entry2.rating > 0 && /* @__PURE__ */ jsx("div", { className: "flex items-center gap-1 mt-1", children: /* @__PURE__ */ jsx(RatingCircles, { rating: entry2.rating }) })
-    ] }),
-    entry2.content && /* @__PURE__ */ jsxs("p", { className: "text-sm font-medium text-text-primary line-clamp-3 leading-relaxed", children: [
-      '"',
-      entry2.content,
-      '"'
-    ] })
-  ] }) : /* @__PURE__ */ jsx(Fragment, { children: entry2.content && /* @__PURE__ */ jsx("p", { className: "text-sm text-text-primary mb-2 leading-relaxed break-words", children: entry2.content }) });
-  const Footer = /* @__PURE__ */ jsxs(
-    "div",
-    {
-      className: `flex w-full max-w-full min-w-0 items-center gap-2 md:gap-4 flex-wrap ${isCompact ? "p-2.5 md:p-4 pt-3 mt-auto border-t border-border-default/50" : "mt-auto pt-3 border-t border-border-default/50"}`,
-      children: [
-        /* @__PURE__ */ jsxs(
-          "button",
-          {
-            onClick: (e) => {
-              e.stopPropagation();
-              onLike == null ? void 0 : onLike(entry2.id);
-              window.dispatchEvent(new CustomEvent("pwa-interaction"));
-            },
-            className: "flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like",
-            children: [
-              /* @__PURE__ */ jsx(Heart, { className: `h-4 w-4 transition-transform group-hover/like:scale-110 ${entry2.is_liked ? "fill-brand-primary text-brand-primary" : ""}` }),
-              /* @__PURE__ */ jsx("span", { className: "text-xs font-medium", children: entry2.likes_count })
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxs(
-          "button",
-          {
-            onClick: handleCommentClick,
-            className: "flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment",
-            children: [
-              /* @__PURE__ */ jsx(MessageCircle, { className: "h-4 w-4 transition-transform group-hover/comment:scale-110" }),
-              /* @__PURE__ */ jsx("span", { className: "text-xs font-medium", children: entry2.comments_count })
-            ]
-          }
-        ),
-        !isCompact && /* @__PURE__ */ jsxs(
-          "button",
-          {
-            onClick: handleSave,
-            className: `flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors ml-auto ${isSaving ? "opacity-50" : ""}`,
-            disabled: isSaving,
-            children: [
-              /* @__PURE__ */ jsx(Bookmark, { className: "h-4 w-4" }),
-              /* @__PURE__ */ jsx("span", { className: "text-xs font-medium", children: "Save" })
-            ]
-          }
-        )
-      ]
-    }
-  );
-  const cardLayoutClass = !isCompact && hasMedia && !useCarousel2 ? `${flexDirection} md:min-h-[220px]` : "";
-  return /* @__PURE__ */ jsx(SuggestedContentBlock, { isSuggested: entry2.is_suggested, suggestionReason: entry2.suggestion_reason, children: /* @__PURE__ */ jsx(
-    "article",
-    {
-      onClick: handleCardClick,
-      className: `group/card relative flex flex-col ${cardLayoutClass} h-full bg-surface-card border border-border-default rounded-sm overflow-hidden shadow-none hover:border-border-strong transition-colors cursor-pointer min-w-0 w-full max-w-full ${isArchitectOfBuilding ? "border-l-2 border-l-brand-primary" : ""}`,
-      children: isCompact ? /* @__PURE__ */ jsxs(Fragment, { children: [
-        Media,
-        Header2,
-        /* @__PURE__ */ jsx("div", { className: "flex flex-col flex-1 min-w-0 p-2.5 md:p-4 md:pt-3 gap-2", children: ContentBody }),
-        Footer
-      ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
-        /* @__PURE__ */ jsxs("div", { className: "flex flex-col flex-1 min-w-0", children: [
-          Header2,
-          /* @__PURE__ */ jsxs("div", { className: "flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2", children: [
-            ContentBody,
-            Footer
-          ] })
-        ] }),
-        Media
-      ] })
-    }
-  ) });
-}
-function MutualFacepile({ users, className }) {
-  if (!users || users.length === 0) return null;
-  const maxAvatars = 3;
-  const displayUsers = users.slice(0, maxAvatars);
-  const names = users.map((u) => u.username || "Unknown").filter(Boolean);
-  let text = "";
-  if (users.length === 1) {
-    text = `followed by ${names[0]}`;
-  } else if (users.length === 2) {
-    text = `${names[0]}, ${names[1]}`;
-  } else {
-    const othersCount = users.length - 2;
-    text = `${names[0]}, ${names[1]} +${othersCount}`;
-  }
-  return /* @__PURE__ */ jsxs("div", { className: `flex items-center gap-2 mt-1 ${className || ""}`, children: [
-    /* @__PURE__ */ jsx("div", { className: "flex -space-x-2", children: displayUsers.map((user) => {
-      var _a;
-      const avatarUrl = user.avatar_url ? user.avatar_url.startsWith("http") ? user.avatar_url : supabase.storage.from("avatars").getPublicUrl(user.avatar_url).data.publicUrl : void 0;
-      return /* @__PURE__ */ jsxs(Avatar, { className: "h-5 w-5 border-2 border-surface-default", children: [
-        /* @__PURE__ */ jsx(AvatarImage, { src: avatarUrl || "", alt: user.username || "User" }),
-        /* @__PURE__ */ jsx(AvatarFallback, { className: "text-[8px]", children: (((_a = user.username) == null ? void 0 : _a[0]) || "?").toUpperCase() })
-      ] }, user.id);
-    }) }),
-    /* @__PURE__ */ jsx("span", { className: "text-xs text-text-secondary truncate flex-1 min-w-0", children: text })
-  ] });
-}
-function PeopleYouMayKnow$1() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const { data: suggestions, isLoading } = useQuery({
-    queryKey: ["people-you-may-know", user == null ? void 0 : user.id],
-    queryFn: async () => {
-      const { data: data2, error } = await supabase.rpc("get_people_you_may_know", {
-        p_limit: 5
-      });
-      if (error) throw error;
-      const rpcRows = data2 ?? [];
-      if (!rpcRows.length || !user) return rpcRows;
-      const suggestionIds = rpcRows.map((s) => s.id);
-      const { data: followingData } = await supabase.from("follows").select("following_id").eq("follower_id", user.id);
-      const myFollowingIds = (followingData == null ? void 0 : followingData.map((f) => f.following_id)) || [];
-      if (myFollowingIds.length === 0) {
-        return rpcRows.map((s) => ({
-          ...s,
-          mutual_follows: []
-        }));
-      }
-      const { data: mutualsData } = await supabase.from("follows").select(`
-          following_id,
-          follower:profiles!follows_follower_id_fkey(id, username, avatar_url)
-        `).in("following_id", suggestionIds).in("follower_id", myFollowingIds);
-      const mutualRows = mutualsData ?? [];
-      return rpcRows.map((s) => {
-        const mutuals = mutualRows.filter((m) => m.following_id === s.id).map((m) => {
-          const f = m.follower;
-          return Array.isArray(f) ? f[0] : f;
-        }).filter((f) => f != null);
-        return { ...s, mutual_follows: mutuals };
-      });
-    },
-    enabled: !!user
-  });
-  const hideMutation = useMutation({
-    mutationFn: async (suggestedId) => {
-      if (!user) return;
-      const { error } = await supabase.from("suggested_profile_hides").insert({
-        user_id: user.id,
-        suggested_user_id: suggestedId
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["people-you-may-know"] });
-    }
-  });
-  if (isLoading || !suggestions || suggestions.length === 0) return null;
-  return /* @__PURE__ */ jsxs("div", { className: "p-6 border border-border-default rounded-sm bg-surface-card shadow-none space-y-4 max-w-full w-full overflow-hidden", children: [
-    /* @__PURE__ */ jsx("h3", { className: "font-semibold text-text-primary", children: "People you may know" }),
-    /* @__PURE__ */ jsx("div", { className: "flex overflow-x-auto gap-4 pb-4 px-1 snap-x hide-scrollbar", children: suggestions.map((person) => {
-      var _a, _b;
-      return /* @__PURE__ */ jsxs("div", { className: "relative flex flex-col items-center justify-between gap-3 min-w-[200px] max-w-[200px] snap-center p-4 border rounded-lg bg-surface-default/50 shrink-0 h-full group", children: [
-        /* @__PURE__ */ jsx(
-          "button",
-          {
-            onClick: (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              hideMutation.mutate(person.id);
-            },
-            className: "absolute top-1 right-1 p-1 text-text-secondary/30 hover:text-text-primary hover:bg-surface-muted rounded-full transition-colors z-10",
-            title: "Hide suggestion",
-            children: /* @__PURE__ */ jsx(X, { className: "h-4 w-4" })
-          }
-        ),
-        /* @__PURE__ */ jsxs(Link, { to: `/profile/${person.username || person.id}`, className: "flex flex-col items-center gap-2 hover:opacity-80 transition-opacity w-full text-center", children: [
-          /* @__PURE__ */ jsxs(Avatar, { className: "h-14 w-14 mb-1 border-2 border-surface-default shadow-sm", children: [
-            /* @__PURE__ */ jsx(AvatarImage, { src: person.avatar_url || void 0 }),
-            /* @__PURE__ */ jsx(AvatarFallback, { children: (_b = (_a = person.username) == null ? void 0 : _a[0]) == null ? void 0 : _b.toUpperCase() })
-          ] }),
-          /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center w-full min-w-0 gap-1", children: [
-            /* @__PURE__ */ jsx("span", { className: "text-sm font-semibold leading-none truncate w-full", children: person.username }),
-            /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center text-xs text-text-secondary w-full gap-0.5", children: [
-              person.mutual_follows && person.mutual_follows.length > 0 ? /* @__PURE__ */ jsx("div", { className: "scale-90 origin-top w-full flex justify-center", children: /* @__PURE__ */ jsx(MutualFacepile, { users: person.mutual_follows, className: "justify-center w-full" }) }) : /* @__PURE__ */ jsx("div", { className: "h-5 flex items-center justify-center w-full", children: (person.mutual_count ?? 0) > 0 && /* @__PURE__ */ jsxs("span", { className: "truncate", children: [
-                person.mutual_count ?? 0,
-                " mutual"
-              ] }) }),
-              (person.group_mutual_count ?? 0) > 0 && /* @__PURE__ */ jsxs("span", { className: "truncate w-full text-[10px] text-text-secondary/80", children: [
-                person.group_mutual_count ?? 0,
-                " group",
-                (person.group_mutual_count ?? 0) !== 1 ? "s" : "",
-                " common"
-              ] })
-            ] })
-          ] })
-        ] }),
-        /* @__PURE__ */ jsx(
-          FollowButton,
-          {
-            userId: person.id,
-            isFollower: person.is_follows_me,
-            className: "w-full mt-auto bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
-          }
-        )
-      ] }, person.id);
-    }) })
-  ] });
-}
-function EmptyFeed() {
-  const { user: _user } = useAuth();
-  const { data: data2, isLoading, toggleLike, toggleImageLike } = useSuggestedFeed();
-  const posts = (data2 == null ? void 0 : data2.pages.flatMap((page) => page)) || [];
-  if (isLoading) {
-    return /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center min-h-[60vh] w-full", children: /* @__PURE__ */ jsx(Loader2, { className: "h-8 w-8 animate-spin text-text-secondary" }) });
-  }
-  if (posts.length === 0) {
-    return /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center justify-center text-center py-16 px-8 gap-4", children: [
-      /* @__PURE__ */ jsx(MapPin$1, { className: "h-12 w-12 text-text-disabled" }),
-      /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold text-text-primary", children: "Welcome to Plano" }),
-      /* @__PURE__ */ jsx("p", { className: "text-sm text-text-secondary max-w-sm", children: "Your feed is empty. Follow others to see their building logs and visits." }),
-      /* @__PURE__ */ jsx(Button, { asChild: true, variant: "default", children: /* @__PURE__ */ jsx(Link, { to: "/search?tab=users", children: "Find People" }) }),
-      /* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsx(Button, { variant: "ghost", asChild: true, children: /* @__PURE__ */ jsx(Link, { to: "/search", className: "text-text-secondary hover:text-text-primary", children: "Log a building visit" }) }) })
-    ] });
-  }
-  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-6 max-w-2xl mx-auto pb-10", children: [
-    /* @__PURE__ */ jsxs("div", { className: "text-center py-8 space-y-2", children: [
-      /* @__PURE__ */ jsx("h2", { className: "text-2xl font-bold", children: "Welcome to Plano!" }),
-      /* @__PURE__ */ jsx("p", { className: "text-sm text-text-secondary", children: "Here is some inspiration from our community to get you started." })
-    ] }),
-    /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-6", children: posts.map((post, index) => /* @__PURE__ */ jsxs(React__default.Fragment, { children: [
-      /* @__PURE__ */ jsx(
-        ReviewCard,
-        {
-          entry: post,
-          onLike: toggleLike,
-          onImageLike: toggleImageLike,
-          showCommunityImages: true
-        }
-      ),
-      index === 2 && /* @__PURE__ */ jsx("div", { className: "py-2", children: /* @__PURE__ */ jsx(PeopleYouMayKnow$1, {}) })
-    ] }, post.id)) })
-  ] });
-}
-function useIntersectionObserver(options = {
-  root: null,
-  rootMargin: "0px",
-  threshold: 0
-}) {
-  const [ref, setRef] = useState(null);
-  const [isVisible, setIsVisible] = useState(false);
-  useEffect(() => {
-    if (!ref) return void 0;
-    const observer = new IntersectionObserver(
-      ([entry2]) => {
-        setIsVisible(entry2.isIntersecting);
-      },
-      options
-    );
-    observer.observe(ref);
-    return () => {
-      observer.disconnect();
-    };
-  }, [ref, options.root, options.rootMargin, options.threshold]);
-  return { containerRef: setRef, isVisible };
-}
-function MetaHead({
-  title,
-  description = "Track your architecture visits, rate buildings, and discover what friends are exploring.",
-  image = "/cover.jpg",
-  type = "website",
-  canonicalUrl,
-  structuredData,
-  noIndex = false
-}) {
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    document.title = title ? `${title} | Plano` : "Plano";
-  }, [title]);
-  return null;
-}
-const getReviewDate = (review) => {
-  return review.edited_at ? new Date(review.edited_at) : new Date(review.created_at);
-};
-function aggregateFeed(reviews) {
-  const aggregated = [];
-  let pendingCluster = [];
-  const flushCluster = () => {
-    if (pendingCluster.length === 0) return;
-    if (pendingCluster.length < 2) {
-      pendingCluster.forEach((entry2) => {
-        aggregated.push({ type: "compact", entry: entry2 });
-      });
-    } else {
-      const cities = new Set(
-        pendingCluster.map((r) => {
-          var _a;
-          return r.building.city || (r.building.address ? (_a = r.building.address.split(",").pop()) == null ? void 0 : _a.trim() : null);
-        }).filter(Boolean)
-      );
-      let location2 = void 0;
-      if (cities.size === 1) {
-        location2 = Array.from(cities)[0];
-      } else if (cities.size > 1) {
-        location2 = void 0;
-      } else {
-        location2 = void 0;
-      }
-      aggregated.push({
-        type: "cluster",
-        entries: [...pendingCluster],
-        user: pendingCluster[0].user,
-        location: location2,
-        timestamp: pendingCluster[0].edited_at || pendingCluster[0].created_at
-        // Use the most recent timestamp (assuming sort desc)
-      });
-    }
-    pendingCluster = [];
-  };
-  for (const review of reviews) {
-    const hasUserImages = review.images && review.images.length > 0;
-    if (hasUserImages) {
-      flushCluster();
-      aggregated.push({ type: "hero", entry: review });
-      continue;
-    }
-    if (pendingCluster.length > 0) {
-      const lastInCluster = pendingCluster[pendingCluster.length - 1];
-      const sameUser = review.user_id === lastInCluster.user_id;
-      const timeDiff = Math.abs(differenceInHours(getReviewDate(review), getReviewDate(lastInCluster)));
-      const withinTime = timeDiff < 4;
-      const sameStatus = review.status === lastInCluster.status;
-      if (sameUser && withinTime && sameStatus) {
-        pendingCluster.push(review);
-      } else {
-        flushCluster();
-        pendingCluster.push(review);
-      }
-    } else {
-      pendingCluster.push(review);
-    }
-  }
-  flushCluster();
-  return aggregated;
-}
-function useUserBuildingStatuses() {
-  const { user } = useAuth();
-  const { data: data2 } = useQuery({
-    queryKey: ["user-building-statuses", user == null ? void 0 : user.id],
-    queryFn: async () => {
-      if (!user) return { statuses: {}, ratings: {} };
-      const { data: rows, error } = await supabase.from("user_buildings").select("building_id, status, rating").eq("user_id", user.id);
-      if (error) {
-        return { statuses: {}, ratings: {} };
-      }
-      const statusMap = {};
-      const ratingMap = {};
-      const list = rows ?? [];
-      list.forEach((item) => {
-        statusMap[item.building_id] = item.status;
-        if (item.rating !== null) {
-          ratingMap[item.building_id] = item.rating;
-        }
-      });
-      return { statuses: statusMap, ratings: ratingMap };
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1e3
-    // 5 minutes
-  });
-  return {
-    statuses: (data2 == null ? void 0 : data2.statuses) || {},
-    ratings: (data2 == null ? void 0 : data2.ratings) || {}
-  };
 }
 function FeedHeroSingleImage({ image, onError }) {
   const [aspectRatio, setAspectRatio] = useState(null);
@@ -12835,6 +11759,596 @@ function FeedHeroCard({
     }
   );
 }
+function FollowButton({ userId, initialIsFollowing, isFollower, className, hideIfFollowing }) {
+  const { user } = useAuth();
+  const { toast: toast2 } = useToast();
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing ?? false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  useEffect(() => {
+    if (initialIsFollowing !== void 0 || !user) return;
+    const checkStatus = async () => {
+      try {
+        const { data: data2 } = await supabase.from("follows").select("follower_id").eq("follower_id", user.id).eq("following_id", userId).maybeSingle();
+        setIsFollowing(!!data2);
+      } catch (_error) {
+      }
+    };
+    checkStatus();
+  }, [userId, user, initialIsFollowing]);
+  const handleToggleFollow = async (e) => {
+    e.stopPropagation();
+    if (!user) return;
+    if (user.id === userId) return;
+    setIsLoading(true);
+    try {
+      if (isFollowing) {
+        const { error } = await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", userId);
+        if (error) throw error;
+        setIsFollowing(false);
+        toast2({ title: "Unfollowed user" });
+      } else {
+        const { error } = await supabase.from("follows").insert({ follower_id: user.id, following_id: userId });
+        if (error) throw error;
+        setIsFollowing(true);
+        await supabase.from("notifications").insert({
+          actor_id: user.id,
+          user_id: userId,
+          type: "follow",
+          is_read: false
+        });
+        toast2({ title: "Following user" });
+        window.dispatchEvent(new CustomEvent("pwa-interaction"));
+      }
+    } catch (error) {
+      toast2({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Something went wrong"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  if (!user || user.id === userId) return null;
+  if (isFollowing && hideIfFollowing) return null;
+  return /* @__PURE__ */ jsx(
+    Button,
+    {
+      variant: isFollowing ? "secondary" : "default",
+      size: "sm",
+      className,
+      onClick: handleToggleFollow,
+      disabled: isLoading,
+      onMouseEnter: () => setIsHovering(true),
+      onMouseLeave: () => setIsHovering(false),
+      children: isFollowing ? /* @__PURE__ */ jsxs(Fragment, { children: [
+        /* @__PURE__ */ jsx(UserCheck, { className: "mr-2 h-4 w-4" }),
+        /* @__PURE__ */ jsx("span", { className: isHovering ? "text-feedback-destructive" : void 0, children: isHovering ? "Unfollow" : "Following" })
+      ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+        /* @__PURE__ */ jsx(UserPlus, { className: "mr-2 h-4 w-4" }),
+        isFollower ? "Follow Back" : "Follow"
+      ] })
+    }
+  );
+}
+function MutualFacepile({ users, className }) {
+  if (!users || users.length === 0) return null;
+  const maxAvatars = 3;
+  const displayUsers = users.slice(0, maxAvatars);
+  const names = users.map((u) => u.username || "Unknown").filter(Boolean);
+  let text = "";
+  if (users.length === 1) {
+    text = `followed by ${names[0]}`;
+  } else if (users.length === 2) {
+    text = `${names[0]}, ${names[1]}`;
+  } else {
+    const othersCount = users.length - 2;
+    text = `${names[0]}, ${names[1]} +${othersCount}`;
+  }
+  return /* @__PURE__ */ jsxs("div", { className: `flex items-center gap-2 mt-1 ${className || ""}`, children: [
+    /* @__PURE__ */ jsx("div", { className: "flex -space-x-2", children: displayUsers.map((user) => {
+      var _a;
+      const avatarUrl = user.avatar_url ? user.avatar_url.startsWith("http") ? user.avatar_url : supabase.storage.from("avatars").getPublicUrl(user.avatar_url).data.publicUrl : void 0;
+      return /* @__PURE__ */ jsxs(Avatar, { className: "h-5 w-5 border-2 border-surface-default", children: [
+        /* @__PURE__ */ jsx(AvatarImage, { src: avatarUrl || "", alt: user.username || "User" }),
+        /* @__PURE__ */ jsx(AvatarFallback, { className: "text-[8px]", children: (((_a = user.username) == null ? void 0 : _a[0]) || "?").toUpperCase() })
+      ] }, user.id);
+    }) }),
+    /* @__PURE__ */ jsx("span", { className: "text-xs text-text-secondary truncate flex-1 min-w-0", children: text })
+  ] });
+}
+function PeopleYouMayKnow$1() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data: suggestions, isLoading } = useQuery({
+    queryKey: ["people-you-may-know", user == null ? void 0 : user.id],
+    queryFn: async () => {
+      const { data: data2, error } = await supabase.rpc("get_people_you_may_know", {
+        p_limit: 5
+      });
+      if (error) throw error;
+      const rpcRows = data2 ?? [];
+      if (!rpcRows.length || !user) return rpcRows;
+      const suggestionIds = rpcRows.map((s) => s.id);
+      const { data: followingData } = await supabase.from("follows").select("following_id").eq("follower_id", user.id);
+      const myFollowingIds = (followingData == null ? void 0 : followingData.map((f) => f.following_id)) || [];
+      if (myFollowingIds.length === 0) {
+        return rpcRows.map((s) => ({
+          ...s,
+          mutual_follows: []
+        }));
+      }
+      const { data: mutualsData } = await supabase.from("follows").select(`
+          following_id,
+          follower:profiles!follows_follower_id_fkey(id, username, avatar_url)
+        `).in("following_id", suggestionIds).in("follower_id", myFollowingIds);
+      const mutualRows = mutualsData ?? [];
+      return rpcRows.map((s) => {
+        const mutuals = mutualRows.filter((m) => m.following_id === s.id).map((m) => {
+          const f = m.follower;
+          return Array.isArray(f) ? f[0] : f;
+        }).filter((f) => f != null);
+        return { ...s, mutual_follows: mutuals };
+      });
+    },
+    enabled: !!user
+  });
+  const hideMutation = useMutation({
+    mutationFn: async (suggestedId) => {
+      if (!user) return;
+      const { error } = await supabase.from("suggested_profile_hides").insert({
+        user_id: user.id,
+        suggested_user_id: suggestedId
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["people-you-may-know"] });
+    }
+  });
+  if (isLoading || !suggestions || suggestions.length === 0) return null;
+  return /* @__PURE__ */ jsxs("div", { className: "p-6 border border-border-default rounded-sm bg-surface-card shadow-none space-y-4 max-w-full w-full overflow-hidden", children: [
+    /* @__PURE__ */ jsx("h3", { className: "font-semibold text-text-primary", children: "People you may know" }),
+    /* @__PURE__ */ jsx("div", { className: "flex overflow-x-auto gap-4 pb-4 px-1 snap-x hide-scrollbar", children: suggestions.map((person) => {
+      var _a, _b;
+      return /* @__PURE__ */ jsxs("div", { className: "relative flex flex-col items-center justify-between gap-3 min-w-[200px] max-w-[200px] snap-center p-4 border rounded-lg bg-surface-default/50 shrink-0 h-full group", children: [
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              hideMutation.mutate(person.id);
+            },
+            className: "absolute top-1 right-1 p-1 text-text-secondary/30 hover:text-text-primary hover:bg-surface-muted rounded-full transition-colors z-10",
+            title: "Hide suggestion",
+            children: /* @__PURE__ */ jsx(X, { className: "h-4 w-4" })
+          }
+        ),
+        /* @__PURE__ */ jsxs(Link, { to: `/profile/${person.username || person.id}`, className: "flex flex-col items-center gap-2 hover:opacity-80 transition-opacity w-full text-center", children: [
+          /* @__PURE__ */ jsxs(Avatar, { className: "h-14 w-14 mb-1 border-2 border-surface-default shadow-sm", children: [
+            /* @__PURE__ */ jsx(AvatarImage, { src: person.avatar_url || void 0 }),
+            /* @__PURE__ */ jsx(AvatarFallback, { children: (_b = (_a = person.username) == null ? void 0 : _a[0]) == null ? void 0 : _b.toUpperCase() })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center w-full min-w-0 gap-1", children: [
+            /* @__PURE__ */ jsx("span", { className: "text-sm font-semibold leading-none truncate w-full", children: person.username }),
+            /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center text-xs text-text-secondary w-full gap-0.5", children: [
+              person.mutual_follows && person.mutual_follows.length > 0 ? /* @__PURE__ */ jsx("div", { className: "scale-90 origin-top w-full flex justify-center", children: /* @__PURE__ */ jsx(MutualFacepile, { users: person.mutual_follows, className: "justify-center w-full" }) }) : /* @__PURE__ */ jsx("div", { className: "h-5 flex items-center justify-center w-full", children: (person.mutual_count ?? 0) > 0 && /* @__PURE__ */ jsxs("span", { className: "truncate", children: [
+                person.mutual_count ?? 0,
+                " mutual"
+              ] }) }),
+              (person.group_mutual_count ?? 0) > 0 && /* @__PURE__ */ jsxs("span", { className: "truncate w-full text-[10px] text-text-secondary/80", children: [
+                person.group_mutual_count ?? 0,
+                " group",
+                (person.group_mutual_count ?? 0) !== 1 ? "s" : "",
+                " common"
+              ] })
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(
+          FollowButton,
+          {
+            userId: person.id,
+            isFollower: person.is_follows_me,
+            className: "w-full mt-auto bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
+          }
+        )
+      ] }, person.id);
+    }) })
+  ] });
+}
+function SectionDivider({ label, href }) {
+  return /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3.5 py-1 w-full", children: [
+    /* @__PURE__ */ jsx("div", { className: "flex-1 h-px bg-border-default" }),
+    href ? /* @__PURE__ */ jsxs(
+      Link,
+      {
+        to: href,
+        className: [
+          "font-mono text-2xs font-medium tracking-wide uppercase whitespace-nowrap",
+          "text-text-disabled no-underline",
+          "transition-colors duration-150",
+          "hover:text-text-secondary"
+        ].join(" "),
+        children: [
+          label,
+          " →"
+        ]
+      }
+    ) : /* @__PURE__ */ jsx(
+      "span",
+      {
+        className: "font-mono text-2xs font-medium tracking-wide uppercase whitespace-nowrap text-text-disabled",
+        children: label
+      }
+    ),
+    /* @__PURE__ */ jsx("div", { className: "flex-1 h-px bg-border-default" })
+  ] });
+}
+function ColdStartFeed({
+  discoveryReviews,
+  onLike,
+  onImageLike,
+  isDiscoveryLoading
+}) {
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-6 w-full", children: [
+    /* @__PURE__ */ jsxs("div", { className: "w-full bg-surface-card border border-border-default rounded-sm p-6 flex flex-col gap-4", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1.5", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold text-text-primary leading-tight", children: "Discover architecture with friends" }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm text-text-secondary leading-normal", children: "Follow architects and enthusiasts to see their visits, ratings, and collections here." })
+      ] }),
+      /* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsx(
+        Button,
+        {
+          asChild: true,
+          className: "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm font-medium text-sm",
+          children: /* @__PURE__ */ jsx(Link, { to: "/connect", children: "Find people to follow" })
+        }
+      ) })
+    ] }),
+    /* @__PURE__ */ jsx(PeopleYouMayKnow$1, {}),
+    /* @__PURE__ */ jsx(SectionDivider, { label: "From the community", href: "/explore" }),
+    isDiscoveryLoading ? /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center py-12", children: /* @__PURE__ */ jsx(Loader2, { className: "h-6 w-6 animate-spin text-text-secondary" }) }) : /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-6", children: discoveryReviews.map((review) => /* @__PURE__ */ jsx(
+      FeedHeroCard,
+      {
+        entry: review,
+        onLike,
+        onImageLike
+      },
+      review.id
+    )) })
+  ] });
+}
+function MosaicCell({ mainImageUrl }) {
+  const [errored, setErrored] = useState(false);
+  if (!mainImageUrl || errored) {
+    return /* @__PURE__ */ jsx("div", { className: "w-full h-full bg-surface-muted" });
+  }
+  return /* @__PURE__ */ jsx("div", { className: "relative w-full h-full overflow-hidden bg-surface-muted", children: /* @__PURE__ */ jsx(
+    "img",
+    {
+      src: mainImageUrl,
+      alt: "",
+      className: "w-full h-full object-cover",
+      onError: () => setErrored(true)
+    }
+  ) });
+}
+function FeedCollectionCard({ collection }) {
+  var _a, _b;
+  const navigate = useNavigate();
+  const [isLiked, setIsLiked] = useState(collection.isLiked ?? false);
+  const [likesCount, setLikesCount] = useState(collection.likesCount ?? 0);
+  const [isSaved, setIsSaved] = useState(false);
+  const username = ((_a = collection.owner) == null ? void 0 : _a.username) ?? "unknown";
+  const avatarUrl = ((_b = collection.owner) == null ? void 0 : _b.avatarUrl) ?? void 0;
+  const userInitial = username.charAt(0).toUpperCase();
+  const handleCardClick = (e) => {
+    const target = e.target;
+    if (target.closest("button")) return;
+    navigate(`/${username}/list/${collection.slug}`);
+  };
+  const handleLike = (e) => {
+    e.stopPropagation();
+    setIsLiked((prev) => {
+      const next = !prev;
+      setLikesCount((c) => next ? c + 1 : c - 1);
+      return next;
+    });
+  };
+  const handleSave = (e) => {
+    e.stopPropagation();
+    setIsSaved((prev) => !prev);
+  };
+  const slots = Array.from({ length: 4 }).map(
+    (_, i) => {
+      var _a2, _b2;
+      return ((_b2 = (_a2 = collection.previewBuildings) == null ? void 0 : _a2[i]) == null ? void 0 : _b2.mainImageUrl) ?? null;
+    }
+  );
+  const timestamp = collection.updatedAt ? formatDistanceToNow(new Date(collection.updatedAt)).replace("about ", "") + " ago" : "";
+  const primaryTagBadge = collection.primaryTag ?? null;
+  return /* @__PURE__ */ jsxs(
+    "article",
+    {
+      onClick: handleCardClick,
+      className: cn(
+        // Layout & surface — matches FeedHeroCard card shell exactly
+        "group relative flex flex-col w-full max-w-full min-w-0",
+        "bg-surface-card border border-border-default rounded-sm shadow-none",
+        "overflow-hidden cursor-pointer",
+        "hover:border-border-strong transition-colors"
+      ),
+      children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border-default", children: [
+          /* @__PURE__ */ jsxs(Avatar, { className: "h-7 w-7 shrink-0 border border-border-default/50", children: [
+            /* @__PURE__ */ jsx(AvatarImage, { src: avatarUrl }),
+            /* @__PURE__ */ jsx(AvatarFallback, { className: "text-2xs font-medium text-text-secondary bg-surface-muted", children: userInitial })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0 text-xs text-text-secondary leading-snug", children: [
+            /* @__PURE__ */ jsx("span", { className: "font-semibold text-text-primary", children: username }),
+            " ",
+            "updated a collection"
+          ] }),
+          /* @__PURE__ */ jsx("span", { className: "text-2xs-plus text-text-disabled whitespace-nowrap shrink-0", children: timestamp })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex min-h-0", children: [
+          /* @__PURE__ */ jsx("div", { className: "grid grid-cols-2 grid-rows-2 shrink-0 w-collection-mosaic h-collection-mosaic gap-mosaic-gap", children: slots.map((url, i) => /* @__PURE__ */ jsx(MosaicCell, { mainImageUrl: url }, i)) }),
+          /* @__PURE__ */ jsxs("div", { className: "flex flex-col justify-center gap-2 px-4 pt-4 pb-3.5 flex-1 min-w-0", children: [
+            /* @__PURE__ */ jsx("p", { className: "text-base font-semibold text-text-primary leading-tight truncate", children: collection.name }),
+            /* @__PURE__ */ jsxs("p", { className: "text-sm text-text-secondary", children: [
+              collection.buildingCount ?? 0,
+              " buildings · Public"
+            ] }),
+            collection.description && /* @__PURE__ */ jsx("p", { className: "text-xs text-text-secondary line-clamp-2 leading-normal", children: collection.description }),
+            primaryTagBadge && /* @__PURE__ */ jsx(
+              Badge,
+              {
+                variant: "outline",
+                className: cn(
+                  "self-start",
+                  "rounded-sm px-2 py-0.5",
+                  "bg-surface-muted border-border-default",
+                  "text-2xs-plus font-medium tracking-wide uppercase text-text-secondary"
+                ),
+                children: primaryTagBadge
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center px-1.5 py-0.5 border-t border-border-default", children: [
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: handleLike,
+              className: cn(
+                "inline-flex items-center gap-1.5",
+                "h-8 px-2 rounded-sm",
+                "text-xs font-medium",
+                "text-text-secondary",
+                "hover:bg-surface-muted",
+                isLiked ? "hover:text-feedback-destructive" : "hover:text-text-primary",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
+                "transition-colors"
+              ),
+              title: `${likesCount} likes`,
+              children: [
+                /* @__PURE__ */ jsx(
+                  Heart,
+                  {
+                    className: cn(
+                      "h-3.5 w-3.5",
+                      isLiked ? "fill-feedback-destructive text-feedback-destructive" : "text-text-secondary"
+                    )
+                  }
+                ),
+                likesCount > 0 && /* @__PURE__ */ jsx("span", { className: cn(isLiked ? "text-feedback-destructive" : ""), children: likesCount })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsx("div", { className: "flex-1" }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: handleSave,
+              className: cn(
+                "inline-flex items-center justify-center",
+                "h-8 w-8 rounded-sm",
+                "text-text-secondary",
+                "hover:bg-surface-muted hover:text-text-primary",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
+                "transition-colors"
+              ),
+              title: isSaved ? "Saved" : "Save collection",
+              children: /* @__PURE__ */ jsx(
+                Bookmark,
+                {
+                  className: cn(
+                    "h-3.5 w-3.5",
+                    isSaved ? "fill-brand-primary text-brand-primary" : ""
+                  )
+                }
+              )
+            }
+          )
+        ] })
+      ]
+    }
+  );
+}
+function useIntersectionObserver(options = {
+  root: null,
+  rootMargin: "0px",
+  threshold: 0
+}) {
+  const [ref, setRef] = useState(null);
+  const [isVisible, setIsVisible] = useState(false);
+  useEffect(() => {
+    if (!ref) return void 0;
+    const observer = new IntersectionObserver(
+      ([entry2]) => {
+        setIsVisible(entry2.isIntersecting);
+      },
+      options
+    );
+    observer.observe(ref);
+    return () => {
+      observer.disconnect();
+    };
+  }, [ref, options.root, options.rootMargin, options.threshold]);
+  return { containerRef: setRef, isVisible };
+}
+function MetaHead({
+  title,
+  description = "Track your architecture visits, rate buildings, and discover what friends are exploring.",
+  image = "/cover.jpg",
+  type = "website",
+  canonicalUrl,
+  structuredData,
+  noIndex = false
+}) {
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.title = title ? `${title} | Plano` : "Plano";
+  }, [title]);
+  return null;
+}
+const getReviewDate = (review) => {
+  return review.edited_at ? new Date(review.edited_at) : new Date(review.created_at);
+};
+function collapseIntoRows(items2) {
+  const out = [];
+  let i = 0;
+  while (i < items2.length) {
+    const cur = items2[i];
+    if (cur.type === "hero" || cur.type === "cluster" || cur.type === "row") {
+      out.push(cur);
+      i += 1;
+      continue;
+    }
+    if (cur.type === "compact") {
+      const next = items2[i + 1];
+      if ((next == null ? void 0 : next.type) === "compact") {
+        out.push({
+          type: "row",
+          left: { type: "compact", entry: cur.entry },
+          right: { type: "compact", entry: next.entry }
+        });
+        i += 2;
+      } else {
+        out.push(cur);
+        i += 1;
+      }
+      continue;
+    }
+    if (cur.type === "activity") {
+      const next = items2[i + 1];
+      if ((next == null ? void 0 : next.type) === "activity") {
+        out.push({
+          type: "row",
+          left: {
+            type: "activity",
+            entry: cur.entry,
+            activityStatus: cur.activityStatus
+          },
+          right: {
+            type: "activity",
+            entry: next.entry,
+            activityStatus: next.activityStatus
+          }
+        });
+        i += 2;
+      } else {
+        out.push(cur);
+        i += 1;
+      }
+      continue;
+    }
+  }
+  return out;
+}
+function aggregateFeed(reviews) {
+  const aggregated = [];
+  let pendingCluster = [];
+  const flushCluster = () => {
+    if (pendingCluster.length === 0) return;
+    if (pendingCluster.length < 2) {
+      pendingCluster.forEach((entry2) => {
+        aggregated.push({ type: "compact", entry: entry2 });
+      });
+    } else {
+      const cities = new Set(
+        pendingCluster.map(
+          (r) => {
+            var _a;
+            return r.building.city || (r.building.address ? (_a = r.building.address.split(",").pop()) == null ? void 0 : _a.trim() : null);
+          }
+        ).filter(Boolean)
+      );
+      let location2 = void 0;
+      if (cities.size === 1) {
+        location2 = Array.from(cities)[0];
+      } else if (cities.size > 1) {
+        location2 = void 0;
+      } else {
+        location2 = void 0;
+      }
+      aggregated.push({
+        type: "cluster",
+        entries: [...pendingCluster],
+        user: pendingCluster[0].user,
+        location: location2,
+        timestamp: pendingCluster[0].edited_at || pendingCluster[0].created_at
+      });
+    }
+    pendingCluster = [];
+  };
+  for (const review of reviews) {
+    const noContent = !review.content;
+    const noRating = !review.rating;
+    const noImages = !review.images || review.images.length === 0;
+    const activityStatusOk = review.status === "visited" || review.status === "pending";
+    const hasMainImage = !!review.building.main_image_url;
+    if (noContent && noRating && noImages && activityStatusOk && hasMainImage) {
+      flushCluster();
+      aggregated.push({
+        type: "activity",
+        entry: review,
+        activityStatus: review.status === "visited" ? "visited" : "pending"
+      });
+      continue;
+    }
+    const hasUserImages = review.images && review.images.length > 0;
+    if (hasUserImages) {
+      flushCluster();
+      aggregated.push({ type: "hero", entry: review });
+      continue;
+    }
+    if (pendingCluster.length > 0) {
+      const lastInCluster = pendingCluster[pendingCluster.length - 1];
+      const sameUser = review.user_id === lastInCluster.user_id;
+      const timeDiff = Math.abs(
+        differenceInHours(getReviewDate(review), getReviewDate(lastInCluster))
+      );
+      const withinTime = timeDiff < 4;
+      const sameStatus = review.status === lastInCluster.status;
+      if (sameUser && withinTime && sameStatus) {
+        pendingCluster.push(review);
+      } else {
+        flushCluster();
+        pendingCluster.push(review);
+      }
+    } else {
+      pendingCluster.push(review);
+    }
+  }
+  flushCluster();
+  return collapseIntoRows(aggregated);
+}
 function FeedClusterCard({
   entries,
   user,
@@ -12939,6 +12453,223 @@ function FeedCompactCard({
           ] })
         ] })
       ] })
+    }
+  );
+}
+function FeedActivityCard({
+  entry: entry2,
+  activityStatus,
+  onLike,
+  size = "hero"
+}) {
+  var _a, _b, _c, _d;
+  const navigate = useNavigate();
+  const [imageVisible, setImageVisible] = useState(true);
+  const [saved, setSaved] = useState(false);
+  if (!entry2.building) return null;
+  const isHero = size === "hero";
+  const username = ((_a = entry2.user) == null ? void 0 : _a.username) ?? "Unknown User";
+  const avatarUrl = ((_b = entry2.user) == null ? void 0 : _b.avatar_url) ?? void 0;
+  const userInitial = username.charAt(0).toUpperCase();
+  const mainTitle = entry2.building.name;
+  const city = entry2.building.city || ((_d = (_c = entry2.building.address) == null ? void 0 : _c.split(",").pop()) == null ? void 0 : _d.trim()) || "";
+  const mainImageUrl = entry2.building.main_image_url;
+  const actionCopy = activityStatus === "visited" ? "visited" : "wants to visit";
+  const handleCardClick = (e) => {
+    const target = e.target;
+    if (target.closest("button")) return;
+    if (entry2.building.id) {
+      navigate(
+        getBuildingUrl(
+          entry2.building.id,
+          entry2.building.slug,
+          entry2.building.short_id
+        )
+      );
+    } else {
+      navigate(`/review/${entry2.id}`);
+    }
+  };
+  const handleLike = (e) => {
+    e.stopPropagation();
+    onLike == null ? void 0 : onLike(entry2.id);
+  };
+  const handleSave = (e) => {
+    e.stopPropagation();
+    setSaved((s) => !s);
+  };
+  const likesCount = entry2.likes_count ?? 0;
+  return /* @__PURE__ */ jsxs(
+    "article",
+    {
+      onClick: handleCardClick,
+      className: "flex flex-col w-full max-w-full min-w-0 bg-surface-card border border-border-default rounded-sm shadow-none overflow-hidden cursor-pointer hover:border-border-strong transition-colors",
+      children: [
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            className: cn(
+              "flex items-center gap-2.5 border-b border-border-default",
+              isHero ? "p-3.5" : "p-3"
+            ),
+            children: [
+              /* @__PURE__ */ jsxs(
+                Avatar,
+                {
+                  className: cn(
+                    "border border-border-default/50 shrink-0",
+                    isHero ? "h-7 w-7" : "h-6 w-6"
+                  ),
+                  children: [
+                    /* @__PURE__ */ jsx(AvatarImage, { src: avatarUrl }),
+                    /* @__PURE__ */ jsx(AvatarFallback, { className: isHero ? "text-2xs-plus" : "text-2xs", children: userInitial })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  className: cn(
+                    "flex-1 min-w-0 leading-tight",
+                    isHero ? "text-sm" : "text-xs"
+                  ),
+                  children: [
+                    /* @__PURE__ */ jsx("span", { className: "font-semibold text-text-primary", children: username }),
+                    /* @__PURE__ */ jsxs("span", { className: "text-text-secondary font-normal", children: [
+                      " ",
+                      actionCopy
+                    ] })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxs(
+                "span",
+                {
+                  className: cn(
+                    "text-text-disabled whitespace-nowrap shrink-0",
+                    isHero ? "text-xs" : "text-2xs"
+                  ),
+                  children: [
+                    formatDistanceToNow(
+                      new Date(entry2.edited_at || entry2.created_at)
+                    ).replace("about ", ""),
+                    " ",
+                    "ago"
+                  ]
+                }
+              )
+            ]
+          }
+        ),
+        mainImageUrl && imageVisible && /* @__PURE__ */ jsx(
+          "div",
+          {
+            className: cn(
+              "w-full overflow-hidden bg-surface-muted",
+              isHero ? "aspect-[4/5]" : "aspect-[3/4]"
+            ),
+            children: /* @__PURE__ */ jsx(
+              "img",
+              {
+                src: mainImageUrl,
+                alt: mainTitle,
+                className: "w-full h-full object-cover",
+                onError: () => setImageVisible(false)
+              }
+            )
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            className: cn(
+              "flex flex-col gap-1.5",
+              isHero ? "p-3.5 pb-2.5" : "p-3 pb-2"
+            ),
+            children: [
+              /* @__PURE__ */ jsx(
+                "span",
+                {
+                  className: cn(
+                    "font-semibold text-text-primary leading-tight",
+                    isHero ? "text-lg" : "text-sm"
+                  ),
+                  children: mainTitle
+                }
+              ),
+              city && /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 text-xs text-text-secondary", children: [
+                /* @__PURE__ */ jsx(MapPin$1, { className: "w-3 h-3 shrink-0", strokeWidth: 2 }),
+                /* @__PURE__ */ jsx("span", { className: "truncate", children: city })
+              ] }),
+              /* @__PURE__ */ jsx("div", { className: "mt-0.5", children: activityStatus === "visited" ? (
+                /*
+                 * Visited — brand-primary (neon) background.
+                 * brand-primary-foreground on the neon surface (DESIGN_TOKENS §2 dark-on-neon).
+                 * Checkmark uses w-2.5 h-2.5.
+                 */
+                /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-brand-primary text-brand-primary-foreground text-2xs-plus font-medium tracking-wide uppercase", children: [
+                  /* @__PURE__ */ jsx(Check, { className: "w-2.5 h-2.5", strokeWidth: 2.5 }),
+                  "Visited"
+                ] })
+              ) : (
+                /*
+                 * Bucket list — muted surface with default border.
+                 * text-secondary matches the "quiet" read level; no neon here
+                 * (bucket-list is aspirational, not confirmed — restraint is right).
+                 */
+                /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-surface-muted border border-border-default text-text-secondary text-2xs-plus font-medium tracking-wide uppercase", children: [
+                  /* @__PURE__ */ jsx(Bookmark, { className: "w-2.5 h-2.5", strokeWidth: 1.8 }),
+                  "Bucket list"
+                ] })
+              ) })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center px-2 py-1 border-t border-border-default", children: [
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: handleLike,
+              className: "inline-flex items-center gap-1.5 h-8 px-2 rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors text-xs font-medium",
+              title: `${likesCount} likes`,
+              children: [
+                /* @__PURE__ */ jsx(
+                  Heart,
+                  {
+                    className: cn(
+                      "h-3.5 w-3.5",
+                      entry2.is_liked ? "fill-brand-primary text-brand-primary" : ""
+                    ),
+                    strokeWidth: 1.8
+                  }
+                ),
+                likesCount > 0 && /* @__PURE__ */ jsx("span", { children: likesCount })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsx("div", { className: "flex-1" }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: handleSave,
+              className: "inline-flex items-center h-8 px-2 rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors",
+              title: saved ? "Saved" : "Save",
+              children: /* @__PURE__ */ jsx(
+                Bookmark,
+                {
+                  className: cn(
+                    "h-3.5 w-3.5",
+                    saved ? "fill-text-primary text-text-primary" : ""
+                  ),
+                  strokeWidth: 1.8
+                }
+              )
+            }
+          )
+        ] })
+      ]
     }
   );
 }
@@ -13626,25 +13357,586 @@ function useFeed({ showGroupActivity }) {
     toggleImageLike
   };
 }
-function AllCaughtUpDivider() {
-  return /* @__PURE__ */ jsxs(
-    motion.div,
+function useSuggestedFeed(options = {}) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const LIMIT = 10;
+  const { enabled = true } = options;
+  const queryKey = ["suggested_feed", user == null ? void 0 : user.id];
+  const query = useInfiniteQuery({
+    queryKey,
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!user) return [];
+      const { data: data2, error } = await supabase.rpc("get_suggested_posts", {
+        p_limit: LIMIT,
+        p_offset: pageParam
+      });
+      if (error) throw error;
+      const posts = data2 || [];
+      if (posts.length === 0) return [];
+      const reviewIds = posts.map((p) => p.id);
+      const { data: imagesData } = await supabase.from("review_images").select("*").in("review_id", reviewIds);
+      let likedImageIds = /* @__PURE__ */ new Set();
+      const imageRows = imagesData || [];
+      if (imageRows.length > 0) {
+        const imageIds = imageRows.map((img) => img.id);
+        const { data: likesData } = await supabase.from("image_likes").select("image_id").eq("user_id", user.id).in("image_id", imageIds);
+        if (likesData) {
+          likedImageIds = new Set(
+            likesData.map((l) => l.image_id)
+          );
+        }
+      }
+      const imagesMap = imageRows.reduce((acc, img) => {
+        if (!acc[img.review_id]) {
+          acc[img.review_id] = [];
+        }
+        acc[img.review_id].push({
+          id: img.id,
+          url: getBuildingImageUrl(img.storage_path) || "",
+          likes_count: img.likes_count || 0,
+          is_liked: likedImageIds.has(img.id)
+        });
+        return acc;
+      }, {});
+      return posts.map((post) => {
+        const buildingData = post.building_data;
+        const userData = post.user_data;
+        return {
+          id: post.id,
+          content: post.content,
+          rating: post.rating,
+          tags: post.tags,
+          created_at: post.created_at,
+          edited_at: post.edited_at,
+          status: post.status,
+          user_id: post.user_id,
+          group_id: post.group_id,
+          user: {
+            username: (userData == null ? void 0 : userData.username) || null,
+            avatar_url: (userData == null ? void 0 : userData.avatar_url) || null
+          },
+          building: {
+            id: buildingData == null ? void 0 : buildingData.id,
+            short_id: buildingData == null ? void 0 : buildingData.short_id,
+            slug: buildingData == null ? void 0 : buildingData.slug,
+            name: (buildingData == null ? void 0 : buildingData.name) || "Unknown Building",
+            address: (buildingData == null ? void 0 : buildingData.address) || null,
+            city: (buildingData == null ? void 0 : buildingData.city) || null,
+            country: (buildingData == null ? void 0 : buildingData.country) || null,
+            main_image_url: (buildingData == null ? void 0 : buildingData.main_image_url) || null,
+            architects: (buildingData == null ? void 0 : buildingData.architects) || null,
+            year_completed: (buildingData == null ? void 0 : buildingData.year_completed) || null
+          },
+          likes_count: post.likes_count || 0,
+          comments_count: post.comments_count || 0,
+          is_liked: post.is_liked,
+          images: imagesMap[post.id] || [],
+          is_suggested: post.is_suggested,
+          suggestion_reason: post.suggestion_reason
+        };
+      });
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < LIMIT) return void 0;
+      return allPages.length * LIMIT;
+    },
+    enabled: !!user && enabled,
+    initialPageParam: 0
+  });
+  const toggleLike = async (reviewId) => {
+    if (!user) return;
+    const currentData = queryClient.getQueryData(queryKey);
+    if (!currentData) return;
+    const review = currentData.pages.flatMap((p) => p).find((r) => r.id === reviewId);
+    if (!review) return;
+    queryClient.setQueryData(queryKey, (oldData) => {
+      if (!oldData) return void 0;
+      return {
+        ...oldData,
+        pages: oldData.pages.map(
+          (page) => page.map(
+            (r) => r.id === reviewId ? {
+              ...r,
+              is_liked: !r.is_liked,
+              likes_count: r.is_liked ? r.likes_count - 1 : r.likes_count + 1
+            } : r
+          )
+        )
+      };
+    });
+    try {
+      if (review.is_liked) {
+        await supabase.from("likes").delete().eq("interaction_id", reviewId).eq("user_id", user.id);
+      } else {
+        await supabase.from("likes").insert({ interaction_id: reviewId, user_id: user.id });
+      }
+    } catch {
+      queryClient.setQueryData(queryKey, (oldData) => {
+        if (!oldData) return void 0;
+        return {
+          ...oldData,
+          pages: oldData.pages.map(
+            (page) => page.map(
+              (r) => r.id === reviewId ? { ...r, is_liked: review.is_liked, likes_count: review.likes_count } : r
+            )
+          )
+        };
+      });
+    }
+  };
+  const toggleImageLike = async (reviewId, imageId) => {
+    var _a;
+    if (!user) return;
+    const currentData = queryClient.getQueryData(queryKey);
+    if (!currentData) return;
+    const review = currentData.pages.flatMap((p) => p).find((r) => r.id === reviewId);
+    if (!review) return;
+    const image = (_a = review.images) == null ? void 0 : _a.find((i) => i.id === imageId);
+    if (!image) return;
+    queryClient.setQueryData(queryKey, (oldData) => {
+      if (!oldData) return void 0;
+      return {
+        ...oldData,
+        pages: oldData.pages.map(
+          (page) => page.map((r) => {
+            var _a2;
+            if (r.id === reviewId) {
+              return {
+                ...r,
+                images: (_a2 = r.images) == null ? void 0 : _a2.map((img) => {
+                  if (img.id === imageId) {
+                    return {
+                      ...img,
+                      is_liked: !img.is_liked,
+                      likes_count: img.is_liked ? img.likes_count - 1 : img.likes_count + 1
+                    };
+                  }
+                  return img;
+                })
+              };
+            }
+            return r;
+          })
+        )
+      };
+    });
+    try {
+      if (image.is_liked) {
+        await supabase.from("image_likes").delete().eq("user_id", user.id).eq("image_id", imageId);
+      } else {
+        await supabase.from("image_likes").insert({ user_id: user.id, image_id: imageId });
+      }
+    } catch {
+      queryClient.setQueryData(queryKey, (oldData) => {
+        if (!oldData) return void 0;
+        return {
+          ...oldData,
+          pages: oldData.pages.map(
+            (page) => page.map((r) => {
+              var _a2;
+              if (r.id === reviewId) {
+                return {
+                  ...r,
+                  images: (_a2 = r.images) == null ? void 0 : _a2.map((img) => {
+                    if (img.id === imageId) {
+                      return {
+                        ...img,
+                        is_liked: image.is_liked,
+                        likes_count: image.likes_count
+                      };
+                    }
+                    return img;
+                  })
+                };
+              }
+              return r;
+            })
+          )
+        };
+      });
+    }
+  };
+  return {
+    ...query,
+    toggleLike,
+    toggleImageLike
+  };
+}
+const PAGE_SIZE$1 = 5;
+function mapCollectionRow(row) {
+  var _a, _b;
+  const previews = row.preview_buildings ?? [];
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+    updatedAt: row.updated_at,
+    ownerId: row.owner_id,
+    primaryTag: row.primary_tag,
+    owner: {
+      id: row.owner_id,
+      username: ((_a = row.owner) == null ? void 0 : _a.username) ?? null,
+      avatarUrl: ((_b = row.owner) == null ? void 0 : _b.avatar_url) ?? null
+    },
+    previewBuildings: previews.map((pb) => ({
+      buildingId: pb.building_id,
+      name: pb.name,
+      mainImageUrl: pb.main_image_url
+    })),
+    buildingCount: row.building_count
+  };
+}
+function useCollectionsFeed(options = {}) {
+  const { user } = useAuth();
+  const { enabled = true } = options;
+  const queryKey = ["collections_feed", user == null ? void 0 : user.id];
+  const query = useInfiniteQuery({
+    queryKey,
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!user) return [];
+      const { data: data2, error } = await supabase.rpc("get_collections_feed", {
+        p_limit: PAGE_SIZE$1,
+        p_offset: pageParam
+      });
+      if (error) throw error;
+      const rows = data2 ?? [];
+      return rows.map(mapCollectionRow);
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => lastPage.length < PAGE_SIZE$1 ? void 0 : allPages.length * PAGE_SIZE$1,
+    enabled: !!user && enabled
+  });
+  return query;
+}
+function WidgetErrorFallback({ resetErrorBoundary }) {
+  return /* @__PURE__ */ jsxs("div", { className: "flex w-full flex-col items-center justify-center rounded-sm border border-border-default bg-surface-card p-6 text-center shadow-none", children: [
+    /* @__PURE__ */ jsx(AlertTriangle, { className: "mb-2 h-6 w-6 text-feedback-destructive" }),
+    /* @__PURE__ */ jsx("p", { className: "mb-3 text-sm text-text-secondary", children: "This section couldn't load" }),
+    /* @__PURE__ */ jsx(Button, { variant: "ghost", size: "sm", onClick: resetErrorBoundary, children: "Retry" })
+  ] });
+}
+function WidgetErrorBoundary({ children }) {
+  return /* @__PURE__ */ jsx(
+    ErrorBoundary$4,
     {
-      initial: { opacity: 0, y: 20 },
-      whileInView: { opacity: 1, y: 0 },
-      viewport: { once: true, margin: "-50px" },
-      transition: { duration: 0.5, ease: "easeOut" },
-      className: "relative flex items-center justify-center w-full",
-      children: [
-        /* @__PURE__ */ jsx("div", { className: "w-full border-t border-border-default" }),
-        /* @__PURE__ */ jsxs("div", { className: "absolute -translate-y-1/2 px-4 bg-surface-default flex items-center gap-2", children: [
-          /* @__PURE__ */ jsx(CheckCircle2, { className: "w-4 h-4 text-text-secondary" }),
-          /* @__PURE__ */ jsx("span", { className: "text-xs font-medium text-text-secondary uppercase tracking-wide", children: "You're all caught up" })
-        ] })
-      ]
+      FallbackComponent: WidgetErrorFallback,
+      onError: (error, errorInfo) => {
+        captureErrorBoundaryException(error, errorInfo.componentStack);
+      },
+      children
     }
   );
 }
+function Landing() {
+  const navigate = useNavigate();
+  return /* @__PURE__ */ jsx(AppLayout, {
+    variant: "home",
+    showNav: false,
+    leftAction: /* @__PURE__ */ jsx(SidebarTrigger, {
+      className: "shrink-0 border border-border-default bg-surface-card/90 shadow-sm",
+      "aria-label": "Open menu"
+    }),
+    rightAction: /* @__PURE__ */ jsx(Button, {
+      variant: "ghost",
+      onClick: () => navigate("/auth"),
+      className: "h-10 px-4 font-medium bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm",
+      children: "Log in"
+    }),
+    children: /* @__PURE__ */ jsxs("main", {
+      className: "flex-1 w-full min-w-0 overflow-x-hidden",
+      children: [/* @__PURE__ */ jsx(LandingHero, {}), /* @__PURE__ */ jsx(LandingMarquee, {}), /* @__PURE__ */ jsxs("div", {
+        className: "container mx-auto py-24 px-4",
+        children: [/* @__PURE__ */ jsxs("div", {
+          className: "text-center mb-16 space-y-4",
+          children: [/* @__PURE__ */ jsx("h2", {
+            className: "text-4xl font-bold tracking-tight text-text-primary",
+            children: "Everything you need"
+          }), /* @__PURE__ */ jsx("p", {
+            className: "text-text-secondary text-lg max-w-2xl mx-auto",
+            children: "Built for architecture enthusiasts, by architecture enthusiasts."
+          })]
+        }), /* @__PURE__ */ jsx(LandingFeatureGrid, {})]
+      })]
+    })
+  });
+}
+const Index = UNSAFE_withComponentProps(function Index2() {
+  const {
+    user,
+    loading: authLoading
+  } = useAuth();
+  const navigate = useNavigate();
+  const {
+    isMobile: _isMobile
+  } = useSidebar();
+  const {
+    containerRef: loadMoreRef,
+    isVisible: isLoadMoreVisible
+  } = useIntersectionObserver({
+    rootMargin: "200px"
+  });
+  useEffect(() => {
+    var _a;
+    if (user && !authLoading) {
+      if (!((_a = user.user_metadata) == null ? void 0 : _a.onboarding_completed)) {
+        navigate("/onboarding");
+      }
+    }
+  }, [user, authLoading, navigate]);
+  const socialFeed = useFeed({
+    showGroupActivity: true
+  });
+  const collectionsFeed = useCollectionsFeed({
+    enabled: !!user
+  });
+  const discoveryFeed = useSuggestedFeed({
+    enabled: !!user
+  });
+  useEffect(() => {
+    if (!isLoadMoreVisible) return;
+    if (socialFeed.hasNextPage && !socialFeed.isFetchingNextPage && !socialFeed.isError) {
+      void socialFeed.fetchNextPage();
+    } else if (!socialFeed.hasNextPage && collectionsFeed.hasNextPage && !collectionsFeed.isFetchingNextPage && !collectionsFeed.isError) {
+      void collectionsFeed.fetchNextPage();
+    } else if (!socialFeed.hasNextPage && !collectionsFeed.hasNextPage && discoveryFeed.hasNextPage && !discoveryFeed.isFetchingNextPage && !discoveryFeed.isError) {
+      void discoveryFeed.fetchNextPage();
+    }
+  }, [isLoadMoreVisible, socialFeed.hasNextPage, socialFeed.isFetchingNextPage, socialFeed.isError, socialFeed.fetchNextPage, collectionsFeed.hasNextPage, collectionsFeed.isFetchingNextPage, collectionsFeed.isError, collectionsFeed.fetchNextPage, discoveryFeed.hasNextPage, discoveryFeed.isFetchingNextPage, discoveryFeed.isError, discoveryFeed.fetchNextPage]);
+  const socialReviews = useMemo(() => {
+    var _a;
+    return ((_a = socialFeed.data) == null ? void 0 : _a.pages.flatMap((page) => page)) || [];
+  }, [socialFeed.data]);
+  const aggregatedReviews = useMemo(() => aggregateFeed(socialReviews), [socialReviews]);
+  const collectionItems = useMemo(() => {
+    var _a;
+    return ((_a = collectionsFeed.data) == null ? void 0 : _a.pages.flatMap((p) => p)) || [];
+  }, [collectionsFeed.data]);
+  const discoveryReviews = useMemo(() => {
+    var _a;
+    return ((_a = discoveryFeed.data) == null ? void 0 : _a.pages.flatMap((page) => page)) || [];
+  }, [discoveryFeed.data]);
+  const loadMoreActive = socialFeed.hasNextPage || collectionsFeed.hasNextPage || discoveryFeed.hasNextPage;
+  const renderRowCell = (cell) => {
+    if (cell.type === "compact") {
+      return /* @__PURE__ */ jsx(FeedCompactCard, {
+        entry: cell.entry,
+        onLike: socialFeed.toggleLike
+      });
+    }
+    return /* @__PURE__ */ jsx(FeedActivityCard, {
+      entry: cell.entry,
+      activityStatus: cell.activityStatus,
+      onLike: socialFeed.toggleLike,
+      size: "compact"
+    });
+  };
+  const renderSocialCard = (item) => {
+    switch (item.type) {
+      case "hero":
+        return /* @__PURE__ */ jsx(FeedHeroCard, {
+          entry: item.entry,
+          onLike: socialFeed.toggleLike,
+          onImageLike: socialFeed.toggleImageLike
+        });
+      case "activity":
+        return /* @__PURE__ */ jsx(FeedActivityCard, {
+          entry: item.entry,
+          activityStatus: item.activityStatus,
+          onLike: socialFeed.toggleLike,
+          size: "hero"
+        });
+      case "compact":
+        return /* @__PURE__ */ jsx(FeedCompactCard, {
+          entry: item.entry,
+          onLike: socialFeed.toggleLike
+        });
+      case "cluster":
+        return /* @__PURE__ */ jsx(FeedClusterCard, {
+          entries: item.entries,
+          user: item.user,
+          location: item.location,
+          timestamp: item.timestamp
+        });
+      case "row":
+        return /* @__PURE__ */ jsxs("div", {
+          className: "grid grid-cols-2 gap-2.5 w-full",
+          children: [renderRowCell(item.left), renderRowCell(item.right)]
+        });
+      default: {
+        const _exhaustive = item;
+        return _exhaustive;
+      }
+    }
+  };
+  if (authLoading) {
+    return /* @__PURE__ */ jsx("div", {
+      className: "min-h-screen bg-surface-default flex flex-col items-center justify-center",
+      children: /* @__PURE__ */ jsx(Loader2, {
+        className: "h-10 w-10 animate-spin text-text-secondary"
+      })
+    });
+  }
+  if (!user) {
+    return /* @__PURE__ */ jsx(Landing, {});
+  }
+  return /* @__PURE__ */ jsxs(AppLayout, {
+    variant: "home",
+    children: [/* @__PURE__ */ jsx(MetaHead, {
+      title: "Home"
+    }), socialFeed.isLoading ? /* @__PURE__ */ jsx("div", {
+      className: "flex items-center justify-center min-h-[60vh]",
+      children: /* @__PURE__ */ jsx(Loader2, {
+        className: "h-10 w-10 animate-spin text-text-secondary"
+      })
+    }) : /* @__PURE__ */ jsx("div", {
+      className: "p-4 sm:p-6 lg:p-8 pb-24 mx-auto w-full",
+      children: socialReviews.length === 0 ? /* @__PURE__ */ jsxs("div", {
+        className: "flex gap-8 items-start max-w-5xl mx-auto",
+        children: [/* @__PURE__ */ jsxs("div", {
+          className: "flex-1 max-w-2xl min-w-0 flex flex-col gap-3",
+          children: [/* @__PURE__ */ jsx(ColdStartFeed, {
+            discoveryReviews,
+            onLike: discoveryFeed.toggleLike,
+            onImageLike: discoveryFeed.toggleImageLike,
+            isDiscoveryLoading: discoveryFeed.isLoading
+          }), loadMoreActive && /* @__PURE__ */ jsx("div", {
+            ref: loadMoreRef,
+            className: "flex justify-center mt-4 py-8",
+            children: socialFeed.isFetchingNextPage || collectionsFeed.isFetchingNextPage || discoveryFeed.isFetchingNextPage ? /* @__PURE__ */ jsx(Loader2, {
+              className: "h-6 w-6 animate-spin text-text-secondary"
+            }) : socialFeed.isError || collectionsFeed.isError || discoveryFeed.isError ? /* @__PURE__ */ jsx(Button, {
+              variant: "ghost",
+              onClick: () => {
+                if (socialFeed.isError && socialFeed.hasNextPage) {
+                  void socialFeed.fetchNextPage();
+                } else if (collectionsFeed.isError && collectionsFeed.hasNextPage) {
+                  void collectionsFeed.fetchNextPage();
+                } else if (discoveryFeed.isError && discoveryFeed.hasNextPage) {
+                  void discoveryFeed.fetchNextPage();
+                }
+              },
+              className: "text-text-secondary hover:text-text-primary",
+              children: "Error loading more. Click to retry."
+            }) : /* @__PURE__ */ jsx(Button, {
+              variant: "ghost",
+              className: "text-text-secondary hover:text-text-primary opacity-0",
+              children: "Load More"
+            })
+          })]
+        }), /* @__PURE__ */ jsx("div", {
+          className: "w-72 flex-shrink-0 hidden lg:block sticky top-20",
+          children: /* @__PURE__ */ jsxs("div", {
+            className: "space-y-4",
+            children: [/* @__PURE__ */ jsxs("div", {
+              className: "p-6 border border-border-default rounded-sm bg-surface-card shadow-none",
+              children: [/* @__PURE__ */ jsx("h3", {
+                className: "font-semibold mb-2 text-text-primary",
+                children: "Trending"
+              }), /* @__PURE__ */ jsxs("p", {
+                className: "text-sm text-text-secondary",
+                children: ["Discover popular buildings and active discussions in the community.", /* @__PURE__ */ jsx("br", {}), /* @__PURE__ */ jsx("br", {}), "(Coming soon)"]
+              })]
+            }), /* @__PURE__ */ jsx(WidgetErrorBoundary, {
+              children: /* @__PURE__ */ jsx(PeopleYouMayKnow$1, {})
+            })]
+          })
+        })]
+      }) : /* @__PURE__ */ jsxs("div", {
+        className: "flex gap-8 items-start max-w-5xl mx-auto",
+        children: [/* @__PURE__ */ jsxs("div", {
+          className: "flex-1 max-w-2xl min-w-0 flex flex-col gap-3",
+          children: [(() => {
+            const feedNodes = [];
+            let collectionCursor = 0;
+            let discoveryCursor = 0;
+            let hasShownDivider = false;
+            aggregatedReviews.forEach((item, index) => {
+              const key = item.type === "cluster" ? `cluster-${item.entries[0].id}` : item.type === "row" ? `row-${item.left.entry.id}-${item.right.entry.id}` : item.entry ? item.entry.id : `item-${index}`;
+              feedNodes.push(/* @__PURE__ */ jsx(React__default.Fragment, {
+                children: renderSocialCard(item)
+              }, key));
+              const n = index + 1;
+              if (n % 4 === 0 && collectionCursor < collectionItems.length) {
+                const col = collectionItems[collectionCursor];
+                collectionCursor += 1;
+                feedNodes.push(/* @__PURE__ */ jsx(WidgetErrorBoundary, {
+                  children: /* @__PURE__ */ jsx(FeedCollectionCard, {
+                    collection: col
+                  })
+                }, `collection-inject-${col.id}-${n}`));
+              }
+              if (n % 8 === 0) {
+                if (!hasShownDivider) {
+                  hasShownDivider = true;
+                  feedNodes.push(/* @__PURE__ */ jsx(SectionDivider, {
+                    label: "From the community",
+                    href: "/explore"
+                  }, "feed-section-from-community"));
+                }
+                if (discoveryCursor < discoveryReviews.length) {
+                  const post = discoveryReviews[discoveryCursor];
+                  discoveryCursor += 1;
+                  feedNodes.push(/* @__PURE__ */ jsx(FeedHeroCard, {
+                    entry: post,
+                    onLike: discoveryFeed.toggleLike,
+                    onImageLike: discoveryFeed.toggleImageLike
+                  }, `discovery-inject-${post.id}-${n}`));
+                }
+              }
+            });
+            return feedNodes;
+          })(), loadMoreActive && /* @__PURE__ */ jsx("div", {
+            ref: loadMoreRef,
+            className: "flex justify-center mt-4 py-8",
+            children: socialFeed.isFetchingNextPage || collectionsFeed.isFetchingNextPage || discoveryFeed.isFetchingNextPage ? /* @__PURE__ */ jsx(Loader2, {
+              className: "h-6 w-6 animate-spin text-text-secondary"
+            }) : socialFeed.isError || collectionsFeed.isError || discoveryFeed.isError ? /* @__PURE__ */ jsx(Button, {
+              variant: "ghost",
+              onClick: () => {
+                if (socialFeed.isError && socialFeed.hasNextPage) {
+                  void socialFeed.fetchNextPage();
+                } else if (collectionsFeed.isError && collectionsFeed.hasNextPage) {
+                  void collectionsFeed.fetchNextPage();
+                } else if (discoveryFeed.isError && discoveryFeed.hasNextPage) {
+                  void discoveryFeed.fetchNextPage();
+                }
+              },
+              className: "text-text-secondary hover:text-text-primary",
+              children: "Error loading more. Click to retry."
+            }) : /* @__PURE__ */ jsx(Button, {
+              variant: "ghost",
+              className: "text-text-secondary hover:text-text-primary opacity-0",
+              children: "Load More"
+            })
+          })]
+        }), /* @__PURE__ */ jsx("div", {
+          className: "w-72 flex-shrink-0 hidden lg:block sticky top-20",
+          children: /* @__PURE__ */ jsxs("div", {
+            className: "space-y-4",
+            children: [/* @__PURE__ */ jsxs("div", {
+              className: "p-6 border border-border-default rounded-sm bg-surface-card shadow-none",
+              children: [/* @__PURE__ */ jsx("h3", {
+                className: "font-semibold mb-2 text-text-primary",
+                children: "Trending"
+              }), /* @__PURE__ */ jsxs("p", {
+                className: "text-sm text-text-secondary",
+                children: ["Discover popular buildings and active discussions in the community.", /* @__PURE__ */ jsx("br", {}), /* @__PURE__ */ jsx("br", {}), "(Coming soon)"]
+              })]
+            }), /* @__PURE__ */ jsx(WidgetErrorBoundary, {
+              children: /* @__PURE__ */ jsx(PeopleYouMayKnow$1, {})
+            })]
+          })
+        })]
+      })
+    })]
+  });
+});
+const route21 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: Index
+}, Symbol.toStringTag, { value: "Module" }));
 function useDiscoveryFeed(filters) {
   const { user } = useAuth();
   const LIMIT = 10;
@@ -13769,314 +14061,6 @@ function useDiscoveryFeed(filters) {
     initialPageParam: 0
   });
 }
-function ExploreTeaserBlock({ className }) {
-  var _a;
-  const { data: data2, isLoading } = useDiscoveryFeed({});
-  const buildings = ((_a = data2 == null ? void 0 : data2.pages[0]) == null ? void 0 : _a.slice(0, 4)) || [];
-  if (isLoading) {
-    return /* @__PURE__ */ jsx("div", { className: cn("py-8 flex items-center justify-center", className), children: /* @__PURE__ */ jsx(Loader2, { className: "h-6 w-6 animate-spin text-text-secondary" }) });
-  }
-  if (!buildings.length) {
-    return null;
-  }
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      className: cn(
-        "w-full max-w-full min-w-0 bg-brand-secondary border border-border-default rounded-sm p-6 space-y-4",
-        className
-      ),
-      children: [
-        /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
-          /* @__PURE__ */ jsxs("div", { children: [
-            /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold tracking-tight text-text-primary", children: "Trending Architecture" }),
-            /* @__PURE__ */ jsx("p", { className: "text-sm text-text-secondary mt-1", children: "Discover popular gems around the world" })
-          ] }),
-          /* @__PURE__ */ jsx(Button, { variant: "ghost", size: "sm", className: "hidden sm:flex", asChild: true, children: /* @__PURE__ */ jsxs(Link, { to: "/explore", children: [
-            "View All ",
-            /* @__PURE__ */ jsx(ArrowRight, { className: "ml-2 w-4 h-4" })
-          ] }) })
-        ] }),
-        /* @__PURE__ */ jsxs("div", { className: "flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar -mx-2 md:mx-0 scroll-pl-4 w-[calc(100%+1rem)] md:w-full md:max-w-full", children: [
-          buildings.map((building) => /* @__PURE__ */ jsxs(
-            Link,
-            {
-              to: `/building/${building.id}/${building.slug || "details"}`,
-              className: "snap-start shrink-0 w-[260px] group relative aspect-[4/3] rounded-sm overflow-hidden bg-surface-muted border border-border-default shadow-none transition-all",
-              children: [
-                /* @__PURE__ */ jsxs("div", { className: "absolute inset-0", children: [
-                  building.main_image_url ? /* @__PURE__ */ jsx(
-                    "img",
-                    {
-                      src: getBuildingImageUrl(building.main_image_url),
-                      alt: building.name,
-                      className: "w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    }
-                  ) : /* @__PURE__ */ jsx("div", { className: "w-full h-full bg-surface-muted flex items-center justify-center text-text-secondary", children: "No Image" }),
-                  /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80 transition-opacity group-hover:opacity-90" })
-                ] }),
-                /* @__PURE__ */ jsxs("div", { className: "absolute bottom-0 left-0 right-0 p-4 text-text-inverse", children: [
-                  /* @__PURE__ */ jsx("h3", { className: "font-semibold text-lg leading-tight mb-1 line-clamp-2 drop-shadow-md", children: building.name }),
-                  /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 text-sm text-text-inverse/80 font-medium drop-shadow-md", children: [
-                    /* @__PURE__ */ jsx(MapPin$1, { className: "w-3.5 h-3.5 shrink-0 text-text-inverse/80" }),
-                    /* @__PURE__ */ jsx("span", { className: "truncate", children: building.city || building.country || "Unknown Location" })
-                  ] })
-                ] })
-              ]
-            },
-            building.id
-          )),
-          /* @__PURE__ */ jsxs(
-            Link,
-            {
-              to: "/explore",
-              className: "snap-start shrink-0 w-[140px] aspect-[4/3] rounded-sm overflow-hidden bg-surface-muted/30 border-2 border-dashed border-border-default flex flex-col items-center justify-center gap-3 hover:bg-surface-muted/50 hover:border-brand-primary/50 transition-all group/view-all",
-              children: [
-                /* @__PURE__ */ jsx("div", { className: "h-12 w-12 rounded-sm bg-surface-default flex items-center justify-center shadow-sm group-hover/view-all:scale-110 transition-transform", children: /* @__PURE__ */ jsx(ArrowRight, { className: "w-5 h-5 text-text-primary" }) }),
-                /* @__PURE__ */ jsx("span", { className: "font-medium text-sm text-text-secondary group-hover/view-all:text-text-primary transition-colors", children: "Explore All" })
-              ]
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsx("div", { className: "pt-2 sm:hidden", children: /* @__PURE__ */ jsx(Button, { variant: "secondary", className: "w-full rounded-sm", asChild: true, children: /* @__PURE__ */ jsxs(Link, { to: "/explore", children: [
-          "Explore more architectural gems ",
-          /* @__PURE__ */ jsx(ArrowRight, { className: "ml-2 w-4 h-4" })
-        ] }) }) })
-      ]
-    }
-  );
-}
-function WidgetErrorFallback({ resetErrorBoundary }) {
-  return /* @__PURE__ */ jsxs("div", { className: "flex w-full flex-col items-center justify-center rounded-sm border border-border-default bg-surface-card p-6 text-center shadow-none", children: [
-    /* @__PURE__ */ jsx(AlertTriangle, { className: "mb-2 h-6 w-6 text-feedback-destructive" }),
-    /* @__PURE__ */ jsx("p", { className: "mb-3 text-sm text-text-secondary", children: "This section couldn't load" }),
-    /* @__PURE__ */ jsx(Button, { variant: "ghost", size: "sm", onClick: resetErrorBoundary, children: "Retry" })
-  ] });
-}
-function WidgetErrorBoundary({ children }) {
-  return /* @__PURE__ */ jsx(
-    ErrorBoundary$4,
-    {
-      FallbackComponent: WidgetErrorFallback,
-      onError: (error, errorInfo) => {
-        captureErrorBoundaryException(error, errorInfo.componentStack);
-      },
-      children
-    }
-  );
-}
-function Landing() {
-  const navigate = useNavigate();
-  return /* @__PURE__ */ jsx(AppLayout, {
-    variant: "home",
-    showNav: false,
-    leftAction: /* @__PURE__ */ jsx(SidebarTrigger, {
-      className: "shrink-0 border border-border-default bg-surface-card/90 shadow-sm",
-      "aria-label": "Open menu"
-    }),
-    rightAction: /* @__PURE__ */ jsx(Button, {
-      variant: "ghost",
-      onClick: () => navigate("/auth"),
-      className: "h-10 px-4 font-medium bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm",
-      children: "Log in"
-    }),
-    children: /* @__PURE__ */ jsxs("main", {
-      className: "flex-1 w-full min-w-0 overflow-x-hidden",
-      children: [/* @__PURE__ */ jsx(LandingHero, {}), /* @__PURE__ */ jsx(LandingMarquee, {}), /* @__PURE__ */ jsxs("div", {
-        className: "container mx-auto py-24 px-4",
-        children: [/* @__PURE__ */ jsxs("div", {
-          className: "text-center mb-16 space-y-4",
-          children: [/* @__PURE__ */ jsx("h2", {
-            className: "text-4xl font-bold tracking-tight text-text-primary",
-            children: "Everything you need"
-          }), /* @__PURE__ */ jsx("p", {
-            className: "text-text-secondary text-lg max-w-2xl mx-auto",
-            children: "Built for architecture enthusiasts, by architecture enthusiasts."
-          })]
-        }), /* @__PURE__ */ jsx(LandingFeatureGrid, {})]
-      })]
-    })
-  });
-}
-const Index = UNSAFE_withComponentProps(function Index2() {
-  const {
-    user,
-    loading: authLoading
-  } = useAuth();
-  const navigate = useNavigate();
-  const location2 = useLocation();
-  const {
-    isMobile: _isMobile
-  } = useSidebar();
-  const [showGroupActivity, setShowGroupActivity] = useState(true);
-  const {
-    containerRef: loadMoreRef,
-    isVisible: isLoadMoreVisible
-  } = useIntersectionObserver({
-    rootMargin: "200px"
-  });
-  useEffect(() => {
-    var _a;
-    if ((_a = location2.state) == null ? void 0 : _a.reviewPosted) {
-      setShowGroupActivity(true);
-    }
-  }, [location2.state]);
-  useEffect(() => {
-    var _a;
-    if (user && !authLoading) {
-      if (!((_a = user.user_metadata) == null ? void 0 : _a.onboarding_completed)) {
-        navigate("/onboarding");
-      }
-    }
-  }, [user, authLoading, navigate]);
-  const socialFeed = useFeed({
-    showGroupActivity
-  });
-  const shouldFetchDiscovery = !!user && !socialFeed.hasNextPage && !socialFeed.isLoading;
-  const discoveryFeed = useSuggestedFeed({
-    enabled: shouldFetchDiscovery
-  });
-  useEffect(() => {
-    if (isLoadMoreVisible) {
-      if (socialFeed.hasNextPage && !socialFeed.isFetchingNextPage && !socialFeed.isError) {
-        socialFeed.fetchNextPage();
-      } else if (!socialFeed.hasNextPage && discoveryFeed.hasNextPage && !discoveryFeed.isFetchingNextPage && !discoveryFeed.isError) {
-        discoveryFeed.fetchNextPage();
-      }
-    }
-  }, [isLoadMoreVisible, socialFeed.hasNextPage, socialFeed.isFetchingNextPage, socialFeed.isError, socialFeed.fetchNextPage, discoveryFeed.hasNextPage, discoveryFeed.isFetchingNextPage, discoveryFeed.isError, discoveryFeed.fetchNextPage]);
-  const socialReviews = useMemo(() => {
-    var _a;
-    return ((_a = socialFeed.data) == null ? void 0 : _a.pages.flatMap((page) => page)) || [];
-  }, [socialFeed.data]);
-  const aggregatedReviews = useMemo(() => aggregateFeed(socialReviews), [socialReviews]);
-  const discoveryReviews = useMemo(() => {
-    var _a;
-    return ((_a = discoveryFeed.data) == null ? void 0 : _a.pages.flatMap((page) => page)) || [];
-  }, [discoveryFeed.data]);
-  if (authLoading) {
-    return /* @__PURE__ */ jsx("div", {
-      className: "min-h-screen bg-surface-default flex flex-col items-center justify-center",
-      children: /* @__PURE__ */ jsx(Loader2, {
-        className: "h-10 w-10 animate-spin text-text-secondary"
-      })
-    });
-  }
-  if (!user) {
-    return /* @__PURE__ */ jsx(Landing, {});
-  }
-  return /* @__PURE__ */ jsxs(AppLayout, {
-    variant: "home",
-    children: [/* @__PURE__ */ jsx(MetaHead, {
-      title: "Home"
-    }), socialFeed.isLoading ? /* @__PURE__ */ jsx("div", {
-      className: "flex items-center justify-center min-h-[60vh]",
-      children: /* @__PURE__ */ jsx(Loader2, {
-        className: "h-10 w-10 animate-spin text-text-secondary"
-      })
-    }) : /* @__PURE__ */ jsx("div", {
-      className: "p-4 sm:p-6 lg:p-8 pb-24 mx-auto w-full",
-      children: socialReviews.length === 0 ? /* @__PURE__ */ jsx(EmptyFeed, {}) : /* @__PURE__ */ jsxs("div", {
-        className: "flex gap-8 items-start max-w-5xl mx-auto",
-        children: [/* @__PURE__ */ jsxs("div", {
-          className: "flex-1 max-w-2xl min-w-0 flex flex-col gap-3",
-          children: [aggregatedReviews.map((item, index) => {
-            const key = item.type === "cluster" ? `cluster-${item.entries[0].id}` : item.entry.id;
-            let card = null;
-            if (item.type === "hero") {
-              card = /* @__PURE__ */ jsx(FeedHeroCard, {
-                entry: item.entry,
-                onLike: socialFeed.toggleLike,
-                onImageLike: socialFeed.toggleImageLike
-              }, key);
-            } else if (item.type === "compact") {
-              card = /* @__PURE__ */ jsx(FeedCompactCard, {
-                entry: item.entry,
-                onLike: socialFeed.toggleLike
-              }, key);
-            } else if (item.type === "cluster") {
-              card = /* @__PURE__ */ jsx(FeedClusterCard, {
-                entries: item.entries,
-                user: item.user,
-                location: item.location,
-                timestamp: item.timestamp
-              }, key);
-            }
-            return /* @__PURE__ */ jsxs(React__default.Fragment, {
-              children: [card, (index + 1) % 10 === 0 && /* @__PURE__ */ jsx("div", {
-                className: "py-2",
-                children: /* @__PURE__ */ jsx(WidgetErrorBoundary, {
-                  children: /* @__PURE__ */ jsx(ExploreTeaserBlock, {})
-                })
-              }, `explore-teaser-${key}-${index}`)]
-            }, key);
-          }), !socialFeed.hasNextPage && /* @__PURE__ */ jsxs(Fragment, {
-            children: [/* @__PURE__ */ jsx("div", {
-              className: "mt-12 border-t border-border-default pt-8",
-              children: /* @__PURE__ */ jsx(AllCaughtUpDivider, {})
-            }), /* @__PURE__ */ jsx("div", {
-              className: "py-2",
-              children: /* @__PURE__ */ jsx(WidgetErrorBoundary, {
-                children: /* @__PURE__ */ jsx(ExploreTeaserBlock, {})
-              })
-            }), /* @__PURE__ */ jsx(WidgetErrorBoundary, {
-              children: /* @__PURE__ */ jsxs("div", {
-                className: "flex flex-col gap-6 mt-6",
-                children: [discoveryReviews.map((post) => /* @__PURE__ */ jsx(ReviewCard, {
-                  entry: post,
-                  onLike: discoveryFeed.toggleLike,
-                  onImageLike: discoveryFeed.toggleImageLike,
-                  showCommunityImages: true
-                }, `discovery-${post.id}`)), discoveryFeed.isLoading && /* @__PURE__ */ jsx("div", {
-                  className: "flex items-center justify-center py-8",
-                  children: /* @__PURE__ */ jsx(Loader2, {
-                    className: "h-6 w-6 animate-spin text-text-secondary"
-                  })
-                })]
-              })
-            })]
-          }), (socialFeed.hasNextPage || discoveryFeed.hasNextPage) && /* @__PURE__ */ jsx("div", {
-            ref: loadMoreRef,
-            className: "flex justify-center mt-4 py-8",
-            children: socialFeed.isFetchingNextPage || discoveryFeed.isFetchingNextPage ? /* @__PURE__ */ jsx(Loader2, {
-              className: "h-6 w-6 animate-spin text-text-secondary"
-            }) : socialFeed.isError || discoveryFeed.isError ? /* @__PURE__ */ jsx(Button, {
-              variant: "ghost",
-              onClick: () => socialFeed.hasNextPage ? socialFeed.fetchNextPage() : discoveryFeed.fetchNextPage(),
-              className: "text-text-secondary hover:text-text-primary",
-              children: "Error loading more. Click to retry."
-            }) : /* @__PURE__ */ jsx(Button, {
-              variant: "ghost",
-              className: "text-text-secondary hover:text-text-primary opacity-0",
-              children: "Load More"
-            })
-          })]
-        }), /* @__PURE__ */ jsx("div", {
-          className: "w-72 flex-shrink-0 hidden lg:block sticky top-20",
-          children: /* @__PURE__ */ jsxs("div", {
-            className: "space-y-4",
-            children: [/* @__PURE__ */ jsxs("div", {
-              className: "p-6 border border-border-default rounded-sm bg-surface-card shadow-none",
-              children: [/* @__PURE__ */ jsx("h3", {
-                className: "font-semibold mb-2 text-text-primary",
-                children: "Trending"
-              }), /* @__PURE__ */ jsxs("p", {
-                className: "text-sm text-text-secondary",
-                children: ["Discover popular buildings and active discussions in the community.", /* @__PURE__ */ jsx("br", {}), /* @__PURE__ */ jsx("br", {}), "(Coming soon)"]
-              })]
-            }), /* @__PURE__ */ jsx(WidgetErrorBoundary, {
-              children: /* @__PURE__ */ jsx(PeopleYouMayKnow$1, {})
-            })]
-          })
-        })]
-      })
-    })]
-  });
-});
-const route21 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  default: Index
-}, Symbol.toStringTag, { value: "Module" }));
 function ContactFacepile({ interactions, className }) {
   const uniqueUsers = useMemo(() => {
     const seen = /* @__PURE__ */ new Set();
@@ -21002,6 +20986,540 @@ const route46 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePrope
   __proto__: null,
   default: NotFound$1
 }, Symbol.toStringTag, { value: "Module" }));
+function VideoPlayer({
+  src,
+  poster,
+  className,
+  autoPlayOnVisible = false,
+  muted = true,
+  objectFit = "contain"
+}) {
+  const videoRef = useRef(null);
+  const containerRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(muted);
+  const [isControlsVisible, setIsControlsVisible] = useState(false);
+  const [_hasInteracted, setHasInteracted] = useState(false);
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return void 0;
+    if (autoPlayOnVisible) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry2) => {
+            if (entry2.isIntersecting) {
+              video.play().catch(() => {
+                setIsPlaying(false);
+              });
+              setIsPlaying(true);
+            } else {
+              video.pause();
+              setIsPlaying(false);
+            }
+          });
+          return void 0;
+        },
+        { threshold: 0.6 }
+        // 60% visibility required
+      );
+      if (containerRef.current) {
+        observer.observe(containerRef.current);
+      }
+      return () => observer.disconnect();
+    }
+    return void 0;
+  }, [autoPlayOnVisible]);
+  const togglePlay = (e) => {
+    e == null ? void 0 : e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    if (isPlaying) {
+      video.pause();
+    } else {
+      video.play();
+    }
+    setIsPlaying(!isPlaying);
+    setHasInteracted(true);
+  };
+  const toggleMute = (e) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !isMuted;
+    setIsMuted(!isMuted);
+  };
+  const toggleFullscreen = (e) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      video.requestFullscreen();
+    }
+  };
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      ref: containerRef,
+      className: cn("relative group bg-black overflow-hidden max-w-full rounded-sm", className),
+      onMouseEnter: () => setIsControlsVisible(true),
+      onMouseLeave: () => setIsControlsVisible(false),
+      onClick: togglePlay,
+      children: [
+        /* @__PURE__ */ jsx(
+          "video",
+          {
+            ref: videoRef,
+            src,
+            poster,
+            className: cn("w-full h-full max-w-full", `object-${objectFit}`),
+            playsInline: true,
+            loop: true,
+            muted: isMuted,
+            preload: "metadata",
+            onPlay: () => setIsPlaying(true),
+            onPause: () => setIsPlaying(false)
+          }
+        ),
+        !isPlaying && /* @__PURE__ */ jsx("div", { className: "pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20", children: /* @__PURE__ */ jsx("div", { className: "rounded-sm bg-black/60 p-3 backdrop-blur-sm", children: /* @__PURE__ */ jsx(Play, { className: "w-8 h-8 text-white fill-white" }) }) }),
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            className: cn(
+              "absolute bottom-0 left-0 right-0 flex items-center justify-between bg-black/60 p-2 backdrop-blur-sm transition-opacity duration-300",
+              isControlsVisible || !isPlaying ? "opacity-100" : "opacity-0"
+            ),
+            children: [
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: togglePlay,
+                  className: "rounded-sm p-2 text-white transition-colors hover:bg-white/20",
+                  "aria-label": isPlaying ? "Pause" : "Play",
+                  children: isPlaying ? /* @__PURE__ */ jsx(Pause, { className: "w-6 h-6 fill-white" }) : /* @__PURE__ */ jsx(Play, { className: "w-6 h-6 fill-white" })
+                }
+              ),
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1", children: [
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    onClick: toggleMute,
+                    className: "rounded-sm p-2 text-white transition-colors hover:bg-white/20",
+                    "aria-label": isMuted ? "Unmute" : "Mute",
+                    children: isMuted ? /* @__PURE__ */ jsx(VolumeX, { className: "w-6 h-6" }) : /* @__PURE__ */ jsx(Volume2, { className: "w-6 h-6" })
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    onClick: toggleFullscreen,
+                    className: "rounded-sm p-2 text-white transition-colors hover:bg-white/20",
+                    "aria-label": "Toggle Fullscreen",
+                    children: /* @__PURE__ */ jsx(Maximize2, { className: "w-6 h-6" })
+                  }
+                )
+              ] })
+            ]
+          }
+        )
+      ]
+    }
+  );
+}
+function SuggestedContentBlock({
+  children,
+  suggestionReason,
+  isSuggested
+}) {
+  if (!isSuggested) {
+    return /* @__PURE__ */ jsx(Fragment, { children });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3 p-4 md:p-6 rounded-sm bg-brand-secondary border border-border-default mb-6 min-w-0 w-full max-w-full overflow-hidden", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+      /* @__PURE__ */ jsx(Sparkles, { className: "h-3.5 w-3.5 text-brand-secondary-foreground" }),
+      /* @__PURE__ */ jsxs("span", { className: "text-xs font-medium text-brand-secondary-foreground", children: [
+        "Suggested ",
+        suggestionReason && `• ${suggestionReason}`
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "relative min-w-0 w-full", children })
+  ] });
+}
+function getCityFromAddress$1(address) {
+  if (!address) return "";
+  const parts = address.split(",").map((p) => p.trim());
+  if (parts.length >= 2) {
+    return parts[parts.length - 2];
+  }
+  return parts[0];
+}
+const RatingCircles = ({ rating }) => {
+  return /* @__PURE__ */ jsx("div", { className: "flex items-center gap-0.5", children: Array.from({ length: 3 }).map((_, i) => /* @__PURE__ */ jsx(
+    Circle,
+    {
+      className: `w-3 h-3 ${i < rating ? "fill-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`
+    },
+    i
+  )) });
+};
+function ReviewCard({
+  entry: entry2,
+  onLike,
+  onImageLike,
+  onComment,
+  isDetailView = false,
+  hideUser = false,
+  hideBuildingInfo = false,
+  imagePosition = "left",
+  variant = "default",
+  showCommunityImages = true
+}) {
+  var _a, _b, _c, _d;
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast: toast2 } = useToast();
+  const [failedImages, setFailedImages] = useState(/* @__PURE__ */ new Set());
+  const [isSaving, setIsSaving] = useState(false);
+  if (!entry2.building) return null;
+  const handleSave = async (e) => {
+    var _a2;
+    e.stopPropagation();
+    if (!user) return;
+    if (!((_a2 = entry2.building) == null ? void 0 : _a2.id)) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("user_buildings").upsert({
+        user_id: user.id,
+        building_id: entry2.building.id,
+        status: "pending",
+        edited_at: (/* @__PURE__ */ new Date()).toISOString()
+      }, { onConflict: "user_id, building_id" });
+      if (error) throw error;
+      toast2({ title: "Saved to your list" });
+    } catch (_error) {
+      toast2({ variant: "destructive", title: "Failed to save" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  const posterUrl = getBuildingImageUrl(entry2.building.main_image_url);
+  const handleCardClick = (e) => {
+    if (isDetailView) return;
+    const target = e.target;
+    if (target.closest("button") || target.closest(".video-container")) return;
+    if (entry2.building.id) {
+      navigate(getBuildingUrl(entry2.building.id, entry2.building.slug, entry2.building.short_id));
+    } else {
+      navigate(`/review/${entry2.id}`);
+    }
+  };
+  const handleCommentClick = (e) => {
+    e.stopPropagation();
+    if (onComment) {
+      onComment(entry2.id);
+    } else {
+      if (entry2.building.id) {
+        navigate(getBuildingUrl(entry2.building.id, entry2.building.slug, entry2.building.short_id));
+      } else {
+        navigate(`/review/${entry2.id}`);
+      }
+    }
+  };
+  const username = ((_a = entry2.user) == null ? void 0 : _a.username) || "Unknown User";
+  const avatarUrl = ((_b = entry2.user) == null ? void 0 : _b.avatar_url) || void 0;
+  const isVerifiedArchitect = ((_c = entry2.user) == null ? void 0 : _c.is_verified_architect) || false;
+  const isArchitectOfBuilding = ((_d = entry2.user) == null ? void 0 : _d.is_architect_of_building) || false;
+  const userInitial = username.charAt(0).toUpperCase();
+  const mainTitle = entry2.building.name;
+  const architects = entry2.building.architects;
+  const year_completed = entry2.building.year_completed;
+  const architectNames = architects ? architects.map((a) => typeof a === "string" ? a : a.name).filter(Boolean) : [];
+  let subTitle = entry2.building.address;
+  if (variant === "compact") {
+    const parts = [];
+    if (architectNames.length > 0) parts.push(architectNames.slice(0, 2).join(", "));
+    if (year_completed) parts.push(year_completed);
+    subTitle = parts.length > 0 ? parts.join(" • ") : entry2.building.address;
+  } else {
+    const architectsList = architectNames.slice(0, 2).join(", ");
+    if (architectsList) {
+      subTitle = architectsList;
+      if (year_completed) subTitle += ` • ${year_completed}`;
+    } else if (year_completed) {
+      subTitle = `${year_completed}`;
+      if (entry2.building.address) subTitle += ` • ${entry2.building.address}`;
+    }
+  }
+  const mediaItems = [];
+  if (entry2.video_url) {
+    mediaItems.push({
+      id: `video-${entry2.id}`,
+      type: "video",
+      url: entry2.video_url,
+      poster: entry2.images && entry2.images.length > 0 ? entry2.images[0].url : posterUrl || void 0
+    });
+  }
+  if (entry2.images && entry2.images.length > 0) {
+    entry2.images.forEach((img) => {
+      mediaItems.push({ id: img.id, type: "image", url: img.url });
+    });
+  }
+  const imageOnlyItems = mediaItems.filter((m) => m.type === "image");
+  const hasVideo = mediaItems.some((m) => m.type === "video");
+  const useCarousel2 = !hasVideo && imageOnlyItems.length > 1;
+  const carouselImages = (entry2.images || []).map((img) => ({
+    id: img.id,
+    url: img.url,
+    likes_count: img.likes_count,
+    is_liked: img.is_liked
+  }));
+  const hasMedia = !hideBuildingInfo && (mediaItems.length > 0 || !!posterUrl);
+  const isCompact = variant === "compact";
+  const flexDirection = imagePosition === "right" ? "md:flex-row" : "md:flex-row-reverse";
+  if (isDetailView) {
+    return /* @__PURE__ */ jsxs("article", { className: "px-4 py-4 hairline", children: [
+      !hideUser ? /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3 mb-3", children: [
+        /* @__PURE__ */ jsxs(Avatar, { className: "h-9 w-9", children: [
+          /* @__PURE__ */ jsx(AvatarImage, { src: avatarUrl }),
+          /* @__PURE__ */ jsx(AvatarFallback, { className: "bg-surface-muted text-text-primary text-sm", children: userInitial })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ jsx("p", { className: "text-sm font-medium text-text-primary truncate", children: username }),
+          /* @__PURE__ */ jsx("p", { className: "text-xs text-text-secondary", children: formatDistanceToNow(new Date(entry2.edited_at || entry2.created_at), { addSuffix: true }).replace("about ", "") })
+        ] })
+      ] }) : /* @__PURE__ */ jsx("div", { className: "mb-3", children: /* @__PURE__ */ jsx("p", { className: "text-xs text-text-secondary", children: formatDistanceToNow(new Date(entry2.edited_at || entry2.created_at), { addSuffix: true }).replace("about ", "") }) }),
+      /* @__PURE__ */ jsxs("div", { className: "flex gap-3", children: [
+        !hideBuildingInfo && (mediaItems.length > 0 && mediaItems[0].type === "video" ? /* @__PURE__ */ jsx("div", { className: "w-32 h-24 bg-black rounded-sm flex-shrink-0 video-container", children: /* @__PURE__ */ jsx(
+          VideoPlayer,
+          {
+            src: mediaItems[0].url,
+            poster: mediaItems[0].poster,
+            className: "w-full h-full",
+            autoPlayOnVisible: false,
+            muted: true,
+            objectFit: "cover"
+          }
+        ) }) : mediaItems.length > 0 ? /* @__PURE__ */ jsx(
+          "img",
+          {
+            src: mediaItems[0].url,
+            alt: entry2.building.name,
+            className: "w-32 h-24 object-cover rounded-sm flex-shrink-0"
+          }
+        ) : posterUrl ? /* @__PURE__ */ jsx(
+          "img",
+          {
+            src: posterUrl,
+            alt: entry2.building.name,
+            className: "w-32 h-24 object-cover rounded-sm flex-shrink-0"
+          }
+        ) : /* @__PURE__ */ jsx("div", { className: "w-32 h-24 bg-surface-muted rounded-sm flex-shrink-0 flex items-center justify-center", children: /* @__PURE__ */ jsx("span", { className: "text-xs text-text-secondary", children: "No image" }) })),
+        /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
+          !hideBuildingInfo && /* @__PURE__ */ jsxs("div", { className: "mb-2", children: [
+            /* @__PURE__ */ jsx("h3", { className: "text-base font-semibold text-text-primary truncate", children: mainTitle }),
+            subTitle && /* @__PURE__ */ jsx("p", { className: "text-xs text-text-secondary truncate", children: subTitle })
+          ] }),
+          entry2.rating && entry2.rating > 0 && /* @__PURE__ */ jsx("div", { className: "flex items-center gap-1 mb-2", children: /* @__PURE__ */ jsx(RatingCircles, { rating: entry2.rating }) }),
+          entry2.content && /* @__PURE__ */ jsx("p", { className: "text-sm text-text-secondary mb-2 break-words", children: entry2.content })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-6 mt-3 pt-2", children: [
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: (e) => {
+              e.stopPropagation();
+              onLike == null ? void 0 : onLike(entry2.id);
+              window.dispatchEvent(new CustomEvent("pwa-interaction"));
+            },
+            className: "flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors",
+            children: [
+              /* @__PURE__ */ jsx(Heart, { className: `h-4 w-4 ${entry2.is_liked ? "fill-brand-primary text-brand-primary" : ""}` }),
+              /* @__PURE__ */ jsx("span", { className: "text-xs", children: entry2.likes_count })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs("button", { onClick: handleCommentClick, className: "flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors", children: [
+          /* @__PURE__ */ jsx(MessageCircle, { className: "h-4 w-4" }),
+          /* @__PURE__ */ jsx("span", { className: "text-xs", children: entry2.comments_count })
+        ] })
+      ] })
+    ] });
+  }
+  const city = getCityFromAddress$1(entry2.building.address);
+  const action = entry2.status === "pending" ? "saved" : "visited";
+  const renderMediaItem = (item, className, overlay) => /* @__PURE__ */ jsxs("div", { className: `relative w-full h-full min-w-0 overflow-hidden ${""}`, children: [
+    /* @__PURE__ */ jsx("div", { className: "absolute inset-0 w-full h-full", children: item.type === "video" ? /* @__PURE__ */ jsx("div", { className: "w-full h-full video-container overflow-hidden", children: /* @__PURE__ */ jsx(
+      VideoPlayer,
+      {
+        src: item.url,
+        poster: item.poster,
+        className: "w-full h-full transition-transform duration-500 hover:scale-105",
+        autoPlayOnVisible: true,
+        muted: true,
+        objectFit: "cover"
+      }
+    ) }) : !failedImages.has(item.id) ? /* @__PURE__ */ jsx(
+      "img",
+      {
+        src: item.url,
+        alt: "Review photo",
+        className: "w-full h-full object-cover transition-transform duration-500 hover:scale-105",
+        onError: () => setFailedImages((prev) => new Set(prev).add(item.id))
+      }
+    ) : /* @__PURE__ */ jsx("div", { className: "w-full h-full flex items-center justify-center text-text-secondary bg-surface-muted/50", children: /* @__PURE__ */ jsx(Image$1, { className: "w-4 h-4 opacity-50" }) }) }),
+    overlay
+  ] }, item.id);
+  const Header2 = !hideUser && /* @__PURE__ */ jsxs("div", { className: "p-3 md:p-4 flex items-center gap-3 border-b border-border-default/40", children: [
+    /* @__PURE__ */ jsxs(Avatar, { className: "h-10 w-10 border border-border-default/50 shrink-0", children: [
+      /* @__PURE__ */ jsx(AvatarImage, { src: avatarUrl }),
+      /* @__PURE__ */ jsx(AvatarFallback, { children: userInitial })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "text-sm md:text-base text-text-primary leading-snug min-w-0 max-w-full flex-1 break-words", children: /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-0.5 md:block min-w-0", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 min-w-0 md:inline md:gap-0", children: [
+        /* @__PURE__ */ jsx("span", { className: "font-semibold truncate md:text-clip min-w-0", children: username }),
+        isVerifiedArchitect && /* @__PURE__ */ jsx("div", { className: "inline-flex items-center text-text-primary ml-1 align-middle", title: "Verified Architect", children: /* @__PURE__ */ jsx(BadgeCheck, { className: "w-4 h-4" }) }),
+        entry2.is_suggested && entry2.user_id && /* @__PURE__ */ jsx("span", { className: "md:inline-block md:ml-2 min-w-0", children: /* @__PURE__ */ jsx(FollowButton, { userId: entry2.user_id, hideIfFollowing: true, className: "h-5 text-[10px] px-2" }) })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 min-w-0 md:inline md:gap-0", children: [
+        /* @__PURE__ */ jsxs("span", { className: "text-text-secondary/60 font-normal md:ml-1 shrink-0", children: [
+          " ",
+          action,
+          " "
+        ] }),
+        /* @__PURE__ */ jsx("span", { className: "font-semibold text-text-primary truncate block md:inline md:w-auto md:max-w-none min-w-0 flex-1 md:flex-none", children: mainTitle }),
+        city && /* @__PURE__ */ jsxs("span", { className: "text-text-secondary hidden md:inline", children: [
+          " in ",
+          city
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 min-w-0 md:inline md:gap-0", children: [
+        entry2.rating && entry2.rating > 0 && /* @__PURE__ */ jsx("span", { className: "inline-flex items-center gap-0.5 align-middle md:ml-2 shrink-0", children: /* @__PURE__ */ jsx(RatingCircles, { rating: entry2.rating }) }),
+        /* @__PURE__ */ jsxs("span", { className: "text-text-secondary text-xs md:ml-2 shrink min-w-0 truncate", children: [
+          !(entry2.rating && entry2.rating > 0) && /* @__PURE__ */ jsx("span", { className: "hidden md:inline", children: "• " }),
+          formatDistanceToNow(new Date(entry2.edited_at || entry2.created_at)).replace("about ", ""),
+          " ago"
+        ] })
+      ] })
+    ] }) })
+  ] });
+  const Media = !hideBuildingInfo && (mediaItems.length > 0 ? useCarousel2 ? (
+    // Multi-image, no video: full-bleed carousel
+    /* @__PURE__ */ jsx(
+      FeedPhotoCarousel,
+      {
+        images: carouselImages,
+        reviewId: entry2.id,
+        onImageLike,
+        className: "w-full"
+      }
+    )
+  ) : (
+    // Single image or video: keep the side-panel layout
+    /* @__PURE__ */ jsx(
+      "div",
+      {
+        className: `relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${!isCompact ? "md:w-[280px] md:shrink-0 aspect-[4/3] md:aspect-auto" : "aspect-[4/3]"}`,
+        children: /* @__PURE__ */ jsx("div", { className: "absolute inset-0 w-full h-full", children: renderMediaItem(mediaItems[0]) })
+      }
+    )
+  ) : posterUrl && showCommunityImages ? /* @__PURE__ */ jsx(
+    "div",
+    {
+      className: `relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden aspect-[4/3] ${!isCompact ? "md:aspect-auto md:w-[280px] md:shrink-0" : ""}`,
+      children: /* @__PURE__ */ jsx(
+        "img",
+        {
+          src: posterUrl,
+          alt: mainTitle || "",
+          className: `w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 ${!isCompact ? "md:absolute md:inset-0" : ""}`
+        }
+      )
+    }
+  ) : null);
+  const ContentBody = isCompact ? /* @__PURE__ */ jsxs(Fragment, { children: [
+    !hideBuildingInfo && /* @__PURE__ */ jsxs("div", { className: "mb-1", children: [
+      /* @__PURE__ */ jsx("h3", { className: "text-base font-bold text-text-primary line-clamp-2 leading-tight", children: mainTitle }),
+      subTitle && /* @__PURE__ */ jsx("p", { className: "text-xs text-text-secondary line-clamp-1 truncate", children: subTitle }),
+      hideUser && entry2.rating && entry2.rating > 0 && /* @__PURE__ */ jsx("div", { className: "flex items-center gap-1 mt-1", children: /* @__PURE__ */ jsx(RatingCircles, { rating: entry2.rating }) })
+    ] }),
+    entry2.content && /* @__PURE__ */ jsxs("p", { className: "text-sm font-medium text-text-primary line-clamp-3 leading-relaxed", children: [
+      '"',
+      entry2.content,
+      '"'
+    ] })
+  ] }) : /* @__PURE__ */ jsx(Fragment, { children: entry2.content && /* @__PURE__ */ jsx("p", { className: "text-sm text-text-primary mb-2 leading-relaxed break-words", children: entry2.content }) });
+  const Footer = /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: `flex w-full max-w-full min-w-0 items-center gap-2 md:gap-4 flex-wrap ${isCompact ? "p-2.5 md:p-4 pt-3 mt-auto border-t border-border-default/50" : "mt-auto pt-3 border-t border-border-default/50"}`,
+      children: [
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: (e) => {
+              e.stopPropagation();
+              onLike == null ? void 0 : onLike(entry2.id);
+              window.dispatchEvent(new CustomEvent("pwa-interaction"));
+            },
+            className: "flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like",
+            children: [
+              /* @__PURE__ */ jsx(Heart, { className: `h-4 w-4 transition-transform group-hover/like:scale-110 ${entry2.is_liked ? "fill-brand-primary text-brand-primary" : ""}` }),
+              /* @__PURE__ */ jsx("span", { className: "text-xs font-medium", children: entry2.likes_count })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: handleCommentClick,
+            className: "flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment",
+            children: [
+              /* @__PURE__ */ jsx(MessageCircle, { className: "h-4 w-4 transition-transform group-hover/comment:scale-110" }),
+              /* @__PURE__ */ jsx("span", { className: "text-xs font-medium", children: entry2.comments_count })
+            ]
+          }
+        ),
+        !isCompact && /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: handleSave,
+            className: `flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors ml-auto ${isSaving ? "opacity-50" : ""}`,
+            disabled: isSaving,
+            children: [
+              /* @__PURE__ */ jsx(Bookmark, { className: "h-4 w-4" }),
+              /* @__PURE__ */ jsx("span", { className: "text-xs font-medium", children: "Save" })
+            ]
+          }
+        )
+      ]
+    }
+  );
+  const cardLayoutClass = !isCompact && hasMedia && !useCarousel2 ? `${flexDirection} md:min-h-[220px]` : "";
+  return /* @__PURE__ */ jsx(SuggestedContentBlock, { isSuggested: entry2.is_suggested, suggestionReason: entry2.suggestion_reason, children: /* @__PURE__ */ jsx(
+    "article",
+    {
+      onClick: handleCardClick,
+      className: `group/card relative flex flex-col ${cardLayoutClass} h-full bg-surface-card border border-border-default rounded-sm overflow-hidden shadow-none hover:border-border-strong transition-colors cursor-pointer min-w-0 w-full max-w-full ${isArchitectOfBuilding ? "border-l-2 border-l-brand-primary" : ""}`,
+      children: isCompact ? /* @__PURE__ */ jsxs(Fragment, { children: [
+        Media,
+        Header2,
+        /* @__PURE__ */ jsx("div", { className: "flex flex-col flex-1 min-w-0 p-2.5 md:p-4 md:pt-3 gap-2", children: ContentBody }),
+        Footer
+      ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex flex-col flex-1 min-w-0", children: [
+          Header2,
+          /* @__PURE__ */ jsxs("div", { className: "flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2", children: [
+            ContentBody,
+            Footer
+          ] })
+        ] }),
+        Media
+      ] })
+    }
+  ) });
+}
 function FavoritePoster({ fav, className, onClick }) {
   return /* @__PURE__ */ jsxs(
     "button",
@@ -27498,16 +28016,16 @@ function useGooglePlacePhotos(markers) {
   }, [markers, isLoaded, photos]);
   return { photos };
 }
-const CollectionSettingsDialog = lazyWithRetry(() => import("./CollectionSettingsDialog-BM3UlDBI.js").then((module) => ({
+const CollectionSettingsDialog = lazyWithRetry(() => import("./CollectionSettingsDialog-CwAhgg0U.js").then((module) => ({
   default: module.CollectionSettingsDialog
 })));
-const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("./AddBuildingsToCollectionDialog-BjIHKg62.js").then((module) => ({
+const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("./AddBuildingsToCollectionDialog-B62S3Gpd.js").then((module) => ({
   default: module.AddBuildingsToCollectionDialog
 })));
-const PlanRouteDialog = lazyWithRetry(() => import("./PlanRouteDialog-BUmELvI1.js").then((module) => ({
+const PlanRouteDialog = lazyWithRetry(() => import("./PlanRouteDialog-fViOIQIk.js").then((module) => ({
   default: module.PlanRouteDialog
 })));
-const CollectionMapGL = lazyWithRetry(() => import("./CollectionMapGL-Lhg8ckvu.js").then((module) => ({
+const CollectionMapGL = lazyWithRetry(() => import("./CollectionMapGL-Bgghdswm.js").then((module) => ({
   default: module.CollectionMapGL
 })));
 const CollectionBuildingCard = lazyWithRetry(() => Promise.resolve().then(() => CollectionBuildingCard$2).then((module) => ({
@@ -35273,7 +35791,7 @@ const route45 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePrope
   __proto__: null,
   default: ReviewDetails
 }, Symbol.toStringTag, { value: "Module" }));
-const serverManifest = { "entry": { "module": "/assets/entry.client-DPX0RRDA.js", "imports": ["/assets/jsx-runtime-CEhGpoVA.js", "/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/index-ofLbeaRs.js", "/assets/consent-DbEcSUJ2.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/root-DQYFsi6_.js", "imports": ["/assets/jsx-runtime-CEhGpoVA.js", "/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/index-ofLbeaRs.js", "/assets/consent-DbEcSUJ2.js", "/assets/button-CLjxMCuh.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/mutation-BNAMlf5Y.js", "/assets/infiniteQueryBehavior-Cja4suR2.js", "/assets/tooltip-CC6Xznx5.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/index-Dy6bCKJC.js", "/assets/index-DMWUnD6k.js", "/assets/index-D_6bR09H.js", "/assets/index-DWm1YzYQ.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-CskkVJIU.js", "/assets/utils-C_0hPamv.js", "/assets/x-BzUiSH4_.js", "/assets/index-DnWzpPO0.js", "/assets/usePwaInstall-eL57OZ5I.js", "/assets/useAuth-BNLu8VOc.js", "/assets/drawer-Cs6jG8KG.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/loader-circle-BOVuU157.js", "/assets/usePresenceTracker-C9weVd60.js", "/assets/diagnostics-DHzbnvOt.js", "/assets/sidebar-DQdiiPel.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/client-rR1rgQyR.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/input-tljl6p0O.js", "/assets/separator-C79Afhsw.js", "/assets/skeleton-Ds_fcKFG.js"], "css": ["/assets/root-BFTbd226.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "auth-login": { "id": "auth-login", "parentId": "root", "path": "/login", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Auth-CgwfXcHR.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/checkbox-Bex4QVwi.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/avatar-BI1PmAho.js", "/assets/client-rR1rgQyR.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/auth-B6ugWtns.js", "/assets/mail-f2dECHGN.js", "/assets/user-plus-DFPLMYg6.js", "/assets/eye-off-CGxjbJDn.js", "/assets/eye--MrztN5o.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/check-B6-Edfop.js", "/assets/index-mTxhfxEY.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "auth-root": { "id": "auth-root", "parentId": "root", "path": "/auth", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Auth-CgwfXcHR.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/checkbox-Bex4QVwi.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/avatar-BI1PmAho.js", "/assets/client-rR1rgQyR.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/auth-B6ugWtns.js", "/assets/mail-f2dECHGN.js", "/assets/user-plus-DFPLMYg6.js", "/assets/eye-off-CGxjbJDn.js", "/assets/eye--MrztN5o.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/check-B6-Edfop.js", "/assets/index-mTxhfxEY.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/auth/pages/UpdatePassword": { "id": "features/auth/pages/UpdatePassword", "parentId": "root", "path": "/update-password", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/UpdatePassword-BMT7v5jG.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useAuth-BNLu8VOc.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/auth-B6ugWtns.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/lock-CiGUQPzb.js", "/assets/client-rR1rgQyR.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/auth/pages/Onboarding": { "id": "features/auth/pages/Onboarding", "parentId": "root", "path": "/onboarding", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Onboarding-BkWEl0gE.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/avatar-BI1PmAho.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/image-compression-B-JfWW6q.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/loader-circle-BOVuU157.js", "/assets/check-B6-Edfop.js", "/assets/user-plus-DFPLMYg6.js", "/assets/user-Dwcgdo66.js", "/assets/upload-CG_Vx3U3.js", "/assets/index-ofLbeaRs.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/command-D5khigHc.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-D_6bR09H.js", "/assets/dialog-Dg5Txfj1.js", "/assets/x-BzUiSH4_.js", "/assets/search-nnPwPiPV.js", "/assets/map-pin-wbZ-WRT2.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "pages/Terms": { "id": "pages/Terms", "parentId": "root", "path": "/terms", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Terms-B-otS8xn.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Unauthorized": { "id": "features/admin/pages/Unauthorized", "parentId": "root", "path": "/admin/unauthorized", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Unauthorized-BxUIsjiT.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/shield-alert-2tVAPeho.js", "/assets/utils-C_0hPamv.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/MergeBuildings": { "id": "features/admin/pages/MergeBuildings", "parentId": "root", "path": "/admin/merge", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/MergeBuildings-mksfhBak.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/card-s80fMsyZ.js", "/assets/badge-d2quT5x6.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-DnWzpPO0.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/refresh-cw-Cz8xZ6RW.js", "/assets/loader-circle-BOVuU157.js", "/assets/merge-yR7iU2Sf.js", "/assets/utils-C_0hPamv.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-mTxhfxEY.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/MergeComparison": { "id": "features/admin/pages/MergeComparison", "parentId": "root", "path": "/admin/merge/:targetId/:sourceId", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/MergeComparison-G5kemfCZ.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/useAuth-BNLu8VOc.js", "/assets/url-DU88vnPn.js", "/assets/button-CLjxMCuh.js", "/assets/card-s80fMsyZ.js", "/assets/badge-d2quT5x6.js", "/assets/index-DnWzpPO0.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/image-D_OrMvzq.js", "/assets/input-tljl6p0O.js", "/assets/textarea-Cqcp_f1C.js", "/assets/architect-select-xQqm93c8.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/useUserLocation-WdlHFGDu.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/minimize-2-VS1ogcVu.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/location-BxOo93J3.js", "/assets/carousel-eTcPPDTN.js", "/assets/loader-circle-BOVuU157.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/check-B6-Edfop.js", "/assets/pencil-Mnlafgz9.js", "/assets/x-BzUiSH4_.js", "/assets/save-BjqJeOrf.js", "/assets/image-BAlUERHE.js", "/assets/utils-C_0hPamv.js", "/assets/trash-2-D4OotWge.js", "/assets/index-ofLbeaRs.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/config-C4Z0oNNz.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/search-nnPwPiPV.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-DV--etif.js", "/assets/index-hC5a87NV.js", "/assets/circle-COwts0_x.js", "/assets/label-pxPLKOzw.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/arrow-right-CWYV95kF.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/components/AdminLayout": { "id": "features/admin/components/AdminLayout", "parentId": "root", "path": void 0, "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/AdminLayout-CN1WmRCV.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/sidebar-DQdiiPel.js", "/assets/useAuth-BNLu8VOc.js", "/assets/utils-C_0hPamv.js", "/assets/building-2-DPAnNLRO.js", "/assets/merge-yR7iU2Sf.js", "/assets/users-DEKJlCr1.js", "/assets/shield-alert-2tVAPeho.js", "/assets/image-BAlUERHE.js", "/assets/map-BB384bNa.js", "/assets/trash-2-D4OotWge.js", "/assets/settings-COmu83Az.js", "/assets/log-out-Twd920Mp.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/client-rR1rgQyR.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Dashboard": { "id": "features/admin/pages/Dashboard", "parentId": "features/admin/components/AdminLayout", "path": "/admin", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Dashboard-m59Jx3Ei.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/admin-Bc2SF-SB.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/card-s80fMsyZ.js", "/assets/users-DEKJlCr1.js", "/assets/user-plus-DFPLMYg6.js", "/assets/activity-MhcVb6rV.js", "/assets/utils-C_0hPamv.js", "/assets/building-2-DPAnNLRO.js", "/assets/image-BAlUERHE.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/image-D_OrMvzq.js", "/assets/avatar-BI1PmAho.js", "/assets/scroll-area-CE-WojNN.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/tooltip-CC6Xznx5.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInHours-BDEHJv3K.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js", "/assets/button-CLjxMCuh.js", "/assets/table-CBBYuJOc.js", "/assets/diagnostics-DHzbnvOt.js", "/assets/client-rR1rgQyR.js", "/assets/circle-check-big-D_eJUdhx.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/eye--MrztN5o.js", "/assets/eye-off-CGxjbJDn.js", "/assets/bell-B40pbp2L.js", "/assets/tabs-mvuqHr4x.js", "/assets/play-BP9MAQUA.js", "/assets/search-nnPwPiPV.js", "/assets/user-Dwcgdo66.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-CbtiC6P_.js", "/assets/config-C4Z0oNNz.js", "/assets/index-BdQq_4o_.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Buildings": { "id": "features/admin/pages/Buildings", "parentId": "features/admin/components/AdminLayout", "path": "/admin/buildings", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Buildings-CCf9IInf.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/input-tljl6p0O.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/switch-DIGHl2cZ.js", "/assets/dialog-Dg5Txfj1.js", "/assets/select-D4SEJ7TE.js", "/assets/tabs-mvuqHr4x.js", "/assets/BuildingForm-BfH_dcz2.js", "/assets/BuildingLocationPicker-BmyRWUTp.js", "/assets/index-DnWzpPO0.js", "/assets/location-BxOo93J3.js", "/assets/utils-C_0hPamv.js", "/assets/loader-circle-BOVuU157.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/pencil-Mnlafgz9.js", "/assets/circle-check-DykN1KN4.js", "/assets/trash-2-D4OotWge.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/index-BdQq_4o_.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-CkFep66M.js", "/assets/index-CskkVJIU.js", "/assets/check-B6-Edfop.js", "/assets/index-B-HqSsFP.js", "/assets/label-pxPLKOzw.js", "/assets/building-DJ2j9bHJ.js", "/assets/types-D3upOYGZ.js", "/assets/architect-select-xQqm93c8.js", "/assets/command-D5khigHc.js", "/assets/search-nnPwPiPV.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/circle-COwts0_x.js", "/assets/url-DU88vnPn.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/proxy-CeAqrdL2.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/separator-C79Afhsw.js", "/assets/textarea-Cqcp_f1C.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/useAuth-BNLu8VOc.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/plus-DKEjp7jg.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/checkbox-Bex4QVwi.js", "/assets/satelliteMapStyle-C0qzLQVO.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Users": { "id": "features/admin/pages/Users", "parentId": "features/admin/components/AdminLayout", "path": "/admin/users", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Users-M8y2tE-3.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/input-tljl6p0O.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/avatar-BI1PmAho.js", "/assets/index-DnWzpPO0.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/loader-circle-BOVuU157.js", "/assets/format-BWwhwzZQ.js", "/assets/refresh-cw-Cz8xZ6RW.js", "/assets/utils-C_0hPamv.js", "/assets/ban-ClyW1PIu.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-ofLbeaRs.js", "/assets/index-Dy6bCKJC.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Moderation": { "id": "features/admin/pages/Moderation", "parentId": "features/admin/components/AdminLayout", "path": "/admin/moderation", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Moderation-B-2sSTqw.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/index-DnWzpPO0.js", "/assets/loader-circle-BOVuU157.js", "/assets/circle-check-big-D_eJUdhx.js", "/assets/trash-2-D4OotWge.js", "/assets/format-BWwhwzZQ.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/ImageWall": { "id": "features/admin/pages/ImageWall", "parentId": "features/admin/components/AdminLayout", "path": "/admin/images", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/ImageWall-ClixpbCK.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/button-CLjxMCuh.js", "/assets/checkbox-Bex4QVwi.js", "/assets/index-DnWzpPO0.js", "/assets/utils-C_0hPamv.js", "/assets/refresh-cw-Cz8xZ6RW.js", "/assets/trash-2-D4OotWge.js", "/assets/loader-circle-BOVuU157.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/check-B6-Edfop.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/PhotoAnalytics": { "id": "features/admin/pages/PhotoAnalytics", "parentId": "features/admin/components/AdminLayout", "path": "/admin/photos", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/PhotoAnalytics-D6P78igl.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/admin-Bc2SF-SB.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/card-s80fMsyZ.js", "/assets/client-rR1rgQyR.js", "/assets/location-BxOo93J3.js", "/assets/loader-circle-BOVuU157.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/index-ofLbeaRs.js", "/assets/utils-C_0hPamv.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/search-nnPwPiPV.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/BuildingAudit": { "id": "features/admin/pages/BuildingAudit", "parentId": "features/admin/components/AdminLayout", "path": "/admin/audit", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/BuildingAudit-DS3AhBEL.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/button-CLjxMCuh.js", "/assets/index-DnWzpPO0.js", "/assets/dialog-Dg5Txfj1.js", "/assets/loader-circle-BOVuU157.js", "/assets/utils-C_0hPamv.js", "/assets/format-BWwhwzZQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/ArchitectClaims": { "id": "features/admin/pages/ArchitectClaims", "parentId": "features/admin/components/AdminLayout", "path": "/admin/claims", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/ArchitectClaims-BLgYzqLG.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/button-CLjxMCuh.js", "/assets/avatar-BI1PmAho.js", "/assets/badge-d2quT5x6.js", "/assets/index-DnWzpPO0.js", "/assets/useAuth-BNLu8VOc.js", "/assets/loader-circle-BOVuU157.js", "/assets/shield-check-Dxg8luhp.js", "/assets/x-BzUiSH4_.js", "/assets/check-B6-Edfop.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/utils-C_0hPamv.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-ofLbeaRs.js", "/assets/en-US-LUXC61Eo.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/StorageJobs": { "id": "features/admin/pages/StorageJobs", "parentId": "features/admin/components/AdminLayout", "path": "/admin/storage-jobs", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/StorageJobs-CVidzCEN.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/input-tljl6p0O.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/card-s80fMsyZ.js", "/assets/index-DnWzpPO0.js", "/assets/loader-circle-BOVuU157.js", "/assets/trash-2-D4OotWge.js", "/assets/refresh-cw-Cz8xZ6RW.js", "/assets/format-BWwhwzZQ.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "pages/AdminSystemPlaceholder": { "id": "pages/AdminSystemPlaceholder", "parentId": "features/admin/components/AdminLayout", "path": "/admin/system", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/AdminSystemPlaceholder-De4BLFPP.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "components/layout/MainLayout": { "id": "components/layout/MainLayout", "parentId": "root", "path": void 0, "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/MainLayout-dN7_GU4v.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/sidebar-DQdiiPel.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/avatar-BI1PmAho.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/search-nnPwPiPV.js", "/assets/users-DEKJlCr1.js", "/assets/bell-B40pbp2L.js", "/assets/user-Dwcgdo66.js", "/assets/settings-COmu83Az.js", "/assets/log-out-Twd920Mp.js", "/assets/usePresenceTracker-C9weVd60.js", "/assets/diagnostics-DHzbnvOt.js", "/assets/sentry-RK2FgH0O.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/client-rR1rgQyR.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-B-HqSsFP.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/check-B6-Edfop.js", "/assets/circle-COwts0_x.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/feed/pages/Index": { "id": "features/feed/pages/Index", "parentId": "components/layout/MainLayout", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Index-3roMxOPe.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/DiscoverySearchInput-DsbfhaHo.js", "/assets/client-rR1rgQyR.js", "/assets/useAuth-BNLu8VOc.js", "/assets/image-D_OrMvzq.js", "/assets/ReviewCard-BhdkcmP2.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useMutation-CoLux32r.js", "/assets/avatar-BI1PmAho.js", "/assets/FollowButton-RaVosGg7.js", "/assets/MutualFacepile-x2XA6CpB.js", "/assets/x-BzUiSH4_.js", "/assets/loader-circle-BOVuU157.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/sidebar-DQdiiPel.js", "/assets/MetaHead-BUqPJU20.js", "/assets/differenceInHours-BDEHJv3K.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/url-DU88vnPn.js", "/assets/useUserBuildingStatuses-Dx3mccJk.js", "/assets/utils-C_0hPamv.js", "/assets/circle-COwts0_x.js", "/assets/heart-Btv1t7q5.js", "/assets/message-circle-D8EcWb3B.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/badge-d2quT5x6.js", "/assets/proxy-CeAqrdL2.js", "/assets/star-Bc7UU24n.js", "/assets/circle-check-DykN1KN4.js", "/assets/useDiscoveryFeed-cDu0EcGG.js", "/assets/arrow-right-CWYV95kF.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/infiniteQueryBehavior-Cja4suR2.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/command-D5khigHc.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/dialog-Dg5Txfj1.js", "/assets/VideoPlayer-daK3UBAd.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/sparkles-Bctff8r-.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/badge-check-CeUfQeV8.js", "/assets/image-BAlUERHE.js", "/assets/mutation-BNAMlf5Y.js", "/assets/user-plus-DFPLMYg6.js", "/assets/separator-C79Afhsw.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/en-US-LUXC61Eo.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/triangle-alert-DBV0qC2H.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/explore/pages/Explore": { "id": "features/explore/pages/Explore", "parentId": "components/layout/MainLayout", "path": "/explore", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Explore-BE7NEWOb.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useDiscoveryFeed-cDu0EcGG.js", "/assets/image-D_OrMvzq.js", "/assets/button-CLjxMCuh.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/client-rR1rgQyR.js", "/assets/index-DnWzpPO0.js", "/assets/avatar-BI1PmAho.js", "/assets/proxy-CeAqrdL2.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/check-B6-Edfop.js", "/assets/checkbox-Bex4QVwi.js", "/assets/utils-C_0hPamv.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/sidebar-DQdiiPel.js", "/assets/drawer-Cs6jG8KG.js", "/assets/DiscoverySearchInput-DsbfhaHo.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/x-BzUiSH4_.js", "/assets/loader-circle-BOVuU157.js", "/assets/config-C4Z0oNNz.js", "/assets/index-ofLbeaRs.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-Dy6bCKJC.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/separator-C79Afhsw.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-CskkVJIU.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/infiniteQueryBehavior-Cja4suR2.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/search/SearchPage": { "id": "features/search/SearchPage", "parentId": "components/layout/MainLayout", "path": "/search", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/SearchPage-C_NDECDp.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/sidebar-DQdiiPel.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/DiscoverySearchInput-DsbfhaHo.js", "/assets/useDebounce-CBO363T0.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/client-rR1rgQyR.js", "/assets/MapMarkers-D0qddDTE.js", "/assets/index-ofLbeaRs.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/minimize-2-VS1ogcVu.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/scroll-area-CE-WojNN.js", "/assets/card-s80fMsyZ.js", "/assets/image-D_OrMvzq.js", "/assets/accordion-D3tMUcqs.js", "/assets/utils-C_0hPamv.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/loader-circle-BOVuU157.js", "/assets/switch-DIGHl2cZ.js", "/assets/label-pxPLKOzw.js", "/assets/separator-C79Afhsw.js", "/assets/badge-d2quT5x6.js", "/assets/command-D5khigHc.js", "/assets/popover-Vu6Kr5M8.js", "/assets/x-BzUiSH4_.js", "/assets/avatar-BI1PmAho.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/useUserLocation-WdlHFGDu.js", "/assets/supabaseFallback-B5U8_K8i.js", "/assets/useAuth-BNLu8VOc.js", "/assets/location-BxOo93J3.js", "/assets/useUserBuildingStatuses-Dx3mccJk.js", "/assets/index-BdQq_4o_.js", "/assets/index-Dy6bCKJC.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/index-DMWUnD6k.js", "/assets/input-tljl6p0O.js", "/assets/checkbox-Bex4QVwi.js", "/assets/search-nnPwPiPV.js", "/assets/folder-D7GBa9Et.js", "/assets/select-D4SEJ7TE.js", "/assets/list-CLUBqjR0.js", "/assets/map-BB384bNa.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-CskkVJIU.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/infiniteQueryBehavior-Cja4suR2.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/types-D3upOYGZ.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/external-link-CS9lkXPq.js", "/assets/trash-2-D4OotWge.js", "/assets/plus-DKEjp7jg.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/MapPin-DZn2GzKq.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/dialog-Dg5Txfj1.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-DnWzpPO0.js"], "css": ["/assets/MapMarkers-tn0RQdqM.css#", "/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "pages/Post": { "id": "pages/Post", "parentId": "components/layout/MainLayout", "path": "/post", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Post-D6dyYkxM.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/textarea-Cqcp_f1C.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/supabaseFallback-B5U8_K8i.js", "/assets/UserPicker-DYsSeTNM.js", "/assets/x-BzUiSH4_.js", "/assets/loader-circle-BOVuU157.js", "/assets/circle-COwts0_x.js", "/assets/pencil-Mnlafgz9.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/client-rR1rgQyR.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/search-nnPwPiPV.js", "/assets/popover-Vu6Kr5M8.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/avatar-BI1PmAho.js", "/assets/badge-d2quT5x6.js", "/assets/check-B6-Edfop.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/notifications/pages/Notifications": { "id": "features/notifications/pages/Notifications", "parentId": "components/layout/MainLayout", "path": "/notifications", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Notifications-DjlGREB9.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/avatar-BI1PmAho.js", "/assets/scroll-area-CE-WojNN.js", "/assets/utils-C_0hPamv.js", "/assets/dialog-Dg5Txfj1.js", "/assets/switch-DIGHl2cZ.js", "/assets/label-pxPLKOzw.js", "/assets/button-CLjxMCuh.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/loader-circle-BOVuU157.js", "/assets/bell-B40pbp2L.js", "/assets/settings-COmu83Az.js", "/assets/shield-check-Dxg8luhp.js", "/assets/users-DEKJlCr1.js", "/assets/sparkles-Bctff8r-.js", "/assets/user-plus-DFPLMYg6.js", "/assets/message-circle-D8EcWb3B.js", "/assets/heart-Btv1t7q5.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/user-Dwcgdo66.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/index-hC5a87NV.js", "/assets/en-US-LUXC61Eo.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/buildings/pages/AddBuilding": { "id": "features/buildings/pages/AddBuilding", "parentId": "components/layout/MainLayout", "path": "/add-building", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/AddBuilding-BWtF3xsC.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/card-s80fMsyZ.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/client-rR1rgQyR.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/index-DnWzpPO0.js", "/assets/BuildingForm-BfH_dcz2.js", "/assets/useAuth-BNLu8VOc.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/badge-d2quT5x6.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/checkbox-Bex4QVwi.js", "/assets/dialog-Dg5Txfj1.js", "/assets/avatar-BI1PmAho.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/image-D_OrMvzq.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/loader-circle-BOVuU157.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/building-2-DPAnNLRO.js", "/assets/arrow-right-CWYV95kF.js", "/assets/utils-C_0hPamv.js", "/assets/command-D5khigHc.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/search-nnPwPiPV.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/building-DJ2j9bHJ.js", "/assets/types-D3upOYGZ.js", "/assets/architect-select-xQqm93c8.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-DV--etif.js", "/assets/index-hC5a87NV.js", "/assets/circle-COwts0_x.js", "/assets/x-BzUiSH4_.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/url-DU88vnPn.js", "/assets/select-D4SEJ7TE.js", "/assets/index-BdQq_4o_.js", "/assets/index-CkFep66M.js", "/assets/index-CskkVJIU.js", "/assets/check-B6-Edfop.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/proxy-CeAqrdL2.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/separator-C79Afhsw.js", "/assets/textarea-Cqcp_f1C.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/plus-DKEjp7jg.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/tooltip-CC6Xznx5.js", "/assets/bell-B40pbp2L.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/connect/pages/Connect": { "id": "features/connect/pages/Connect", "parentId": "components/layout/MainLayout", "path": "/connect", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Connect-L3nr9uCG.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/client-rR1rgQyR.js", "/assets/useAuth-BNLu8VOc.js", "/assets/avatar-BI1PmAho.js", "/assets/FollowButton-RaVosGg7.js", "/assets/MutualFacepile-x2XA6CpB.js", "/assets/x-BzUiSH4_.js", "/assets/star-Bc7UU24n.js", "/assets/user-plus-DFPLMYg6.js", "/assets/tabs-mvuqHr4x.js", "/assets/scroll-area-CE-WojNN.js", "/assets/loader-circle-BOVuU157.js", "/assets/users-DEKJlCr1.js", "/assets/utils-C_0hPamv.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/user-Dwcgdo66.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "groups-not-found": { "id": "groups-not-found", "parentId": "components/layout/MainLayout", "path": "/groups/*", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/NotFound-C_cAowoy.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/Header-CFKXDfTO.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/button-CLjxMCuh.js", "/assets/MetaHead-BUqPJU20.js", "/assets/utils-C_0hPamv.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/search-nnPwPiPV.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "profile-root": { "id": "profile-root", "parentId": "components/layout/MainLayout", "path": "/profile", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/Profile-fIwhNkzU.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/core.esm-DTWHKSUW.js", "/assets/sortable.esm-cjwCgDDv.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/avatar-BI1PmAho.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/client-rR1rgQyR.js", "/assets/ReviewCard-BhdkcmP2.js", "/assets/dialog-Dg5Txfj1.js", "/assets/scroll-area-CE-WojNN.js", "/assets/FollowButton-RaVosGg7.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/heart-Btv1t7q5.js", "/assets/plus-DKEjp7jg.js", "/assets/label-pxPLKOzw.js", "/assets/switch-DIGHl2cZ.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/popover-Vu6Kr5M8.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/checkbox-Bex4QVwi.js", "/assets/select-D4SEJ7TE.js", "/assets/textarea-Cqcp_f1C.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/loader-circle-BOVuU157.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/command-D5khigHc.js", "/assets/useDebounce-CBO363T0.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/bookmark-DPL9meeS.js", "/assets/check-B6-Edfop.js", "/assets/log-out-Twd920Mp.js", "/assets/ban-ClyW1PIu.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/card-s80fMsyZ.js", "/assets/pencil-Mnlafgz9.js", "/assets/building-2-DPAnNLRO.js", "/assets/user-Dwcgdo66.js", "/assets/CollectionCard-DvSJpn0e.js", "/assets/globe-S5Mqjnq8.js", "/assets/lock-CiGUQPzb.js", "/assets/folder-D7GBa9Et.js", "/assets/image-D_OrMvzq.js", "/assets/map-BB384bNa.js", "/assets/url-DU88vnPn.js", "/assets/collection-Lb0xuYse.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/circle-COwts0_x.js", "/assets/proxy-CeAqrdL2.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/sidebar-DQdiiPel.js", "/assets/table-CBBYuJOc.js", "/assets/index-Dy6bCKJC.js", "/assets/index-CkFep66M.js", "/assets/index-D_6bR09H.js", "/assets/index-G0woRxxR.js", "/assets/tooltip-CC6Xznx5.js", "/assets/x-BzUiSH4_.js", "/assets/index-DnWzpPO0.js", "/assets/structuredData-C3BnDgPG.js", "/assets/list-CLUBqjR0.js", "/assets/search-nnPwPiPV.js", "/assets/index-ofLbeaRs.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/VideoPlayer-daK3UBAd.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/sparkles-Bctff8r-.js", "/assets/message-circle-D8EcWb3B.js", "/assets/badge-check-CeUfQeV8.js", "/assets/image-BAlUERHE.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/user-plus-DFPLMYg6.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CskkVJIU.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/en-US-LUXC61Eo.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/trash-2-D4OotWge.js", "/assets/star-Bc7UU24n.js", "/assets/config-C4Z0oNNz.js", "/assets/types-D3upOYGZ.js", "/assets/separator-C79Afhsw.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "profile-username": { "id": "profile-username", "parentId": "components/layout/MainLayout", "path": "/profile/:username", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/Profile-fIwhNkzU.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/core.esm-DTWHKSUW.js", "/assets/sortable.esm-cjwCgDDv.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/avatar-BI1PmAho.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/client-rR1rgQyR.js", "/assets/ReviewCard-BhdkcmP2.js", "/assets/dialog-Dg5Txfj1.js", "/assets/scroll-area-CE-WojNN.js", "/assets/FollowButton-RaVosGg7.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/heart-Btv1t7q5.js", "/assets/plus-DKEjp7jg.js", "/assets/label-pxPLKOzw.js", "/assets/switch-DIGHl2cZ.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/popover-Vu6Kr5M8.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/checkbox-Bex4QVwi.js", "/assets/select-D4SEJ7TE.js", "/assets/textarea-Cqcp_f1C.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/loader-circle-BOVuU157.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/command-D5khigHc.js", "/assets/useDebounce-CBO363T0.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/bookmark-DPL9meeS.js", "/assets/check-B6-Edfop.js", "/assets/log-out-Twd920Mp.js", "/assets/ban-ClyW1PIu.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/card-s80fMsyZ.js", "/assets/pencil-Mnlafgz9.js", "/assets/building-2-DPAnNLRO.js", "/assets/user-Dwcgdo66.js", "/assets/CollectionCard-DvSJpn0e.js", "/assets/globe-S5Mqjnq8.js", "/assets/lock-CiGUQPzb.js", "/assets/folder-D7GBa9Et.js", "/assets/image-D_OrMvzq.js", "/assets/map-BB384bNa.js", "/assets/url-DU88vnPn.js", "/assets/collection-Lb0xuYse.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/circle-COwts0_x.js", "/assets/proxy-CeAqrdL2.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/sidebar-DQdiiPel.js", "/assets/table-CBBYuJOc.js", "/assets/index-Dy6bCKJC.js", "/assets/index-CkFep66M.js", "/assets/index-D_6bR09H.js", "/assets/index-G0woRxxR.js", "/assets/tooltip-CC6Xznx5.js", "/assets/x-BzUiSH4_.js", "/assets/index-DnWzpPO0.js", "/assets/structuredData-C3BnDgPG.js", "/assets/list-CLUBqjR0.js", "/assets/search-nnPwPiPV.js", "/assets/index-ofLbeaRs.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/VideoPlayer-daK3UBAd.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/sparkles-Bctff8r-.js", "/assets/message-circle-D8EcWb3B.js", "/assets/badge-check-CeUfQeV8.js", "/assets/image-BAlUERHE.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/user-plus-DFPLMYg6.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CskkVJIU.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/en-US-LUXC61Eo.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/trash-2-D4OotWge.js", "/assets/star-Bc7UU24n.js", "/assets/config-C4Z0oNNz.js", "/assets/types-D3upOYGZ.js", "/assets/separator-C79Afhsw.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "profile-photos": { "id": "profile-photos", "parentId": "components/layout/MainLayout", "path": "/profile/photos", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/UserPhotoGallery-C48j50sh.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/client-rR1rgQyR.js", "/assets/image-D_OrMvzq.js", "/assets/useAuth-BNLu8VOc.js", "/assets/utils-C_0hPamv.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/select-D4SEJ7TE.js", "/assets/loader-circle-BOVuU157.js", "/assets/image-BAlUERHE.js", "/assets/heart-Btv1t7q5.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/index-BdQq_4o_.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/check-B6-Edfop.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "profile-username-photos": { "id": "profile-username-photos", "parentId": "components/layout/MainLayout", "path": "/profile/:username/photos", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/UserPhotoGallery-C48j50sh.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/client-rR1rgQyR.js", "/assets/image-D_OrMvzq.js", "/assets/useAuth-BNLu8VOc.js", "/assets/utils-C_0hPamv.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/select-D4SEJ7TE.js", "/assets/loader-circle-BOVuU157.js", "/assets/image-BAlUERHE.js", "/assets/heart-Btv1t7q5.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/index-BdQq_4o_.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/check-B6-Edfop.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/profile/pages/Settings": { "id": "features/profile/pages/Settings", "parentId": "components/layout/MainLayout", "path": "/settings", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Settings-DK9fJGkf.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/textarea-Cqcp_f1C.js", "/assets/label-pxPLKOzw.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/types-D3upOYGZ.js", "/assets/avatar-BI1PmAho.js", "/assets/separator-C79Afhsw.js", "/assets/usePwaInstall-eL57OZ5I.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/dialog-Dg5Txfj1.js", "/assets/supabaseFallback-B5U8_K8i.js", "/assets/scroll-area-CE-WojNN.js", "/assets/tabs-mvuqHr4x.js", "/assets/useDebounce-CBO363T0.js", "/assets/image-D_OrMvzq.js", "/assets/search-nnPwPiPV.js", "/assets/x-BzUiSH4_.js", "/assets/loader-circle-BOVuU157.js", "/assets/circle-COwts0_x.js", "/assets/check-B6-Edfop.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/index-DnWzpPO0.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/image-compression-B-JfWW6q.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/upload-CG_Vx3U3.js", "/assets/lock-CiGUQPzb.js", "/assets/mail-f2dECHGN.js", "/assets/download-BtEs1S91.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/command-D5khigHc.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/collections/components/CollectionMapPage": { "id": "features/collections/components/CollectionMapPage", "parentId": "components/layout/MainLayout", "path": "/:username/map/:slug", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/CollectionMapPage-B3Qhc0H-.js", "imports": ["/assets/CollectionMapPage-DMV1NTLW.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/client-rR1rgQyR.js", "/assets/useAuth-BNLu8VOc.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/location-BxOo93J3.js", "/assets/accordion-D3tMUcqs.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/select-D4SEJ7TE.js", "/assets/index-BdQq_4o_.js", "/assets/index-hC5a87NV.js", "/assets/check-B6-Edfop.js", "/assets/url-DU88vnPn.js", "/assets/map-BB384bNa.js", "/assets/list-CLUBqjR0.js", "/assets/tabs-mvuqHr4x.js", "/assets/index-B-HqSsFP.js", "/assets/core.esm-DTWHKSUW.js", "/assets/sortable.esm-cjwCgDDv.js", "/assets/textarea-Cqcp_f1C.js", "/assets/card-s80fMsyZ.js", "/assets/image-D_OrMvzq.js", "/assets/config-C4Z0oNNz.js", "/assets/save-BjqJeOrf.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/popover-Vu6Kr5M8.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/label-pxPLKOzw.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/pencil-Mnlafgz9.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/plus-DKEjp7jg.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/index-DmSeETPQ.js", "/assets/loader-circle-BOVuU157.js", "/assets/external-link-CS9lkXPq.js", "/assets/settings-COmu83Az.js", "/assets/star-Bc7UU24n.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/profile/pages/FolderView": { "id": "features/profile/pages/FolderView", "parentId": "components/layout/MainLayout", "path": "/:username/folders/:slug", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/FolderView-D0S4Iz4O.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/CollectionCard-DvSJpn0e.js", "/assets/MetaHead-BUqPJU20.js", "/assets/useAuth-BNLu8VOc.js", "/assets/loader-circle-BOVuU157.js", "/assets/folder-D7GBa9Et.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/dialog-Dg5Txfj1.js", "/assets/label-pxPLKOzw.js", "/assets/textarea-Cqcp_f1C.js", "/assets/switch-DIGHl2cZ.js", "/assets/index-hC5a87NV.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/checkbox-Bex4QVwi.js", "/assets/check-B6-Edfop.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/url-DU88vnPn.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/star-Bc7UU24n.js", "/assets/card-s80fMsyZ.js", "/assets/core.esm-DTWHKSUW.js", "/assets/globe-S5Mqjnq8.js", "/assets/lock-CiGUQPzb.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-details-slug": { "id": "building-details-slug", "parentId": "components/layout/MainLayout", "path": "/building/:id/:slug", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/BuildingDetails-CqDkPM2s.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/image-compression-B-JfWW6q.js", "/assets/CollectionSelector-ABZ23wgo.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/tabs-mvuqHr4x.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/textarea-Cqcp_f1C.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/BuildingAttributes-55uvX6SL.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/client-rR1rgQyR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/avatar-BI1PmAho.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/UserPicker-DYsSeTNM.js", "/assets/location-BxOo93J3.js", "/assets/image-D_OrMvzq.js", "/assets/ImageDetailsDialog-C0gja7Gj.js", "/assets/url-DU88vnPn.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/MapPin-DZn2GzKq.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/minimize-2-VS1ogcVu.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/play-BP9MAQUA.js", "/assets/heart-Btv1t7q5.js", "/assets/utils-C_0hPamv.js", "/assets/sparkles-Bctff8r-.js", "/assets/eye--MrztN5o.js", "/assets/lock-CiGUQPzb.js", "/assets/search-nnPwPiPV.js", "/assets/calendar-CbH2_Osy.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/structuredData-C3BnDgPG.js", "/assets/loader-circle-BOVuU157.js", "/assets/pencil-Mnlafgz9.js", "/assets/circle-COwts0_x.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/users-DEKJlCr1.js", "/assets/x-BzUiSH4_.js", "/assets/image-BAlUERHE.js", "/assets/external-link-CS9lkXPq.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/badge-check-CeUfQeV8.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/index-ofLbeaRs.js", "/assets/popover-Vu6Kr5M8.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-G0woRxxR.js", "/assets/index-DnWzpPO0.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/user-Dwcgdo66.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/building-2-DPAnNLRO.js", "/assets/map-BB384bNa.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/config-C4Z0oNNz.js", "/assets/VideoPlayer-daK3UBAd.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/message-circle-D8EcWb3B.js", "/assets/format-BWwhwzZQ.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js", "/assets/preload-helper-D7HrI6pR.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-details-id-only": { "id": "building-details-id-only", "parentId": "components/layout/MainLayout", "path": "/building/:id", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/BuildingDetails-CqDkPM2s.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/image-compression-B-JfWW6q.js", "/assets/CollectionSelector-ABZ23wgo.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/tabs-mvuqHr4x.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/textarea-Cqcp_f1C.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/BuildingAttributes-55uvX6SL.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/client-rR1rgQyR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/avatar-BI1PmAho.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/UserPicker-DYsSeTNM.js", "/assets/location-BxOo93J3.js", "/assets/image-D_OrMvzq.js", "/assets/ImageDetailsDialog-C0gja7Gj.js", "/assets/url-DU88vnPn.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/MapPin-DZn2GzKq.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/minimize-2-VS1ogcVu.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/play-BP9MAQUA.js", "/assets/heart-Btv1t7q5.js", "/assets/utils-C_0hPamv.js", "/assets/sparkles-Bctff8r-.js", "/assets/eye--MrztN5o.js", "/assets/lock-CiGUQPzb.js", "/assets/search-nnPwPiPV.js", "/assets/calendar-CbH2_Osy.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/structuredData-C3BnDgPG.js", "/assets/loader-circle-BOVuU157.js", "/assets/pencil-Mnlafgz9.js", "/assets/circle-COwts0_x.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/users-DEKJlCr1.js", "/assets/x-BzUiSH4_.js", "/assets/image-BAlUERHE.js", "/assets/external-link-CS9lkXPq.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/badge-check-CeUfQeV8.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/index-ofLbeaRs.js", "/assets/popover-Vu6Kr5M8.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-G0woRxxR.js", "/assets/index-DnWzpPO0.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/user-Dwcgdo66.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/building-2-DPAnNLRO.js", "/assets/map-BB384bNa.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/config-C4Z0oNNz.js", "/assets/VideoPlayer-daK3UBAd.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/message-circle-D8EcWb3B.js", "/assets/format-BWwhwzZQ.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js", "/assets/preload-helper-D7HrI6pR.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-edit-slug": { "id": "building-edit-slug", "parentId": "components/layout/MainLayout", "path": "/building/:id/:slug/edit", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/EditBuilding-CWWyJEGZ.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/card-s80fMsyZ.js", "/assets/button-CLjxMCuh.js", "/assets/BuildingForm-BfH_dcz2.js", "/assets/BuildingLocationPicker-BmyRWUTp.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/index-DnWzpPO0.js", "/assets/location-BxOo93J3.js", "/assets/url-DU88vnPn.js", "/assets/loader-circle-BOVuU157.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/label-pxPLKOzw.js", "/assets/building-DJ2j9bHJ.js", "/assets/types-D3upOYGZ.js", "/assets/architect-select-xQqm93c8.js", "/assets/badge-d2quT5x6.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/circle-COwts0_x.js", "/assets/select-D4SEJ7TE.js", "/assets/index-BdQq_4o_.js", "/assets/check-B6-Edfop.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/proxy-CeAqrdL2.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/textarea-Cqcp_f1C.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/plus-DKEjp7jg.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/checkbox-Bex4QVwi.js", "/assets/satelliteMapStyle-C0qzLQVO.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-edit-id-only": { "id": "building-edit-id-only", "parentId": "components/layout/MainLayout", "path": "/building/:id/edit", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/EditBuilding-CWWyJEGZ.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/card-s80fMsyZ.js", "/assets/button-CLjxMCuh.js", "/assets/BuildingForm-BfH_dcz2.js", "/assets/BuildingLocationPicker-BmyRWUTp.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/index-DnWzpPO0.js", "/assets/location-BxOo93J3.js", "/assets/url-DU88vnPn.js", "/assets/loader-circle-BOVuU157.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/label-pxPLKOzw.js", "/assets/building-DJ2j9bHJ.js", "/assets/types-D3upOYGZ.js", "/assets/architect-select-xQqm93c8.js", "/assets/badge-d2quT5x6.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/circle-COwts0_x.js", "/assets/select-D4SEJ7TE.js", "/assets/index-BdQq_4o_.js", "/assets/check-B6-Edfop.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/proxy-CeAqrdL2.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/textarea-Cqcp_f1C.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/plus-DKEjp7jg.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/checkbox-Bex4QVwi.js", "/assets/satelliteMapStyle-C0qzLQVO.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-review-slug": { "id": "building-review-slug", "parentId": "components/layout/MainLayout", "path": "/building/:id/:slug/review", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/WriteReview-BO6oVI7T.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/button-CLjxMCuh.js", "/assets/textarea-Cqcp_f1C.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/client-rR1rgQyR.js", "/assets/image-compression-B-JfWW6q.js", "/assets/url-DU88vnPn.js", "/assets/image-D_OrMvzq.js", "/assets/CollectionSelector-ABZ23wgo.js", "/assets/review-C10rB1Zf.js", "/assets/loader-circle-BOVuU157.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/circle-COwts0_x.js", "/assets/x-BzUiSH4_.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/pencil-Mnlafgz9.js", "/assets/upload-CG_Vx3U3.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-B-HqSsFP.js", "/assets/utils-C_0hPamv.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/popover-Vu6Kr5M8.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-G0woRxxR.js", "/assets/index-DnWzpPO0.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-BdQq_4o_.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-review-id-only": { "id": "building-review-id-only", "parentId": "components/layout/MainLayout", "path": "/building/:id/review", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/WriteReview-BO6oVI7T.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/button-CLjxMCuh.js", "/assets/textarea-Cqcp_f1C.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/client-rR1rgQyR.js", "/assets/image-compression-B-JfWW6q.js", "/assets/url-DU88vnPn.js", "/assets/image-D_OrMvzq.js", "/assets/CollectionSelector-ABZ23wgo.js", "/assets/review-C10rB1Zf.js", "/assets/loader-circle-BOVuU157.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/circle-COwts0_x.js", "/assets/x-BzUiSH4_.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/pencil-Mnlafgz9.js", "/assets/upload-CG_Vx3U3.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-B-HqSsFP.js", "/assets/utils-C_0hPamv.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/popover-Vu6Kr5M8.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-G0woRxxR.js", "/assets/index-DnWzpPO0.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-BdQq_4o_.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/architect/pages/ArchitectDashboard": { "id": "features/architect/pages/ArchitectDashboard", "parentId": "components/layout/MainLayout", "path": "/architect/dashboard", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/ArchitectDashboard-CcL2kQaW.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/card-s80fMsyZ.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/ReviewCard-BhdkcmP2.js", "/assets/index-DnWzpPO0.js", "/assets/image-D_OrMvzq.js", "/assets/utils-C_0hPamv.js", "/assets/avatar-BI1PmAho.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-ofLbeaRs.js", "/assets/button-CLjxMCuh.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/url-DU88vnPn.js", "/assets/VideoPlayer-daK3UBAd.js", "/assets/play-BP9MAQUA.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/sparkles-Bctff8r-.js", "/assets/FollowButton-RaVosGg7.js", "/assets/user-plus-DFPLMYg6.js", "/assets/heart-Btv1t7q5.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/message-circle-D8EcWb3B.js", "/assets/badge-check-CeUfQeV8.js", "/assets/bookmark-DPL9meeS.js", "/assets/circle-COwts0_x.js", "/assets/image-BAlUERHE.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/en-US-LUXC61Eo.js", "/assets/config-C4Z0oNNz.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/architect/pages/ArchitectDetails": { "id": "features/architect/pages/ArchitectDetails", "parentId": "components/layout/MainLayout", "path": "/architect/:id", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/ArchitectDetails-DlG5Ph32.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/form-Mj8VkWK_.js", "/assets/useAuth-BNLu8VOc.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/badge-d2quT5x6.js", "/assets/button-CLjxMCuh.js", "/assets/card-s80fMsyZ.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/index-ofLbeaRs.js", "/assets/avatar-BI1PmAho.js", "/assets/image-D_OrMvzq.js", "/assets/client-rR1rgQyR.js", "/assets/dialog-Dg5Txfj1.js", "/assets/input-tljl6p0O.js", "/assets/check-B6-Edfop.js", "/assets/types-D3upOYGZ.js", "/assets/structuredData-C3BnDgPG.js", "/assets/badge-check-CeUfQeV8.js", "/assets/map-BB384bNa.js", "/assets/globe-S5Mqjnq8.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/utils-C_0hPamv.js", "/assets/label-pxPLKOzw.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/url-DU88vnPn.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/architect/pages/EditArchitect": { "id": "features/architect/pages/EditArchitect", "parentId": "components/layout/MainLayout", "path": "/architect/:id/edit", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/EditArchitect-D0115sRI.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/form-Mj8VkWK_.js", "/assets/index-DnWzpPO0.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/card-s80fMsyZ.js", "/assets/input-tljl6p0O.js", "/assets/textarea-Cqcp_f1C.js", "/assets/separator-C79Afhsw.js", "/assets/select-D4SEJ7TE.js", "/assets/architect-select-xQqm93c8.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/loader-circle-BOVuU157.js", "/assets/types-D3upOYGZ.js", "/assets/utils-C_0hPamv.js", "/assets/label-pxPLKOzw.js", "/assets/index-ofLbeaRs.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/index-BdQq_4o_.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/check-B6-Edfop.js", "/assets/badge-d2quT5x6.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/circle-COwts0_x.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/buildings/pages/ReviewDetails": { "id": "features/buildings/pages/ReviewDetails", "parentId": "components/layout/MainLayout", "path": "/review/:id", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/ReviewDetails-Cy1BQRMI.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/textarea-Cqcp_f1C.js", "/assets/avatar-BI1PmAho.js", "/assets/badge-d2quT5x6.js", "/assets/dialog-Dg5Txfj1.js", "/assets/scroll-area-CE-WojNN.js", "/assets/card-s80fMsyZ.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/MetaHead-BUqPJU20.js", "/assets/NotFound-C_cAowoy.js", "/assets/image-D_OrMvzq.js", "/assets/ImageDetailsDialog-C0gja7Gj.js", "/assets/loader-circle-BOVuU157.js", "/assets/circle-COwts0_x.js", "/assets/heart-Btv1t7q5.js", "/assets/message-circle-D8EcWb3B.js", "/assets/pencil-Mnlafgz9.js", "/assets/trash-2-D4OotWge.js", "/assets/building-2-DPAnNLRO.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/calendar-CbH2_Osy.js", "/assets/external-link-CS9lkXPq.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/config-C4Z0oNNz.js", "/assets/VideoPlayer-daK3UBAd.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/check-B6-Edfop.js", "/assets/plus-DKEjp7jg.js", "/assets/image-BAlUERHE.js", "/assets/format-BWwhwzZQ.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "root-not-found": { "id": "root-not-found", "parentId": "components/layout/MainLayout", "path": "*", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/NotFound-C_cAowoy.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/Header-CFKXDfTO.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/button-CLjxMCuh.js", "/assets/MetaHead-BUqPJU20.js", "/assets/utils-C_0hPamv.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/search-nnPwPiPV.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-fcacf182.js", "version": "fcacf182", "sri": void 0 };
+const serverManifest = { "entry": { "module": "/assets/entry.client-DPX0RRDA.js", "imports": ["/assets/jsx-runtime-CEhGpoVA.js", "/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/index-ofLbeaRs.js", "/assets/consent-DbEcSUJ2.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/root-C5yyHVz_.js", "imports": ["/assets/jsx-runtime-CEhGpoVA.js", "/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/index-ofLbeaRs.js", "/assets/consent-DbEcSUJ2.js", "/assets/button-CLjxMCuh.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/mutation-BNAMlf5Y.js", "/assets/infiniteQueryBehavior-Cja4suR2.js", "/assets/tooltip-CC6Xznx5.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/index-Dy6bCKJC.js", "/assets/index-DMWUnD6k.js", "/assets/index-D_6bR09H.js", "/assets/index-DWm1YzYQ.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-CskkVJIU.js", "/assets/utils-C_0hPamv.js", "/assets/x-BzUiSH4_.js", "/assets/index-DnWzpPO0.js", "/assets/usePwaInstall-eL57OZ5I.js", "/assets/useAuth-BNLu8VOc.js", "/assets/drawer-Cs6jG8KG.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/loader-circle-BOVuU157.js", "/assets/usePresenceTracker-C9weVd60.js", "/assets/diagnostics-DHzbnvOt.js", "/assets/sidebar-DQdiiPel.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/client-rR1rgQyR.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/input-tljl6p0O.js", "/assets/separator-C79Afhsw.js", "/assets/skeleton-Ds_fcKFG.js"], "css": ["/assets/root-qmRbJQfR.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "auth-login": { "id": "auth-login", "parentId": "root", "path": "/login", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Auth-CgwfXcHR.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/checkbox-Bex4QVwi.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/avatar-BI1PmAho.js", "/assets/client-rR1rgQyR.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/auth-B6ugWtns.js", "/assets/mail-f2dECHGN.js", "/assets/user-plus-DFPLMYg6.js", "/assets/eye-off-CGxjbJDn.js", "/assets/eye--MrztN5o.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/check-B6-Edfop.js", "/assets/index-mTxhfxEY.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "auth-root": { "id": "auth-root", "parentId": "root", "path": "/auth", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Auth-CgwfXcHR.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/checkbox-Bex4QVwi.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/avatar-BI1PmAho.js", "/assets/client-rR1rgQyR.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/auth-B6ugWtns.js", "/assets/mail-f2dECHGN.js", "/assets/user-plus-DFPLMYg6.js", "/assets/eye-off-CGxjbJDn.js", "/assets/eye--MrztN5o.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/check-B6-Edfop.js", "/assets/index-mTxhfxEY.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/auth/pages/UpdatePassword": { "id": "features/auth/pages/UpdatePassword", "parentId": "root", "path": "/update-password", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/UpdatePassword-BMT7v5jG.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useAuth-BNLu8VOc.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/auth-B6ugWtns.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/lock-CiGUQPzb.js", "/assets/client-rR1rgQyR.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/auth/pages/Onboarding": { "id": "features/auth/pages/Onboarding", "parentId": "root", "path": "/onboarding", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Onboarding-BkWEl0gE.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/avatar-BI1PmAho.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/image-compression-B-JfWW6q.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/loader-circle-BOVuU157.js", "/assets/check-B6-Edfop.js", "/assets/user-plus-DFPLMYg6.js", "/assets/user-Dwcgdo66.js", "/assets/upload-CG_Vx3U3.js", "/assets/index-ofLbeaRs.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/command-D5khigHc.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-D_6bR09H.js", "/assets/dialog-Dg5Txfj1.js", "/assets/x-BzUiSH4_.js", "/assets/search-nnPwPiPV.js", "/assets/map-pin-wbZ-WRT2.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "pages/Terms": { "id": "pages/Terms", "parentId": "root", "path": "/terms", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Terms-B-otS8xn.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Unauthorized": { "id": "features/admin/pages/Unauthorized", "parentId": "root", "path": "/admin/unauthorized", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Unauthorized-BxUIsjiT.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/shield-alert-2tVAPeho.js", "/assets/utils-C_0hPamv.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/MergeBuildings": { "id": "features/admin/pages/MergeBuildings", "parentId": "root", "path": "/admin/merge", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/MergeBuildings-mksfhBak.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/card-s80fMsyZ.js", "/assets/badge-d2quT5x6.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-DnWzpPO0.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/refresh-cw-Cz8xZ6RW.js", "/assets/loader-circle-BOVuU157.js", "/assets/merge-yR7iU2Sf.js", "/assets/utils-C_0hPamv.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-mTxhfxEY.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/MergeComparison": { "id": "features/admin/pages/MergeComparison", "parentId": "root", "path": "/admin/merge/:targetId/:sourceId", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/MergeComparison-G5kemfCZ.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/useAuth-BNLu8VOc.js", "/assets/url-DU88vnPn.js", "/assets/button-CLjxMCuh.js", "/assets/card-s80fMsyZ.js", "/assets/badge-d2quT5x6.js", "/assets/index-DnWzpPO0.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/image-D_OrMvzq.js", "/assets/input-tljl6p0O.js", "/assets/textarea-Cqcp_f1C.js", "/assets/architect-select-xQqm93c8.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/useUserLocation-WdlHFGDu.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/minimize-2-VS1ogcVu.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/location-BxOo93J3.js", "/assets/carousel-eTcPPDTN.js", "/assets/loader-circle-BOVuU157.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/check-B6-Edfop.js", "/assets/pencil-Mnlafgz9.js", "/assets/x-BzUiSH4_.js", "/assets/save-BjqJeOrf.js", "/assets/image-BAlUERHE.js", "/assets/utils-C_0hPamv.js", "/assets/trash-2-D4OotWge.js", "/assets/index-ofLbeaRs.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/config-C4Z0oNNz.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/search-nnPwPiPV.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-DV--etif.js", "/assets/index-hC5a87NV.js", "/assets/circle-COwts0_x.js", "/assets/label-pxPLKOzw.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/arrow-right-CWYV95kF.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/components/AdminLayout": { "id": "features/admin/components/AdminLayout", "parentId": "root", "path": void 0, "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/AdminLayout-CN1WmRCV.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/sidebar-DQdiiPel.js", "/assets/useAuth-BNLu8VOc.js", "/assets/utils-C_0hPamv.js", "/assets/building-2-DPAnNLRO.js", "/assets/merge-yR7iU2Sf.js", "/assets/users-DEKJlCr1.js", "/assets/shield-alert-2tVAPeho.js", "/assets/image-BAlUERHE.js", "/assets/map-BB384bNa.js", "/assets/trash-2-D4OotWge.js", "/assets/settings-COmu83Az.js", "/assets/log-out-Twd920Mp.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/client-rR1rgQyR.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Dashboard": { "id": "features/admin/pages/Dashboard", "parentId": "features/admin/components/AdminLayout", "path": "/admin", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Dashboard-m59Jx3Ei.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/admin-Bc2SF-SB.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/card-s80fMsyZ.js", "/assets/users-DEKJlCr1.js", "/assets/user-plus-DFPLMYg6.js", "/assets/activity-MhcVb6rV.js", "/assets/utils-C_0hPamv.js", "/assets/building-2-DPAnNLRO.js", "/assets/image-BAlUERHE.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/image-D_OrMvzq.js", "/assets/avatar-BI1PmAho.js", "/assets/scroll-area-CE-WojNN.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/tooltip-CC6Xznx5.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInHours-BDEHJv3K.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js", "/assets/button-CLjxMCuh.js", "/assets/table-CBBYuJOc.js", "/assets/diagnostics-DHzbnvOt.js", "/assets/client-rR1rgQyR.js", "/assets/circle-check-big-D_eJUdhx.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/eye--MrztN5o.js", "/assets/eye-off-CGxjbJDn.js", "/assets/bell-B40pbp2L.js", "/assets/tabs-mvuqHr4x.js", "/assets/play-BP9MAQUA.js", "/assets/search-nnPwPiPV.js", "/assets/user-Dwcgdo66.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-CbtiC6P_.js", "/assets/config-C4Z0oNNz.js", "/assets/index-BdQq_4o_.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Buildings": { "id": "features/admin/pages/Buildings", "parentId": "features/admin/components/AdminLayout", "path": "/admin/buildings", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Buildings-D9_lzHkL.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/input-tljl6p0O.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/switch-DIGHl2cZ.js", "/assets/dialog-Dg5Txfj1.js", "/assets/select-D4SEJ7TE.js", "/assets/tabs-mvuqHr4x.js", "/assets/BuildingForm-BfH_dcz2.js", "/assets/BuildingLocationPicker-BmyRWUTp.js", "/assets/index-DnWzpPO0.js", "/assets/location-BxOo93J3.js", "/assets/utils-C_0hPamv.js", "/assets/loader-circle-BOVuU157.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/pencil-Mnlafgz9.js", "/assets/trash-2-D4OotWge.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/index-BdQq_4o_.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-CkFep66M.js", "/assets/index-CskkVJIU.js", "/assets/check-B6-Edfop.js", "/assets/index-B-HqSsFP.js", "/assets/label-pxPLKOzw.js", "/assets/building-DJ2j9bHJ.js", "/assets/types-D3upOYGZ.js", "/assets/architect-select-xQqm93c8.js", "/assets/command-D5khigHc.js", "/assets/search-nnPwPiPV.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/circle-COwts0_x.js", "/assets/url-DU88vnPn.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/proxy-CeAqrdL2.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/separator-C79Afhsw.js", "/assets/textarea-Cqcp_f1C.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/useAuth-BNLu8VOc.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/plus-DKEjp7jg.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/checkbox-Bex4QVwi.js", "/assets/satelliteMapStyle-C0qzLQVO.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Users": { "id": "features/admin/pages/Users", "parentId": "features/admin/components/AdminLayout", "path": "/admin/users", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Users-M8y2tE-3.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/input-tljl6p0O.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/avatar-BI1PmAho.js", "/assets/index-DnWzpPO0.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/loader-circle-BOVuU157.js", "/assets/format-BWwhwzZQ.js", "/assets/refresh-cw-Cz8xZ6RW.js", "/assets/utils-C_0hPamv.js", "/assets/ban-ClyW1PIu.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-ofLbeaRs.js", "/assets/index-Dy6bCKJC.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/Moderation": { "id": "features/admin/pages/Moderation", "parentId": "features/admin/components/AdminLayout", "path": "/admin/moderation", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Moderation-B-2sSTqw.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/index-DnWzpPO0.js", "/assets/loader-circle-BOVuU157.js", "/assets/circle-check-big-D_eJUdhx.js", "/assets/trash-2-D4OotWge.js", "/assets/format-BWwhwzZQ.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/ImageWall": { "id": "features/admin/pages/ImageWall", "parentId": "features/admin/components/AdminLayout", "path": "/admin/images", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/ImageWall-ClixpbCK.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/button-CLjxMCuh.js", "/assets/checkbox-Bex4QVwi.js", "/assets/index-DnWzpPO0.js", "/assets/utils-C_0hPamv.js", "/assets/refresh-cw-Cz8xZ6RW.js", "/assets/trash-2-D4OotWge.js", "/assets/loader-circle-BOVuU157.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/check-B6-Edfop.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/PhotoAnalytics": { "id": "features/admin/pages/PhotoAnalytics", "parentId": "features/admin/components/AdminLayout", "path": "/admin/photos", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/PhotoAnalytics-D6P78igl.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/admin-Bc2SF-SB.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/card-s80fMsyZ.js", "/assets/client-rR1rgQyR.js", "/assets/location-BxOo93J3.js", "/assets/loader-circle-BOVuU157.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/index-ofLbeaRs.js", "/assets/utils-C_0hPamv.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/search-nnPwPiPV.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/BuildingAudit": { "id": "features/admin/pages/BuildingAudit", "parentId": "features/admin/components/AdminLayout", "path": "/admin/audit", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/BuildingAudit-DS3AhBEL.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/button-CLjxMCuh.js", "/assets/index-DnWzpPO0.js", "/assets/dialog-Dg5Txfj1.js", "/assets/loader-circle-BOVuU157.js", "/assets/utils-C_0hPamv.js", "/assets/format-BWwhwzZQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/ArchitectClaims": { "id": "features/admin/pages/ArchitectClaims", "parentId": "features/admin/components/AdminLayout", "path": "/admin/claims", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/ArchitectClaims-BLgYzqLG.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/button-CLjxMCuh.js", "/assets/avatar-BI1PmAho.js", "/assets/badge-d2quT5x6.js", "/assets/index-DnWzpPO0.js", "/assets/useAuth-BNLu8VOc.js", "/assets/loader-circle-BOVuU157.js", "/assets/shield-check-Dxg8luhp.js", "/assets/x-BzUiSH4_.js", "/assets/check-B6-Edfop.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/utils-C_0hPamv.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-ofLbeaRs.js", "/assets/en-US-LUXC61Eo.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/admin/pages/StorageJobs": { "id": "features/admin/pages/StorageJobs", "parentId": "features/admin/components/AdminLayout", "path": "/admin/storage-jobs", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/StorageJobs-CVidzCEN.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/table-CBBYuJOc.js", "/assets/input-tljl6p0O.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/card-s80fMsyZ.js", "/assets/index-DnWzpPO0.js", "/assets/loader-circle-BOVuU157.js", "/assets/trash-2-D4OotWge.js", "/assets/refresh-cw-Cz8xZ6RW.js", "/assets/format-BWwhwzZQ.js", "/assets/utils-C_0hPamv.js", "/assets/index-ofLbeaRs.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "pages/AdminSystemPlaceholder": { "id": "pages/AdminSystemPlaceholder", "parentId": "features/admin/components/AdminLayout", "path": "/admin/system", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/AdminSystemPlaceholder-De4BLFPP.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "components/layout/MainLayout": { "id": "components/layout/MainLayout", "parentId": "root", "path": void 0, "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/MainLayout-dN7_GU4v.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/sidebar-DQdiiPel.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/avatar-BI1PmAho.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/search-nnPwPiPV.js", "/assets/users-DEKJlCr1.js", "/assets/bell-B40pbp2L.js", "/assets/user-Dwcgdo66.js", "/assets/settings-COmu83Az.js", "/assets/log-out-Twd920Mp.js", "/assets/usePresenceTracker-C9weVd60.js", "/assets/diagnostics-DHzbnvOt.js", "/assets/sentry-RK2FgH0O.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/client-rR1rgQyR.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-B-HqSsFP.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/check-B6-Edfop.js", "/assets/circle-COwts0_x.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/feed/pages/Index": { "id": "features/feed/pages/Index", "parentId": "components/layout/MainLayout", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Index-9hQkP69X.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/avatar-BI1PmAho.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/client-rR1rgQyR.js", "/assets/url-DU88vnPn.js", "/assets/useUserBuildingStatuses-Dx3mccJk.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/utils-C_0hPamv.js", "/assets/FeedPhotoCarousel-DZmUEppB.js", "/assets/circle-COwts0_x.js", "/assets/heart-Btv1t7q5.js", "/assets/message-circle-D8EcWb3B.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useMutation-CoLux32r.js", "/assets/FollowButton-RaVosGg7.js", "/assets/MutualFacepile-x2XA6CpB.js", "/assets/x-BzUiSH4_.js", "/assets/loader-circle-BOVuU157.js", "/assets/badge-d2quT5x6.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/sidebar-DQdiiPel.js", "/assets/MetaHead-BUqPJU20.js", "/assets/differenceInHours-BDEHJv3K.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/DiscoverySearchInput-DsbfhaHo.js", "/assets/proxy-CeAqrdL2.js", "/assets/star-Bc7UU24n.js", "/assets/image-D_OrMvzq.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-ofLbeaRs.js", "/assets/chevron-left-Bozi3dIh.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/en-US-LUXC61Eo.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/mutation-BNAMlf5Y.js", "/assets/user-plus-DFPLMYg6.js", "/assets/separator-C79Afhsw.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-D_6bR09H.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/infiniteQueryBehavior-Cja4suR2.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/triangle-alert-DBV0qC2H.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/explore/pages/Explore": { "id": "features/explore/pages/Explore", "parentId": "components/layout/MainLayout", "path": "/explore", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Explore-Bq35XAKj.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/useAuth-BNLu8VOc.js", "/assets/DiscoverySearchInput-DsbfhaHo.js", "/assets/client-rR1rgQyR.js", "/assets/image-D_OrMvzq.js", "/assets/button-CLjxMCuh.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/index-DnWzpPO0.js", "/assets/avatar-BI1PmAho.js", "/assets/proxy-CeAqrdL2.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/check-B6-Edfop.js", "/assets/checkbox-Bex4QVwi.js", "/assets/utils-C_0hPamv.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/sidebar-DQdiiPel.js", "/assets/drawer-Cs6jG8KG.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/x-BzUiSH4_.js", "/assets/loader-circle-BOVuU157.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/infiniteQueryBehavior-Cja4suR2.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/command-D5khigHc.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/dialog-Dg5Txfj1.js", "/assets/search-nnPwPiPV.js", "/assets/input-tljl6p0O.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/separator-C79Afhsw.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-CskkVJIU.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/search/SearchPage": { "id": "features/search/SearchPage", "parentId": "components/layout/MainLayout", "path": "/search", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/SearchPage-C_NDECDp.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/sidebar-DQdiiPel.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/DiscoverySearchInput-DsbfhaHo.js", "/assets/useDebounce-CBO363T0.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/client-rR1rgQyR.js", "/assets/MapMarkers-D0qddDTE.js", "/assets/index-ofLbeaRs.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/minimize-2-VS1ogcVu.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/scroll-area-CE-WojNN.js", "/assets/card-s80fMsyZ.js", "/assets/image-D_OrMvzq.js", "/assets/accordion-D3tMUcqs.js", "/assets/utils-C_0hPamv.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/loader-circle-BOVuU157.js", "/assets/switch-DIGHl2cZ.js", "/assets/label-pxPLKOzw.js", "/assets/separator-C79Afhsw.js", "/assets/badge-d2quT5x6.js", "/assets/command-D5khigHc.js", "/assets/popover-Vu6Kr5M8.js", "/assets/x-BzUiSH4_.js", "/assets/avatar-BI1PmAho.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/useUserLocation-WdlHFGDu.js", "/assets/supabaseFallback-B5U8_K8i.js", "/assets/useAuth-BNLu8VOc.js", "/assets/location-BxOo93J3.js", "/assets/useUserBuildingStatuses-Dx3mccJk.js", "/assets/index-BdQq_4o_.js", "/assets/index-Dy6bCKJC.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/index-DMWUnD6k.js", "/assets/input-tljl6p0O.js", "/assets/checkbox-Bex4QVwi.js", "/assets/search-nnPwPiPV.js", "/assets/folder-D7GBa9Et.js", "/assets/select-D4SEJ7TE.js", "/assets/list-CLUBqjR0.js", "/assets/map-BB384bNa.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-CskkVJIU.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/infiniteQueryBehavior-Cja4suR2.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/types-D3upOYGZ.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/external-link-CS9lkXPq.js", "/assets/trash-2-D4OotWge.js", "/assets/plus-DKEjp7jg.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/MapPin-DZn2GzKq.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/dialog-Dg5Txfj1.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-DnWzpPO0.js"], "css": ["/assets/MapMarkers-tn0RQdqM.css#", "/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "pages/Post": { "id": "pages/Post", "parentId": "components/layout/MainLayout", "path": "/post", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Post-D6dyYkxM.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/textarea-Cqcp_f1C.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/supabaseFallback-B5U8_K8i.js", "/assets/UserPicker-DYsSeTNM.js", "/assets/x-BzUiSH4_.js", "/assets/loader-circle-BOVuU157.js", "/assets/circle-COwts0_x.js", "/assets/pencil-Mnlafgz9.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-DWm1YzYQ.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/client-rR1rgQyR.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/search-nnPwPiPV.js", "/assets/popover-Vu6Kr5M8.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/avatar-BI1PmAho.js", "/assets/badge-d2quT5x6.js", "/assets/check-B6-Edfop.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/notifications/pages/Notifications": { "id": "features/notifications/pages/Notifications", "parentId": "components/layout/MainLayout", "path": "/notifications", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Notifications-DjlGREB9.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/avatar-BI1PmAho.js", "/assets/scroll-area-CE-WojNN.js", "/assets/utils-C_0hPamv.js", "/assets/dialog-Dg5Txfj1.js", "/assets/switch-DIGHl2cZ.js", "/assets/label-pxPLKOzw.js", "/assets/button-CLjxMCuh.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/loader-circle-BOVuU157.js", "/assets/bell-B40pbp2L.js", "/assets/settings-COmu83Az.js", "/assets/shield-check-Dxg8luhp.js", "/assets/users-DEKJlCr1.js", "/assets/sparkles-Bctff8r-.js", "/assets/user-plus-DFPLMYg6.js", "/assets/message-circle-D8EcWb3B.js", "/assets/heart-Btv1t7q5.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/user-Dwcgdo66.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/index-hC5a87NV.js", "/assets/en-US-LUXC61Eo.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/buildings/pages/AddBuilding": { "id": "features/buildings/pages/AddBuilding", "parentId": "components/layout/MainLayout", "path": "/add-building", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/AddBuilding-BWtF3xsC.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/button-CLjxMCuh.js", "/assets/card-s80fMsyZ.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/client-rR1rgQyR.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/index-DnWzpPO0.js", "/assets/BuildingForm-BfH_dcz2.js", "/assets/useAuth-BNLu8VOc.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/badge-d2quT5x6.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/checkbox-Bex4QVwi.js", "/assets/dialog-Dg5Txfj1.js", "/assets/avatar-BI1PmAho.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/image-D_OrMvzq.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/loader-circle-BOVuU157.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/building-2-DPAnNLRO.js", "/assets/arrow-right-CWYV95kF.js", "/assets/utils-C_0hPamv.js", "/assets/command-D5khigHc.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/search-nnPwPiPV.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/building-DJ2j9bHJ.js", "/assets/types-D3upOYGZ.js", "/assets/architect-select-xQqm93c8.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-DV--etif.js", "/assets/index-hC5a87NV.js", "/assets/circle-COwts0_x.js", "/assets/x-BzUiSH4_.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/url-DU88vnPn.js", "/assets/select-D4SEJ7TE.js", "/assets/index-BdQq_4o_.js", "/assets/index-CkFep66M.js", "/assets/index-CskkVJIU.js", "/assets/check-B6-Edfop.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/proxy-CeAqrdL2.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/separator-C79Afhsw.js", "/assets/textarea-Cqcp_f1C.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/plus-DKEjp7jg.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/tooltip-CC6Xznx5.js", "/assets/bell-B40pbp2L.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/connect/pages/Connect": { "id": "features/connect/pages/Connect", "parentId": "components/layout/MainLayout", "path": "/connect", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Connect-L3nr9uCG.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/client-rR1rgQyR.js", "/assets/useAuth-BNLu8VOc.js", "/assets/avatar-BI1PmAho.js", "/assets/FollowButton-RaVosGg7.js", "/assets/MutualFacepile-x2XA6CpB.js", "/assets/x-BzUiSH4_.js", "/assets/star-Bc7UU24n.js", "/assets/user-plus-DFPLMYg6.js", "/assets/tabs-mvuqHr4x.js", "/assets/scroll-area-CE-WojNN.js", "/assets/loader-circle-BOVuU157.js", "/assets/users-DEKJlCr1.js", "/assets/utils-C_0hPamv.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/user-Dwcgdo66.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "groups-not-found": { "id": "groups-not-found", "parentId": "components/layout/MainLayout", "path": "/groups/*", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/NotFound-C_cAowoy.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/Header-CFKXDfTO.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/button-CLjxMCuh.js", "/assets/MetaHead-BUqPJU20.js", "/assets/utils-C_0hPamv.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/search-nnPwPiPV.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "profile-root": { "id": "profile-root", "parentId": "components/layout/MainLayout", "path": "/profile", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/Profile-B-3GTtF2.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/core.esm-DTWHKSUW.js", "/assets/sortable.esm-cjwCgDDv.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/avatar-BI1PmAho.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/client-rR1rgQyR.js", "/assets/ReviewCard-Wz0VcqIg.js", "/assets/dialog-Dg5Txfj1.js", "/assets/scroll-area-CE-WojNN.js", "/assets/FollowButton-RaVosGg7.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/heart-Btv1t7q5.js", "/assets/plus-DKEjp7jg.js", "/assets/label-pxPLKOzw.js", "/assets/switch-DIGHl2cZ.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/popover-Vu6Kr5M8.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/checkbox-Bex4QVwi.js", "/assets/select-D4SEJ7TE.js", "/assets/textarea-Cqcp_f1C.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/loader-circle-BOVuU157.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/command-D5khigHc.js", "/assets/useDebounce-CBO363T0.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/bookmark-DPL9meeS.js", "/assets/check-B6-Edfop.js", "/assets/log-out-Twd920Mp.js", "/assets/ban-ClyW1PIu.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/card-s80fMsyZ.js", "/assets/pencil-Mnlafgz9.js", "/assets/building-2-DPAnNLRO.js", "/assets/user-Dwcgdo66.js", "/assets/CollectionCard-DvSJpn0e.js", "/assets/globe-S5Mqjnq8.js", "/assets/lock-CiGUQPzb.js", "/assets/folder-D7GBa9Et.js", "/assets/image-D_OrMvzq.js", "/assets/map-BB384bNa.js", "/assets/url-DU88vnPn.js", "/assets/collection-Lb0xuYse.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/circle-COwts0_x.js", "/assets/proxy-CeAqrdL2.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/sidebar-DQdiiPel.js", "/assets/table-CBBYuJOc.js", "/assets/index-Dy6bCKJC.js", "/assets/index-CkFep66M.js", "/assets/index-D_6bR09H.js", "/assets/index-G0woRxxR.js", "/assets/tooltip-CC6Xznx5.js", "/assets/x-BzUiSH4_.js", "/assets/index-DnWzpPO0.js", "/assets/structuredData-C3BnDgPG.js", "/assets/list-CLUBqjR0.js", "/assets/search-nnPwPiPV.js", "/assets/index-ofLbeaRs.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/VideoPlayer-BzS6cKtD.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/sparkles-Bctff8r-.js", "/assets/FeedPhotoCarousel-DZmUEppB.js", "/assets/chevron-left-Bozi3dIh.js", "/assets/message-circle-D8EcWb3B.js", "/assets/badge-check-CeUfQeV8.js", "/assets/image-BAlUERHE.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/user-plus-DFPLMYg6.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CskkVJIU.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/en-US-LUXC61Eo.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/trash-2-D4OotWge.js", "/assets/star-Bc7UU24n.js", "/assets/config-C4Z0oNNz.js", "/assets/types-D3upOYGZ.js", "/assets/separator-C79Afhsw.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "profile-username": { "id": "profile-username", "parentId": "components/layout/MainLayout", "path": "/profile/:username", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/Profile-B-3GTtF2.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/core.esm-DTWHKSUW.js", "/assets/sortable.esm-cjwCgDDv.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/avatar-BI1PmAho.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/client-rR1rgQyR.js", "/assets/ReviewCard-Wz0VcqIg.js", "/assets/dialog-Dg5Txfj1.js", "/assets/scroll-area-CE-WojNN.js", "/assets/FollowButton-RaVosGg7.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/heart-Btv1t7q5.js", "/assets/plus-DKEjp7jg.js", "/assets/label-pxPLKOzw.js", "/assets/switch-DIGHl2cZ.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/popover-Vu6Kr5M8.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/checkbox-Bex4QVwi.js", "/assets/select-D4SEJ7TE.js", "/assets/textarea-Cqcp_f1C.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/loader-circle-BOVuU157.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/command-D5khigHc.js", "/assets/useDebounce-CBO363T0.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/bookmark-DPL9meeS.js", "/assets/check-B6-Edfop.js", "/assets/log-out-Twd920Mp.js", "/assets/ban-ClyW1PIu.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/card-s80fMsyZ.js", "/assets/pencil-Mnlafgz9.js", "/assets/building-2-DPAnNLRO.js", "/assets/user-Dwcgdo66.js", "/assets/CollectionCard-DvSJpn0e.js", "/assets/globe-S5Mqjnq8.js", "/assets/lock-CiGUQPzb.js", "/assets/folder-D7GBa9Et.js", "/assets/image-D_OrMvzq.js", "/assets/map-BB384bNa.js", "/assets/url-DU88vnPn.js", "/assets/collection-Lb0xuYse.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/circle-COwts0_x.js", "/assets/proxy-CeAqrdL2.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/sidebar-DQdiiPel.js", "/assets/table-CBBYuJOc.js", "/assets/index-Dy6bCKJC.js", "/assets/index-CkFep66M.js", "/assets/index-D_6bR09H.js", "/assets/index-G0woRxxR.js", "/assets/tooltip-CC6Xznx5.js", "/assets/x-BzUiSH4_.js", "/assets/index-DnWzpPO0.js", "/assets/structuredData-C3BnDgPG.js", "/assets/list-CLUBqjR0.js", "/assets/search-nnPwPiPV.js", "/assets/index-ofLbeaRs.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/VideoPlayer-BzS6cKtD.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/sparkles-Bctff8r-.js", "/assets/FeedPhotoCarousel-DZmUEppB.js", "/assets/chevron-left-Bozi3dIh.js", "/assets/message-circle-D8EcWb3B.js", "/assets/badge-check-CeUfQeV8.js", "/assets/image-BAlUERHE.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/user-plus-DFPLMYg6.js", "/assets/index-hC5a87NV.js", "/assets/index-DV--etif.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CskkVJIU.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/en-US-LUXC61Eo.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/trash-2-D4OotWge.js", "/assets/star-Bc7UU24n.js", "/assets/config-C4Z0oNNz.js", "/assets/types-D3upOYGZ.js", "/assets/separator-C79Afhsw.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "profile-photos": { "id": "profile-photos", "parentId": "components/layout/MainLayout", "path": "/profile/photos", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/UserPhotoGallery-C48j50sh.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/client-rR1rgQyR.js", "/assets/image-D_OrMvzq.js", "/assets/useAuth-BNLu8VOc.js", "/assets/utils-C_0hPamv.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/select-D4SEJ7TE.js", "/assets/loader-circle-BOVuU157.js", "/assets/image-BAlUERHE.js", "/assets/heart-Btv1t7q5.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/index-BdQq_4o_.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/check-B6-Edfop.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "profile-username-photos": { "id": "profile-username-photos", "parentId": "components/layout/MainLayout", "path": "/profile/:username/photos", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/UserPhotoGallery-C48j50sh.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/client-rR1rgQyR.js", "/assets/image-D_OrMvzq.js", "/assets/useAuth-BNLu8VOc.js", "/assets/utils-C_0hPamv.js", "/assets/useIntersectionObserver-DZO0kMrk.js", "/assets/select-D4SEJ7TE.js", "/assets/loader-circle-BOVuU157.js", "/assets/image-BAlUERHE.js", "/assets/heart-Btv1t7q5.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/index-BdQq_4o_.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/check-B6-Edfop.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/profile/pages/Settings": { "id": "features/profile/pages/Settings", "parentId": "components/layout/MainLayout", "path": "/settings", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/Settings-DK9fJGkf.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/textarea-Cqcp_f1C.js", "/assets/label-pxPLKOzw.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/types-D3upOYGZ.js", "/assets/avatar-BI1PmAho.js", "/assets/separator-C79Afhsw.js", "/assets/usePwaInstall-eL57OZ5I.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/dialog-Dg5Txfj1.js", "/assets/supabaseFallback-B5U8_K8i.js", "/assets/scroll-area-CE-WojNN.js", "/assets/tabs-mvuqHr4x.js", "/assets/useDebounce-CBO363T0.js", "/assets/image-D_OrMvzq.js", "/assets/search-nnPwPiPV.js", "/assets/x-BzUiSH4_.js", "/assets/loader-circle-BOVuU157.js", "/assets/circle-COwts0_x.js", "/assets/check-B6-Edfop.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/index-DnWzpPO0.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/image-compression-B-JfWW6q.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/upload-CG_Vx3U3.js", "/assets/lock-CiGUQPzb.js", "/assets/mail-f2dECHGN.js", "/assets/download-BtEs1S91.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/command-D5khigHc.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/collections/components/CollectionMapPage": { "id": "features/collections/components/CollectionMapPage", "parentId": "components/layout/MainLayout", "path": "/:username/map/:slug", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/CollectionMapPage-B3Qhc0H-.js", "imports": ["/assets/CollectionMapPage-DMV1NTLW.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/client-rR1rgQyR.js", "/assets/useAuth-BNLu8VOc.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/button-CLjxMCuh.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/location-BxOo93J3.js", "/assets/accordion-D3tMUcqs.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/select-D4SEJ7TE.js", "/assets/index-BdQq_4o_.js", "/assets/index-hC5a87NV.js", "/assets/check-B6-Edfop.js", "/assets/url-DU88vnPn.js", "/assets/map-BB384bNa.js", "/assets/list-CLUBqjR0.js", "/assets/tabs-mvuqHr4x.js", "/assets/index-B-HqSsFP.js", "/assets/core.esm-DTWHKSUW.js", "/assets/sortable.esm-cjwCgDDv.js", "/assets/textarea-Cqcp_f1C.js", "/assets/card-s80fMsyZ.js", "/assets/image-D_OrMvzq.js", "/assets/config-C4Z0oNNz.js", "/assets/save-BjqJeOrf.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/popover-Vu6Kr5M8.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/label-pxPLKOzw.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/pencil-Mnlafgz9.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/plus-DKEjp7jg.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/index-DmSeETPQ.js", "/assets/loader-circle-BOVuU157.js", "/assets/external-link-CS9lkXPq.js", "/assets/settings-COmu83Az.js", "/assets/star-Bc7UU24n.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/profile/pages/FolderView": { "id": "features/profile/pages/FolderView", "parentId": "components/layout/MainLayout", "path": "/:username/folders/:slug", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/FolderView-D0S4Iz4O.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/client-rR1rgQyR.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/CollectionCard-DvSJpn0e.js", "/assets/MetaHead-BUqPJU20.js", "/assets/useAuth-BNLu8VOc.js", "/assets/loader-circle-BOVuU157.js", "/assets/folder-D7GBa9Et.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/dialog-Dg5Txfj1.js", "/assets/label-pxPLKOzw.js", "/assets/textarea-Cqcp_f1C.js", "/assets/switch-DIGHl2cZ.js", "/assets/index-hC5a87NV.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/checkbox-Bex4QVwi.js", "/assets/check-B6-Edfop.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/url-DU88vnPn.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/star-Bc7UU24n.js", "/assets/card-s80fMsyZ.js", "/assets/core.esm-DTWHKSUW.js", "/assets/globe-S5Mqjnq8.js", "/assets/lock-CiGUQPzb.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-details-slug": { "id": "building-details-slug", "parentId": "components/layout/MainLayout", "path": "/building/:id/:slug", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/BuildingDetails-8QNgylsP.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/image-compression-B-JfWW6q.js", "/assets/CollectionSelector-ABZ23wgo.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/tabs-mvuqHr4x.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/textarea-Cqcp_f1C.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/BuildingAttributes-55uvX6SL.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/client-rR1rgQyR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/avatar-BI1PmAho.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/UserPicker-DYsSeTNM.js", "/assets/location-BxOo93J3.js", "/assets/image-D_OrMvzq.js", "/assets/ImageDetailsDialog-64_oCUd4.js", "/assets/url-DU88vnPn.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/MapPin-DZn2GzKq.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/minimize-2-VS1ogcVu.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/play-BP9MAQUA.js", "/assets/heart-Btv1t7q5.js", "/assets/utils-C_0hPamv.js", "/assets/sparkles-Bctff8r-.js", "/assets/eye--MrztN5o.js", "/assets/lock-CiGUQPzb.js", "/assets/search-nnPwPiPV.js", "/assets/calendar-CbH2_Osy.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/structuredData-C3BnDgPG.js", "/assets/loader-circle-BOVuU157.js", "/assets/pencil-Mnlafgz9.js", "/assets/circle-COwts0_x.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/users-DEKJlCr1.js", "/assets/x-BzUiSH4_.js", "/assets/image-BAlUERHE.js", "/assets/external-link-CS9lkXPq.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/badge-check-CeUfQeV8.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/index-ofLbeaRs.js", "/assets/popover-Vu6Kr5M8.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-G0woRxxR.js", "/assets/index-DnWzpPO0.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/user-Dwcgdo66.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/building-2-DPAnNLRO.js", "/assets/map-BB384bNa.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/config-C4Z0oNNz.js", "/assets/VideoPlayer-BzS6cKtD.js", "/assets/chevron-left-Bozi3dIh.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/message-circle-D8EcWb3B.js", "/assets/format-BWwhwzZQ.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js", "/assets/preload-helper-D7HrI6pR.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-details-id-only": { "id": "building-details-id-only", "parentId": "components/layout/MainLayout", "path": "/building/:id", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/BuildingDetails-8QNgylsP.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/image-compression-B-JfWW6q.js", "/assets/CollectionSelector-ABZ23wgo.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/tabs-mvuqHr4x.js", "/assets/button-CLjxMCuh.js", "/assets/badge-d2quT5x6.js", "/assets/textarea-Cqcp_f1C.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/BuildingAttributes-55uvX6SL.js", "/assets/useAuth-BNLu8VOc.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/client-rR1rgQyR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/avatar-BI1PmAho.js", "/assets/WidgetErrorBoundary-A_RrpkhS.js", "/assets/UserPicker-DYsSeTNM.js", "/assets/location-BxOo93J3.js", "/assets/image-D_OrMvzq.js", "/assets/ImageDetailsDialog-64_oCUd4.js", "/assets/url-DU88vnPn.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/MapPin-DZn2GzKq.js", "/assets/satelliteMapStyle-C0qzLQVO.js", "/assets/minimize-2-VS1ogcVu.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/play-BP9MAQUA.js", "/assets/heart-Btv1t7q5.js", "/assets/utils-C_0hPamv.js", "/assets/sparkles-Bctff8r-.js", "/assets/eye--MrztN5o.js", "/assets/lock-CiGUQPzb.js", "/assets/search-nnPwPiPV.js", "/assets/calendar-CbH2_Osy.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/structuredData-C3BnDgPG.js", "/assets/loader-circle-BOVuU157.js", "/assets/pencil-Mnlafgz9.js", "/assets/circle-COwts0_x.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/eye-off-CGxjbJDn.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/users-DEKJlCr1.js", "/assets/x-BzUiSH4_.js", "/assets/image-BAlUERHE.js", "/assets/external-link-CS9lkXPq.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/badge-check-CeUfQeV8.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/index-ofLbeaRs.js", "/assets/popover-Vu6Kr5M8.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-G0woRxxR.js", "/assets/index-DnWzpPO0.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/user-Dwcgdo66.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/building-2-DPAnNLRO.js", "/assets/map-BB384bNa.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/react-error-boundary-CqOZcjTr.js", "/assets/sentry-RK2FgH0O.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/config-C4Z0oNNz.js", "/assets/VideoPlayer-BzS6cKtD.js", "/assets/chevron-left-Bozi3dIh.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/message-circle-D8EcWb3B.js", "/assets/format-BWwhwzZQ.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js", "/assets/preload-helper-D7HrI6pR.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-edit-slug": { "id": "building-edit-slug", "parentId": "components/layout/MainLayout", "path": "/building/:id/:slug/edit", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/EditBuilding-CWWyJEGZ.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/card-s80fMsyZ.js", "/assets/button-CLjxMCuh.js", "/assets/BuildingForm-BfH_dcz2.js", "/assets/BuildingLocationPicker-BmyRWUTp.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/index-DnWzpPO0.js", "/assets/location-BxOo93J3.js", "/assets/url-DU88vnPn.js", "/assets/loader-circle-BOVuU157.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/label-pxPLKOzw.js", "/assets/building-DJ2j9bHJ.js", "/assets/types-D3upOYGZ.js", "/assets/architect-select-xQqm93c8.js", "/assets/badge-d2quT5x6.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/circle-COwts0_x.js", "/assets/select-D4SEJ7TE.js", "/assets/index-BdQq_4o_.js", "/assets/check-B6-Edfop.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/proxy-CeAqrdL2.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/textarea-Cqcp_f1C.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/plus-DKEjp7jg.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/checkbox-Bex4QVwi.js", "/assets/satelliteMapStyle-C0qzLQVO.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-edit-id-only": { "id": "building-edit-id-only", "parentId": "components/layout/MainLayout", "path": "/building/:id/edit", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/EditBuilding-CWWyJEGZ.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/card-s80fMsyZ.js", "/assets/button-CLjxMCuh.js", "/assets/BuildingForm-BfH_dcz2.js", "/assets/BuildingLocationPicker-BmyRWUTp.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/index-DnWzpPO0.js", "/assets/location-BxOo93J3.js", "/assets/url-DU88vnPn.js", "/assets/loader-circle-BOVuU157.js", "/assets/triangle-alert-DBV0qC2H.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/utils-C_0hPamv.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/label-pxPLKOzw.js", "/assets/building-DJ2j9bHJ.js", "/assets/types-D3upOYGZ.js", "/assets/architect-select-xQqm93c8.js", "/assets/badge-d2quT5x6.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/circle-COwts0_x.js", "/assets/select-D4SEJ7TE.js", "/assets/index-BdQq_4o_.js", "/assets/check-B6-Edfop.js", "/assets/segmented-control-_U0-U3Dd.js", "/assets/proxy-CeAqrdL2.js", "/assets/toggle-group-cHvIC-a7.js", "/assets/textarea-Cqcp_f1C.js", "/assets/useUserProfile-qzGRCySw.js", "/assets/ArchitectStatement-C3Z4m_HC.js", "/assets/plus-DKEjp7jg.js", "/assets/LocationInput-D1CAQHtO.js", "/assets/index.esm-Bv1Qn9HN.js", "/assets/index-DmSeETPQ.js", "/assets/config-C4Z0oNNz.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/maplibre-gl-U4jOBiEo.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/checkbox-Bex4QVwi.js", "/assets/satelliteMapStyle-C0qzLQVO.js"], "css": ["/assets/maplibre-gl-PhPnDjd-.css#"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-review-slug": { "id": "building-review-slug", "parentId": "components/layout/MainLayout", "path": "/building/:id/:slug/review", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/WriteReview-BO6oVI7T.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/button-CLjxMCuh.js", "/assets/textarea-Cqcp_f1C.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/client-rR1rgQyR.js", "/assets/image-compression-B-JfWW6q.js", "/assets/url-DU88vnPn.js", "/assets/image-D_OrMvzq.js", "/assets/CollectionSelector-ABZ23wgo.js", "/assets/review-C10rB1Zf.js", "/assets/loader-circle-BOVuU157.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/circle-COwts0_x.js", "/assets/x-BzUiSH4_.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/pencil-Mnlafgz9.js", "/assets/upload-CG_Vx3U3.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-B-HqSsFP.js", "/assets/utils-C_0hPamv.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/popover-Vu6Kr5M8.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-G0woRxxR.js", "/assets/index-DnWzpPO0.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-BdQq_4o_.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "building-review-id-only": { "id": "building-review-id-only", "parentId": "components/layout/MainLayout", "path": "/building/:id/review", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/WriteReview-BO6oVI7T.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/dropdown-menu-DZ1WIQ0T.js", "/assets/alert-dialog-D4J4NiFR.js", "/assets/button-CLjxMCuh.js", "/assets/textarea-Cqcp_f1C.js", "/assets/input-tljl6p0O.js", "/assets/label-pxPLKOzw.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/useAuth-BNLu8VOc.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/client-rR1rgQyR.js", "/assets/image-compression-B-JfWW6q.js", "/assets/url-DU88vnPn.js", "/assets/image-D_OrMvzq.js", "/assets/CollectionSelector-ABZ23wgo.js", "/assets/review-C10rB1Zf.js", "/assets/loader-circle-BOVuU157.js", "/assets/check-B6-Edfop.js", "/assets/bookmark-DPL9meeS.js", "/assets/circle-COwts0_x.js", "/assets/x-BzUiSH4_.js", "/assets/plus-DKEjp7jg.js", "/assets/trash-2-D4OotWge.js", "/assets/pencil-Mnlafgz9.js", "/assets/upload-CG_Vx3U3.js", "/assets/index-Dy6bCKJC.js", "/assets/index-ofLbeaRs.js", "/assets/index-0rwYoKZb.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/index-DWm1YzYQ.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-B-HqSsFP.js", "/assets/utils-C_0hPamv.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/popover-Vu6Kr5M8.js", "/assets/proxy-CeAqrdL2.js", "/assets/index-G0woRxxR.js", "/assets/index-DnWzpPO0.js", "/assets/scroll-area-CE-WojNN.js", "/assets/index-BdQq_4o_.js", "/assets/preload-helper-D7HrI6pR.js", "/assets/types-D3upOYGZ.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/architect/pages/ArchitectDashboard": { "id": "features/architect/pages/ArchitectDashboard", "parentId": "components/layout/MainLayout", "path": "/architect/dashboard", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/ArchitectDashboard-Cuw_Za70.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/card-s80fMsyZ.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/ReviewCard-Wz0VcqIg.js", "/assets/index-DnWzpPO0.js", "/assets/image-D_OrMvzq.js", "/assets/utils-C_0hPamv.js", "/assets/avatar-BI1PmAho.js", "/assets/index-mTxhfxEY.js", "/assets/index-0rwYoKZb.js", "/assets/index-ofLbeaRs.js", "/assets/button-CLjxMCuh.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/url-DU88vnPn.js", "/assets/VideoPlayer-BzS6cKtD.js", "/assets/play-BP9MAQUA.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/sparkles-Bctff8r-.js", "/assets/FollowButton-RaVosGg7.js", "/assets/user-plus-DFPLMYg6.js", "/assets/FeedPhotoCarousel-DZmUEppB.js", "/assets/heart-Btv1t7q5.js", "/assets/chevron-left-Bozi3dIh.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/message-circle-D8EcWb3B.js", "/assets/badge-check-CeUfQeV8.js", "/assets/bookmark-DPL9meeS.js", "/assets/circle-COwts0_x.js", "/assets/image-BAlUERHE.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/en-US-LUXC61Eo.js", "/assets/config-C4Z0oNNz.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/architect/pages/ArchitectDetails": { "id": "features/architect/pages/ArchitectDetails", "parentId": "components/layout/MainLayout", "path": "/architect/:id", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/ArchitectDetails-DlG5Ph32.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/form-Mj8VkWK_.js", "/assets/useAuth-BNLu8VOc.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/badge-d2quT5x6.js", "/assets/button-CLjxMCuh.js", "/assets/card-s80fMsyZ.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/index-ofLbeaRs.js", "/assets/avatar-BI1PmAho.js", "/assets/image-D_OrMvzq.js", "/assets/client-rR1rgQyR.js", "/assets/dialog-Dg5Txfj1.js", "/assets/input-tljl6p0O.js", "/assets/check-B6-Edfop.js", "/assets/types-D3upOYGZ.js", "/assets/structuredData-C3BnDgPG.js", "/assets/badge-check-CeUfQeV8.js", "/assets/map-BB384bNa.js", "/assets/globe-S5Mqjnq8.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/utils-C_0hPamv.js", "/assets/label-pxPLKOzw.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/config-C4Z0oNNz.js", "/assets/url-DU88vnPn.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/architect/pages/EditArchitect": { "id": "features/architect/pages/EditArchitect", "parentId": "components/layout/MainLayout", "path": "/architect/:id/edit", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/EditArchitect-D0115sRI.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/form-Mj8VkWK_.js", "/assets/index-DnWzpPO0.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/card-s80fMsyZ.js", "/assets/input-tljl6p0O.js", "/assets/textarea-Cqcp_f1C.js", "/assets/separator-C79Afhsw.js", "/assets/select-D4SEJ7TE.js", "/assets/architect-select-xQqm93c8.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/loader-circle-BOVuU157.js", "/assets/types-D3upOYGZ.js", "/assets/utils-C_0hPamv.js", "/assets/label-pxPLKOzw.js", "/assets/index-ofLbeaRs.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/sidebar-DQdiiPel.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/index-BdQq_4o_.js", "/assets/index-DMWUnD6k.js", "/assets/index-CbtiC6P_.js", "/assets/index-hC5a87NV.js", "/assets/check-B6-Edfop.js", "/assets/badge-d2quT5x6.js", "/assets/command-D5khigHc.js", "/assets/dialog-Dg5Txfj1.js", "/assets/useQuery-BCbJxZXQ.js", "/assets/useBaseQuery-BZ9h792H.js", "/assets/QueryClientProvider-tLTBFosY.js", "/assets/radio-group-Cgod5Xfw.js", "/assets/index-B-HqSsFP.js", "/assets/circle-COwts0_x.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "features/buildings/pages/ReviewDetails": { "id": "features/buildings/pages/ReviewDetails", "parentId": "components/layout/MainLayout", "path": "/review/:id", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/ReviewDetails-BACTmFmI.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/AppLayout-Cz07rG_n.js", "/assets/button-CLjxMCuh.js", "/assets/textarea-Cqcp_f1C.js", "/assets/avatar-BI1PmAho.js", "/assets/badge-d2quT5x6.js", "/assets/dialog-Dg5Txfj1.js", "/assets/scroll-area-CE-WojNN.js", "/assets/card-s80fMsyZ.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/use-toast-Dtdl8Fdi.js", "/assets/utils-C_0hPamv.js", "/assets/MetaHead-BUqPJU20.js", "/assets/NotFound-C_cAowoy.js", "/assets/image-D_OrMvzq.js", "/assets/ImageDetailsDialog-64_oCUd4.js", "/assets/loader-circle-BOVuU157.js", "/assets/circle-COwts0_x.js", "/assets/heart-Btv1t7q5.js", "/assets/message-circle-D8EcWb3B.js", "/assets/pencil-Mnlafgz9.js", "/assets/trash-2-D4OotWge.js", "/assets/building-2-DPAnNLRO.js", "/assets/map-pin-wbZ-WRT2.js", "/assets/calendar-CbH2_Osy.js", "/assets/external-link-CS9lkXPq.js", "/assets/formatDistanceToNow-D5MFV6iO.js", "/assets/Header-CFKXDfTO.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/search-nnPwPiPV.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js", "/assets/index-CbtiC6P_.js", "/assets/index-BdQq_4o_.js", "/assets/config-C4Z0oNNz.js", "/assets/VideoPlayer-BzS6cKtD.js", "/assets/maximize-2-B3E_GIFK.js", "/assets/chevron-left-Bozi3dIh.js", "/assets/chevron-right-BtY7eYGR.js", "/assets/check-B6-Edfop.js", "/assets/plus-DKEjp7jg.js", "/assets/image-BAlUERHE.js", "/assets/format-BWwhwzZQ.js", "/assets/en-US-LUXC61Eo.js", "/assets/differenceInCalendarDays-B7zbD8Sd.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "root-not-found": { "id": "root-not-found", "parentId": "components/layout/MainLayout", "path": "*", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/NotFound-C_cAowoy.js", "imports": ["/assets/chunk-UVKPFVEO-DEs6_LXg.js", "/assets/jsx-runtime-CEhGpoVA.js", "/assets/Header-CFKXDfTO.js", "/assets/BottomNav-BLWaMbS6.js", "/assets/button-CLjxMCuh.js", "/assets/MetaHead-BUqPJU20.js", "/assets/utils-C_0hPamv.js", "/assets/arrow-left-uO2_mFFF.js", "/assets/useAuth-BNLu8VOc.js", "/assets/client-rR1rgQyR.js", "/assets/PlanoLogo-Beij3SH-.js", "/assets/input-tljl6p0O.js", "/assets/sidebar-DQdiiPel.js", "/assets/separator-C79Afhsw.js", "/assets/index-ofLbeaRs.js", "/assets/index-DWm1YzYQ.js", "/assets/index-Dy6bCKJC.js", "/assets/index-0rwYoKZb.js", "/assets/index-D_6bR09H.js", "/assets/index-mTxhfxEY.js", "/assets/x-BzUiSH4_.js", "/assets/skeleton-Ds_fcKFG.js", "/assets/tooltip-CC6Xznx5.js", "/assets/index-CkFep66M.js", "/assets/index-DV--etif.js", "/assets/index-CskkVJIU.js", "/assets/bell-B40pbp2L.js", "/assets/search-nnPwPiPV.js", "/assets/activity-MhcVb6rV.js", "/assets/play-BP9MAQUA.js", "/assets/users-DEKJlCr1.js", "/assets/user-Dwcgdo66.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-eb2040c1.js", "version": "eb2040c1", "sri": void 0 };
 const assetsBuildDirectory = "build/client";
 const basename = "/";
 const future = { "unstable_optimizeDeps": false, "unstable_passThroughRequests": false, "unstable_subResourceIntegrity": false, "unstable_trailingSlashAwareDataRequests": false, "unstable_previewServerPrerendering": false, "v8_middleware": false, "v8_splitRouteModules": false, "v8_viteEnvironmentApi": false };

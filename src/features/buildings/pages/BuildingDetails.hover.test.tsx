@@ -22,7 +22,11 @@ const mocks = vi.hoisted(() => {
     signOut: vi.fn(),
     toast: vi.fn(),
     upsert: vi.fn(),
-    user: { id: 'user-123', email: 'test@example.com' } // Stable user object
+    user: { id: 'user-123', email: 'test@example.com' }, // Stable user object
+    loaderData: {
+      building: null as Record<string, unknown> | null,
+      heroImageUrl: null as string | null,
+    },
   };
 });
 
@@ -34,6 +38,8 @@ vi.mock('react-router', async (importOriginal) => {
     useParams: () => {
         return { id: 'b1' };
     },
+    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    useLoaderData: () => mocks.loaderData,
   };
 });
 
@@ -158,7 +164,7 @@ describe('BuildingDetails Rating Hover', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue({
+    const building = {
         id: 'b1',
         name: 'Test Building',
         address: '123 Main St',
@@ -171,7 +177,10 @@ describe('BuildingDetails Rating Hover', () => {
         location: { type: 'Point', coordinates: [0, 0] },
         created_by: 'other-user',
         styles: [],
-    } as any);
+    };
+    vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue(building as any);
+    mocks.loaderData.building = building;
+    mocks.loaderData.heroImageUrl = null;
   });
 
   afterEach(() => {

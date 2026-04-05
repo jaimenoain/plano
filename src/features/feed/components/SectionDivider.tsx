@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -15,7 +15,7 @@ interface SectionDividerProps {
  * A hairline rule with a centred label. Used as the "From the community"
  * transition marker in the feed (C7-3).
  *
- * - Label: 10px / Space Mono / uppercase / tracking-wide / text-text-disabled
+ * - Label: text-2xs / Space Mono / uppercase / tracking-wide / text-text-disabled
  * - When `href` is provided the label becomes a React Router <Link> with
  *   a → suffix. Hover lifts colour from text-disabled → text-secondary.
  *   No underline, no weight change — deliberately metadata-quiet.
@@ -32,7 +32,7 @@ export function SectionDivider({ label, href }: SectionDividerProps) {
         <Link
           to={href}
           className={[
-            "font-mono text-[10px] font-medium tracking-wide uppercase whitespace-nowrap",
+            "font-mono text-2xs font-medium tracking-wide uppercase whitespace-nowrap",
             "text-text-disabled no-underline",
             "transition-colors duration-150",
             "hover:text-text-secondary",
@@ -42,7 +42,7 @@ export function SectionDivider({ label, href }: SectionDividerProps) {
         </Link>
       ) : (
         <span
-          className="font-mono text-[10px] font-medium tracking-wide uppercase whitespace-nowrap text-text-disabled"
+          className="font-mono text-2xs font-medium tracking-wide uppercase whitespace-nowrap text-text-disabled"
         >
           {label}
         </span>

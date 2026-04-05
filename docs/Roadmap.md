@@ -17,7 +17,7 @@
 
 ## Phase 1 — Type & Aggregation Foundations
 
-### [ ] P7-1A — Extend feed types and wire `main_image_url` into `useFeed`
+### [x] P7-1A — Extend feed types and wire `main_image_url` into `useFeed`
 
 **Files:** `src/types/feed.ts`, `src/features/feed/hooks/useFeed.ts`
 
@@ -42,7 +42,7 @@
 
 ---
 
-### [ ] P7-1B — Extend `feed-aggregation.ts` and write unit tests
+### [x] P7-1B — Extend `feed-aggregation.ts` and write unit tests
 
 **Files:** `src/lib/feed-aggregation.ts`, `src/lib/feed-aggregation.test.ts`
 (create if it does not exist)
@@ -90,7 +90,7 @@ Rule 0 and `RowCell` referencing `FeedReview`).
 
 ## Phase 2 — Data Layer
 
-### [ ] P7-2 — SQL migration and `useCollectionsFeed` hook
+### [x] P7-2 — SQL migration and `useCollectionsFeed` hook
 
 **Files:** `supabase/migrations/YYYYMMDDHHMMSS_add_get_collections_feed.sql`
 (new), `src/features/feed/hooks/useCollectionsFeed.ts` (new),
@@ -135,7 +135,7 @@ exists at the correct path with a valid timestamp prefix.
 
 ## Phase 3 — Feed Orchestration
 
-### [ ] P7-3 — Rewrite `Index.tsx` to integrate all feeds and card types
+### [x] P7-3 — Rewrite `Index.tsx` to integrate all feeds and card types
 
 **Files:** `src/features/feed/pages/Index.tsx` only.
 
@@ -192,7 +192,7 @@ for a logged-in user with social activity.
 
 ## Phase 4 — Quality & Spec Sync
 
-### [ ] P7-97 — Build, typecheck, lint, and test gate
+### [x] P7-97 — Build, typecheck, lint, and test gate
 
 **Files:** `src/lib/feed-aggregation.test.ts` and any test file that asserts
 on components removed from `Index.tsx`.
@@ -217,7 +217,7 @@ greater than the baseline recorded in P7-0.
 
 ---
 
-### [ ] P7-99 — Spec sync
+### [x] P7-99 — Spec sync
 
 **Files:** `docs/DATA_CONTRACT.md`, `docs/PRD.md`, `docs/Roadmap.md`,
 `.ai-status.md`
@@ -257,3 +257,32 @@ hex values (e.g. `#BEFF00`) or arbitrary pixel values in the four new
 component files returns nothing — all visual values trace to a token class.
 
 **Dependencies:** P7-97.
+
+---
+
+## Phase 7 Summary
+
+**Completion date:** 2026-04-05
+
+**Delivered tasks**
+
+- **P7-1A** — Feed types (`ReviewBuilding.main_image_url`, `CollectionPreviewBuilding`, `RawCollectionFeedRow`, `FeedCollection`) and `useFeed` mapping.
+- **P7-1B** — `feed-aggregation`: `activity` / `row` / `RowCell`, Rule 0, `collapseIntoRows`, unit tests.
+- **P7-2** — Migration `get_collections_feed` + `useCollectionsFeed` infinite query and feed barrel export.
+- **P7-3** — `Index.tsx` orchestration: interleaved social, collections, discovery; `ColdStartFeed`; card helpers; load-more priority.
+- **P7-97** — Quality gate (typecheck, lint, test, build).
+- **P7-99** — Spec sync: `DATA_CONTRACT.md`, `PRD.md`, `Roadmap.md`, `.ai-status.md`; `DESIGN_TOKENS.md` + `tailwind.config.ts` aligned for feed micro type and mosaic spacing tokens; C7 components use token classes only (no hex / `[Npx]` in class names).
+- **C7 (four design-review component tasks)** — `FeedActivityCard.tsx`, `FeedCollectionCard.tsx`, `SectionDivider.tsx`, `ColdStartFeed.tsx` committed with review fixes as pre-phase artefacts.
+
+**Descoped / deferred**
+
+- None for Phase 7 deliverables. Applying `get_collections_feed` in production remains a manual Supabase SQL Editor step for the operator (per P7-2).
+
+**Spec / config documents updated**
+
+- `docs/DATA_CONTRACT.md` — `get_collections_feed` registry + RPC inventory; `CollectionPreviewBuilding`, `RawCollectionFeedRow`, `FeedCollection`; `BuildingSummaryDTO.mainImageUrl`.
+- `docs/PRD.md` — Home feed note for activity + collection card types; RPC inventory row for `get_collections_feed`.
+- `docs/Roadmap.md` — This summary; P7-99 marked complete.
+- `docs/DESIGN_TOKENS.md` — `fontSize` `2xs` / `2xs-plus`; spacing `collection-mosaic` / `mosaic-gap`.
+- `tailwind.config.ts` — Same theme extensions as documented.
+- `.ai-status.md` — Phase 7 closure snapshot.
