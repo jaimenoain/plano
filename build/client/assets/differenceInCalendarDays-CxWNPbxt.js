@@ -1,1 +1,0 @@
-import{t as f,g as a,h as c}from"./en-US-Db6uJQLZ.js";function o(s){const t=f(s);return t.setHours(0,0,0,0),t}function d(s,t){const e=o(s),n=o(t),r=+e-a(e),i=+n-a(n);return Math.round((r-i)/c)}export{d};

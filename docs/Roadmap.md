@@ -1,377 +1,259 @@
-# Phase 1 — SSR hardening
+# Phase 7 — Feed Redesign: Cursor Implementation Roadmap
 
-**Depends on:** Phase 0 complete and QA passing (all three routes returning HTTP 200,
-322 unit tests passing, no console errors on `/search` after hydration).
+## Pre-conditions (human, before Cursor starts anything)
 
-**Goal:** Close the remaining SSR crash vectors that Phase 0 did not touch, add
-the missing resilience exports (`HydrateFallback`, root `ErrorBoundary`) that the
-RR7 migration left incomplete, and establish a documented, defensible strategy
-for the widespread `react-map-gl` import graph.
-
-**Context from Phase 0 QA:**
-- `/search`, `/explore`, and `/` all return HTTP 200.
-- `OmniSearchBar` is confirmed unused (file-only) — no action needed this phase.
-- The note that `/` and `/explore` often do not include the search `<input>` in
-  raw SSR HTML is **expected behaviour**: `/explore` redirects unauthenticated
-  users; `/` renders `LandingHero` only inside an auth-conditional branch that
-  the server cannot resolve. This is not a bug to fix here.
+- All four C7 component files are committed to the repo at their exact paths
+  with the design-review fixes applied:
+  - `src/features/feed/components/FeedActivityCard.tsx`
+  - `src/features/feed/components/FeedCollectionCard.tsx`
+  - `src/features/feed/components/SectionDivider.tsx`
+  - `src/features/feed/components/ColdStartFeed.tsx`
+- P7-0 stability gate has passed (`build`, `typecheck`, `lint`, `test` all
+  green, baseline test count recorded).
+- Migration will be applied manually via the Supabase SQL Editor after Cursor
+  produces the file in P7-2 — do not `supabase db push`.
 
 ---
 
-## Tasks
+## Phase 1 — Type & Aggregation Foundations
+
+### [ ] P7-1A — Extend feed types and wire `main_image_url` into `useFeed`
+
+**Files:** `src/types/feed.ts`, `src/features/feed/hooks/useFeed.ts`
+
+- In `ReviewBuilding`, add `main_image_url?: string | null` as a new optional
+  field. This is the image source for `FeedActivityCard` and unblocks the
+  cast currently in that component.
+- Add three new exported interfaces to `src/types/feed.ts`:
+  - `CollectionPreviewBuilding { building_id: string; name: string; main_image_url: string | null }`
+  - `RawCollectionFeedRow` — raw RPC shape with snake_case fields including
+    `primary_tag: string | null`, `owner: { username, avatar_url }`,
+    `preview_buildings: CollectionPreviewBuilding[]`, `building_count: number`
+  - `FeedCollection` — camelCase DTO with `primaryTag: string | null`,
+    `owner: { id, username, avatarUrl }`, `previewBuildings`, `buildingCount`
+- In `useFeed.ts`, inside the `feedData.map()` building object, add:
+  `main_image_url: review.building_data?.main_image_url || null`
+- Run `npm run typecheck` and confirm no new errors.
+
+**Verify:** `typecheck` passes. The `main_image_url` field is available on
+`entry.building` throughout the feed feature without any type cast.
+
+**Dependencies:** C7 files committed.
 
 ---
 
-### [x] P1-1 — Guard `@ffmpeg/ffmpeg` against SSR import
+### [ ] P7-1B — Extend `feed-aggregation.ts` and write unit tests
 
-**What this is:** `src/utils/video-compression.ts` starts with a top-level
-`import { FFmpeg } from '@ffmpeg/ffmpeg'`. That module is imported by
-`WriteReview.tsx`, which means the ffmpeg package enters the SSR bundle for
-every `/building/:id/:slug/review` and `/building/:id/review` request. If
-`@ffmpeg/ffmpeg` reads browser or Worker APIs at module initialisation time, it
-will crash the server render. Even if it does not crash today, it inflates the
-server bundle unnecessarily and is a maintenance hazard.
+**Files:** `src/lib/feed-aggregation.ts`, `src/lib/feed-aggregation.test.ts`
+(create if it does not exist)
 
-**Concrete actions:**
-
-- Open `src/utils/video-compression.ts`. Remove the top-level `import { FFmpeg }
-  from '@ffmpeg/ffmpeg'` and the top-level `import { fetchFile, toBlobURL } from
-  '@ffmpeg/util'`.
-- Inside the private `VideoCompressionService.load()` static method, replace the
-  references with dynamic imports: `const { FFmpeg } = await
-  import('@ffmpeg/ffmpeg')` and `const { fetchFile, toBlobURL } = await
-  import('@ffmpeg/util')`. Both are already inside an `async` method, so no
-  structural changes are needed — this is a drop-in replacement.
-- Update the local `ffmpeg` variable type inside `load()` to use the dynamically
-  imported type: `let ffmpeg: InstanceType<typeof FFmpeg>`. Adjust any TypeScript
-  errors that surface from losing the top-level import.
-- Do **not** touch `WriteReview.tsx` — the fix is fully contained in
-  `video-compression.ts`.
-- Run `npm run typecheck` and `npm run build` to confirm the dynamic import types
-  resolve correctly. The `@ffmpeg/ffmpeg` package uses ESM; confirm Vite handles
-  the dynamic import without adding it to `ssr.noExternal`.
-
-**How to verify:**
-
-- `npm run build` completes without error.
-- `npm run typecheck` passes.
-- Navigate to `/building/:id/:slug/review` in the running dev server; confirm the
-  page loads and that uploading a video triggers compression (the codec loads
-  lazily on first use, not on page render).
-- Confirm `@ffmpeg/ffmpeg` does **not** appear in the server bundle analysis
-  (run `npx vite-bundle-visualizer` or inspect the Vercel function output if
-  available).
-
-**Dependencies:** None — independent of all other Phase 1 tasks.
-
----
-
-### [x] P1-2 — Add `HydrateFallback` to the three server-loader routes
-
-**What this is:** `Profile.tsx`, `BuildingDetails.tsx`, and `ArchitectDetails.tsx`
-each export a `loader` but no `HydrateFallback`. In RR7, the `HydrateFallback` is
-shown during the initial hydration window while the route's JS chunk loads on the
-client (RR7 code-splits each route automatically). Without it, a client navigating
-directly to one of these URLs may see a flash of blank content between the server
-HTML arriving and the React tree hydrating. `root.tsx` already exports
-`HydrateFallback` (using `<RouteLoadingFallback />`); this task extends that
-pattern to the three child routes.
-
-**Concrete actions:**
-
-- **`BuildingDetails.tsx`:** The component already imports `<Skeleton>` (line 38)
-  and uses `<AppLayout title="Loading...">` as a runtime loading guard. Export a
-  `HydrateFallback` that matches the visual weight of the page: an `<AppLayout>`
-  containing a hero image skeleton, a title skeleton (~40% width), and two
-  paragraph skeletons. Reuse the existing `<Skeleton>` component. The fallback
-  should be ~15–20 lines.
-- **`Profile.tsx`:** Export a `HydrateFallback` showing an `<AppLayout>` with an
-  avatar skeleton (circular, ~80px), a name skeleton, and a stats row skeleton.
-  Match the approximate layout of the profile header — users should not see a
-  content jump when hydration completes. ~15–20 lines.
-- **`ArchitectDetails.tsx`:** Export a `HydrateFallback` showing an `<AppLayout>`
-  with a name skeleton and a card grid skeleton (two `<Skeleton>` blocks at the
-  height of a building card). ~10–15 lines.
-- Place each `HydrateFallback` export **directly above** the existing
-  `ErrorBoundary` export in each file, so all three special exports are grouped
-  together at the top of the exports section.
-- Do **not** import new dependencies — all three files already have access to
-  `<Skeleton>` and `<AppLayout>`.
-
-**How to verify:**
-
-- `npm run typecheck` passes.
-- In Chrome DevTools, throttle the network to "Slow 3G" and navigate to
-  `/building/:id`, `/profile/:username`, and `/architect/:id` via hard refresh.
-  Confirm the skeleton layout appears during the loading window rather than a
-  blank area or content flash.
-- On fast connections, the `HydrateFallback` is invisible (instant hydration) — do
-  not remove it if it seems "not to appear" on localhost.
-
-**Dependencies:** None — independent of other Phase 1 tasks, but should be done
-after Phase 0 is confirmed stable.
-
----
-
-### [x] P1-3 — Add `ErrorBoundary` export to `root.tsx`
-
-**What this is:** `root.tsx` wraps the entire tree in `<AppErrorBoundary>` (a
-`react-error-boundary` class wrapper), which catches React render errors. However,
-it does **not** export an RR7 `ErrorBoundary` function, which is the mechanism
-that catches errors thrown by **loaders** — including the root loader itself. If
-`createSupabaseServerClient` throws (e.g. missing env var, Supabase unreachable),
-or if any child route's loader throws an unhandled error that bubbles to root,
-users currently receive a blank page. This task adds the RR7-native boundary.
-
-**Concrete actions:**
-
-- At the bottom of `src/root.tsx`, add an export:
+- Extend the `AggregatedFeedItem` union with two new members and export a
+  `RowCell` type:
   ```ts
-  export function ErrorBoundary() { ... }
+  | { type: 'activity'; entry: FeedReview; activityStatus: 'visited' | 'pending' }
+  | { type: 'row'; left: RowCell; right: RowCell }
+
+  export type RowCell =
+    | { type: 'compact';  entry: FeedReview }
+    | { type: 'activity'; entry: FeedReview; activityStatus: 'visited' | 'pending' }
   ```
-  Import `useRouteError` and `isRouteErrorResponse` from `react-router` (they
-  are likely already imported or can be added to the existing import block).
-- The `ErrorBoundary` body should:
-  - Call `const error = useRouteError()`.
-  - If `isRouteErrorResponse(error)` and status is 404 — render a "page not
-    found" message (this case is unlikely at root level but handle it for
-    completeness).
-  - For all other errors — render the same full-screen error UI already used by
-    `AppErrorFallback` in `AppErrorBoundary.tsx`: the `AlertTriangle` icon, "Something
-    went wrong", and a "Refresh page" button (`window.location.reload()`). Do
-    **not** include a "Try again" button that calls `resetErrorBoundary` — RR7's
-    `ErrorBoundary` does not receive that prop; use `useRevalidator` instead if a
-    retry action is needed.
-  - Do **not** remove `<AppErrorBoundary>` from the `Root` component body. The
-    two mechanisms are complementary: `AppErrorBoundary` catches synchronous
-    React render panics; the exported `ErrorBoundary` catches loader errors. Both
-    should remain.
-- The `ErrorBoundary` component must **not** use any hook that requires the full
-  provider tree (no `useAuth`, no `useToast`, no `QueryClient`) — it renders
-  **outside** the `Root` component tree when a root-level error occurs, so those
-  providers are unavailable.
+- Add **Rule 0 — Activity Exemption** at the very top of the `for` loop in
+  `aggregateFeed`, before the existing Gold Dust Exemption (Rule A). An entry
+  qualifies if: `!review.content`, `!review.rating`,
+  `(!review.images || review.images.length === 0)`,
+  `(review.status === 'visited' || review.status === 'pending')`, and
+  `!!review.building.main_image_url`. When all five conditions are true, flush
+  any pending cluster, push `{ type: 'activity', entry, activityStatus }`, and
+  `continue`. Entries missing `main_image_url` fall through to Rules A and B.
+- Add a `collapseIntoRows` function after `aggregateFeed` and call it as the
+  final step before returning. Pairing rules: only two items of the **same
+  type** are ever paired (`compact+compact` or `activity+activity`). A compact
+  next to an activity, a cluster next to anything, or any hero item is never
+  paired. A lone item at the end of a run stays full-width.
+- Write unit tests covering these exact cases:
+  - Two compact items → one `'row'` item
+  - Three compact items → one `'row'` + one `'compact'`
+  - Compact followed by activity → two separate full-width items (not paired)
+  - Cluster between two compact items → cluster full-width; compacts on either
+    side are not paired across it
+  - Activity-eligible entry with no `main_image_url` → falls through to compact
+  - Activity-eligible entry with `main_image_url` → becomes `'activity'`
+  - `collapseIntoRows([])` → `[]`
+  - `collapseIntoRows([oneItem])` → `[oneItem]` unchanged
 
-**How to verify:**
+**Verify:** `npm run test` passes with all new cases green.
 
-- `npm run typecheck` passes.
-- Temporarily throw an error from the root `loader` in a local branch
-  (`throw new Error("test")`) — confirm that navigating to any page shows the
-  error UI rather than a blank page, then revert the test throw.
-- Confirm `AppErrorBoundary` is still present inside `Root` (the two should
-  coexist).
-
-**Dependencies:** None — independent, but easiest to do alongside P1-2 since both
-are edits to the same area of the route files.
+**Dependencies:** P7-1A (for `FeedReview['building'].main_image_url` used in
+Rule 0 and `RowCell` referencing `FeedReview`).
 
 ---
 
-### [x] P1-4 — Audit map components in SSR-rendered routes and document the `noExternal` strategy
+## Phase 2 — Data Layer
 
-**What this is:** There are **15+ files** across the codebase that import from
-`react-map-gl/maplibre`. Converting them all to dynamic/lazy imports is not in
-scope for Phase 1. Instead, this task establishes a clear rule: every component
-that imports `react-map-gl` must have an SSR guard, and the `ssr.noExternal:
-["react-map-gl"]` setting in `vite.config.ts` must be documented so it is not
-accidentally removed.
+### [ ] P7-2 — SQL migration and `useCollectionsFeed` hook
 
-Phase 0 already handled:
-- `PlanoMap` → wrapped in `<ClientOnly>` at the `SearchPage` call site (P0-4).
-- `BuildingLocationMap` → has its own `isClient` guard (`useState(false)` +
-  `useEffect`).
+**Files:** `supabase/migrations/YYYYMMDDHHMMSS_add_get_collections_feed.sql`
+(new), `src/features/feed/hooks/useCollectionsFeed.ts` (new),
+`src/features/feed/index.ts`
 
-This task audits the remaining importers for SSR exposure and applies guards where
-needed.
+- Create the migration file. Substitute the real UTC timestamp. The function
+  must use `SECURITY DEFINER SET search_path = public`, be `STABLE`, and be
+  granted to `authenticated` / revoked from `anon`. The SELECT must include:
+  - Collection fields: `id`, `name`, `slug`, `description`, `updated_at`,
+    `owner_id`
+  - `owner` as `jsonb_build_object('username', p.username, 'avatar_url',
+    p.avatar_url)` joined from `profiles`
+  - `preview_buildings` — a subquery returning up to 4 buildings from
+    `collection_items` (where `is_hidden = false`) joined to `buildings`,
+    returning `building_id`, `name`, `main_image_url`, ordered by
+    `ci.order_index`
+  - `building_count` — a COUNT subquery on `collection_items` where
+    `is_hidden = false`
+  - `primary_tag` — a subquery joining `collection_items → buildings →
+    building_attributes → attributes → attribute_groups` where
+    `ag.slug = 'style'`, ordered by `ci.order_index`, limit 1, returning
+    `a.name`
+  - WHERE clause: `c.is_public = true` AND `c.owner_id IN (SELECT following_id
+    FROM follows WHERE follower_id = (SELECT auth.uid()))`
+  - ORDER BY `c.updated_at DESC`, LIMIT `p_limit`, OFFSET `p_offset`
+- Create `useCollectionsFeed.ts` using `useInfiniteQuery` with page size 5.
+  The `queryFn` calls `supabase.rpc('get_collections_feed', { p_limit,
+  p_offset })`. The mapping from `RawCollectionFeedRow` to `FeedCollection`
+  must camelCase all fields including `primary_tag → primaryTag` and
+  `owner.avatar_url → owner.avatarUrl`.
+- Export `useCollectionsFeed` from `src/features/feed/index.ts`.
+- Note for the human operator: apply the migration via the Supabase SQL Editor
+  before UAT begins. Cursor produces the file; the human applies it.
 
-**Concrete actions:**
+**Verify:** `npm run typecheck` passes. The hook imports `FeedCollection` and
+`RawCollectionFeedRow` from `@/types/feed` without errors. The migration file
+exists at the correct path with a valid timestamp prefix.
 
-- Run a grep for all files importing `react-map-gl` under `src/` (exclude `.js`
-  compiled duplicates and test files). The expected list includes:
-  `PlanoMap.tsx`, `BuildingLocationMap.tsx`, `CollectionMapGL.tsx`,
-  `BuildingLocationPicker.tsx`, `BuildingMap.tsx`, `PhotoHeatmapZone.tsx`,
-  `NoPhotosMapZone.tsx`, `ItineraryRoutes.tsx`, `AddBuilding.tsx`,
-  `MapMarkers.tsx`.
-- For each file, check whether it is used in a route that could be SSR-rendered
-  (i.e. a non-admin, non-auth-gated route, or any route with a `loader`). Apply
-  the following triage:
-  - **Admin-only routes** (`/admin/*`): lower priority — these routes are behind
-    auth and are not in the SEO-critical path. Note them but do not add guards
-    this phase.
-  - **`CollectionMapGL.tsx`** (used by `CollectionMapPage` at `/:username/map/:slug`):
-    check whether it has an `isClient` guard. If not, add the same `useState(false)`
-    + `useEffect` pattern already used in `BuildingLocationMap`. This route has no
-    loader but is SSR-rendered.
-  - **`BuildingLocationPicker.tsx`** (used by `AddBuilding` and `EditBuilding`):
-    both routes require auth (redirect to `/login` if unauthenticated). Confirm
-    auth redirect happens before the map component renders server-side; if not,
-    add an `isClient` guard.
-  - **`ItineraryRoutes.tsx`** and **`MapMarkers.tsx`**: these are sub-components of
-    `PlanoMap` and are therefore already covered by the `<ClientOnly>` guard on
-    `<PlanoMap>` in `SearchPage`. No additional guard needed.
-  - **`AddBuilding.tsx`** imports `react-map-gl` at the top level. Check whether
-    the `/add-building` route ever renders server-side without auth. If so, add
-    an `isClient` guard to the map render section.
-- Add a comment block to `vite.config.ts` above the `ssr.noExternal` line
-  explaining **why** it exists and what would break if removed:
-  ```ts
-  // react-map-gl uses the `react-map-gl/maplibre` subpath export, which Node's
-  // ESM resolver cannot resolve (ERR_UNSUPPORTED_DIR_IMPORT). Bundling the
-  // package via noExternal fixes this. The package itself is safe to import in
-  // Node as long as no map component renders server-side (each must have its own
-  // isClient guard or be wrapped in <ClientOnly>). Do not remove without first
-  // converting all map imports to dynamic imports.
-  ```
-- Update `docs/rr7-migration-roadmap.md` (or `docs/Roadmap.md`) with a short
-  note recording the decision: "`react-map-gl` stays in `noExternal` for Node ESM
-  resolution; all components using it must have an SSR guard."
-
-**How to verify:**
-
-- `npm run build` and `npm run typecheck` pass.
-- Navigate to `/:username/map/:slug` (a collection map page) — confirm HTTP 200
-  and no map-related server crash.
-- Navigate to `/add-building` while logged in — confirm the map renders and no
-  console errors appear.
-- The `vite.config.ts` comment is present and accurately describes the tradeoff.
-
-**Dependencies:** P0-1 (uses `ClientOnly` if new guards are needed). Can be done
-in parallel with P1-2 and P1-3.
-
-**P1-4 decision — `react-map-gl` and SSR:** Keep `ssr.noExternal: ['react-map-gl']` in `vite.config.ts` so Node can resolve the `maplibre` subpath (see comment above `noExternal` in that file). Every map surface must avoid mounting MapLibre during SSR: `SearchPage` wraps `PlanoMap` in `<ClientOnly>` (covers `MapMarkers` and `ItineraryRoutes`); `BuildingLocationMap` already uses `isClient`; **P1-4** adds `isClient` to **`CollectionMapGL`** (collection map route) and the map column on **`AddBuilding`** (public SSR). **`BuildingLocationPicker`:** EditBuilding only renders the form after client `useEffect` fetch (`loading` gate), so the map is not in the SSR tree; admin `Buildings` usage stays behind auth and is out of scope for guards this phase. Admin-only **`BuildingMap`**, **`PhotoHeatmapZone`**, **`NoPhotosMapZone`:** noted; no guard added this phase.
+**Dependencies:** P7-1A (for `FeedCollection` and `RawCollectionFeedRow` types).
 
 ---
 
-### [x] P1-5 — Extend the server environment shim
+## Phase 3 — Feed Orchestration
 
-**What this is:** `src/entry-server-localstorage-shim.ts` currently polyfills only
-`localStorage`. This was enough to unblock Phase 0, but any dependency that reads
-other browser globals (`sessionStorage`, `window.matchMedia`, `navigator`,
-`IntersectionObserver`, `ResizeObserver`) at **module scope** or during server-side
-rendering would produce a `ReferenceError` or `TypeError` that is not caught by
-the existing shim. This task runs a targeted audit and adds any missing polyfills.
+### [ ] P7-3 — Rewrite `Index.tsx` to integrate all feeds and card types
 
-**Concrete actions:**
+**Files:** `src/features/feed/pages/Index.tsx` only.
 
-- Search the codebase for the following patterns **outside of `useEffect` /
-  event handlers / conditional blocks** (i.e. at module scope or at the top of
-  a component's function body before any hook):
-  - `sessionStorage.`
-  - `window.matchMedia(`
-  - `navigator.`
-  - `new IntersectionObserver(`
-  - `new ResizeObserver(`
-  - `new BroadcastChannel(`
-  Focus on files in the SSR render path: `root.tsx`, components imported by
-  `root.tsx`, and any file imported by the three loader routes without a
-  `ClientOnly` / `isClient` guard.
-- For each finding, determine whether it is in a `useEffect` (safe — effects
-  don't run during SSR) or genuinely at render/module scope (unsafe).
-- For each **unsafe** finding, choose the least-invasive fix:
-  - If the call is in a third-party dependency and cannot be moved, add a shim to
-    `entry-server-localstorage-shim.ts`.
-  - If the call is in first-party code, move it inside a `useEffect` or wrap with
-    `if (typeof window !== 'undefined')`. Prefer fixing the source over adding a
-    shim.
-- Common shims to add if needed (add only what the audit finds is actually
-  missing — do not pre-emptively add every possible polyfill):
-  ```ts
-  // sessionStorage — same no-op pattern as localStorage
-  // window.matchMedia — return a MediaQueryList-like object with matches: false
-  // navigator — return { userAgent: '', language: 'en', onLine: true }
-  // IntersectionObserver — no-op constructor (for libs that check existence)
-  // ResizeObserver — no-op constructor
-  ```
-- Document each shim with a one-line comment identifying which dependency or
-  component triggered the need for it.
+Do not begin this task until P7-1A, P7-1B, and P7-2 are all complete, and all
+four C7 files are confirmed present in the repo.
 
-**How to verify:**
+- **Imports.** Add: `FeedActivityCard`, `FeedCollectionCard`, `SectionDivider`,
+  `ColdStartFeed`, `useCollectionsFeed`. Remove: `AllCaughtUpDivider`,
+  `ExploreTeaserBlock`, `EmptyFeed`, `ReviewCard`.
+- **State and effect cleanup.** Remove the `showGroupActivity` state variable,
+  its setter `useEffect` (the one triggered by `location.state?.reviewPosted`),
+  and any call to `setShowGroupActivity`. If `useFeed` still accepts
+  `showGroupActivity`, pass `showGroupActivity: true` as a hardcoded constant
+  so the hook signature is not broken.
+- **Hook wiring.** Add `useCollectionsFeed({ enabled: !!user })` and derive
+  `collectionItems` via `useMemo`. Change `useSuggestedFeed` to
+  `enabled: !!user` (always-on — no longer gated on social exhaustion).
+  Remove the `shouldFetchDiscovery` variable. Derive `discoveryReviews` via
+  `useMemo`.
+- **Load-more effect.** Update the single `isLoadMoreVisible` `useEffect` to
+  paginate all three feeds in priority order: social first, then collections
+  if social is exhausted, then discovery. Add `collectionsFeed` to the
+  dependency array.
+- **Cold-start branch.** Replace the `socialReviews.length === 0` render path
+  — swap `<EmptyFeed />` for `<ColdStartFeed discoveryReviews={discoveryReviews}
+  onLike={discoveryFeed.toggleLike} onImageLike={discoveryFeed.toggleImageLike}
+  isDiscoveryLoading={discoveryFeed.isLoading} />`.
+- **Feed render loop.** Replace the existing `aggregatedReviews.map(...)` block
+  with a `forEach` that pushes into a `feedNodes` array. Use three plain `let`
+  variables (not state, not refs): `collectionCursor = 0`, `discoveryCursor = 0`,
+  `hasShownDivider = false`. After every 4th social item: inject the next
+  collection card if available. After every 8th social item: if not yet shown,
+  push `<SectionDivider label="From the community" href="/explore" />` and set
+  the flag; then push the next discovery item as `<FeedHeroCard>`.
+- **`renderSocialCard` helper.** Implement as an inner function with a `switch`
+  over all five `AggregatedFeedItem` types: `'hero'` → `<FeedHeroCard>`;
+  `'activity'` → `<FeedActivityCard size="hero">` with `activityStatus`;
+  `'compact'` → `<FeedCompactCard>`; `'cluster'` → `<FeedClusterCard>`;
+  `'row'` → a `<div className="grid grid-cols-2 gap-2.5 w-full">` containing
+  two `renderRowCell` calls.
+- **`renderRowCell` helper.** Returns `<FeedActivityCard size="compact">` for
+  `activity` cells and `<FeedCompactCard>` for `compact` cells.
+- **Remove** the old `!socialFeed.hasNextPage` discovery block entirely (the
+  section that rendered `<AllCaughtUpDivider>`, `<ExploreTeaserBlock>`, and
+  `discoveryReviews.map(post => <ReviewCard .../>)`).
 
-- `npm run build` and `npm run typecheck` pass.
-- `npm run test` — 322 or more tests pass (no regressions).
-- If any shims were added: restart `react-router dev`, load the three previously
-  working routes (`/search`, `/explore`, `/building/:id`), and confirm no new
-  errors in the server console.
-- If no new shims were needed: document this in the QA report as "shim audit
-  complete — no additional globals found at server scope."
+**Verify:** `npm run typecheck` passes on `Index.tsx` with zero unhandled
+union-member warnings. The page renders in the browser without a runtime crash
+for a logged-in user with social activity.
 
-**Dependencies:** None — independent investigation and fix task.
-
-**P1-5 audit — server globals:** Grep for `sessionStorage`, `matchMedia`, `IntersectionObserver`, `ResizeObserver`, `BroadcastChannel`, and `navigator` in `src/`. Unsafe SSR path: **`lazyWithRetry`** catch block used `window.sessionStorage` / `reload` when a lazy import fails (e.g. chunk error) while the factory still runs on the server — guarded with `typeof window === "undefined"` → rethrow. All other hits are in `useEffect`/event handlers or already guarded (`isMobileDevice`, try/catch in map code). **`logDiagnosticError`** now uses `typeof navigator` / `typeof window` before reading UA/URL so a mistaken server call cannot throw. **No new shims** in `entry-server-localstorage-shim.ts` (localStorage-only shim remains sufficient).
+**Dependencies:** P7-1A, P7-1B, P7-2, all four C7 files in the repo.
 
 ---
 
-### [x] P1-6 — Phase 1 QA report
+## Phase 4 — Quality & Spec Sync
 
-**What this is:** A structured verification pass after all P1-1 through P1-5 are
-merged. Produces the report to paste into the planning chat before Phase 2
-(migration cleanup) begins.
+### [ ] P7-97 — Build, typecheck, lint, and test gate
 
-**Concrete actions:**
+**Files:** `src/lib/feed-aggregation.test.ts` and any test file that asserts
+on components removed from `Index.tsx`.
 
-- **Build gate:** `npm run build` — exits 0. Paste the final line.
-- **Type gate:** `npm run typecheck` — exits 0. List any new type errors introduced this phase.
-- **Test gate:** `npm run test` — passes (≥ 322). List any new failures.
-- **Lint gate:** `npm run lint` — exits 0. Note any new warnings.
-- **`@ffmpeg` verification (P1-1):** Navigate to `/building/:id/review` in dev.
-  Attach a short video file. Confirm compression runs without errors. Confirm
-  `@ffmpeg/ffmpeg` is NOT listed in the Vercel server function's module graph (or
-  note if bundle analysis was not run).
-- **HydrateFallback verification (P1-2):** In Chrome DevTools Network tab, set
-  throttling to "Slow 3G". Hard-navigate to `/building/:id`, `/profile/:username`,
-  and `/architect/:id`. Describe what shows during the loading window — skeleton,
-  blank, or previous route. Confirm "skeleton" for all three.
-- **Root ErrorBoundary verification (P1-3):** Temporarily add `throw new
-  Error("P1-3 test")` to the root `loader`. Navigate to any route — confirm the
-  error UI appears (not blank). Revert the test throw before merging.
-- **Map audit results (P1-4):** List each component audited, its verdict (already
-  guarded / guard added / admin-only deferred), and the `vite.config.ts` comment
-  status.
-- **Shim audit results (P1-5):** State whether any new shims were added. If yes,
-  list each shim and the dependency that triggered it.
-- **Regression check:** Navigate to `/search` (map + search input), `/building/:id`
-  (map + loader), `/profile/:username` (loader), and the logged-in home feed.
-  Confirm no new errors.
+- Run `npm run typecheck`. Fix any remaining errors. Common sources:
+  - Any file outside `Index.tsx` that imports `AggregatedFeedItem` (e.g.
+    tests for `FeedClusterCard`) and doesn't handle the new `'activity'` or
+    `'row'` members — add exhaustive checks or narrowing.
+  - Missing `RowCell` import in files that reference it.
+- Run `npm run lint`. Fix any `any` usage introduced without `// eslint-disable`
+  justification.
+- Run `npm run test`. Update tests that assert on the presence of `<EmptyFeed>`,
+  `<AllCaughtUpDivider>`, or `<ExploreTeaserBlock>` in the `Index.tsx` render
+  tree — those components are no longer rendered there. Do not delete the
+  component files themselves.
+- Run `npm run build`. Fix any bundle errors.
 
-**Report format to paste into the planning chat:**
+**Verify:** All four commands exit 0. Passing test count is equal to or
+greater than the baseline recorded in P7-0.
 
-```
-## Phase 1 QA report
+**Dependencies:** P7-3.
 
-**Build:** [PASS / FAIL — paste last build line]
-**Typecheck:** [PASS / FAIL — list any new errors]
-**Unit tests:** [PASS / n failures — list new failures if any]
-**Lint:** [PASS / FAIL]
+---
 
-**@ffmpeg guard (P1-1):**
-- WriteReview page loads without crash: [Yes ✓ / No ✗]
-- Video compression triggered successfully: [Yes ✓ / Not tested]
-- @ffmpeg absent from server bundle: [Confirmed ✓ / Not verified]
+### [ ] P7-99 — Spec sync
 
-**HydrateFallback (P1-2):**
-- /building/:id on Slow 3G: [Skeleton ✓ / Blank ✗ / Flash ✗]
-- /profile/:username on Slow 3G: [Skeleton ✓ / Blank ✗ / Flash ✗]
-- /architect/:id on Slow 3G: [Skeleton ✓ / Blank ✗ / Flash ✗]
+**Files:** `docs/DATA_CONTRACT.md`, `docs/PRD.md`, `docs/Roadmap.md`,
+`.ai-status.md`
 
-**Root ErrorBoundary (P1-3):**
-- Test throw shows error UI (not blank): [Yes ✓ / No ✗]
-- AppErrorBoundary still present: [Yes ✓ / No ✗]
+- **`DATA_CONTRACT.md` — Collections Domain Component 3:** Add
+  `get_collections_feed` to the API Route Registry table
+  (`GET | (RPC) get_collections_feed | Authenticated | Collections feed for
+  followed users`). Add the three new DTOs (`CollectionPreviewBuilding`,
+  `RawCollectionFeedRow`, `FeedCollection`) with their full field lists
+  including `primaryTag`.
+- **`DATA_CONTRACT.md` — User Library Domain Component 3:** Confirm
+  `main_image_url` appears on the `ReviewBuilding` joined fields block of
+  `UserBuildingDTO`. Add it if missing.
+- **`PRD.md` — Social/Feed section:** Add a note after the existing feed
+  description that non-review `user_buildings` activity (visited and
+  bucket-list status changes) and collection updates from followed users
+  surface as dedicated card types (`FeedActivityCard`, `FeedCollectionCard`)
+  alongside review-based cards.
+- **`Roadmap.md`:** Append a `## Phase 7 Summary` block containing: actual
+  completion date, a bulleted list of all seven delivered tasks (P7-1A,
+  P7-1B, P7-2, P7-3, P7-97, P7-99, and the four C7 Claude tasks), any
+  items descoped or deferred with a one-line reason, and the list of spec
+  documents updated.
+- **`.ai-status.md`:** Set Current Phase to "Phase 7 — Feed Redesign:
+  complete". Add all tasks to Completed Tasks. Update
+  `CURRENT_ARCHITECTURE_SNAPSHOT` to reflect: `FeedActivityCard` (activity
+  status events, hero+compact sizes), `FeedCollectionCard` (mosaic card,
+  collection updates), `SectionDivider` (hairline divider, optional `/explore`
+  link), `ColdStartFeed` (replaces `EmptyFeed`), `useCollectionsFeed`
+  (infinite query, `get_collections_feed` RPC), extended `AggregatedFeedItem`
+  union (`'activity'`, `'row'`, `RowCell`), `EmptyFeed` retired from
+  `Index.tsx` (file kept). Remove any KNOWN_ISSUES entries resolved in this
+  phase.
 
-**Map component audit (P1-4):**
-- CollectionMapGL: [Already guarded / Guard added / N/A]
-- BuildingLocationPicker: [Already guarded / Guard added / N/A]
-- AddBuilding: [Already guarded / Guard added / N/A]
-- vite.config.ts comment added: [Yes ✓ / No ✗]
-- noExternal decision documented: [Yes ✓ / No ✗]
+**Verify:** All four documents are updated. Running `grep` for any hardcoded
+hex values (e.g. `#BEFF00`) or arbitrary pixel values in the four new
+component files returns nothing — all visual values trace to a token class.
 
-**Shim audit (P1-5):**
-- New shims added: [None / List: ...]
-- First-party fixes applied: [None / List: ...]
-
-**Regressions on /search, /building/:id, /profile/:username, feed:** [None ✓ / list]
-
-**Anything unexpected that needs discussion before Phase 2 (migration cleanup):**
-[Free text — leave blank if none]
-```
-
-**P1-6 sign-off:** Automated gates passed (`npm run typecheck`, `npm run build`, `npm run test` ≥322, `npm run lint`). **HydrateFallback (P1-2) manual check (Slow 3G, hard navigation):** loading window showed **blank**, not the route skeletons — treat as follow-up UX (Suspense / framework hydration timing), not a blocker for closing Phase 1 per operator sign-off.
-
-**Dependencies:** P1-1 through P1-5 all merged.
+**Dependencies:** P7-97.

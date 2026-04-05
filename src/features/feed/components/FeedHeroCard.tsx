@@ -239,7 +239,6 @@ export function FeedHeroCard({
   const singleImages = allImages.filter((img) => !failedImages.has(img.id));
 
   const renderImages = () => {
-    console.log("[FeedHeroCard] renderImages called, allImages.length:", allImages.length, "entry.id:", entry.id);
     if (allImages.length === 0) return null;
 
     // Multi-image: hand off entirely to the carousel (it manages its own error state)

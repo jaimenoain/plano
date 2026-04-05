@@ -1,1 +1,0 @@
-const n=(e,r,i)=>i&&r?`/building/${i}/${r}`:`/building/${e}`,u=e=>e?e.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""):"";export{n as g,u as s};

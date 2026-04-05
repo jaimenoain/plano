@@ -1,4 +1,4 @@
-import { ar, as, at, au, av, aw, ax, ay, az, aA, aB, aC } from "./assets/server-build-BfY62R6q.js";
+import { ar, as, at, au, av, aw, ax, ay, az, aA, aB, aC } from "./assets/server-build-BKYtbWHm.js";
 import "@vercel/react-router/entry.server";
 import "react-router";
 import "react/jsx-runtime";
@@ -13,11 +13,10 @@ import "@radix-ui/react-tooltip";
 import "@radix-ui/react-toast";
 import "next-themes";
 import "sonner";
-import "@supabase/supabase-js";
+import "@supabase/ssr";
 import "vaul";
 import "react-error-boundary";
 import "@sentry/react";
-import "@supabase/ssr";
 import "@radix-ui/react-separator";
 import "@radix-ui/react-dialog";
 import "@radix-ui/react-label";

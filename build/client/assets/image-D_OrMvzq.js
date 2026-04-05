@@ -1,0 +1,1 @@
+import{c as a}from"./config-C4Z0oNNz.js";const o=t=>{if(!t)return;if(t.startsWith("http")||t.startsWith("blob:")||t.startsWith("data:"))return t;const e=a.storage.publicUrl,r=e.endsWith("/")?e.slice(0,-1):e,s=t.startsWith("/")?t.slice(1):t;let i=s;if(s.startsWith("review-images/")||(i=`review-images/${s}`),!r)return i;const n=encodeURI(i);return`${r}/${n}`};export{o as g};
