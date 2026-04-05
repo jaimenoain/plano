@@ -26,7 +26,7 @@ The cluster card is working correctly — it's grouping 16 pending entries from 
 
 ---
 
-### [ ] FIX-2 — Cap `FeedClusterCard` at 3 visible items with a count overflow
+### [x] FIX-2 — Cap `FeedClusterCard` at 3 visible items with a count overflow
 
 **Files:** `src/features/feed/components/FeedClusterCard.tsx` only.
 

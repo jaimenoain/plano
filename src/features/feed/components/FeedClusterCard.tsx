@@ -34,6 +34,8 @@ export function FeedClusterCard({
   const username = user.username || "Unknown User";
   const userInitial = username.charAt(0).toUpperCase();
   const avatarUrl = user.avatar_url || undefined;
+  const visible = entries.slice(0, 3);
+  const overflow = entries.length - 3;
 
   return (
     <div
@@ -59,7 +61,7 @@ export function FeedClusterCard({
           </div>
 
           <div className="mt-3 space-y-1.5 text-sm text-text-secondary">
-            {entries.map((entry) => (
+            {visible.map((entry) => (
               <div key={entry.id} className="flex items-start gap-1.5">
                 <span className="mt-[2px] text-xs text-text-secondary">•</span>
                 <span className="min-w-0">
@@ -72,6 +74,11 @@ export function FeedClusterCard({
                 </span>
               </div>
             ))}
+            {overflow > 0 ? (
+              <div className="text-sm text-text-secondary">
+                and {overflow} more
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
