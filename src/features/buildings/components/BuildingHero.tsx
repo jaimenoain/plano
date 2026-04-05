@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface BuildingHeroProps {
@@ -9,13 +10,17 @@ interface BuildingHeroProps {
 }
 
 export function BuildingHero({ src, alt, className, children }: BuildingHeroProps) {
+  const [imgError, setImgError] = useState(false);
+  const showImg = !!src && !imgError;
+
   return (
     <div className={cn("relative w-full overflow-hidden", className)}>
-      {src ? (
+      {showImg ? (
         <img
           src={src}
           alt={alt}
           className="w-full h-[clamp(260px,48vh,500px)] object-cover animate-in fade-in duration-700"
+          onError={() => setImgError(true)}
         />
       ) : (
         <div className="w-full h-[clamp(260px,48vh,500px)] bg-neutral-900" />

@@ -30,11 +30,15 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
     if (heroRow) heroImageUrl = getBuildingImageUrl(heroRow.storage_path) ?? null;
   }
 
-  // Fallback: use community_preview_url when no hero image is set
+  // Fallback: community_preview_url is a storage path — run it through getBuildingImageUrl.
   if (!heroImageUrl) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const communityPreview = (building as any).community_preview_url as string | null | undefined;
-    if (communityPreview) heroImageUrl = communityPreview;
+    if (communityPreview) {
+      heroImageUrl = communityPreview.startsWith("http")
+        ? communityPreview
+        : (getBuildingImageUrl(communityPreview) ?? null);
+    }
   }
 
   return data({ building, heroImageUrl }, { headers });
