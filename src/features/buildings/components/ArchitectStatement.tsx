@@ -6,9 +6,17 @@ interface ArchitectStatementProps {
   isEditing: boolean;
   onChange: (value: string) => void;
   className?: string;
+  /** Name shown as attribution below the statement (e.g. the lead architect's name) */
+  architectName?: string;
 }
 
-export const ArchitectStatement = ({ statement, isEditing, onChange, className }: ArchitectStatementProps) => {
+export const ArchitectStatement = ({
+  statement,
+  isEditing,
+  onChange,
+  className,
+  architectName,
+}: ArchitectStatementProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -20,21 +28,17 @@ export const ArchitectStatement = ({ statement, isEditing, onChange, className }
         setShowReadMore(el.scrollHeight > el.clientHeight);
       }
     };
-
     checkOverflow();
-    window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
+    window.addEventListener("resize", checkOverflow);
+    return () => window.removeEventListener("resize", checkOverflow);
   }, [statement, isExpanded]);
 
   if (!statement && !isEditing) return null;
 
   return (
-    <div className={`space-y-3 ${className || ""}`}>
-      <div className="bg-brand-secondary border border-border-default rounded-sm p-6">
-        <h3 className="text-xs font-medium text-brand-secondary-foreground uppercase tracking-wide mb-3">
-          Architect&apos;s Statement
-        </h3>
-
+    <div className={className || ""}>
+      {/* Editorial blockquote: neon left rule, no card box */}
+      <div className="border-l-[3px] border-brand-primary pl-5 py-0.5">
         {isEditing ? (
           <Textarea
             value={statement}
@@ -46,14 +50,21 @@ export const ArchitectStatement = ({ statement, isEditing, onChange, className }
           <div>
             <p
               ref={textRef}
-              className={`text-base leading-relaxed italic text-text-primary/90 whitespace-pre-wrap ${!isExpanded ? "line-clamp-5" : ""}`}
+              className={`text-base leading-relaxed italic text-text-secondary whitespace-pre-wrap ${
+                !isExpanded ? "line-clamp-5" : ""
+              }`}
             >
               {statement}
             </p>
+            {architectName && (
+              <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                — {architectName}
+              </p>
+            )}
             {(showReadMore || isExpanded) && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="mt-3 text-sm text-text-secondary hover:text-text-primary font-medium hover:underline focus:outline-none"
+                className="mt-2 text-xs uppercase tracking-wide text-text-secondary hover:text-text-primary font-medium hover:underline focus:outline-none"
               >
                 {isExpanded ? "Read less" : "Read more"}
               </button>
