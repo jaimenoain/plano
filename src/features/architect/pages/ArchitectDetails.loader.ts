@@ -1,4 +1,4 @@
-import { data, type LoaderFunctionArgs } from "react-router";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 
 export async function architectLoader({ request, params }: LoaderFunctionArgs) {
@@ -11,20 +11,24 @@ export async function architectLoader({ request, params }: LoaderFunctionArgs) {
 
   const { data: architect, error: architectError } = await supabase
     .from("architects")
-    .select("id, name, type, bio")
+    .select("id, name, type, bio, website_url, headquarters")
     .eq("id", params.id!)
     .maybeSingle();
 
   if (architectError) throw architectError;
   if (!architect) throw new Response("Not found", { status: 404 });
 
-  // Fetched here to support the existing redirect-to-profile logic
+  // If this architect has a linked Plano account, redirect to their user profile.
+  // The user profile already handles the Portfolio tab for verified architects.
   const { data: linkedUser } = await supabase
     .from("profiles")
     .select("username")
     .eq("verified_architect_id", architect.id)
     .maybeSingle();
 
-  return data({ architect, linkedUser }, { headers });
-}
+  if (linkedUser?.username) {
+    throw redirect(`/profile/${linkedUser.username}`, { headers });
+  }
 
+  return data({ architect }, { headers });
+}
