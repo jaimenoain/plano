@@ -25,8 +25,14 @@ export function BuildingHero({ src, alt, className, children }: BuildingHeroProp
       ) : (
         <div className="w-full h-[clamp(260px,48vh,500px)] bg-neutral-900" />
       )}
-      {/* Dark scrim — keeps overlay text legible regardless of image brightness */}
-      <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+      {/* Gradient scrim — light at top, heavy at bottom for text legibility */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.9) 100%)",
+        }}
+      />
       {children}
     </div>
   );
