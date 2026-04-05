@@ -304,7 +304,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                     muted={false} // Unmuted in full view
                 />
             ) : (
-                <div className="relative inline-flex max-h-full max-w-full items-center justify-center">
+                <div className="relative h-full w-full flex items-center justify-center">
                     <img
                       src={initialUrl || ""}
                       alt="Expanded view"
