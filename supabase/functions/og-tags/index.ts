@@ -112,6 +112,16 @@ Deno.serve(async (req) => {
           { headers: corsHeaders },
         );
       }
+
+      return new Response(
+        renderOgHtml({
+          title: DEFAULT_TITLE,
+          description: DEFAULT_DESCRIPTION,
+          image: DEFAULT_IMAGE,
+          url: `${SITE_URL}/`,
+        }),
+        { headers: corsHeaders },
+      );
     }
 
     const architectMatch = path.match(/^\/architect\/([^/]+)/);

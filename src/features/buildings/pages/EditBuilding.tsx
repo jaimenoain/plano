@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Architect } from "@/components/ui/architect-select";
 import { parseLocation } from "@/utils/location";
 import { getBuildingUrl } from "@/utils/url";
+import { classifyBuildingPathIdSegment } from "@/utils/buildingPathId";
 
 interface LocationData {
     lat: number | null;
@@ -60,15 +61,22 @@ export default function EditBuilding() {
     if (!id) return;
     try {
       setLoading(true);
+      setInitialValues(null);
+      setLocationData(null);
+      setBuildingId(null);
+      setBuildingSlug(null);
+      setBuildingShortId(null);
+      setDuplicates([]);
 
       let query = supabase.from('buildings').select('*');
 
-      const idIsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-      if (idIsUuid) {
-          query = query.eq('id', id);
+      const segment = classifyBuildingPathIdSegment(id);
+      if (segment.kind === "uuid") {
+        query = query.eq("id", segment.value);
+      } else if (segment.kind === "shortId") {
+        query = query.eq("short_id", segment.value);
       } else {
-          const shortNum = parseInt(id, 10);
-          query = query.eq('short_id', shortNum);
+        query = query.eq("slug", segment.value);
       }
 
       const { data, error } = await query.single();

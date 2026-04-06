@@ -180,6 +180,8 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
     { property: "og:title", content: `${building.name} | Plano` },
     { property: "og:description", content: description },
     { property: "og:image", content: image },
+    { property: "og:url", content: canonical },
+    { property: "og:site_name", content: "Plano" },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: `${building.name} | Plano` },

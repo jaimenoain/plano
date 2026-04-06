@@ -1,4 +1,26 @@
-import { ScrollRestoration } from "react-router";
+import { ScrollRestoration, type MetaFunction } from "react-router";
+import { SITE_URL } from "@/features/buildings/utils/structuredData";
+
+const TERMS_TITLE = "Terms and Conditions | Plano";
+const TERMS_DESCRIPTION =
+  "Terms and conditions for using Plano, the architecture social platform.";
+const TERMS_CANONICAL = `${SITE_URL}/terms`;
+const TERMS_OG_IMAGE = `${SITE_URL}/cover.jpg`;
+
+export const meta: MetaFunction = () => [
+  { title: TERMS_TITLE },
+  { name: "description", content: TERMS_DESCRIPTION },
+  { property: "og:title", content: TERMS_TITLE },
+  { property: "og:description", content: TERMS_DESCRIPTION },
+  { property: "og:image", content: TERMS_OG_IMAGE },
+  { property: "og:type", content: "website" },
+  { property: "og:url", content: TERMS_CANONICAL },
+  { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: TERMS_TITLE },
+  { name: "twitter:description", content: TERMS_DESCRIPTION },
+  { name: "twitter:image", content: TERMS_OG_IMAGE },
+  { tagName: "link", rel: "canonical", href: TERMS_CANONICAL },
+];
 
 export default function Terms() {
   return (

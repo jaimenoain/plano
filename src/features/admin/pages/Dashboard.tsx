@@ -12,7 +12,10 @@ import { SessionDiagnosticZone } from "@/features/admin/components/SessionDiagno
 import { NotificationIntelligenceZone } from "@/features/admin/components/NotificationIntelligenceZone";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const meta: MetaFunction = () => [{ title: "Admin | Plano" }];
+export const meta: MetaFunction = () => [
+  { title: "Admin | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);

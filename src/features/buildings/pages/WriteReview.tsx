@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { resizeImage } from "@/lib/image-compression";
 import { getBuildingUrl } from "@/utils/url";
+import { classifyBuildingPathIdSegment } from "@/utils/buildingPathId";
 import { getBuildingImageUrl } from "@/utils/image";
 import { uploadFile, deleteFiles, uploadFileWithProgress } from "@/utils/upload";
 import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
@@ -125,11 +126,13 @@ export default function WriteReview() {
 
         // 1. Fetch Building Name
         let query = supabase.from("buildings").select("id, name, slug, short_id");
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id!);
-        if (isUUID) {
-            query = query.eq("id", id);
+        const segment = classifyBuildingPathIdSegment(id!);
+        if (segment.kind === "uuid") {
+          query = query.eq("id", segment.value);
+        } else if (segment.kind === "shortId") {
+          query = query.eq("short_id", segment.value);
         } else {
-            query = query.eq("short_id", parseInt(id!));
+          query = query.eq("slug", segment.value);
         }
 
         const { data: building, error: buildingError } = await query.single();

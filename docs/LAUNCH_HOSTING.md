@@ -32,6 +32,47 @@ Production serves **`/sitemap.xml`** via a Vercel rewrite in [`vercel.json`](../
 
 (`<project-ref>` for Plano is `lnqxtomyucnnrgeapnzt`, matching the rewrite destination in `vercel.json`.)
 
+The rewrite proxies the upstream response: HTTP status codes from the Edge Function (including **5xx**) are returned to the client as-is, so a failed sitemap build is not masked as `200`.
+
 ## `robots.txt`
 
 [`public/robots.txt`](../public/robots.txt) references `https://plano.app/sitemap.xml` — ensure production serves the sitemap URL above at that path.
+
+## Google Search Console (site owner)
+
+**Sitemap URL to submit:** `https://plano.app/sitemap.xml` (same path `robots.txt` advertises; apex may redirect to `www` — either host is fine if the property matches how users reach the site).
+
+**In Google Search Console**
+
+1. Open **Sitemaps**, enter `https://plano.app/sitemap.xml`, use Test then Submit.
+2. After processing, confirm the reported discovered URL count is non-zero and errors are addressed (fix code or data, then resubmit).
+3. Use **URL Inspection** on a few sample URLs from the sitemap (buildings, architects, profiles) and request indexing where you want faster recrawls.
+4. Use **URL Inspection** on private URLs such as `/settings`, `/auth`, and one `/building/<id>/edit` URL — status should be **not indexed**, with **noindex** given as the reason.
+
+**Vercel rewrite (sitemap proxy)** — in [`vercel.json`](../vercel.json):
+
+| Source | Destination |
+|--------|-------------|
+| `/sitemap.xml` | `https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap` |
+
+Upstream status codes (including **5xx**) are passed through to the client (see **Sitemap routing** above).
+
+### Issue categories vs. implementation (checklist)
+
+Use this when reviewing Search Console **Pages** / **Indexing** reports after the next full crawl:
+
+- **Canonical / duplicate URLs:** Building routes enforce slug canonicalisation (301 when slug missing or wrong).
+- **Crawled / not indexed (thin or meta):** Public pages ship SSR `meta` (title, description, canonical, OG/Twitter) from React Router `meta()` exports.
+- **Excluded by noindex:** Edit flows, auth, settings, notifications, admin, and similar routes emit `noindex, nofollow` in SSR HTML.
+- **Sitemap errors or stale empty sitemap:** Edge function returns partial XML if one section fails; full failure returns **500** (not a fake empty **200**).
+
+### Automated spot-check (2026-04-06, `www.plano.app`, Googlebot UA)
+
+| Check | Result |
+|-------|--------|
+| `GET /sitemap.xml` | HTTP 200, XML `urlset` |
+| `GET /` | `meta name="description"` and `link rel="canonical"` present |
+| `GET /building/18242` (no slug, no redirects) | HTTP 301 |
+| `GET /settings` | `meta name="robots"` contains noindex + nofollow |
+
+**Note:** `/terms` SSR meta (canonical + description) is in app code (SEO Task 5.1); confirm again after the next production deploy if the live response still omits those tags.

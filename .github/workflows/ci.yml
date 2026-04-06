@@ -44,3 +44,23 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SENTRY_DSN: ""
+
+  seo-smoke:
+    name: SEO smoke (preview)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run SEO checks
+        env:
+          BASE_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
+        run: |
+          if [ -z "${BASE_URL}" ]; then
+            echo "::error::Add the VERCEL_PREVIEW_URL secret in repository settings (your Vercel preview base URL, for example https://your-app.vercel.app)."
+            exit 1
+          fi
+          chmod +x scripts/seo-check.sh
+          ./scripts/seo-check.sh

@@ -35,19 +35,28 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
+  let architectIdsWithProfile = new Set<string>();
   try {
-    const { data: verifiedLinks } = await supabase
+    const { data: verifiedLinks, error: verifiedErr } = await supabase
       .from("profiles")
       .select("verified_architect_id")
       .not("verified_architect_id", "is", null);
+    if (verifiedErr) {
+      console.error("sitemap: verified_architect_id query error", verifiedErr.message);
+    } else {
+      architectIdsWithProfile = new Set(
+        (verifiedLinks ?? [])
+          .map((row) => row.verified_architect_id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0),
+      );
+    }
+  } catch (e) {
+    console.error("sitemap: verified_architect_id query exception", e);
+  }
 
-    const architectIdsWithProfile = new Set(
-      (verifiedLinks ?? [])
-        .map((row) => row.verified_architect_id)
-        .filter((id): id is string => typeof id === "string" && id.length > 0),
-    );
-
-    const { data: buildings } = await supabase
+  let buildings: { short_id: string; slug: string; updated_at: string | null }[] | null = null;
+  try {
+    const { data, error } = await supabase
       .from("buildings")
       .select("short_id, slug, updated_at")
       .eq("is_deleted", false)
@@ -55,22 +64,51 @@ Deno.serve(async (req) => {
       .not("short_id", "is", null)
       .order("updated_at", { ascending: false })
       .limit(10000);
+    if (error) {
+      console.error("sitemap: buildings query error", error.message);
+    } else {
+      buildings = data;
+    }
+  } catch (e) {
+    console.error("sitemap: buildings query exception", e);
+  }
 
-    const { data: architects } = await supabase
+  let architects: { id: string; created_at: string | null }[] | null = null;
+  try {
+    const { data, error } = await supabase
       .from("architects")
       .select("id, created_at")
       .order("created_at", { ascending: false })
       .limit(5000);
+    if (error) {
+      console.error("sitemap: architects query error", error.message);
+    } else {
+      architects = data;
+    }
+  } catch (e) {
+    console.error("sitemap: architects query exception", e);
+  }
 
-    // Public profile URLs (includes users with verified_architect_id — canonical is /profile/:username, not /architect/:id).
-    // No public.banned_users table: exclude banned usernames here if that table is added later.
-    const { data: profiles } = await supabase
+  // Public profile URLs (includes users with verified_architect_id — canonical is /profile/:username, not /architect/:id).
+  // No public.banned_users table: exclude banned usernames here if that table is added later.
+  let profiles: { username: string; updated_at: string | null }[] | null = null;
+  try {
+    const { data, error } = await supabase
       .from("profiles")
       .select("username, updated_at")
       .not("username", "is", null)
       .order("updated_at", { ascending: false })
       .limit(10000);
+    if (error) {
+      console.error("sitemap: profiles query error", error.message);
+    } else {
+      profiles = data;
+    }
+  } catch (e) {
+    console.error("sitemap: profiles query exception", e);
+  }
 
+  try {
     const staticPages = [
       { loc: "/", priority: "1.0", changefreq: "daily" },
       { loc: "/explore", priority: "0.9", changefreq: "daily" },
@@ -136,25 +174,25 @@ Deno.serve(async (req) => {
 
     xml += `</urlset>`;
 
+    const body = new TextEncoder().encode(xml);
+    console.log(`sitemap: xml_bytes=${body.length}`);
+
     return new Response(xml, {
       headers: {
         "Content-Type": "application/xml; charset=utf-8",
+        "Content-Length": String(body.length),
         "Cache-Control": "public, max-age=3600, s-maxage=3600",
         "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch {
-    return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>${escapeXml(`${SITE_URL}/`)}</loc><priority>1.0</priority></url>
-</urlset>`,
-      {
-        headers: {
-          "Content-Type": "application/xml; charset=utf-8",
-          "Cache-Control": "public, max-age=300",
-        },
+  } catch (e) {
+    console.error("sitemap: response assembly failed", e);
+    return new Response("Internal Server Error", {
+      status: 500,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
       },
-    );
+    });
   }
 });

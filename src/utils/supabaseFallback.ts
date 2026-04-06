@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { classifyBuildingPathIdSegment } from "@/utils/buildingPathId";
 import { DiscoveryBuilding, DiscoveryBuildingMapPin, LeaderboardData } from "@/features/search/components/types";
 
 export const searchBuildingsRpc = async (params: {
@@ -205,18 +206,13 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
       attributes:building_attributes(attribute:attributes(name, id, group_id, group:attribute_groups(slug)))
     `);
 
-    // Check if id is UUID
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    const isShortId = /^\d+$/.test(id);
-
-    if (isUUID) {
-        query = query.eq("id", id);
-    } else if (isShortId) {
-        // Assume short_id
-        query = query.eq("short_id", parseInt(id));
+    const segment = classifyBuildingPathIdSegment(id);
+    if (segment.kind === "uuid") {
+        query = query.eq("id", segment.value);
+    } else if (segment.kind === "shortId") {
+        query = query.eq("short_id", segment.value);
     } else {
-        // Assume slug
-        query = query.eq("slug", id);
+        query = query.eq("slug", segment.value);
     }
 
     const { data, error } = await query.limit(1).maybeSingle();

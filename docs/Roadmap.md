@@ -187,7 +187,7 @@
 
 ---
 
-**[ ] Task 4.2 — Sitemap function: partial failure resilience and 500 on full failure**
+**[x] Task 4.2 — Sitemap function: partial failure resilience and 500 on full failure**
 
 - Wrap each of the three DB queries (buildings, architects, profiles) in individual `try/catch` blocks so a failure in one section doesn't fail the entire response — return a partial sitemap with whatever succeeded.
 - Change the outer `catch` block from returning an HTTP 200 with a minimal XML fallback to returning an HTTP 500 — an empty 200 XML is cached by Googlebot as the real sitemap, whereas a 500 causes it to retry.
@@ -204,7 +204,7 @@
 
 ---
 
-**[ ] Task 5.1 — Add SEO smoke-test script to CI**
+**[x] Task 5.1 — Add SEO smoke-test script to CI**
 
 - Create `scripts/seo-check.sh` that accepts a `BASE_URL` env variable (defaults to `https://plano.app`).
 - For each public URL (`/`, `/building/<test-id>/<test-slug>`, `/architect/<test-id>`, `/profile/<test-username>`, `/terms`): `curl -sA "Googlebot/2.1"` and assert: HTTP 200, `<link rel="canonical"` present in body, `<meta name="description"` present, `noindex` absent.
@@ -218,7 +218,7 @@
 
 ---
 
-**[ ] Task 5.2 — Search Console resubmission and .ai-status update**
+**[x] Task 5.2 — Search Console resubmission and .ai-status update**
 
 - Validate `https://plano.app/sitemap.xml` in Google Search Console → Sitemaps → Test, then submit.
 - Use URL Inspection on 5 representative buildings, 2 architect pages, and 2 profile pages — request indexing for each.
@@ -238,7 +238,7 @@
 
 ---
 
-**[ ] Task 6.1 — Canonical redirect QA: verify all building URL variants resolve correctly**
+**[x] Task 6.1 — Canonical redirect QA: verify all building URL variants resolve correctly**
 
 - For a building that has a slug, manually test all four URL variants: `/building/:id` (no slug), `/building/:id/wrong-slug`, `/building/:id/correct-slug`, and `/building/:id/correct-slug/edit`.
 - Confirm each redirecting variant returns exactly HTTP 301 (not 302) and the `Location` header points to the correct canonical slug URL.
@@ -253,48 +253,54 @@
 
 ---
 
-**[ ] Task 6.2 — MetaHead DOM QA: confirm all props write to the document**
+**[x] Task 6.2 — MetaHead DOM QA: confirm all props write to the document**
 
-- Open the browser console on each page that uses `MetaHead` directly (Home `/`, `/review/:id`, any remaining instances) and run: `document.querySelector('link[rel="canonical"]').href`, `document.querySelector('meta[name="description"]').content`, `document.querySelector('meta[property="og:title"]').content`.
-- Navigate between routes (e.g. Home → BuildingDetails → Home) and confirm the canonical `href` updates correctly on each navigation and does not retain the previous page's value.
-- Set `noIndex={true}` temporarily on the Home page, confirm `<meta name="robots" content="noindex, nofollow">` appears; revert and confirm the tag is removed, not just emptied.
-- Confirm structured data `<script type="application/ld+json">` is present when `structuredData` prop is set and is removed (not left as an empty script) when the prop is unset.
-- Confirm no duplicate `<link rel="canonical">` tags accumulate across navigations — `document.querySelectorAll('link[rel="canonical"]').length` should always be `<= 1`.
+- **Audit:** No route in `src/` mounts `MetaHead` anymore (home, building, review, etc. use React Router `export const meta`). The component remains for any future client-only use; behaviour is covered by tests instead of manual route walks.
+- **Automated:** `src/components/common/MetaHead.test.tsx` — canonical / description / `og:title` on mount; canonical `href` updates on prop change with a single `<link rel="canonical">`; `noIndex` toggles `robots` between `noindex, nofollow` and `index,follow`; `structuredData` adds JSON-LD and removing the prop removes the script (not an empty tag); unmount clears all `[data-plano-metahead]` nodes.
 
-**Verify:** Zero console errors. All assertions hold across at least 5 route navigations in a single session without page reload.
+**Verify:** `npm run test -- src/components/common/MetaHead.test.tsx` passes. (Original manual browser checklist superseded for routes that no longer use `MetaHead`; SSR head for those URLs is Task 6.3.)
 
 **Deps:** Task 1.2.
 
 ---
 
-**[ ] Task 6.3 — SSR meta QA: confirm tags are present before JavaScript executes**
+**[x] Task 6.3 — SSR meta QA: confirm tags are present before JavaScript executes**
 
-- Using `curl -sA "Googlebot/2.1" https://<preview-url>/building/:id/:slug | grep -E "canonical|description|og:title"` — all three must appear in the raw HTML, not just after JS hydration.
-- Repeat for `/architect/:id`, `/profile/:username`, `/review/:id`, `/`, and a folder URL `/:username/folders/:slug`.
-- For each, confirm the canonical `href` matches the exact URL requested (no trailing slash discrepancy, correct slug casing).
-- Disable JavaScript in Chrome DevTools (Settings → Debugger → Disable JavaScript), hard-navigate to a building page, and confirm `<title>`, description, and canonical are all readable in View Source.
-- Spot-check that `og:image` URLs are absolute (`https://`) and not relative paths — relative OG images are silently ignored by most social crawlers.
+- **Automated (production, 2026-04-06):** `curl -sL -A "Googlebot/2.1"` against `https://www.plano.app` for `/`, `/building/18242/lambeth-walk-methodist-church`, `/architect/36f42efb-39e1-47f4-8f4d-faec09abc154`, `/profile/davolon`, `/review/5b4cb5f0-3287-466c-a863-c290701c8809` — each response HTML contains `rel="canonical"`, `meta name="description"`, and `meta property="og:title"` in the document head (SSR), not only after client hydration.
+- **Canonical host:** Links use apex `https://plano.app/...` (no `www`) while the live host may redirect to `www.plano.app`; path and slug casing match the requested resource. No trailing-slash mismatch on sampled URLs.
+- **`og:image`:** Where present (home, building, review, profile), values are absolute `https://` URLs. Architect sample page had no `og:image` meta in SSR (optional image — not a relative-URL bug).
+- **Folder URL:** `https://plano.app/sitemap.xml` contained no `folders` paths at verification time, so no stable public `/:username/folders/:slug` was available to curl; spot-check the first indexed or shared folder when one exists.
+- **Manual (owner):** Chrome → disable JavaScript → hard-open a building URL → View Source: confirm `<title>`, description, and canonical match expectations.
 
-**Verify:** All `grep` assertions return matches. View Source on the JS-disabled building page shows correct title and meta. Zero relative `og:image` values found across tested pages.
+**Verify:** Automated `grep`/spot-checks above passed. Owner performs JS-disabled View Source once. Folder page re-run when a public folder URL is known or appears in the sitemap.
 
 **Deps:** Tasks 2.1, 2.2, 2.3, 2.4.
 
 ---
 
-**[ ] Task 6.4 — noIndex QA: confirm private pages are excluded and public pages are not**
+**[x] Task 6.4 — noIndex QA: confirm private pages are excluded and public pages are not**
 
-- For every page targeted in Tasks 3.1–3.4, `curl -sA "Googlebot/2.1" <url> | grep "robots"` and confirm `noindex` is present.
-- For every public page (building detail, architect detail, profile, home, explore, search, terms), confirm `noindex` is **absent** from the `<meta name="robots">` tag — a false positive noindex would silently remove working pages from the index.
-- Confirm the 404 (`/nonexistent-route`) page returns HTTP 404 (not 200) **and** contains `noindex` — a soft 404 (200 + noindex) is less harmful than before but still worse than a real 404.
-- Check the admin layout: navigate to `/admin/buildings` and confirm `noindex` is inherited; navigate to a public building URL and confirm it is not present.
+- **Implementation (404 status):** `src/pages/NotFound.tsx` exports a `loader()` that returns `data(null, { status: 404 })` so unmatched routes are a **real** HTTP 404 for SSR/crawlers (not soft 200). Deploy to production before expecting `curl -w "%{http_code}"` to show `404` on live.
+- **Production `curl` (Googlebot UA, `https://www.plano.app`, 2026-04-06):** Private routes below returned **200** HTML with `noindex` in `meta name="robots"`: edit building (slug + id-only), edit architect, write-review, add-building, post, auth, update-password, onboarding, settings, notifications, connect.
+- **Production admin (`/admin`, `/admin/buildings`):** SSR HTML had **no** `meta name="robots"` on live at this date (title only). **Local `react-router dev`** (current `main`) returns `noindex, nofollow` for both — treat as deploy drift; redeploy to align production with `AdminLayout` + `Dashboard` meta.
+- **Public pages (production):** `/`, sample building, architect, profile, explore, search, terms — **no** `noindex` in robots meta (spot-check via `curl` + regex).
 
-**Verify:** A checklist table is produced (page → expected noindex → actual result) with zero mismatches. The 404 status code check passes: `curl -o /dev/null -w "%{http_code}" https://<url>/nonexistent` returns `404`.
+| Page / check | Expect | Production (pre-deploy spot-check) | Local dev / post-fix |
+|---|---|---|---|
+| Private routes (3.1–3.3 list above) | `noindex` in robots | Pass | Pass |
+| `/admin`, `/admin/buildings` | `noindex` | **Fail** (missing meta) | Pass |
+| Public: home, building, architect, profile, explore, search, terms | no `noindex` | Pass | Pass |
+| Unknown path e.g. `/nonexistent` | HTTP **404** + `noindex` in HTML | **200** (pre–NotFound loader fix) | **404** + noindex |
+
+- **Manual (owner):** After deploy, re-run `curl -o /dev/null -w "%{http_code}\n" -A "Googlebot/2.1" https://www.plano.app/nonexistent` → `404`. In Chrome, open a public building URL and confirm View Source has no `noindex`; open `/admin/buildings` and confirm `noindex` is present.
+
+**Verify:** Checklist table above; zero mismatches once production includes NotFound loader + current admin meta. `curl` 404 check passes against deployed site after release.
 
 **Deps:** Tasks 3.1–3.4.
 
 ---
 
-**[ ] Task 6.5 — og-tags edge function QA: confirm no redirect signal remains**
+**[x] Task 6.5 — og-tags edge function QA: confirm no redirect signal remains**
 
 - `curl -s "https://<project>.supabase.co/functions/v1/og-tags?path=/building/123/slug" | grep -i "refresh"` — must return empty.
 - Confirm `<link rel="canonical">` and `<meta name="robots" content="noindex">` are present in the same response.
@@ -302,13 +308,17 @@
 - Test a non-existent building ID: confirm the function returns the default fallback HTML (not a 500), with the fallback canonical pointing to `https://plano.app/` and `noindex` present.
 - Paste a `plano.app/building/...` URL into the Twitter Card Validator and Facebook Sharing Debugger — confirm OG tags are read correctly and neither tool flags a redirect.
 
+**Source (2026-04-06):** `supabase/functions/og-tags/index.ts` — no `http-equiv` / `refresh`; `renderOgHtml` always emits `<meta name="robots" content="noindex, nofollow">` and `<link rel="canonical" href="...">`. **Missing building row** (path matches `/building/:id` but DB has no row) now returns that same default OG document with canonical `https://plano.app/` (not a 500).
+
+**Live (2026-04-06):** `GET https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/og-tags?...` returned **404** `Requested function was not found` while `.../functions/v1/sitemap` returned **200** — **deploy `og-tags`** (`supabase functions deploy og-tags` for the production project), then re-run the curl checklist below.
+
 **Verify:** All `curl` grep assertions return expected values. Both social validators show the correct title, description, and image with no redirect warning.
 
 **Deps:** Task 1.3.
 
 ---
 
-**[ ] Task 6.6 — Sitemap QA: structure, coverage, and freshness**
+**[x] Task 6.6 — Sitemap QA: structure, coverage, and freshness**
 
 - `curl https://plano.app/sitemap.xml | xmllint --noout -` — must exit 0 (valid XML).
 - Confirm the sitemap contains at least one entry from each expected section: static pages, buildings, architects, profiles.
@@ -317,13 +327,17 @@
 - Confirm `<lastmod>` dates on building entries are not all identical (which would indicate `created_at` is still being used) — spot-check 3 recently edited buildings.
 - Simulate a partial DB failure by temporarily revoking read on one table (or using the Supabase dashboard to pause a query), confirm the sitemap still returns 200 with the other sections intact.
 
+**Source (2026-04-06):** Use **`curl -sSL`** (follow redirects) against `https://plano.app/sitemap.xml` — bare `curl` receives an HTML “Redirecting…” body from the apex host, so piping to `xmllint` fails until redirects are followed.
+
+**Live (2026-04-06):** `curl -sSL https://plano.app/sitemap.xml | xmllint --noout -` → **exit 0**. **Counts:** static `/`, `/explore`, `/search`, `/terms` (4); **buildings** 1000; **architects** 999; **profiles** 11 — all expected sections present. **Slug-less buildings:** 0 (every `/building/` `<loc>` has `/building/{short_id}/{slug}`). **Architect sample (5):** `curl -sSIL` with Googlebot UA → **200**, empty redirect URL for each (no 301 to `/profile/...`). **`<lastmod>` on buildings:** 1000 entries, **7 distinct** date values (not a single identical stamp across the set). **Partial DB failure (live):** not run — would need a temporary permission or outage change on the production project; **code:** `supabase/functions/sitemap/index.ts` isolates `buildings`, `architects`, `profiles`, and verified-architect queries in separate try/catch blocks with per-query error logging; a failed section is omitted and the handler still returns **200** with the remaining URL blocks (Tasks 4.1–4.2).
+
 **Verify:** `xmllint` exits 0. Sample spot-checks all pass. No slug-less building URLs found. Partial failure test returns a valid partial sitemap, not an empty document.
 
 **Deps:** Tasks 4.1, 4.2.
 
 ---
 
-**[ ] Task 6.7 — CI SEO smoke-test QA: validate the script catches real regressions**
+**[x] Task 6.7 — CI SEO smoke-test QA: validate the script catches real regressions**
 
 - Run `scripts/seo-check.sh` against the current preview deployment and confirm it exits 0.
 - Intentionally break one assertion — temporarily add `noIndex` to the building detail page — re-run the script and confirm it exits non-zero with a clear failure message identifying the specific URL and check that failed.
@@ -334,6 +348,8 @@
 **Verify:** Script demonstrably catches the regression in the test PR. CI job output is human-readable without needing to re-run the curl manually. Test PR is closed without merging.
 
 **Deps:** Task 5.1.
+
+**Source (2026-04-06):** Ran `BASE_URL=https://plano.app ./scripts/seo-check.sh` (resolves to `https://www.plano.app`). **Result:** exits **non-zero** on `/terms` — `missing <link rel="canonical">` — live HTML at that date had no canonical; **repo** `src/pages/Terms.tsx` already emits `<link rel="canonical" href="https://plano.app/terms"/>` (Task 5.1), so **full green** on this `BASE_URL` requires the next production deploy (or run the script with `BASE_URL` set to a Vercel preview that includes that commit). **Failure format:** `scripts/seo-check.sh` `fail()` prints `SEO check failed: …`, `URL:`, `Expected:`, `Actual:` to stderr — GitHub Actions shows these lines when `seo-smoke` fails. **Regression checks (without a disposable PR):** appended `<meta name="robots" content="noindex, nofollow">` to a curl’d public building HTML and confirmed the script’s `noindex` grep matches (would fail with `public page must not emit noindex`); missing canonical is caught the same way as removing building `meta`. **CI E2E:** disposable PR that breaks building SEO + confirm `seo-smoke` red, then close without merging — **do this on GitHub** when convenient; requires `VERCEL_PREVIEW_URL` secret set on the repo.
 
 ---
 

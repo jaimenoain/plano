@@ -1,8 +1,13 @@
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate, type MetaFunction } from "react-router";
 import { ArrowLeft, Home } from "lucide-react";
+import { data, Link, useNavigate, type MetaFunction } from "react-router";
+
+/** Ensures crawlers and SEO checks see a real 404 status (not a soft 200). */
+export function loader() {
+  return data(null, { status: 404 });
+}
 
 export const meta: MetaFunction = () => [
   { title: "Page Not Found | Plano" },
