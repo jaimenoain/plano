@@ -180,7 +180,7 @@ function CloseButton() {
 
 // ─── AppSidebar ───────────────────────────────────────────────────────────────
 /**
- * Pitch-black overlay sidebar. Triggered by the hamburger in MainLayout's header.
+ * Pitch-black overlay sidebar. Triggered by the floating menu control in MainLayout.
  * Uses collapsible="offcanvas" so the sidebar slides in/out as a full overlay
  * with no icon-rail remnant on desktop.
  */

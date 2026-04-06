@@ -1,8 +1,9 @@
 // @vitest-environment happy-dom
+import { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AppSidebar } from './AppSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { BrowserRouter } from 'react-router';
 
 const mocks = vi.hoisted(() => {
@@ -34,6 +35,11 @@ vi.mock('@/features/profile/hooks/useUserProfile', () => ({
     loading: false,
     refetch: vi.fn(),
   }),
+}));
+
+/** Desktop path: trigger must call `setOpen` / `onOpenChange`, not only `openMobile`. */
+vi.mock('@/hooks/use-mobile', () => ({
+  useIsMobile: () => false,
 }));
 
 // Mock UI components to avoid Portal issues
@@ -104,30 +110,44 @@ describe('AppSidebar', () => {
   //   });
   // });
 
-  it('toggles sidebar state when SidebarTrigger is clicked', async () => {
-    render(
-      <BrowserRouter>
-        <SidebarProvider defaultOpen={true}>
-          <AppSidebar />
-        </SidebarProvider>
-      </BrowserRouter>
-    );
+  it('toggles sidebar state when SidebarTrigger and Close are used', async () => {
+    function Controlled() {
+      const [open, setOpen] = useState(false);
+      return (
+        <BrowserRouter>
+          <SidebarProvider open={open} onOpenChange={setOpen}>
+            <AppSidebar />
+            <SidebarTrigger aria-label="Open menu" />
+          </SidebarProvider>
+        </BrowserRouter>
+      );
+    }
 
-    // Sidebar is expanded by default
-    const sidebarWrapper = document.querySelector("[data-state]");
-    expect(sidebarWrapper).toHaveAttribute("data-state", "expanded");
+    const { container } = render(<Controlled />);
 
-    const [trigger] = screen.getAllByLabelText(/toggle sidebar/i);
+    const getProvider = () => container.querySelector("[class*='sidebar-wrapper']");
+
+    expect(getProvider()).toHaveAttribute("data-state", "collapsed");
+
+    const trigger = screen.getByRole("button", { name: /open menu/i });
     fireEvent.click(trigger);
 
     await waitFor(() => {
-      expect(sidebarWrapper).toHaveAttribute("data-state", "collapsed");
+      expect(getProvider()).toHaveAttribute("data-state", "expanded");
+    });
+
+    const closeBtn = getProvider()?.querySelector('button[aria-label="Close menu"]');
+    expect(closeBtn).toBeTruthy();
+    fireEvent.click(closeBtn!);
+
+    await waitFor(() => {
+      expect(getProvider()).toHaveAttribute("data-state", "collapsed");
     });
 
     fireEvent.click(trigger);
 
     await waitFor(() => {
-      expect(sidebarWrapper).toHaveAttribute("data-state", "expanded");
+      expect(getProvider()).toHaveAttribute("data-state", "expanded");
     });
   });
 });

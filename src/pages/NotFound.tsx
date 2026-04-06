@@ -1,4 +1,3 @@
-import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
@@ -90,10 +89,6 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-surface-default flex flex-col">
-      <div className="md:hidden">
-        <Header showLogo={true} />
-      </div>
-
       {/* Main Content - Centered */}
       <main className="flex-1 flex flex-col items-center justify-center py-16 px-8 text-center w-full">
 

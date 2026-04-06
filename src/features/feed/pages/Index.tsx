@@ -7,7 +7,6 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import {
   aggregateFeed,
@@ -52,25 +51,16 @@ export const meta: MetaFunction = () => [
 function Landing() {
   const navigate = useNavigate();
   return (
-    <AppLayout
-      variant="home"
-      showNav={false}
-      leftAction={
-        <SidebarTrigger
-          className="shrink-0 border border-border-default bg-surface-card/90 shadow-sm"
-          aria-label="Open menu"
-        />
-      }
-      rightAction={
+    <AppLayout showNav={false}>
+      <div className="pointer-events-none fixed right-4 top-4 z-40 safe-area-pt">
         <Button
           variant="ghost"
           onClick={() => navigate("/auth")}
-          className="h-10 px-4 font-medium bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
+          className="pointer-events-auto h-10 px-4 font-medium bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm shadow-md"
         >
           Log in
         </Button>
-      }
-    >
+      </div>
       <main className="flex-1 w-full min-w-0 overflow-x-hidden">
         <LandingHero />
         <LandingMarquee />
@@ -94,7 +84,6 @@ function Landing() {
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { isMobile: _isMobile } = useSidebar();
   const { containerRef: loadMoreRef, isVisible: isLoadMoreVisible } = useIntersectionObserver({
     rootMargin: "200px",
   });
@@ -237,7 +226,7 @@ export default function Index() {
   }
 
   return (
-    <AppLayout variant="home">
+    <AppLayout>
       {socialFeed.isLoading ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />

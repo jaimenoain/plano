@@ -127,13 +127,16 @@ function SearchPageContent() {
   );
 
   return (
-    <AppLayout
-      isFullScreen={true}
-      showHeader={true}
-      variant="map"
-      searchBar={mobileSearchBar}
-    >
+    <AppLayout isFullScreen={true}>
       <div className="relative flex flex-col h-full w-full overflow-hidden">
+        {/* Mobile: search was in the old top header — keep it as a floating bar */}
+        {isMobile && (
+          <div className="fixed left-14 right-4 top-4 z-40 safe-area-pt md:hidden">
+            <div className="rounded-sm border border-border-default bg-surface-card/95 p-1 shadow-md backdrop-blur supports-[backdrop-filter]:bg-surface-card/90">
+              {mobileSearchBar}
+            </div>
+          </div>
+        )}
 
         {/* Desktop Sidebar (Fixed) */}
         <div

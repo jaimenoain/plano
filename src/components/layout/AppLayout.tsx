@@ -29,7 +29,7 @@ export function AppLayout({
   showBack = false,
   headerAction,
   isFullScreen = false,
-  showHeader = true,
+  showHeader = false,
   fullWidth = false
 }: AppLayoutProps) {
   void fullWidth;
