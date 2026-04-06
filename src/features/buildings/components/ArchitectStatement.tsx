@@ -38,19 +38,19 @@ export const ArchitectStatement = ({
   return (
     <div className={className || ""}>
       {/* Editorial blockquote: neon left rule, no card box */}
-      <div className="border-l-[3px] border-brand-primary pl-5 py-0.5">
+      <div className="border-l-[3px] border-text-primary pl-5 py-0.5">
         {isEditing ? (
           <Textarea
             value={statement}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Write the architect's statement here..."
-            className="min-h-[150px] text-base leading-relaxed italic resize-y bg-surface-default"
+            className="min-h-[150px] text-base leading-relaxed resize-y bg-surface-default"
           />
         ) : (
           <div>
             <p
               ref={textRef}
-              className={`text-base leading-relaxed italic text-text-secondary whitespace-pre-wrap ${
+              className={`text-base leading-relaxed text-text-secondary whitespace-pre-wrap ${
                 !isExpanded ? "line-clamp-5" : ""
               }`}
             >

@@ -23,16 +23,8 @@ export function BuildingHero({ src, alt, className, children }: BuildingHeroProp
           onError={() => setImgError(true)}
         />
       ) : (
-        <div className="w-full h-[clamp(260px,48vh,500px)] bg-neutral-900" />
+        <div className="w-full h-[clamp(200px,30vh,320px)] bg-surface-muted" />
       )}
-      {/* Gradient scrim — light at top, heavy at bottom for text legibility */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.9) 100%)",
-        }}
-      />
       {children}
     </div>
   );

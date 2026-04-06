@@ -891,119 +891,179 @@ export default function BuildingDetails() {
   return (
     <AppLayout title={building.name} showBack>
 
-      {/* ── HERO with title overlay ── */}
-      <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name}>
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-10">
-          {building.tier_rank && (
-            <div className="mb-3">
-              <span className="inline-block bg-brand-primary text-brand-primary-foreground text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1">
-                ◆ {building.tier_rank}{building.city ? ` · ${building.city}` : ""}
+      {/* ── HERO — pure image, no overlay ── */}
+      <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
+
+      {/* ── Main content — single column ── */}
+      <div className="px-4 sm:px-6 lg:px-8 py-10">
+        <div className="max-w-4xl mx-auto space-y-16">
+
+          {/* ── BUILDING HEADER — editorial scale ── */}
+          <div>
+            {building.tier_rank && (
+              <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-3 block">
+                {building.tier_rank}{building.city ? ` · ${building.city}` : ""}
               </span>
-            </div>
-          )}
-
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white leading-[1.05] max-w-3xl">
-            {building.name}
-          </h1>
-
-          {building.alt_name && building.alt_name !== building.name && (
-            <p className="text-base text-white/55 mt-1">{building.alt_name}</p>
-          )}
-
-          <div className="flex items-center gap-2.5 mt-3 flex-wrap">
-            {building.architects && building.architects.length > 0 && (
-              <>
-                <div className="flex flex-wrap gap-1">
-                  {building.architects.map((arch, i) => (
-                    <span key={arch.id}>
-                      <Link to={`/architect/${arch.id}`} className="text-brand-primary font-semibold text-sm hover:underline">
-                        {arch.name}
-                      </Link>
-                      {i < building.architects.length - 1 && <span className="text-white/30 ml-1">,</span>}
-                    </span>
-                  ))}
-                </div>
-                <span className="text-white/25">·</span>
-              </>
             )}
-            <span className="text-white/60 text-sm font-mono">{building.year_completed}</span>
-            {(building.city || building.country) && (
-              <>
-                <span className="text-white/25">·</span>
-                <span className="text-white/50 text-sm">{[building.city, building.country].filter(Boolean).join(", ")}</span>
-              </>
-            )}
-          </div>
 
-          {entries.length > 0 && (
-            <div className="flex items-center gap-4 mt-3">
-              {avgRating !== null && (
-                <div className="flex items-center gap-1.5">
-                  <div className="flex gap-1">
-                    {[1,2,3].map(i => (
-                      <div key={i} className={`w-2 h-2 rounded-full border ${i <= Math.round(avgRating) ? "bg-brand-primary border-brand-primary-foreground" : "bg-transparent border-white/30"}`} />
+            {isOfficialEditing ? (
+              <Input
+                value={draftOfficialData.name}
+                onChange={(e) => setDraftOfficialData(p => ({ ...p, name: e.target.value }))}
+                className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight h-auto px-0 py-2 w-full border-none focus-visible:ring-0 bg-transparent"
+                placeholder="Building Name"
+              />
+            ) : (
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight text-text-primary">
+                {building.name}
+              </h1>
+            )}
+
+            {building.alt_name && building.alt_name !== building.name && !isOfficialEditing && (
+              <p className="text-lg text-text-secondary mt-2">{building.alt_name}</p>
+            )}
+
+            {/* Architect · Year · Location */}
+            <div className="flex flex-wrap items-center gap-2 mt-4 text-sm text-text-secondary">
+              {building.architects && building.architects.length > 0 && (
+                <>
+                  <div className="flex flex-wrap gap-1">
+                    {building.architects.map((arch, i) => (
+                      <span key={arch.id}>
+                        <Link to={`/architect/${arch.id}`} className="font-medium text-text-primary hover:underline">
+                          {arch.name}
+                        </Link>
+                        {i < building.architects.length - 1 && ", "}
+                      </span>
                     ))}
                   </div>
-                  <span className="text-white/40 text-[11px] font-mono">{avgRating.toFixed(1)} avg</span>
+                  <span className="text-text-disabled">·</span>
+                </>
+              )}
+              {isOfficialEditing ? (
+                <Input type="number" value={draftOfficialData.year_completed}
+                  onChange={(e) => setDraftOfficialData(p => ({ ...p, year_completed: parseInt(e.target.value) }))}
+                  className="w-20 h-7 text-sm" />
+              ) : (
+                <span>{building.year_completed}</span>
+              )}
+              {(building.city || building.country) && (
+                <>
+                  <span className="text-text-disabled">·</span>
+                  <span>{[building.city, building.country].filter(Boolean).join(", ")}</span>
+                </>
+              )}
+            </div>
+
+            {/* Stats */}
+            {entries.length > 0 && (
+              <div className="flex items-center gap-4 mt-3">
+                {avgRating !== null && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex gap-0.5">
+                      {[1,2,3].map(i => (
+                        <Circle key={i} className={`w-3 h-3 ${i <= Math.round(avgRating) ? "fill-text-primary text-text-primary" : "fill-transparent text-text-disabled"}`} />
+                      ))}
+                    </div>
+                    <span className="text-xs text-text-disabled">{avgRating.toFixed(1)} avg</span>
+                  </div>
+                )}
+                <span className="text-xs text-text-disabled">{visitorCount} {visitorCount === 1 ? "visitor" : "visitors"}</span>
+              </div>
+            )}
+
+            {/* Inline user actions — minimal row */}
+            <div className="flex items-center gap-3 mt-6 pt-6 border-t border-border-default">
+              <button
+                type="button"
+                onClick={() => handleStatusChange("visited")}
+                className={`text-xs font-medium uppercase tracking-widest transition-colors ${userStatus === "visited" ? "text-text-primary" : "text-text-disabled hover:text-text-primary"}`}
+              >
+                <Check className={`inline w-4 h-4 mr-1 ${userStatus === "visited" ? "stroke-[2.5px]" : ""}`} />
+                Visited
+              </button>
+              <button
+                type="button"
+                onClick={() => handleStatusChange("pending")}
+                className={`text-xs font-medium uppercase tracking-widest transition-colors ${userStatus === "pending" ? "text-text-primary" : "text-text-disabled hover:text-text-primary"}`}
+              >
+                <Bookmark className={`inline w-4 h-4 mr-1 ${userStatus === "pending" ? "fill-current" : ""}`} />
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => handleStatusChange("ignored")}
+                className={`text-xs font-medium uppercase tracking-widest transition-colors ${userStatus === "ignored" ? "text-text-primary" : "text-text-disabled hover:text-text-primary"}`}
+              >
+                <EyeOff className="inline w-4 h-4 mr-1" />
+                Hide
+              </button>
+
+              {(userStatus === "visited" || userStatus === "pending") && (
+                <div className="flex items-center gap-1 ml-2" onMouseLeave={() => setHoverRating(null)}>
+                  {[1,2,3].map(i => {
+                    const filled = hoverRating !== null ? i <= hoverRating : i <= myRating;
+                    return (
+                      <Circle key={i}
+                        className={`w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity ${filled ? "fill-text-primary text-text-primary" : "fill-transparent text-text-disabled"}`}
+                        onMouseEnter={() => setHoverRating(i)}
+                        onClick={() => handleRate(building.id, i === myRating ? 0 : i)}
+                      />
+                    );
+                  })}
                 </div>
               )}
-              <span className="text-white/20">·</span>
-              <span className="text-white/40 text-[11px] font-mono">{visitorCount} {visitorCount === 1 ? "visitor" : "visitors"}</span>
-            </div>
-          )}
 
-          {canEditOfficialData && (
-            <div className="flex gap-2 mt-4">
-              {isOfficialEditing ? (
+              <div className="flex-1" />
+
+              <Link
+                to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}
+                className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors"
+              >
+                Write review →
+              </Link>
+
+              {canEditOfficialData && (
                 <>
-                  <Button variant="ghost" size="sm" onClick={() => setIsOfficialEditing(false)} disabled={isSavingOfficial} className="text-white/70 hover:text-white hover:bg-white/10 h-7">
-                    Cancel
-                  </Button>
-                  <Button size="sm" onClick={handleSaveOfficialData} disabled={isSavingOfficial} className="bg-brand-primary text-brand-primary-foreground hover:opacity-90 h-7">
-                    {isSavingOfficial && <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />}Save
-                  </Button>
+                  {isOfficialEditing ? (
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setIsOfficialEditing(false)} disabled={isSavingOfficial}
+                        className="text-xs text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+                      <button type="button" onClick={handleSaveOfficialData} disabled={isSavingOfficial}
+                        className="text-xs font-medium text-text-primary hover:text-brand-primary transition-colors">
+                        {isSavingOfficial && <Loader2 className="w-3 h-3 mr-1 animate-spin inline" />}Save
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => setIsOfficialEditing(true)}
+                      className="text-text-disabled hover:text-text-primary transition-colors" aria-label="Edit official data">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </>
-              ) : (
-                <Button variant="ghost" size="icon" onClick={() => setIsOfficialEditing(true)} className="text-white/45 hover:text-white hover:bg-white/10 h-7 w-7" aria-label="Edit official data">
-                  <Pencil className="w-3.5 h-3.5" />
-                </Button>
               )}
             </div>
-          )}
-        </div>
-      </BuildingHero>
+          </div>
 
-      {/* ── Official data editing panel ── */}
-      {isOfficialEditing && (
-        <div className="border-b border-border-default bg-surface-muted/50 px-4 sm:px-6 lg:px-8 py-5">
-          <div className="max-w-7xl mx-auto">
-            <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-text-disabled mb-4">Editing official data</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs text-text-secondary">Building name</Label>
-                <Input value={draftOfficialData.name} onChange={(e) => setDraftOfficialData(p => ({ ...p, name: e.target.value }))} className="h-8 text-sm" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-text-secondary">Year completed</Label>
-                <Input type="number" value={draftOfficialData.year_completed} onChange={(e) => setDraftOfficialData(p => ({ ...p, year_completed: parseInt(e.target.value) }))} className="h-8 text-sm" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-text-secondary">City</Label>
-                <Input value={draftOfficialData.city} onChange={(e) => setDraftOfficialData(p => ({ ...p, city: e.target.value }))} className="h-8 text-sm" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-text-secondary">Country</Label>
-                <Input value={draftOfficialData.country} onChange={(e) => setDraftOfficialData(p => ({ ...p, country: e.target.value }))} className="h-8 text-sm" />
+          {/* ── Official data editing panel ── */}
+          {isOfficialEditing && (
+            <div className="border-t border-border-default pt-6">
+              <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-text-disabled mb-4">Editing official data</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-text-secondary">City</Label>
+                  <Input value={draftOfficialData.city} onChange={(e) => setDraftOfficialData(p => ({ ...p, city: e.target.value }))} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-text-secondary">Country</Label>
+                  <Input value={draftOfficialData.country} onChange={(e) => setDraftOfficialData(p => ({ ...p, country: e.target.value }))} className="h-8 text-sm" />
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* ── Building status alert ── */}
-      {(building.status === "Lost" || building.status === "Unbuilt" || building.status === "Under Construction") && (
-        <div className="px-4 sm:px-6 lg:px-8 pt-5">
-          <div className="max-w-7xl mx-auto">
+          {/* ── Building status alert ── */}
+          {(building.status === "Lost" || building.status === "Unbuilt" || building.status === "Under Construction") && (
             <Alert className="border-feedback-destructive/50 bg-feedback-destructive/10 text-feedback-destructive">
               <AlertTriangle className="h-4 w-4 stroke-feedback-destructive" />
               <AlertDescription className="ml-2 font-medium">
@@ -1012,454 +1072,341 @@ export default function BuildingDetails() {
                   : "This building is under construction."}
               </AlertDescription>
             </Alert>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* ── Main content ── */}
-      <div className="px-4 sm:px-6 lg:px-8 py-10">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 lg:gap-14 items-start">
+          {/* ── Architect Statement ── */}
+          <ArchitectStatement
+            statement={draftOfficialData.architect_statement}
+            isEditing={isOfficialEditing}
+            onChange={(val) => setDraftOfficialData(p => ({ ...p, architect_statement: val }))}
+            architectName={building.architects?.[0]?.name}
+          />
 
-            {/* ── LEFT COLUMN ── */}
-            <div className="space-y-10 min-w-0">
+          {/* ── About — attributes, no card container ── */}
+          <section className="border-t border-border-default pt-10">
+            <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary mb-6">About</h2>
+            <BuildingAttributes building={building} />
+            {(accessSynthesis || building.access_notes) && (
+              <div className="mt-6 space-y-2">
+                {accessSynthesis && (
+                  <Badge variant={accessBadgeVariant()} className="flex items-center gap-1.5 w-fit">
+                    {createElement(accessSynthesis.icon, { className: "w-3.5 h-3.5" })}
+                    {accessSynthesis.label}
+                  </Badge>
+                )}
+                {building.access_notes && (
+                  <div className="text-sm text-text-secondary border-l-2 border-text-primary/20 pl-3 py-1">{building.access_notes}</div>
+                )}
+              </div>
+            )}
+          </section>
 
-              {/* Architect Statement */}
-              <ArchitectStatement
-                statement={draftOfficialData.architect_statement}
-                isEditing={isOfficialEditing}
-                onChange={(val) => setDraftOfficialData(p => ({ ...p, architect_statement: val }))}
-                architectName={building.architects?.[0]?.name}
-              />
+          {/* ── Photo Gallery ── */}
+          <section className="border-t border-border-default pt-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+                Photos{displayImages.length > 0 ? ` · ${displayImages.length}` : ""}
+              </h2>
+              <button type="button" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+                onClick={() => document.getElementById("hidden-file-input")?.click()}>
+                Upload →
+              </button>
+              <input id="hidden-file-input" type="file" multiple accept="image/*" className="hidden" onChange={handleImageSelect} aria-label="Upload photos of this building" />
+            </div>
 
-              {/* Photo Gallery */}
-              <section>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-[10px] font-bold tracking-[0.12em] uppercase text-text-disabled">
-                    Photos{displayImages.length > 0 ? ` — ${displayImages.length}` : ""}
-                  </h2>
-                  <Button variant="ghost" size="sm" className="text-xs h-7 text-text-secondary hover:text-text-primary" onClick={() => document.getElementById("hidden-file-input")?.click()}>
-                    <ImagePlus className="w-3 h-3 mr-1.5" />Upload photo
-                  </Button>
-                  <input id="hidden-file-input" type="file" multiple accept="image/*" className="hidden" onChange={handleImageSelect} aria-label="Upload photos of this building" />
-                </div>
-
-                {pendingImages.length > 0 && user && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {pendingImages.map((img) => (
-                      <div key={img.id} className="relative h-16 w-16 shrink-0 border border-border-default bg-surface-muted">
-                        <img src={img.preview} alt="" className="h-full w-full object-cover" />
-                        <button
-                          type="button"
-                          className="absolute right-0 top-0 flex h-6 w-6 items-center justify-center rounded-bl-sm bg-surface-overlay text-text-primary hover:bg-surface-muted"
-                          onClick={() => removePendingImage(img.id)}
-                          aria-label="Remove pending photo"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      className="h-8 gap-2 text-xs"
-                      disabled={isSavingNote}
-                      onClick={() => {
-                        void handleSaveNote();
-                      }}
-                    >
-                      {isSavingNote ? <Loader2 className="h-3 w-3 shrink-0 animate-spin" /> : null}
-                      <span>Save photos to profile</span>
-                    </Button>
+            {pendingImages.length > 0 && user && (
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                {pendingImages.map((img) => (
+                  <div key={img.id} className="relative h-16 w-16 shrink-0 bg-surface-muted">
+                    <img src={img.preview} alt="" className="h-full w-full object-cover" />
+                    <button type="button"
+                      className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center bg-surface-overlay text-text-primary hover:bg-surface-muted"
+                      onClick={() => removePendingImage(img.id)} aria-label="Remove pending photo">
+                      <X className="h-3 w-3" />
+                    </button>
                   </div>
-                )}
+                ))}
+                <button type="button" disabled={isSavingNote}
+                  className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors disabled:opacity-50"
+                  onClick={() => { void handleSaveNote(); }}>
+                  {isSavingNote ? <Loader2 className="h-3 w-3 animate-spin inline mr-1" /> : null}
+                  Save photos →
+                </button>
+              </div>
+            )}
 
-                <WidgetErrorBoundary>
-                  {displayImages.length > 0 ? renderGallery() : (
-                    <div className="aspect-[16/9] border border-border-default flex flex-col items-center justify-center text-text-secondary text-center p-6 bg-surface-muted/30">
-                      <ImageIcon className="w-12 h-12 text-text-secondary/20 mb-3" />
-                      <h3 className="font-medium text-text-secondary mb-1">No photos yet</h3>
-                      <p className="text-xs text-text-secondary/50 max-w-[200px] mb-4">Be the first to add a photo of this building</p>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}>
-                          <ImagePlus className="w-4 h-4 mr-2" />Upload photo
-                        </Link>
-                      </Button>
-                    </div>
-                  )}
-                </WidgetErrorBoundary>
-
-                <div className="mt-3 text-center">
-                  <a href={googleSearchUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[11px] text-text-disabled hover:text-brand-primary hover:underline transition-colors">
-                    <Search className="w-3 h-3" />Search for photos on Google<ExternalLink className="w-3 h-3 opacity-50" />
-                  </a>
+            <WidgetErrorBoundary>
+              {displayImages.length > 0 ? renderGallery() : (
+                <div className="aspect-[16/9] flex flex-col items-center justify-center text-text-secondary text-center p-6 bg-surface-muted/20">
+                  <ImageIcon className="w-10 h-10 text-text-disabled mb-3" />
+                  <p className="text-xs text-text-disabled mb-4">Be the first to add a photo</p>
+                  <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}
+                    className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors">
+                    Upload photo →
+                  </Link>
                 </div>
-              </section>
+              )}
+            </WidgetErrorBoundary>
 
-              {/* Location */}
-              <section className="pt-10 border-t border-border-default">
-                <h2 className="text-[10px] font-bold tracking-[0.12em] uppercase text-text-disabled mb-4">Location</h2>
+            <div className="mt-3 text-center">
+              <a href={googleSearchUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[11px] text-text-disabled hover:text-text-primary transition-colors">
+                <Search className="w-3 h-3" />Search for photos on Google<ExternalLink className="w-3 h-3 opacity-50" />
+              </a>
+            </div>
+          </section>
 
-                {building.location_precision === "approximate" && (
-                  <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-500 mb-4">
-                    <AlertTriangle className="h-4 w-4 stroke-amber-500" />
-                    <AlertDescription className="ml-2">Exact location not verified. This marker indicates the general village/locality.</AlertDescription>
-                  </Alert>
-                )}
+          {/* ── Location ── */}
+          <section className="border-t border-border-default pt-10">
+            <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary mb-4">Location</h2>
 
-                {coordinates ? (
-                  <WidgetErrorBoundary>
-                    <BuildingLocationMap
-                      lat={coordinates.lat} lng={coordinates.lng} status={userStatus} rating={myRating}
-                      tierRank={building.tier_rank} locationPrecision={building.location_precision}
-                      isExpanded={isMapExpanded} onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
-                      className={isMapExpanded ? "" : "h-52 w-full"}
-                    />
-                  </WidgetErrorBoundary>
+            {building.location_precision === "approximate" && (
+              <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-500 mb-4">
+                <AlertTriangle className="h-4 w-4 stroke-amber-500" />
+                <AlertDescription className="ml-2">Exact location not verified. This marker indicates the general village/locality.</AlertDescription>
+              </Alert>
+            )}
+
+            {coordinates ? (
+              <WidgetErrorBoundary>
+                <BuildingLocationMap
+                  lat={coordinates.lat} lng={coordinates.lng} status={userStatus} rating={myRating}
+                  tierRank={building.tier_rank} locationPrecision={building.location_precision}
+                  isExpanded={isMapExpanded} onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
+                  className={isMapExpanded ? "" : "h-52 w-full"}
+                />
+              </WidgetErrorBoundary>
+            ) : (
+              <div className="h-48 bg-surface-muted/20 flex flex-col items-center justify-center gap-2 text-text-secondary">
+                <MapPin className="w-6 h-6 opacity-50" />
+                <span className="text-xs uppercase tracking-widest">Location Unavailable</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-4 mt-4 flex-wrap">
+              <div className="flex items-center gap-2 text-text-secondary text-sm group">
+                <MapPin className="w-4 h-4 shrink-0" />
+                {isOfficialEditing ? (
+                  <div className="flex gap-2">
+                    <Input value={draftOfficialData.city} onChange={(e) => setDraftOfficialData(p => ({ ...p, city: e.target.value }))} placeholder="City" className="h-8 text-sm w-28" />
+                    <Input value={draftOfficialData.country} onChange={(e) => setDraftOfficialData(p => ({ ...p, country: e.target.value }))} placeholder="Country" className="h-8 text-sm w-28" />
+                  </div>
                 ) : (
-                  <div className="h-48 bg-surface-muted/20 border border-dashed border-border-default flex flex-col items-center justify-center gap-2 text-text-secondary">
-                    <MapPin className="w-6 h-6 opacity-50" />
-                    <span className="text-xs uppercase tracking-widest">Location Unavailable</span>
-                  </div>
+                  <span>{[building.city, building.country].filter(Boolean).join(", ") || building.address}</span>
                 )}
+                {user && !isOfficialEditing && (
+                  <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"} className="hidden group-hover:inline-flex items-center justify-center p-1 hover:bg-surface-muted text-text-disabled hover:text-text-primary transition-colors ml-1" title="Edit building">
+                    <Pencil className="w-3 h-3" />
+                  </Link>
+                )}
+              </div>
 
-                <div className="flex items-center justify-between gap-4 mt-4 flex-wrap">
-                  <div className="flex items-center gap-2 text-text-secondary text-sm font-medium group">
-                    <MapPin className="w-4 h-4 shrink-0" />
-                    {isOfficialEditing ? (
-                      <div className="flex gap-2">
-                        <Input value={draftOfficialData.city} onChange={(e) => setDraftOfficialData(p => ({ ...p, city: e.target.value }))} placeholder="City" className="h-8 text-sm w-28" />
-                        <Input value={draftOfficialData.country} onChange={(e) => setDraftOfficialData(p => ({ ...p, country: e.target.value }))} placeholder="Country" className="h-8 text-sm w-28" />
-                      </div>
-                    ) : (
-                      <span>{[building.city, building.country].filter(Boolean).join(", ") || building.address}</span>
-                    )}
-                    {user && !isOfficialEditing && (
-                      <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"} className="hidden group-hover:inline-flex items-center justify-center p-1 rounded-sm hover:bg-surface-muted text-text-secondary/50 hover:text-text-primary transition-colors ml-1" title="Edit building">
-                        <Pencil className="w-3 h-3" />
-                      </Link>
-                    )}
-                  </div>
+              {coordinates && (
+                <>
+                  <button type="button"
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+                    onClick={() => {
+                      if (building.location_precision === "approximate") setShowDirectionsAlert(true);
+                      else window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, "_blank");
+                    }}
+                  >
+                    {building.status === "Lost" ? "Navigate to site →" : "Get directions →"}
+                  </button>
 
-                  {coordinates && (
-                    <>
-                      <Button variant="outline" size="sm" className="shrink-0 h-8"
-                        onClick={() => {
-                          if (building.location_precision === "approximate") setShowDirectionsAlert(true);
-                          else window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, "_blank");
-                        }}
-                      >
-                        {building.status === "Lost"
-                          ? building.location_precision === "approximate" ? "Navigate to Site (Approximate)" : "Navigate to Site"
-                          : building.location_precision === "approximate" ? "Get Directions (Approximate)" : "Get Directions"}
-                      </Button>
-
-                      <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This building&apos;s location is approximate. The directions will guide you to the general vicinity (e.g. village center).<br /><br />Please look around when you arrive.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, "_blank")}>
-                              {building.status === "Lost" ? "Navigate to Site" : "Get Directions"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </>
-                  )}
-                </div>
-              </section>
+                  <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This building&apos;s location is approximate. The directions will guide you to the general vicinity (e.g. village center).<br /><br />Please look around when you arrive.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`, "_blank")}>
+                          {building.status === "Lost" ? "Navigate to Site" : "Get Directions"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
             </div>
+          </section>
 
-            {/* ── SIDEBAR ── */}
-            <div className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start">
-
-              {/* YOUR ACTIVITY */}
-              <div className="border border-border-default bg-surface-card">
-                <div className="px-4 py-3 border-b border-border-default">
-                  <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-text-disabled">Your Activity</span>
-                </div>
-                <div className="p-4 space-y-4">
-                  <div className="flex gap-1.5">
-                    <Button size="sm" variant={userStatus === "visited" ? "default" : "outline"}
-                      className={`flex-1 text-[11px] font-bold tracking-wide uppercase h-10 ${userStatus === "visited" ? "bg-brand-primary text-brand-primary-foreground border-brand-primary hover:opacity-90" : ""}`}
-                      onClick={() => handleStatusChange("visited")}>
-                      <Check className="w-3 h-3 mr-1" />Visited
-                    </Button>
-                    <Button size="sm" variant={userStatus === "pending" ? "default" : "outline"} className="flex-1 text-[11px] font-bold tracking-wide uppercase h-10" onClick={() => handleStatusChange("pending")}>
-                      <Bookmark className={`w-3 h-3 mr-1 ${userStatus === "pending" ? "fill-current" : ""}`} />Save
-                    </Button>
-                    <Button size="sm" variant={userStatus === "ignored" ? "default" : "outline"} className="flex-1 text-[11px] font-bold tracking-wide uppercase h-10" onClick={() => handleStatusChange("ignored")}>
-                      <EyeOff className="w-3 h-3 mr-1" />Hide
-                    </Button>
-                  </div>
-
-                  {(userStatus === "visited" || userStatus === "pending") && (
-                    <div className="flex items-center gap-3 px-3 py-2.5 bg-surface-muted" onMouseLeave={() => setHoverRating(null)}>
-                      <span className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-disabled">
-                        {userStatus === "pending" ? "Priority" : "Rate"}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {[1,2,3].map(i => {
-                          const filled = hoverRating !== null ? i <= hoverRating : i <= myRating;
-                          return (
-                            <Circle key={i}
-                              className={`w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity ${filled ? "fill-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`}
-                              onMouseEnter={() => setHoverRating(i)}
-                              onClick={() => handleRate(building.id, i === myRating ? 0 : i)}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {note && userStatus && (
-                    <p className="text-sm text-text-primary/90 leading-relaxed line-clamp-3">{note}</p>
-                  )}
-
-                  {selectedCollectionIds.length > 0 && (
-                    <Badge variant="outline" className="text-xs border-dashed">
-                      In {selectedCollectionIds.length} collection{selectedCollectionIds.length > 1 ? "s" : ""}
-                    </Badge>
-                  )}
-
-                  {userImages.length > 0 && (
-                    <div className="flex gap-1.5 flex-wrap">
-                      {userImages.slice(0, 4).map(img => {
-                        const publicUrl = getBuildingImageUrl(img.storage_path);
-                        if (!publicUrl) return null;
-                        const displayImg: DisplayImage = {
-                          id: img.id, url: publicUrl, likes_count: 0, created_at: new Date().toISOString(),
-                          user: { username: profile?.username || user?.email || "Me", avatar_url: profile?.avatar_url || null },
-                          is_generated: img.is_generated ?? undefined, is_official: img.is_official ?? undefined,
-                        };
-                        return (
-                          <img key={img.id} src={publicUrl} className="h-16 w-16 object-cover border bg-surface-muted cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0" alt="Your photo" onClick={() => setSelectedImage(displayImg)} />
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-2 pt-1">
-                    <Button className="w-full bg-brand-primary text-brand-primary-foreground hover:opacity-90 text-[11px] font-bold tracking-wide uppercase h-10" asChild>
-                      <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}>Write Review</Link>
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full text-[11px] font-bold tracking-wide uppercase h-9" onClick={() => setShowCollections(!showCollections)}>
-                      <Plus className="w-3 h-3 mr-1.5" />Add to Collection
-                    </Button>
-                    {user && (
-                      <Button variant="outline" size="sm" className="w-full text-[11px] font-bold tracking-wide uppercase h-9" onClick={() => setShowVisitWith(!showVisitWith)}>
-                        <Users className="w-3 h-3 mr-1.5" />Plan a Visit
-                      </Button>
-                    )}
-                  </div>
-
-                  {showCollections && user && (
-                    <div className="pt-3 border-t border-border-default">
-                      <CollectionSelector
-                        userId={user.id}
-                        selectedCollectionIds={selectedCollectionIds}
-                        onChange={setSelectedCollectionIds}
-                      />
-                    </div>
-                  )}
-
-                  {showVisitWith && user && (
-                    <div className="pt-3 border-t border-border-default space-y-3">
-                      <UserPicker
-                        selectedIds={selectedFriends}
-                        onSelect={(id) =>
-                          setSelectedFriends((prev) => (prev.includes(id) ? prev : [...prev, id]))
-                        }
-                        onRemove={(id) => setSelectedFriends((prev) => prev.filter((x) => x !== id))}
-                      />
-                      {selectedFriends.length > 0 && (
-                        <Button className="w-full" size="sm" onClick={handleSendInvites} disabled={sendingInvites}>
-                          {sendingInvites ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-                          Send Invite
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+          {/* ── Resources — no card container ── */}
+          {(linksLoading || topLinks.length > 0) && (
+            <section className="border-t border-border-default pt-10">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">Resources</h2>
+                {user && (
+                  <button type="button" onClick={() => setShowLinkEditor(!showLinkEditor)}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
+                    Add →
+                  </button>
+                )}
               </div>
-
-              {/* BUILDING FACTS */}
-              <div className="border border-border-default bg-surface-card">
-                <div className="px-4 py-3 border-b border-border-default">
-                  <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-text-disabled">About</span>
+              {linksLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-9 w-full" />
+                  <Skeleton className="h-9 w-full" />
                 </div>
-                <div className="px-4 pb-4 pt-1">
-                  <BuildingAttributes building={building} />
-                  {(accessSynthesis || building.access_notes) && (
-                    <div className="mt-3 space-y-2">
-                      {accessSynthesis && (
-                        <Badge variant={accessBadgeVariant()} className="flex items-center gap-1.5 w-fit">
-                          {createElement(accessSynthesis.icon, { className: "w-3.5 h-3.5" })}
-                          {accessSynthesis.label}
-                        </Badge>
-                      )}
-                      {building.access_notes && (
-                        <div className="text-xs text-text-secondary border-l-2 border-brand-primary/30 pl-3 py-1 bg-surface-muted/30">{building.access_notes}</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* RESOURCES */}
-              {(linksLoading || topLinks.length > 0) && (
-                <div className="border border-border-default bg-surface-card">
-                  <div className="px-4 py-3 border-b border-border-default flex items-center justify-between">
-                    <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-text-disabled">Resources</span>
-                    {user && <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setShowLinkEditor(!showLinkEditor)}>+ Add</Button>}
-                  </div>
-                  {linksLoading ? (
-                    <div className="p-4 space-y-2">
-                      <Skeleton className="h-9 w-full rounded-sm" />
-                      <Skeleton className="h-9 w-full rounded-sm" />
-                    </div>
-                  ) : (
-                    <div>
-                      {topLinks.map(link => {
-                        let domain = "";
-                        try { domain = new URL(link.url).hostname; } catch { /* ignore */ }
-                        const displayDomain = domain || link.url;
-                        const hasTitle = !!link.title;
-                        const isLiked = likedLinkIds.has(link.link_id);
-                        return (
-                          <div key={link.link_id} className="flex items-center justify-between px-4 py-2.5 border-b border-border-default last:border-b-0 hover:bg-surface-muted/50 transition-colors group">
-                            <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex-1 flex flex-col gap-0.5 overflow-hidden cursor-pointer min-w-0">
-                              <span className="font-medium truncate text-sm group-hover:text-brand-primary transition-colors">{hasTitle ? link.title : displayDomain}</span>
-                              <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-                                {hasTitle && <span className="truncate max-w-[110px]">{displayDomain}</span>}
-                                {hasTitle && link.user_username && <span>·</span>}
-                                {link.user_username && <span>@{link.user_username}</span>}
-                              </div>
-                            </a>
-                            <div className="flex items-center gap-1 shrink-0 ml-2">
-                              <Button variant="ghost" size="sm" className={`h-7 px-2 gap-1 text-xs hover:bg-transparent ${isLiked ? "text-pink-500 hover:text-pink-600" : "text-text-secondary hover:text-pink-500"}`}
-                                onClick={(e) => { e.preventDefault(); handleLinkLike(link.link_id); }} aria-label={isLiked ? "Unlike resource" : "Like resource"}>
-                                <Heart className={`w-3 h-3 ${isLiked ? "fill-current" : ""}`} />
-                                <span>{link.like_count}</span>
-                              </Button>
-                              <a href={link.url} target="_blank" rel="noopener noreferrer" className="p-1 rounded-sm hover:bg-surface-default text-text-secondary/50 hover:text-text-primary transition-colors" aria-label="Open resource">
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
-                            </div>
+              ) : (
+                <div className="space-y-0">
+                  {topLinks.map(link => {
+                    let domain = "";
+                    try { domain = new URL(link.url).hostname; } catch { /* ignore */ }
+                    const displayDomain = domain || link.url;
+                    const hasTitle = !!link.title;
+                    const isLiked = likedLinkIds.has(link.link_id);
+                    return (
+                      <div key={link.link_id} className="flex items-center justify-between py-3 border-b border-border-default group">
+                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex-1 flex flex-col gap-0.5 overflow-hidden min-w-0">
+                          <span className="font-medium truncate text-sm text-text-primary group-hover:text-brand-primary transition-colors">{hasTitle ? link.title : displayDomain}</span>
+                          <div className="flex items-center gap-1.5 text-xs text-text-disabled">
+                            {hasTitle && <span className="truncate max-w-[150px]">{displayDomain}</span>}
+                            {hasTitle && link.user_username && <span>·</span>}
+                            {link.user_username && <span>@{link.user_username}</span>}
                           </div>
-                        );
-                      })}
-                      {showLinkEditor && user && (
-                        <div className="p-4 border-t border-border-default space-y-2">
-                          {userLinks.length > 0 && (
-                            <ul className="space-y-1.5 text-sm text-text-secondary">
-                              {userLinks.map((l) => (
-                                <li key={l.id} className="flex items-center gap-2">
-                                  <span className="min-w-0 flex-1 truncate">{l.title || l.url}</span>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 shrink-0 px-2"
-                                    onClick={() => handleRemoveLink(l.id)}
-                                    aria-label="Remove link"
-                                  >
-                                    <X className="h-3.5 w-3.5" />
-                                  </Button>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                          <Input placeholder="URL" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="h-8 text-sm" />
-                          <Input placeholder="Title (optional)" value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} className="h-8 text-sm" />
-                          <Button size="sm" onClick={handleAddLink} className="w-full h-8">Add Link</Button>
-                          {(userLinks.length > 0 || selectedCollectionIds.length !== initialCollectionIds.length) && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              className="w-full h-8"
-                              disabled={isSavingNote}
-                              onClick={() => {
-                                void handleSaveNote();
-                              }}
-                            >
-                              {isSavingNote ? <Loader2 className="h-3 w-3 mr-2 animate-spin" /> : null}
-                              Save links & collections
-                            </Button>
-                          )}
+                        </a>
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <button type="button"
+                            className={`inline-flex items-center gap-1 text-xs transition-colors ${isLiked ? "text-text-primary" : "text-text-disabled hover:text-text-primary"}`}
+                            onClick={(e) => { e.preventDefault(); handleLinkLike(link.link_id); }}>
+                            <Heart className={`w-3 h-3 ${isLiked ? "fill-current" : ""}`} />
+                            <span>{link.like_count}</span>
+                          </button>
+                          <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-text-disabled hover:text-text-primary transition-colors">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
                         </div>
+                      </div>
+                    );
+                  })}
+                  {showLinkEditor && user && (
+                    <div className="pt-4 space-y-2">
+                      {userLinks.length > 0 && (
+                        <ul className="space-y-1.5 text-sm text-text-secondary">
+                          {userLinks.map((l) => (
+                            <li key={l.id} className="flex items-center gap-2">
+                              <span className="min-w-0 flex-1 truncate">{l.title || l.url}</span>
+                              <button type="button" onClick={() => handleRemoveLink(l.id)} className="text-text-disabled hover:text-text-primary transition-colors" aria-label="Remove link">
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <Input placeholder="URL" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="h-8 text-sm" />
+                      <Input placeholder="Title (optional)" value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} className="h-8 text-sm" />
+                      <button type="button" onClick={handleAddLink}
+                        className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors">
+                        Add link →
+                      </button>
+                      {(userLinks.length > 0 || selectedCollectionIds.length !== initialCollectionIds.length) && (
+                        <button type="button" disabled={isSavingNote}
+                          className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors disabled:opacity-50 block mt-2"
+                          onClick={() => { void handleSaveNote(); }}>
+                          {isSavingNote ? <Loader2 className="h-3 w-3 mr-1 animate-spin inline" /> : null}
+                          Save links →
+                        </button>
                       )}
                     </div>
                   )}
                 </div>
               )}
-            </div>
-          </div>
+            </section>
+          )}
 
-          {/* ── COMMUNITY REVIEWS — full width ── */}
-          <section className="mt-16 pt-10 border-t border-border-default">
-            <div className="flex items-baseline justify-between mb-6">
-              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-primary">Community Reviews</h2>
-              {entries.length > 0 && (
-                <span className="text-xs text-text-disabled font-mono">{entries.length} {entries.length === 1 ? "entry" : "entries"}</span>
+          {/* ── Add to collection / Visit with friend ── */}
+          {user && (
+            <section className="border-t border-border-default pt-10 space-y-6">
+              <div className="flex items-center gap-4">
+                <button type="button" onClick={() => setShowCollections(!showCollections)}
+                  className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
+                  <Plus className="inline w-3.5 h-3.5 mr-1" />Add to collection
+                </button>
+                <button type="button" onClick={() => setShowVisitWith(!showVisitWith)}
+                  className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
+                  <Users className="inline w-3.5 h-3.5 mr-1" />Plan a visit
+                </button>
+              </div>
+
+              {showCollections && (
+                <CollectionSelector
+                  userId={user.id}
+                  selectedCollectionIds={selectedCollectionIds}
+                  onChange={setSelectedCollectionIds}
+                />
               )}
+
+              {showVisitWith && (
+                <div className="space-y-3">
+                  <UserPicker
+                    selectedIds={selectedFriends}
+                    onSelect={(friendId) => setSelectedFriends((prev) => (prev.includes(friendId) ? prev : [...prev, friendId]))}
+                    onRemove={(friendId) => setSelectedFriends((prev) => prev.filter((x) => x !== friendId))}
+                  />
+                  {selectedFriends.length > 0 && (
+                    <button type="button" onClick={handleSendInvites} disabled={sendingInvites}
+                      className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors disabled:opacity-50">
+                      {sendingInvites ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Send className="inline w-3.5 h-3.5 mr-1" />}
+                      Send invite →
+                    </button>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ── COMMUNITY REVIEWS — editorial list ── */}
+          <section className="border-t border-border-default pt-10">
+            <div className="flex items-baseline justify-between mb-8">
+              <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+                Community reviews{entries.length > 0 ? ` · ${entries.length}` : ""}
+              </h2>
             </div>
 
             {entries.length === 0 ? (
-              <p className="text-text-secondary text-sm">No reviews yet.</p>
+              <p className="text-sm text-text-disabled">No reviews yet.</p>
             ) : (
-              <div className="border border-border-default">
+              <div className="space-y-0">
                 {entries.map(entry => (
-                  <div key={entry.id} className={`flex gap-4 px-5 py-5 border-b border-border-default last:border-b-0 hover:bg-surface-muted/30 transition-colors ${entry.user.is_architect_of_building ? "border-l-[3px] border-l-brand-primary" : "border-l-[3px] border-l-transparent"}`}>
-                    <Avatar className="flex-shrink-0 w-9 h-9">
+                  <div key={entry.id} className={`flex gap-4 py-6 border-b border-border-default ${entry.user.is_architect_of_building ? "border-l-[3px] border-l-text-primary pl-4" : ""}`}>
+                    <Avatar className="flex-shrink-0 w-8 h-8">
                       <AvatarImage src={entry.user.avatar_url || undefined} />
-                      <AvatarFallback>{entry.user.username?.[0]}</AvatarFallback>
+                      <AvatarFallback className="text-[10px]">{entry.user.username?.[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <Link to={`/profile/${entry.user.username || entry.user_id}`} className="font-bold text-sm hover:underline">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link to={`/profile/${entry.user.username || entry.user_id}`} className="font-semibold text-sm text-text-primary hover:underline">
                           {entry.user.username}
                         </Link>
                         {entry.user.is_verified_architect && (
-                          <div className="inline-flex items-center text-text-primary" data-testid="verified-badge-icon" title="Verified Architect">
-                            <BadgeCheck className="w-4 h-4" />
-                          </div>
+                          <BadgeCheck className="w-3.5 h-3.5 text-text-primary" />
                         )}
-                        {entry.status === "visited" && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">Visited</Badge>}
-                        {entry.status === "pending" && <Badge variant="outline" className="text-[10px] h-5 px-1.5">Saved</Badge>}
-                        <Link to={`/review/${entry.id}`} className="text-xs text-text-secondary hover:underline ml-auto flex-shrink-0">
-                          {formatDistanceToNow(new Date(entry.created_at))} ago
-                        </Link>
+                        {entry.status === "visited" && <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">Visited</span>}
+                        {entry.status === "pending" && <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">Saved</span>}
                       </div>
-                      <Link to={`/review/${entry.id}`} className="block group">
+                      <Link to={`/review/${entry.id}`} className="block group mt-1">
                         {entry.rating && (
-                          <div className="flex items-center gap-0.5 my-1 group-hover:opacity-80 transition-opacity">
+                          <div className="flex items-center gap-0.5 mb-1">
                             {[...Array(3)].map((_, i) => (
-                              <Circle key={i} className={`w-3 h-3 ${i < entry.rating! ? "fill-brand-primary text-text-primary" : "fill-transparent text-text-secondary/20"}`} />
+                              <Circle key={i} className={`w-3 h-3 ${i < entry.rating! ? "fill-text-primary text-text-primary" : "fill-transparent text-text-disabled"}`} />
                             ))}
                           </div>
                         )}
                         {entry.content && (
-                          <p className="text-sm mt-1 text-text-secondary group-hover:text-text-primary transition-colors">{entry.content}</p>
+                          <p className="text-sm text-text-secondary group-hover:text-text-primary transition-colors leading-relaxed">{entry.content}</p>
                         )}
                       </Link>
                       {entry.images && entry.images.length > 0 && (
-                        <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+                        <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1">
                           {entry.images.map(img => {
                             const publicUrl = getBuildingImageUrl(img.storage_path);
                             if (!publicUrl) return null;
                             const displayImg: DisplayImage = { id: img.id, url: publicUrl, likes_count: 0, created_at: img.created_at || entry.created_at, user: entry.user };
                             return (
-                              <img key={img.id} src={publicUrl} className="h-24 w-24 object-cover rounded-md border bg-surface-muted cursor-pointer hover:opacity-90 transition-opacity" alt="Review photo" onClick={() => setSelectedImage(displayImg)} />
+                              <img key={img.id} src={publicUrl} className="h-20 w-20 object-cover rounded-none bg-surface-muted cursor-pointer hover:opacity-90 transition-opacity" alt="Review photo" onClick={() => setSelectedImage(displayImg)} />
                             );
                           })}
                         </div>
