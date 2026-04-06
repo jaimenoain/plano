@@ -9,13 +9,13 @@ import { logDiagnosticError } from "@/features/admin/api/diagnostics";
 import { setSentryUser } from "@/lib/sentry";
 
 /**
- * Always mount AppSidebar so logged-out home and every route share the same shell.
- * Desktop: `open` is controlled so off-canvas collapse cannot leave nav stuck off-screen.
- * Mobile: sheet visibility still uses `openMobile` inside SidebarProvider.
+ * Sidebar is closed by default; opened via SidebarTrigger in Header (AppLayout).
+ *
+ * collapsible="offcanvas" on AppSidebar means the sidebar overlays the
+ * content on desktop (no permanent rail) — same Sheet behaviour as mobile.
  */
 function MainLayout() {
   const { user, loading: authLoading } = useAuth();
-
   useLoginTracker();
   usePresenceTracker();
 
@@ -28,14 +28,11 @@ function MainLayout() {
     const handleError = (event: ErrorEvent) => {
       logDiagnosticError("GlobalError", event.message, event.error?.stack);
     };
-
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       logDiagnosticError("UnhandledRejection", String(event.reason));
     };
-
     window.addEventListener("error", handleError);
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
-
     return () => {
       window.removeEventListener("error", handleError);
       window.removeEventListener("unhandledrejection", handleUnhandledRejection);
@@ -43,7 +40,7 @@ function MainLayout() {
   }, []);
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset
         className="min-w-0 bg-surface-default"

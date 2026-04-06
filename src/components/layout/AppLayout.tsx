@@ -35,24 +35,20 @@ export function AppLayout({
   void fullWidth;
   return (
     <>
-      {/* Header is mobile-only — desktop navigation lives in AppSidebar */}
       {showHeader && (
-        <div className="md:hidden">
-          <Header
-            title={title}
-            variant={variant}
-            searchBar={searchBar}
-            leftAction={leftAction}
-            rightAction={rightAction}
-            showLogo={showLogo}
-            showBack={showBack}
-            action={headerAction}
-          />
-        </div>
+        <Header
+          title={title}
+          variant={variant}
+          searchBar={searchBar}
+          leftAction={leftAction}
+          rightAction={rightAction}
+          showLogo={showLogo}
+          showBack={showBack}
+          action={headerAction}
+        />
       )}
       <div className={cn(
-        // Only add top padding on mobile where the fixed header lives
-        showHeader && "pt-16 md:pt-0",
+        showHeader && "pt-16",
         "w-full min-w-0",
         isFullScreen && "h-full flex flex-col flex-1",
         showNav && "pb-20 md:pb-0"
