@@ -67,6 +67,7 @@ These are the only colour tokens Cursor and components are permitted to use.
 | `surface-card` | `#FFFFFF` | Card and panel background |
 | `surface-overlay` | `#FFFFFF` | Modal and popover background |
 | `surface-muted` | `palette-neutral-100` · `#F5F5F5` | Muted/subdued surface — sidebar, code blocks |
+| `--sidebar-background` (CSS, HSL components) | `0 0% 96.1%` (default) · matches `surface-muted` | `Sidebar` panel fill via `hsl(var(--sidebar-background))`; override per instance (e.g. pitch-black menu: `0 0% 0%`) |
 | `border-default` | `palette-neutral-200` · `#E5E5E5` | Default border — cards, inputs, dividers |
 | `border-strong` | `palette-neutral-400` · `#A3A3A3` | Emphasis border — focus, selected states |
 | `text-primary` | `palette-neutral-900` · `#171717` | Primary body text |

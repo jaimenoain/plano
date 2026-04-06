@@ -1,0 +1,1 @@
+function n(t){const e=Object.prototype.toString.call(t);return t instanceof Date||typeof t=="object"&&e==="[object Date]"?new t.constructor(+t):typeof t=="number"||e==="[object Number]"||typeof t=="string"||e==="[object String]"?new Date(t):new Date(NaN)}const o=6048e5,s=864e5,c=6e4,i=36e5,a=43200,l=1440;export{s as a,l as b,a as c,o as d,c as e,i as m,n as t};

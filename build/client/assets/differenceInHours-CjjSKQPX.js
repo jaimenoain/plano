@@ -1,0 +1,1 @@
+import{d as f,g as i}from"./differenceInMilliseconds-BpwRTL1K.js";import{m as o}from"./constants-BUiKi49J.js";function s(r,d,e){const n=f(r,d)/o;return i(e==null?void 0:e.roundingMethod)(n)}export{s as d};

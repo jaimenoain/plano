@@ -24,6 +24,9 @@
     --surface-overlay:  #FFFFFF;
     --surface-muted:    #F5F5F5;
 
+    /* Sidebar panel fill (HSL components for hsl() — default matches surface-muted) */
+    --sidebar-background: 0 0% 96.1%;
+
     /* --- Borders --- */
     --border-default: #E5E5E5;
     --border-strong:  #A3A3A3;
