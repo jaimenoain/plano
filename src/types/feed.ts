@@ -19,6 +19,8 @@ export interface ReviewBuilding {
   name: string;
   address?: string | null;
   main_image_url?: string | null;
+  /** Mapped: community_preview_url — top community review image path; feed fallback when no hero/main. */
+  community_preview_url?: string | null;
   architects?: string[] | { id: string; name: string }[] | null;
   year_completed?: number | null;
   city?: string | null;
@@ -69,6 +71,7 @@ export interface RawFeedBuildingData {
   city?: string | null;
   country?: string | null;
   main_image_url?: string | null;
+  community_preview_url?: string | null;
   architects?: unknown;
   year_completed?: number | null;
 }

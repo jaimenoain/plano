@@ -134,9 +134,12 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
     const noImages = !review.images || review.images.length === 0;
     const activityStatusOk =
       review.status === "visited" || review.status === "pending";
-    const hasMainImage = !!review.building.main_image_url;
+    const hasBuildingImage = !!(
+      review.building.main_image_url ||
+      review.building.community_preview_url
+    );
 
-    if (noContent && noRating && noImages && activityStatusOk && hasMainImage) {
+    if (noContent && noRating && noImages && activityStatusOk && hasBuildingImage) {
       flushCluster();
       aggregated.push({
         type: "activity",

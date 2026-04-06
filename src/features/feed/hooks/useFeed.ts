@@ -61,6 +61,8 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
           city: review.building_data?.city || null,
           country: review.building_data?.country || null,
           main_image_url: review.building_data?.main_image_url || null,
+          community_preview_url:
+            review.building_data?.community_preview_url ?? null,
           architects: review.building_data?.architects || null,
           year_completed: review.building_data?.year_completed || null,
         },

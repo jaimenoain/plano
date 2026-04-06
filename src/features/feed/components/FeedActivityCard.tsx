@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
+import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +49,9 @@ export function FeedActivityCard({
     entry.building.address?.split(",").pop()?.trim() ||
     "";
 
-  const mainImageUrl = entry.building.main_image_url;
+  const cardImageSrc =
+    getBuildingImageUrl(entry.building.main_image_url) ??
+    getBuildingImageUrl(entry.building.community_preview_url);
 
   // Action copy per spec — no inline building name (that lives in the card body).
   const actionCopy =
@@ -143,7 +146,8 @@ export function FeedActivityCard({
 
       {/* ── Image zone ──────────────────────────────────────────────────────── */}
       {/*
-        Rendered only when mainImageUrl is present AND the load succeeded.
+        Hero path first, then community_preview_url (storage paths via getBuildingImageUrl).
+        Rendered only when a resolved URL exists AND the load succeeded.
         onError collapses the zone entirely (no broken-image chrome).
 
         Aspect ratios per spec:
@@ -153,7 +157,7 @@ export function FeedActivityCard({
         object-cover ensures the building photo is always full-bleed regardless
         of the source image's native aspect ratio.
       */}
-      {mainImageUrl && imageVisible && (
+      {cardImageSrc && imageVisible && (
         <div
           className={cn(
             "w-full overflow-hidden bg-surface-muted",
@@ -161,7 +165,7 @@ export function FeedActivityCard({
           )}
         >
           <img
-            src={mainImageUrl}
+            src={cardImageSrc}
             alt={mainTitle}
             className="w-full h-full object-cover"
             onError={() => setImageVisible(false)}

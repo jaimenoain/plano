@@ -1179,6 +1179,8 @@ interface BuildingSummaryDTO {
   heroImageUrl: string | null;
   /** Mapped: `main_image_url` on `buildings`; included on feed / `ReviewBuilding` joins from `get_feed` (hero image for activity cards). */
   mainImageUrl?: string | null;
+  /** Mapped: `community_preview_url`; included in `get_feed` / `get_suggested_posts` `building_data` for feed activity-card fallback imagery. */
+  communityPreviewUrl?: string | null;
   tierRank: string | null;
 }
 

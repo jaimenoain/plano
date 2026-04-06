@@ -6,10 +6,15 @@ import {
 } from "@/lib/feed-aggregation";
 import type { FeedReview, ReviewBuilding } from "@/types/feed";
 
-const building = (id: string, mainImageUrl: string | null = null): ReviewBuilding => ({
+const building = (
+  id: string,
+  mainImageUrl: string | null = null,
+  communityPreviewUrl: string | null = null,
+): ReviewBuilding => ({
   id,
   name: `Building ${id}`,
   main_image_url: mainImageUrl,
+  community_preview_url: communityPreviewUrl,
 });
 
 const user = (seed: string) => ({
@@ -226,12 +231,12 @@ describe("aggregateFeed", () => {
     ]);
   });
 
-  it("falls through to compact when Rule 0 matches but main_image_url is absent", () => {
+  it("falls through to compact when Rule 0 matches but no building image fields", () => {
     const r = makeReview({
       id: "x",
       user_id: "u",
       created_at: "2025-01-01T12:00:00Z",
-      building: building("b", null),
+      building: building("b", null, null),
       content: null,
       rating: null,
       images: [],
@@ -239,6 +244,23 @@ describe("aggregateFeed", () => {
     });
     const out = aggregateFeed([r]);
     expect(out).toEqual([{ type: "compact", entry: r }]);
+  });
+
+  it("emits activity when Rule 0 matches with community_preview_url only", () => {
+    const r = makeReview({
+      id: "x",
+      user_id: "u",
+      created_at: "2025-01-01T12:00:00Z",
+      building: building("b", null, "review_images/b/preview.jpg"),
+      content: null,
+      rating: null,
+      images: [],
+      status: "visited",
+    });
+    const out = aggregateFeed([r]);
+    expect(out).toEqual([
+      { type: "activity", entry: r, activityStatus: "visited" },
+    ]);
   });
 
   it("produces one row from two non-clustering compact reviews", () => {

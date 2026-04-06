@@ -113,6 +113,8 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
             city: buildingData?.city || null,
             country: buildingData?.country || null,
             main_image_url: buildingData?.main_image_url || null,
+            community_preview_url:
+              buildingData?.community_preview_url ?? null,
             architects: buildingData?.architects || null,
             year_completed: buildingData?.year_completed || null,
           },
