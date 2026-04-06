@@ -57,7 +57,7 @@ export const meta: MetaFunction = () => [
 function FeedSidebar() {
   return (
     <div className="w-72 flex-shrink-0 hidden lg:block sticky top-20">
-      <div className="space-y-4">
+      <div className="space-y-12">
         <WidgetErrorBoundary>
           <TrendingBuildings />
         </WidgetErrorBoundary>
@@ -208,12 +208,14 @@ export default function Index() {
     );
   };
 
+  let heroCounter = 0;
   const renderSocialCard = (item: AggregatedFeedItem): React.ReactNode => {
     switch (item.type) {
       case "hero":
         return (
           <FeedHeroCard
             entry={item.entry}
+            index={heroCounter++}
             onLike={socialFeed.toggleLike}
             onImageLike={socialFeed.toggleImageLike}
           />
@@ -240,7 +242,7 @@ export default function Index() {
         );
       case "row":
         return (
-          <div className="grid grid-cols-2 gap-2.5 w-full">
+          <div className="grid grid-cols-2 gap-8 w-full">
             {renderRowCell(item.left)}
             {renderRowCell(item.right)}
           </div>
@@ -275,7 +277,7 @@ export default function Index() {
           {socialReviews.length === 0 ? (
             // --- Cold-start state: new user with no social feed yet ---
             <div className="flex gap-8 items-start max-w-5xl mx-auto">
-              <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-3">
+              <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-16 lg:gap-20">
                 <ColdStartFeed
                   discoveryReviews={discoveryReviews}
                   onLike={discoveryFeed.toggleLike}
@@ -317,7 +319,7 @@ export default function Index() {
           ) : (
             // --- Active feed state ---
             <div className="flex gap-8 items-start max-w-5xl mx-auto">
-              <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-3">
+              <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-16 lg:gap-20">
                 {(() => {
                   const feedNodes: React.ReactNode[] = [];
                   let collectionCursor = 0;
@@ -363,6 +365,7 @@ export default function Index() {
                           <FeedHeroCard
                             key={`discovery-inject-${post.id}-${n}`}
                             entry={post}
+                            index={discoveryCursor}
                             onLike={discoveryFeed.toggleLike}
                             onImageLike={discoveryFeed.toggleImageLike}
                           />

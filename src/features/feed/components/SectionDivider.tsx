@@ -1,55 +1,31 @@
 import { Link } from "react-router";
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-
 interface SectionDividerProps {
   label: string;
   href?: string;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 /**
  * SectionDivider
  *
- * A hairline rule with a centred label. Used as the "From the community"
- * transition marker in the feed (C7-3).
- *
- * - Label: text-2xs / Space Mono / uppercase / tracking-wide / text-text-disabled
- * - When `href` is provided the label becomes a React Router <Link> with
- *   a → suffix. Hover lifts colour from text-disabled → text-secondary.
- *   No underline, no weight change — deliberately metadata-quiet.
- * - Vertical padding: py-1 (4px top + 4px bottom) — unobtrusive.
+ * Editorial section separator — a border-top with a left-aligned uppercase
+ * tracked label. Used as the "From the community" transition marker in the feed.
  */
 export function SectionDivider({ label, href }: SectionDividerProps) {
   return (
-    <div className="flex items-center gap-3.5 py-1 w-full">
-      {/* Left rule */}
-      <div className="flex-1 h-px bg-border-default" />
-
-      {/* Centre label */}
+    <div className="border-t border-border-default pt-6 w-full">
       {href ? (
         <Link
           to={href}
-          className={[
-            "font-mono text-2xs font-medium tracking-wide uppercase whitespace-nowrap",
-            "text-text-disabled no-underline",
-            "transition-colors duration-150",
-            "hover:text-text-secondary",
-          ].join(" ")}
+          className="text-2xs font-medium tracking-widest uppercase text-text-secondary no-underline transition-colors duration-150 hover:text-text-primary"
         >
-          {label}&thinsp;→
+          {label} →
         </Link>
       ) : (
-        <span
-          className="font-mono text-2xs font-medium tracking-wide uppercase whitespace-nowrap text-text-disabled"
-        >
+        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
           {label}
         </span>
       )}
-
-      {/* Right rule */}
-      <div className="flex-1 h-px bg-border-default" />
     </div>
   );
 }

@@ -17,17 +17,15 @@ export function FeedClusterCard({
   entries,
   user,
   location: _location,
-  timestamp
+  timestamp,
 }: FeedClusterCardProps) {
   const navigate = useNavigate();
 
   const handleClick = (e: React.MouseEvent) => {
-    // Avoid triggering if clicking an interactive element (though none exist here yet)
     const target = e.target as HTMLElement;
-    if (target.closest('button')) return;
-
+    if (target.closest("button")) return;
     if (user.username) {
-        navigate(`/profile/${user.username}`);
+      navigate(`/profile/${user.username}`);
     }
   };
 
@@ -40,47 +38,42 @@ export function FeedClusterCard({
   return (
     <div
       onClick={handleClick}
-      className="w-full max-w-full min-w-0 cursor-pointer bg-surface-card border border-border-default rounded-sm shadow-none hover:border-border-strong transition-colors"
+      className="w-full cursor-pointer pb-6 border-b border-border-default"
     >
-      <div className="flex items-start gap-3 p-4">
-        <Avatar className="h-6 w-6 border border-border-default/50 shrink-0 mt-0.5">
+      {/* Category label */}
+      <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+        Activity
+      </span>
+
+      {/* User attribution */}
+      <div className="flex items-center gap-2.5 mt-2">
+        <Avatar className="h-6 w-6 shrink-0">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
         </Avatar>
+        <span className="text-sm font-medium text-text-primary">{username}</span>
+        <span className="text-xs text-text-disabled">
+          {formatDistanceToNow(new Date(timestamp)).replace("about ", "")} ago
+        </span>
+      </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-sm text-text-primary font-semibold truncate">
-                {username}
-              </div>
-              <div className="text-xs text-text-secondary">
-                {formatDistanceToNow(new Date(timestamp)).replace("about ", "")} ago
-              </div>
-            </div>
+      {/* Activity list */}
+      <div className="mt-3 space-y-2">
+        {visible.map((entry) => (
+          <div key={entry.id} className="flex items-baseline gap-2">
+            <span className="text-xs text-text-disabled">
+              {entry.status === "pending" ? "saved" : "visited"}
+            </span>
+            <span className="text-base font-semibold text-text-primary leading-tight">
+              {entry.building.name}
+            </span>
           </div>
-
-          <div className="mt-3 space-y-1.5 text-sm text-text-secondary">
-            {visible.map((entry) => (
-              <div key={entry.id} className="flex items-start gap-1.5">
-                <span className="mt-[2px] text-xs text-text-secondary">•</span>
-                <span className="min-w-0">
-                  <span className="text-text-secondary">
-                    {entry.status === "pending" ? "pending" : "visited"}{" "}
-                  </span>
-                  <span className="font-semibold text-text-primary">
-                    {entry.building.name}
-                  </span>
-                </span>
-              </div>
-            ))}
-            {overflow > 0 ? (
-              <div className="text-sm text-text-secondary">
-                and {overflow} more
-              </div>
-            ) : null}
-          </div>
-        </div>
+        ))}
+        {overflow > 0 && (
+          <span className="text-xs text-text-secondary">
+            and {overflow} more
+          </span>
+        )}
       </div>
     </div>
   );

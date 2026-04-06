@@ -106,56 +106,49 @@ export function PeopleYouMayKnow() {
   if (isLoading || !suggestions || suggestions.length === 0) return null;
 
   return (
-    <div className="p-6 border border-border-default rounded-sm bg-surface-card shadow-none space-y-4 max-w-full w-full overflow-hidden">
-      <h3 className="font-semibold text-text-primary">People you may know</h3>
-      <div className="flex overflow-x-auto gap-4 pb-4 px-1 snap-x hide-scrollbar">
+    <div className="mb-12 max-w-full w-full overflow-hidden">
+      <h3 className="text-xs font-medium uppercase tracking-widest text-text-secondary mb-4">
+        People you may know
+      </h3>
+      <div className="flex overflow-x-auto gap-6 pb-2 snap-x hide-scrollbar">
         {suggestions.map((person: PeopleYouMayKnowSuggestion) => (
-          <div key={person.id} className="relative flex flex-col items-center justify-between gap-3 min-w-[200px] max-w-[200px] snap-center p-4 border rounded-lg bg-surface-default/50 shrink-0 h-full group">
+          <div key={person.id} className="relative flex flex-col items-center gap-3 min-w-[140px] max-w-[140px] snap-center shrink-0 group">
             <button
                 onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     hideMutation.mutate(person.id);
                 }}
-                className="absolute top-1 right-1 p-1 text-text-secondary/30 hover:text-text-primary hover:bg-surface-muted rounded-full transition-colors z-10"
+                className="absolute -top-1 -right-1 p-1 text-text-disabled hover:text-text-primary transition-colors z-10"
                 title="Hide suggestion"
             >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
             </button>
 
             <Link to={`/profile/${person.username || person.id}`} className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity w-full text-center">
-              <Avatar className="h-14 w-14 mb-1 border-2 border-surface-default shadow-sm">
+              <Avatar className="h-12 w-12">
                 <AvatarImage src={person.avatar_url || undefined} />
                 <AvatarFallback>{person.username?.[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
-              <div className="flex flex-col items-center w-full min-w-0 gap-1">
-                <span className="text-sm font-semibold leading-none truncate w-full">{person.username}</span>
-                <div className="flex flex-col items-center text-xs text-text-secondary w-full gap-0.5">
+              <div className="flex flex-col items-center w-full min-w-0 gap-0.5">
+                <span className="text-sm font-medium leading-tight truncate w-full">{person.username}</span>
+                <div className="flex flex-col items-center text-xs text-text-secondary w-full">
                   {person.mutual_follows && person.mutual_follows.length > 0 ? (
                     <div className="scale-90 origin-top w-full flex justify-center">
                         <MutualFacepile users={person.mutual_follows} className="justify-center w-full" />
                     </div>
-                  ) : (
-                    <div className="h-5 flex items-center justify-center w-full">
-                      {(person.mutual_count ?? 0) > 0 && (
-                        <span className="truncate">
-                          {person.mutual_count ?? 0} mutual
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {(person.group_mutual_count ?? 0) > 0 && (
-                     <span className="truncate w-full text-[10px] text-text-secondary/80">
-                      {person.group_mutual_count ?? 0} group{(person.group_mutual_count ?? 0) !== 1 ? 's' : ''} common
+                  ) : (person.mutual_count ?? 0) > 0 ? (
+                    <span className="text-xs text-text-disabled truncate">
+                      {person.mutual_count} mutual
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </Link>
             <FollowButton
               userId={person.id}
               isFollower={person.is_follows_me}
-              className="w-full mt-auto bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm"
+              className="w-full text-xs h-7 rounded-sm"
             />
           </div>
         ))}

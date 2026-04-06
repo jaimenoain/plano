@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
-import { Flame, MapPin, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -85,38 +85,37 @@ export function TrendingBuildings() {
   });
 
   return (
-    <div className="p-0 border border-border-default rounded-sm bg-surface-card shadow-none overflow-hidden">
+    <div className="mb-12">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary flex items-center gap-1.5">
-          <Flame className="h-3.5 w-3.5 text-brand-primary" />
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
           Trending this week
         </h3>
         <Link
           to="/explore"
-          className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors flex items-center gap-0.5"
+          className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors inline-flex items-center gap-1"
         >
           See all <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
 
       {/* List */}
-      <div className="divide-y divide-border-default">
+      <div className="space-y-4">
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                <span className="w-4 text-center text-xs font-bold text-text-disabled">{i + 1}</span>
-                <Skeleton className="w-9 h-9 rounded-sm flex-shrink-0" />
+              <div key={i} className="flex items-center gap-3">
+                <span className="text-2xl font-bold text-text-disabled w-6 shrink-0">{i + 1}</span>
+                <Skeleton className="w-10 h-10 rounded-none flex-shrink-0" />
                 <div className="flex-1 space-y-1.5">
-                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-3.5 w-28" />
                   <Skeleton className="h-2.5 w-20" />
                 </div>
               </div>
             ))
           : buildings.length === 0
           ? (
-            <p className="px-4 py-4 text-xs text-text-secondary italic">
-              No trending data yet — check back soon.
+            <p className="text-xs text-text-secondary">
+              No trending data yet.
             </p>
           )
           : buildings.map((building, index) => {
@@ -126,19 +125,19 @@ export function TrendingBuildings() {
                 <Link
                   key={building.id}
                   to={href}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-muted transition-colors group"
+                  className="flex items-center gap-3 group"
                 >
-                  {/* Rank */}
-                  <span className="w-4 text-center text-xs font-bold text-text-disabled flex-shrink-0">
+                  {/* Rank — large editorial number */}
+                  <span className="text-2xl font-bold text-text-disabled w-6 shrink-0 text-center">
                     {index + 1}
                   </span>
                   {/* Thumbnail */}
-                  <div className="w-9 h-9 rounded-sm flex-shrink-0 overflow-hidden bg-surface-muted border border-border-default">
+                  <div className="w-10 h-10 rounded-none flex-shrink-0 overflow-hidden bg-surface-muted">
                     {imageUrl ? (
                       <img
                         src={imageUrl}
                         alt={building.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-surface-muted" />
@@ -146,20 +145,13 @@ export function TrendingBuildings() {
                   </div>
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-text-primary truncate leading-tight">
+                    <p className="text-sm font-semibold text-text-primary truncate leading-tight group-hover:text-brand-primary transition-colors">
                       {building.name}
                     </p>
-                    <p className="text-2xs text-text-secondary flex items-center gap-0.5 mt-0.5">
-                      <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
-                      <span className="truncate">
-                        {[building.city, building.country].filter(Boolean).join(", ")}
-                      </span>
+                    <p className="text-xs text-text-secondary mt-0.5 truncate">
+                      {[building.city, building.country].filter(Boolean).join(", ")}
                     </p>
                   </div>
-                  {/* Visit count badge */}
-                  <span className="text-2xs font-semibold px-1.5 py-0.5 rounded bg-brand-secondary text-brand-secondary-foreground flex-shrink-0">
-                    {building.visitCount}
-                  </span>
                 </Link>
               );
             })}

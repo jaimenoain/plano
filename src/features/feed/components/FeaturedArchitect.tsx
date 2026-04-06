@@ -106,17 +106,14 @@ export function FeaturedArchitect() {
   if (!isLoading && !architect) return null;
 
   return (
-    <div className="border border-border-default rounded-sm bg-surface-card shadow-none overflow-hidden">
+    <div className="mb-12">
       {/* Header */}
-      <div className="px-4 pt-4 pb-2">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary">
-          ✦ Featured architect
-        </h3>
-      </div>
+      <h3 className="text-xs font-medium uppercase tracking-widest text-text-secondary mb-4">
+        Featured architect
+      </h3>
 
       {isLoading ? (
-        <div className="px-4 pb-4 space-y-3">
-          {/* Identity skeleton */}
+        <div className="space-y-3">
           <div className="flex items-center gap-3">
             <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
             <div className="space-y-1.5 flex-1">
@@ -124,19 +121,17 @@ export function FeaturedArchitect() {
               <Skeleton className="h-2.5 w-24" />
             </div>
           </div>
-          {/* Building thumbnails skeleton */}
           <div className="grid grid-cols-3 gap-1.5">
             {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="aspect-square rounded-sm" />
+              <Skeleton key={i} className="aspect-square rounded-none" />
             ))}
           </div>
-          <Skeleton className="h-8 w-full rounded-sm" />
         </div>
       ) : architect ? (
-        <div className="px-4 pb-4 space-y-3">
+        <div className="space-y-3">
           {/* Identity */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-surface-muted border border-border-default flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-surface-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
               <span className="text-sm font-bold text-text-secondary select-none">
                 {architect.name
                   .split(" ")
@@ -154,7 +149,7 @@ export function FeaturedArchitect() {
                 )}
               </p>
               {architect.headquarters && (
-                <p className="text-2xs text-text-secondary truncate mt-0.5">
+                <p className="text-xs text-text-secondary truncate mt-0.5">
                   {architect.headquarters}
                 </p>
               )}
@@ -171,13 +166,13 @@ export function FeaturedArchitect() {
                     key={building.id}
                     to={`/building/${building.id}/${building.slug ?? "details"}`}
                     title={building.name}
-                    className="aspect-square rounded-sm overflow-hidden bg-surface-muted border border-border-default block group"
+                    className="aspect-square rounded-none overflow-hidden bg-surface-muted block"
                   >
                     {imageUrl ? (
                       <img
                         src={imageUrl}
                         alt={building.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-surface-muted flex items-center justify-center">
@@ -195,14 +190,9 @@ export function FeaturedArchitect() {
           {/* CTA */}
           <Link
             to={`/architect/${architect.id}`}
-            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-sm bg-surface-muted border border-border-default text-xs font-semibold text-text-secondary hover:bg-brand-secondary hover:border-brand-primary hover:text-brand-secondary-foreground transition-colors"
+            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors inline-flex items-center gap-1.5"
           >
-            Explore{" "}
-            {architect.buildingCount > 0 && (
-              <span className="font-bold">{architect.buildingCount}</span>
-            )}{" "}
-            buildings
-            <ArrowRight className="h-3 w-3" />
+            View profile <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
       ) : null}

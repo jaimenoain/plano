@@ -21,7 +21,7 @@ export function BottomNav() {
         "fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t",
         isExplore
           ? "bg-[#0A0A0A] border-white/10 backdrop-blur-xl" /* palette-neutral-950 */
-          : "bg-surface-card border-border-default"
+          : "bg-surface-default border-border-default"
       )}
     >
       <div className="flex items-center justify-around h-20 max-w-lg mx-auto px-2 pb-2">
@@ -36,7 +36,7 @@ export function BottomNav() {
               className={cn(
                 "flex flex-col items-center justify-center gap-1.5 transition-all duration-300 relative",
                 "flex-1 min-w-0 min-h-[64px] rounded-sm border-t-2",
-                isActive ? "border-brand-primary" : "border-transparent"
+                isActive ? "border-text-primary" : "border-transparent"
               )}
             >
               <Icon
@@ -48,7 +48,7 @@ export function BottomNav() {
               />
               <span
                 className={cn(
-                  "text-xs font-medium tracking-wide",
+                  "text-[10px] font-medium uppercase tracking-widest",
                   isActive ? "text-text-primary" : "text-text-secondary"
                 )}
               >

@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Circle, Bookmark, Check, EyeOff } from "lucide-react";
+import { Heart, MessageCircle, Circle, Bookmark, Check, EyeOff, ArrowRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
 
-// ─── Single-image subcomponent (unchanged) ────────────────────────────────────
+// ─── Single-image subcomponent ───────────────────────────────────────────────
 
 interface FeedHeroSingleImageProps {
   image: { id: string; url: string };
@@ -21,51 +21,18 @@ interface FeedHeroSingleImageProps {
 }
 
 function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
-  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
-
-  const handleLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    if (img.naturalHeight > 0) {
-      setAspectRatio(img.naturalWidth / img.naturalHeight);
-    }
-  };
-
-  // 4:5 aspect ratio = 0.8
-  const MAX_ASPECT_RATIO = 0.8;
-
-  // While loading, use a placeholder aspect ratio (e.g., 4:5)
-  if (aspectRatio === null) {
-    return (
-      <div className="relative w-full aspect-[4/5] bg-surface-muted animate-pulse">
-        <img
-          src={image.url}
-          className="opacity-0 absolute inset-0 w-full h-full max-w-full"
-          onLoad={handleLoad}
-          onError={() => onError(image.id)}
-          alt="Building"
-        />
-      </div>
-    );
-  }
-
-  const isTall = aspectRatio < MAX_ASPECT_RATIO;
+  const [loaded, setLoaded] = useState(false);
 
   return (
-    <div
-      className={cn(
-        "relative w-full overflow-hidden flex justify-center items-center transition-all duration-300",
-        isTall ? "bg-black" : "bg-surface-muted"
-      )}
-      style={{
-        aspectRatio: isTall ? `${MAX_ASPECT_RATIO}` : `${aspectRatio}`,
-      }}
-    >
+    <div className="relative w-full h-full min-h-[300px] md:min-h-0 bg-surface-muted">
+      {!loaded && <div className="absolute inset-0 bg-surface-muted animate-pulse" />}
       <img
         src={image.url}
+        onLoad={() => setLoaded(true)}
         onError={() => onError(image.id)}
         className={cn(
-          "w-full h-full transition-opacity duration-300 max-w-full",
-          isTall ? "object-contain" : "object-cover"
+          "w-full h-full object-cover rounded-none transition-opacity duration-300",
+          loaded ? "opacity-100" : "opacity-0"
         )}
         alt="Building"
       />
@@ -73,19 +40,21 @@ function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
   );
 }
 
-// ─── Card props ───────────────────────────────────────────────────────────────
+// ─── Card props ──────────────────────────────────────────────────────────────
 
 interface FeedHeroCardProps {
   entry: FeedReview;
+  index?: number;
   onLike?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
   onComment?: (reviewId: string) => void;
 }
 
-// ─── Main card ────────────────────────────────────────────────────────────────
+// ─── Main card ───────────────────────────────────────────────────────────────
 
 export function FeedHeroCard({
   entry,
+  index = 0,
   onLike,
   onImageLike,
   onComment,
@@ -106,6 +75,7 @@ export function FeedHeroCard({
   const isSaved = viewerStatus === "pending";
   const isVisited = viewerStatus === "visited";
   const isIgnored = viewerStatus === "ignored";
+  const isReversed = index % 2 !== 0;
 
   const navigateToReview = () => {
     if (!entry.building?.id) return;
@@ -221,6 +191,10 @@ export function FeedHeroCard({
   const avatarUrl = entry.user?.avatar_url || undefined;
   const userInitial = username.charAt(0).toUpperCase();
   const mainTitle = entry.building.name;
+  const architects = entry.building.architects;
+  const architectName = architects && architects.length > 0
+    ? architects.map((a) => (typeof a === "string" ? a : a.name)).join(", ")
+    : null;
   const city = entry.building.city || entry.building.address?.split(",").pop()?.trim() || "";
 
   const handleImageError = (imageId: string) => {
@@ -231,29 +205,24 @@ export function FeedHeroCard({
     });
   };
 
-  // ── Image rendering ──────────────────────────────────────────────────────────
-  // Single image: use FeedHeroSingleImage (preserves adaptive aspect-ratio logic).
-  // Multiple images: use FeedPhotoCarousel (full-bleed carousel with per-image likes).
+  // ── Image rendering ─────────────────────────────────────────────────────────
   const allImages = entry.images || [];
-  // For single-image path we still need to track failures to fall back gracefully.
   const singleImages = allImages.filter((img) => !failedImages.has(img.id));
 
   const renderImages = () => {
     if (allImages.length === 0) return null;
 
-    // Multi-image: hand off entirely to the carousel (it manages its own error state)
     if (allImages.length > 1) {
       return (
         <FeedPhotoCarousel
           images={allImages}
           reviewId={entry.id}
           onImageLike={onImageLike}
-          className="w-full"
+          className="w-full h-full"
         />
       );
     }
 
-    // Single image: use existing adaptive-aspect component
     if (singleImages.length === 1) {
       return (
         <FeedHeroSingleImage
@@ -266,12 +235,12 @@ export function FeedHeroCard({
     return null;
   };
 
-  // ── Rating control ───────────────────────────────────────────────────────────
+  // ── Rating control ──────────────────────────────────────────────────────────
   const renderRatingControl = () => {
     const options = [1, 2, 3];
     return (
       <div
-        className="flex items-center gap-1 mr-2 bg-surface-muted/80 backdrop-blur-sm px-2.5 py-1.5 rounded-sm animate-in fade-in slide-in-from-right-5 duration-200 border border-border-default/50 shadow-none"
+        className="flex items-center gap-1 animate-in fade-in slide-in-from-right-5 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {options.map((val) => {
@@ -297,130 +266,165 @@ export function FeedHeroCard({
     );
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  const hasImages = allImages.length > 0;
+
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <article
       onClick={handleCardClick}
-      className="group relative flex flex-col w-full max-w-full min-w-0 bg-surface-card border border-border-default rounded-sm shadow-none overflow-hidden cursor-pointer mb-6 hover:border-border-strong transition-colors"
+      className="group relative w-full cursor-pointer"
     >
-      {/* Header */}
-      <div className="p-6 flex items-start gap-3 border-b border-border-default/40">
-        <Avatar className="h-8 w-8 border border-border-default/50 mt-0.5">
-          <AvatarImage src={avatarUrl} />
-          <AvatarFallback>{userInitial}</AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col gap-0.5 flex-1 min-w-0 max-w-full overflow-hidden">
-          {/* User row */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-text-primary">{username}</span>
-              <span className="text-xs text-text-secondary">
-                {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-              </span>
-            </div>
-            {city && <span className="text-xs text-text-secondary">{city}</span>}
+      {/* Magazine spread: two-column on desktop, stacked on mobile */}
+      <div className={cn(
+        "grid grid-cols-1 gap-0 items-stretch",
+        hasImages && "md:grid-cols-2"
+      )}>
+        {/* Image column */}
+        {hasImages && (
+          <div className={cn(
+            "relative overflow-hidden min-h-[280px] md:min-h-[400px]",
+            isReversed ? "md:order-2" : "md:order-1"
+          )}>
+            {renderImages()}
           </div>
-          {/* Building name + rating */}
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-left text-xl font-semibold text-text-primary hover:underline truncate">
-              {mainTitle}
+        )}
+
+        {/* Text column */}
+        <div className={cn(
+          "flex flex-col justify-center py-6 md:py-10",
+          hasImages && (isReversed ? "md:order-1 md:pr-10" : "md:order-2 md:pl-10"),
+          !hasImages && "max-w-xl"
+        )}>
+          {/* Category label */}
+          <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-3">
+            {entry.status === "visited" ? "Review" : "Building"}
+          </span>
+
+          {/* Building name — editorial scale */}
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight text-text-primary mb-3">
+            {mainTitle}
+          </h2>
+
+          {/* Architect + location */}
+          {(architectName || city) && (
+            <p className="text-sm text-text-secondary mb-4">
+              {architectName}{architectName && city ? " · " : ""}{city}
+            </p>
+          )}
+
+          {/* Rating */}
+          {entry.rating && entry.rating > 0 && (
+            <div className="flex items-center gap-1 mb-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Circle
+                  key={i}
+                  className={cn(
+                    "w-3.5 h-3.5",
+                    i < entry.rating!
+                      ? "fill-text-primary text-text-primary"
+                      : "fill-transparent text-text-disabled"
+                  )}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Review excerpt */}
+          {entry.content && (
+            <p className="text-base leading-relaxed text-text-secondary max-w-md mb-6 line-clamp-4">
+              {entry.content}
+            </p>
+          )}
+
+          {/* User attribution */}
+          <div className="flex items-center gap-2.5 mb-6">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={avatarUrl} />
+              <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium text-text-primary">{username}</span>
+            <span className="text-xs text-text-disabled">
+              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
             </span>
-            {entry.rating && entry.rating > 0 && (
-              <span className="inline-flex items-center gap-0.5">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Circle
-                    key={i}
-                    className={cn(
-                      "w-3 h-3",
-                      i < entry.rating!
-                        ? "fill-brand-primary text-brand-primary"
-                        : "fill-transparent text-text-secondary/30"
-                    )}
-                  />
-                ))}
-              </span>
+          </div>
+
+          {/* Actions row — subtle, inline */}
+          <div className="flex items-center gap-4">
+            {/* CTA */}
+            <button
+              type="button"
+              onClick={handleCardClick}
+              className="text-xs font-medium tracking-widest uppercase text-text-primary hover:text-brand-primary transition-colors inline-flex items-center gap-1.5"
+            >
+              View building <ArrowRight className="h-3 w-3" />
+            </button>
+
+            <div className="flex-1" />
+
+            {/* Like */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onLike?.(entry.id); }}
+              className="inline-flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors"
+              title={`${entry.likes_count} likes`}
+            >
+              <Heart className={cn("h-4 w-4", entry.is_liked ? "fill-brand-primary text-brand-primary" : "")} />
+              {entry.likes_count > 0 && <span className="text-xs">{entry.likes_count}</span>}
+            </button>
+
+            {/* Comment */}
+            <button
+              type="button"
+              onClick={handleCommentClick}
+              className="inline-flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors"
+              title={`${entry.comments_count} comments`}
+            >
+              <MessageCircle className="h-4 w-4" />
+              {entry.comments_count > 0 && <span className="text-xs">{entry.comments_count}</span>}
+            </button>
+
+            {/* Rating control */}
+            {(isSaved || isVisited || showRatingInput) && renderRatingControl()}
+
+            {/* Visit */}
+            {(!viewerStatus || isVisited) && (
+              <button
+                type="button"
+                onClick={handleVisit}
+                className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+                disabled={isSaving}
+                title={isVisited ? "Visited" : "Mark as visited"}
+              >
+                <Check className={cn("h-4 w-4", isVisited ? "stroke-[3px] text-brand-primary" : "")} />
+              </button>
+            )}
+
+            {/* Save */}
+            {(!viewerStatus || isSaved) && (
+              <button
+                type="button"
+                onClick={handleSave}
+                className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+                disabled={isSaving}
+                title={isSaved ? "Saved" : "Save"}
+              >
+                <Bookmark className={cn("h-4 w-4", isSaved ? "fill-brand-primary text-brand-primary" : "")} />
+              </button>
+            )}
+
+            {/* Hide */}
+            {(!viewerStatus || isIgnored) && (
+              <button
+                type="button"
+                onClick={handleHide}
+                className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+                disabled={isSaving}
+                title={isIgnored ? "Hidden" : "Hide"}
+              >
+                <EyeOff className="h-4 w-4" />
+              </button>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Review text */}
-      {entry.content && (
-        <div className="px-6 pt-4 pb-2 flex flex-col gap-3 max-w-full overflow-hidden">
-          <p className="text-sm text-text-primary leading-relaxed break-words w-full">
-            {entry.content}
-          </p>
-        </div>
-      )}
-
-      {/* Images — full bleed */}
-      <div className="w-full bg-surface-muted overflow-hidden min-w-0">
-        {renderImages()}
-      </div>
-
-      {/* Footer */}
-      <div className="p-6 pt-4 flex items-center justify-between mt-auto border-t border-border-default/50">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onLike?.(entry.id); }}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
-            title={`${entry.likes_count} likes`}
-          >
-            <Heart
-              className={cn(
-                "h-4 w-4",
-                entry.is_liked ? "fill-brand-primary text-brand-primary" : ""
-              )}
-            />
-          </button>
-          <button
-            type="button"
-            onClick={handleCommentClick}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
-            title={`${entry.comments_count} comments`}
-          >
-            <MessageCircle className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {(isSaved || isVisited || showRatingInput) && renderRatingControl()}
-          {(!viewerStatus || isVisited) && (
-            <button
-              type="button"
-              onClick={handleVisit}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:opacity-50"
-              disabled={isSaving}
-              title={isVisited ? "Mark as not visited" : "Mark as visited"}
-            >
-              <Check className={cn("h-4 w-4", isVisited ? "stroke-[3px] text-brand-primary" : "")} />
-            </button>
-          )}
-          {(!viewerStatus || isSaved) && (
-            <button
-              type="button"
-              onClick={handleSave}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:opacity-50"
-              disabled={isSaving}
-              title={isSaved ? "Saved to your list" : "Save to your list"}
-            >
-              <Bookmark
-                className={cn("h-4 w-4", isSaved ? "fill-brand-primary text-brand-primary" : "")}
-              />
-            </button>
-          )}
-          {(!viewerStatus || isIgnored) && (
-            <button
-              type="button"
-              onClick={handleHide}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:opacity-50"
-              disabled={isSaving}
-              title={isIgnored ? "Hidden from your map" : "Hide from map"}
-            >
-              <EyeOff className="h-4 w-4" />
-            </button>
-          )}
         </div>
       </div>
     </article>

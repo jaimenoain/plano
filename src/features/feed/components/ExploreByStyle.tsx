@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
-import { Layers } from "lucide-react";
+// lucide-react icons removed — editorial treatment uses no icons in headers
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -45,29 +45,26 @@ export function ExploreByStyle() {
     !isLoading && styles && styles.length > 0 ? styles : FALLBACK_STYLES;
 
   return (
-    <div className="border border-border-default rounded-sm bg-surface-card shadow-none overflow-hidden">
+    <div className="mb-12">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary flex items-center gap-1.5">
-          <Layers className="h-3.5 w-3.5 text-text-secondary" />
-          Explore by style
-        </h3>
-      </div>
+      <h3 className="text-xs font-medium uppercase tracking-widest text-text-secondary mb-4">
+        Explore by style
+      </h3>
 
       {/* Pills */}
-      <div className="px-4 pb-4 flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {isLoading
           ? Array.from({ length: 8 }).map((_, i) => (
               <Skeleton
                 key={i}
-                className={cn("h-6 rounded-sm", i % 3 === 0 ? "w-20" : i % 3 === 1 ? "w-16" : "w-24")}
+                className={cn("h-6 rounded-none", i % 3 === 0 ? "w-20" : i % 3 === 1 ? "w-16" : "w-24")}
               />
             ))
           : displayStyles.map((style) => (
               <button
                 key={style.id}
                 onClick={() => navigate("/explore")}
-                className="text-xs font-medium px-2.5 py-1 rounded-sm border border-border-default bg-surface-muted text-text-secondary hover:bg-brand-secondary hover:border-brand-primary hover:text-brand-secondary-foreground transition-colors"
+                className="text-xs font-medium px-2.5 py-1 text-text-secondary hover:text-text-primary transition-colors"
               >
                 {style.name}
               </button>

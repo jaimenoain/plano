@@ -43,7 +43,7 @@ in the entries above.
 
 ## Interaction Design Principles
 
-Plano is an architectural portfolio platform modelled on contemporary studio websites — OMA, BIG, Zaha Hadid Architects. Its personality is **modern, minimalist, sharp, and photographic**. The density setting is **spacious** — generous whitespace creates gallery-like breathing room. The radius direction is **sharp** — 2px default communicates precision and intentionality. Hierarchy comes from borders and whitespace, not from shadow stacking. These five principles are calibrated to that identity.
+Plano is an architectural portfolio platform with an **editorial** personality inspired by A24 Films (a24films.com) and contemporary architecture studios (OMA, BIG, Zaha Hadid Architects). Its personality is **editorial, modern, minimalist, sharp, and photographic**. The density setting is **spacious** — generous whitespace creates editorial breathing room. The radius direction is **sharp** — 2px default for app UI, 0px for editorial feed content. In the feed, hierarchy comes from **typography scale and whitespace alone** — not from borders, not from card containers, not from shadows. Tiny uppercase labels contrasted against massive bold headlines create structure. Content floats directly on the white canvas. These five principles are calibrated to that identity, with editorial feed exceptions noted where applicable.
 
 ### 1. Progressive Disclosure
 
@@ -111,7 +111,9 @@ Plano is an architectural portfolio platform modelled on contemporary studio web
 - `spacing-12` (48px): separation between logical page sections — the gap between "Building Details" and "Reviews" sections on a building page
 - `spacing-16` (64px): major page-level vertical rhythm — top-of-page to first content block, between primary page regions
 
-**Section separation method:** `spacing-12` margin-top plus a `border-t border-border-default` divider line. Plano's flat design uses borders as the primary section separator — not extra whitespace alone, and never shadows.
+**Section separation method (app UI):** `spacing-12` margin-top plus a `border-t border-border-default` divider line. Plano's flat design uses borders as the primary section separator — not extra whitespace alone, and never shadows.
+
+**Section separation method (editorial feed):** `spacing-16` to `spacing-20` vertical margin between feed items. No borders between major feed items (hero cards, collection cards). The whitespace *is* the separator — editorial breathing room. Borders may appear only as subtle `border-b` dividers between compact/activity card rows where items are dense enough to merge visually.
 
 ---
 
@@ -196,7 +198,9 @@ For text-only cards (stat blocks, review cards), the entire card is padded with 
 
 ### Constraints
 
-**Always:** Cards use `border border-border-default`. A card with `surface-card` but no border is invisible against `surface-default` in light mode — this is a rendering bug, not a stylistic choice.
+**Always (non-editorial):** Cards in app contexts (admin, settings, tables, building detail pages) use `border border-border-default`. A card with `surface-card` but no border is invisible against `surface-default` in light mode — this is a rendering bug, not a stylistic choice.
+
+**Exception — editorial feed cards:** Feed cards (hero, activity, compact, collection, cluster) do not use the Card component's container styling. They have no `surface-card` background, no `border-default`, no `rounded-sm`. They are open compositions that sit directly on the page surface, with structure provided by typographic hierarchy and vertical spacing. See section 13 (Feed Editorial Components) for their specifications.
 
 **Always:** Cards use `shadow-none` by default. Plano's hierarchy is border-driven, not shadow-driven. Use `shadow-md` only when a card needs explicit visual lift above sibling cards (e.g. a featured or pinned building).
 
@@ -666,6 +670,226 @@ Toasts are positioned `fixed bottom-6 right-6 z-50` (or in a toast stack contain
 
 ---
 
+## 13. Feed Editorial Components
+
+### Design Philosophy
+
+The feed follows an editorial magazine aesthetic inspired by A24 Films. The defining characteristics are:
+
+1. **No card containers.** Feed items have no background, border, or shadow. Content sits directly on the white page surface.
+2. **Typography is structure.** The contrast between tiny uppercase category labels and massive bold building names creates all the hierarchy needed.
+3. **Whitespace is intentional.** Large vertical gaps between feed items create editorial rhythm — each item is a self-contained composition, not a row in a list.
+4. **Images are raw.** No border-radius, no borders, no overlays. Sharp edges, like a printed photograph.
+5. **CTAs are text, not buttons.** Feed actions use uppercase tracked text with a `→` arrow, never filled buttons.
+6. **Monochromatic in the feed.** Black text, gray metadata, white surface. Colour comes only from photography and sparingly from the brand accent on interactive states.
+
+---
+
+### 13a. Feed Hero Card
+
+#### Purpose
+The primary editorial unit — a full-width magazine-spread layout showcasing a building review with photography. This is the most visually impactful feed item and sets the editorial tone.
+
+#### Layout Composition
+Two-column layout on desktop: text block on one side, image on the other. The text block contains (top to bottom): category label, building name (massive), architect name, review excerpt, user attribution, and CTA link. The image fills its column edge-to-edge with no padding, border, or radius.
+
+On mobile, the layout stacks vertically: image first (full-width, edge-to-edge), text block below.
+
+The text-image position alternates between feed items (text-left/image-right, then text-right/image-left) to create visual rhythm, like magazine page spreads.
+
+Desktop structure: `grid grid-cols-2 gap-0 items-stretch`. Mobile: `flex flex-col`.
+
+#### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | none | — (transparent, sits on page surface) |
+| Container | border | none | — |
+| Container | margin-bottom | spacing-16 to spacing-20 | mb-16 / mb-20 |
+| Category label | — | — | text-2xs font-medium uppercase tracking-widest text-text-secondary |
+| Building name | — | — | text-5xl lg:text-6xl font-bold tracking-tight leading-tight text-text-primary |
+| Architect name | — | — | text-sm font-normal text-text-secondary |
+| Review excerpt | — | — | text-base font-normal leading-relaxed text-text-secondary max-w-md |
+| User attribution | — | — | text-sm font-medium text-text-primary |
+| CTA link | — | — | text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors |
+| CTA arrow | — | — | `→` character or ArrowRight icon, inline |
+| Image | border-radius | radius-none | rounded-none |
+| Image | object-fit | — | object-cover w-full h-full |
+
+#### Interaction Design Notes
+
+**CTA pattern:** The primary CTA is a text link reading `VIEW BUILDING →` — uppercase, tracked, with an arrow. On hover, the text or arrow shifts to `brand-primary`. This replaces any filled button in the feed context.
+
+**Image interaction:** Clicking the image navigates to the building detail page. No hover overlay or zoom effect — the editorial aesthetic is static and composed, not animated.
+
+**Like/save actions:** Positioned subtly beneath the review excerpt or in the user attribution row. Icon-only, small (`h-6 w-6`), using `text-text-secondary` at rest, `text-text-primary` on hover, `brand-primary` when active.
+
+#### Constraints
+
+**Always:** Hero cards have no background, border, or shadow. They are open compositions.
+
+**Always:** Building names use `font-size-5xl` minimum on desktop, `font-size-3xl` minimum on mobile. The editorial impact depends on scale — do not shrink the headline to fit.
+
+**Always:** Images use `rounded-none`. Sharp edges are non-negotiable in the editorial feed.
+
+**Default:** Vertical spacing between hero cards and the next feed item is `spacing-16` (64px) minimum. This editorial pause separates compositions.
+
+---
+
+### 13b. Feed Activity Card
+
+#### Purpose
+A compact feed item representing a status-only action (visited / wants to visit) without review content or images. Multiple activity cards can sit side-by-side in a grid row.
+
+#### Layout Composition
+Horizontal layout: small building thumbnail on the left, text on the right. Text contains: user name + action verb + building name, with timestamp below. When multiple activity cards appear together, they sit in a `grid grid-cols-2 gap-8` row on desktop, single column on mobile.
+
+#### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | none | — |
+| Container | border | none | — |
+| Container | padding-bottom | spacing-8 | pb-8 |
+| Container | border-bottom | border-default | border-b border-border-default (subtle divider between activity rows only) |
+| Building thumbnail | size | 64px | w-16 h-16 |
+| Building thumbnail | border-radius | radius-none | rounded-none |
+| Building thumbnail | object-fit | — | object-cover |
+| User name | — | — | text-sm font-medium text-text-primary |
+| Action verb | — | — | text-sm font-normal text-text-secondary |
+| Building name | — | — | text-sm font-semibold text-text-primary |
+| Timestamp | — | — | text-xs font-normal text-text-disabled |
+
+#### Constraints
+
+**Always:** Activity cards are the smallest editorial unit. They use a subtle `border-b` divider between rows — this is the one place a border appears in the feed, to separate adjacent compact items that would otherwise merge visually.
+
+**Default:** Activity cards group in pairs. A single activity card still takes half the grid width on desktop, preserving visual rhythm.
+
+---
+
+### 13c. Feed Compact Card
+
+#### Purpose
+A text-focused review card without images — displays the review content, rating, and building name with strong typographic treatment.
+
+#### Layout Composition
+Vertical stack: category label at top, building name (large), rating indicator, review text excerpt, user attribution. No image. The text itself is the visual content.
+
+When compact cards appear together, they sit in a `grid grid-cols-2 gap-8` row, similar to activity cards.
+
+#### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | none | — |
+| Container | border | none | — |
+| Container | padding-bottom | spacing-12 | pb-12 |
+| Category label | — | — | text-2xs font-medium uppercase tracking-widest text-text-secondary |
+| Building name | — | — | text-2xl font-semibold tracking-tight leading-tight text-text-primary |
+| Rating | — | — | Small filled/empty circles, text-text-primary |
+| Review excerpt | — | — | text-base font-normal leading-relaxed text-text-secondary |
+| User name | — | — | text-sm font-medium text-text-primary |
+| Timestamp | — | — | text-xs font-normal text-text-disabled |
+
+#### Constraints
+
+**Always:** Compact cards have no border or background. Structure comes from the building name's typographic weight.
+
+**Default:** Review text is truncated at 3 lines with `line-clamp-3`.
+
+---
+
+### 13d. Feed Collection Card
+
+#### Purpose
+A horizontal editorial strip showcasing a user's curated collection of buildings.
+
+#### Layout Composition
+Full-width horizontal layout: a row of 4–6 building thumbnails on top (edge-to-edge, tight mosaic), with collection title, owner, and building count below.
+
+#### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | none | — |
+| Container | margin-bottom | spacing-16 | mb-16 |
+| Mosaic row | gap | mosaic-gap | gap-mosaic-gap |
+| Mosaic row | layout | — | flex overflow-hidden |
+| Mosaic image | height | 200px | h-[200px] |
+| Mosaic image | border-radius | radius-none | rounded-none |
+| Mosaic image | object-fit | — | object-cover flex-1 min-w-0 |
+| Collection title | — | — | text-2xl font-semibold tracking-tight text-text-primary mt-4 |
+| Owner name | — | — | text-sm font-normal text-text-secondary |
+| Building count | — | — | text-xs font-normal text-text-disabled |
+| CTA link | — | — | text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary |
+
+#### Constraints
+
+**Always:** Mosaic images use `rounded-none` and `gap-mosaic-gap` (1.5px hairline). The tight mosaic reads as a single photographic strip, not as individual cards.
+
+---
+
+### 13e. Feed Section Divider
+
+#### Purpose
+A typographic separator between feed sections (e.g., between social feed and community discovery content).
+
+#### Layout Composition
+A single line of uppercase tracked text with an optional `→` arrow linking to a discovery page. Centred or left-aligned depending on context. May include a subtle `border-t` above.
+
+#### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | padding-y | spacing-8 | py-8 |
+| Container | border-top | border-default | border-t border-border-default |
+| Label | — | — | text-2xs font-medium uppercase tracking-widest text-text-secondary |
+| Arrow/link | — | — | text-2xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary ml-2 |
+
+#### Constraints
+
+**Always:** Section dividers use the tiny uppercase tracked label style. They are architectural marginalia — labelling, not headings.
+
+---
+
+### 13f. Feed Sidebar Widget
+
+#### Purpose
+Editorial-styled sidebar modules (Trending Buildings, Featured Architect, Explore by Style, etc.) that complement the main feed.
+
+#### Layout Composition
+Vertical stack: widget title (uppercase tracked label), content items, optional "See all →" CTA. Widgets have no border or background — they sit directly on the sidebar surface with generous spacing between them.
+
+#### Token Assembly
+
+| Part | Property | Token | Tailwind class |
+|---|---|---|---|
+| Container | background | none | — |
+| Container | border | none | — |
+| Container | margin-bottom | spacing-12 | mb-12 |
+| Widget title | — | — | text-xs font-medium uppercase tracking-widest text-text-secondary mb-4 |
+| Item name | — | — | text-base font-semibold text-text-primary leading-tight |
+| Item meta | — | — | text-xs font-normal text-text-secondary |
+| Item gap | — | spacing-4 | gap-4 (between items in the widget) |
+| CTA link | — | — | text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary |
+
+#### Interaction Design Notes
+
+**Trending Buildings widget:** Numbered list (1–5). The number is `text-2xl font-bold text-text-disabled` — large but quiet. Building name is `text-base font-semibold text-text-primary`. Architect name below in `text-xs text-text-secondary`. The numbered list format echoes editorial "Top 5" sidebars.
+
+**Featured Architect widget:** Architect photo (square, `rounded-none`), name as `text-lg font-semibold`, brief tagline as `text-sm text-text-secondary`, `VIEW PROFILE →` CTA.
+
+**People You May Know widget:** Avatar (`rounded-full` — avatars are the one exception to sharp edges), name as `text-sm font-medium`, follow button as a small ghost button — the only button element permitted in the feed sidebar.
+
+#### Constraints
+
+**Always:** Widget titles are uppercase tracked labels (`text-xs uppercase tracking-widest text-text-secondary`). They are section markers, not headings — small and structural.
+
+**Always:** Widgets have no borders or card backgrounds. They are open compositions within the sidebar.
+
+---
+
 ## Appendix A — Typography Application Matrix
 
 When a component entry does not specify typography for an element, this
@@ -699,6 +923,19 @@ documented reason.
 | Toast title | font-size-sm | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
 | Toast description | font-size-sm | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
 | Map pin label | font-size-xs | font-weight-medium | text-primary | letter-spacing-normal | line-height-tight |
+| | | | | | |
+| **Feed editorial** | | | | | |
+| Feed category label | font-size-2xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
+| Feed building name (hero) | font-size-5xl / 6xl | font-weight-bold | text-primary | letter-spacing-tight | line-height-tight |
+| Feed building name (compact) | font-size-2xl | font-weight-semibold | text-primary | letter-spacing-tight | line-height-tight |
+| Feed review excerpt | font-size-base | font-weight-normal | text-secondary | letter-spacing-normal | line-height-relaxed |
+| Feed user name | font-size-sm | font-weight-medium | text-primary | letter-spacing-normal | line-height-normal |
+| Feed timestamp | font-size-xs | font-weight-normal | text-disabled | letter-spacing-normal | line-height-normal |
+| Feed CTA link | font-size-xs | font-weight-medium | text-primary | letter-spacing-wide | line-height-tight |
+| Feed section divider | font-size-2xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
+| Feed sidebar widget title | font-size-xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
+| Feed sidebar item name | font-size-base | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
+| Feed sidebar item meta | font-size-xs | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
 
 ---
 
@@ -720,10 +957,15 @@ invisible against it.
 `surface-card` is for any contained block that groups content and sits
 on the page background: building cards, data panels, stat blocks,
 review cards, collection tiles, table containers, and modal bodies.
-In Plano's sharp/minimal design, `surface-card` is always paired with
+In non-editorial contexts, `surface-card` is always paired with
 `border-default` — shadow is optional and discouraged (prefer
 border-only cards; use `shadow-md` only when explicit lift is needed).
 A card with `surface-card` and no border is invisible in light mode.
+
+**Editorial feed exception:** Feed components (section 13) do not use
+`surface-card` or `border-default`. Content sits directly on the page
+surface with no container. Structure comes from typographic scale
+contrast, generous vertical spacing, and content grouping.
 
 `surface-muted` signals reduced visual prominence. Use it for areas
 that support the primary content: the sidebar background, input field

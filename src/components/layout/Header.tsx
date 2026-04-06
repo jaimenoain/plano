@@ -134,7 +134,7 @@ export function Header({
   );
 
   return (
-    <header className="fixed top-0 right-0 z-40 left-0 md:left-[--sidebar-width] bg-surface-card border-b border-border-default h-16 px-4 transition-all duration-300">
+    <header className="fixed top-0 right-0 z-40 left-0 md:left-[--sidebar-width] bg-surface-default border-b border-border-default h-16 px-4 transition-all duration-300">
       <div className={cn(
         "h-full w-full max-w-7xl mx-auto items-center",
         effectiveVariant === 'map' ? "flex justify-between gap-4" : "grid grid-cols-3"

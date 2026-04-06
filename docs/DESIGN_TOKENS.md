@@ -9,9 +9,11 @@
 
 ## 1. Design Intent
 
-**Personality:** Modern, minimalist, neon, sharp, clean, photographic, architectural
+**Personality:** Editorial, modern, minimalist, sharp, photographic, architectural
 
-**Reference products:** Contemporary architecture studio websites (OMA, BIG, Zaha Hadid Architects) — stark grayscale palettes, bold typography, photography-first layouts, sharp geometry, zero ornamentation.
+**Reference products:** A24 Films (a24films.com) — aggressive sans-serif typography at extreme scale, monochromatic palette (black/gray/white), zero UI chrome, generous whitespace as structure, content floats directly on white canvas. Contemporary architecture studio websites (OMA, BIG, Zaha Hadid Architects) — photography-first layouts, sharp geometry, zero ornamentation.
+
+**Editorial direction:** The feed and content pages follow an editorial magazine aesthetic. Typography weight and scale create hierarchy — not borders, not shadows, not card containers. Content sits directly on the white surface. The contrast between tiny uppercase category labels and massive bold headlines *is* the design. Whitespace is not empty space — it is editorial pause. Images are presented raw, with sharp edges and no decorative chrome.
 
 **Mode:** Light only
 
@@ -99,7 +101,10 @@ Dark mode: not configured.
 | `font-size-xl` | `1.25rem` | 20px — card titles |
 | `font-size-2xl` | `1.5rem` | 24px — section headings |
 | `font-size-3xl` | `2rem` | 32px — page headings (spacious density: larger than default) |
-| `font-size-4xl` | `2.5rem` | 40px — hero headings, landing page |
+| `font-size-4xl` | `2.5rem` | 40px — page headings (spacious density) |
+| `font-size-5xl` | `3rem` | 48px — editorial feed building names (hero cards) |
+| `font-size-6xl` | `3.75rem` | 60px — editorial hero headlines, landing hero |
+| `font-size-7xl` | `4.5rem` | 72px — editorial maximum, landing page hero text |
 | `font-weight-normal` | `400` | Body text |
 | `font-weight-medium` | `500` | Labels, nav items, form labels |
 | `font-weight-semibold` | `600` | Headings, emphasis |
@@ -280,6 +285,9 @@ theme: {
       '2xl':  ['1.5rem',   { lineHeight: '2rem' }],
       '3xl':  ['2rem',     { lineHeight: '2.4rem' }],
       '4xl':  ['2.5rem',   { lineHeight: '3rem' }],
+      '5xl':  ['3rem',     { lineHeight: '3.25rem' }],
+      '6xl':  ['3.75rem',  { lineHeight: '4rem' }],
+      '7xl':  ['4.5rem',   { lineHeight: '4.75rem' }],
     },
     spacing: {
       'collection-mosaic': '10.5rem',
@@ -391,6 +399,21 @@ convention.
 | Map pin label | `font-size-xs` | `font-weight-medium` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
 | Empty state heading | `font-size-lg` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
 | Empty state body | `font-size-sm` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| | | | | | |
+| **Feed editorial contexts** | | | | | |
+| Feed category label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Feed building name (hero) | `font-size-5xl` / `font-size-6xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Feed building name (compact) | `font-size-2xl` | `font-weight-semibold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Feed review excerpt | `font-size-base` | `font-weight-normal` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
+| Feed user name | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
+| Feed timestamp | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-disabled` |
+| Feed CTA link | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-tight` | `text-primary` |
+| Feed section divider | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Feed sidebar widget title | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Feed sidebar item name | `font-size-base` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Feed sidebar item meta | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+
+**Feed editorial typography notes:** The extreme scale contrast between category labels (`font-size-2xs`, uppercase, tracked) and building names (`font-size-5xl`+, bold, tight) is the defining visual signature of the editorial feed. This mirrors A24's approach where a tiny "PODCAST" label sits above a massive 5-line headline. The contrast *is* the design — do not flatten it by making labels larger or headlines smaller. Feed CTA links use uppercase tracked text with a `→` arrow, never a filled button — editorial navigation, not app UI. All feed category labels and CTA links must use `uppercase` text-transform.
 
 ---
 
@@ -405,7 +428,9 @@ context — never a raw palette value.**
 
 **`surface-default`** (`#FAFAFA`) is the page background only. It is applied once, to the root layout element. It must never appear on cards, panels, sidebar sections, or any component that sits on top of the page. Using it on a component makes that component invisible against the page — treat any such usage as a bug.
 
-**`surface-card`** (`#FFFFFF`) is applied to any contained element that sits directly on `surface-default`: building cards, data panels, stat blocks, review cards, collection tiles, and table containers. In this sharp/minimal design, it is always paired with `border-default` — shadow is optional (prefer borderless or border-only cards; use `shadow-md` only when explicit lift is needed for visual hierarchy). If an element uses `surface-card` but has no border, it will be invisible in light mode — add a border.
+**`surface-card`** (`#FFFFFF`) is applied to any contained element that sits directly on `surface-default`: building cards, data panels, stat blocks, review cards, collection tiles, and table containers. In non-editorial contexts (admin, settings, tables), it is always paired with `border-default` — shadow is optional (prefer borderless or border-only cards; use `shadow-md` only when explicit lift is needed for visual hierarchy). If a non-editorial element uses `surface-card` but has no border, it will be invisible in light mode — add a border.
+
+**Editorial feed exception:** Feed content (hero cards, activity cards, compact cards, collection cards, sidebar widgets) does *not* use `surface-card` with `border-default`. Feed content sits directly on the page surface without card containers, borders, or backgrounds. Structure in the feed comes from typography scale, whitespace, and content grouping — not from boxes. This is the core editorial principle: content floats on the canvas. The only visual separation between feed items is generous vertical spacing.
 
 **`surface-muted`** (`#F5F5F5`) is applied to secondary or structural areas that must read as visually quieter than the main content: the sidebar background, secondary navigation panels, input field backgrounds, code blocks, building taxonomy chips, and empty-state containers. It communicates "this area is supporting, not primary." It is never used on action-bearing components (buttons, badges, primary CTAs).
 
@@ -431,6 +456,8 @@ context — never a raw palette value.**
 
 **`brand-primary`** (`#BEFF00`) is the single neon accent. It is used for: primary button backgrounds, active navigation indicators, focus rings, progress bars, selected states, and the building "visited" checkmark. It must appear sparingly — the power of a single-colour system depends on restraint. If the neon appears in more than two places on any given screen, it is overused.
 
+**Editorial feed accent rule:** In the feed, `brand-primary` is even more restrained. It may appear on: the `→` arrow of a CTA link on hover, a like/bookmark action highlight, or a single active state indicator. It must never appear as a background fill in the feed. The feed is monochromatic — black text, gray metadata, white canvas, colour only in photography. The neon accent punctuates, it does not decorate.
+
 **`brand-primary-foreground`** (`#171717`) is always used for text and icons placed on `brand-primary` surfaces. The neon is a light colour — it requires dark foreground, not white.
 
 **`brand-secondary`** (`#F7FFE0`) is a barely-there neon tint used for: hovered table rows, selected filter chips, active tab backgrounds, and subtle highlight surfaces. It provides a whisper of the accent without the full neon intensity.
@@ -445,8 +472,10 @@ context — never a raw palette value.**
 
 The entire system is built on one principle: **let the architecture be the colour.** Plano is a photography-first platform — every building photo will be the most colourful element on screen. The strictly grayscale palette ensures photos sing without competing against brand colours. The single neon accent (#BEFF00 electric lime) provides just enough tension to feel alive — it functions like a fluorescent tube in a concrete gallery, marking where to look and what to press.
 
-**Space Grotesk** was chosen over Inter or DM Sans because its geometric construction echoes architectural drafting — the letterforms feel measured and precise without being cold. Its slightly unconventional `g` and `R` give Plano a distinctive typographic identity that avoids the "generic SaaS" trap. Space Mono extends this identity into metadata, coordinates, and building IDs, reinforcing the technical/cataloguing personality.
+**Space Grotesk** was chosen over Inter or DM Sans because its geometric construction echoes architectural drafting — the letterforms feel measured and precise without being cold. Its slightly unconventional `g` and `R` give Plano a distinctive typographic identity that avoids the "generic SaaS" trap. Space Mono extends this identity into metadata, coordinates, and building IDs, reinforcing the technical/cataloguing personality. In the editorial feed, Space Grotesk is deployed at extreme scale — building names at 48–72px feel like posters, while category labels at 10px uppercase feel like editorial marginalia. The typeface works because it holds its geometry at both extremes.
 
-The **sharp radius** (2px default) is the single most important spatial decision. Rounded corners signal friendliness and consumer softness — Plano is neither. Sharp edges communicate precision, intentionality, and respect for the subject matter. The 2px value is not 0px (which can feel unfinished in a web context) but it is close enough to read as deliberately sharp.
+The **sharp radius** (2px default) is the single most important spatial decision. Rounded corners signal friendliness and consumer softness — Plano is neither. Sharp edges communicate precision, intentionality, and respect for the subject matter. The 2px value is not 0px (which can feel unfinished in a web context) but it is close enough to read as deliberately sharp. In the editorial feed, images and content blocks use 0px radius — true sharp edges, like printed photographs in a magazine.
 
-**Spacious density** with **flat shadows** means hierarchy comes from whitespace and borders, not from elevation stacking. This mirrors the way architecture photography is presented in galleries and monographs — generous margins, clear separation, nothing competing for attention. The result should feel closer to a curated exhibition catalogue than a typical SaaS dashboard.
+**Spacious density** with **flat shadows** means hierarchy comes from whitespace and typography, not from elevation stacking. This mirrors the way architecture photography is presented in galleries and monographs — generous margins, clear separation, nothing competing for attention. The result should feel closer to a curated exhibition catalogue than a typical SaaS dashboard.
+
+**Editorial feed philosophy:** The feed follows A24 Films' design language — white canvas, aggressive typographic hierarchy, zero decorative chrome. Content does not live inside card containers. Structure comes from the contrast between tiny uppercase labels and massive bold headlines, from generous whitespace between items, and from raw photography presented without borders or rounded corners. The feed should feel like flipping through an architecture magazine, not scrolling through a social media app. Every feed item earns its space through the quality of its typography and imagery, not through a containing box that says "I am a card."

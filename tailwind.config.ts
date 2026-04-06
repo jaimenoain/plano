@@ -19,6 +19,12 @@ export default {
         "2xs": ["0.625rem", { lineHeight: "0.875rem" }],
         /** 11px — uppercase status / meta beside tokens */
         "2xs-plus": ["0.6875rem", { lineHeight: "0.875rem" }],
+        /** 48px — editorial feed building names (hero cards) */
+        "5xl": ["3rem", { lineHeight: "3.25rem" }],
+        /** 60px — editorial hero headlines, landing hero */
+        "6xl": ["3.75rem", { lineHeight: "4rem" }],
+        /** 72px — editorial maximum, landing page hero text */
+        "7xl": ["4.5rem", { lineHeight: "4.75rem" }],
       },
       spacing: {
         /** 168px — collection feed mosaic tile (2×2 preview grid) */
