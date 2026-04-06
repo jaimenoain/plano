@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,10 @@ interface NearbyBuilding {
   dist_meters: number;
 }
 
+export const meta: MetaFunction = () => [
+  { title: "Edit Building | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function EditBuilding() {
   const { id } = useParams();

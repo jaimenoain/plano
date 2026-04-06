@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, type MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminBuilding } from "@/features/admin/types/admin_building";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -52,6 +52,11 @@ function toComparisonBuilding(b: BuildingComparisonRow): ComparisonBuilding {
       .filter((a): a is NonNullable<typeof a> => Boolean(a)) ?? [];
   return { ...b, architects } as ComparisonBuilding;
 }
+
+export const meta: MetaFunction = () => [
+  { title: "Merge Comparison | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function MergeComparison() {
     const { targetId, sourceId } = useParams();

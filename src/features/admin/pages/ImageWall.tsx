@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +21,8 @@ interface ImageItem {
   date: string;
   uniqueKey: string;
 }
+
+export const meta: MetaFunction = () => [{ title: "Image Wall | Plano" }];
 
 export default function ImageWall() {
   const [images, setImages] = useState<ImageItem[]>([]);

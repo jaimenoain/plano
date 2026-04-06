@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams, type MetaFunction } from "react-router";
 import { X, Circle, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +29,11 @@ type Visibility = "public" | "contacts" | "private";
 type PostType = "review" | "bucket_list";
 
 type PostBuildingDetails = NonNullable<Awaited<ReturnType<typeof fetchBuildingDetailsRpc>>>;
+
+export const meta: MetaFunction = () => [
+  { title: "Post | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function Post() {
   const [searchParams] = useSearchParams();

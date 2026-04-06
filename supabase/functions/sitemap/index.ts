@@ -36,13 +36,24 @@ Deno.serve(async (req) => {
   );
 
   try {
+    const { data: verifiedLinks } = await supabase
+      .from("profiles")
+      .select("verified_architect_id")
+      .not("verified_architect_id", "is", null);
+
+    const architectIdsWithProfile = new Set(
+      (verifiedLinks ?? [])
+        .map((row) => row.verified_architect_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    );
+
     const { data: buildings } = await supabase
       .from("buildings")
-      .select("short_id, slug, created_at")
+      .select("short_id, slug, updated_at")
       .eq("is_deleted", false)
       .not("slug", "is", null)
       .not("short_id", "is", null)
-      .order("created_at", { ascending: false })
+      .order("updated_at", { ascending: false })
       .limit(10000);
 
     const { data: architects } = await supabase
@@ -51,6 +62,8 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(5000);
 
+    // Public profile URLs (includes users with verified_architect_id — canonical is /profile/:username, not /architect/:id).
+    // No public.banned_users table: exclude banned usernames here if that table is added later.
     const { data: profiles } = await supabase
       .from("profiles")
       .select("username, updated_at")
@@ -80,7 +93,7 @@ Deno.serve(async (req) => {
 
     if (buildings) {
       for (const b of buildings) {
-        const lastmod = formatLastmod(b.created_at);
+        const lastmod = formatLastmod(b.updated_at);
         const loc = `${SITE_URL}/building/${b.short_id}/${b.slug}`;
         xml += `  <url>
     <loc>${escapeXml(loc)}</loc>${lastmod ? `
@@ -94,6 +107,7 @@ Deno.serve(async (req) => {
 
     if (architects) {
       for (const a of architects) {
+        if (architectIdsWithProfile.has(a.id)) continue;
         const lastmod = formatLastmod(a.created_at);
         const loc = `${SITE_URL}/architect/${a.id}`;
         xml += `  <url>

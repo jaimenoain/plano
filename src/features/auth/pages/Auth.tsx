@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router";
+import { useNavigate, useSearchParams, Link, type MetaFunction } from "react-router";
 import { Eye, EyeOff, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,11 @@ type Profile = {
   avatar_url: string | null;
   role?: string;
 };
+
+export const meta: MetaFunction = () => [
+  { title: "Sign In | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function Auth() {
   const [searchParams] = useSearchParams();

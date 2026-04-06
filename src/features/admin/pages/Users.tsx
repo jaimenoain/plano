@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -33,6 +34,8 @@ interface Profile {
   role: string | null;
   created_at: string;
 }
+
+export const meta: MetaFunction = () => [{ title: "Admin Users | Plano" }];
 
 export default function Users() {
   const [users, setUsers] = useState<Profile[]>([]);

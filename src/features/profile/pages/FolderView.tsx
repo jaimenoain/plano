@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, type MetaFunction } from "react-router";
 import { Loader2, ArrowLeft, Folder } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -7,8 +7,33 @@ import { Button } from "@/components/ui/button";
 import { CollectionCard } from "@/features/collections/components/CollectionCard";
 import { ManageFoldersDialog } from "@/features/profile/components/ManageFoldersDialog";
 import { UserFolder } from "@/features/collections/types";
-import { MetaHead } from "@/components/common/MetaHead";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { folderLoader } from "./FolderView.loader";
+
+export { folderLoader as loader };
+
+export const meta: MetaFunction<typeof folderLoader> = ({ data }) => {
+  if (!data) return [{ title: "Plano" }];
+  const { title, description, canonical, ogImage, isPublic } = data;
+  const tags = [
+    { title },
+    { name: "description", content: description },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:image", content: ogImage },
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: canonical },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: ogImage },
+    { tagName: "link", rel: "canonical", href: canonical },
+  ];
+  if (!isPublic) {
+    tags.push({ name: "robots", content: "noindex, nofollow" });
+  }
+  return tags;
+};
 
 interface Collection {
   id: string;
@@ -182,11 +207,6 @@ setError("Failed to load folder");
 
   return (
     <AppLayout title={folder.name} showLogo={false} showBack>
-       <MetaHead
-          title={`${folder.name} by ${username}`}
-          description={folder.description || `View ${folder.name} folder on Plano.`}
-       />
-
        <div className="max-w-4xl mx-auto px-4 py-6">
            {/* Header */}
            <div className="mb-8">

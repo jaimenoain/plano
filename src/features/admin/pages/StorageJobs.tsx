@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -26,6 +27,8 @@ interface DeletionJob {
   logs: string[] | null;
   bucket_name: string;
 }
+
+export const meta: MetaFunction = () => [{ title: "Storage Jobs | Plano" }];
 
 export default function StorageJobs() {
   const [jobs, setJobs] = useState<DeletionJob[]>([]);

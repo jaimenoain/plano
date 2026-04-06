@@ -1,6 +1,6 @@
 // Implements "Write Review" page with rating, text, and image upload
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, type MetaFunction } from "react-router";
 import {
   Circle,
   Upload,
@@ -63,6 +63,11 @@ interface VideoState {
   status: 'idle' | 'compressing' | 'uploading' | 'ready' | 'error';
   progress: number;
 }
+
+export const meta: MetaFunction = () => [
+  { title: "Write Review | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function WriteReview() {
   const { id } = useParams(); // buildingId

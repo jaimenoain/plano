@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +60,11 @@ const NOTIFICATION_QUERY = `
     building:buildings(name)
   )
 `;
+
+export const meta: MetaFunction = () => [
+  { title: "Notifications | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function Notifications() {
   const { user, loading: authLoading } = useAuth();

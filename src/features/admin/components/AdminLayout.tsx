@@ -1,6 +1,8 @@
-import { Outlet } from "react-router";
+import { Outlet, type MetaFunction } from "react-router";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
+
+export const meta: MetaFunction = () => [{ name: "robots", content: "noindex, nofollow" }];
 
 export default function AdminLayout() {
   return (

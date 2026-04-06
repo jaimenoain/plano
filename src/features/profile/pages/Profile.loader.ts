@@ -1,11 +1,15 @@
-import { data, type LoaderFunctionArgs } from "react-router";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 
 export async function profileLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   if (!params.username) {
-    // /profile with no username requires auth — no SSR needed
-    return data({ profile: null, styleBreakdown: [] }, { headers });
+    // /profile with no username requires auth — noindex for SSR; avoid caching shell
+    headers.set("Cache-Control", "private, no-store");
+    return data(
+      { profile: null, styleBreakdown: [], noIndex: true as const },
+      { headers },
+    );
   }
 
   const supabase = createSupabaseServerClient(request, headers);
@@ -35,6 +39,18 @@ export async function profileLoader({ request, params }: LoaderFunctionArgs) {
     throw new Response("Not found", { status: 404 });
   }
 
+  if (
+    isUuid &&
+    typeof profile.username === "string" &&
+    profile.username.trim().length > 0
+  ) {
+    headers.set("Cache-Control", "no-store");
+    throw redirect(`/profile/${profile.username.trim()}`, {
+      status: 301,
+      headers,
+    });
+  }
+
   // Fetch top 5 architectural styles for this user's visited buildings.
   // Joins user_buildings → building_styles → styles, grouped by style name.
   // NOTE: This requires a `building_styles` junction table and a `styles` table.
@@ -51,7 +67,9 @@ export async function profileLoader({ request, params }: LoaderFunctionArgs) {
     if (stylesData) {
       const counts = new Map<string, number>();
       for (const row of stylesData) {
-        const name = (row.style as any)?.name as string | undefined;
+        const style = row.style as { name?: string | null } | { name?: string | null }[] | null;
+        const styleObj = Array.isArray(style) ? style[0] : style;
+        const name = styleObj?.name ?? undefined;
         if (name) counts.set(name, (counts.get(name) || 0) + 1);
       }
       styleBreakdown = Array.from(counts.entries())

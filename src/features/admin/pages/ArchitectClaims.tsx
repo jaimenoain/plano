@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -40,6 +41,8 @@ interface Claim {
     type: string;
   };
 }
+
+export const meta: MetaFunction = () => [{ title: "Architect Claims | Plano" }];
 
 export default function ArchitectClaims() {
   const [claims, setClaims] = useState<Claim[]>([]);

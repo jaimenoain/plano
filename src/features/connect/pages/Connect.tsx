@@ -1,7 +1,13 @@
+import { type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PeopleYouMayKnow } from "@/features/connect/components/PeopleYouMayKnow";
 import { YourContacts } from "@/features/connect/components/YourContacts";
 import { cn } from "@/lib/utils";
+
+export const meta: MetaFunction = () => [
+  { title: "Connect | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function Connect() {
   return (

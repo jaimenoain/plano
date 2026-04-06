@@ -1,4 +1,4 @@
-import { data, type LoaderFunctionArgs } from "react-router";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { fetchBuildingDetails } from "@/utils/supabaseFallback";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -18,6 +18,20 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
       throw new Response("Not found", { status: 404 });
     }
     throw e;
+  }
+
+  const canonicalSlug =
+    typeof building.slug === "string" && building.slug.length > 0
+      ? building.slug
+      : null;
+  if (
+    canonicalSlug !== null &&
+    params.slug !== canonicalSlug
+  ) {
+    throw redirect(`/building/${params.id}/${canonicalSlug}`, {
+      status: 301,
+      headers,
+    });
   }
 
   let heroImageUrl: string | null = null;

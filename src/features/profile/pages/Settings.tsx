@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useLocation, type MetaFunction } from "react-router";
 import { ArrowLeft, Loader2, Upload, Lock, Mail, Smartphone, Download, Database, LayoutTemplate } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,11 @@ type UserBuildingExportRow = {
     | { name: string | null; year_completed: number | null }[]
     | null;
 };
+
+export const meta: MetaFunction = () => [
+  { title: "Settings | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth();

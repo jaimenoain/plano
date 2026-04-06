@@ -205,7 +205,12 @@ export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
 
   if (!data || !data.profile) {
     const fallback = usernameFromParams ?? "Profile";
-    return [{ title: `${fallback} | Plano` }];
+    return [
+      { title: `${fallback} | Plano` },
+      ...(data?.noIndex
+        ? ([{ name: "robots", content: "noindex, nofollow" }] as const)
+        : []),
+    ];
   }
 
   const { profile } = data as { profile: Profile | null };
@@ -472,11 +477,18 @@ export default function Profile() {
         if (data) {
           setUserPhotos(
             data
-              .map(img => ({
-                id: img.id,
-                url: getBuildingImageUrl(img.storage_path) || '',
-                building_name: (img.review as any)?.[0]?.building?.name || null,
-              }))
+              .map(img => {
+                const review = img.review as
+                  | { building?: { name?: string | null } | null }
+                  | { building?: { name?: string | null } | null }[]
+                  | null;
+                const row = Array.isArray(review) ? review[0] : review;
+                return {
+                  id: img.id,
+                  url: getBuildingImageUrl(img.storage_path) || '',
+                  building_name: row?.building?.name ?? null,
+                };
+              })
               .filter(img => img.url)
           );
         }
@@ -540,9 +552,20 @@ export default function Profile() {
       const userLikes = new Set(userLikesResult.data?.map(l => l.interaction_id));
       const userLikedImages = new Set(imageLikesResult.data?.map((l: { image_id: string }) => l.image_id));
 
-      const imagesByReviewId = new Map<string, any[]>();
+      type ProfileReviewImage = {
+        id: string;
+        url: string;
+        likes_count: number;
+        is_liked: boolean;
+      };
+      const imagesByReviewId = new Map<string, ProfileReviewImage[]>();
       imagesData?.forEach(img => {
-        const obj = { id: img.id, url: getBuildingImageUrl(img.storage_path), likes_count: img.likes_count || 0, is_liked: userLikedImages.has(img.id) };
+        const obj: ProfileReviewImage = {
+          id: img.id,
+          url: getBuildingImageUrl(img.storage_path) ?? "",
+          likes_count: img.likes_count || 0,
+          is_liked: userLikedImages.has(img.id),
+        };
         if (!imagesByReviewId.has(img.review_id)) imagesByReviewId.set(img.review_id, []);
         imagesByReviewId.get(img.review_id)!.push(obj);
       });
@@ -564,7 +587,7 @@ export default function Profile() {
         const imageLikes = itemImages.reduce((sum: number, img: { likes_count?: number }) => sum + (img.likes_count || 0), 0);
         return {
           id: item.id, content: item.content, rating: item.rating,
-          created_at: item.created_at, edited_at: item.edited_at, status: item.status,
+          created_at: item.created_at, edited_at: item.edited_at ?? null, status: item.status,
           user: { username: profile?.username || "Unknown", avatar_url: profile?.avatar_url || null },
           building: {
             id: item.building?.id || item.building_id, name: item.building?.name || "Unknown Building",
@@ -657,8 +680,6 @@ export default function Profile() {
     }
   };
 
-  const handleBuildingAdded = () => { fetchUserContent(0, true); fetchStats(); };
-
   const handleLike = async (reviewId: string) => {
     if (!currentUser) return;
     const item = content.find(r => r.id === reviewId);
@@ -668,18 +689,6 @@ export default function Profile() {
       if (item.is_liked) { await supabase.from("likes").delete().eq("interaction_id", reviewId).eq("user_id", currentUser.id); }
       else { await supabase.from("likes").insert({ interaction_id: reviewId, user_id: currentUser.id }); }
     } catch (_error) { void _error; }
-  };
-
-  const handleFollowToggle = async () => {
-    if (!currentUser || !targetUserId) return;
-    if (isFollowing) {
-      await supabase.from("follows").delete().eq("follower_id", currentUser.id).eq("following_id", targetUserId);
-      setStats(prev => ({ ...prev, followers: prev.followers - 1 }));
-    } else {
-      await supabase.from("follows").insert({ follower_id: currentUser.id, following_id: targetUserId });
-      setStats(prev => ({ ...prev, followers: prev.followers + 1 }));
-    }
-    setIsFollowing(!isFollowing);
   };
 
   const handleUpdate = async (id: string, updates: { status?: string; rating?: number | null; content?: string }) => {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, type MetaFunction } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -41,6 +41,11 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+export const meta: MetaFunction = () => [
+  { title: "Edit Architect | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function EditArchitect() {
   const { id } = useParams<{ id: string }>();

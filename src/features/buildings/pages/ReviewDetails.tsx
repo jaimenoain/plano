@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router";
+import { useParams, useNavigate, Link, type MetaFunction } from "react-router";
 import { Loader2, Trash2, Heart, Circle, MessageCircle, Pencil, MapPin, Send, ExternalLink, Calendar, Building2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,32 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { MetaHead } from "@/components/common/MetaHead";
 import NotFound from "@/pages/NotFound";
 import { getBuildingImageUrl } from "@/utils/image";
 import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
+import { reviewLoader } from "./ReviewDetails.loader";
+
+export { reviewLoader as loader };
+
+export const meta: MetaFunction<typeof reviewLoader> = ({ data }) => {
+  if (!data) return [{ title: "Plano" }];
+  const title = `${data.username} - ${data.buildingName}`;
+  const { description, ogImage, canonical } = data;
+  return [
+    { title },
+    { name: "description", content: description },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:image", content: ogImage },
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: canonical },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: ogImage },
+    { tagName: "link", rel: "canonical", href: canonical },
+  ];
+};
 
 interface FeedReview {
   id: string;
@@ -524,14 +546,6 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
 
   return (
     <>
-      <MetaHead
-        title={`${review.user.username} - ${review.building.name}`}
-        description={
-          review.content || `Check out ${review.user.username}'s visit to ${review.building.name}`
-        }
-        image={review.images.length > 0 ? review.images[0].url : undefined}
-      />
-
       <AppLayout title="Visit Log" showBack>
         <div className="max-w-2xl mx-auto px-4 py-6">
           <h1 className="text-4xl font-bold tracking-tight leading-tight text-text-primary mb-6">

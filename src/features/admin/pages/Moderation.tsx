@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { MetaFunction } from "react-router";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -34,6 +35,8 @@ interface EnrichedReport extends Report {
 type ReportQueryRow = Report & {
   reporter?: { username: string | null } | null;
 };
+
+export const meta: MetaFunction = () => [{ title: "Moderation | Plano" }];
 
 export default function Moderation() {
   const [reports, setReports] = useState<EnrichedReport[]>([]);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, type MetaFunction } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Lock } from "lucide-react";
 import { updatePasswordSchema } from "@/lib/validations/auth";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
+
+export const meta: MetaFunction = () => [
+  { title: "Update Password | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState("");

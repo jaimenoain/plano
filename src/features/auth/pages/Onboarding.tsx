@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, type MetaFunction } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { resizeImage } from "@/lib/image-compression";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
+
+export const meta: MetaFunction = () => [
+  { title: "Welcome to Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function Onboarding() {
   const { user, loading: authLoading } = useAuth();

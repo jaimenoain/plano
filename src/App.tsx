@@ -10,6 +10,7 @@ import Index from "@/features/feed/pages/Index";
 import Auth from "@/features/auth/pages/Auth";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import AdminSystemPlaceholder from "./pages/AdminSystemPlaceholder";
 
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { RouteLoadingFallback } from "@/components/common/RouteLoadingFallback";
@@ -112,7 +113,7 @@ const router = createBrowserRouter(
         <Route path="/admin/claims" element={<ArchitectClaims />} />
         {/* Storage management tool */}
         <Route path="/admin/storage-jobs" element={<StorageJobs />} />
-        <Route path="/admin/system" element={<div>System (Coming Soon)</div>} />
+        <Route path="/admin/system" element={<AdminSystemPlaceholder />} />
       </Route>
 
       {/* Main App Routes (Wrapped in Sidebar) */}

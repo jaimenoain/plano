@@ -1,9 +1,13 @@
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router";
-import { MetaHead } from "@/components/common/MetaHead";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { ArrowLeft, Home } from "lucide-react";
+
+export const meta: MetaFunction = () => [
+  { title: "Page Not Found | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 const ScopeReductionGraphic = () => (
   <div className="w-full max-w-[320px] aspect-[4/3] mx-auto relative mb-8">
@@ -81,7 +85,6 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-surface-default flex flex-col">
-      <MetaHead title="404: Scope Reduction" />
       <div className="md:hidden">
         <Header showLogo={true} />
       </div>

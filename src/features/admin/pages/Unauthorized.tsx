@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import { ShieldAlert } from "lucide-react";
+
+export const meta: MetaFunction = () => [
+  { title: "Admin Unauthorized | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function Unauthorized() {
   return (

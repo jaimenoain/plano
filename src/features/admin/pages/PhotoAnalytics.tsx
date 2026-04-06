@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import type { MetaFunction } from "react-router";
 import { fetchPhotoHeatmapData } from "@/features/admin/api/admin";
 import { HeatmapPoint } from "@/features/admin/types/admin";
 import { PhotoHeatmapZone } from "@/features/admin/components/PhotoHeatmapZone";
 import { NoPhotosMapZone } from "@/features/admin/components/NoPhotosMapZone";
 import { BottomNav } from "@/components/layout/BottomNav";
+
+export const meta: MetaFunction = () => [{ title: "Photo Analytics | Plano" }];
 
 export default function PhotoAnalytics() {
   const [heatmapData, setHeatmapData] = useState<HeatmapPoint[] | null>(null);

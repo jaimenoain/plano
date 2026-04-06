@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ColdStartFeed } from "../components/ColdStartFeed";
 import { FeedCollectionCard } from "../components/FeedCollectionCard";
@@ -13,7 +13,7 @@ import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { MetaHead } from "@/components/common/MetaHead";
+import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import {
   aggregateFeed,
   type AggregatedFeedItem,
@@ -31,6 +31,27 @@ import { useFeed } from "../hooks/useFeed";
 import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { useCollectionsFeed } from "../hooks/useCollectionsFeed";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
+
+const INDEX_TITLE = "Plano — The world's architecture, cataloged.";
+const INDEX_DESCRIPTION =
+  "Track your architecture visits, rate buildings, and discover what friends are exploring.";
+const INDEX_CANONICAL = `${SITE_URL}/`;
+const INDEX_OG_IMAGE = `${SITE_URL}/cover.jpg`;
+
+export const meta: MetaFunction = () => [
+  { title: INDEX_TITLE },
+  { name: "description", content: INDEX_DESCRIPTION },
+  { property: "og:title", content: INDEX_TITLE },
+  { property: "og:description", content: INDEX_DESCRIPTION },
+  { property: "og:image", content: INDEX_OG_IMAGE },
+  { property: "og:type", content: "website" },
+  { property: "og:url", content: INDEX_CANONICAL },
+  { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: INDEX_TITLE },
+  { name: "twitter:description", content: INDEX_DESCRIPTION },
+  { name: "twitter:image", content: INDEX_OG_IMAGE },
+  { tagName: "link", rel: "canonical", href: INDEX_CANONICAL },
+];
 
 // --- Shared sidebar rendered in both the cold-start and active feed layouts ---
 function FeedSidebar() {
@@ -245,7 +266,6 @@ export default function Index() {
 
   return (
     <AppLayout variant="home">
-      <MetaHead title="Home" />
       {socialFeed.isLoading ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />

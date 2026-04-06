@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminBuilding } from "@/features/admin/types/admin_building";
 import {
@@ -34,6 +35,8 @@ import { toast } from "sonner";
 import { parseLocation } from "@/utils/location";
 import type { Architect as ArchitectOption } from "@/components/ui/architect-select";
 import { cn } from "@/lib/utils";
+
+export const meta: MetaFunction = () => [{ title: "Admin Buildings | Plano" }];
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState<AdminBuilding[]>([]);

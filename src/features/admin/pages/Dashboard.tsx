@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { MetaFunction } from "react-router";
 import { fetchAdminDashboardStats } from "@/features/admin/api/admin";
 import { DashboardStats } from "@/features/admin/types/admin";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -10,6 +11,8 @@ import { RetentionZone } from "@/features/admin/components/RetentionZone";
 import { SessionDiagnosticZone } from "@/features/admin/components/SessionDiagnosticZone";
 import { NotificationIntelligenceZone } from "@/features/admin/components/NotificationIntelligenceZone";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export const meta: MetaFunction = () => [{ title: "Admin | Plano" }];
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);

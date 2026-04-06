@@ -10,7 +10,7 @@ import { Loader2, MapPin, ArrowRight, Building2, Layers } from "lucide-react";
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams, type MetaFunction } from "react-router";
 import { toast } from "sonner";
 import { AddBuildingDetails } from "../components/AddBuildingDetails";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +93,11 @@ interface NearbyBuilding {
 
   main_image_url?: string | null;
 }
+
+export const meta: MetaFunction = () => [
+  { title: "Add Building | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function AddBuilding() {
   const [step, setStep] = useState<1 | 2 | null>(1);

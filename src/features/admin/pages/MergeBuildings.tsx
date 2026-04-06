@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminBuilding } from "@/features/admin/types/admin_building";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+export const meta: MetaFunction = () => [
+  { title: "Merge Buildings | Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 type PotentialDuplicate = {
   id1: string;

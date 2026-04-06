@@ -12,7 +12,7 @@ import {
   Loader2, MapPin, Send,
   Check, Bookmark, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle, Search,
-  EyeOff, ImagePlus, Plus, Trash2, Link as LinkIcon, Users, X,
+  EyeOff, ImagePlus, Plus, Users, X,
   Pencil, BadgeCheck
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,6 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -44,7 +43,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
-import { PersonalRatingButton } from "../components/PersonalRatingButton";
 import { UserPicker } from "@/components/common/UserPicker";
 import { parseLocation } from "@/utils/location";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -274,7 +272,7 @@ export default function BuildingDetails() {
   const [topLinks, setTopLinks] = useState<TopLink[]>([]);
   const [likedLinkIds, setLikedLinkIds] = useState<Set<string>>(new Set());
   const [linksLoading, setLinksLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
+  const [, setIsEditing] = useState(false);
   const [_socialContext, setSocialContext] = useState<string | null>(null);
   const [isOfficialEditing, setIsOfficialEditing] = useState(false);
   const [verifiedClaims, setVerifiedClaims] = useState<string[]>([]);
@@ -300,7 +298,7 @@ export default function BuildingDetails() {
   const [note, setNote] = useState("");
   const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
   const [initialCollectionIds, setInitialCollectionIds] = useState<string[]>([]);
-  const [showNoteEditor, setShowNoteEditor] = useState(false);
+  const [, setShowNoteEditor] = useState(false);
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [deleteWarningMessage, setDeleteWarningMessage] = useState("");
@@ -554,7 +552,11 @@ export default function BuildingDetails() {
     if (!user) { toast({ title: "Please sign in to like links" }); return; }
     const isLiked = likedLinkIds.has(linkId);
     const newLiked = new Set(likedLinkIds);
-    isLiked ? newLiked.delete(linkId) : newLiked.add(linkId);
+    if (isLiked) {
+      newLiked.delete(linkId);
+    } else {
+      newLiked.add(linkId);
+    }
     setLikedLinkIds(newLiked);
     setTopLinks(prev => prev.map(l => l.link_id === linkId ? { ...l, like_count: l.like_count + (isLiked ? -1 : 1) } : l));
     try {
@@ -1040,6 +1042,37 @@ export default function BuildingDetails() {
                   <input id="hidden-file-input" type="file" multiple accept="image/*" className="hidden" onChange={handleImageSelect} aria-label="Upload photos of this building" />
                 </div>
 
+                {pendingImages.length > 0 && user && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {pendingImages.map((img) => (
+                      <div key={img.id} className="relative h-16 w-16 shrink-0 border border-border-default bg-surface-muted">
+                        <img src={img.preview} alt="" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          className="absolute right-0 top-0 flex h-6 w-6 items-center justify-center rounded-bl-sm bg-surface-overlay text-text-primary hover:bg-surface-muted"
+                          onClick={() => removePendingImage(img.id)}
+                          aria-label="Remove pending photo"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="h-8 gap-2 text-xs"
+                      disabled={isSavingNote}
+                      onClick={() => {
+                        void handleSaveNote();
+                      }}
+                    >
+                      {isSavingNote ? <Loader2 className="h-3 w-3 shrink-0 animate-spin" /> : null}
+                      <span>Save photos to profile</span>
+                    </Button>
+                  </div>
+                )}
+
                 <WidgetErrorBoundary>
                   {displayImages.length > 0 ? renderGallery() : (
                     <div className="aspect-[16/9] border border-border-default flex flex-col items-center justify-center text-text-secondary text-center p-6 bg-surface-muted/30">
@@ -1226,15 +1259,25 @@ export default function BuildingDetails() {
                     )}
                   </div>
 
-                  {showCollections && (
+                  {showCollections && user && (
                     <div className="pt-3 border-t border-border-default">
-                      <CollectionSelector selectedIds={selectedCollectionIds} onSelectionChange={setSelectedCollectionIds} initialSelectedIds={initialCollectionIds} />
+                      <CollectionSelector
+                        userId={user.id}
+                        selectedCollectionIds={selectedCollectionIds}
+                        onChange={setSelectedCollectionIds}
+                      />
                     </div>
                   )}
 
                   {showVisitWith && user && (
                     <div className="pt-3 border-t border-border-default space-y-3">
-                      <UserPicker selectedUserIds={selectedFriends} onSelectionChange={setSelectedFriends} label="Invite friends" />
+                      <UserPicker
+                        selectedIds={selectedFriends}
+                        onSelect={(id) =>
+                          setSelectedFriends((prev) => (prev.includes(id) ? prev : [...prev, id]))
+                        }
+                        onRemove={(id) => setSelectedFriends((prev) => prev.filter((x) => x !== id))}
+                      />
                       {selectedFriends.length > 0 && (
                         <Button className="w-full" size="sm" onClick={handleSendInvites} disabled={sendingInvites}>
                           {sendingInvites ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
@@ -1314,9 +1357,43 @@ export default function BuildingDetails() {
                       })}
                       {showLinkEditor && user && (
                         <div className="p-4 border-t border-border-default space-y-2">
+                          {userLinks.length > 0 && (
+                            <ul className="space-y-1.5 text-sm text-text-secondary">
+                              {userLinks.map((l) => (
+                                <li key={l.id} className="flex items-center gap-2">
+                                  <span className="min-w-0 flex-1 truncate">{l.title || l.url}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 shrink-0 px-2"
+                                    onClick={() => handleRemoveLink(l.id)}
+                                    aria-label="Remove link"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </Button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                           <Input placeholder="URL" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="h-8 text-sm" />
                           <Input placeholder="Title (optional)" value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} className="h-8 text-sm" />
                           <Button size="sm" onClick={handleAddLink} className="w-full h-8">Add Link</Button>
+                          {(userLinks.length > 0 || selectedCollectionIds.length !== initialCollectionIds.length) && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              className="w-full h-8"
+                              disabled={isSavingNote}
+                              onClick={() => {
+                                void handleSaveNote();
+                              }}
+                            >
+                              {isSavingNote ? <Loader2 className="h-3 w-3 mr-2 animate-spin" /> : null}
+                              Save links & collections
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>

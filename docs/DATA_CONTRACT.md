@@ -329,6 +329,7 @@ CREATE TABLE public.buildings (
   merged_into_id        uuid,
   created_by            uuid,
   created_at            timestamptz DEFAULT now(),
+  updated_at            timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT buildings_pkey PRIMARY KEY (id),
   CONSTRAINT buildings_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
