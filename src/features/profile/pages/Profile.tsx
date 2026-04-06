@@ -821,9 +821,9 @@ export default function Profile() {
             <div className="flex items-start gap-4 py-5 flex-wrap sm:flex-nowrap">
 
               {/* Avatar */}
-              <Avatar className="w-[60px] h-[60px] sm:w-[72px] sm:h-[72px] border-2 border-brand-primary shrink-0 mt-0.5">
+              <Avatar className="w-[60px] h-[60px] sm:w-[72px] sm:h-[72px] shrink-0 mt-0.5">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-neutral-900 text-brand-primary font-bold text-2xl">
+                <AvatarFallback className="bg-surface-muted text-text-primary font-bold text-2xl">
                   {profile?.username?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -831,12 +831,11 @@ export default function Profile() {
               <div className="flex-1 min-w-0">
                 {/* Name + badges */}
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h1 className="text-lg font-semibold tracking-tight text-text-primary leading-tight">
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text-primary leading-tight">
                     {profile?.username}
                   </h1>
                   {verifiedArchitectId && (
-                    <span className="inline-flex items-center gap-1 bg-brand-primary text-brand-primary-foreground text-[10px] font-bold tracking-[.07em] uppercase px-2 py-0.5 leading-none">
-                      <BadgeCheck className="w-3 h-3" />
+                    <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
                       Architect
                     </span>
                   )}
@@ -863,7 +862,7 @@ export default function Profile() {
                       onClick={stat.action}
                       className={`pr-4 hover:opacity-70 transition-opacity cursor-pointer text-left group ${i > 0 ? 'pl-4 border-l border-border-default' : ''}`}
                     >
-                      <div className="text-base font-semibold text-text-primary leading-tight group-hover:text-brand-primary transition-colors">{stat.value}</div>
+                      <div className="text-base font-semibold text-text-primary leading-tight">{stat.value}</div>
                       <div className="text-[11px] text-text-secondary uppercase tracking-[.06em] mt-0.5">{stat.label}</div>
                     </button>
                   ))}
@@ -871,15 +870,15 @@ export default function Profile() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 items-start shrink-0 pt-1">
+              <div className="flex gap-3 items-start shrink-0 pt-1">
                 {isOwnProfile ? (
                   <>
-                    <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
-                      <Link to="/settings"><Settings className="w-3.5 h-3.5 mr-1.5" />Settings</Link>
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs text-text-secondary" onClick={handleSignOut}>
+                    <Link to="/settings" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
+                      Settings
+                    </Link>
+                    <button type="button" onClick={handleSignOut} className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors">
                       <LogOut className="w-3.5 h-3.5" />
-                    </Button>
+                    </button>
                   </>
                 ) : (
                   targetUserId && (
@@ -899,10 +898,10 @@ export default function Profile() {
                 <button
                   key={tab.key}
                   onClick={() => handleSectionChange(tab.key)}
-                  className={`px-4 py-2.5 text-[13px] border-b-2 transition-colors whitespace-nowrap ${
+                  className={`px-4 py-2.5 text-xs font-medium uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap ${
                     activeSection === tab.key
-                      ? 'border-brand-primary text-brand-primary font-medium'
-                      : 'border-transparent text-text-secondary hover:text-text-primary'
+                      ? 'border-text-primary text-text-primary'
+                      : 'border-transparent text-text-disabled hover:text-text-primary'
                   }`}
                 >
                   {tab.label}
@@ -913,11 +912,11 @@ export default function Profile() {
         </div>
 
         {/* ── BODY ── */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_232px] gap-0 items-start">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div>
 
-            {/* ── LEFT: main tab content ── */}
-            <div className="min-h-[60vh] border-r border-border-default py-6 pr-0 lg:pr-8">
+            {/* ── Main tab content ── */}
+            <div className="min-h-[60vh] py-6">
 
               {/* ── PORTFOLIO TAB ── */}
               {activeSection === 'portfolio' && verifiedArchitectId && (
@@ -937,13 +936,13 @@ export default function Profile() {
                       onValueChange={handleFilterChange}
                       className="justify-start"
                     >
-                      <ToggleGroupItem value="all" className="px-3 py-1.5 text-xs font-medium data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground">
+                      <ToggleGroupItem value="all" className="px-3 py-1.5 text-xs font-medium data-[state=on]:bg-text-primary data-[state=on]:text-surface-default">
                         All ({stats.reviews + stats.pending})
                       </ToggleGroupItem>
-                      <ToggleGroupItem value="visited" className="px-3 py-1.5 text-xs font-medium data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground">
+                      <ToggleGroupItem value="visited" className="px-3 py-1.5 text-xs font-medium data-[state=on]:bg-text-primary data-[state=on]:text-surface-default">
                         Visited ({stats.reviews})
                       </ToggleGroupItem>
-                      <ToggleGroupItem value="pending" className="px-3 py-1.5 text-xs font-medium data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground">
+                      <ToggleGroupItem value="pending" className="px-3 py-1.5 text-xs font-medium data-[state=on]:bg-text-primary data-[state=on]:text-surface-default">
                         Saved ({stats.pending})
                       </ToggleGroupItem>
                     </ToggleGroup>
@@ -1131,23 +1130,23 @@ export default function Profile() {
                 <div className="max-w-sm space-y-6">
                   {profile?.bio && (
                     <div>
-                      <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-2">Bio</p>
+                      <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">Bio</p>
                       <p className="text-sm text-text-primary leading-relaxed">{profile.bio}</p>
                     </div>
                   )}
 
                   {verifiedArchitectId && (
                     <div>
-                      <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-2">Role</p>
+                      <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">Role</p>
                       <div className="flex items-center gap-1.5 text-sm text-text-primary">
-                        <BadgeCheck className="w-4 h-4 text-brand-primary" />
+                        <BadgeCheck className="w-4 h-4 text-text-primary" />
                         Verified architect on Plano
                       </div>
                     </div>
                   )}
 
                   <div>
-                    <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-3">Connections</p>
+                    <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-3">Connections</p>
                     <div className="flex gap-6">
                       <button onClick={() => openUserList('followers')} className="text-left hover:opacity-70 transition-opacity">
                         <div className="text-lg font-semibold text-text-primary">{stats.followers}</div>
@@ -1162,7 +1161,7 @@ export default function Profile() {
 
                   {squad.length > 0 && isOwnProfile && (
                     <div>
-                      <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-3">Following</p>
+                      <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-3">Following</p>
                       <div className="flex gap-3 flex-wrap">
                         {squad.map(member => (
                           <Link key={member.id} to={`/profile/${member.username}`} className="flex flex-col items-center gap-1.5 hover:opacity-70 transition-opacity w-14">
@@ -1179,58 +1178,6 @@ export default function Profile() {
                 </div>
               )}
 
-            </div>
-
-            {/* ── RIGHT: persistent sidebar ── */}
-            <div className="hidden lg:flex flex-col gap-6 lg:sticky lg:top-[calc(64px+120px)] lg:self-start pl-6 py-6">
-
-              {/* Social context — other profiles only */}
-              {!isOwnProfile && (profileComparison.mutualAffinityUsers?.length > 0 || profileComparison.commonFollowers?.count > 0) && (
-                <div>
-                  <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-3">In common</p>
-                  <SocialContextSection
-                    mutualAffinityUsers={profileComparison.mutualAffinityUsers}
-                    commonFollowers={profileComparison.commonFollowers}
-                  />
-                </div>
-              )}
-
-              {/* Highlights — all profiles */}
-              {(favorites.filter(f => f.type !== 'building' && f.type !== undefined).length > 0 || isOwnProfile) && (
-                <div>
-                  <ProfileHighlights
-                    favorites={favorites}
-                    isOwnProfile={isOwnProfile}
-                    onManage={() => navigate('/settings#highlights')}
-                  />
-                </div>
-              )}
-
-              {/* Favorite buildings — all profiles */}
-              {(buildingFavorites.length > 0 || isOwnProfile) && (
-                <FavoritesSection
-                  favorites={buildingFavorites}
-                  isOwnProfile={isOwnProfile}
-                  onManage={() => navigate('/settings#favorites')}
-                />
-              )}
-
-              {/* Own profile: squad preview */}
-              {isOwnProfile && squad.length > 0 && (
-                <div className="border-t border-border-default pt-5">
-                  <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-3">Following</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {squad.map(member => (
-                      <Link key={member.id} to={`/profile/${member.username}`} className="hover:opacity-70 transition-opacity">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={member.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs">{member.username?.[0]?.toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
           </div>

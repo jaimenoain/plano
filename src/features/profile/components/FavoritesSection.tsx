@@ -1,5 +1,3 @@
-import { Heart, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router";
 import { FavoriteItem } from "./types";
@@ -50,21 +48,20 @@ export function FavoritesSection({ favorites, isOwnProfile, onManage }: Favorite
 
     return (
       <div className="px-4 py-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Heart className="h-4 w-4 text-brand-primary fill-brand-primary" />
-          <h3 className="text-sm font-semibold text-text-primary">All-time Favourites</h3>
+        <div className="flex items-center justify-between border-t border-border-default pt-4 mb-4">
+          <h3 className="text-xs font-medium tracking-widest uppercase text-text-secondary">All-time Favourites</h3>
         </div>
         <button
           type="button"
           onClick={onManage}
-          className="w-full border-2 border-dashed border-border-default/50 rounded-sm p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-surface-muted/20 transition-colors group"
+          className="w-full border border-dashed border-border-default p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-surface-muted/20 transition-colors group"
         >
-          <div className="w-12 h-12 bg-surface-muted/30 rounded-sm flex items-center justify-center mb-3 group-hover:bg-brand-primary/20 transition-colors">
-            <Plus className="h-6 w-6 text-text-secondary group-hover:text-brand-primary transition-colors" />
-          </div>
-          <p className="text-text-secondary font-medium group-hover:text-text-primary transition-colors">
-            Add here your top 6 favourite buildings
+          <p className="text-text-secondary group-hover:text-text-primary transition-colors">
+            Add your top 6 favourite buildings
           </p>
+          <span className="mt-2 text-xs font-medium uppercase tracking-widest text-text-disabled group-hover:text-text-secondary transition-colors">
+            Add favourites →
+          </span>
         </button>
       </div>
     );
@@ -80,15 +77,12 @@ export function FavoritesSection({ favorites, isOwnProfile, onManage }: Favorite
 
   return (
     <div className="px-4 py-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Heart className="h-4 w-4 text-brand-primary fill-brand-primary" />
-          <h3 className="text-sm font-semibold text-text-primary">All-time Favourites</h3>
-        </div>
+      <div className="flex items-center justify-between border-t border-border-default pt-4 mb-4">
+        <h3 className="text-xs font-medium tracking-widest uppercase text-text-secondary">All-time Favourites</h3>
         {isOwnProfile && (
-           <Button variant="ghost" size="sm" onClick={onManage} className="text-xs h-auto p-0 text-text-secondary hover:text-brand-primary">
-             Edit
-           </Button>
+           <button onClick={onManage} className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
+             Edit →
+           </button>
         )}
       </div>
 

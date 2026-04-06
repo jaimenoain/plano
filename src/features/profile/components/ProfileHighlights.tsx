@@ -1,7 +1,5 @@
 import { FavoriteItem } from "./types";
-import { Card } from "@/components/ui/card";
-import { Quote, User, Building2, Plus, Pencil } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { User, Building2 } from "lucide-react";
 
 interface ProfileHighlightsProps {
   favorites: FavoriteItem[];
@@ -23,16 +21,14 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
 
   return (
     <div className="space-y-6 px-4 mb-8">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-wide text-text-secondary flex items-center gap-2">
-          <span className="h-6 w-1 bg-brand-primary rounded-sm" />
+      <div className="flex items-center justify-between border-t border-border-default pt-4">
+        <h3 className="text-xs font-medium tracking-widest uppercase text-text-secondary">
           Highlights
         </h3>
         {isOwnProfile && (
-            <Button variant="ghost" size="sm" onClick={onManage} className="h-6 text-xs gap-1.5">
-                {genres.length + people.length + quotes.length === 0 ? <Plus className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
-                {genres.length + people.length + quotes.length === 0 ? "Add Highlights" : "Edit"}
-            </Button>
+            <button onClick={onManage} className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
+                {genres.length + people.length + quotes.length === 0 ? "Add →" : "Edit →"}
+            </button>
         )}
       </div>
 
@@ -41,40 +37,39 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
 
           {showGenres && (
              <div className="space-y-2">
-                 <h4 className="text-xs font-semibold text-text-secondary/80 pl-1">Favorite Styles</h4>
+                 <h4 className="text-2xs font-medium tracking-widest uppercase text-text-disabled">Favorite Styles</h4>
                  {genres.length > 0 ? (
                      <div className="flex flex-wrap gap-2">
                         {genres.map(g => (
                             <div
                               key={g.id}
-                              className="bg-surface-muted border border-border-default px-3 py-1 rounded-sm text-sm font-medium flex items-center gap-2"
+                              className="px-3 py-1 text-sm font-medium flex items-center gap-2 text-text-secondary"
                             >
-                                <Building2 className="h-3 w-3 text-text-secondary" />
+                                <Building2 className="h-3 w-3 text-text-disabled" />
                                 {g.title}
                             </div>
                         ))}
                      </div>
                  ) : (
-                     <div className="text-sm text-text-secondary italic pl-1">No styles selected</div>
+                     <div className="text-sm text-text-disabled">No styles selected</div>
                  )}
              </div>
           )}
 
           {(quotes.length > 0) && (
              <div className="space-y-2">
-                 <h4 className="text-xs font-semibold text-text-secondary/80 pl-1">Favorite Quotes</h4>
+                 <h4 className="text-2xs font-medium tracking-widest uppercase text-text-disabled">Favorite Quotes</h4>
                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
                     {quotes.map((q, i) => (
-                        <Card
+                        <div
                           key={i}
-                          className="min-w-[260px] max-w-[300px] p-4 bg-surface-card border border-border-default rounded-sm shadow-none snap-start"
+                          className="min-w-[260px] max-w-[300px] border-l-[3px] border-text-primary pl-4 py-2 snap-start"
                         >
-                             <Quote className="h-4 w-4 text-brand-primary/50 mb-2" />
-                             <p className="text-sm font-medium italic mb-3 line-clamp-4">"{q.title}"</p>
+                             <p className="text-sm font-medium mb-3 line-clamp-4 text-text-secondary">"{q.title}"</p>
                              {q.quote_source && (
-                                 <p className="text-xs text-text-secondary text-right">— {q.quote_source}</p>
+                                 <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled">— {q.quote_source}</p>
                              )}
-                        </Card>
+                        </div>
                     ))}
                  </div>
              </div>
@@ -82,15 +77,15 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
 
           {showPeople && (
              <div className="space-y-2">
-                 <h4 className="text-xs font-semibold text-text-secondary/80 pl-1">Favorite Architects</h4>
+                 <h4 className="text-2xs font-medium tracking-widest uppercase text-text-disabled">Favorite Architects</h4>
                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
                     {people.map(p => (
                         <div key={p.id} className="flex flex-col items-center gap-2 w-20 shrink-0 snap-start">
-                             <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-border-default/50 shadow-sm bg-surface-muted">
+                             <div className="h-20 w-20 overflow-hidden bg-surface-muted">
                                  {p.image_url ? (
                                      <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
                                  ) : (
-                                     <div className="w-full h-full flex items-center justify-center bg-surface-muted"><User className="h-8 w-8 text-text-secondary/50" /></div>
+                                     <div className="w-full h-full flex items-center justify-center bg-surface-muted"><User className="h-8 w-8 text-text-disabled" /></div>
                                  )}
                              </div>
                              <span className="text-xs text-center font-medium leading-tight line-clamp-2">{p.title}</span>

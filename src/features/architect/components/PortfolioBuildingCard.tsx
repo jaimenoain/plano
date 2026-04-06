@@ -3,8 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Clock, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Architect } from "@/features/architect/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -91,56 +90,47 @@ export function PortfolioBuildingCard({ building, hideBucketListButton }: Portfo
   };
 
   return (
-    <div className="group relative flex flex-col space-y-2">
+    <div className="group relative flex flex-col bg-surface-default">
       <Link
         to={linkUrl}
-        className="relative aspect-[4/3] overflow-hidden rounded-xl bg-surface-muted transition-all hover:scale-[1.02] hover:ring-2 hover:ring-brand-primary/50 shadow-none"
+        className="relative aspect-[4/3] overflow-hidden bg-surface-muted"
       >
         <img
           src={imageUrl}
           alt={building.name}
-          className="h-full w-full object-cover transition-all"
+          className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-90"
           loading="lazy"
         />
+      </Link>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover:opacity-40" />
-
-        {!hideBucketListButton && (
-          <div className="absolute top-2 right-2 z-10">
-            <Button
-              size="icon"
-              variant={isInWatchlist ? "secondary" : "default"}
-              className={`h-8 w-8 rounded-full shadow-lg transition-all ${
-                isInWatchlist
-                  ? "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"
-                  : "bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm"
-              }`}
-              onClick={handleToggleWatchlist}
-              disabled={isMutating}
-            >
-              {isMutating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isInWatchlist ? (
-                <Clock className="h-4 w-4" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
-              <span className="sr-only">
-                {isInWatchlist ? "Remove from bucket list" : "Add to bucket list"}
-              </span>
-            </Button>
-          </div>
-        )}
-
-        <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-          <h3 className="font-semibold leading-tight line-clamp-2 text-sm md:text-base drop-shadow-md">{building.name}</h3>
-          <div className="flex items-center gap-2 text-xs text-white/80 mt-1">
+      <div className="px-1 py-3 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <Link to={linkUrl}>
+            <h3 className="text-sm font-semibold leading-tight line-clamp-2 text-text-primary">{building.name}</h3>
+          </Link>
+          <div className="flex items-center gap-1.5 text-2xs text-text-secondary mt-1">
             {building.architects && building.architects.length > 0 && <span>{building.architects[0].name}</span>}
-            {building.architects && building.architects.length > 0 && building.year_completed && <span>•</span>}
+            {building.architects && building.architects.length > 0 && building.year_completed && <span>·</span>}
             {building.year_completed && <span>{building.year_completed}</span>}
           </div>
         </div>
-      </Link>
+
+        {!hideBucketListButton && (
+          <button
+            onClick={handleToggleWatchlist}
+            disabled={isMutating}
+            className="shrink-0 mt-0.5 text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+          >
+            {isMutating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : isInWatchlist ? (
+              "Saved"
+            ) : (
+              "Save"
+            )}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

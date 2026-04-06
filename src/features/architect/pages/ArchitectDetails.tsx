@@ -243,9 +243,9 @@ export default function ArchitectDetails() {
             <div className="flex items-start gap-4 py-5 flex-wrap sm:flex-nowrap">
 
               {/* Avatar — uses first building image as placeholder */}
-              <Avatar className="w-[60px] h-[60px] sm:w-[72px] sm:h-[72px] border-2 border-brand-primary shrink-0 mt-0.5">
+              <Avatar className="w-[60px] h-[60px] sm:w-[72px] sm:h-[72px] shrink-0 mt-0.5">
                 <AvatarImage src={avatarSrc} className="object-cover" />
-                <AvatarFallback className="bg-neutral-900 text-brand-primary font-bold text-2xl">
+                <AvatarFallback className="bg-surface-muted text-text-primary font-bold text-2xl">
                   {architect.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -253,11 +253,11 @@ export default function ArchitectDetails() {
               <div className="flex-1 min-w-0">
                 {/* Name + verified badge */}
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h1 className="text-lg font-semibold tracking-tight text-text-primary leading-tight">
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text-primary leading-tight">
                     {architect.name}
                   </h1>
                   {claimStatus.is_verified && (
-                    <span className="inline-flex items-center gap-1 bg-brand-primary text-brand-primary-foreground text-[10px] font-bold tracking-[.07em] uppercase px-2 py-0.5 leading-none">
+                    <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary inline-flex items-center gap-1">
                       <BadgeCheck className="w-3 h-3" />
                       Verified
                     </span>
@@ -280,7 +280,7 @@ export default function ArchitectDetails() {
                       href={architect.website_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 hover:text-brand-primary transition-colors"
+                      className="flex items-center gap-1 hover:text-text-primary transition-colors"
                     >
                       <Globe className="w-3 h-3" />
                       Website
@@ -288,7 +288,7 @@ export default function ArchitectDetails() {
                   )}
                 </div>
 
-                {/* Stats row — same pattern as Profile, but architect stats */}
+                {/* Stats row */}
                 <div className="flex items-stretch gap-0 flex-wrap text-left">
                   <div className="pr-4 text-left">
                     <div className="text-base font-semibold text-text-primary leading-tight">
@@ -314,40 +314,37 @@ export default function ArchitectDetails() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 items-start shrink-0 pt-1 flex-wrap">
-                <Button variant="secondary" size="sm" asChild className="h-8 text-xs">
-                  <Link
-                    to={`/search?filters=${encodeURIComponent(
-                      JSON.stringify({ query: architect.name })
-                    )}`}
-                  >
-                    <MapIcon className="h-3.5 w-3.5 mr-1.5" />
-                    Map
-                  </Link>
-                </Button>
+              <div className="flex gap-3 items-start shrink-0 pt-1 flex-wrap">
+                <Link
+                  to={`/search?filters=${encodeURIComponent(
+                    JSON.stringify({ query: architect.name })
+                  )}`}
+                  className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors inline-flex items-center gap-1"
+                >
+                  <MapIcon className="h-3.5 w-3.5" />
+                  Map
+                </Link>
 
                 {user && !claimStatus.is_verified && claimStatus.my_claim_status !== "pending" && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="h-8 px-4 text-xs font-semibold bg-brand-primary text-brand-primary-foreground hover:opacity-90"
+                  <button
+                    type="button"
+                    className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors"
                     onClick={() => setClaimDialogOpen(true)}
                   >
-                    Claim Profile
-                  </Button>
+                    Claim profile →
+                  </button>
                 )}
 
                 {user && claimStatus.my_claim_status === "pending" && (
-                  <Badge variant="secondary" className="h-8 px-3 text-xs font-medium flex items-center">
-                    Claim Pending
-                  </Badge>
+                  <span className="text-2xs font-medium tracking-widest uppercase text-text-disabled">
+                    Claim pending
+                  </span>
                 )}
 
-                {/* Logged-out users see a softer nudge */}
                 {!user && (
-                  <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
-                    <Link to="/auth">Claim Profile</Link>
-                  </Button>
+                  <Link to="/auth" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
+                    Claim profile →
+                  </Link>
                 )}
               </div>
             </div>
@@ -358,10 +355,10 @@ export default function ArchitectDetails() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveSection(tab.key)}
-                  className={`px-4 py-2.5 text-[13px] border-b-2 transition-colors whitespace-nowrap ${
+                  className={`px-4 py-2.5 text-xs font-medium uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap ${
                     activeSection === tab.key
-                      ? "border-brand-primary text-brand-primary font-medium"
-                      : "border-transparent text-text-secondary hover:text-text-primary"
+                      ? "border-text-primary text-text-primary"
+                      : "border-transparent text-text-disabled hover:text-text-primary"
                   }`}
                 >
                   {tab.label}
@@ -372,23 +369,22 @@ export default function ArchitectDetails() {
         </div>
 
         {/* ── BODY ── */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
           {/* Unclaimed nudge banner — shown to logged-in users who haven't claimed */}
           {user && !claimStatus.is_verified && claimStatus.my_claim_status !== "pending" && (
-            <div className="mb-6 flex items-center justify-between gap-4 px-4 py-3 border border-dashed border-brand-primary/40 bg-brand-primary/5">
+            <div className="mb-6 flex items-center justify-between gap-4 py-4 border-b border-border-default">
               <p className="text-sm text-text-secondary">
                 <span className="font-medium text-text-primary">Is this your profile?</span>
                 {" "}Claim it to connect your portfolio with your Plano account.
               </p>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs shrink-0"
+              <button
+                type="button"
+                className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors shrink-0"
                 onClick={() => setClaimDialogOpen(true)}
               >
-                Claim now
-              </Button>
+                Claim →
+              </button>
             </div>
           )}
 
@@ -406,16 +402,15 @@ export default function ArchitectDetails() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 border-l border-t border-border-default">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border-default">
                   {buildings.map((building) => {
                     const imgUrl = getBuildingImageUrl(building.main_image_url);
                     return (
                       <div
                         key={building.id}
-                        className="border-r border-b border-border-default cursor-pointer group overflow-hidden"
+                        className="bg-surface-default cursor-pointer group overflow-hidden"
                         onClick={() => navigate(`/building/${building.id}`)}
                       >
-                        {/* Image */}
                         <div className="aspect-[4/3] overflow-hidden bg-surface-muted">
                           {imgUrl ? (
                             <img
@@ -429,9 +424,8 @@ export default function ArchitectDetails() {
                             </div>
                           )}
                         </div>
-                        {/* Caption */}
-                        <div className="px-4 py-3 border-t border-border-default">
-                          <h3 className="font-medium text-sm text-text-primary line-clamp-1 group-hover:text-brand-primary transition-colors">
+                        <div className="py-3 px-1">
+                          <h3 className="font-semibold text-sm text-text-primary line-clamp-1">
                             {building.name}
                           </h3>
                           <div className="flex items-center justify-between mt-0.5">
@@ -439,7 +433,7 @@ export default function ArchitectDetails() {
                               {[building.city, building.country].filter(Boolean).join(", ")}
                             </p>
                             {building.year_completed && (
-                              <span className="text-xs text-text-disabled font-mono">
+                              <span className="text-xs text-text-disabled">
                                 {building.year_completed}
                               </span>
                             )}
@@ -458,7 +452,7 @@ export default function ArchitectDetails() {
             <div className="max-w-sm space-y-6">
               {architect.bio && (
                 <div>
-                  <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-2">
+                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
                     Bio
                   </p>
                   <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
@@ -469,7 +463,7 @@ export default function ArchitectDetails() {
 
               {architect.type && (
                 <div>
-                  <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-2">
+                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
                     Practice type
                   </p>
                   <p className="text-sm text-text-primary capitalize">{architect.type}</p>
@@ -478,7 +472,7 @@ export default function ArchitectDetails() {
 
               {architect.headquarters && (
                 <div>
-                  <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-2">
+                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
                     Headquarters
                   </p>
                   <p className="text-sm text-text-primary flex items-center gap-1.5">
@@ -490,7 +484,7 @@ export default function ArchitectDetails() {
 
               {architect.website_url && (
                 <div>
-                  <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-2">
+                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
                     Website
                   </p>
                   <a
@@ -506,7 +500,7 @@ export default function ArchitectDetails() {
               )}
 
               <div>
-                <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-2">
+                <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
                   On Plano
                 </p>
                 <div className="flex items-center gap-2 text-sm text-text-secondary">
@@ -518,19 +512,19 @@ export default function ArchitectDetails() {
               {/* Claim CTA in About tab too */}
               {user && !claimStatus.is_verified && claimStatus.my_claim_status !== "pending" && (
                 <div className="border-t border-border-default pt-5">
-                  <p className="text-[10px] font-bold tracking-[.1em] uppercase text-text-disabled mb-2">
+                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
                     This is you?
                   </p>
                   <p className="text-sm text-text-secondary mb-3 leading-relaxed">
                     Claim this profile to connect your portfolio with your Plano activity and get a verified badge.
                   </p>
-                  <Button
-                    size="sm"
-                    className="h-8 text-xs bg-brand-primary text-brand-primary-foreground hover:opacity-90"
+                  <button
+                    type="button"
+                    className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors"
                     onClick={() => setClaimDialogOpen(true)}
                   >
-                    Claim Profile
-                  </Button>
+                    Claim profile →
+                  </button>
                 </div>
               )}
             </div>

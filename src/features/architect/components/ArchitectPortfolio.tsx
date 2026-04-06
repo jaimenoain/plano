@@ -13,20 +13,20 @@ export function ArchitectPortfolio({ architectId, isOwnProfile }: ArchitectPortf
 
   return (
     <div className="py-6">
-      <h3 className="text-xl font-semibold mb-6">Portfolio</h3>
+      <h3 className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-6">Portfolio</h3>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border-default">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[200px] rounded-xl w-full" />
+            <Skeleton key={i} className="h-[200px] rounded-none w-full" />
           ))}
         </div>
       ) : buildings.length === 0 ? (
-        <div className="py-12 text-center border rounded-xl bg-surface-muted/10">
-          <p className="text-text-secondary">System recognizes you as a verified architect, but no buildings were found in your portfolio.</p>
+        <div className="py-12 text-center border-t border-border-default">
+          <p className="text-text-secondary">No buildings in portfolio yet.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border-default">
           {buildings.map((building) => {
             // Map PortfolioBuilding to SmartBuilding expected format for a premium visual grid
             let main_image_url: string | null = null;
