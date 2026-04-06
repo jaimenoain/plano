@@ -1,6 +1,5 @@
-import { Heart, Bookmark } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
@@ -18,7 +17,7 @@ interface FeedActivityCardProps {
 export function FeedActivityCard({
   entry,
   activityStatus,
-  onLike,
+  onLike: _onLike,
   size = "hero",
 }: FeedActivityCardProps) {
   const navigate = useNavigate();
@@ -54,28 +53,21 @@ export function FeedActivityCard({
     }
   };
 
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onLike?.(entry.id);
-  };
-
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSaved((s) => !s);
   };
-
-  const likesCount = entry.likes_count ?? 0;
 
   return (
     <article
       onClick={handleCardClick}
       className="flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
     >
-      {/* Thumbnail */}
+      {/* Thumbnail — larger sizes */}
       {cardImageSrc && imageVisible && (
         <div className={cn(
           "shrink-0 overflow-hidden bg-surface-muted rounded-none",
-          isHero ? "w-20 h-20" : "w-16 h-16"
+          isHero ? "w-28 h-28" : "w-24 h-24"
         )}>
           <img
             src={cardImageSrc}
@@ -106,7 +98,7 @@ export function FeedActivityCard({
           <p className="text-xs text-text-secondary mt-1">{city}</p>
         )}
 
-        {/* Attribution + actions */}
+        {/* Attribution + bookmark */}
         <div className="flex items-center gap-3 mt-2">
           <div className="flex items-center gap-1.5">
             <Avatar className={cn("shrink-0", isHero ? "h-5 w-5" : "h-4 w-4")}>
@@ -119,25 +111,7 @@ export function FeedActivityCard({
             </span>
           </div>
 
-          <span className="text-xs text-text-disabled">
-            {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-          </span>
-
           <div className="flex-1" />
-
-          {/* Like */}
-          <button
-            type="button"
-            onClick={handleLike}
-            className="inline-flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors"
-            title={`${likesCount} likes`}
-          >
-            <Heart
-              className={cn("h-3.5 w-3.5", entry.is_liked ? "fill-brand-primary text-brand-primary" : "")}
-              strokeWidth={1.8}
-            />
-            {likesCount > 0 && <span className="text-xs">{likesCount}</span>}
-          </button>
 
           {/* Bookmark */}
           <button
@@ -147,7 +121,7 @@ export function FeedActivityCard({
             title={saved ? "Saved" : "Save"}
           >
             <Bookmark
-              className={cn("h-3.5 w-3.5", saved ? "fill-text-primary text-text-primary" : "")}
+              className={cn("h-4 w-4", saved ? "fill-text-primary text-text-primary" : "")}
               strokeWidth={1.8}
             />
           </button>

@@ -1,6 +1,5 @@
-import { Heart, MessageCircle, Circle, Bookmark, Check, EyeOff, ArrowRight } from "lucide-react";
+import { Circle, Bookmark } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -55,62 +54,28 @@ interface FeedHeroCardProps {
 export function FeedHeroCard({
   entry,
   index = 0,
-  onLike,
+  onLike: _onLike,
   onImageLike,
-  onComment,
+  onComment: _onComment,
 }: FeedHeroCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { statuses, ratings } = useUserBuildingStatuses();
+  const { statuses } = useUserBuildingStatuses();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-  const [showRatingInput, setShowRatingInput] = useState(false);
 
   if (!entry.building) return null;
 
   const viewerStatus = entry.building ? statuses[entry.building.id] : undefined;
-  const viewerRating = entry.building ? ratings[entry.building.id] : undefined;
   const isSaved = viewerStatus === "pending";
-  const isVisited = viewerStatus === "visited";
-  const isIgnored = viewerStatus === "ignored";
   const isReversed = index % 2 !== 0;
-
-  const navigateToReview = () => {
-    if (!entry.building?.id) return;
-    const url = entry.building.slug
-      ? `/building/${entry.building.id}/${entry.building.slug}/review`
-      : `/building/${entry.building.id}/review`;
-    navigate(url);
-  };
-
-  const handleHide = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) return;
-    if (!entry.building?.id) return;
-    if (isIgnored) { navigateToReview(); return; }
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("user_buildings").upsert(
-        { user_id: user.id, building_id: entry.building.id, status: "ignored", edited_at: new Date().toISOString() },
-        { onConflict: "user_id, building_id" }
-      );
-      if (error) throw error;
-      toast({ title: "Building hidden" });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to update status" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return;
     if (!entry.building?.id) return;
-    if (isSaved) { navigateToReview(); return; }
     setIsSaving(true);
     try {
       const { error } = await supabase.from("user_buildings").upsert(
@@ -120,47 +85,10 @@ export function FeedHeroCard({
       if (error) throw error;
       toast({ title: "Saved to your list" });
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-      setShowRatingInput(true);
     } catch {
       toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleVisit = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) return;
-    if (!entry.building?.id) return;
-    if (isVisited) { navigateToReview(); return; }
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("user_buildings").upsert(
-        { user_id: user.id, building_id: entry.building.id, status: "visited", edited_at: new Date().toISOString() },
-        { onConflict: "user_id, building_id" }
-      );
-      if (error) throw error;
-      toast({ title: "Marked as visited" });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-      setShowRatingInput(true);
-    } catch {
-      toast({ variant: "destructive", title: "Failed to update status" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleRate = async (newRating: number) => {
-    if (!user || !entry.building?.id) return;
-    try {
-      const { error } = await supabase.from("user_buildings").upsert(
-        { user_id: user.id, building_id: entry.building.id, rating: newRating, edited_at: new Date().toISOString() },
-        { onConflict: "user_id, building_id" }
-      );
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to update rating" });
     }
   };
 
@@ -171,19 +99,6 @@ export function FeedHeroCard({
       navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
     } else {
       navigate(`/review/${entry.id}`);
-    }
-  };
-
-  const handleCommentClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onComment) {
-      onComment(entry.id);
-    } else {
-      if (entry.building.id) {
-        navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
-      } else {
-        navigate(`/review/${entry.id}`);
-      }
     }
   };
 
@@ -233,37 +148,6 @@ export function FeedHeroCard({
     }
 
     return null;
-  };
-
-  // ── Rating control ──────────────────────────────────────────────────────────
-  const renderRatingControl = () => {
-    const options = [1, 2, 3];
-    return (
-      <div
-        className="flex items-center gap-1 animate-in fade-in slide-in-from-right-5 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {options.map((val) => {
-          const isFilled = (viewerRating || 0) >= val;
-          return (
-            <button
-              key={val}
-              onClick={() => handleRate(val)}
-              className="focus:outline-none transition-transform active:scale-90 hover:scale-110"
-            >
-              <Circle
-                className={cn(
-                  "w-3.5 h-3.5 transition-colors",
-                  isFilled
-                    ? "fill-brand-primary text-brand-primary"
-                    : "text-text-secondary/40 hover:text-brand-primary/70"
-                )}
-              />
-            </button>
-          );
-        })}
-      </div>
-    );
   };
 
   const hasImages = allImages.length > 0;
@@ -336,94 +220,26 @@ export function FeedHeroCard({
             </p>
           )}
 
-          {/* User attribution */}
-          <div className="flex items-center gap-2.5 mb-6">
+          {/* User attribution + bookmark */}
+          <div className="flex items-center gap-2.5">
             <Avatar className="h-6 w-6">
               <AvatarImage src={avatarUrl} />
               <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
             </Avatar>
             <span className="text-sm font-medium text-text-primary">{username}</span>
-            <span className="text-xs text-text-disabled">
-              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-            </span>
-          </div>
-
-          {/* Actions row — subtle, inline */}
-          <div className="flex items-center gap-4">
-            {/* CTA */}
-            <button
-              type="button"
-              onClick={handleCardClick}
-              className="text-xs font-medium tracking-widest uppercase text-text-primary hover:text-brand-primary transition-colors inline-flex items-center gap-1.5"
-            >
-              View building <ArrowRight className="h-3 w-3" />
-            </button>
 
             <div className="flex-1" />
 
-            {/* Like */}
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onLike?.(entry.id); }}
-              className="inline-flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors"
-              title={`${entry.likes_count} likes`}
-            >
-              <Heart className={cn("h-4 w-4", entry.is_liked ? "fill-brand-primary text-brand-primary" : "")} />
-              {entry.likes_count > 0 && <span className="text-xs">{entry.likes_count}</span>}
-            </button>
-
-            {/* Comment */}
-            <button
-              type="button"
-              onClick={handleCommentClick}
-              className="inline-flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors"
-              title={`${entry.comments_count} comments`}
-            >
-              <MessageCircle className="h-4 w-4" />
-              {entry.comments_count > 0 && <span className="text-xs">{entry.comments_count}</span>}
-            </button>
-
-            {/* Rating control */}
-            {(isSaved || isVisited || showRatingInput) && renderRatingControl()}
-
-            {/* Visit */}
-            {(!viewerStatus || isVisited) && (
-              <button
-                type="button"
-                onClick={handleVisit}
-                className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
-                disabled={isSaving}
-                title={isVisited ? "Visited" : "Mark as visited"}
-              >
-                <Check className={cn("h-4 w-4", isVisited ? "stroke-[3px] text-brand-primary" : "")} />
-              </button>
-            )}
-
             {/* Save */}
-            {(!viewerStatus || isSaved) && (
-              <button
-                type="button"
-                onClick={handleSave}
-                className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
-                disabled={isSaving}
-                title={isSaved ? "Saved" : "Save"}
-              >
-                <Bookmark className={cn("h-4 w-4", isSaved ? "fill-brand-primary text-brand-primary" : "")} />
-              </button>
-            )}
-
-            {/* Hide */}
-            {(!viewerStatus || isIgnored) && (
-              <button
-                type="button"
-                onClick={handleHide}
-                className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
-                disabled={isSaving}
-                title={isIgnored ? "Hidden" : "Hide"}
-              >
-                <EyeOff className="h-4 w-4" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleSave}
+              className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+              disabled={isSaving}
+              title={isSaved ? "Saved" : "Save"}
+            >
+              <Bookmark className={cn("h-5 w-5", isSaved ? "fill-text-primary text-text-primary" : "")} />
+            </button>
           </div>
         </div>
       </div>

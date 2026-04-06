@@ -3,11 +3,6 @@ import { useNavigate, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ColdStartFeed } from "../components/ColdStartFeed";
 import { FeedCollectionCard } from "../components/FeedCollectionCard";
-import { PeopleYouMayKnow } from "../components/PeopleYouMayKnow";
-import { TrendingBuildings } from "../components/TrendingBuildings";
-import { ExploreByStyle } from "../components/ExploreByStyle";
-import { BucketListWidget } from "../components/BucketListWidget";
-import { FeaturedArchitect } from "../components/FeaturedArchitect";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Loader2 } from "lucide-react";
@@ -52,31 +47,6 @@ export const meta: MetaFunction = () => [
   { name: "twitter:image", content: INDEX_OG_IMAGE },
   { tagName: "link", rel: "canonical", href: INDEX_CANONICAL },
 ];
-
-// --- Shared sidebar rendered in both the cold-start and active feed layouts ---
-function FeedSidebar() {
-  return (
-    <div className="w-72 flex-shrink-0 hidden lg:block sticky top-20">
-      <div className="space-y-12">
-        <WidgetErrorBoundary>
-          <TrendingBuildings />
-        </WidgetErrorBoundary>
-        <WidgetErrorBoundary>
-          <ExploreByStyle />
-        </WidgetErrorBoundary>
-        <WidgetErrorBoundary>
-          <BucketListWidget />
-        </WidgetErrorBoundary>
-        <WidgetErrorBoundary>
-          <PeopleYouMayKnow />
-        </WidgetErrorBoundary>
-        <WidgetErrorBoundary>
-          <FeaturedArchitect />
-        </WidgetErrorBoundary>
-      </div>
-    </div>
-  );
-}
 
 // --- Landing page (logged-out) ---
 function Landing() {
@@ -276,8 +246,8 @@ export default function Index() {
         <div className="p-4 sm:p-6 lg:p-8 pb-24 mx-auto w-full">
           {socialReviews.length === 0 ? (
             // --- Cold-start state: new user with no social feed yet ---
-            <div className="flex gap-8 items-start max-w-5xl mx-auto">
-              <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-16 lg:gap-20">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex flex-col gap-16 lg:gap-20">
                 <ColdStartFeed
                   discoveryReviews={discoveryReviews}
                   onLike={discoveryFeed.toggleLike}
@@ -314,12 +284,11 @@ export default function Index() {
                   </div>
                 )}
               </div>
-              <FeedSidebar />
             </div>
           ) : (
             // --- Active feed state ---
-            <div className="flex gap-8 items-start max-w-5xl mx-auto">
-              <div className="flex-1 max-w-2xl min-w-0 flex flex-col gap-16 lg:gap-20">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex flex-col gap-16 lg:gap-20">
                 {(() => {
                   const feedNodes: React.ReactNode[] = [];
                   let collectionCursor = 0;
@@ -405,7 +374,6 @@ export default function Index() {
                   </div>
                 )}
               </div>
-              <FeedSidebar />
             </div>
           )}
         </div>

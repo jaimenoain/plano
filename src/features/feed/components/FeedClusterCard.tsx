@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
 import { FeedReview } from "@/types/feed";
 
@@ -17,7 +16,7 @@ export function FeedClusterCard({
   entries,
   user,
   location: _location,
-  timestamp,
+  timestamp: _timestamp,
 }: FeedClusterCardProps) {
   const navigate = useNavigate();
 
@@ -52,9 +51,6 @@ export function FeedClusterCard({
           <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
         </Avatar>
         <span className="text-sm font-medium text-text-primary">{username}</span>
-        <span className="text-xs text-text-disabled">
-          {formatDistanceToNow(new Date(timestamp)).replace("about ", "")} ago
-        </span>
       </div>
 
       {/* Activity list */}

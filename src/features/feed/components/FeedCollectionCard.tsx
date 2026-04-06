@@ -1,5 +1,3 @@
-import { ArrowRight } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedCollection } from "@/types/feed";
@@ -42,17 +40,13 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
     (_, i) => collection.previewBuildings?.[i]?.mainImageUrl ?? null
   );
 
-  const timestamp = collection.updatedAt
-    ? formatDistanceToNow(new Date(collection.updatedAt)).replace("about ", "") + " ago"
-    : "";
-
   return (
     <article
       onClick={handleCardClick}
       className="w-full cursor-pointer"
     >
       {/* Horizontal photo strip */}
-      <div className="flex gap-mosaic-gap w-full h-[200px] overflow-hidden">
+      <div className="flex gap-mosaic-gap w-full h-[240px] overflow-hidden">
         {slots.map((url, i) => (
           <MosaicCell key={i} mainImageUrl={url} />
         ))}
@@ -73,7 +67,6 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
         {/* Details row */}
         <p className="text-sm text-text-secondary mt-1">
           {username} · {collection.buildingCount ?? 0} buildings
-          {timestamp && <span className="text-text-disabled"> · {timestamp}</span>}
         </p>
 
         {/* Description */}
@@ -82,15 +75,6 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
             {collection.description}
           </p>
         )}
-
-        {/* CTA */}
-        <button
-          type="button"
-          onClick={handleCardClick}
-          className="text-xs font-medium tracking-widest uppercase text-text-primary hover:text-brand-primary transition-colors inline-flex items-center gap-1.5 mt-3"
-        >
-          View collection <ArrowRight className="h-3 w-3" />
-        </button>
       </div>
     </article>
   );
