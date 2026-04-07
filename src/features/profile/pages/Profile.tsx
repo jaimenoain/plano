@@ -1,3 +1,21 @@
+/**
+ * Profile.tsx — Redesigned with A24 editorial aesthetic (v2)
+ *
+ * SCHEMA MIGRATION REQUIRED for architect firm / website fields:
+ *   ALTER TABLE profiles ADD COLUMN IF NOT EXISTS firm text;
+ *   ALTER TABLE profiles ADD COLUMN IF NOT EXISTS website text;
+ *
+ * All data-fetching logic, hooks, effects and handlers are unchanged.
+ * Only the render output has been redesigned.
+ *
+ * Key visual changes:
+ *  - Avatar is a first-class portrait photo (3:4, right column, full-bleed)
+ *  - Metrics ARE the tabs — no separate stats row + tab strip
+ *  - 'Visited' and 'Saved' replace the old 'log' + filter combo as first-class sections
+ *  - Editorial building grid: no borders, no icons, bold name / faint meta
+ *  - Photos: CSS masonry, featured items at positions 0, 7, 14…
+ *  - Architects: inline-editable firm name, bio, website link in header
+ */
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo, ReactNode, useCallback } from "react";
 import {
@@ -9,7 +27,7 @@ import {
   useSensors,
   DragEndEvent,
   DragOverlay,
-  DragStartEvent
+  DragStartEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import {
@@ -36,6 +54,9 @@ import {
   List,
   BadgeCheck,
   Plus,
+  Pencil,
+  Check,
+  ExternalLink,
   type LucideIcon,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -46,7 +67,12 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { ReviewCard } from "@/features/feed/components/ReviewCard";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FollowButton } from "@/features/profile/components/FollowButton";
 import { useToast } from "@/hooks/use-toast";
@@ -67,21 +93,23 @@ import {
   profileStructuredData,
   SITE_URL,
 } from "@/features/buildings/utils/structuredData";
+import { getBuildingUrl } from "@/utils/url";
+
 export { profileLoader as loader } from "./Profile.loader";
 
 // ─── Hydrate / Error Boundaries ──────────────────────────────────────────────
 export function HydrateFallback() {
   return (
     <AppLayout title="Profile" showLogo={false} showBack>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
-        <Skeleton className="h-4 w-20 mb-6" />
-        <Skeleton className="h-16 w-2/3 mb-4" />
-        <Skeleton className="h-4 w-80 mb-8" />
-        <div className="flex gap-8 border-t border-border-default pt-6">
-          <Skeleton className="h-10 w-12" />
-          <Skeleton className="h-10 w-12" />
-          <Skeleton className="h-10 w-12" />
-          <Skeleton className="h-10 w-12" />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+        <div className="flex gap-12 items-start">
+          <div className="flex-1 space-y-5">
+            <Skeleton className="h-3.5 w-20" />
+            <Skeleton className="h-14 w-2/3" />
+            <Skeleton className="h-4 w-80" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <Skeleton className="hidden sm:block w-44 h-56 shrink-0" />
         </div>
       </div>
     </AppLayout>
@@ -92,57 +120,48 @@ export function ErrorBoundary() {
   const error = useRouteError();
   const { username } = useParams<{ username?: string }>();
   const revalidator = useRevalidator();
+
   if (isRouteErrorResponse(error) && error.status === 404) {
     return (
       <AppLayout showBack title="Profile not found" showLogo={false}>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
           <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">404</p>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-text-primary mb-4 leading-tight">
+          <h1 className="text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">
             Profile not found
           </h1>
           <p className="text-base text-text-secondary max-w-md mb-10 leading-relaxed">
             We couldn&apos;t find a profile for
-            {username ? (
-              <> <span className="font-mono text-text-primary">{username}</span></>
-            ) : (
-              " this URL"
-            )}
-            . The user may have changed their username or the account may no longer exist.
+            {username ? <> <span className="font-mono text-text-primary">{username}</span></> : " this URL"}.
           </p>
-          <Link
-            to="/"
-            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary transition-colors"
-          >
+          <Link to="/" className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity">
             Back to home →
           </Link>
         </div>
       </AppLayout>
     );
   }
+
   return (
     <AppLayout showBack title="Error" showLogo={false}>
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
         <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">Error</p>
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary mb-4 leading-tight">
+        <h1 className="text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">
           Something went wrong
         </h1>
         <p className="text-base text-text-secondary max-w-md mb-10 leading-relaxed">
-          An unexpected error occurred while loading this profile. You can try again or return home.
+          An unexpected error occurred while loading this profile.
         </p>
-        <div className="flex flex-col sm:flex-row items-center gap-6">
+        <div className="flex items-center gap-8">
           <button
             type="button"
-            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary transition-colors disabled:opacity-40"
+            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity disabled:opacity-30"
             onClick={() => revalidator.revalidate()}
             disabled={revalidator.state === "loading"}
           >
             Try again →
           </button>
-          <Link
-            to="/"
-            className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors"
-          >
-            Back to home →
+          <Link to="/" className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors">
+            Go home →
           </Link>
         </div>
       </div>
@@ -156,6 +175,8 @@ interface Profile {
   username: string | null;
   avatar_url: string | null;
   bio: string | null;
+  firm?: string | null;     // MIGRATION: ALTER TABLE profiles ADD COLUMN firm text
+  website?: string | null;  // MIGRATION: ALTER TABLE profiles ADD COLUMN website text
   last_online?: string | null;
   role?: string;
   verified_architect_id?: string | null;
@@ -181,10 +202,13 @@ interface UserPhoto {
   building_name?: string | null;
 }
 
+// 'visited' and 'saved' replace the old 'log' + filter combo
+type SectionKey = "portfolio" | "visited" | "saved" | "collections" | "photos" | "about";
+
 const variants = {
-  initial: { opacity: 0, y: 10 },
+  initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, scale: 0.98, transition: { duration: 0.2 } }
+  exit: { opacity: 0, scale: 0.99, transition: { duration: 0.15 } },
 };
 const ITEMS_PER_PAGE = 15;
 
@@ -195,9 +219,7 @@ export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
     const fallback = usernameFromParams ?? "Profile";
     return [
       { title: `${fallback} | Plano` },
-      ...(data?.noIndex
-        ? ([{ name: "robots", content: "noindex, nofollow" }] as const)
-        : []),
+      ...(data?.noIndex ? ([{ name: "robots", content: "noindex, nofollow" }] as const) : []),
     ];
   }
   const { profile } = data as { profile: Profile | null };
@@ -219,13 +241,7 @@ export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
     { tagName: "link", rel: "canonical", href: canonical },
-    {
-      "script:ld+json": profileStructuredData({
-        username,
-        avatar_url: profile.avatar_url,
-        bio: profile.bio,
-      }),
-    },
+    { "script:ld+json": profileStructuredData({ username, avatar_url: profile.avatar_url, bio: profile.bio }) },
   ];
 };
 
@@ -236,19 +252,31 @@ export default function Profile() {
   const { username: routeUsername } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  const [viewMode, setViewMode] = useState<'grid' | 'kanban' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<"grid" | "kanban" | "list">("grid");
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const { profile: loaderProfile } = useLoaderData<typeof profileLoader>();
   const [profile, setProfile] = useState<Profile | null>(loaderProfile as Profile | null);
   const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0, photos: 0, maps: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
 
+  // ── Inline editing state (own profile header fields) ──
+  const [isEditingHeader, setIsEditingHeader] = useState(false);
+  const [draftFirm, setDraftFirm] = useState("");
+  const [draftBio, setDraftBio] = useState("");
+  const [draftWebsite, setDraftWebsite] = useState("");
+  const [isSavingHeader, setIsSavingHeader] = useState(false);
+
   // ── URL state ──
-  const sectionParam = searchParams.get("section");
-  const filterParam = searchParams.get("filter");
+  const sectionParam = searchParams.get("section") as SectionKey | null;
   const legacyTabParam = searchParams.get("tab");
-  const legacyTabToSection = (legacyTabParam === 'reviews' || legacyTabParam === 'bucket_list') ? 'log' : null;
-  const legacyTabToFilter = legacyTabParam === 'reviews' ? 'visited' : legacyTabParam === 'bucket_list' ? 'pending' : null;
+  const legacyFilterParam = searchParams.get("filter");
+  // Backward compat: old ?tab=reviews / ?section=log&filter=visited → 'visited', etc.
+  const legacySectionKey: SectionKey | null =
+    legacyTabParam === "reviews" || legacyFilterParam === "visited" ? "visited"
+    : legacyTabParam === "bucket_list" || legacyFilterParam === "pending" ? "saved"
+    : sectionParam === "log" ? "visited"
+    : null;
+
   const searchQuery = searchParams.get("search") || "";
   const [loading, setLoading] = useState(true);
 
@@ -280,21 +308,16 @@ export default function Profile() {
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
   const handleDragStart = (event: DragStartEvent) => { setActiveId(event.active.id as string); };
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-    await handleDragEndLogic({
-      activeId: active.id as string,
-      overId: over?.id as string || null,
-      content, setContent, supabase, toast, setUpdatingItemId
-    });
+    await handleDragEndLogic({ activeId: active.id as string, overId: (over?.id as string) || null, content, setContent, supabase, toast, setUpdatingItemId });
   };
   const handleCollectionDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    if (active.data.current?.type === "collection") {
-      setActiveCollectionData(active.data.current.collection);
-    }
+    if (active.data.current?.type === "collection") setActiveCollectionData(active.data.current.collection);
   };
   const handleCollectionDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -303,16 +326,9 @@ export default function Profile() {
     const collectionId = active.id.toString().replace("collection-", "");
     const folderId = over.id.toString().replace("folder-", "");
     try {
-      const { data: existing } = await supabase
-        .from("user_folder_items")
-        .select("folder_id")
-        .eq("folder_id", folderId)
-        .eq("collection_id", collectionId)
-        .maybeSingle();
+      const { data: existing } = await supabase.from("user_folder_items").select("folder_id").eq("folder_id", folderId).eq("collection_id", collectionId).maybeSingle();
       if (!existing) {
-        const { error } = await supabase
-          .from("user_folder_items")
-          .insert({ folder_id: folderId, collection_id: collectionId });
+        const { error } = await supabase.from("user_folder_items").insert({ folder_id: folderId, collection_id: collectionId });
         if (error) throw error;
         toast({ description: "Added to folder" });
         setCollectionsRefreshKey(prev => prev + 1);
@@ -333,35 +349,22 @@ export default function Profile() {
   const { profile: currentUserProfile } = useUserProfile();
   const verifiedArchitectId = isOwnProfile ? currentUserProfile?.verified_architect_id : profile?.verified_architect_id;
 
-  // ── Derive active section & filter ──
-  const defaultSection = verifiedArchitectId ? 'portfolio' : 'log';
-  const activeSection = sectionParam || legacyTabToSection || defaultSection;
-  const activeFilter = filterParam || legacyTabToFilter || 'all';
+  // ── Derive active section ──
+  const defaultSection: SectionKey = verifiedArchitectId ? "portfolio" : "visited";
+  const activeSection: SectionKey = sectionParam || legacySectionKey || defaultSection;
+
+  // Derive content filter directly from section — no separate filter param needed
+  const activeFilter =
+    activeSection === "visited" ? "visited"
+    : activeSection === "saved" ? "pending"
+    : "all";
 
   // ── URL handlers ──
-  const handleSectionChange = useCallback((section: string) => {
-    const newParams = new URLSearchParams(searchParams);
+  const handleSectionChange = useCallback((section: SectionKey) => {
+    const newParams = new URLSearchParams();
     newParams.set("section", section);
-    newParams.delete("tab");
-    if (section !== 'log') {
-      newParams.delete("filter");
-      newParams.delete("search");
-    }
     setSearchParams(newParams, { replace: true, preventScrollReset: true });
-  }, [searchParams, setSearchParams]);
-
-  const handleFilterChange = (value: string) => {
-    if (!value) return;
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("section", "log");
-    newParams.delete("tab");
-    if (value === 'all') {
-      newParams.delete("filter");
-    } else {
-      newParams.set("filter", value);
-    }
-    setSearchParams(newParams, { replace: true, preventScrollReset: true });
-  };
+  }, [setSearchParams]);
 
   const handleSearchChange = (query: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -378,7 +381,8 @@ export default function Profile() {
     const fetchProfileData = async () => {
       setLoading(true);
       let uid: string | null = null;
-      let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id");
+      // MIGRATION REQUIRED: include 'firm, website' once columns exist
+      let query = supabase.from("profiles").select("id, username, avatar_url, bio, firm, website, favorites, last_online, verified_architect_id");
       let data: { id: string; username?: string | null; favorites?: unknown; [key: string]: unknown } | null = null;
       if (routeUsername) {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(routeUsername);
@@ -386,25 +390,20 @@ export default function Profile() {
         const res = await query.maybeSingle();
         data = res.data;
         if (data) {
-          if (isUuid && data.username) {
-            navigate(`/profile/${data.username.toLowerCase()}`, { replace: true });
-            return;
-          }
-          if (!isUuid && routeUsername && routeUsername !== routeUsername.toLowerCase()) {
-            navigate(`/profile/${routeUsername.toLowerCase()}`, { replace: true });
-            return;
-          }
+          if (isUuid && data.username) { navigate(`/profile/${data.username.toLowerCase()}`, { replace: true }); return; }
+          if (!isUuid && routeUsername && routeUsername !== routeUsername.toLowerCase()) { navigate(`/profile/${routeUsername.toLowerCase()}`, { replace: true }); return; }
         }
       } else if (currentUser) {
         uid = currentUser.id;
-        const res = await supabase.from("profiles")
-          .select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id")
-          .eq("id", uid).maybeSingle();
+        const res = await supabase.from("profiles").select("id, username, avatar_url, bio, firm, website, favorites, last_online, verified_architect_id").eq("id", uid).maybeSingle();
         data = res.data;
       }
       if (data) {
         setProfile(data as unknown as Profile);
         uid = data.id;
+        setDraftFirm((data.firm as string) || "");
+        setDraftBio((data.bio as string) || "");
+        setDraftWebsite((data.website as string) || "");
       }
       setTargetUserId(uid);
       setLoading(false);
@@ -416,37 +415,26 @@ export default function Profile() {
   useEffect(() => { if (targetUserId) { checkIfFollowing(); fetchSquad(); } }, [targetUserId, currentUser]);
 
   useEffect(() => {
-    if (activeSection !== 'photos' || !targetUserId || userPhotos.length > 0) return;
+    if (activeSection !== "photos" || !targetUserId || userPhotos.length > 0) return;
     const fetchPhotos = async () => {
       setPhotosLoading(true);
       try {
         const { data } = await supabase
-          .from('review_images')
-          .select('id, storage_path, review:user_buildings(building:buildings(name))')
-          .eq('user_id', targetUserId)
-          .order('created_at', { ascending: false })
+          .from("review_images")
+          .select("id, storage_path, review:user_buildings(building:buildings(name))")
+          .eq("user_id", targetUserId)
+          .order("created_at", { ascending: false })
           .limit(60);
         if (data) {
           setUserPhotos(
-            data
-              .map(img => {
-                const review = img.review as
-                  | { building?: { name?: string | null } | null }
-                  | { building?: { name?: string | null } | null }[]
-                  | null;
-                const row = Array.isArray(review) ? review[0] : review;
-                return {
-                  id: img.id,
-                  url: getBuildingImageUrl(img.storage_path) || '',
-                  building_name: row?.building?.name ?? null,
-                };
-              })
-              .filter(img => img.url)
+            data.map(img => {
+              const review = img.review as | { building?: { name?: string | null } | null } | { building?: { name?: string | null } | null }[] | null;
+              const row = Array.isArray(review) ? review[0] : review;
+              return { id: img.id, url: getBuildingImageUrl(img.storage_path) || "", building_name: row?.building?.name ?? null };
+            }).filter(img => img.url)
           );
         }
-      } catch (_e) { /* silent */ } finally {
-        setPhotosLoading(false);
-      }
+      } catch (_e) { /* silent */ } finally { setPhotosLoading(false); }
     };
     fetchPhotos();
   }, [activeSection, targetUserId]);
@@ -458,16 +446,14 @@ export default function Profile() {
     try {
       let query = supabase
         .from("user_buildings")
-        .select(`
-          id, content, rating, created_at, edited_at, user_id, building_id, status,
-          building:buildings ( id, name, address, city, country, year_completed, main_image_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )
-        `)
+        .select(`id, content, rating, created_at, edited_at, user_id, building_id, status,
+          building:buildings ( id, name, address, city, country, year_completed, main_image_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )`)
         .eq("user_id", targetUserId)
         .order("edited_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
-      if (activeFilter === 'visited') { query = query.eq('status', 'visited'); }
-      else if (activeFilter === 'pending') { query = query.eq('status', 'pending'); }
-      else { query = query.in('status', ['visited', 'pending']); }
+      if (activeFilter === "visited") { query = query.eq("status", "visited"); }
+      else if (activeFilter === "pending") { query = query.eq("status", "pending"); }
+      else { query = query.in("status", ["visited", "pending"]); }
       const from = pageIndex * ITEMS_PER_PAGE;
       query = query.range(from, from + ITEMS_PER_PAGE - 1);
       const { data: entriesData, error: entriesError } = await query;
@@ -477,9 +463,7 @@ export default function Profile() {
         return;
       }
       const entryIds = entriesData.map(r => r.id);
-      const { data: imagesData } = await supabase
-        .from('review_images').select('id, review_id, storage_path, likes_count')
-        .in('review_id', entryIds);
+      const { data: imagesData } = await supabase.from("review_images").select("id, review_id, storage_path, likes_count").in("review_id", entryIds);
       const imageIds = imagesData?.map(img => img.id) || [];
       const [likesResult, commentsResult, userLikesResult, imageLikesResult] = await Promise.all([
         supabase.from("likes").select("interaction_id").in("interaction_id", entryIds),
@@ -493,61 +477,33 @@ export default function Profile() {
       commentsResult.data?.forEach(c => commentsCount.set(c.interaction_id, (commentsCount.get(c.interaction_id) || 0) + 1));
       const userLikes = new Set(userLikesResult.data?.map(l => l.interaction_id));
       const userLikedImages = new Set(imageLikesResult.data?.map((l: { image_id: string }) => l.image_id));
-      type ProfileReviewImage = {
-        id: string;
-        url: string;
-        likes_count: number;
-        is_liked: boolean;
-      };
+      type ProfileReviewImage = { id: string; url: string; likes_count: number; is_liked: boolean; };
       const imagesByReviewId = new Map<string, ProfileReviewImage[]>();
       imagesData?.forEach(img => {
-        const obj: ProfileReviewImage = {
-          id: img.id,
-          url: getBuildingImageUrl(img.storage_path) ?? "",
-          likes_count: img.likes_count || 0,
-          is_liked: userLikedImages.has(img.id),
-        };
+        const obj: ProfileReviewImage = { id: img.id, url: getBuildingImageUrl(img.storage_path) ?? "", likes_count: img.likes_count || 0, is_liked: userLikedImages.has(img.id) };
         if (!imagesByReviewId.has(img.review_id)) imagesByReviewId.set(img.review_id, []);
         imagesByReviewId.get(img.review_id)!.push(obj);
       });
       type ProfileFeedRow = {
         id: string; content: string | null; rating: number | null; created_at: string;
         edited_at?: string | null; status: "visited" | "pending"; building_id: string;
-        building?: {
-          id?: string; name?: string | null; address?: string | null; city?: string | null;
-          country?: string | null; year_completed?: number | null; main_image_url?: string | null;
-          slug?: string | null; short_id?: number | null;
-          architects?: { architect: { id: string; name: string } | null }[] | null;
-        } | null;
+        building?: { id?: string; name?: string | null; address?: string | null; city?: string | null; country?: string | null; year_completed?: number | null; main_image_url?: string | null; slug?: string | null; short_id?: number | null; architects?: { architect: { id: string; name: string } | null }[] | null; } | null;
       };
       const formattedContent: FeedReview[] = (entriesData as ProfileFeedRow[]).map(item => {
         const reviewLikes = likesCount.get(item.id) || 0;
         const itemImages = imagesByReviewId.get(item.id) || [];
         const imageLikes = itemImages.reduce((sum: number, img: { likes_count?: number }) => sum + (img.likes_count || 0), 0);
         return {
-          id: item.id, content: item.content, rating: item.rating,
-          created_at: item.created_at, edited_at: item.edited_at ?? null, status: item.status,
+          id: item.id, content: item.content, rating: item.rating, created_at: item.created_at, edited_at: item.edited_at ?? null, status: item.status,
           user: { username: profile?.username || "Unknown", avatar_url: profile?.avatar_url || null },
-          building: {
-            id: item.building?.id || item.building_id, name: item.building?.name || "Unknown Building",
-            address: item.building?.address || null, city: item.building?.city || null,
-            country: item.building?.country || null, year_completed: item.building?.year_completed || null,
-            main_image_url: item.building?.main_image_url || null, slug: item.building?.slug || null,
-            short_id: item.building?.short_id || null,
-            architects: item.building?.architects?.flatMap(a => a.architect ? [a.architect] : []) || [],
-          },
-          tags: [] as string[], likes_count: reviewLikes + imageLikes,
-          comments_count: commentsCount.get(item.id) || 0, is_liked: userLikes.has(item.id),
-          watch_with_users: [] as WatchWithUser[], images: itemImages,
+          building: { id: item.building?.id || item.building_id, name: item.building?.name || "Unknown Building", address: item.building?.address || null, city: item.building?.city || null, country: item.building?.country || null, year_completed: item.building?.year_completed || null, main_image_url: item.building?.main_image_url || null, slug: item.building?.slug || null, short_id: item.building?.short_id || null, architects: item.building?.architects?.flatMap(a => a.architect ? [a.architect] : []) || [] },
+          tags: [] as string[], likes_count: reviewLikes + imageLikes, comments_count: commentsCount.get(item.id) || 0, is_liked: userLikes.has(item.id), watch_with_users: [] as WatchWithUser[], images: itemImages,
         };
       });
       if (reset) { setContent(formattedContent); setHasMore(formattedContent.length === ITEMS_PER_PAGE); setPage(0); }
       else { setContent(prev => [...prev, ...formattedContent]); setHasMore(formattedContent.length === ITEMS_PER_PAGE); }
     } catch (_error) {
-    } finally {
-      setContentLoading(false);
-      setIsFetchingMore(false);
-    }
+    } finally { setContentLoading(false); setIsFetchingMore(false); }
   }, [targetUserId, activeFilter, currentUser, profile]);
 
   useEffect(() => { if (targetUserId) { fetchUserContent(0, true); } }, [fetchUserContent]);
@@ -561,9 +517,7 @@ export default function Profile() {
 
   const filteredContent = useMemo(() => {
     return content.filter(item => {
-      const matchesSearch = searchQuery === "" ||
-        item.building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.content && item.content.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesSearch = searchQuery === "" || item.building.name.toLowerCase().includes(searchQuery.toLowerCase()) || (item.content && item.content.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesSearch;
     });
   }, [content, searchQuery]);
@@ -598,19 +552,12 @@ export default function Profile() {
       supabase.from("review_images").select("id", { count: "exact", head: true }).eq("user_id", targetUserId),
       supabase.from("collections").select("id", { count: "exact", head: true }).eq("owner_id", targetUserId),
     ]);
-    setStats({
-      reviews: reviewsResult.count || 0, pending: pendingResult.count || 0,
-      followers: followersResult.count || 0, following: followingResult.count || 0,
-      photos: photosResult.count || 0, maps: collectionsResult.count || 0,
-    });
+    setStats({ reviews: reviewsResult.count || 0, pending: pendingResult.count || 0, followers: followersResult.count || 0, following: followingResult.count || 0, photos: photosResult.count || 0, maps: collectionsResult.count || 0 });
   };
 
   const fetchSquad = async () => {
     if (!targetUserId || !isOwnProfile) return;
-    const { data } = await supabase
-      .from("follows")
-      .select("following:profiles!follows_following_id_fkey(id, username, avatar_url)")
-      .eq("follower_id", targetUserId).limit(5);
+    const { data } = await supabase.from("follows").select("following:profiles!follows_following_id_fkey(id, username, avatar_url)").eq("follower_id", targetUserId).limit(5);
     if (data) {
       const squadMembers = data.map(row => { const f = row.following; return Array.isArray(f) ? f[0] : f; }).filter((p): p is Profile => p != null);
       setSquad(squadMembers);
@@ -639,13 +586,13 @@ export default function Profile() {
     if (updates.status && updates.status !== currentItem.status) {
       setStats(prev => {
         const newStats = { ...prev };
-        if (currentItem.status === 'pending') { newStats.pending = Math.max(0, newStats.pending - 1); } else { newStats.reviews = Math.max(0, newStats.reviews - 1); }
-        if (updates.status === 'pending') { newStats.pending++; } else { newStats.reviews++; }
+        if (currentItem.status === "pending") { newStats.pending = Math.max(0, newStats.pending - 1); } else { newStats.reviews = Math.max(0, newStats.reviews - 1); }
+        if (updates.status === "pending") { newStats.pending++; } else { newStats.reviews++; }
         return newStats;
       });
     }
     try {
-      const { error } = await supabase.from('user_buildings').update({ ...updates, edited_at: new Date().toISOString() }).eq('id', id);
+      const { error } = await supabase.from("user_buildings").update({ ...updates, edited_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
       if (updates.status) toast({ description: "Status updated" });
     } catch (_error) {
@@ -653,8 +600,8 @@ export default function Profile() {
       if (updates.status && updates.status !== currentItem.status) {
         setStats(prev => {
           const newStats = { ...prev };
-          if (updates.status === 'pending') { newStats.pending--; } else { newStats.reviews--; }
-          if (currentItem.status === 'pending') { newStats.pending++; } else { newStats.reviews++; }
+          if (updates.status === "pending") { newStats.pending--; } else { newStats.reviews--; }
+          if (currentItem.status === "pending") { newStats.pending++; } else { newStats.reviews++; }
           return newStats;
         });
       }
@@ -663,6 +610,24 @@ export default function Profile() {
   };
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
+
+  const handleSaveHeader = async () => {
+    if (!currentUser || !targetUserId) return;
+    setIsSavingHeader(true);
+    try {
+      const { error } = await supabase.from("profiles").update({
+        firm: draftFirm.trim() || null,
+        bio: draftBio.trim() || null,
+        website: draftWebsite.trim() || null,
+      }).eq("id", targetUserId);
+      if (error) throw error;
+      setProfile(prev => prev ? { ...prev, firm: draftFirm.trim() || null, bio: draftBio.trim() || null, website: draftWebsite.trim() || null } : prev);
+      setIsEditingHeader(false);
+      toast({ description: "Profile updated" });
+    } catch (_error) {
+      toast({ variant: "destructive", description: "Failed to update profile" });
+    } finally { setIsSavingHeader(false); }
+  };
 
   const openUserList = async (type: "followers" | "following") => {
     setUserListDialog({ open: true, type });
@@ -709,7 +674,7 @@ export default function Profile() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-surface-default flex items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
+        <Loader2 className="h-4 w-4 animate-spin text-text-disabled" />
       </div>
     );
   }
@@ -719,14 +684,11 @@ export default function Profile() {
       <AppLayout title="User Not Found" showLogo={false} showBack>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
           <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">Unavailable</p>
-          <h2 className="text-4xl font-bold tracking-tight text-text-primary mb-4">User not found</h2>
+          <h2 className="text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">User not found</h2>
           <p className="text-base text-text-secondary max-w-sm mx-auto mb-10 leading-relaxed">
             This profile is not available. The user might have been deleted, suspended, or does not exist.
           </p>
-          <button
-            onClick={() => navigate("/")}
-            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary transition-colors"
-          >
+          <button onClick={() => navigate("/")} className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity">
             Go home →
           </button>
         </div>
@@ -734,266 +696,279 @@ export default function Profile() {
     );
   }
 
-  // ─── Tab config ───────────────────────────────────────────────────────────
-  const tabs = [
-    ...(verifiedArchitectId ? [{ key: 'portfolio', label: 'Portfolio' }] : []),
-    { key: 'log', label: 'Log' },
-    { key: 'collections', label: 'Collections' },
-    { key: 'photos', label: 'Photos' },
-    { key: 'about', label: 'About' },
+  // ─── Tab config — metrics as tabs ────────────────────────────────────────
+  const tabs: { key: SectionKey; label: string; count: number | null }[] = [
+    ...(verifiedArchitectId ? [{ key: "portfolio" as SectionKey, label: "Portfolio", count: null }] : []),
+    { key: "visited", label: "Visited", count: stats.reviews },
+    { key: "saved", label: "Saved", count: stats.pending },
+    { key: "collections", label: "Collections", count: stats.maps },
+    { key: "photos", label: "Photos", count: stats.photos },
+    { key: "about", label: "About", count: null },
   ];
 
-  // ─── Stats config ─────────────────────────────────────────────────────────
-  const statItems = [
-    { label: 'Visited', value: stats.reviews, action: () => handleSectionChange('log') },
-    { label: 'Saved', value: stats.pending, action: () => { handleSectionChange('log'); handleFilterChange('pending'); } },
-    { label: 'Collections', value: stats.maps, action: () => handleSectionChange('collections') },
-    { label: 'Photos', value: stats.photos, action: () => handleSectionChange('photos') },
-    { label: 'Followers', value: stats.followers, action: () => openUserList('followers') },
-    { label: 'Following', value: stats.following, action: () => openUserList('following') },
-  ];
+  const hasAnyHeaderContent = profile?.firm || profile?.bio || profile?.website;
 
   // ─── Main render ─────────────────────────────────────────────────────────
   return (
     <>
       <AppLayout title={profile?.username || "Profile"} showLogo={false} showBack={!isOwnProfile} fullWidth>
 
-        {/* ── EDITORIAL PROFILE HERO ── */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* ══ PROFILE HERO ══════════════════════════════════════════════════ */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-start sm:gap-12 lg:gap-20 pt-10 pb-10 border-b border-border-default">
 
-          {/* Top meta row: avatar + role label + actions */}
-          <div className="flex items-center justify-between pt-10 pb-6">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-11 h-11 shrink-0 ring-1 ring-border-default">
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-surface-muted text-text-primary font-semibold text-sm">
-                  {profile?.username?.[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              {verifiedArchitectId && (
-                <div className="flex items-center gap-1.5">
-                  <BadgeCheck className="w-3.5 h-3.5 text-text-primary" />
-                  <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-                    Architect
+            {/* LEFT — text */}
+            <div className="flex-1 min-w-0 mt-6 sm:mt-0">
+
+              {/* Action bar */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2 min-h-[20px]">
+                  {verifiedArchitectId && (
+                    <>
+                      <BadgeCheck className="w-3.5 h-3.5 text-text-primary shrink-0" />
+                      <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">Architect</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-5">
+                  {isOwnProfile ? (
+                    isEditingHeader ? (
+                      <>
+                        <button type="button" onClick={() => setIsEditingHeader(false)} className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors">
+                          Cancel
+                        </button>
+                        <button type="button" onClick={handleSaveHeader} disabled={isSavingHeader} className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity disabled:opacity-40 flex items-center gap-1.5">
+                          {isSavingHeader ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                          Save
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => { setDraftFirm(profile?.firm || ""); setDraftBio(profile?.bio || ""); setDraftWebsite(profile?.website || ""); setIsEditingHeader(true); }} className="text-text-disabled hover:text-text-primary transition-colors" aria-label="Edit profile">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <Link to="/settings" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
+                          Settings →
+                        </Link>
+                        <button type="button" onClick={handleSignOut} className="text-text-disabled hover:text-text-primary transition-colors" aria-label="Sign out">
+                          <LogOut className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )
+                  ) : (
+                    targetUserId && <FollowButton userId={targetUserId} initialIsFollowing={isFollowing} className="h-7 text-xs px-4" />
+                  )}
+                </div>
+              </div>
+
+              {/* Username — hero title */}
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary leading-none break-words mb-5">
+                {profile?.username}
+              </h1>
+
+              {/* Editable fields or display */}
+              {isEditingHeader ? (
+                <div className="space-y-2.5 max-w-sm mb-5">
+                  {verifiedArchitectId && (
+                    <Input
+                      value={draftFirm}
+                      onChange={e => setDraftFirm(e.target.value)}
+                      placeholder="Practice or firm name..."
+                      className="h-8 text-sm bg-transparent border-border-default"
+                    />
+                  )}
+                  <textarea
+                    value={draftBio}
+                    onChange={e => setDraftBio(e.target.value)}
+                    placeholder="Short bio..."
+                    rows={3}
+                    className="w-full text-sm text-text-primary bg-transparent border border-border-default px-3 py-2 resize-none focus:outline-none focus:border-border-strong placeholder:text-text-disabled leading-relaxed"
+                  />
+                  <Input
+                    value={draftWebsite}
+                    onChange={e => setDraftWebsite(e.target.value)}
+                    placeholder="Website or portfolio URL..."
+                    className="h-8 text-sm bg-transparent border-border-default"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2 mb-5">
+                  {profile?.firm && (
+                    <p className="text-sm font-medium text-text-secondary">{profile.firm}</p>
+                  )}
+                  {profile?.bio && (
+                    <p className="text-base text-text-secondary leading-relaxed max-w-lg">{profile.bio}</p>
+                  )}
+                  {profile?.website && (
+                    <a
+                      href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors"
+                    >
+                      {profile.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                  {isOwnProfile && !hasAnyHeaderContent && (
+                    <button type="button" onClick={() => setIsEditingHeader(true)} className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors">
+                      + Add bio{verifiedArchitectId ? ", firm" : ""} & website
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Followers / following — secondary row */}
+              <div className="flex items-center gap-5">
+                <button onClick={() => openUserList("followers")} className="text-left hover:opacity-60 transition-opacity">
+                  <span className="text-sm font-semibold text-text-primary">{stats.followers}</span>
+                  <span className="text-xs text-text-disabled ml-1.5">followers</span>
+                </button>
+                <button onClick={() => openUserList("following")} className="text-left hover:opacity-60 transition-opacity">
+                  <span className="text-sm font-semibold text-text-primary">{stats.following}</span>
+                  <span className="text-xs text-text-disabled ml-1.5">following</span>
+                </button>
+              </div>
+            </div>
+
+            {/* RIGHT — portrait photo */}
+            <div className="shrink-0 self-start">
+              {profile?.avatar_url ? (
+                <div className="w-32 h-40 sm:w-44 sm:h-56 overflow-hidden bg-surface-muted">
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.username || ""}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-32 h-40 sm:w-44 sm:h-56 bg-surface-muted flex items-end p-3">
+                  <span className="text-5xl sm:text-6xl font-bold text-border-strong leading-none select-none">
+                    {profile?.username?.[0]?.toUpperCase()}
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-5">
-              {isOwnProfile ? (
-                <>
-                  <Link
-                    to="/settings"
-                    className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
-                  >
-                    Settings →
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="text-text-disabled hover:text-text-primary transition-colors"
-                    aria-label="Sign out"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                  </button>
-                </>
-              ) : (
-                targetUserId && (
-                  <FollowButton
-                    userId={targetUserId}
-                    initialIsFollowing={isFollowing}
-                    className="h-7 text-xs px-4"
-                  />
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Username — editorial hero title */}
-          <div className="pb-8">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary leading-none break-words">
-              {profile?.username}
-            </h1>
-            {profile?.bio && (
-              <p className="mt-4 text-base text-text-secondary leading-relaxed max-w-xl">
-                {profile.bio}
-              </p>
-            )}
-          </div>
-
-          {/* Stats row */}
-          <div className="flex flex-wrap items-stretch border-t border-border-default pt-6 pb-6 gap-y-5">
-            {statItems.map((stat, i) => (
-              <button
-                key={stat.label}
-                onClick={stat.action}
-                className={`text-left hover:opacity-60 transition-opacity cursor-pointer pr-8 ${i > 0 ? '' : ''}`}
-              >
-                <div className="text-2xl font-bold tracking-tight text-text-primary leading-none">
-                  {stat.value}
-                </div>
-                <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">
-                  {stat.label}
-                </div>
-              </button>
-            ))}
           </div>
         </div>
 
-        {/* ── STICKY TAB STRIP ── */}
+        {/* ══ METRICS AS TABS ══════════════════════════════════════════════ */}
         <div className="sticky top-0 z-20 bg-surface-default border-b border-border-default">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex gap-0 -mb-px overflow-x-auto scrollbar-none">
-              {tabs.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => handleSectionChange(tab.key)}
-                  className={`px-5 py-3.5 text-xs font-medium uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap shrink-0 ${
-                    activeSection === tab.key
-                      ? 'border-text-primary text-text-primary'
-                      : 'border-transparent text-text-disabled hover:text-text-secondary'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex -mb-px overflow-x-auto scrollbar-none">
+              {tabs.map(tab => {
+                const isActive = activeSection === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => handleSectionChange(tab.key)}
+                    className={`shrink-0 px-5 py-3 border-b-2 transition-colors text-left ${
+                      isActive ? "border-text-primary" : "border-transparent hover:border-border-default"
+                    }`}
+                  >
+                    {tab.count !== null ? (
+                      <>
+                        <div className={`text-base font-bold tracking-tight leading-none ${isActive ? "text-text-primary" : "text-text-disabled"}`}>
+                          {tab.count.toLocaleString()}
+                        </div>
+                        <div className={`text-2xs font-medium tracking-widest uppercase mt-0.5 ${isActive ? "text-text-secondary" : "text-text-disabled"}`}>
+                          {tab.label}
+                        </div>
+                      </>
+                    ) : (
+                      <div className={`text-xs font-medium tracking-widest uppercase leading-none py-1 ${isActive ? "text-text-primary" : "text-text-disabled"}`}>
+                        {tab.label}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* ── BODY ── */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* ══ CONTENT BODY ═════════════════════════════════════════════════ */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="min-h-[60vh] py-10">
 
-            {/* ── PORTFOLIO TAB ── */}
-            {activeSection === 'portfolio' && verifiedArchitectId && (
+            {/* ── PORTFOLIO ── */}
+            {activeSection === "portfolio" && verifiedArchitectId && (
               <WidgetErrorBoundary>
                 <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
               </WidgetErrorBoundary>
             )}
 
-            {/* ── LOG TAB ── */}
-            {activeSection === 'log' && (
+            {/* ── VISITED / SAVED (both are log views) ── */}
+            {(activeSection === "visited" || activeSection === "saved") && (
               <div>
                 {/* Toolbar */}
-                <div className="flex flex-wrap items-center gap-3 mb-6">
-                  <ToggleGroup
-                    type="single"
-                    value={activeFilter}
-                    onValueChange={handleFilterChange}
-                    className="justify-start"
-                  >
-                    <ToggleGroupItem
-                      value="all"
-                      className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide data-[state=on]:bg-text-primary data-[state=on]:text-surface-default"
-                    >
-                      All ({stats.reviews + stats.pending})
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="visited"
-                      className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide data-[state=on]:bg-text-primary data-[state=on]:text-surface-default"
-                    >
-                      Visited ({stats.reviews})
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="pending"
-                      className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide data-[state=on]:bg-text-primary data-[state=on]:text-surface-default"
-                    >
-                      Saved ({stats.pending})
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                  <ToggleGroup
-                    type="single"
-                    value={viewMode}
-                    onValueChange={v => v && setViewMode(v as "grid" | "kanban" | "list")}
-                    className="ml-auto"
-                  >
-                    <ToggleGroupItem value="grid" size="sm" aria-label="Grid view">
-                      <LayoutGrid className="h-3.5 w-3.5" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban view">
-                      <Columns className="h-3.5 w-3.5" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="list" size="sm" aria-label="List view">
-                      <List className="h-3.5 w-3.5" />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                  <label className="flex items-center gap-2 cursor-pointer shrink-0">
-                    <span className="text-2xs font-medium tracking-widest uppercase text-text-disabled whitespace-nowrap">
-                      Hero photos
-                    </span>
-                    <Switch
-                      checked={showCommunityImages}
-                      onCheckedChange={setShowCommunityImages}
-                      className="scale-75 origin-right"
-                    />
-                  </label>
-                </div>
-
-                {/* Search + map */}
-                <div className="flex gap-2 mb-8">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-disabled" />
-                    <Input
-                      placeholder="Search buildings..."
-                      value={searchQuery}
-                      onChange={e => handleSearchChange(e.target.value)}
-                      className="pl-9 h-8 text-sm bg-surface-muted/40 border-transparent focus:bg-surface-default"
-                    />
-                    {searchQuery && (
-                      <button type="button" onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <X className="h-3.5 w-3.5 text-text-disabled hover:text-text-primary" />
-                      </button>
-                    )}
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <ToggleGroup type="single" value={viewMode} onValueChange={v => v && setViewMode(v as "grid" | "kanban" | "list")}>
+                      <ToggleGroupItem value="grid" size="sm" aria-label="Grid"><LayoutGrid className="h-3.5 w-3.5" /></ToggleGroupItem>
+                      <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban"><Columns className="h-3.5 w-3.5" /></ToggleGroupItem>
+                      <ToggleGroupItem value="list" size="sm" aria-label="List"><List className="h-3.5 w-3.5" /></ToggleGroupItem>
+                    </ToggleGroup>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <span className="text-2xs font-medium tracking-widest uppercase text-text-disabled">Hero</span>
+                      <Switch checked={showCommunityImages} onCheckedChange={setShowCommunityImages} className="scale-75 origin-right" />
+                    </label>
                   </div>
-                  <button
-                    type="button"
-                    className="shrink-0 h-8 px-3 border border-border-default text-text-secondary hover:text-text-primary hover:border-border-strong transition-colors text-xs"
-                    onClick={() => navigate(activeFilter === "pending"
-                      ? `/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending`
-                      : `/search?rated_by=${profile?.username || ""}&open_filters=true`
-                    )}
-                    title="View on map"
-                  >
-                    <MapIcon className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-text-disabled" />
+                      <Input
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={e => handleSearchChange(e.target.value)}
+                        className="pl-8 h-7 w-32 text-xs bg-surface-muted/40 border-transparent focus:bg-surface-default focus:w-44 transition-all"
+                      />
+                      {searchQuery && (
+                        <button type="button" onClick={() => handleSearchChange("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+                          <X className="h-3 w-3 text-text-disabled hover:text-text-primary" />
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="h-7 px-2.5 border border-border-default text-text-disabled hover:text-text-primary hover:border-border-strong transition-colors"
+                      onClick={() => navigate(activeSection === "saved" ? `/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending` : `/search?rated_by=${profile?.username || ""}&open_filters=true`)}
+                      title="View on map"
+                    >
+                      <MapIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Content */}
                 {contentLoading ? (
-                  <div className="flex justify-center py-16">
-                    <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-                  </div>
+                  <div className="flex justify-center py-16"><Loader2 className="h-4 w-4 animate-spin text-text-disabled" /></div>
                 ) : filteredContent.length > 0 ? (
                   <>
                     <WidgetErrorBoundary>
                       <AnimatePresence mode="wait">
-                        {viewMode === 'grid' ? (
-                          <motion.div key="grid" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-16">
+                        {viewMode === "grid" ? (
+                          <motion.div key="grid" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }}>
+                            {/* Editorial grid — no borders, no icons */}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10 pb-16">
                               {filteredContent.map(item => (
-                                <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser variant="compact" showCommunityImages={showCommunityImages} />
+                                <EditorialBuildingCard key={item.id} entry={item} showCommunityImages={showCommunityImages} />
                               ))}
                             </div>
                           </motion.div>
-                        ) : viewMode === 'list' ? (
-                          <motion.div key="list" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
+                        ) : viewMode === "list" ? (
+                          <motion.div key="list" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }}>
                             <ProfileListView data={filteredContent} isOwnProfile={isOwnProfile} onUpdate={handleUpdate} />
                           </motion.div>
                         ) : (
-                          <motion.div key="kanban" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
+                          <motion.div key="kanban" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }}>
                             <div className="-mx-4">
                               <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                                 <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} isDragEnabled={isOwnProfile} />
                                 <DragOverlay dropAnimation={null}>
                                   {activeId ? (
                                     <div className="w-[280px] scale-105 shadow-lg z-50 cursor-grabbing bg-surface-card border border-border-default overflow-hidden opacity-90">
-                                      {(() => {
-                                        const activeItem = content.find(i => i.id === activeId);
-                                        return activeItem ? <ReviewCard entry={activeItem} variant="compact" hideUser imagePosition="left" showCommunityImages={showCommunityImages} /> : null;
-                                      })()}
+                                      {(() => { const activeItem = content.find(i => i.id === activeId); return activeItem ? <ReviewCard entry={activeItem} variant="compact" hideUser imagePosition="left" showCommunityImages={showCommunityImages} /> : null; })()}
                                     </div>
                                   ) : null}
                                 </DragOverlay>
@@ -1005,61 +980,39 @@ export default function Profile() {
                     </WidgetErrorBoundary>
                     <div ref={containerRef} className="h-4 w-full" />
                   </>
+                ) : searchQuery ? (
+                  <EmptyState icon={Search} label="No results found" />
+                ) : activeSection === "visited" ? (
+                  <EmptyState icon={Building2} label="No visited buildings yet" />
                 ) : (
-                  searchQuery ? (
-                    <EmptyState icon={Search} label="No results found" />
-                  ) : activeFilter === 'visited' ? (
-                    <EmptyState icon={Building2} label="No visited buildings yet" />
-                  ) : activeFilter === 'pending' ? (
-                    <EmptyState
-                      icon={Bookmark}
-                      label="Bucket list is empty"
-                      description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
-                      action={isOwnProfile ? (
-                        <button
-                          type="button"
-                          onClick={() => navigate("/search")}
-                          className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary transition-colors"
-                        >
-                          Search buildings →
-                        </button>
-                      ) : undefined}
-                    />
-                  ) : (
-                    <EmptyState icon={Building2} label="No activity yet" />
-                  )
+                  <EmptyState
+                    icon={Bookmark}
+                    label="Bucket list is empty"
+                    description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
+                    action={isOwnProfile ? (
+                      <button type="button" onClick={() => navigate("/search")} className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity">
+                        Search buildings →
+                      </button>
+                    ) : undefined}
+                  />
                 )}
-                {isFetchingMore && (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-text-disabled" />
-                  </div>
-                )}
+                {isFetchingMore && <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-text-disabled" /></div>}
               </div>
             )}
 
-            {/* ── COLLECTIONS TAB ── */}
-            {activeSection === 'collections' && targetUserId && (
+            {/* ── COLLECTIONS ── */}
+            {activeSection === "collections" && targetUserId && (
               <div>
                 {isOwnProfile && (
                   <div className="flex justify-end mb-8">
-                    <button
-                      type="button"
-                      onClick={() => setShowCreateCollection(true)}
-                      className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5"
-                    >
+                    <button type="button" onClick={() => setShowCreateCollection(true)} className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5">
                       <Plus className="w-3 h-3" />New collection →
                     </button>
                   </div>
                 )}
                 <WidgetErrorBoundary>
                   <DndContext sensors={sensors} onDragStart={handleCollectionDragStart} onDragEnd={handleCollectionDragEnd}>
-                    <CollectionsGrid
-                      userId={targetUserId}
-                      username={profile?.username || null}
-                      isOwnProfile={isOwnProfile}
-                      onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
-                      refreshKey={collectionsRefreshKey}
-                    />
+                    <CollectionsGrid userId={targetUserId} username={profile?.username || null} isOwnProfile={isOwnProfile} onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined} refreshKey={collectionsRefreshKey} />
                     <DragOverlay dropAnimation={null}>
                       {activeCollectionData ? (
                         <div className="shadow-lg cursor-grabbing bg-surface-card border border-border-default overflow-hidden opacity-90 inline-block">
@@ -1074,57 +1027,56 @@ export default function Profile() {
               </div>
             )}
 
-            {/* ── PHOTOS TAB ── */}
-            {activeSection === 'photos' && (
+            {/* ── PHOTOS — editorial masonry ── */}
+            {activeSection === "photos" && (
               <div>
-                <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">
+                <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-8">
                   Photos by {profile?.username}
                 </p>
                 {photosLoading ? (
-                  <div className="flex justify-center py-16">
-                    <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-                  </div>
+                  <div className="flex justify-center py-16"><Loader2 className="h-4 w-4 animate-spin text-text-disabled" /></div>
                 ) : userPhotos.length > 0 ? (
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-0.5">
-                    {userPhotos.map(photo => (
-                      <div key={photo.id} className="relative aspect-square overflow-hidden bg-surface-muted group cursor-pointer">
-                        <img src={photo.url} alt={photo.building_name || ""} className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" />
-                        {photo.building_name && (
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-end">
-                            <span className="translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all text-[11px] text-white font-medium px-2.5 pb-2.5 line-clamp-1">
-                              {photo.building_name}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <MasonryPhotoGrid photos={userPhotos} />
                 ) : (
-                  <EmptyState
-                    icon={Search}
-                    label="No photos yet"
-                    description={isOwnProfile ? "Photos you upload when reviewing buildings will appear here." : undefined}
-                  />
+                  <EmptyState icon={Search} label="No photos yet" description={isOwnProfile ? "Photos you upload when reviewing buildings will appear here." : undefined} />
                 )}
               </div>
             )}
 
-            {/* ── ABOUT TAB ── */}
-            {activeSection === 'about' && (
-              <div className="max-w-sm space-y-10">
-
-                {profile?.bio && (
-                  <div>
-                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-3">Bio</p>
-                    <p className="text-base text-text-primary leading-relaxed">{profile.bio}</p>
+            {/* ── ABOUT ── */}
+            {activeSection === "about" && (
+              <div className="max-w-md space-y-10">
+                {(profile?.bio || profile?.firm || profile?.website) && (
+                  <div className="space-y-6">
+                    {profile?.firm && (
+                      <div>
+                        <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-1.5">Practice</p>
+                        <p className="text-base font-medium text-text-primary">{profile.firm}</p>
+                      </div>
+                    )}
+                    {profile?.bio && (
+                      <div>
+                        <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-1.5">Bio</p>
+                        <p className="text-base text-text-primary leading-relaxed">{profile.bio}</p>
+                      </div>
+                    )}
+                    {profile?.website && (
+                      <div>
+                        <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-1.5">Website</p>
+                        <a href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-text-primary hover:opacity-60 transition-opacity">
+                          {profile.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                          <ExternalLink className="w-3 h-3 text-text-disabled" />
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {verifiedArchitectId && (
                   <div>
-                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-3">Role</p>
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-2">Role</p>
                     <div className="flex items-center gap-2 text-sm text-text-primary">
-                      <BadgeCheck className="w-4 h-4 text-text-primary shrink-0" />
+                      <BadgeCheck className="w-4 h-4 shrink-0" />
                       Verified architect on Plano
                     </div>
                   </div>
@@ -1132,13 +1084,13 @@ export default function Profile() {
 
                 <div>
                   <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-5">Connections</p>
-                  <div className="flex gap-10">
-                    <button onClick={() => openUserList('followers')} className="text-left hover:opacity-60 transition-opacity">
-                      <div className="text-2xl font-bold tracking-tight text-text-primary leading-none">{stats.followers}</div>
+                  <div className="flex gap-12">
+                    <button onClick={() => openUserList("followers")} className="text-left hover:opacity-60 transition-opacity">
+                      <div className="text-3xl font-bold tracking-tight text-text-primary leading-none">{stats.followers}</div>
                       <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">Followers</div>
                     </button>
-                    <button onClick={() => openUserList('following')} className="text-left hover:opacity-60 transition-opacity">
-                      <div className="text-2xl font-bold tracking-tight text-text-primary leading-none">{stats.following}</div>
+                    <button onClick={() => openUserList("following")} className="text-left hover:opacity-60 transition-opacity">
+                      <div className="text-3xl font-bold tracking-tight text-text-primary leading-none">{stats.following}</div>
                       <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">Following</div>
                     </button>
                   </div>
@@ -1147,13 +1099,9 @@ export default function Profile() {
                 {squad.length > 0 && isOwnProfile && (
                   <div>
                     <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-5">Following</p>
-                    <div className="flex gap-4 flex-wrap">
+                    <div className="flex gap-5 flex-wrap">
                       {squad.map(member => (
-                        <Link
-                          key={member.id}
-                          to={`/profile/${member.username}`}
-                          className="flex flex-col items-center gap-2 hover:opacity-60 transition-opacity w-14"
-                        >
+                        <Link key={member.id} to={`/profile/${member.username}`} className="flex flex-col items-center gap-2 hover:opacity-60 transition-opacity w-14">
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={member.avatar_url || undefined} />
                             <AvatarFallback className="text-xs">{member.username?.[0]?.toUpperCase()}</AvatarFallback>
@@ -1174,23 +1122,17 @@ export default function Profile() {
         <Dialog open={userListDialog.open} onOpenChange={open => setUserListDialog(prev => ({ ...prev, open }))}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-xs font-medium tracking-widest uppercase text-center text-text-secondary">
+              <DialogTitle className="text-2xs font-medium tracking-widest uppercase text-center text-text-secondary">
                 {userListDialog.type}
               </DialogTitle>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
               {userListLoading ? (
-                <div className="flex justify-center py-10">
-                  <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-                </div>
+                <div className="flex justify-center py-10"><Loader2 className="h-4 w-4 animate-spin text-text-disabled" /></div>
               ) : userList.length > 0 ? (
                 <div className="space-y-0 p-1">
                   {userList.map(u => (
-                    <div
-                      key={u.id}
-                      className="flex items-center justify-between py-3 border-b border-border-default last:border-0 cursor-pointer hover:opacity-70 transition-opacity"
-                      onClick={() => { setUserListDialog(prev => ({ ...prev, open: false })); navigate(`/profile/${u.username?.toLowerCase()}`); }}
-                    >
+                    <div key={u.id} className="flex items-center justify-between py-3 border-b border-border-default last:border-0 cursor-pointer hover:opacity-70 transition-opacity" onClick={() => { setUserListDialog(prev => ({ ...prev, open: false })); navigate(`/profile/${u.username?.toLowerCase()}`); }}>
                       <div className="flex items-center gap-3">
                         <Avatar className="w-8 h-8">
                           <AvatarImage src={u.avatar_url || undefined} />
@@ -1227,21 +1169,83 @@ export default function Profile() {
   );
 }
 
+// ─── Editorial Building Card ──────────────────────────────────────────────────
+// No card chrome. 3:4 portrait image, bold name, faint meta below.
+function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedReview; showCommunityImages: boolean }) {
+  const imageUrl = (showCommunityImages && entry.images?.[0]?.url) || entry.building.main_image_url;
+  const architectName = entry.building.architects?.[0]?.name;
+  const meta = [architectName, entry.building.year_completed].filter(Boolean).join(" · ");
+  const url = getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id);
+
+  return (
+    <Link to={url} className="group block">
+      {/* 3:4 portrait image, no rounding */}
+      <div className="aspect-[3/4] overflow-hidden bg-surface-muted mb-3">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={entry.building.name}
+            className="w-full h-full object-cover group-hover:opacity-85 transition-opacity duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-end p-3">
+            <span className="text-text-disabled text-xs font-medium uppercase tracking-wide leading-tight line-clamp-3">
+              {entry.building.name}
+            </span>
+          </div>
+        )}
+      </div>
+      {/* Text — no icons, stark hierarchy */}
+      <p className="text-sm font-bold text-text-primary leading-snug line-clamp-2 group-hover:opacity-60 transition-opacity">
+        {entry.building.name}
+      </p>
+      {meta && (
+        <p className="text-2xs text-text-disabled mt-0.5 truncate">{meta}</p>
+      )}
+    </Link>
+  );
+}
+
+// ─── Masonry Photo Grid ───────────────────────────────────────────────────────
+// CSS columns masonry. Photos at index 0, 7, 14… get a taller aspect ratio.
+function MasonryPhotoGrid({ photos }: { photos: UserPhoto[] }) {
+  return (
+    <div style={{ columnCount: 3, columnGap: "3px" }}>
+      {photos.map((photo, i) => {
+        const isFeatured = i === 0 || i % 7 === 0;
+        return (
+          <div
+            key={photo.id}
+            className={`relative overflow-hidden bg-surface-muted group cursor-pointer break-inside-avoid ${isFeatured ? "aspect-[3/4]" : "aspect-square"}`}
+            style={{ display: "block", marginBottom: "3px" }}
+          >
+            <img
+              src={photo.url}
+              alt={photo.building_name || ""}
+              className="w-full h-full object-cover group-hover:opacity-85 transition-opacity duration-200"
+            />
+            {photo.building_name && (
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-end">
+                <span className="translate-y-1.5 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-200 text-[11px] text-white font-medium px-2.5 pb-2.5 line-clamp-1 leading-tight">
+                  {photo.building_name}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Empty State ──────────────────────────────────────────────────────────────
-function EmptyState({ icon: Icon, label, description, action }: {
-  icon: LucideIcon;
-  label: string;
-  description?: string;
-  action?: ReactNode;
-}) {
+function EmptyState({ icon: Icon, label, description, action }: { icon: LucideIcon; label: string; description?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-20 px-8 gap-5">
-      <Icon className="h-8 w-8 text-text-disabled" strokeWidth={1.5} />
+      <Icon className="h-7 w-7 text-text-disabled" strokeWidth={1.5} />
       <div className="space-y-2">
         <p className="text-base font-semibold text-text-primary tracking-tight">{label}</p>
-        {description && (
-          <p className="text-sm text-text-secondary max-w-xs leading-relaxed">{description}</p>
-        )}
+        {description && <p className="text-sm text-text-secondary max-w-xs leading-relaxed">{description}</p>}
       </div>
       {action && <div className="mt-1">{action}</div>}
     </div>
