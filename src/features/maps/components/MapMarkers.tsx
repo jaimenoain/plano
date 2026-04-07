@@ -153,9 +153,9 @@ export function MapMarkers({
                         /* Keep existing Rating or fallback dot logic here if needed,
                             or leave empty if the Pin Style handles the visuals (e.g. dots)
                         */
-                        // If it's a candidate, show a yellow dot inside
+                        // If it's a candidate, show accent dot inside
                         cluster.is_candidate ? (
-                            <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                            <div className="h-2 w-2 rounded-full bg-brand-primary" />
                         ) : null
                       )
                   )

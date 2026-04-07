@@ -135,10 +135,7 @@ function SearchPageContent() {
         )}
 
         {/* Desktop Sidebar (Fixed) */}
-        <div
-            className={`hidden md:flex flex-col w-[400px] bg-surface-card border-r border-border-default absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
-            style={{ left: 0 }}
-        >
+        <div className="absolute bottom-0 left-0 top-0 z-20 hidden w-search-serp flex-col border-r border-border-default bg-surface-card shadow-lg transition-all duration-300 md:flex">
            <div className="p-4 border-b flex items-center gap-2 bg-surface-card/95 backdrop-blur supports-[backdrop-filter]:bg-surface-card/60">
               <DiscoverySearchInput
                  value={searchValue}
@@ -161,12 +158,7 @@ function SearchPageContent() {
         </div>
 
         {/* Map Container (Main) */}
-        <div
-          className={`flex-1 h-full relative transition-all duration-300`}
-          style={{
-            marginLeft: isMobile ? 0 : 400
-          }}
-        >
+        <div className="relative h-full flex-1 transition-all duration-300 md:ml-search-serp">
           <ClientOnly fallback={<MapLoadingPlaceholder />}>
             <PlanoMap showEmptyMessage={true} />
           </ClientOnly>

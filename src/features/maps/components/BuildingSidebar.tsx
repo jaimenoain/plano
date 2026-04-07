@@ -168,9 +168,9 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
   }, [data?.pages]);
 
   return (
-    <div className={cn("h-full w-80 bg-surface-card border-l border-border-default", className)}>
+    <div className={cn("h-full w-full min-w-0 bg-surface-card border-l border-border-default", className)}>
       <ScrollArea className="h-full w-full">
-        <div className="space-y-4 p-4">
+        <div className="space-y-4 pl-4 pt-4 pb-4">
         {/* Architect Results */}
         {architects && architects.length > 0 && (
           <div className="space-y-2">
@@ -274,7 +274,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
                 return (
                   <Link to={`/building/${building.slug || building.id}`} key={building.id} className="block group">
                     <Card
-                      className="flex flex-row overflow-hidden transition-all duration-200 shadow-none border-transparent hover:border-border-default/50 min-h-[7rem]"
+                      className="flex min-h-28 flex-row overflow-hidden border-transparent shadow-none transition-all duration-200 hover:border-border-default/50"
                       onMouseEnter={() => setHighlightedId(building.id)}
                       onMouseLeave={() => setHighlightedId(null)}
                     >
@@ -285,7 +285,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
                                 {building.name}
                             </h3>
                             {building.alt_name && building.alt_name !== building.name && (
-                                <span className="text-xs text-text-secondary italic truncate max-w-[200px]">
+                                <span className="max-w-search-serp-alt truncate text-xs italic text-text-secondary">
                                     {building.alt_name}
                                 </span>
                             )}
@@ -313,7 +313,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
                         {( (building.status && building.status !== 'none') || building.rating > 0 ) && (
                             <div className="mt-2 flex items-center gap-2">
                                 {building.status && building.status !== 'none' && (
-                                    <span className="inline-flex items-center rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground capitalize">
+                                    <span className="inline-flex items-center rounded-full bg-surface-muted px-1.5 py-0.5 text-2xs font-medium capitalize text-secondary-foreground">
                                         {building.status}
                                     </span>
                                 )}
@@ -337,7 +337,7 @@ export function BuildingSidebar({ topLocation, onLocationClick, suggestions, arc
                             loading="lazy"
                           />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-text-secondary text-[10px]">
+                          <div className="flex h-full items-center justify-center text-2xs text-text-secondary">
                             No Image
                           </div>
                         )}

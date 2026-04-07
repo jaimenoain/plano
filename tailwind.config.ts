@@ -31,6 +31,12 @@ export default {
         "collection-mosaic": "10.5rem",
         /** 1.5px — hairline gutter between mosaic cells */
         "mosaic-gap": "1.5px",
+        /** 400px — Search map SERP (results) column */
+        "search-serp": "25rem",
+      },
+      maxWidth: {
+        /** 200px — secondary name line clamp in SERP building rows */
+        "search-serp-alt": "12.5rem",
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

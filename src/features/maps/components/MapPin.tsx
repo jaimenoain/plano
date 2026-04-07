@@ -38,7 +38,7 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
       {/* Pulse Effect (Tier S) */}
       {style.tier === 'S' && (
         <div
-          className="absolute inset-0 -z-10 animate-ping-large-slow rounded-full bg-lime-high opacity-30"
+          className="absolute inset-0 -z-10 animate-ping-large-slow rounded-full bg-brand-primary opacity-30"
           data-testid="map-pin-pulse"
         />
       )}
@@ -54,7 +54,7 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
         {/* Dot Decoration (Tier A) */}
         {style.showDot && (
           <div
-            className="absolute h-2 w-2 rounded-full bg-lime-high"
+            className="absolute h-2 w-2 rounded-full bg-brand-primary"
             data-testid="map-pin-dot"
           />
         )}

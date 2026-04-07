@@ -24,8 +24,8 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
     let zIndex = 10;
 
     if (item.max_tier === 3) {
-      // Tier 3: Lime Tinted
-      classes += ' bg-[#F6FFA0]/90 border-lime-high border-2';
+      // Tier 3: Brand-tinted cluster (matches design tokens, not legacy yellow wash)
+      classes += ' bg-brand-secondary/90 border-brand-primary border-2';
       zIndex = 20;
     } else if (item.max_tier === 2) {
       // Tier 2: White Tinted
@@ -109,7 +109,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 100,
         size: 30,
-        classes: 'bg-lime-high border-text-primary border-2 text-black',
+        classes: 'bg-brand-primary border-text-primary border-2 text-brand-primary-foreground',
         showDot: false,
         showContent: true
       };

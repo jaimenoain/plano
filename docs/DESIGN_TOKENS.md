@@ -187,6 +187,8 @@ Named layout tokens (exact measures, not constrained to the 4px grid):
 |---|---|---|---|
 | `collection-mosaic` | `10.5rem` | 168px | Feed collection card 2×2 preview (`w-collection-mosaic` / `h-collection-mosaic`) |
 | `mosaic-gap` | `1.5px` | 1.5px | Gutter between mosaic cells (`gap-mosaic-gap`) |
+| `search-serp` | `25rem` | 400px | Search map results column width (`w-search-serp`, `ml-search-serp`, etc.) |
+| `search-serp-alt` (max-width) | `12.5rem` | 200px | Secondary building name line clamp in SERP list rows (`max-w-search-serp-alt`) |
 
 ---
 
@@ -301,6 +303,10 @@ theme: {
     spacing: {
       'collection-mosaic': '10.5rem',
       'mosaic-gap': '1.5px',
+      'search-serp': '25rem',
+    },
+    maxWidth: {
+      'search-serp-alt': '12.5rem',
     },
     borderRadius: {
       'none': '0px',

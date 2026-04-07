@@ -341,7 +341,7 @@ export function BuildingPopupContent({
                 </div>
                 )}
                 <div className="absolute top-2 right-2 z-20">
-                     <span className="bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                     <span className="bg-brand-primary text-brand-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                         SUGGESTED
                      </span>
                 </div>

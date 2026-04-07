@@ -69,7 +69,7 @@ describe('BuildingLocationMap', () => {
 
     // Expect failure until implementation
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.className).toContain('bg-lime-high');
+    expect(pin.className).toContain('bg-brand-primary');
     expect(pin.className).toContain('border-text-primary');
   });
 
@@ -92,7 +92,7 @@ describe('BuildingLocationMap', () => {
     render(<BuildingLocationMap {...defaultProps} rating={0} tierRank="Top 1%" />);
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.className).toContain('bg-lime-high');
+    expect(pin.className).toContain('bg-brand-primary');
   });
 
   it('renders Tier C pin for Standard rank (no user rating)', () => {

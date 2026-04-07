@@ -57,8 +57,8 @@ describe('MapMarkers - Smart Clusters', () => {
 
     const pin = screen.getByTestId('map-pin-container');
     // Check classes for Lime styling
-    expect(pin.className).toContain('bg-[#F6FFA0]/90');
-    expect(pin.className).toContain('border-lime-high');
+    expect(pin.className).toContain('bg-brand-secondary/90');
+    expect(pin.className).toContain('border-brand-primary');
     // Check zIndex
     const marker = screen.getByTestId('marker-container');
     expect(marker.style.zIndex).toBe('20');

@@ -23,8 +23,8 @@ describe('getPinStyle', () => {
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
       expect(style.size).toBe(30);
-      expect(style.classes).toContain('bg-lime-high');
-      expect(style.classes).toContain('text-black');
+      expect(style.classes).toContain('bg-brand-primary');
+      expect(style.classes).toContain('text-brand-primary-foreground');
     });
 
     it('returns Tier A (White, No Dot) for rating 2', () => {
@@ -68,7 +68,7 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 1%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
-      expect(style.classes).toContain('bg-lime-high');
+      expect(style.classes).toContain('bg-brand-primary');
     });
 
     it("returns Tier B for 'Top 10%'", () => {
@@ -146,8 +146,8 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ is_cluster: true, max_tier: 3, count: 10 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('Cluster');
-      expect(style.classes).toContain('bg-[#F6FFA0]/90');
-      expect(style.classes).toContain('border-lime-high');
+      expect(style.classes).toContain('bg-brand-secondary/90');
+      expect(style.classes).toContain('border-brand-primary');
       expect(style.classes).toContain('border-2');
     });
 
