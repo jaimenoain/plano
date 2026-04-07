@@ -9,12 +9,14 @@
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Bookmark, EyeOff, MoveUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ExploreTutorialProps {
   onComplete: () => void;
+  isSidebarOpen?: boolean;
 }
 
-export function ExploreTutorial({ onComplete }: ExploreTutorialProps) {
+export function ExploreTutorial({ onComplete, isSidebarOpen }: ExploreTutorialProps) {
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const handleComplete = () => {
@@ -25,7 +27,13 @@ export function ExploreTutorial({ onComplete }: ExploreTutorialProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm animate-in fade-in duration-500">
+    <div
+      className={cn(
+        "fixed inset-y-0 right-0 z-[60] bg-black/95 backdrop-blur-sm animate-in fade-in duration-500 [transition:left_200ms_linear]",
+        !isSidebarOpen && "left-0"
+      )}
+      style={isSidebarOpen ? { left: "var(--sidebar-width)" } : undefined}
+    >
       {/* Full-height layout: title top, gestures middle, CTA bottom */}
       <div className="h-full flex flex-col justify-between px-8 sm:px-12 py-12 sm:py-16 max-w-md">
 

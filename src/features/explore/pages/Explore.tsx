@@ -219,6 +219,7 @@ export default function Explore() {
       {/* ── Tutorial overlay ── */}
       {showTutorial && (
         <ExploreTutorial
+          isSidebarOpen={isSidebarOpen}
           onComplete={() => {
             setShowTutorial(false);
             closeSidebar();
