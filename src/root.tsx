@@ -32,6 +32,7 @@ import { setSentryUser } from "@/lib/sentry";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import type { Session } from "@supabase/supabase-js";
+import { Analytics } from "@vercel/analytics/react";
 import "./index.css";
 
 function makeQueryClient() {
@@ -131,6 +132,7 @@ function AppShell() {
       <TooltipProvider>
         <PwaProvider>
           <GoogleAnalytics />
+          <Analytics />
           <CookieConsent />
           <PwaPrompt />
           <Toaster />
