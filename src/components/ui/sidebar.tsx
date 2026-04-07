@@ -1,9 +1,13 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
-import { PanelLeft } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  readSidebarOpenFromDocument,
+  writeSidebarOpenCookie,
+} from "@/lib/sidebar-cookie";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,29 +15,6 @@ import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-const SIDEBAR_COOKIE_NAME = "sidebar:state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-
-function readSidebarOpenFromCookie(): boolean | null {
-  if (typeof document === "undefined") return null;
-  const parts = document.cookie.split(";");
-  for (const part of parts) {
-    const idx = part.indexOf("=");
-    if (idx === -1) continue;
-    const name = part.slice(0, idx).trim();
-    if (name !== SIDEBAR_COOKIE_NAME) continue;
-    const raw = part.slice(idx + 1).trim();
-    if (raw === "true") return true;
-    if (raw === "false") return false;
-  }
-  return null;
-}
-
-function writeSidebarCookie(openState: boolean) {
-  if (typeof document === "undefined") return;
-  document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
-}
 
 const SIDEBAR_WIDTH = "18rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
@@ -65,25 +46,33 @@ const SidebarProvider = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     defaultOpen?: boolean;
+    /** From root loader (`Cookie` header) so SSR matches saved `sidebar:state`. */
+    initialOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
   }
->(({ defaultOpen = true, open: openProp, onOpenChange: setOpenProp, className, style, children, ...props }, ref) => {
+>(({ defaultOpen = true, initialOpen, open: openProp, onOpenChange: setOpenProp, className, style, children, ...props }, ref) => {
   const isMobile = useIsMobile();
   const isUncontrolled = openProp === undefined;
 
+  const resolvedInitialOpen =
+    initialOpen === true || initialOpen === false ? initialOpen : defaultOpen;
+
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  // `initialOpen` comes from the root loader (Cookie header) so SSR HTML matches the saved preference.
+  const [_open, _setOpen] = React.useState(() =>
+    openProp !== undefined ? openProp : resolvedInitialOpen,
+  );
   const [openMobile, _setOpenMobile] = React.useState(() =>
-    openProp !== undefined ? openProp : defaultOpen,
+    openProp !== undefined ? openProp : resolvedInitialOpen,
   );
   const open = openProp ?? _open;
 
   const setOpenMobile = React.useCallback((value: boolean | ((prev: boolean) => boolean)) => {
     _setOpenMobile((prev) => {
       const next = typeof value === "function" ? value(prev) : value;
-      writeSidebarCookie(next);
+      writeSidebarOpenCookie(next);
       return next;
     });
   }, []);
@@ -91,7 +80,7 @@ const SidebarProvider = React.forwardRef<
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value;
-      writeSidebarCookie(openState);
+      writeSidebarOpenCookie(openState);
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
@@ -105,7 +94,7 @@ const SidebarProvider = React.forwardRef<
   // Uncontrolled only — controlled callers own the source of truth.
   React.useLayoutEffect(() => {
     if (!isUncontrolled) return;
-    const saved = readSidebarOpenFromCookie();
+    const saved = readSidebarOpenFromDocument();
     if (saved !== null) {
       _setOpen(saved);
       _setOpenMobile(saved);
@@ -276,8 +265,10 @@ const Sidebar = React.forwardRef<
 Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
-  ({ className, onClick, ...props }, ref) => {
-    const { toggleSidebar } = useSidebar();
+  ({ className, onClick, "aria-label": ariaLabelProp, ...props }, ref) => {
+    const { toggleSidebar, open, openMobile, isMobile } = useSidebar();
+    const isOpen = isMobile ? openMobile : open;
+    const ariaLabel = ariaLabelProp ?? (isOpen ? "Close menu" : "Open menu");
 
     return (
       <Button
@@ -286,14 +277,16 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         variant="ghost"
         size="icon"
         className={cn("h-7 w-7", className)}
+        aria-label={ariaLabel}
+        aria-expanded={isOpen}
         onClick={(event) => {
           onClick?.(event);
           toggleSidebar();
         }}
         {...props}
       >
-        <PanelLeft />
-        <span className="sr-only">Toggle Sidebar</span>
+        {/* Three-line hamburger only — no panel / frame glyph */}
+        <Menu className="!size-5" strokeWidth={1.75} aria-hidden />
       </Button>
     );
   },

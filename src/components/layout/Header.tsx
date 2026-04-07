@@ -142,7 +142,7 @@ export function Header({
 
         {/* Left Slot */}
         <div className="flex items-center justify-start shrink-0 gap-2">
-          <SidebarTrigger className="-ml-2 shrink-0" aria-label="Open menu" />
+          <SidebarTrigger className="-ml-2 shrink-0" />
           {leftContent}
         </div>
 

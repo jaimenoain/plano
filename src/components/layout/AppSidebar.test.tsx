@@ -117,7 +117,7 @@ describe('AppSidebar', () => {
         <BrowserRouter>
           <SidebarProvider open={open} onOpenChange={setOpen}>
             <AppSidebar />
-            <SidebarTrigger aria-label="Open menu" />
+            <SidebarTrigger />
           </SidebarProvider>
         </BrowserRouter>
       );

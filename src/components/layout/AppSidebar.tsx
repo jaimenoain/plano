@@ -198,7 +198,7 @@ export function AppSidebar() {
           to="/"
           className="flex items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30 rounded-sm"
         >
-          <PlanoLogo className="text-2xl text-white" />
+          <PlanoLogo className="text-[2.5em] leading-none text-white" />
         </Link>
         <CloseButton />
       </SidebarHeader>

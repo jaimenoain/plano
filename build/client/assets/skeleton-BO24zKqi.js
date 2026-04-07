@@ -1,1 +1,0 @@
-import{j as r}from"./chunk-UVKPFVEO-C0bEtxYT.js";import{a as t}from"./utils-DXeoNpsy.js";function o({className:e,...s}){return r.jsx("div",{className:t("animate-pulse rounded-sm bg-surface-muted",e),...s})}export{o as S};

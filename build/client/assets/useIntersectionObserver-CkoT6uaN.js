@@ -1,1 +1,0 @@
-import{r as t}from"./chunk-UVKPFVEO-C0bEtxYT.js";function a(e={root:null,rootMargin:"0px",threshold:0}){const[r,n]=t.useState(null),[o,i]=t.useState(!1);return t.useEffect(()=>{if(!r)return;const s=new IntersectionObserver(([c])=>{i(c.isIntersecting)},e);return s.observe(r),()=>{s.disconnect()}},[r,e.root,e.rootMargin,e.threshold]),{containerRef:n,isVisible:o}}export{a as u};

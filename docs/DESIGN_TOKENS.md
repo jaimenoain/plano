@@ -146,13 +146,15 @@ const spaceMono = Space_Mono({
 // Apply to <html> element: className={`${spaceGrotesk.variable} ${spaceMono.variable}`}
 ```
 
-**Option B — `<link>` tag (recommended for Vite/React SPA):** Add this to `apps/web/index.html` inside `<head>`:
+**Option B — `<link>` tag (recommended for Vite/React SPA):** Add this inside the document `<head>` (e.g. `index.html` in a vanilla Vite app):
 
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 ```
+
+**This repository (React Router 7 + SSR):** the same tags are in `src/root.tsx` — `Layout` component `<head>` — not in the minimal root `index.html`.
 
 ---
 

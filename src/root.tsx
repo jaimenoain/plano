@@ -30,6 +30,7 @@ import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
 import { logDiagnosticError } from "@/features/admin/api/diagnostics";
 import { setSentryUser } from "@/lib/sentry";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
+import { parseSidebarOpenFromRequest } from "@/lib/sidebar-cookie";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import type { Session } from "@supabase/supabase-js";
 import { Analytics } from "@vercel/analytics/react";
@@ -58,7 +59,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   } = await supabase.auth.getSession();
 
   return Response.json(
-    { session },
+    {
+      session,
+      sidebarOpen: parseSidebarOpenFromRequest(request),
+    },
     { headers: responseHeaders }
   );
 }
@@ -67,6 +71,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
         {/* Google tag (gtag.js) */}
         <script
           async
@@ -98,7 +108,7 @@ gtag('config', 'G-QW7R06L5TL');
   );
 }
 
-function AppShell() {
+function AppShell({ initialSidebarOpen }: { initialSidebarOpen: boolean | null }) {
   const { user, loading: authLoading } = useAuth();
 
   useLoginTracker();
@@ -128,7 +138,10 @@ function AppShell() {
   }, []);
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider
+      defaultOpen={true}
+      initialOpen={initialSidebarOpen ?? undefined}
+    >
       <TooltipProvider>
         <PwaProvider>
           <GoogleAnalytics />
@@ -145,7 +158,10 @@ function AppShell() {
 }
 
 export default function Root() {
-  const { session } = useLoaderData<typeof loader>() as { session: Session | null };
+  const { session, sidebarOpen } = useLoaderData<typeof loader>() as {
+    session: Session | null;
+    sidebarOpen: boolean | null;
+  };
   const [queryClient] = useState(makeQueryClient);
 
   return (
@@ -153,7 +169,7 @@ export default function Root() {
       <AppErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider initialSession={session}>
-            <AppShell />
+            <AppShell initialSidebarOpen={sidebarOpen} />
           </AuthProvider>
         </QueryClientProvider>
       </AppErrorBoundary>
