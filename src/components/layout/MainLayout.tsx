@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, useRouteLoaderData } from "react-router";
+import { Outlet, useLocation, useRouteLoaderData } from "react-router";
 import {
   SidebarProvider,
   SidebarInset,
@@ -46,6 +46,8 @@ function MainLayout() {
     | { sidebarOpen: boolean | null }
     | undefined;
   const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
+  const isExplorePage = location.pathname === "/explore";
   useLoginTracker();
   usePresenceTracker();
 
@@ -75,9 +77,11 @@ function MainLayout() {
       initialOpen={rootData?.sidebarOpen ?? undefined}
     >
       <AppSidebar />
-      <div className="pointer-events-none fixed left-4 top-4 z-40 safe-area-pt">
-        <SidebarTrigger className="pointer-events-auto h-auto min-h-11 min-w-11 w-auto border-0 bg-transparent p-2 shadow-none hover:bg-transparent active:scale-100 [&_svg]:!size-6" />
-      </div>
+      {!isExplorePage && (
+        <div className="pointer-events-none fixed left-4 top-4 z-40 safe-area-pt">
+          <SidebarTrigger className="pointer-events-auto h-auto min-h-11 min-w-11 w-auto border-0 bg-transparent p-2 shadow-none hover:bg-transparent active:scale-100 [&_svg]:!size-6" />
+        </div>
+      )}
       <MainLayoutInset />
     </SidebarProvider>
   );

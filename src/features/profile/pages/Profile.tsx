@@ -453,7 +453,7 @@ export default function Profile() {
       let query = supabase
         .from("user_buildings")
         .select(`id, content, rating, created_at, edited_at, user_id, building_id, status,
-          building:buildings ( id, name, address, city, country, year_completed, main_image_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )`)
+          building:buildings ( id, name, address, city, country, year_completed, main_image_url, community_preview_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )`)
         .eq("user_id", targetUserId)
         .order("edited_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
@@ -493,7 +493,7 @@ export default function Profile() {
       type ProfileFeedRow = {
         id: string; content: string | null; rating: number | null; created_at: string;
         edited_at?: string | null; status: "visited" | "pending"; building_id: string;
-        building?: { id?: string; name?: string | null; address?: string | null; city?: string | null; country?: string | null; year_completed?: number | null; main_image_url?: string | null; slug?: string | null; short_id?: number | null; architects?: { architect: { id: string; name: string } | null }[] | null; } | null;
+        building?: { id?: string; name?: string | null; address?: string | null; city?: string | null; country?: string | null; year_completed?: number | null; main_image_url?: string | null; community_preview_url?: string | null; slug?: string | null; short_id?: number | null; architects?: { architect: { id: string; name: string } | null }[] | null; } | null;
       };
       const formattedContent: FeedReview[] = (entriesData as ProfileFeedRow[]).map(item => {
         const reviewLikes = likesCount.get(item.id) || 0;
@@ -502,7 +502,7 @@ export default function Profile() {
         return {
           id: item.id, content: item.content, rating: item.rating, created_at: item.created_at, edited_at: item.edited_at ?? null, status: item.status,
           user: { username: profile?.username || "Unknown", avatar_url: profile?.avatar_url || null },
-          building: { id: item.building?.id || item.building_id, name: item.building?.name || "Unknown Building", address: item.building?.address || null, city: item.building?.city || null, country: item.building?.country || null, year_completed: item.building?.year_completed || null, main_image_url: item.building?.main_image_url || null, slug: item.building?.slug || null, short_id: item.building?.short_id || null, architects: item.building?.architects?.flatMap(a => a.architect ? [a.architect] : []) || [] },
+          building: { id: item.building?.id || item.building_id, name: item.building?.name || "Unknown Building", address: item.building?.address || null, city: item.building?.city || null, country: item.building?.country || null, year_completed: item.building?.year_completed || null, main_image_url: item.building?.main_image_url || null, community_preview_url: item.building?.community_preview_url ?? null, slug: item.building?.slug || null, short_id: item.building?.short_id || null, architects: item.building?.architects?.flatMap(a => a.architect ? [a.architect] : []) || [] },
           tags: [] as string[], likes_count: reviewLikes + imageLikes, comments_count: commentsCount.get(item.id) || 0, is_liked: userLikes.has(item.id), watch_with_users: [] as WatchWithUser[], images: itemImages,
         };
       });
@@ -1169,7 +1169,11 @@ export default function Profile() {
 // ─── Editorial Building Card ──────────────────────────────────────────────────
 // No card chrome. 3:4 portrait image, bold name, faint meta below.
 function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedReview; showCommunityImages: boolean }) {
-  const imageUrl = (showCommunityImages && entry.images?.[0]?.url) || entry.building.main_image_url;
+  const heroFromBuilding =
+    getBuildingImageUrl(entry.building.main_image_url) ??
+    getBuildingImageUrl(entry.building.community_preview_url);
+  const imageUrl =
+    (showCommunityImages && entry.images?.[0]?.url) || heroFromBuilding;
   const arch0 = entry.building.architects?.[0];
   const architectName = typeof arch0 === "string" ? arch0 : arch0?.name;
   const meta = [architectName, entry.building.year_completed].filter(Boolean).join(" · ");

@@ -66,7 +66,9 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
               : "—";
 
             const location = review.building.city || getCityFromAddress(review.building.address);
-            const imageUrl = getBuildingImageUrl(review.building.main_image_url);
+            const imageUrl =
+              getBuildingImageUrl(review.building.main_image_url) ??
+              getBuildingImageUrl(review.building.community_preview_url);
 
             return (
               <TableRow

@@ -10,17 +10,15 @@
  *   no visible content of its own on this page.
  *
  * White hamburger:
- *   A custom `<Menu>` button floats at `fixed top-4 left-4 z-[35]` (above the
- *   explore image at z-5, above the MainLayout trigger at ~z-30, below the
- *   sidebar panel at z-40). White text so it reads against any building photo.
- *   Opens the sidebar via useSidebar().
+ *   A custom `<Menu>` button floats at `fixed top-4 left-4 z-[55]` (above the
+ *   explore image at z-5). White text so it reads against any building photo.
+ *   Opens the sidebar via useSidebar(). The MainLayout SidebarTrigger is hidden
+ *   on /explore to avoid duplicate hamburgers.
  *
- * Sidebar collapse on first interaction:
- *   useSidebar() is imported. A `hasInteracted` ref gates a one-shot collapse
- *   that fires the first time the user begins a drag gesture on a card
- *   (DiscoveryCard calls `onInteractionStart` from its Framer Motion onDragStart).
- *   The sidebar does NOT collapse on page mount — it stays in whatever state
- *   the user left it when they navigated to /explore.
+ * Sidebar auto-hide:
+ *   On mount, if the tutorial has already been seen, the sidebar is closed
+ *   immediately. If the tutorial is shown, the sidebar closes when the user
+ *   clicks "Begin exploring".
  *
  * "Hide" terminology:
  *   handleSwipeHide and all related labels now say "Hide" consistently.
@@ -52,27 +50,15 @@ export default function Explore() {
   const { user, loading: authLoading } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
 
-  // Sidebar control — collapse when user begins exploring, not on page mount
+  // Sidebar control
   const { setOpen, setOpenMobile, open, openMobile, isMobile } = useSidebar();
   // True when the sidebar panel is visible — used to hide our white hamburger
   // so it doesn't float over the open sidebar (the sidebar's own close button handles that)
   const isSidebarOpen = isMobile ? openMobile : open;
-  const hasInteractedRef = useRef(false);
 
-  /**
-   * Called once — on the user's first pointer-down anywhere on the explore surface
-   * (tap, drag start, button press, etc.). The sidebar stays open when navigating
-   * to /explore; it only collapses when the user actually begins engaging with
-   * the content. Also wired to DiscoveryCard's onInteractionStart as a fallback.
-   */
-  const handleFirstInteraction = useCallback(() => {
-    if (hasInteractedRef.current) return;
-    hasInteractedRef.current = true;
-    if (isMobile) {
-      setOpenMobile(false);
-    } else {
-      setOpen(false);
-    }
+  const closeSidebar = useCallback(() => {
+    if (isMobile) setOpenMobile(false);
+    else setOpen(false);
   }, [isMobile, setOpen, setOpenMobile]);
 
   const [locationFilter, setLocationFilter] = useState<{
@@ -88,8 +74,14 @@ export default function Explore() {
 
   useEffect(() => {
     const hasSeenTutorial = localStorage.getItem("explore-tutorial-seen");
-    if (!hasSeenTutorial) setShowTutorial(true);
-  }, []);
+    if (!hasSeenTutorial) {
+      setShowTutorial(true);
+      // Sidebar hides when the user clicks "Begin exploring" in the tutorial
+    } else {
+      // No tutorial — hide sidebar immediately on page load
+      closeSidebar();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
     useDiscoveryFeed({
@@ -226,19 +218,21 @@ export default function Explore() {
 
       {/* ── Tutorial overlay ── */}
       {showTutorial && (
-        <ExploreTutorial onComplete={() => setShowTutorial(false)} />
+        <ExploreTutorial
+          onComplete={() => {
+            setShowTutorial(false);
+            closeSidebar();
+          }}
+        />
       )}
 
       {/* ─────────────────────────────────────────────────────────────────
           Full-bleed explore container.
           `fixed inset-0 z-[5]` breaks out of AppLayout's sidebar inset
           so the image goes edge-to-edge regardless of sidebar state.
-          onPointerDown fires on the very first tap or drag — this is
-          what collapses the sidebar when the user "begins exploring".
       ───────────────────────────────────────────────────────────────── */}
       <div
         className="fixed inset-0 z-[5] bg-[#0A0A0A] text-white overflow-hidden"
-        onPointerDown={handleFirstInteraction}
       >
 
         {/* ── White hamburger ──────────────────────────────────────────────
@@ -399,7 +393,7 @@ export default function Explore() {
                 onSwipeSave={() => handleSwipeSave(building.id)}
                 onSwipeHide={() => handleSwipeHide(building.id)}
                 onSkip={() => handleSkip(building.id)}
-                onInteractionStart={handleFirstInteraction}
+                onInteractionStart={undefined}
               />
             </div>
           ))}
