@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useSidebar } from "@/components/ui/sidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Map as MapIcon, List as ListIcon, Loader2 } from "lucide-react";
@@ -14,8 +13,7 @@ import { BuildingSidebar } from "@/features/maps/components/BuildingSidebar";
 import { MapControls } from "@/features/maps/components/MapControls";
 import { DiscoverySearchInput, Suggestion } from "@/features/search/components/DiscoverySearchInput";
 import { useArchitectSearch } from "@/features/search/hooks/useArchitectSearch";
-
-const SIDEBAR_EXPANDED_OFFSET = 208; // Approx 13rem
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /** SSR/hydration skeleton: matches PlanoMap outer shell (`h-full w-full bg-surface-default`) to avoid layout shift. */
 function MapLoadingPlaceholder() {
@@ -31,9 +29,7 @@ function MapLoadingPlaceholder() {
 }
 
 function SearchPageContent() {
-  const { state, isMobile } = useSidebar();
-  const isSidebarExpanded = state === 'expanded' && !isMobile;
-
+  const isMobile = useIsMobile();
   const {
     state: { filters },
     methods: { setFilter, moveMap, fitMapBounds }
@@ -141,7 +137,7 @@ function SearchPageContent() {
         {/* Desktop Sidebar (Fixed) */}
         <div
             className={`hidden md:flex flex-col w-[400px] bg-surface-card border-r border-border-default absolute top-0 bottom-0 z-20 shadow-lg transition-all duration-300`}
-            style={{ left: isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0 }}
+            style={{ left: 0 }}
         >
            <div className="p-4 border-b flex items-center gap-2 bg-surface-card/95 backdrop-blur supports-[backdrop-filter]:bg-surface-card/60">
               <DiscoverySearchInput
@@ -168,7 +164,7 @@ function SearchPageContent() {
         <div
           className={`flex-1 h-full relative transition-all duration-300`}
           style={{
-            marginLeft: isMobile ? 0 : 400 + (isSidebarExpanded ? SIDEBAR_EXPANDED_OFFSET : 0)
+            marginLeft: isMobile ? 0 : 400
           }}
         >
           <ClientOnly fallback={<MapLoadingPlaceholder />}>

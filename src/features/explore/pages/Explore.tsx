@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ExploreTutorial } from "@/features/search/components/ExploreTutorial";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
@@ -19,7 +18,6 @@ import { DiscoverySearchInput } from "@/features/search/components/DiscoverySear
 export default function Explore() {
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
-  const { state } = useSidebar();
   const [showTutorial, setShowTutorial] = useState(false);
 
   // Filter state
@@ -201,12 +199,7 @@ toast.error("Failed to skip building");
   }
 
   return (
-      <div
-        className={cn(
-          "transition-[margin-left] duration-200 ease-linear w-auto",
-          state === "expanded" ? "md:ml-[calc(var(--sidebar-width)-var(--sidebar-width-icon))]" : "md:ml-0"
-        )}
-      >
+      <div className="w-full">
         <AppLayout isFullScreen>
           {showTutorial && <ExploreTutorial onComplete={() => setShowTutorial(false)} />}
 

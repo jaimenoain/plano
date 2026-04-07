@@ -223,17 +223,24 @@ const Sidebar = React.forwardRef<
       {/* This is what handles the sidebar gap on desktop */}
       <div
         className={cn(
-          "relative h-svh w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear",
-          "group-data-[collapsible=offcanvas]:w-0",
+          "relative h-svh bg-transparent transition-[width] duration-200 ease-linear",
           "group-data-[side=right]:rotate-180",
-          variant === "floating" || variant === "inset"
-            ? cn(
-                "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
-                preventShift && collapsible === "icon" && "w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-              )
+          // Offcanvas overlays content — never reserve a layout column (expanded state
+          // omits data-collapsible=offcanvas on the peer, so this must not rely on it).
+          collapsible === "offcanvas"
+            ? "w-0 shrink-0"
             : cn(
-                "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
-                preventShift && collapsible === "icon" && "w-[--sidebar-width-icon]"
+                "w-[--sidebar-width]",
+                "group-data-[collapsible=offcanvas]:w-0",
+                variant === "floating" || variant === "inset"
+                  ? cn(
+                      "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
+                      preventShift && collapsible === "icon" && "w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
+                    )
+                  : cn(
+                      "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
+                      preventShift && collapsible === "icon" && "w-[--sidebar-width-icon]"
+                    ),
               ),
         )}
       />

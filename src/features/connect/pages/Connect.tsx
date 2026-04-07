@@ -2,7 +2,6 @@ import { type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PeopleYouMayKnow } from "@/features/connect/components/PeopleYouMayKnow";
 import { YourContacts } from "@/features/connect/components/YourContacts";
-import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [
   { title: "Connect | Plano" },
@@ -11,7 +10,7 @@ export const meta: MetaFunction = () => [
 
 export default function Connect() {
   return (
-    <div className={cn("w-full transition-[padding] duration-200 ease-linear", "md:pl-52")}>
+    <div className="w-full md:pl-16">
       <AppLayout title="Connect" showLogo={false}>
         <div className="w-full pb-20">
           <div className="px-4 py-6 max-w-2xl mx-auto">
