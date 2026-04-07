@@ -1259,6 +1259,8 @@ CREATE TABLE public.review_images (
   likes_count  integer DEFAULT 0,
   is_generated boolean DEFAULT false,             -- AI-generated flag
   is_official  boolean DEFAULT false,             -- Official building image
+  width_px     integer,                           -- Stored file width (post client resize); null on legacy rows
+  height_px    integer,                           -- Stored file height (post client resize); null on legacy rows
   created_at   timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT review_images_pkey PRIMARY KEY (id),

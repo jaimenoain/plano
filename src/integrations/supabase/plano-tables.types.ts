@@ -1044,6 +1044,8 @@ export type PlanoPublicTables = {
       is_generated: boolean | null
       is_official: boolean | null
       hero_image_id: string | null
+      width_px: number | null
+      height_px: number | null
       created_at: string | null
     }
     Insert: {
@@ -1056,6 +1058,8 @@ export type PlanoPublicTables = {
       is_generated?: boolean | null
       is_official?: boolean | null
       hero_image_id?: string | null
+      width_px?: number | null
+      height_px?: number | null
       created_at?: string | null
     }
     Update: {
@@ -1068,6 +1072,8 @@ export type PlanoPublicTables = {
       is_generated?: boolean | null
       is_official?: boolean | null
       hero_image_id?: string | null
+      width_px?: number | null
+      height_px?: number | null
       created_at?: string | null
     }
     Relationships: [

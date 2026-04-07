@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { resizeImage } from "@/lib/image-compression";
+import { resizeImageWithDimensions } from "@/lib/image-compression";
 import { uploadFile } from "@/utils/upload";
 import {
   AlertDialog,
@@ -290,7 +290,16 @@ export default function BuildingDetails() {
   const [isSavingOfficial, setIsSavingOfficial] = useState(false);
   const [heroImageUrl, setHeroImageUrl] = useState<string | null>(initialHeroImageUrl);
   const [userLinks, setUserLinks] = useState<{id: string, url: string, title: string}[]>([]);
-  const [pendingImages, setPendingImages] = useState<{id: string, file: File, preview: string, is_generated: boolean}[]>([]);
+  const [pendingImages, setPendingImages] = useState<
+    {
+      id: string;
+      file: File;
+      preview: string;
+      is_generated: boolean;
+      width_px: number | null;
+      height_px: number | null;
+    }[]
+  >([]);
   const [likedImageIds, setLikedImageIds] = useState<Set<string>>(new Set());
   const [showCollections, setShowCollections] = useState(false);
   const [showLinkEditor, setShowLinkEditor] = useState(false);
@@ -631,9 +640,20 @@ export default function BuildingDetails() {
     if (e.target.files) {
       for (const file of Array.from(e.target.files)) {
         try {
-          const compressedFile = await resizeImage(file);
+          const { file: compressedFile, width, height } =
+            await resizeImageWithDimensions(file);
           const previewUrl = URL.createObjectURL(compressedFile);
-          setPendingImages(prev => [...prev, { id: crypto.randomUUID(), file: compressedFile, preview: previewUrl, is_generated: false }]);
+          setPendingImages(prev => [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              file: compressedFile,
+              preview: previewUrl,
+              is_generated: false,
+              width_px: width,
+              height_px: height,
+            },
+          ]);
         } catch (_error) { toast({ variant: "destructive", title: "Error processing image" }); }
       }
       e.target.value = "";
@@ -685,7 +705,14 @@ export default function BuildingDetails() {
       if (pendingImages.length > 0 && reviewId) {
         for (const img of pendingImages) {
           const storagePath = await uploadFile(img.file, reviewId);
-          await supabase.from("review_images").insert({ review_id: reviewId, user_id: user.id, storage_path: storagePath, is_generated: img.is_generated });
+          await supabase.from("review_images").insert({
+            review_id: reviewId,
+            user_id: user.id,
+            storage_path: storagePath,
+            is_generated: img.is_generated,
+            width_px: img.width_px,
+            height_px: img.height_px,
+          });
         }
         pendingImages.forEach(img => URL.revokeObjectURL(img.preview));
         setPendingImages([]);

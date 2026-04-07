@@ -39,7 +39,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { resizeImage } from "@/lib/image-compression";
+import { resizeImageWithDimensions } from "@/lib/image-compression";
 import { getBuildingUrl } from "@/utils/url";
 import { classifyBuildingPathIdSegment } from "@/utils/buildingPathId";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -55,6 +55,8 @@ interface ReviewImage {
   preview: string;
   storage_path?: string;
   is_generated?: boolean;
+  width_px?: number | null;
+  height_px?: number | null;
 }
 
 interface VideoState {
@@ -251,13 +253,16 @@ toast({ variant: "destructive", title: "Error loading data" });
     const newImages: ReviewImage[] = [];
     for (const file of files) {
       try {
-        const compressedFile = await resizeImage(file);
+        const { file: compressedFile, width, height } =
+          await resizeImageWithDimensions(file);
         const previewUrl = URL.createObjectURL(compressedFile);
         newImages.push({
           id: crypto.randomUUID(),
           file: compressedFile,
           preview: previewUrl,
-          is_generated: false
+          is_generated: false,
+          width_px: width,
+          height_px: height,
         });
       } catch (_error) {
 toast({
@@ -734,7 +739,9 @@ toast({
               review_id: reviewId,
               user_id: user.id,
               storage_path: storagePath,
-              is_generated: img.is_generated
+              is_generated: img.is_generated,
+              width_px: img.width_px ?? null,
+              height_px: img.height_px ?? null,
             };
           })
         );

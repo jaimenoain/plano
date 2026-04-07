@@ -47,6 +47,7 @@ vi.mock('@/utils/video-compression', () => ({
 
 vi.mock('@/lib/image-compression', () => ({
   resizeImage: vi.fn(),
+  resizeImageWithDimensions: vi.fn(),
 }));
 
 vi.mock('@/features/collections/components/CollectionSelector', () => ({
