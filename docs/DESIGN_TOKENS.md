@@ -97,8 +97,8 @@ Dark mode: not configured.
 
 | Token | Value | Notes |
 |---|---|---|
-| `font-sans` | `'Space Grotesk', sans-serif` | Geometric, architectural. Sharp letterforms with no humanist curves. Google Fonts. |
-| `font-mono` | `'Space Mono', monospace` | Sibling to Space Grotesk — used for building IDs, coordinates, metadata codes. Google Fonts. |
+| `font-sans` | `'Inter', sans-serif` | Neutral grotesk — excellent legibility at UI sizes, clean at editorial display sizes. Optical sizing via Google Fonts. |
+| `font-mono` | `'Space Mono', monospace` | Technical contrast to Inter — building IDs, coordinates, metadata codes. Google Fonts. |
 | `font-size-2xs` | `0.625rem` | 10px — micro labels (avatar fallbacks, section dividers); Tailwind `text-2xs` |
 | `font-size-2xs-plus` | `0.6875rem` | 11px — uppercase meta / status chips; Tailwind `text-2xs-plus` |
 | `font-size-xs` | `0.75rem` | 12px — captions, timestamps, badge labels |
@@ -116,10 +116,10 @@ Dark mode: not configured.
 | `font-weight-medium` | `500` | Labels, nav items, form labels |
 | `font-weight-semibold` | `600` | Headings, emphasis |
 | `font-weight-bold` | `700` | Hero text, strong emphasis |
-| `line-height-tight` | `1.2` | Headings — tighter than default to match architectural precision |
+| `line-height-tight` | `1.2` | Headings — tighter than default for editorial lockup |
 | `line-height-normal` | `1.5` | Body copy |
 | `line-height-relaxed` | `1.75` | Long-form text — reviews, descriptions |
-| `letter-spacing-tight` | `-0.03em` | Large headings — pulled in for geometric type |
+| `letter-spacing-tight` | `-0.03em` | Large headings — slight negative tracking for tight display type |
 | `letter-spacing-normal` | `0em` | Body |
 | `letter-spacing-wide` | `0.08em` | All-caps labels, badges, table headers |
 
@@ -128,9 +128,9 @@ Dark mode: not configured.
 **Option A — `next/font/google` (Next.js only):** If the project migrates to Next.js, add the following to `apps/web/app/layout.tsx`:
 
 ```typescript
-import { Space_Grotesk, Space_Mono } from 'next/font/google';
+import { Inter, Space_Mono } from 'next/font/google';
 
-const spaceGrotesk = Space_Grotesk({
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
@@ -143,7 +143,7 @@ const spaceMono = Space_Mono({
   display: 'swap',
 });
 
-// Apply to <html> element: className={`${spaceGrotesk.variable} ${spaceMono.variable}`}
+// Apply to <html> element: className={`${inter.variable} ${spaceMono.variable}`}
 ```
 
 **Option B — `<link>` tag (recommended for Vite/React SPA):** Add this inside the document `<head>` (e.g. `index.html` in a vanilla Vite app):
@@ -151,7 +151,7 @@ const spaceMono = Space_Mono({
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 ```
 
 **This repository (React Router 7 + SSR):** the same tags are in `src/root.tsx` — `Layout` component `<head>` — not in the minimal root `index.html`.
@@ -280,7 +280,7 @@ theme: {
       'feedback-destructive-foreground': '#FFFFFF',
     },
     fontFamily: {
-      sans: ['Space Grotesk', 'sans-serif'],
+      sans: ['Inter', 'system-ui', 'sans-serif'],
       mono: ['Space Mono', 'monospace'],
     },
     fontSize: {
@@ -380,7 +380,7 @@ pairings that are not listed here.**
 
 The spacious density directive pushes h1 to `font-size-4xl` and increases
 breathing room between heading levels. Letter spacing is tighter on large
-headings to match Space Grotesk's geometric precision. Table headers and badges
+headings to keep display type tight and editorial. Table headers and badges
 use `letter-spacing-wide` with uppercase text — a deliberate architectural
 convention.
 
@@ -496,7 +496,7 @@ context — never a raw palette value.**
 
 The entire system is built on one principle: **let the architecture be the colour.** Plano is a photography-first platform — every building photo will be the most colourful element on screen. The strictly grayscale palette ensures photos sing without competing against brand colours. The single neon accent (#BEFF00 electric lime) provides just enough tension to feel alive — it functions like a fluorescent tube in a concrete gallery, marking where to look and what to press.
 
-**Space Grotesk** was chosen over Inter or DM Sans because its geometric construction echoes architectural drafting — the letterforms feel measured and precise without being cold. Its slightly unconventional `g` and `R` give Plano a distinctive typographic identity that avoids the "generic SaaS" trap. Space Mono extends this identity into metadata, coordinates, and building IDs, reinforcing the technical/cataloguing personality. In the editorial feed, Space Grotesk is deployed at extreme scale — building names at 48–72px feel like posters, while category labels at 10px uppercase feel like editorial marginalia. The typeface works because it holds its geometry at both extremes.
+**Inter** is the primary sans: highly legible in dense UI, neutral enough to let photography dominate, and strong at editorial sizes when paired with existing scale and weight rules (tight line height and slight negative letter-spacing on large headings preserve the poster-like feed hierarchy). **Space Mono** remains the monospace — it supplies technical contrast for metadata, coordinates, and building IDs without competing with the sans. Together they keep the catalogue/editorial split: neutral sans for body and display, monospace for machine-readable detail.
 
 The **sharp radius** (2px default) is the single most important spatial decision. Rounded corners signal friendliness and consumer softness — Plano is neither. Sharp edges communicate precision, intentionality, and respect for the subject matter. The 2px value is not 0px (which can feel unfinished in a web context) but it is close enough to read as deliberately sharp. In the editorial feed, images and content blocks use 0px radius — true sharp edges, like printed photographs in a magazine.
 

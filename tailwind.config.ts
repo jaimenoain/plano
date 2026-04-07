@@ -33,7 +33,7 @@ export default {
         "mosaic-gap": "1.5px",
       },
       fontFamily: {
-        sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['Space Mono', 'monospace'],
       },
       colors: {
