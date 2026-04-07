@@ -1,4 +1,4 @@
-import { ar, as, at, au, av, aw, ax, ay, az, aA, aB, aC } from "./assets/server-build-BX1gNTda.js";
+import { ar, as, at, au, av, aw, ax, ay, az, aA, aB, aC } from "./assets/server-build-W_r8BN8w.js";
 import "@vercel/react-router/entry.server";
 import "react-router";
 import "react/jsx-runtime";
@@ -19,6 +19,7 @@ import "react-error-boundary";
 import "@sentry/react";
 import "@radix-ui/react-separator";
 import "@radix-ui/react-dialog";
+import "@vercel/analytics/react";
 import "@radix-ui/react-label";
 import "@radix-ui/react-checkbox";
 import "@radix-ui/react-avatar";

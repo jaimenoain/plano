@@ -31,7 +31,6 @@
     "index.html",
     "package.json",
     "package-lock.json",
-    "playwright.config.ts",
     "postcss.config.js",
     "tailwind.config.ts",
     "tsconfig.json",

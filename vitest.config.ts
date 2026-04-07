@@ -12,8 +12,7 @@ export default defineConfig({
       "tests/unit/**/*.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       "src/**/*.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
-    // Explicitly exclude .spec.ts files as they are likely Playwright tests
-    exclude: ["**/*.spec.ts", "node_modules/**", "dist/**"],
+    exclude: ["node_modules/**", "dist/**", "build/**"],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     alias: {

@@ -32,8 +32,7 @@ This project is a Single Page Application (SPA) built with the following core te
     * **Row Level Security (RLS):** heavily relied upon for data privacy.
 
 ### Testing
-* **E2E:** Playwright
-* **Strategy:** Use the `TEST_USERS.md` credentials. Do not mock auth network requests; use the UI login flow or storage state as described.
+* **Unit / component:** Vitest + Testing Library (`npm run test`). Co-located `*.test.ts` / `*.test.tsx` under `src/` and `tests/unit/`.
 
 ---
 
@@ -52,4 +51,4 @@ This project is a Single Page Application (SPA) built with the following core te
 
 * `npm run dev`: Start local Vite server.
 * `npm run test`: Run unit tests (Vitest).
-* `npm run typecheck`, `npm run lint`, `npm run build`: used in CI; see [`CONTRIBUTING.md`](CONTRIBUTING.md) for recommended branch protection (require the **CI / Quality checks** workflow on `main`).
+* `npm run typecheck`, `npm run lint`, `npm run build`: local quality gates; see [`CONTRIBUTING.md`](CONTRIBUTING.md) for recommended branch protection on `main`.
