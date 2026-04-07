@@ -1,3 +1,18 @@
+/**
+ * ArchitectDetails.tsx — Redesigned with A24 editorial aesthetic
+ *
+ * This page is only rendered for UNCLAIMED architect profiles.
+ * Claimed profiles are redirected to /profile/:username by the loader.
+ *
+ * Visual changes (all logic / hooks / effects unchanged):
+ *  - Sticky compact header → editorial hero with two-column layout
+ *  - Portrait frame (right column): first building image, full-bleed, 3:4 ratio
+ *  - Architect name at editorial scale (text-5xl → text-7xl)
+ *  - Metrics ARE the tabs: "N Projects" · "N Built" · "About"
+ *    (mirrors Profile.tsx's Visited / Saved / About structure)
+ *  - Building grid: portrait-ratio cards, no borders, no icons
+ *  - Claim CTA as a clean inline text link, not a banner
+ */
 import { useState, useEffect, useCallback } from "react";
 import {
   useParams,
@@ -12,12 +27,10 @@ import {
 import { useArchitect } from "@/features/architect/hooks/useArchitect";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   MapPin,
-  Globe,
+  ExternalLink,
   Map as MapIcon,
   BadgeCheck,
   Building2,
@@ -38,16 +51,15 @@ export { architectLoader as loader } from "./ArchitectDetails.loader";
 export function HydrateFallback() {
   return (
     <AppLayout showBack>
-      <div className="sticky top-16 z-20 bg-surface-default border-b border-border-default">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-start gap-4">
-            <Skeleton className="w-[72px] h-[72px] rounded-full shrink-0" />
-            <div className="flex-1 space-y-2.5">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-72" />
-              <Skeleton className="h-4 w-32" />
-            </div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+        <div className="flex gap-12 items-start">
+          <div className="flex-1 space-y-5">
+            <Skeleton className="h-3.5 w-20" />
+            <Skeleton className="h-14 w-2/3" />
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-3 w-32" />
           </div>
+          <Skeleton className="hidden sm:block w-44 h-56 shrink-0" />
         </div>
       </div>
     </AppLayout>
@@ -62,20 +74,29 @@ export function ErrorBoundary() {
   if (isRouteErrorResponse(error) && error.status === 404) {
     return (
       <AppLayout showBack>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+          <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">
+            404
+          </p>
+          <h1 className="text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">
             Architect not found
           </h1>
-          <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+          <p className="text-base text-text-secondary max-w-md mb-10 leading-relaxed">
             We couldn&apos;t find an architect at this URL
             {id ? (
-              <> <span className="font-mono text-text-primary">({id})</span></>
+              <>
+                {" "}
+                <span className="font-mono text-text-primary">({id})</span>
+              </>
             ) : null}
             . The profile may have been removed or the link is incorrect.
           </p>
-          <Button asChild size="lg" variant="default" className="min-w-[200px]">
-            <Link to="/explore">Browse buildings</Link>
-          </Button>
+          <Link
+            to="/explore"
+            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"
+          >
+            Browse buildings →
+          </Link>
         </div>
       </AppLayout>
     );
@@ -83,28 +104,31 @@ export function ErrorBoundary() {
 
   return (
     <AppLayout showBack>
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+        <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">
+          Error
+        </p>
+        <h1 className="text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">
           Something went wrong
         </h1>
-        <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
-          An unexpected error occurred while loading this architect. You can try
-          again or return to explore.
+        <p className="text-base text-text-secondary max-w-md mb-10 leading-relaxed">
+          An unexpected error occurred while loading this architect.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Button
+        <div className="flex items-center gap-8">
+          <button
             type="button"
-            size="lg"
-            variant="default"
-            className="min-w-[200px]"
+            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity disabled:opacity-30"
             onClick={() => revalidator.revalidate()}
             disabled={revalidator.state === "loading"}
           >
-            Try again
-          </Button>
-          <Button asChild size="lg" variant="outline" className="min-w-[200px]">
-            <Link to="/explore">Browse buildings</Link>
-          </Button>
+            Try again →
+          </button>
+          <Link
+            to="/explore"
+            className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors"
+          >
+            Browse buildings →
+          </Link>
         </div>
       </div>
     </AppLayout>
@@ -145,13 +169,15 @@ export default function ArchitectDetails() {
   const { user } = useAuth();
   const { architect: loaderArchitect } = useLoaderData<typeof architectLoader>();
 
-  // useArchitect fetches the buildings list client-side
-  // linkedUser is not needed here — the loader already redirects if claimed
+  // useArchitect fetches the buildings list client-side.
+  // The loader already redirects claimed profiles to /profile/:username.
   const { architect, buildings, loading, error } = useArchitect(id, {
     initialArchitect: loaderArchitect,
   });
 
-  const [activeSection, setActiveSection] = useState<"portfolio" | "about">("portfolio");
+  // Section: 'projects' shows all buildings, 'built' shows only built status,
+  // mirroring the Visited / Saved split in Profile.tsx
+  const [activeSection, setActiveSection] = useState<"projects" | "built" | "about">("projects");
 
   const [claimStatus, setClaimStatus] = useState<{
     is_verified: boolean;
@@ -184,16 +210,15 @@ export default function ArchitectDetails() {
   if (loading) {
     return (
       <AppLayout showBack>
-        <div className="sticky top-16 z-20 bg-surface-default border-b border-border-default">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-            <div className="flex items-start gap-4">
-              <Skeleton className="w-[72px] h-[72px] rounded-full shrink-0" />
-              <div className="flex-1 space-y-2.5">
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-64" />
-                <Skeleton className="h-4 w-32" />
-              </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+          <div className="flex gap-12 items-start">
+            <div className="flex-1 space-y-5">
+              <Skeleton className="h-3.5 w-20" />
+              <Skeleton className="h-14 w-2/3" />
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-32" />
             </div>
+            <Skeleton className="hidden sm:block w-44 h-56 shrink-0" />
           </div>
         </div>
       </AppLayout>
@@ -204,331 +229,368 @@ export default function ArchitectDetails() {
   if (error || !architect) {
     return (
       <AppLayout showBack>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center space-y-4">
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+          <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">
+            Not found
+          </p>
+          <h1 className="text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">
             Architect not found
           </h1>
-          <p className="text-text-secondary max-w-sm">
+          <p className="text-base text-text-secondary max-w-sm mb-10 leading-relaxed">
             The architect you are looking for does not exist or an error occurred.
           </p>
-          <Button asChild variant="secondary">
-            <Link to="/">Return to Home</Link>
-          </Button>
+          <Link
+            to="/"
+            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"
+          >
+            Return to home →
+          </Link>
         </div>
       </AppLayout>
     );
   }
 
+  // ── Derived values ──
   const totalProjects = buildings.length;
   const builtWorks = buildings.filter((b) => b.status === "Built").length;
+  const filteredBuildings =
+    activeSection === "built"
+      ? buildings.filter((b) => b.status === "Built")
+      : buildings;
 
-  // Use the first building image as the architect avatar fallback
-  const avatarSrc = buildings[0]?.main_image_url
+  // Portrait image: first building's photo — an architect's work is their portrait
+  const portraitUrl = buildings[0]?.main_image_url
     ? getBuildingImageUrl(buildings[0].main_image_url) ?? undefined
     : undefined;
 
-  const tabs = [
-    { key: "portfolio" as const, label: "Portfolio" },
-    { key: "about" as const, label: "About" },
+  // Claim state helpers
+  const canClaim =
+    user && !claimStatus.is_verified && claimStatus.my_claim_status !== "pending";
+  const claimPending = user && claimStatus.my_claim_status === "pending";
+
+  // Tab config — metrics as tabs
+  const tabs: { key: "projects" | "built" | "about"; label: string; count: number | null }[] = [
+    { key: "projects", label: "Projects", count: totalProjects },
+    { key: "built", label: "Built", count: builtWorks },
+    { key: "about", label: "About", count: null },
   ];
 
   return (
     <>
       <AppLayout showBack fullWidth>
 
-        {/* ── STICKY HEADER BAND — matches Profile.tsx exactly ── */}
-        <div className="sticky top-16 z-20 bg-surface-default border-b border-border-default">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-start gap-4 py-5 flex-wrap sm:flex-nowrap">
+        {/* ══ EDITORIAL ARCHITECT HERO ════════════════════════════════════ */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-start sm:gap-12 lg:gap-20 pt-10 pb-10 border-b border-border-default">
 
-              {/* Avatar — uses first building image as placeholder */}
-              <Avatar className="w-[60px] h-[60px] sm:w-[72px] sm:h-[72px] shrink-0 mt-0.5">
-                <AvatarImage src={avatarSrc} className="object-cover" />
-                <AvatarFallback className="bg-surface-muted text-text-primary font-bold text-2xl">
-                  {architect.name?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+            {/* LEFT — text */}
+            <div className="flex-1 min-w-0 mt-6 sm:mt-0">
 
-              <div className="flex-1 min-w-0">
-                {/* Name + verified badge */}
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text-primary leading-tight">
-                    {architect.name}
-                  </h1>
+              {/* Top meta row */}
+              <div className="flex items-center justify-between mb-5">
+                {/* Practice type label */}
+                <div className="flex items-center gap-2 min-h-[20px]">
+                  {architect.type && (
+                    <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary capitalize">
+                      {architect.type}
+                    </span>
+                  )}
                   {claimStatus.is_verified && (
-                    <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary inline-flex items-center gap-1">
-                      <BadgeCheck className="w-3 h-3" />
+                    <span className="inline-flex items-center gap-1 text-2xs font-medium tracking-widest uppercase text-text-secondary">
+                      <BadgeCheck className="w-3.5 h-3.5 text-text-primary" />
                       Verified
                     </span>
                   )}
                 </div>
 
-                {/* Type + location */}
-                <div className="flex items-center gap-3 text-sm text-text-secondary mb-2.5 flex-wrap">
-                  {architect.type && (
-                    <span className="capitalize">{architect.type}</span>
-                  )}
-                  {architect.headquarters && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {architect.headquarters}
-                    </span>
-                  )}
-                  {architect.website_url && (
-                    <a
-                      href={architect.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 hover:text-text-primary transition-colors"
-                    >
-                      <Globe className="w-3 h-3" />
-                      Website
-                    </a>
-                  )}
-                </div>
-
-                {/* Stats row */}
-                <div className="flex items-stretch gap-0 flex-wrap text-left">
-                  <div className="pr-4 text-left">
-                    <div className="text-base font-semibold text-text-primary leading-tight">
-                      {totalProjects >= 1000
-                        ? (totalProjects / 1000).toFixed(1).replace(/\.0$/, "") + "k"
-                        : totalProjects}
-                    </div>
-                    <div className="text-[11px] text-text-secondary uppercase tracking-[.06em] mt-0.5">
-                      projects
-                    </div>
-                  </div>
-                  <div className="pl-4 border-l border-border-default text-left">
-                    <div className="text-base font-semibold text-text-primary leading-tight">
-                      {builtWorks >= 1000
-                        ? (builtWorks / 1000).toFixed(1).replace(/\.0$/, "") + "k"
-                        : builtWorks}
-                    </div>
-                    <div className="text-[11px] text-text-secondary uppercase tracking-[.06em] mt-0.5">
-                      built works
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 items-start shrink-0 pt-1 flex-wrap">
+                {/* Map action */}
                 <Link
                   to={`/search?filters=${encodeURIComponent(
                     JSON.stringify({ query: architect.name })
                   )}`}
-                  className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors inline-flex items-center gap-1"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
                 >
                   <MapIcon className="h-3.5 w-3.5" />
-                  Map
+                  Map →
                 </Link>
-
-                {user && !claimStatus.is_verified && claimStatus.my_claim_status !== "pending" && (
-                  <button
-                    type="button"
-                    className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors"
-                    onClick={() => setClaimDialogOpen(true)}
-                  >
-                    Claim profile →
-                  </button>
-                )}
-
-                {user && claimStatus.my_claim_status === "pending" && (
-                  <span className="text-2xs font-medium tracking-widest uppercase text-text-disabled">
-                    Claim pending
-                  </span>
-                )}
-
-                {!user && (
-                  <Link to="/auth" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
-                    Claim profile →
-                  </Link>
-                )}
               </div>
-            </div>
 
-            {/* Tab strip */}
-            <div className="flex gap-0 -mb-px">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveSection(tab.key)}
-                  className={`px-4 py-2.5 text-xs font-medium uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap ${
-                    activeSection === tab.key
-                      ? "border-text-primary text-text-primary"
-                      : "border-transparent text-text-disabled hover:text-text-primary"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+              {/* Name — editorial hero title */}
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary leading-none break-words mb-5">
+                {architect.name}
+              </h1>
 
-        {/* ── BODY ── */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-          {/* Unclaimed nudge banner — shown to logged-in users who haven't claimed */}
-          {user && !claimStatus.is_verified && claimStatus.my_claim_status !== "pending" && (
-            <div className="mb-6 flex items-center justify-between gap-4 py-4 border-b border-border-default">
-              <p className="text-sm text-text-secondary">
-                <span className="font-medium text-text-primary">Is this your profile?</span>
-                {" "}Claim it to connect your portfolio with your Plano account.
-              </p>
-              <button
-                type="button"
-                className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors shrink-0"
-                onClick={() => setClaimDialogOpen(true)}
-              >
-                Claim →
-              </button>
-            </div>
-          )}
-
-          {/* ── PORTFOLIO TAB ── */}
-          {activeSection === "portfolio" && (
-            <div>
-              {buildings.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-border-default">
-                  <Building2 className="h-10 w-10 text-text-disabled mb-4" />
-                  <h3 className="text-base font-semibold mb-1 text-text-primary">
-                    No designs listed yet
-                  </h3>
-                  <p className="text-sm text-text-secondary max-w-xs">
-                    We haven&apos;t added any buildings for this architect yet.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border-default">
-                  {buildings.map((building) => {
-                    const imgUrl = getBuildingImageUrl(building.main_image_url);
-                    return (
-                      <div
-                        key={building.id}
-                        className="bg-surface-default cursor-pointer group overflow-hidden"
-                        onClick={() => navigate(`/building/${building.id}`)}
-                      >
-                        <div className="aspect-[4/3] overflow-hidden bg-surface-muted">
-                          {imgUrl ? (
-                            <img
-                              src={imgUrl}
-                              alt={building.name}
-                              className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Building2 className="h-8 w-8 text-text-disabled" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="py-3 px-1">
-                          <h3 className="font-semibold text-sm text-text-primary line-clamp-1">
-                            {building.name}
-                          </h3>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <p className="text-xs text-text-secondary">
-                              {[building.city, building.country].filter(Boolean).join(", ")}
-                            </p>
-                            {building.year_completed && (
-                              <span className="text-xs text-text-disabled">
-                                {building.year_completed}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── ABOUT TAB ── */}
-          {activeSection === "about" && (
-            <div className="max-w-sm space-y-6">
-              {architect.bio && (
-                <div>
-                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
-                    Bio
-                  </p>
-                  <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
-                    {architect.bio}
-                  </p>
-                </div>
-              )}
-
-              {architect.type && (
-                <div>
-                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
-                    Practice type
-                  </p>
-                  <p className="text-sm text-text-primary capitalize">{architect.type}</p>
-                </div>
-              )}
-
-              {architect.headquarters && (
-                <div>
-                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
-                    Headquarters
-                  </p>
-                  <p className="text-sm text-text-primary flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4 text-text-secondary" />
+              {/* Secondary metadata */}
+              <div className="space-y-1.5 mb-5">
+                {architect.headquarters && (
+                  <p className="text-sm text-text-secondary flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-text-disabled shrink-0" />
                     {architect.headquarters}
                   </p>
-                </div>
-              )}
-
-              {architect.website_url && (
-                <div>
-                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
-                    Website
+                )}
+                {architect.bio && (
+                  <p className="text-base text-text-secondary leading-relaxed max-w-lg">
+                    {architect.bio}
                   </p>
+                )}
+                {architect.website_url && (
                   <a
                     href={architect.website_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-text-primary flex items-center gap-1.5 hover:text-brand-primary transition-colors"
+                    className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors"
                   >
-                    <Globe className="w-4 h-4 text-text-secondary" />
-                    {architect.website_url.replace(/^https?:\/\/(www\.)?/, "")}
+                    {architect.website_url
+                      .replace(/^https?:\/\/(www\.)?/, "")
+                      .replace(/\/$/, "")}
+                    <ExternalLink className="w-3 h-3" />
                   </a>
-                </div>
-              )}
-
-              <div>
-                <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
-                  On Plano
-                </p>
-                <div className="flex items-center gap-2 text-sm text-text-secondary">
-                  <Building2 className="w-4 h-4" />
-                  {totalProjects} building{totalProjects !== 1 ? "s" : ""} listed
-                </div>
+                )}
               </div>
 
-              {/* Claim CTA in About tab too */}
-              {user && !claimStatus.is_verified && claimStatus.my_claim_status !== "pending" && (
-                <div className="border-t border-border-default pt-5">
-                  <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">
-                    This is you?
-                  </p>
-                  <p className="text-sm text-text-secondary mb-3 leading-relaxed">
-                    Claim this profile to connect your portfolio with your Plano activity and get a verified badge.
-                  </p>
-                  <button
-                    type="button"
-                    className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors"
-                    onClick={() => setClaimDialogOpen(true)}
-                  >
-                    Claim profile →
-                  </button>
+              {/* Claim CTA */}
+              {canClaim && (
+                <button
+                  type="button"
+                  onClick={() => setClaimDialogOpen(true)}
+                  className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"
+                >
+                  Claim this profile →
+                </button>
+              )}
+              {claimPending && (
+                <span className="text-2xs font-medium tracking-widest uppercase text-text-disabled">
+                  Claim pending review
+                </span>
+              )}
+              {!user && (
+                <Link
+                  to="/auth"
+                  className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors"
+                >
+                  Claim this profile →
+                </Link>
+              )}
+            </div>
+
+            {/* RIGHT — portrait frame: first building image */}
+            <div className="shrink-0 self-start">
+              {portraitUrl ? (
+                <div className="w-32 h-40 sm:w-44 sm:h-56 overflow-hidden bg-surface-muted">
+                  <img
+                    src={portraitUrl}
+                    alt={`${architect.name} — portfolio`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-32 h-40 sm:w-44 sm:h-56 bg-surface-muted flex items-end p-3">
+                  <span className="text-5xl sm:text-6xl font-bold text-border-strong leading-none select-none">
+                    {architect.name?.charAt(0).toUpperCase()}
+                  </span>
                 </div>
               )}
             </div>
-          )}
+
+          </div>
         </div>
+
+        {/* ══ METRICS AS TABS ════════════════════════════════════════════ */}
+        <div className="sticky top-0 z-20 bg-surface-default border-b border-border-default">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex -mb-px overflow-x-auto scrollbar-none">
+              {tabs.map((tab) => {
+                const isActive = activeSection === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveSection(tab.key)}
+                    className={`shrink-0 px-5 py-3 border-b-2 transition-colors text-left ${
+                      isActive
+                        ? "border-text-primary"
+                        : "border-transparent hover:border-border-default"
+                    }`}
+                  >
+                    {tab.count !== null ? (
+                      <>
+                        <div
+                          className={`text-base font-bold tracking-tight leading-none ${
+                            isActive ? "text-text-primary" : "text-text-disabled"
+                          }`}
+                        >
+                          {tab.count >= 1000
+                            ? (tab.count / 1000).toFixed(1).replace(/\.0$/, "") + "k"
+                            : tab.count.toLocaleString()}
+                        </div>
+                        <div
+                          className={`text-2xs font-medium tracking-widest uppercase mt-0.5 ${
+                            isActive ? "text-text-secondary" : "text-text-disabled"
+                          }`}
+                        >
+                          {tab.label}
+                        </div>
+                      </>
+                    ) : (
+                      <div
+                        className={`text-xs font-medium tracking-widest uppercase leading-none py-1 ${
+                          isActive ? "text-text-primary" : "text-text-disabled"
+                        }`}
+                      >
+                        {tab.label}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ══ CONTENT BODY ════════════════════════════════════════════════ */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="min-h-[60vh] py-10">
+
+            {/* ── PROJECTS / BUILT TABS (both are building grids) ── */}
+            {(activeSection === "projects" || activeSection === "built") && (
+              <>
+                {filteredBuildings.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 px-8 gap-5 text-center">
+                    <Building2 className="h-7 w-7 text-text-disabled" strokeWidth={1.5} />
+                    <div className="space-y-2">
+                      <p className="text-base font-semibold text-text-primary">
+                        {activeSection === "built"
+                          ? "No built works listed"
+                          : "No designs listed yet"}
+                      </p>
+                      <p className="text-sm text-text-secondary max-w-xs leading-relaxed">
+                        {activeSection === "built"
+                          ? "No confirmed built projects have been added for this architect."
+                          : "We haven't added any buildings for this architect yet."}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10 pb-16">
+                    {filteredBuildings.map((building) => (
+                      <ArchitectBuildingCard
+                        key={building.id}
+                        building={building}
+                        onClick={() => navigate(`/building/${building.id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── ABOUT TAB ── */}
+            {activeSection === "about" && (
+              <div className="max-w-md space-y-10">
+
+                {architect.bio && (
+                  <div>
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-1.5">
+                      Bio
+                    </p>
+                    <p className="text-base text-text-primary leading-relaxed whitespace-pre-wrap">
+                      {architect.bio}
+                    </p>
+                  </div>
+                )}
+
+                {architect.type && (
+                  <div>
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-1.5">
+                      Practice type
+                    </p>
+                    <p className="text-base text-text-primary capitalize">
+                      {architect.type}
+                    </p>
+                  </div>
+                )}
+
+                {architect.headquarters && (
+                  <div>
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-1.5">
+                      Headquarters
+                    </p>
+                    <p className="text-base text-text-primary flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-text-disabled shrink-0" />
+                      {architect.headquarters}
+                    </p>
+                  </div>
+                )}
+
+                {architect.website_url && (
+                  <div>
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-1.5">
+                      Website
+                    </p>
+                    <a
+                      href={architect.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-base text-text-primary hover:opacity-60 transition-opacity"
+                    >
+                      {architect.website_url
+                        .replace(/^https?:\/\/(www\.)?/, "")
+                        .replace(/\/$/, "")}
+                      <ExternalLink className="w-3.5 h-3.5 text-text-disabled" />
+                    </a>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-1.5">
+                    On Plano
+                  </p>
+                  <p className="text-base text-text-primary">
+                    {totalProjects} building{totalProjects !== 1 ? "s" : ""} listed
+                    {builtWorks > 0 && builtWorks !== totalProjects && (
+                      <span className="text-text-disabled">
+                        {" "}· {builtWorks} built
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                {/* Claim CTA in About tab */}
+                {canClaim && (
+                  <div className="border-t border-border-default pt-8">
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-3">
+                      Is this you?
+                    </p>
+                    <p className="text-base text-text-secondary mb-5 leading-relaxed max-w-sm">
+                      Claim this profile to connect your portfolio with your Plano
+                      activity and get a verified badge.
+                    </p>
+                    <button
+                      type="button"
+                      className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"
+                      onClick={() => setClaimDialogOpen(true)}
+                    >
+                      Claim profile →
+                    </button>
+                  </div>
+                )}
+
+                {claimPending && (
+                  <div className="border-t border-border-default pt-8">
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-2">
+                      Claim status
+                    </p>
+                    <p className="text-sm text-text-secondary">
+                      Your claim is pending review by our team.
+                    </p>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+          </div>
+        </div>
+
       </AppLayout>
 
       <ClaimProfileDialog
@@ -539,5 +601,62 @@ export default function ArchitectDetails() {
         onSuccess={fetchClaimStatus}
       />
     </>
+  );
+}
+
+// ─── Editorial Building Card ──────────────────────────────────────────────────
+// Portrait ratio, no borders, no icons. Bold name / faint location + year.
+// Separate from Profile.tsx's EditorialBuildingCard because the data shape
+// comes from useArchitect (building records) not FeedReview.
+interface ArchitectBuilding {
+  id: string;
+  name: string;
+  main_image_url: string | null;
+  city?: string | null;
+  country?: string | null;
+  year_completed?: number | null;
+  status?: string | null;
+}
+
+function ArchitectBuildingCard({
+  building,
+  onClick,
+}: {
+  building: ArchitectBuilding;
+  onClick: () => void;
+}) {
+  const imgUrl = getBuildingImageUrl(building.main_image_url);
+  const meta = [building.city, building.year_completed].filter(Boolean).join(" · ");
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group block text-left w-full"
+    >
+      {/* 3:4 portrait image, no rounding */}
+      <div className="aspect-[3/4] overflow-hidden bg-surface-muted mb-3">
+        {imgUrl ? (
+          <img
+            src={imgUrl}
+            alt={building.name}
+            className="w-full h-full object-cover group-hover:opacity-85 transition-opacity duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-end p-3">
+            <span className="text-text-disabled text-xs font-medium uppercase tracking-wide leading-tight line-clamp-3">
+              {building.name}
+            </span>
+          </div>
+        )}
+      </div>
+      {/* Text — no icons, stark hierarchy */}
+      <p className="text-sm font-bold text-text-primary leading-snug line-clamp-2 group-hover:opacity-60 transition-opacity">
+        {building.name}
+      </p>
+      {meta && (
+        <p className="text-2xs text-text-disabled mt-0.5 truncate">{meta}</p>
+      )}
+    </button>
   );
 }
