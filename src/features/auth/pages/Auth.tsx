@@ -210,7 +210,7 @@ export default function Auth() {
   if (checkEmail) {
     return (
       <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
-        <PlanoLogo className="h-8 w-auto mb-6" />
+        <PlanoLogo className="text-2xl text-text-primary mb-6" />
         <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6 text-center">
           <div className="flex justify-center">
             <div className="h-16 w-16 bg-brand-secondary/30 rounded-sm flex items-center justify-center">
@@ -245,7 +245,7 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
-      <PlanoLogo className="h-8 w-auto mb-6" />
+      <PlanoLogo className="text-2xl text-text-primary mb-6" />
 
       <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary text-center">

@@ -296,7 +296,7 @@ const { error: notifError } = await supabase
 
   return (
     <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
-      <PlanoLogo className="h-8 w-auto mb-6" />
+      <PlanoLogo className="text-2xl text-text-primary mb-6" />
       <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6 text-center">
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2">

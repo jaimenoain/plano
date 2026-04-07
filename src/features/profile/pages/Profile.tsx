@@ -35,7 +35,6 @@ import {
   Columns,
   List,
   BadgeCheck,
-  Settings,
   Plus,
   type LucideIcon,
 } from "lucide-react";
@@ -52,17 +51,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FollowButton } from "@/features/profile/components/FollowButton";
 import { useToast } from "@/hooks/use-toast";
-import { FavoritesSection } from "@/features/profile/components/FavoritesSection";
-import { FavoriteItem } from "@/features/profile/components/types";
 import { Switch } from "@/components/ui/switch";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ProfileHighlights } from "@/features/profile/components/ProfileHighlights";
-import { SocialContextSection } from "@/features/profile/components/SocialContextSection";
 import { CollectionsGrid } from "@/features/collections/components/CollectionsGrid";
 import { CreateCollectionDialog } from "@/features/collections/components/CreateCollectionDialog";
 import { FeedReview, WatchWithUser } from "@/types/feed";
-import { useProfileComparison } from "@/features/profile/hooks/useProfileComparison";
 import { getBuildingImageUrl } from "@/utils/image";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { ProfileKanbanView } from "@/features/profile/components/ProfileKanbanView";
@@ -280,8 +274,6 @@ export default function Profile() {
 
   const { containerRef, isVisible } = useIntersectionObserver();
 
-  // ── Favorites ──
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [showCommunityImages, setShowCommunityImages] = useState(false);
 
   // ── Drag State ──
@@ -356,7 +348,6 @@ export default function Profile() {
 
   // ── Social ──
   const [squad, setSquad] = useState<Profile[]>([]);
-  const { profileComparison } = useProfileComparison(currentUser?.id, targetUserId);
 
   const [userListDialog, setUserListDialog] = useState<{ open: boolean; type: "followers" | "following" }>({ open: false, type: "followers" });
   const [userList, setUserList] = useState<UserListItem[]>([]);
@@ -447,8 +438,6 @@ export default function Profile() {
       if (data) {
         setProfile(data as unknown as Profile);
         uid = data.id;
-        const favs = Array.isArray(data.favorites) ? data.favorites : [];
-        setFavorites(favs);
       }
 
       setTargetUserId(uid);
@@ -796,8 +785,6 @@ export default function Profile() {
       </AppLayout>
     );
   }
-
-  const buildingFavorites = favorites.filter(f => !f.type || f.type === 'building');
 
   // ─── Tab config ───────────────────────────────────────────────────────────
 

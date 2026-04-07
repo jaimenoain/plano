@@ -12,7 +12,7 @@ import {
   Loader2, MapPin, Send,
   Check, Bookmark, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle, Search,
-  EyeOff, ImagePlus, Plus, Users, X,
+  EyeOff, Plus, Users, X,
   Pencil, BadgeCheck
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -41,7 +41,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { UserPicker } from "@/components/common/UserPicker";
 import { parseLocation } from "@/utils/location";

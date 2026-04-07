@@ -161,8 +161,15 @@ function CloseButton() {
   const { setOpen, setOpenMobile, isMobile } = useSidebar();
   return (
     <button
-      onClick={() => isMobile ? setOpenMobile(false) : setOpen(false)}
-      className="p-1 text-white/40 hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30 rounded-sm"
+      type="button"
+      onClick={() => (isMobile ? setOpenMobile(false) : setOpen(false))}
+      className={cn(
+        "p-1 rounded-sm text-white/40 hover:text-white",
+        "transition-[opacity,color] duration-150",
+        // Mobile sheet: no hover affordance — keep visible. Desktop overlay: show only while hovering the menu (see `group` on sidebar shell in `sidebar.tsx`) or when this control is keyboard-focused.
+        "opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100",
+        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+      )}
       aria-label="Close menu"
     >
       <X className="h-5 w-5" strokeWidth={1.5} />
@@ -191,8 +198,7 @@ export function AppSidebar() {
           to="/"
           className="flex items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30 rounded-sm"
         >
-          {/* Invert the logo to white on black */}
-          <PlanoLogo className="h-7 w-auto brightness-0 invert" />
+          <PlanoLogo className="text-2xl text-white" />
         </Link>
         <CloseButton />
       </SidebarHeader>
