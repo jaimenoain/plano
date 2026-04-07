@@ -1,10 +1,24 @@
+/**
+ * YourContacts.tsx — Redesigned with A24 editorial aesthetic
+ *
+ * Changes:
+ *  - Section label: text-2xs uppercase tracking-widest (no Users icon)
+ *  - Shadcn <Tabs> replaced with a custom metric tab strip identical to the
+ *    Profile.tsx pattern: large bold count above a tiny uppercase label,
+ *    border-b-2 active indicator, no filled pill background
+ *  - Switched from Tabs defaultValue to useState for active tab control
+ *  - bg-surface-card border rounded-xl container removed from both tab panels —
+ *    UserRows flow directly on the page surface with border-b dividers
+ *  - ScrollArea retained for overflow but without a containing box
+ *  - Loading: minimal spinner, no card layout
+ *  - Empty states: minimal text, no centred card
+ */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { UserRow } from "./UserRow";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Users } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface ContactUser {
   id: string;
@@ -18,6 +32,7 @@ export function YourContacts() {
   const [following, setFollowing] = useState<ContactUser[]>([]);
   const [followers, setFollowers] = useState<ContactUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"following" | "followers">("following");
 
   const sortContacts = (contacts: ContactUser[]) => {
     return [...contacts].sort((a, b) => {
@@ -30,25 +45,20 @@ export function YourContacts() {
 
   const toggleCloseFriend = async (targetId: string, currentStatus: boolean) => {
     if (!user) return;
-
-    // Optimistic update
     setFollowing((prev) => {
       const updated = prev.map((u) =>
         u.id === targetId ? { ...u, is_close_friend: !currentStatus } : u
       );
       return sortContacts(updated);
     });
-
     try {
       const { error } = await supabase
         .from("follows")
         .update({ is_close_friend: !currentStatus })
         .eq("follower_id", user.id)
         .eq("following_id", targetId);
-
       if (error) throw error;
     } catch (_error) {
-// Revert on error
       setFollowing((prev) => {
         const updated = prev.map((u) =>
           u.id === targetId ? { ...u, is_close_friend: currentStatus } : u
@@ -63,7 +73,6 @@ export function YourContacts() {
       if (!user) return;
       setLoading(true);
       try {
-        // Fetch Following
         const { data: followingRefs } = await supabase
           .from("follows")
           .select("following_id, is_close_friend")
@@ -97,7 +106,6 @@ export function YourContacts() {
           setFollowing([]);
         }
 
-        // Fetch Followers
         const { data: followerRefs } = await supabase
           .from("follows")
           .select("follower_id")
@@ -106,17 +114,16 @@ export function YourContacts() {
         const followerIds = followerRefs?.map(r => r.follower_id) || [];
 
         if (followerIds.length > 0) {
-             const { data: followerProfiles } = await supabase
-                .from("profiles")
-                .select("id, username, avatar_url")
-                .in("id", followerIds);
-             setFollowers(followerProfiles || []);
+          const { data: followerProfiles } = await supabase
+            .from("profiles")
+            .select("id, username, avatar_url")
+            .in("id", followerIds);
+          setFollowers(followerProfiles || []);
         } else {
-            setFollowers([]);
+          setFollowers([]);
         }
-
       } catch (_error) {
-} finally {
+      } finally {
         setLoading(false);
       }
     };
@@ -124,62 +131,116 @@ export function YourContacts() {
     fetchContacts();
   }, [user]);
 
+  // ── Loading ──
   if (loading) {
-     return <div className="h-40 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-text-secondary" /></div>;
+    return (
+      <div className="py-16 flex justify-center">
+        <Loader2 className="h-4 w-4 animate-spin text-text-disabled" />
+      </div>
+    );
   }
 
+  // ── Tab config — mirrors Profile.tsx metric tab pattern ──
+  const tabs: { key: "following" | "followers"; label: string; count: number }[] = [
+    { key: "following", label: "Following", count: following.length },
+    { key: "followers", label: "Followers", count: followers.length },
+  ];
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-         <Users className="h-5 w-5 text-brand-primary" />
-         Your Contacts
-      </h2>
+    <div>
+      {/* Section label */}
+      <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-6">
+        Your contacts
+      </p>
 
-      <Tabs defaultValue="following" className="w-full">
-        <TabsList className="w-full max-w-[400px]">
-          <TabsTrigger value="following" className="flex-1">Following ({following.length})</TabsTrigger>
-          <TabsTrigger value="followers" className="flex-1">Followers ({followers.length})</TabsTrigger>
-        </TabsList>
+      {/* ── Metric tab strip — same pattern as Profile.tsx ── */}
+      <div className="flex border-b border-border-default mb-0">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-5 py-3 border-b-2 -mb-px transition-colors text-left shrink-0 ${
+                isActive
+                  ? "border-text-primary"
+                  : "border-transparent hover:border-border-default"
+              }`}
+            >
+              <div
+                className={`text-base font-bold tracking-tight leading-none ${
+                  isActive ? "text-text-primary" : "text-text-disabled"
+                }`}
+              >
+                {tab.count.toLocaleString()}
+              </div>
+              <div
+                className={`text-2xs font-medium tracking-widest uppercase mt-0.5 ${
+                  isActive ? "text-text-secondary" : "text-text-disabled"
+                }`}
+              >
+                {tab.label}
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
-        <TabsContent value="following" className="mt-4">
-           <div className="bg-surface-card border rounded-xl overflow-hidden">
-               <ScrollArea className="h-[300px] sm:h-[400px]">
-                   <div className="p-2 space-y-1">
-                       {following.length > 0 ? following.map(u => (
-                           <UserRow
-                             key={u.id}
-                             user={u}
-                             showFollowButton={false}
-                             isCloseFriend={u.is_close_friend}
-                             onToggleCloseFriend={() => toggleCloseFriend(u.id, !!u.is_close_friend)}
-                           />
-                       )) : (
-                           <div className="p-8 text-center text-text-secondary">You are not following anyone yet.</div>
-                       )}
-                   </div>
-               </ScrollArea>
-           </div>
-        </TabsContent>
+      {/* ── Following tab ── */}
+      {activeTab === "following" && (
+        <ScrollArea className="h-[320px] sm:h-[420px]">
+          {following.length > 0 ? (
+            <div>
+              {following.map(u => (
+                <div
+                  key={u.id}
+                  className="border-b border-border-default last:border-0"
+                >
+                  <UserRow
+                    user={u}
+                    showFollowButton={false}
+                    isCloseFriend={u.is_close_friend}
+                    onToggleCloseFriend={() => toggleCloseFriend(u.id, !!u.is_close_friend)}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-16 text-center">
+              <p className="text-sm text-text-disabled">
+                You are not following anyone yet
+              </p>
+            </div>
+          )}
+        </ScrollArea>
+      )}
 
-        <TabsContent value="followers" className="mt-4">
-            <div className="bg-surface-card border rounded-xl overflow-hidden">
-               <ScrollArea className="h-[300px] sm:h-[400px]">
-                   <div className="p-2 space-y-1">
-                       {followers.length > 0 ? followers.map(u => (
-                           <UserRow
-                               key={u.id}
-                               user={u}
-                               showFollowButton={true}
-                               isFollower={true} // Since they are in followers list, isFollower is true.
-                           />
-                       )) : (
-                           <div className="p-8 text-center text-text-secondary">No followers yet.</div>
-                       )}
-                   </div>
-               </ScrollArea>
-           </div>
-        </TabsContent>
-      </Tabs>
+      {/* ── Followers tab ── */}
+      {activeTab === "followers" && (
+        <ScrollArea className="h-[320px] sm:h-[420px]">
+          {followers.length > 0 ? (
+            <div>
+              {followers.map(u => (
+                <div
+                  key={u.id}
+                  className="border-b border-border-default last:border-0"
+                >
+                  <UserRow
+                    user={u}
+                    showFollowButton={true}
+                    isFollower={true}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-16 text-center">
+              <p className="text-sm text-text-disabled">No followers yet</p>
+            </div>
+          )}
+        </ScrollArea>
+      )}
     </div>
   );
 }

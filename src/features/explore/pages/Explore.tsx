@@ -40,12 +40,11 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { DiscoverySearchInput } from "@/features/search/components/DiscoverySearchInput";
 
 export default function Explore() {
@@ -54,13 +53,17 @@ export default function Explore() {
   const [showTutorial, setShowTutorial] = useState(false);
 
   // Sidebar control — collapse when user begins exploring, not on page mount
-  const { setOpen, setOpenMobile, isMobile } = useSidebar();
+  const { setOpen, setOpenMobile, open, openMobile, isMobile } = useSidebar();
+  // True when the sidebar panel is visible — used to hide our white hamburger
+  // so it doesn't float over the open sidebar (the sidebar's own close button handles that)
+  const isSidebarOpen = isMobile ? openMobile : open;
   const hasInteractedRef = useRef(false);
 
   /**
-   * Called once — on the user's first drag gesture.
-   * The sidebar stays open when navigating to /explore; it only collapses when
-   * the user actually begins engaging with the swipe feed.
+   * Called once — on the user's first pointer-down anywhere on the explore surface
+   * (tap, drag start, button press, etc.). The sidebar stays open when navigating
+   * to /explore; it only collapses when the user actually begins engaging with
+   * the content. Also wired to DiscoveryCard's onInteractionStart as a fallback.
    */
   const handleFirstInteraction = useCallback(() => {
     if (hasInteractedRef.current) return;
@@ -79,7 +82,7 @@ export default function Explore() {
     label: string | null;
   }>({ city: null, country: null, region: null, label: null });
   const [isFilterVisible, setIsFilterVisible] = useState(true);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isLocationSheetOpen, setIsLocationSheetOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -125,7 +128,7 @@ export default function Explore() {
     else if (country) label = country;
 
     setLocationFilter({ city, country, region, label });
-    setIsDrawerOpen(false);
+    setIsLocationSheetOpen(false);
     setSearchValue("");
 
     if (scrollContainerRef.current) {
@@ -229,20 +232,35 @@ export default function Explore() {
       {/* ─────────────────────────────────────────────────────────────────
           Full-bleed explore container.
           `fixed inset-0 z-[5]` breaks out of AppLayout's sidebar inset
-          so the image goes edge-to-edge regardless of sidebar open/closed state.
-          The sidebar panel (z-40) and location filter (z-50) render above this.
+          so the image goes edge-to-edge regardless of sidebar state.
+          onPointerDown fires on the very first tap or drag — this is
+          what collapses the sidebar when the user "begins exploring".
       ───────────────────────────────────────────────────────────────── */}
-      <div className="fixed inset-0 z-[5] bg-[#0A0A0A] text-white overflow-hidden">
+      <div
+        className="fixed inset-0 z-[5] bg-[#0A0A0A] text-white overflow-hidden"
+        onPointerDown={handleFirstInteraction}
+      >
 
-        {/* ── White hamburger — floats over the image ── */}
-        {/*
-            z-[35]: above this container (z-5) and MainLayout's trigger (~z-30),
-            below the sidebar panel (z-40). White so it reads on any building photo.
-        */}
+        {/* ── White hamburger ──────────────────────────────────────────────
+            z-[55]: above the explore image (z-5), above any MainLayout
+            trigger (typically z-10 – z-30), above the desktop sidebar panel
+            (shadcn offcanvas: z-10).
+            Hidden when the sidebar is open — the sidebar's own close button
+            handles that state, and we don't want two hamburgers visible
+            simultaneously on the screen.
+        ──────────────────────────────────────────────────────────────── */}
         <button
           type="button"
-          onClick={() => (isMobile ? setOpenMobile(true) : setOpen(true))}
-          className="fixed top-4 left-4 z-[35] p-2 text-white hover:opacity-60 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation(); // don't fire onPointerDown collapse on open
+            isMobile ? setOpenMobile(true) : setOpen(true);
+          }}
+          className={cn(
+            "fixed top-4 left-4 z-[55] p-2 text-white transition-opacity",
+            isSidebarOpen
+              ? "opacity-0 pointer-events-none"
+              : "opacity-100 hover:opacity-60"
+          )}
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" strokeWidth={1.5} />
@@ -258,61 +276,63 @@ export default function Explore() {
           )}
         >
           <div className="pointer-events-auto">
-            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-              <DrawerTrigger asChild>
-                <button
+            <Sheet open={isLocationSheetOpen} onOpenChange={setIsLocationSheetOpen}>
+              <button
+                type="button"
+                onClick={() => setIsLocationSheetOpen(true)}
+                className={cn(
+                  "inline-flex items-center gap-2 h-9 px-4 text-xs font-medium uppercase tracking-widest transition-all",
+                  locationFilter.label
+                    ? "bg-brand-primary text-brand-primary-foreground"
+                    : "bg-black/70 backdrop-blur-md text-white/70 border border-white/15 hover:bg-black/90 hover:text-white/90"
+                )}
+              >
+                <MapPin
                   className={cn(
-                    "inline-flex items-center gap-2 h-9 px-4 text-xs font-medium uppercase tracking-widest transition-all",
+                    "h-3.5 w-3.5 shrink-0",
                     locationFilter.label
-                      ? "bg-brand-primary text-brand-primary-foreground"
-                      : "bg-black/70 backdrop-blur-md text-white/70 border border-white/15 hover:bg-black/90 hover:text-white/90"
+                      ? "text-brand-primary-foreground"
+                      : "text-white/50"
                   )}
-                >
-                  <MapPin
-                    className={cn(
-                      "h-3.5 w-3.5 shrink-0",
-                      locationFilter.label
-                        ? "text-brand-primary-foreground"
-                        : "text-white/50"
-                    )}
-                    strokeWidth={1.5}
-                  />
-                  <span className="max-w-[160px] truncate">
-                    {locationFilter.label || "World"}
-                  </span>
-                  {locationFilter.label && (
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      aria-label="Clear location filter"
-                      onClick={(e) => {
+                  strokeWidth={1.5}
+                />
+                <span className="max-w-[160px] truncate">
+                  {locationFilter.label || "World"}
+                </span>
+                {locationFilter.label && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Clear location filter"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      clearFilter(e);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         e.stopPropagation();
-                        clearFilter(e);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          clearFilter(e as unknown as React.MouseEvent);
-                        }
-                      }}
-                      className="ml-0.5 inline-flex h-5 w-5 items-center justify-center text-brand-primary-foreground hover:opacity-60 transition-opacity"
-                    >
-                      <X className="h-3 w-3" />
-                    </span>
-                  )}
-                </button>
-              </DrawerTrigger>
+                        clearFilter(e as unknown as React.MouseEvent);
+                      }
+                    }}
+                    className="ml-0.5 inline-flex h-5 w-5 items-center justify-center text-brand-primary-foreground hover:opacity-60 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </span>
+                )}
+              </button>
 
-              {/* ── Location drawer ── */}
-              <DrawerContent className="bg-surface-default text-text-primary border-t border-border-default">
-                <DrawerHeader className="border-b border-border-default pb-5 pt-6">
-                  <DrawerTitle className="text-xs font-medium tracking-[0.2em] uppercase text-text-secondary">
+              <SheetContent
+                side="right"
+                className="flex h-full w-3/4 flex-col overflow-visible border-l border-border-default bg-surface-default p-0 text-text-primary sm:w-search-serp sm:max-w-none"
+              >
+                <SheetHeader className="border-b border-border-default px-6 pb-5 pt-6 text-left">
+                  <SheetTitle className="text-xs font-medium tracking-[0.2em] uppercase text-text-secondary">
                     Filter by location
-                  </DrawerTitle>
-                </DrawerHeader>
-                <div className="p-5 pt-4">
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex min-h-0 flex-1 flex-col overflow-visible px-6 pb-6 pt-4">
                   <DiscoverySearchInput
                     value={searchValue}
                     onSearchChange={setSearchValue}
@@ -322,8 +342,8 @@ export default function Explore() {
                     className="w-full"
                   />
                 </div>
-              </DrawerContent>
-            </Drawer>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
 

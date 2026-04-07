@@ -1,8 +1,17 @@
+/**
+ * PeopleYouMayKnow.tsx — Redesigned with A24 editorial aesthetic
+ *
+ * Changes:
+ *  - Section label: text-2xs uppercase tracking-widest (no UserPlus icon)
+ *  - Card wrappers removed: no bg-surface-card, no border, no rounded-lg, no shadow
+ *  - Suggestions render as a flat list; each UserRow is separated by a
+ *    border-b border-border-default rule — content floats on the white canvas
+ *  - Loading skeleton: rectangular blocks, no rounded corners
+ */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { UserRow } from "./UserRow";
-import { UserPlus } from "lucide-react";
 
 interface SuggestionUser {
   id: string;
@@ -35,7 +44,6 @@ export function PeopleYouMayKnow() {
       if (!user) return;
       setLoading(true);
       try {
-        // 1. Get IDs I follow
         const { data: followingData } = await supabase
           .from("follows")
           .select("following_id")
@@ -43,9 +51,8 @@ export function PeopleYouMayKnow() {
 
         const realFollowingIds = followingData?.map(f => f.following_id) || [];
         const followingIds = new Set(realFollowingIds);
-        followingIds.add(user.id); // Exclude myself
+        followingIds.add(user.id);
 
-        // Get IDs I hid
         const { data: hiddenData } = await supabase
           .from("suggested_profile_hides")
           .select("suggested_user_id")
@@ -55,8 +62,6 @@ export function PeopleYouMayKnow() {
           (hiddenData as SuggestedHideRow[] | null)?.map((h) => h.suggested_user_id) || []
         );
 
-        // 2. Fetch profiles
-        // We fetch a batch and filter client-side to find non-followed users.
         const { data: profiles } = await supabase
           .from("profiles")
           .select("id, username, avatar_url")
@@ -67,17 +72,15 @@ export function PeopleYouMayKnow() {
             .filter((p) => !followingIds.has(p.id) && !hiddenIds.has(p.id))
             .slice(0, 3);
 
-          // 3. Fetch mutual follows for these candidates
-          // We want to find: Users in 'realFollowingIds' who follow 'filtered' candidates
           const candidateIds = filtered.map((u) => u.id);
 
           if (candidateIds.length > 0 && realFollowingIds.length > 0) {
             const { data: mutualsData } = await supabase
               .from("follows")
               .select(`
-                  following_id,
-                  follower:profiles!follows_follower_id_fkey(id, username, avatar_url)
-                `)
+                following_id,
+                follower:profiles!follows_follower_id_fkey(id, username, avatar_url)
+              `)
               .in("following_id", candidateIds)
               .in("follower_id", realFollowingIds);
 
@@ -99,7 +102,7 @@ export function PeopleYouMayKnow() {
           }
         }
       } catch (_error) {
-} finally {
+      } finally {
         setLoading(false);
       }
     };
@@ -109,55 +112,61 @@ export function PeopleYouMayKnow() {
 
   const handleHide = async (suggestedId: string) => {
     if (!user) return;
-
-    // Optimistic update
     setSuggestions(prev => prev.filter(p => p.id !== suggestedId));
-
     try {
-        const { error } = await supabase
-            .from("suggested_profile_hides")
-            .insert({
-                user_id: user.id,
-                suggested_user_id: suggestedId
-            });
-
-        if (error) throw error;
+      const { error } = await supabase
+        .from("suggested_profile_hides")
+        .insert({ user_id: user.id, suggested_user_id: suggestedId });
+      if (error) throw error;
     } catch (_err) {
-        void _err;
+      void _err;
     }
   };
 
+  // ── Loading ──
   if (loading) {
     return (
-        <div className="space-y-4">
-             <div className="h-6 w-40 bg-surface-muted animate-pulse rounded" />
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[1, 2, 3].map(i => (
-                    <div key={i} className="h-16 bg-surface-muted/50 animate-pulse rounded-lg" />
-                ))}
-             </div>
+      <div className="space-y-6">
+        <div className="h-3 w-36 bg-surface-muted animate-pulse" />
+        <div className="space-y-0">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-4 py-4 border-b border-border-default last:border-0">
+              <div className="h-9 w-9 bg-surface-muted animate-pulse shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3.5 w-28 bg-surface-muted animate-pulse" />
+                <div className="h-3 w-20 bg-surface-muted/60 animate-pulse" />
+              </div>
+              <div className="h-7 w-16 bg-surface-muted animate-pulse shrink-0" />
+            </div>
+          ))}
         </div>
-    )
+      </div>
+    );
   }
 
   if (suggestions.length === 0) return null;
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-         <UserPlus className="h-5 w-5 text-brand-primary" />
-         People You May Know
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+      {/* Section label — 2xs uppercase, no icon */}
+      <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-6">
+        People you may know
+      </p>
+
+      {/* Flat list — no card chrome */}
+      <div>
         {suggestions.map(u => (
-            <div key={u.id} className="bg-surface-card border rounded-lg shadow-sm overflow-hidden">
-                 <UserRow
-                    user={u}
-                    showFollowButton={true}
-                    mutualFollows={u.mutual_follows}
-                    onHide={() => handleHide(u.id)}
-                 />
-            </div>
+          <div
+            key={u.id}
+            className="border-b border-border-default last:border-0"
+          >
+            <UserRow
+              user={u}
+              showFollowButton={true}
+              mutualFollows={u.mutual_follows}
+              onHide={() => handleHide(u.id)}
+            />
+          </div>
         ))}
       </div>
     </div>

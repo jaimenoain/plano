@@ -12,19 +12,26 @@ export default function Connect() {
   return (
     <div className="w-full">
       <AppLayout title="Connect" showLogo={false}>
-        <div className="w-full pb-20">
-          <div className="px-4 py-6 max-w-2xl mx-auto">
-            <h1 className="text-4xl font-bold tracking-tight text-text-primary">
-              Connect
-            </h1>
+        <div className="w-full pb-24">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            <section className="mt-12 pt-8 border-t border-border-default">
+            {/* ── Editorial page heading ── */}
+            <div className="pt-10 pb-10 border-b border-border-default">
+              <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-text-primary leading-none">
+                Connect
+              </h1>
+            </div>
+
+            {/* ── Suggestions ── */}
+            <section className="py-12 border-b border-border-default">
               <PeopleYouMayKnow />
             </section>
 
-            <section className="mt-12 pt-8 border-t border-border-default">
+            {/* ── Contacts ── */}
+            <section className="py-12">
               <YourContacts />
             </section>
+
           </div>
         </div>
       </AppLayout>
