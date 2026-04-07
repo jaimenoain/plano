@@ -68,26 +68,21 @@ import {
   profileStructuredData,
   SITE_URL,
 } from "@/features/buildings/utils/structuredData";
-
 export { profileLoader as loader } from "./Profile.loader";
 
 // ─── Hydrate / Error Boundaries ──────────────────────────────────────────────
-
 export function HydrateFallback() {
   return (
     <AppLayout title="Profile" showLogo={false} showBack>
-      <div className="p-4 sm:p-6 lg:p-8">
-        <div className="max-w-6xl mx-auto flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
-          <Skeleton className="h-20 w-20 shrink-0 rounded-full" />
-          <div className="flex-1 w-full space-y-4 text-center sm:text-left">
-            <Skeleton className="h-8 w-48 mx-auto sm:mx-0" />
-            <div className="flex flex-wrap justify-center sm:justify-start gap-x-6 gap-y-2">
-              <Skeleton className="h-6 w-14" />
-              <Skeleton className="h-6 w-14" />
-              <Skeleton className="h-6 w-14" />
-              <Skeleton className="h-6 w-14" />
-            </div>
-          </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+        <Skeleton className="h-4 w-20 mb-6" />
+        <Skeleton className="h-16 w-2/3 mb-4" />
+        <Skeleton className="h-4 w-80 mb-8" />
+        <div className="flex gap-8 border-t border-border-default pt-6">
+          <Skeleton className="h-10 w-12" />
+          <Skeleton className="h-10 w-12" />
+          <Skeleton className="h-10 w-12" />
+          <Skeleton className="h-10 w-12" />
         </div>
       </div>
     </AppLayout>
@@ -98,51 +93,58 @@ export function ErrorBoundary() {
   const error = useRouteError();
   const { username } = useParams<{ username?: string }>();
   const revalidator = useRevalidator();
-
   if (isRouteErrorResponse(error) && error.status === 404) {
     return (
       <AppLayout showBack title="Profile not found" showLogo={false}>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+          <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">404</p>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-text-primary mb-4 leading-tight">
             Profile not found
           </h1>
-          <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+          <p className="text-base text-text-secondary max-w-md mb-10 leading-relaxed">
             We couldn&apos;t find a profile for
             {username ? (
               <> <span className="font-mono text-text-primary">{username}</span></>
             ) : (
               " this URL"
             )}
-            . The user may have changed their username or the account may no longer be available.
+            . The user may have changed their username or the account may no longer exist.
           </p>
-          <Button asChild size="lg" variant="default" className="min-w-[200px]">
-            <Link to="/">Back to home</Link>
-          </Button>
+          <Link
+            to="/"
+            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary transition-colors"
+          >
+            Back to home →
+          </Link>
         </div>
       </AppLayout>
     );
   }
-
   return (
     <AppLayout showBack title="Error" showLogo={false}>
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+        <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">Error</p>
+        <h1 className="text-4xl font-bold tracking-tight text-text-primary mb-4 leading-tight">
           Something went wrong
         </h1>
-        <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+        <p className="text-base text-text-secondary max-w-md mb-10 leading-relaxed">
           An unexpected error occurred while loading this profile. You can try again or return home.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Button
-            type="button" size="lg" variant="default" className="min-w-[200px]"
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <button
+            type="button"
+            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary transition-colors disabled:opacity-40"
             onClick={() => revalidator.revalidate()}
             disabled={revalidator.state === "loading"}
           >
-            Try again
-          </Button>
-          <Button asChild size="lg" variant="outline" className="min-w-[200px]">
-            <Link to="/">Back to home</Link>
-          </Button>
+            Try again →
+          </button>
+          <Link
+            to="/"
+            className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors"
+          >
+            Back to home →
+          </Link>
         </div>
       </div>
     </AppLayout>
@@ -150,7 +152,6 @@ export function ErrorBoundary() {
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 interface Profile {
   id: string;
   username: string | null;
@@ -160,7 +161,6 @@ interface Profile {
   role?: string;
   verified_architect_id?: string | null;
 }
-
 interface Stats {
   reviews: number;
   pending: number;
@@ -169,7 +169,6 @@ interface Stats {
   photos: number;
   maps: number;
 }
-
 interface UserListItem {
   id: string;
   username: string | null;
@@ -177,7 +176,6 @@ interface UserListItem {
   is_following: boolean;
   is_follower: boolean;
 }
-
 interface UserPhoto {
   id: string;
   url: string;
@@ -189,14 +187,11 @@ const variants = {
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, scale: 0.98, transition: { duration: 0.2 } }
 };
-
 const ITEMS_PER_PAGE = 15;
 
 // ─── Meta ─────────────────────────────────────────────────────────────────────
-
 export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
   const usernameFromParams = params.username;
-
   if (!data || !data.profile) {
     const fallback = usernameFromParams ?? "Profile";
     return [
@@ -206,18 +201,15 @@ export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
         : []),
     ];
   }
-
   const { profile } = data as { profile: Profile | null };
   if (!profile?.username) {
     const fallback = usernameFromParams ?? "Profile";
     return [{ title: `${fallback} | Plano` }];
   }
-
   const username = profile.username;
   const title = `${username} (@${username}) | Plano`;
   const description = profile.bio || `Check out ${username}'s reviews on Plano.`;
   const canonical = `${SITE_URL}/profile/${username}`;
-
   return [
     { title },
     { name: "description", content: description },
@@ -239,7 +231,6 @@ export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
-
 export default function Profile() {
   const { user: currentUser, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -256,13 +247,10 @@ export default function Profile() {
   // ── URL state ──
   const sectionParam = searchParams.get("section");
   const filterParam = searchParams.get("filter");
-  // Backward compat: old ?tab=reviews / ?tab=bucket_list
   const legacyTabParam = searchParams.get("tab");
   const legacyTabToSection = (legacyTabParam === 'reviews' || legacyTabParam === 'bucket_list') ? 'log' : null;
   const legacyTabToFilter = legacyTabParam === 'reviews' ? 'visited' : legacyTabParam === 'bucket_list' ? 'pending' : null;
-
   const searchQuery = searchParams.get("search") || "";
-
   const [loading, setLoading] = useState(true);
 
   // ── Pagination ──
@@ -271,9 +259,7 @@ export default function Profile() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-
   const { containerRef, isVisible } = useIntersectionObserver();
-
   const [showCommunityImages, setShowCommunityImages] = useState(false);
 
   // ── Drag State ──
@@ -295,9 +281,7 @@ export default function Profile() {
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
-
   const handleDragStart = (event: DragStartEvent) => { setActiveId(event.active.id as string); };
-
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
@@ -307,22 +291,18 @@ export default function Profile() {
       content, setContent, supabase, toast, setUpdatingItemId
     });
   };
-
   const handleCollectionDragStart = (event: DragStartEvent) => {
     const { active } = event;
     if (active.data.current?.type === "collection") {
       setActiveCollectionData(active.data.current.collection);
     }
   };
-
   const handleCollectionDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveCollectionData(null);
     if (!over || active.data.current?.type !== "collection" || over.data.current?.type !== "folder") return;
-
     const collectionId = active.id.toString().replace("collection-", "");
     const folderId = over.id.toString().replace("folder-", "");
-
     try {
       const { data: existing } = await supabase
         .from("user_folder_items")
@@ -330,7 +310,6 @@ export default function Profile() {
         .eq("folder_id", folderId)
         .eq("collection_id", collectionId)
         .maybeSingle();
-
       if (!existing) {
         const { error } = await supabase
           .from("user_folder_items")
@@ -348,28 +327,23 @@ export default function Profile() {
 
   // ── Social ──
   const [squad, setSquad] = useState<Profile[]>([]);
-
   const [userListDialog, setUserListDialog] = useState<{ open: boolean; type: "followers" | "following" }>({ open: false, type: "followers" });
   const [userList, setUserList] = useState<UserListItem[]>([]);
   const [userListLoading, setUserListLoading] = useState(false);
-
   const isOwnProfile = currentUser?.id === targetUserId;
   const { profile: currentUserProfile } = useUserProfile();
   const verifiedArchitectId = isOwnProfile ? currentUserProfile?.verified_architect_id : profile?.verified_architect_id;
 
   // ── Derive active section & filter ──
-  // Section defaults to portfolio (for architects) or log
   const defaultSection = verifiedArchitectId ? 'portfolio' : 'log';
   const activeSection = sectionParam || legacyTabToSection || defaultSection;
-  // Filter within Log tab
   const activeFilter = filterParam || legacyTabToFilter || 'all';
 
   // ── URL handlers ──
-
   const handleSectionChange = useCallback((section: string) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("section", section);
-    newParams.delete("tab"); // clear legacy params
+    newParams.delete("tab");
     if (section !== 'log') {
       newParams.delete("filter");
       newParams.delete("search");
@@ -397,7 +371,6 @@ export default function Profile() {
   };
 
   // ── Effects ──
-
   useEffect(() => {
     if (!authLoading && !currentUser && !routeUsername) navigate("/auth");
   }, [currentUser, authLoading, navigate, routeUsername]);
@@ -406,17 +379,13 @@ export default function Profile() {
     const fetchProfileData = async () => {
       setLoading(true);
       let uid: string | null = null;
-
       let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id");
       let data: { id: string; username?: string | null; favorites?: unknown; [key: string]: unknown } | null = null;
-
       if (routeUsername) {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(routeUsername);
         if (isUuid) { query = query.eq("id", routeUsername); } else { query = query.ilike("username", routeUsername); }
-
         const res = await query.maybeSingle();
         data = res.data;
-
         if (data) {
           if (isUuid && data.username) {
             navigate(`/profile/${data.username.toLowerCase()}`, { replace: true });
@@ -434,23 +403,19 @@ export default function Profile() {
           .eq("id", uid).maybeSingle();
         data = res.data;
       }
-
       if (data) {
         setProfile(data as unknown as Profile);
         uid = data.id;
       }
-
       setTargetUserId(uid);
       setLoading(false);
     };
-
     fetchProfileData();
   }, [routeUsername, currentUser, navigate]);
 
   useEffect(() => { if (targetUserId) { fetchStats(); } }, [targetUserId, collectionsRefreshKey]);
   useEffect(() => { if (targetUserId) { checkIfFollowing(); fetchSquad(); } }, [targetUserId, currentUser]);
 
-  // Lazy-load photos when Photos tab is active
   useEffect(() => {
     if (activeSection !== 'photos' || !targetUserId || userPhotos.length > 0) return;
     const fetchPhotos = async () => {
@@ -462,7 +427,6 @@ export default function Profile() {
           .eq('user_id', targetUserId)
           .order('created_at', { ascending: false })
           .limit(60);
-
         if (data) {
           setUserPhotos(
             data
@@ -489,11 +453,9 @@ export default function Profile() {
   }, [activeSection, targetUserId]);
 
   // ── Data fetching ──
-
   const fetchUserContent = useCallback(async (pageIndex: number, reset: boolean = false) => {
     if (!targetUserId) return;
     if (pageIndex === 0) { setContentLoading(true); } else { setIsFetchingMore(true); }
-
     try {
       let query = supabase
         .from("user_buildings")
@@ -504,43 +466,34 @@ export default function Profile() {
         .eq("user_id", targetUserId)
         .order("edited_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
-
       if (activeFilter === 'visited') { query = query.eq('status', 'visited'); }
       else if (activeFilter === 'pending') { query = query.eq('status', 'pending'); }
       else { query = query.in('status', ['visited', 'pending']); }
-
       const from = pageIndex * ITEMS_PER_PAGE;
       query = query.range(from, from + ITEMS_PER_PAGE - 1);
-
       const { data: entriesData, error: entriesError } = await query;
       if (entriesError) throw entriesError;
-
       if (!entriesData || entriesData.length === 0) {
         if (reset) { setContent([]); setHasMore(false); } else { setHasMore(false); }
         return;
       }
-
       const entryIds = entriesData.map(r => r.id);
       const { data: imagesData } = await supabase
         .from('review_images').select('id, review_id, storage_path, likes_count')
         .in('review_id', entryIds);
-
       const imageIds = imagesData?.map(img => img.id) || [];
-
       const [likesResult, commentsResult, userLikesResult, imageLikesResult] = await Promise.all([
         supabase.from("likes").select("interaction_id").in("interaction_id", entryIds),
         supabase.from("comments").select("interaction_id").in("interaction_id", entryIds),
         currentUser ? supabase.from("likes").select("interaction_id").in("interaction_id", entryIds).eq("user_id", currentUser.id) : Promise.resolve({ data: [] }),
         currentUser && imageIds.length > 0 ? supabase.from("image_likes").select("image_id").in("image_id", imageIds).eq("user_id", currentUser.id) : Promise.resolve({ data: [] }),
       ]);
-
       const likesCount = new Map<string, number>();
       likesResult.data?.forEach(l => likesCount.set(l.interaction_id, (likesCount.get(l.interaction_id) || 0) + 1));
       const commentsCount = new Map<string, number>();
       commentsResult.data?.forEach(c => commentsCount.set(c.interaction_id, (commentsCount.get(c.interaction_id) || 0) + 1));
       const userLikes = new Set(userLikesResult.data?.map(l => l.interaction_id));
       const userLikedImages = new Set(imageLikesResult.data?.map((l: { image_id: string }) => l.image_id));
-
       type ProfileReviewImage = {
         id: string;
         url: string;
@@ -558,7 +511,6 @@ export default function Profile() {
         if (!imagesByReviewId.has(img.review_id)) imagesByReviewId.set(img.review_id, []);
         imagesByReviewId.get(img.review_id)!.push(obj);
       });
-
       type ProfileFeedRow = {
         id: string; content: string | null; rating: number | null; created_at: string;
         edited_at?: string | null; status: "visited" | "pending"; building_id: string;
@@ -569,7 +521,6 @@ export default function Profile() {
           architects?: { architect: { id: string; name: string } | null }[] | null;
         } | null;
       };
-
       const formattedContent: FeedReview[] = (entriesData as ProfileFeedRow[]).map(item => {
         const reviewLikes = likesCount.get(item.id) || 0;
         const itemImages = imagesByReviewId.get(item.id) || [];
@@ -591,7 +542,6 @@ export default function Profile() {
           watch_with_users: [] as WatchWithUser[], images: itemImages,
         };
       });
-
       if (reset) { setContent(formattedContent); setHasMore(formattedContent.length === ITEMS_PER_PAGE); setPage(0); }
       else { setContent(prev => [...prev, ...formattedContent]); setHasMore(formattedContent.length === ITEMS_PER_PAGE); }
     } catch (_error) {
@@ -602,7 +552,6 @@ export default function Profile() {
   }, [targetUserId, activeFilter, currentUser, profile]);
 
   useEffect(() => { if (targetUserId) { fetchUserContent(0, true); } }, [fetchUserContent]);
-
   useEffect(() => {
     if (isVisible && hasMore && !isFetchingMore && !contentLoading) {
       const nextPage = page + 1;
@@ -688,7 +637,6 @@ export default function Profile() {
     const currentItem = content[itemIndex];
     const newItem = { ...currentItem, ...updates, edited_at: new Date().toISOString() };
     setContent(prev => prev.map(item => item.id === id ? newItem : item));
-
     if (updates.status && updates.status !== currentItem.status) {
       setStats(prev => {
         const newStats = { ...prev };
@@ -697,7 +645,6 @@ export default function Profile() {
         return newStats;
       });
     }
-
     try {
       const { error } = await supabase.from('user_buildings').update({ ...updates, edited_at: new Date().toISOString() }).eq('id', id);
       if (error) throw error;
@@ -760,11 +707,10 @@ export default function Profile() {
   };
 
   // ─── Loading / not found states ──────────────────────────────────────────
-
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-surface-default flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+        <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
       </div>
     );
   }
@@ -773,21 +719,23 @@ export default function Profile() {
     return (
       <AppLayout title="User Not Found" showLogo={false} showBack>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-          <div className="bg-surface-muted/50 p-6 rounded-full mb-6">
-            <LogOut className="h-10 w-10 text-text-secondary" />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">User Unavailable</h2>
-          <p className="text-text-secondary max-w-sm mx-auto mb-8">
+          <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">Unavailable</p>
+          <h2 className="text-4xl font-bold tracking-tight text-text-primary mb-4">User not found</h2>
+          <p className="text-base text-text-secondary max-w-sm mx-auto mb-10 leading-relaxed">
             This profile is not available. The user might have been deleted, suspended, or does not exist.
           </p>
-          <Button onClick={() => navigate("/")}>Go Home</Button>
+          <button
+            onClick={() => navigate("/")}
+            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary transition-colors"
+          >
+            Go home →
+          </button>
         </div>
       </AppLayout>
     );
   }
 
   // ─── Tab config ───────────────────────────────────────────────────────────
-
   const tabs = [
     ...(verifiedArchitectId ? [{ key: 'portfolio', label: 'Portfolio' }] : []),
     { key: 'log', label: 'Log' },
@@ -796,99 +744,117 @@ export default function Profile() {
     { key: 'about', label: 'About' },
   ];
 
-  // ─── Main render ─────────────────────────────────────────────────────────
+  // ─── Stats config ─────────────────────────────────────────────────────────
+  const statItems = [
+    { label: 'Visited', value: stats.reviews, action: () => handleSectionChange('log') },
+    { label: 'Saved', value: stats.pending, action: () => { handleSectionChange('log'); handleFilterChange('pending'); } },
+    { label: 'Collections', value: stats.maps, action: () => handleSectionChange('collections') },
+    { label: 'Photos', value: stats.photos, action: () => handleSectionChange('photos') },
+    { label: 'Followers', value: stats.followers, action: () => openUserList('followers') },
+    { label: 'Following', value: stats.following, action: () => openUserList('following') },
+  ];
 
+  // ─── Main render ─────────────────────────────────────────────────────────
   return (
     <>
       <AppLayout title={profile?.username || "Profile"} showLogo={false} showBack={!isOwnProfile} fullWidth>
 
-        {/* ── STICKY HEADER BAND ── */}
-        <div className="sticky top-16 z-20 bg-surface-default border-b border-border-default">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-start gap-4 py-5 flex-wrap sm:flex-nowrap">
+        {/* ── EDITORIAL PROFILE HERO ── */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
-              {/* Avatar */}
-              <Avatar className="w-[60px] h-[60px] sm:w-[72px] sm:h-[72px] shrink-0 mt-0.5">
+          {/* Top meta row: avatar + role label + actions */}
+          <div className="flex items-center justify-between pt-10 pb-6">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-11 h-11 shrink-0 ring-1 ring-border-default">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-surface-muted text-text-primary font-bold text-2xl">
+                <AvatarFallback className="bg-surface-muted text-text-primary font-semibold text-sm">
                   {profile?.username?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-
-              <div className="flex-1 min-w-0">
-                {/* Name + badges */}
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text-primary leading-tight">
-                    {profile?.username}
-                  </h1>
-                  {verifiedArchitectId && (
-                    <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-                      Architect
-                    </span>
-                  )}
+              {verifiedArchitectId && (
+                <div className="flex items-center gap-1.5">
+                  <BadgeCheck className="w-3.5 h-3.5 text-text-primary" />
+                  <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+                    Architect
+                  </span>
                 </div>
-
-                {profile?.bio && (
-                  <p className="text-sm text-text-secondary mb-2.5 line-clamp-1 max-w-sm leading-relaxed">
-                    {profile.bio}
-                  </p>
-                )}
-
-                {/* Stats-as-nav */}
-                <div className="flex items-stretch gap-0 flex-wrap text-left">
-                  {[
-                    { label: 'visited', value: stats.reviews, action: () => handleSectionChange('log') },
-                    { label: 'saved', value: stats.pending, action: () => { handleSectionChange('log'); handleFilterChange('pending'); } },
-                    { label: 'collections', value: stats.maps, action: () => handleSectionChange('collections') },
-                    { label: 'photos', value: stats.photos, action: () => handleSectionChange('photos') },
-                    { label: 'followers', value: stats.followers, action: () => openUserList('followers') },
-                    { label: 'following', value: stats.following, action: () => openUserList('following') },
-                  ].map((stat, i) => (
-                    <button
-                      key={stat.label}
-                      onClick={stat.action}
-                      className={`pr-4 hover:opacity-70 transition-opacity cursor-pointer text-left group ${i > 0 ? 'pl-4 border-l border-border-default' : ''}`}
-                    >
-                      <div className="text-base font-semibold text-text-primary leading-tight">{stat.value}</div>
-                      <div className="text-[11px] text-text-secondary uppercase tracking-[.06em] mt-0.5">{stat.label}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 items-start shrink-0 pt-1">
-                {isOwnProfile ? (
-                  <>
-                    <Link to="/settings" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
-                      Settings
-                    </Link>
-                    <button type="button" onClick={handleSignOut} className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors">
-                      <LogOut className="w-3.5 h-3.5" />
-                    </button>
-                  </>
-                ) : (
-                  targetUserId && (
-                    <FollowButton
-                      userId={targetUserId}
-                      initialIsFollowing={isFollowing}
-                      className="h-8 text-xs px-4"
-                    />
-                  )
-                )}
-              </div>
+              )}
             </div>
 
-            {/* Tab strip */}
-            <div className="flex gap-0 -mb-px">
+            {/* Actions */}
+            <div className="flex items-center gap-5">
+              {isOwnProfile ? (
+                <>
+                  <Link
+                    to="/settings"
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    Settings →
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="text-text-disabled hover:text-text-primary transition-colors"
+                    aria-label="Sign out"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              ) : (
+                targetUserId && (
+                  <FollowButton
+                    userId={targetUserId}
+                    initialIsFollowing={isFollowing}
+                    className="h-7 text-xs px-4"
+                  />
+                )
+              )}
+            </div>
+          </div>
+
+          {/* Username — editorial hero title */}
+          <div className="pb-8">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary leading-none break-words">
+              {profile?.username}
+            </h1>
+            {profile?.bio && (
+              <p className="mt-4 text-base text-text-secondary leading-relaxed max-w-xl">
+                {profile.bio}
+              </p>
+            )}
+          </div>
+
+          {/* Stats row */}
+          <div className="flex flex-wrap items-stretch border-t border-border-default pt-6 pb-6 gap-y-5">
+            {statItems.map((stat, i) => (
+              <button
+                key={stat.label}
+                onClick={stat.action}
+                className={`text-left hover:opacity-60 transition-opacity cursor-pointer pr-8 ${i > 0 ? '' : ''}`}
+              >
+                <div className="text-2xl font-bold tracking-tight text-text-primary leading-none">
+                  {stat.value}
+                </div>
+                <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">
+                  {stat.label}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── STICKY TAB STRIP ── */}
+        <div className="sticky top-0 z-20 bg-surface-default border-b border-border-default">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex gap-0 -mb-px overflow-x-auto scrollbar-none">
               {tabs.map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => handleSectionChange(tab.key)}
-                  className={`px-4 py-2.5 text-xs font-medium uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap ${
+                  className={`px-5 py-3.5 text-xs font-medium uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                     activeSection === tab.key
                       ? 'border-text-primary text-text-primary'
-                      : 'border-transparent text-text-disabled hover:text-text-primary'
+                      : 'border-transparent text-text-disabled hover:text-text-secondary'
                   }`}
                 >
                   {tab.label}
@@ -900,272 +866,307 @@ export default function Profile() {
 
         {/* ── BODY ── */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div>
+          <div className="min-h-[60vh] py-10">
 
-            {/* ── Main tab content ── */}
-            <div className="min-h-[60vh] py-6">
+            {/* ── PORTFOLIO TAB ── */}
+            {activeSection === 'portfolio' && verifiedArchitectId && (
+              <WidgetErrorBoundary>
+                <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
+              </WidgetErrorBoundary>
+            )}
 
-              {/* ── PORTFOLIO TAB ── */}
-              {activeSection === 'portfolio' && verifiedArchitectId && (
-                <WidgetErrorBoundary>
-                  <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
-                </WidgetErrorBoundary>
-              )}
-
-              {/* ── LOG TAB ── */}
-              {activeSection === 'log' && (
-                <div>
-                  {/* Toolbar */}
-                  <div className="flex flex-wrap items-center gap-3 mb-4">
-                    <ToggleGroup
-                      type="single"
-                      value={activeFilter}
-                      onValueChange={handleFilterChange}
-                      className="justify-start"
+            {/* ── LOG TAB ── */}
+            {activeSection === 'log' && (
+              <div>
+                {/* Toolbar */}
+                <div className="flex flex-wrap items-center gap-3 mb-6">
+                  <ToggleGroup
+                    type="single"
+                    value={activeFilter}
+                    onValueChange={handleFilterChange}
+                    className="justify-start"
+                  >
+                    <ToggleGroupItem
+                      value="all"
+                      className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide data-[state=on]:bg-text-primary data-[state=on]:text-surface-default"
                     >
-                      <ToggleGroupItem value="all" className="px-3 py-1.5 text-xs font-medium data-[state=on]:bg-text-primary data-[state=on]:text-surface-default">
-                        All ({stats.reviews + stats.pending})
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="visited" className="px-3 py-1.5 text-xs font-medium data-[state=on]:bg-text-primary data-[state=on]:text-surface-default">
-                        Visited ({stats.reviews})
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="pending" className="px-3 py-1.5 text-xs font-medium data-[state=on]:bg-text-primary data-[state=on]:text-surface-default">
-                        Saved ({stats.pending})
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-
-                    <ToggleGroup
-                      type="single"
-                      value={viewMode}
-                      onValueChange={v => v && setViewMode(v as "grid" | "kanban" | "list")}
-                      className="ml-auto"
+                      All ({stats.reviews + stats.pending})
+                    </ToggleGroupItem>
+                    <ToggleGroupItem
+                      value="visited"
+                      className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide data-[state=on]:bg-text-primary data-[state=on]:text-surface-default"
                     >
-                      <ToggleGroupItem value="grid" size="sm" aria-label="Grid view"><LayoutGrid className="h-3.5 w-3.5" /></ToggleGroupItem>
-                      <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban view"><Columns className="h-3.5 w-3.5" /></ToggleGroupItem>
-                      <ToggleGroupItem value="list" size="sm" aria-label="List view"><List className="h-3.5 w-3.5" /></ToggleGroupItem>
-                    </ToggleGroup>
+                      Visited ({stats.reviews})
+                    </ToggleGroupItem>
+                    <ToggleGroupItem
+                      value="pending"
+                      className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide data-[state=on]:bg-text-primary data-[state=on]:text-surface-default"
+                    >
+                      Saved ({stats.pending})
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                  <ToggleGroup
+                    type="single"
+                    value={viewMode}
+                    onValueChange={v => v && setViewMode(v as "grid" | "kanban" | "list")}
+                    className="ml-auto"
+                  >
+                    <ToggleGroupItem value="grid" size="sm" aria-label="Grid view">
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban view">
+                      <Columns className="h-3.5 w-3.5" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="list" size="sm" aria-label="List view">
+                      <List className="h-3.5 w-3.5" />
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                  <label className="flex items-center gap-2 cursor-pointer shrink-0">
+                    <span className="text-2xs font-medium tracking-widest uppercase text-text-disabled whitespace-nowrap">
+                      Hero photos
+                    </span>
+                    <Switch
+                      checked={showCommunityImages}
+                      onCheckedChange={setShowCommunityImages}
+                      className="scale-75 origin-right"
+                    />
+                  </label>
+                </div>
 
-                    {/* Community photos toggle — inline, no popover */}
-                    <label className="flex items-center gap-2 cursor-pointer shrink-0">
-                      <span className="text-[11px] text-text-secondary whitespace-nowrap">Hero photos</span>
-                      <Switch
-                        checked={showCommunityImages}
-                        onCheckedChange={setShowCommunityImages}
-                        className="scale-75 origin-right"
-                      />
-                    </label>
+                {/* Search + map */}
+                <div className="flex gap-2 mb-8">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-disabled" />
+                    <Input
+                      placeholder="Search buildings..."
+                      value={searchQuery}
+                      onChange={e => handleSearchChange(e.target.value)}
+                      className="pl-9 h-8 text-sm bg-surface-muted/40 border-transparent focus:bg-surface-default"
+                    />
+                    {searchQuery && (
+                      <button type="button" onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <X className="h-3.5 w-3.5 text-text-disabled hover:text-text-primary" />
+                      </button>
+                    )}
                   </div>
+                  <button
+                    type="button"
+                    className="shrink-0 h-8 px-3 border border-border-default text-text-secondary hover:text-text-primary hover:border-border-strong transition-colors text-xs"
+                    onClick={() => navigate(activeFilter === "pending"
+                      ? `/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending`
+                      : `/search?rated_by=${profile?.username || ""}&open_filters=true`
+                    )}
+                    title="View on map"
+                  >
+                    <MapIcon className="h-3.5 w-3.5" />
+                  </button>
+                </div>
 
-                  {/* Search + map button */}
-                  <div className="flex gap-2 mb-5">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-secondary" />
-                      <Input
-                        placeholder="Search buildings..."
-                        value={searchQuery}
-                        onChange={e => handleSearchChange(e.target.value)}
-                        className="pl-9 h-8 text-sm bg-surface-muted/50 border-transparent focus:bg-surface-default"
-                      />
-                      {searchQuery && (
-                        <button type="button" onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <X className="h-3.5 w-3.5 text-text-secondary hover:text-text-primary" />
+                {/* Content */}
+                {contentLoading ? (
+                  <div className="flex justify-center py-16">
+                    <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
+                  </div>
+                ) : filteredContent.length > 0 ? (
+                  <>
+                    <WidgetErrorBoundary>
+                      <AnimatePresence mode="wait">
+                        {viewMode === 'grid' ? (
+                          <motion.div key="grid" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-16">
+                              {filteredContent.map(item => (
+                                <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser variant="compact" showCommunityImages={showCommunityImages} />
+                              ))}
+                            </div>
+                          </motion.div>
+                        ) : viewMode === 'list' ? (
+                          <motion.div key="list" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
+                            <ProfileListView data={filteredContent} isOwnProfile={isOwnProfile} onUpdate={handleUpdate} />
+                          </motion.div>
+                        ) : (
+                          <motion.div key="kanban" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
+                            <div className="-mx-4">
+                              <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                                <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} isDragEnabled={isOwnProfile} />
+                                <DragOverlay dropAnimation={null}>
+                                  {activeId ? (
+                                    <div className="w-[280px] scale-105 shadow-lg z-50 cursor-grabbing bg-surface-card border border-border-default overflow-hidden opacity-90">
+                                      {(() => {
+                                        const activeItem = content.find(i => i.id === activeId);
+                                        return activeItem ? <ReviewCard entry={activeItem} variant="compact" hideUser imagePosition="left" showCommunityImages={showCommunityImages} /> : null;
+                                      })()}
+                                    </div>
+                                  ) : null}
+                                </DragOverlay>
+                              </DndContext>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </WidgetErrorBoundary>
+                    <div ref={containerRef} className="h-4 w-full" />
+                  </>
+                ) : (
+                  searchQuery ? (
+                    <EmptyState icon={Search} label="No results found" />
+                  ) : activeFilter === 'visited' ? (
+                    <EmptyState icon={Building2} label="No visited buildings yet" />
+                  ) : activeFilter === 'pending' ? (
+                    <EmptyState
+                      icon={Bookmark}
+                      label="Bucket list is empty"
+                      description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
+                      action={isOwnProfile ? (
+                        <button
+                          type="button"
+                          onClick={() => navigate("/search")}
+                          className="text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary transition-colors"
+                        >
+                          Search buildings →
                         </button>
-                      )}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 h-8"
-                      onClick={() => navigate(activeFilter === "pending"
-                        ? `/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending`
-                        : `/search?rated_by=${profile?.username || ""}&open_filters=true`
-                      )}
-                      title="View on map"
-                    >
-                      <MapIcon className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-
-                  {/* Content */}
-                  {contentLoading ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
-                    </div>
-                  ) : filteredContent.length > 0 ? (
-                    <>
-                      <WidgetErrorBoundary>
-                        <AnimatePresence mode="wait">
-                          {viewMode === 'grid' ? (
-                            <motion.div key="grid" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-16">
-                                {filteredContent.map(item => (
-                                  <ReviewCard key={item.id} entry={item} onLike={handleLike} hideUser variant="compact" showCommunityImages={showCommunityImages} />
-                                ))}
-                              </div>
-                            </motion.div>
-                          ) : viewMode === 'list' ? (
-                            <motion.div key="list" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
-                              <ProfileListView data={filteredContent} isOwnProfile={isOwnProfile} onUpdate={handleUpdate} />
-                            </motion.div>
-                          ) : (
-                            <motion.div key="kanban" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
-                              <div className="-mx-4">
-                                <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                                  <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} isDragEnabled={isOwnProfile} />
-                                  <DragOverlay dropAnimation={null}>
-                                    {activeId ? (
-                                      <div className="w-[280px] scale-105 shadow-xl z-50 cursor-grabbing rounded-sm bg-surface-card border overflow-hidden opacity-90">
-                                        {(() => {
-                                          const activeItem = content.find(i => i.id === activeId);
-                                          return activeItem ? <ReviewCard entry={activeItem} variant="compact" hideUser imagePosition="left" showCommunityImages={showCommunityImages} /> : null;
-                                        })()}
-                                      </div>
-                                    ) : null}
-                                  </DragOverlay>
-                                </DndContext>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </WidgetErrorBoundary>
-                      <div ref={containerRef} className="h-4 w-full" />
-                    </>
+                      ) : undefined}
+                    />
                   ) : (
-                    searchQuery ? (
-                      <EmptyState icon={Search} label="No results found" />
-                    ) : activeFilter === 'visited' ? (
-                      <EmptyState icon={Building2} label="No visited buildings yet" />
-                    ) : activeFilter === 'pending' ? (
-                      <EmptyState
-                        icon={Bookmark}
-                        label="Bucket list is empty"
-                        description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
-                        action={isOwnProfile ? <Button size="sm" onClick={() => navigate("/search")}>Search Buildings</Button> : undefined}
-                      />
-                    ) : (
-                      <EmptyState icon={Building2} label="No activity yet" />
-                    )
-                  )}
-                  {isFetchingMore && <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-text-secondary" /></div>}
-                </div>
-              )}
+                    <EmptyState icon={Building2} label="No activity yet" />
+                  )
+                )}
+                {isFetchingMore && (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-text-disabled" />
+                  </div>
+                )}
+              </div>
+            )}
 
-              {/* ── COLLECTIONS TAB ── */}
-              {activeSection === 'collections' && targetUserId && (
-                <div>
-                  {isOwnProfile && (
-                    <div className="flex justify-end mb-5">
-                      <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setShowCreateCollection(true)}>
-                        <Plus className="w-3.5 h-3.5 mr-1.5" />New collection
-                      </Button>
-                    </div>
-                  )}
-                  <WidgetErrorBoundary>
-                    <DndContext sensors={sensors} onDragStart={handleCollectionDragStart} onDragEnd={handleCollectionDragEnd}>
-                      <CollectionsGrid
-                        userId={targetUserId}
-                        username={profile?.username || null}
-                        isOwnProfile={isOwnProfile}
-                        onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
-                        refreshKey={collectionsRefreshKey}
-                      />
-                      <DragOverlay dropAnimation={null}>
-                        {activeCollectionData ? (
-                          <div className="scale-105 shadow-xl cursor-grabbing rounded-sm bg-surface-card border border-border-default overflow-hidden opacity-90 inline-block">
-                            <div className="p-4 h-[100px] w-[180px] flex flex-col justify-between">
-                              <h4 className="font-medium text-sm line-clamp-2 leading-tight text-text-primary">{activeCollectionData.name}</h4>
-                            </div>
+            {/* ── COLLECTIONS TAB ── */}
+            {activeSection === 'collections' && targetUserId && (
+              <div>
+                {isOwnProfile && (
+                  <div className="flex justify-end mb-8">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateCollection(true)}
+                      className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5"
+                    >
+                      <Plus className="w-3 h-3" />New collection →
+                    </button>
+                  </div>
+                )}
+                <WidgetErrorBoundary>
+                  <DndContext sensors={sensors} onDragStart={handleCollectionDragStart} onDragEnd={handleCollectionDragEnd}>
+                    <CollectionsGrid
+                      userId={targetUserId}
+                      username={profile?.username || null}
+                      isOwnProfile={isOwnProfile}
+                      onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined}
+                      refreshKey={collectionsRefreshKey}
+                    />
+                    <DragOverlay dropAnimation={null}>
+                      {activeCollectionData ? (
+                        <div className="shadow-lg cursor-grabbing bg-surface-card border border-border-default overflow-hidden opacity-90 inline-block">
+                          <div className="p-4 h-[100px] w-[180px] flex flex-col justify-between">
+                            <h4 className="font-medium text-sm line-clamp-2 leading-tight text-text-primary">{activeCollectionData.name}</h4>
                           </div>
-                        ) : null}
-                      </DragOverlay>
-                    </DndContext>
-                  </WidgetErrorBoundary>
-                </div>
-              )}
-
-              {/* ── PHOTOS TAB ── */}
-              {activeSection === 'photos' && (
-                <div>
-                  <p className="text-xs text-text-secondary mb-4 uppercase tracking-widest">
-                    Photos uploaded by {profile?.username}
-                  </p>
-                  {photosLoading ? (
-                    <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-text-secondary" /></div>
-                  ) : userPhotos.length > 0 ? (
-                    <div className="grid grid-cols-3 md:grid-cols-4 gap-0.5">
-                      {userPhotos.map(photo => (
-                        <div key={photo.id} className="relative aspect-square overflow-hidden bg-surface-muted group cursor-pointer">
-                          <img src={photo.url} alt={photo.building_name || ""} className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" />
-                          {photo.building_name && (
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end">
-                              <span className="translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all text-[11px] text-white font-medium px-2 pb-2 line-clamp-1">
-                                {photo.building_name}
-                              </span>
-                            </div>
-                          )}
                         </div>
+                      ) : null}
+                    </DragOverlay>
+                  </DndContext>
+                </WidgetErrorBoundary>
+              </div>
+            )}
+
+            {/* ── PHOTOS TAB ── */}
+            {activeSection === 'photos' && (
+              <div>
+                <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">
+                  Photos by {profile?.username}
+                </p>
+                {photosLoading ? (
+                  <div className="flex justify-center py-16">
+                    <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
+                  </div>
+                ) : userPhotos.length > 0 ? (
+                  <div className="grid grid-cols-3 md:grid-cols-4 gap-0.5">
+                    {userPhotos.map(photo => (
+                      <div key={photo.id} className="relative aspect-square overflow-hidden bg-surface-muted group cursor-pointer">
+                        <img src={photo.url} alt={photo.building_name || ""} className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" />
+                        {photo.building_name && (
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-end">
+                            <span className="translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all text-[11px] text-white font-medium px-2.5 pb-2.5 line-clamp-1">
+                              {photo.building_name}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={Search}
+                    label="No photos yet"
+                    description={isOwnProfile ? "Photos you upload when reviewing buildings will appear here." : undefined}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* ── ABOUT TAB ── */}
+            {activeSection === 'about' && (
+              <div className="max-w-sm space-y-10">
+
+                {profile?.bio && (
+                  <div>
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-3">Bio</p>
+                    <p className="text-base text-text-primary leading-relaxed">{profile.bio}</p>
+                  </div>
+                )}
+
+                {verifiedArchitectId && (
+                  <div>
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-3">Role</p>
+                    <div className="flex items-center gap-2 text-sm text-text-primary">
+                      <BadgeCheck className="w-4 h-4 text-text-primary shrink-0" />
+                      Verified architect on Plano
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-5">Connections</p>
+                  <div className="flex gap-10">
+                    <button onClick={() => openUserList('followers')} className="text-left hover:opacity-60 transition-opacity">
+                      <div className="text-2xl font-bold tracking-tight text-text-primary leading-none">{stats.followers}</div>
+                      <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">Followers</div>
+                    </button>
+                    <button onClick={() => openUserList('following')} className="text-left hover:opacity-60 transition-opacity">
+                      <div className="text-2xl font-bold tracking-tight text-text-primary leading-none">{stats.following}</div>
+                      <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">Following</div>
+                    </button>
+                  </div>
+                </div>
+
+                {squad.length > 0 && isOwnProfile && (
+                  <div>
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-5">Following</p>
+                    <div className="flex gap-4 flex-wrap">
+                      {squad.map(member => (
+                        <Link
+                          key={member.id}
+                          to={`/profile/${member.username}`}
+                          className="flex flex-col items-center gap-2 hover:opacity-60 transition-opacity w-14"
+                        >
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={member.avatar_url || undefined} />
+                            <AvatarFallback className="text-xs">{member.username?.[0]?.toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-2xs text-text-secondary text-center truncate w-full">{member.username}</span>
+                        </Link>
                       ))}
                     </div>
-                  ) : (
-                    <EmptyState icon={Search} label="No photos uploaded yet" description={isOwnProfile ? "Photos you upload when reviewing buildings will appear here." : undefined} />
-                  )}
-                </div>
-              )}
-
-              {/* ── ABOUT TAB ── */}
-              {activeSection === 'about' && (
-                <div className="max-w-sm space-y-6">
-                  {profile?.bio && (
-                    <div>
-                      <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">Bio</p>
-                      <p className="text-sm text-text-primary leading-relaxed">{profile.bio}</p>
-                    </div>
-                  )}
-
-                  {verifiedArchitectId && (
-                    <div>
-                      <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-2">Role</p>
-                      <div className="flex items-center gap-1.5 text-sm text-text-primary">
-                        <BadgeCheck className="w-4 h-4 text-text-primary" />
-                        Verified architect on Plano
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-3">Connections</p>
-                    <div className="flex gap-6">
-                      <button onClick={() => openUserList('followers')} className="text-left hover:opacity-70 transition-opacity">
-                        <div className="text-lg font-semibold text-text-primary">{stats.followers}</div>
-                        <div className="text-xs text-text-secondary">followers</div>
-                      </button>
-                      <button onClick={() => openUserList('following')} className="text-left hover:opacity-70 transition-opacity">
-                        <div className="text-lg font-semibold text-text-primary">{stats.following}</div>
-                        <div className="text-xs text-text-secondary">following</div>
-                      </button>
-                    </div>
                   </div>
-
-                  {squad.length > 0 && isOwnProfile && (
-                    <div>
-                      <p className="text-xs font-medium tracking-widest uppercase text-text-secondary mb-3">Following</p>
-                      <div className="flex gap-3 flex-wrap">
-                        {squad.map(member => (
-                          <Link key={member.id} to={`/profile/${member.username}`} className="flex flex-col items-center gap-1.5 hover:opacity-70 transition-opacity w-14">
-                            <Avatar className="w-10 h-10">
-                              <AvatarImage src={member.avatar_url || undefined} />
-                              <AvatarFallback className="text-xs">{member.username?.[0]?.toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-[11px] text-text-secondary text-center truncate w-full">{member.username}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-            </div>
+                )}
+              </div>
+            )}
 
           </div>
         </div>
@@ -1174,36 +1175,40 @@ export default function Profile() {
         <Dialog open={userListDialog.open} onOpenChange={open => setUserListDialog(prev => ({ ...prev, open }))}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="capitalize text-center">{userListDialog.type}</DialogTitle>
+              <DialogTitle className="text-xs font-medium tracking-widest uppercase text-center text-text-secondary">
+                {userListDialog.type}
+              </DialogTitle>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
               {userListLoading ? (
-                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-text-secondary" /></div>
+                <div className="flex justify-center py-10">
+                  <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
+                </div>
               ) : userList.length > 0 ? (
-                <div className="space-y-1 p-1">
+                <div className="space-y-0 p-1">
                   {userList.map(u => (
                     <div
                       key={u.id}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-muted/50 cursor-pointer transition-colors"
+                      className="flex items-center justify-between py-3 border-b border-border-default last:border-0 cursor-pointer hover:opacity-70 transition-opacity"
                       onClick={() => { setUserListDialog(prev => ({ ...prev, open: false })); navigate(`/profile/${u.username?.toLowerCase()}`); }}
                     >
                       <div className="flex items-center gap-3">
-                        <Avatar>
+                        <Avatar className="w-8 h-8">
                           <AvatarImage src={u.avatar_url || undefined} />
-                          <AvatarFallback>{u.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback className="text-xs">{u.username?.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{u.username || "Unknown"}</span>
+                        <span className="font-medium text-sm text-text-primary">{u.username || "Unknown"}</span>
                       </div>
                       {currentUser && currentUser.id !== u.id && (
                         <div onClick={e => e.stopPropagation()}>
-                          <FollowButton userId={u.id} initialIsFollowing={u.is_following} isFollower={u.is_follower} className="h-8 text-xs px-3" />
+                          <FollowButton userId={u.id} initialIsFollowing={u.is_following} isFollower={u.is_follower} className="h-7 text-xs px-3" />
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-text-secondary">No users found</div>
+                <div className="text-center py-10 text-text-disabled text-sm">No users found</div>
               )}
             </ScrollArea>
           </DialogContent>
@@ -1223,13 +1228,23 @@ export default function Profile() {
   );
 }
 
-function EmptyState({ icon: Icon, label, description, action }: { icon: LucideIcon; label: string; description?: string; action?: ReactNode }) {
+// ─── Empty State ──────────────────────────────────────────────────────────────
+function EmptyState({ icon: Icon, label, description, action }: {
+  icon: LucideIcon;
+  label: string;
+  description?: string;
+  action?: ReactNode;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-16 px-8 gap-4">
-      <Icon className="h-12 w-12 text-text-disabled" />
-      <p className="text-lg font-semibold text-text-primary">{label}</p>
-      {description && <p className="text-sm text-text-secondary max-w-sm">{description}</p>}
-      {action && <div>{action}</div>}
+    <div className="flex flex-col items-center justify-center text-center py-20 px-8 gap-5">
+      <Icon className="h-8 w-8 text-text-disabled" strokeWidth={1.5} />
+      <div className="space-y-2">
+        <p className="text-base font-semibold text-text-primary tracking-tight">{label}</p>
+        {description && (
+          <p className="text-sm text-text-secondary max-w-xs leading-relaxed">{description}</p>
+        )}
+      </div>
+      {action && <div className="mt-1">{action}</div>}
     </div>
   );
 }
