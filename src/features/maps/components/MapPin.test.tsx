@@ -2,6 +2,7 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { afterEach, describe, it, expect } from 'vitest';
 import { MapPin } from './MapPin';
 import { PinStyle } from '../utils/pinStyling';
+import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
 // @vitest-environment happy-dom
 
@@ -15,9 +16,10 @@ describe('MapPin Component', () => {
     shape: 'circle',
     zIndex: 5,
     size: 20,
-    classes: 'bg-surface-muted/80 border-white/50 border',
+    classes: 'border-white/50 border',
+    backgroundColor: MAP_MARKER_FILL.surfaceMuted80,
     showDot: false,
-    showContent: true
+    showContent: true,
   };
 
   it('renders with default circle style', () => {

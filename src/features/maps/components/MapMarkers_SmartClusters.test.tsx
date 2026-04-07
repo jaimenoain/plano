@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { MapMarkers } from './MapMarkers';
 import { ClusterResponse } from '../hooks/useMapData';
+import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
 // Mock react-map-gl/maplibre
 vi.mock('react-map-gl/maplibre', () => ({
@@ -56,8 +57,7 @@ describe('MapMarkers - Smart Clusters', () => {
     );
 
     const pin = screen.getByTestId('map-pin-container');
-    // Check classes for Lime styling
-    expect(pin.className).toContain('bg-brand-secondary/90');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.brandSecondary);
     expect(pin.className).toContain('border-brand-primary');
     // Check zIndex
     const marker = screen.getByTestId('marker-container');
@@ -79,8 +79,7 @@ describe('MapMarkers - Smart Clusters', () => {
     );
 
     const pin = screen.getByTestId('map-pin-container');
-    // Check classes for White styling
-    expect(pin.className).toContain('bg-white/90');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
     expect(pin.className).toContain('border-white');
     // Check zIndex
     const marker = screen.getByTestId('marker-container');
@@ -102,8 +101,7 @@ describe('MapMarkers - Smart Clusters', () => {
     );
 
     const pin = screen.getByTestId('map-pin-container');
-    // Check classes for Standard styling
-    expect(pin.className).toContain('bg-[#f5f5f5]');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
     expect(pin.className).toContain('border-gray-600');
     // Check zIndex
     const marker = screen.getByTestId('marker-container');
@@ -125,8 +123,7 @@ describe('MapMarkers - Smart Clusters', () => {
     );
 
     const pin = screen.getByTestId('map-pin-container');
-    // Should fallback to standard
-    expect(pin.className).toContain('bg-[#f5f5f5]');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
     expect(pin.className).toContain('border-gray-600');
     // Check zIndex
     const marker = screen.getByTestId('marker-container');

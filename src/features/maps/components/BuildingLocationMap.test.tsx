@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { BuildingLocationMap } from './BuildingLocationMap';
+import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
 // Mock react-map-gl/maplibre
 vi.mock('react-map-gl/maplibre', () => {
@@ -69,7 +70,7 @@ describe('BuildingLocationMap', () => {
 
     // Expect failure until implementation
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.className).toContain('bg-brand-primary');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
     expect(pin.className).toContain('border-text-primary');
   });
 
@@ -77,14 +78,14 @@ describe('BuildingLocationMap', () => {
     render(<BuildingLocationMap {...defaultProps} rating={2} />);
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.className).toContain('bg-white');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
   });
 
   it('renders Tier B pin for rating 1', () => {
     render(<BuildingLocationMap {...defaultProps} rating={1} />);
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.className).toContain('bg-white');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
     expect(pin.className).toContain('border-gray-600');
   });
 
@@ -92,14 +93,14 @@ describe('BuildingLocationMap', () => {
     render(<BuildingLocationMap {...defaultProps} rating={0} tierRank="Top 1%" />);
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.className).toContain('bg-brand-primary');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
   });
 
   it('renders Tier C pin for Standard rank (no user rating)', () => {
     render(<BuildingLocationMap {...defaultProps} rating={0} tierRank="Standard" />);
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.className).toContain('bg-surface-muted/80');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
   });
 
   it('uses bottom anchor for exact location (pin shape)', () => {

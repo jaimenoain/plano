@@ -1,5 +1,6 @@
 import React from 'react';
 import { PinStyle } from '../utils/pinStyling';
+import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
 interface MapPinProps {
   style: PinStyle;
@@ -19,6 +20,14 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
   // Apply scale and z-index on hover
   const hoverClasses = isHovered ? 'scale-125 z-50' : '';
 
+  const containerStyle: React.CSSProperties = {
+    width: `${style.size}px`,
+    height: `${style.size}px`,
+  };
+  if (style.backgroundColor) {
+    containerStyle.backgroundColor = style.backgroundColor;
+  }
+
   return (
     <div
       className={`
@@ -28,17 +37,14 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
         ${shapeClasses}
         ${hoverClasses}
       `}
-      style={{
-        width: `${style.size}px`,
-        height: `${style.size}px`,
-        backgroundColor: style.backgroundColor,
-      }}
+      style={containerStyle}
       data-testid="map-pin-container"
     >
-      {/* Pulse Effect (Tier S) */}
+      {/* Pulse Effect (Tier S) — inline fill so it paints inside MapLibre marker portal */}
       {style.tier === 'S' && (
         <div
-          className="absolute inset-0 -z-10 animate-ping-large-slow rounded-full bg-brand-primary opacity-30"
+          className="absolute inset-0 -z-10 animate-ping-large-slow rounded-full opacity-30"
+          style={{ backgroundColor: MAP_MARKER_FILL.brandPrimary }}
           data-testid="map-pin-pulse"
         />
       )}
@@ -54,7 +60,8 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
         {/* Dot Decoration (Tier A) */}
         {style.showDot && (
           <div
-            className="absolute h-2 w-2 rounded-full bg-brand-primary"
+            className="absolute h-2 w-2 rounded-full"
+            style={{ backgroundColor: MAP_MARKER_FILL.brandPrimary }}
             data-testid="map-pin-dot"
           />
         )}

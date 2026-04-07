@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getPinStyle } from './pinStyling';
 import { ClusterResponse } from '../hooks/useMapData';
+import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
 // Helper to create mock items
 const createMockBuilding = (overrides: Partial<ClusterResponse>): ClusterResponse => ({
@@ -23,7 +24,7 @@ describe('getPinStyle', () => {
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
       expect(style.size).toBe(30);
-      expect(style.classes).toContain('bg-brand-primary');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
       expect(style.classes).toContain('text-brand-primary-foreground');
     });
 
@@ -33,7 +34,7 @@ describe('getPinStyle', () => {
       expect(style.tier).toBe('A');
       expect(style.size).toBe(30);
       expect(style.zIndex).toBe(100);
-      expect(style.classes).toContain('bg-white');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
       expect(style.showDot).toBe(false);
     });
 
@@ -42,7 +43,7 @@ describe('getPinStyle', () => {
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
       expect(style.size).toBe(20);
-      expect(style.classes).toContain('bg-white');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
       expect(style.classes).toContain('border-gray-600');
     });
 
@@ -51,14 +52,14 @@ describe('getPinStyle', () => {
       const savedItem = createMockBuilding({ rating: 0, status: 'saved' });
       let style = getPinStyle(savedItem);
       expect(style.tier).toBe('C');
-      expect(style.classes).toContain('bg-surface-muted/80');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
       expect(style.classes).toContain('border-gray-600');
 
       // Case 2: Rating null, Status 'saved'
       const savedItemNull = createMockBuilding({ rating: null, status: 'saved' });
       style = getPinStyle(savedItemNull);
       expect(style.tier).toBe('C');
-      expect(style.classes).toContain('bg-surface-muted/80');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
       expect(style.classes).toContain('border-gray-600');
     });
   });
@@ -68,7 +69,7 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 1%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
-      expect(style.classes).toContain('bg-brand-primary');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
     });
 
     it("returns Tier B for 'Top 10%'", () => {
@@ -76,7 +77,7 @@ describe('getPinStyle', () => {
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
       expect(style.size).toBe(20);
-      expect(style.classes).toContain('bg-white');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
     });
 
     it("returns Tier B for 'Top 20%'", () => {
@@ -84,7 +85,7 @@ describe('getPinStyle', () => {
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
       expect(style.size).toBe(20);
-      expect(style.classes).toContain('bg-white');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
     });
 
     it('returns Tier C for other ranks', () => {
@@ -142,20 +143,20 @@ describe('getPinStyle', () => {
   });
 
   describe('Suite 5: Cluster Logic', () => {
-    it('returns high opacity lime mix for Tier 3 clusters', () => {
+    it('returns solid brand-secondary fill for Tier 3 clusters', () => {
       const item = createMockBuilding({ is_cluster: true, max_tier: 3, count: 10 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('Cluster');
-      expect(style.classes).toContain('bg-brand-secondary/90');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandSecondary);
       expect(style.classes).toContain('border-brand-primary');
       expect(style.classes).toContain('border-2');
     });
 
-    it('returns high opacity white for Tier 2 clusters', () => {
+    it('returns solid white fill for Tier 2 clusters', () => {
       const item = createMockBuilding({ is_cluster: true, max_tier: 2, count: 10 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('Cluster');
-      expect(style.classes).toContain('bg-white/90');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
       expect(style.classes).toContain('border-white');
       expect(style.classes).toContain('border-2');
     });
@@ -164,7 +165,7 @@ describe('getPinStyle', () => {
       const item = createMockBuilding({ is_cluster: true, max_tier: 1, count: 10 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('Cluster');
-      expect(style.classes).toContain('bg-[#f5f5f5]');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
       expect(style.classes).toContain('border-gray-600');
       expect(style.classes).toContain('border');
       expect(style.classes).not.toContain('border-2');

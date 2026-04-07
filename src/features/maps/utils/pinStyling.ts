@@ -1,4 +1,5 @@
 import { ClusterResponse } from '../hooks/useMapData';
+import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
 export type PinTier = 'S' | 'A' | 'B' | 'C' | 'Cluster';
 export type PinShape = 'pin' | 'circle';
@@ -23,18 +24,20 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
     let classes = 'text-black font-bold';
     let zIndex = 10;
 
+    let backgroundColor: string;
     if (item.max_tier === 3) {
-      // Tier 3: Brand-tinted cluster (matches design tokens, not legacy yellow wash)
-      classes += ' bg-brand-secondary/90 border-brand-primary border-2';
+      // Tier 3: Solid brand-secondary face (inline fill — reliable inside map canvas)
+      classes += ' border-brand-primary border-2';
       zIndex = 20;
+      backgroundColor = MAP_MARKER_FILL.brandSecondary;
     } else if (item.max_tier === 2) {
-      // Tier 2: White Tinted
-      classes += ' bg-white/90 border-white border-2';
+      classes += ' border-white border-2';
       zIndex = 20;
+      backgroundColor = MAP_MARKER_FILL.white;
     } else {
-      // Tier 1: Standard Solid
-      classes += ' bg-[#f5f5f5] border-gray-600 border';
+      classes += ' border-gray-600 border';
       zIndex = 10;
+      backgroundColor = MAP_MARKER_FILL.surfaceMuted;
     }
 
     return {
@@ -43,6 +46,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
       zIndex,
       size,
       classes,
+      backgroundColor,
       showDot: false,
       showContent: true
     };
@@ -62,7 +66,7 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
       classes: 'border-white border-2 text-black',
       backgroundColor: item.color,
       showDot: false,
-      showContent: true
+      showContent: true,
     };
   }
 
@@ -109,9 +113,10 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 100,
         size: 30,
-        classes: 'bg-brand-primary border-text-primary border-2 text-brand-primary-foreground',
+        classes: 'border-text-primary border-2 text-brand-primary-foreground',
+        backgroundColor: MAP_MARKER_FILL.brandPrimary,
         showDot: false,
-        showContent: true
+        showContent: true,
       };
     case 'A':
       return {
@@ -119,9 +124,10 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 100,
         size: 30,
-        classes: 'bg-white border-text-primary border-2',
+        classes: 'border-text-primary border-2',
+        backgroundColor: MAP_MARKER_FILL.white,
         showDot: false,
-        showContent: true
+        showContent: true,
       };
     case 'B':
       return {
@@ -129,9 +135,10 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 20,
         size: 20,
-        classes: 'bg-white border-gray-600 border',
+        classes: 'border-gray-600 border',
+        backgroundColor: MAP_MARKER_FILL.white,
         showDot: false,
-        showContent: true
+        showContent: true,
       };
     case 'C':
     default:
@@ -140,9 +147,10 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
         shape,
         zIndex: 5,
         size: 20,
-        classes: 'bg-surface-muted/80 border-gray-600 border',
+        classes: 'border-gray-600 border',
+        backgroundColor: MAP_MARKER_FILL.surfaceMuted80,
         showDot: false,
-        showContent: true
+        showContent: true,
       };
   }
 }

@@ -5,6 +5,7 @@ import { BuildingPopupContent } from './BuildingPopupContent';
 import { getPinStyle } from '../utils/pinStyling';
 import { MapPin } from './MapPin';
 import { DAY_COLORS } from '@/features/maps/constants';
+import { MAP_MARKER_FILL } from '@/features/maps/constants/mapMarkerFills';
 import { Bed, Utensils, Bus, Camera, MapPin as MapPinIcon } from 'lucide-react';
 import '../../../App.css';
 
@@ -155,7 +156,10 @@ export function MapMarkers({
                         */
                         // If it's a candidate, show accent dot inside
                         cluster.is_candidate ? (
-                            <div className="h-2 w-2 rounded-full bg-brand-primary" />
+                            <div
+                              className="h-2 w-2 shrink-0 rounded-full"
+                              style={{ backgroundColor: MAP_MARKER_FILL.brandPrimary }}
+                            />
                         ) : null
                       )
                   )
