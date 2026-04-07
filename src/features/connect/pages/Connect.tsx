@@ -10,7 +10,7 @@ export const meta: MetaFunction = () => [
 
 export default function Connect() {
   return (
-    <div className="w-full md:pl-16">
+    <div className="w-full">
       <AppLayout title="Connect" showLogo={false}>
         <div className="w-full pb-20">
           <div className="px-4 py-6 max-w-2xl mx-auto">

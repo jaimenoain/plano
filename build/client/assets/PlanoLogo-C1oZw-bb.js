@@ -1,1 +1,0 @@
-import{j as r}from"./chunk-UVKPFVEO-qF7BMI6g.js";import{a as s}from"./utils-B_iAD4EV.js";const e=({className:o,...n})=>r.jsx("span",{className:s("inline-block font-bold uppercase tracking-tight",o),...n,children:"PLANO"});export{e as P};

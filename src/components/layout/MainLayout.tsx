@@ -1,12 +1,18 @@
 import { useEffect } from "react";
 import { Outlet, useRouteLoaderData } from "react-router";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useLoginTracker } from "@/features/auth/hooks/useLoginTracker";
 import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
 import { logDiagnosticError } from "@/features/admin/api/diagnostics";
 import { setSentryUser } from "@/lib/sentry";
+import { cn } from "@/lib/utils";
 
 /**
  * Sidebar is open by default on first visit; preference is stored in a cookie
@@ -14,9 +20,27 @@ import { setSentryUser } from "@/lib/sentry";
  * no flash of the wrong state). In-app navigation does not change open/closed state.
  * The floating SidebarTrigger toggles the menu.
  *
- * collapsible="offcanvas" on AppSidebar means the sidebar overlays the
- * content on desktop (no permanent rail) — same Sheet behaviour as mobile.
+ * collapsible="offcanvas" on AppSidebar: the panel is fixed and does not
+ * consume flex width (spacer stays w-0). Desktop inset padding clears the
+ * overlay when open and the floating trigger when closed.
  */
+function MainLayoutInset() {
+  const { open, isMobile } = useSidebar();
+
+  return (
+    <SidebarInset
+      className={cn(
+        "min-w-0 bg-surface-default transition-[padding-left] duration-200 ease-linear",
+        !isMobile && open && "md:pl-[var(--sidebar-width)]",
+        !isMobile && !open && "md:pl-16",
+      )}
+      data-testid="main-layout"
+    >
+      <Outlet />
+    </SidebarInset>
+  );
+}
+
 function MainLayout() {
   const rootData = useRouteLoaderData("root") as
     | { sidebarOpen: boolean | null }
@@ -54,12 +78,7 @@ function MainLayout() {
       <div className="pointer-events-none fixed left-4 top-4 z-40 safe-area-pt">
         <SidebarTrigger className="pointer-events-auto h-auto min-h-11 min-w-11 w-auto border-0 bg-transparent p-2 shadow-none hover:bg-transparent active:scale-100 [&_svg]:!size-6" />
       </div>
-      <SidebarInset
-        className="min-w-0 bg-surface-default"
-        data-testid="main-layout"
-      >
-        <Outlet />
-      </SidebarInset>
+      <MainLayoutInset />
     </SidebarProvider>
   );
 }
