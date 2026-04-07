@@ -1,35 +1,43 @@
 /**
- * Explore.tsx — Redesigned with A24 editorial aesthetic
+ * Explore.tsx — A24 cinematic aesthetic (updated)
  *
- * Visual changes (all logic / hooks / effects / handlers unchanged):
+ * Changes from previous version:
  *
- * Location filter button:
- *   - Replaced <Button variant="secondary"> with a sharp minimal pill
- *   - No rounded corners (0 radius — sharp like all other editorial elements)
- *   - Dark glass (bg-black/70 backdrop-blur) when unfiltered
- *   - Neon (bg-brand-primary) when a filter is active
- *   - Uppercase tracking-widest text matching app typography system
+ * Full-bleed image:
+ *   The scroll container is now `fixed inset-0 z-[5]` so it breaks out of
+ *   AppLayout's sidebar-inset entirely. No left gap regardless of sidebar state.
+ *   AppLayout is still rendered as the SidebarProvider context — it just has
+ *   no visible content of its own on this page.
  *
- * Drawer:
- *   - Header: oversized uppercase label, no decorative chrome
- *   - Content area: clean generous padding
+ * White hamburger:
+ *   A custom `<Menu>` button floats at `fixed top-4 left-4 z-[35]` (above the
+ *   explore image at z-5, above the MainLayout trigger at ~z-30, below the
+ *   sidebar panel at z-40). White text so it reads against any building photo.
+ *   Opens the sidebar via useSidebar().
  *
- * Empty / error / loading states:
- *   - Match the dark cinematic surface of the page
- *   - Minimal text, no icons-in-boxes
+ * Sidebar collapse on first interaction:
+ *   useSidebar() is imported. A `hasInteracted` ref gates a one-shot collapse
+ *   that fires the first time the user begins a drag gesture on a card
+ *   (DiscoveryCard calls `onInteractionStart` from its Framer Motion onDragStart).
+ *   The sidebar does NOT collapse on page mount — it stays in whatever state
+ *   the user left it when they navigated to /explore.
+ *
+ * "Hide" terminology:
+ *   handleSwipeHide and all related labels now say "Hide" consistently.
  */
-import { useState, useEffect, useMemo, useRef, type RefCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, type RefCallback } from "react";
 import { Navigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useDiscoveryFeed } from "@/features/feed/hooks/useDiscoveryFeed";
 import { DiscoveryCard } from "@/features/feed/components/DiscoveryCard";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
-import { Loader2, MapPin, X } from "lucide-react";
+import { Loader2, MapPin, X, Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ExploreTutorial } from "@/features/search/components/ExploreTutorial";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import {
   Drawer,
@@ -44,6 +52,25 @@ export default function Explore() {
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
+
+  // Sidebar control — collapse when user begins exploring, not on page mount
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
+  const hasInteractedRef = useRef(false);
+
+  /**
+   * Called once — on the user's first drag gesture.
+   * The sidebar stays open when navigating to /explore; it only collapses when
+   * the user actually begins engaging with the swipe feed.
+   */
+  const handleFirstInteraction = useCallback(() => {
+    if (hasInteractedRef.current) return;
+    hasInteractedRef.current = true;
+    if (isMobile) {
+      setOpenMobile(false);
+    } else {
+      setOpen(false);
+    }
+  }, [isMobile, setOpen, setOpenMobile]);
 
   const [locationFilter, setLocationFilter] = useState<{
     city: string | null;
@@ -76,8 +103,7 @@ export default function Explore() {
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
-      const scrollTop = scrollContainerRef.current.scrollTop;
-      setIsFilterVisible(scrollTop <= 50);
+      setIsFilterVisible(scrollContainerRef.current.scrollTop <= 50);
     }
   };
 
@@ -124,17 +150,15 @@ export default function Explore() {
   const handleSkip = async (buildingId: string) => {
     try {
       if (!user) return;
-      const { error } = await supabase
-        .from("user_buildings")
-        .upsert(
-          {
-            user_id: user.id,
-            building_id: buildingId,
-            status: "ignored",
-            edited_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id, building_id" }
-        );
+      const { error } = await supabase.from("user_buildings").upsert(
+        {
+          user_id: user.id,
+          building_id: buildingId,
+          status: "ignored",
+          edited_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id, building_id" }
+      );
       if (error) throw error;
     } catch (_error) {}
   };
@@ -148,17 +172,15 @@ export default function Explore() {
     toast.success("Saved to your list");
     try {
       if (!user) return;
-      const { error } = await supabase
-        .from("user_buildings")
-        .upsert(
-          {
-            user_id: user.id,
-            building_id: buildingId,
-            status: "pending",
-            edited_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id, building_id" }
-        );
+      const { error } = await supabase.from("user_buildings").upsert(
+        {
+          user_id: user.id,
+          building_id: buildingId,
+          status: "pending",
+          edited_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id, building_id" }
+      );
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
     } catch (_error) {
@@ -174,21 +196,19 @@ export default function Explore() {
     });
     try {
       if (!user) return;
-      const { error } = await supabase
-        .from("user_buildings")
-        .upsert(
-          {
-            user_id: user.id,
-            building_id: buildingId,
-            status: "ignored",
-            edited_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id, building_id" }
-        );
+      const { error } = await supabase.from("user_buildings").upsert(
+        {
+          user_id: user.id,
+          building_id: buildingId,
+          status: "ignored",
+          edited_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id, building_id" }
+      );
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
     } catch (_error) {
-      toast.error("Failed to skip building");
+      toast.error("Failed to hide building");
     }
   };
 
@@ -197,13 +217,38 @@ export default function Explore() {
   }
 
   return (
-    <div className="w-full">
-      <AppLayout isFullScreen>
-        {showTutorial && (
-          <ExploreTutorial onComplete={() => setShowTutorial(false)} />
-        )}
+    // AppLayout is kept as the SidebarProvider context host — it renders no
+    // visible content on this page since the explore container is fixed.
+    <AppLayout isFullScreen>
 
-        {/* ── Location filter — sharp minimal pill, top-center ── */}
+      {/* ── Tutorial overlay ── */}
+      {showTutorial && (
+        <ExploreTutorial onComplete={() => setShowTutorial(false)} />
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────
+          Full-bleed explore container.
+          `fixed inset-0 z-[5]` breaks out of AppLayout's sidebar inset
+          so the image goes edge-to-edge regardless of sidebar open/closed state.
+          The sidebar panel (z-40) and location filter (z-50) render above this.
+      ───────────────────────────────────────────────────────────────── */}
+      <div className="fixed inset-0 z-[5] bg-[#0A0A0A] text-white overflow-hidden">
+
+        {/* ── White hamburger — floats over the image ── */}
+        {/*
+            z-[35]: above this container (z-5) and MainLayout's trigger (~z-30),
+            below the sidebar panel (z-40). White so it reads on any building photo.
+        */}
+        <button
+          type="button"
+          onClick={() => (isMobile ? setOpenMobile(true) : setOpen(true))}
+          className="fixed top-4 left-4 z-[35] p-2 text-white hover:opacity-60 transition-opacity"
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5" strokeWidth={1.5} />
+        </button>
+
+        {/* ── Location filter — minimal sharp pill, top-center ── */}
         <div
           className={cn(
             "fixed top-4 left-0 right-0 z-50 flex justify-center transition-all duration-300 pointer-events-none",
@@ -282,78 +327,76 @@ export default function Explore() {
           </div>
         </div>
 
-        {/* ── Full-screen snap container ── */}
-        <div className="relative h-[calc(100vh-80px)] md:h-screen w-full bg-[#0A0A0A] text-text-inverse overflow-hidden">
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
-          >
-            {/* Loading */}
-            {status === "pending" && (
-              <div className="h-full w-full flex items-center justify-center snap-center">
-                <Loader2 className="h-5 w-5 animate-spin text-white/20" />
-              </div>
-            )}
+        {/* ── Snap scroll feed ── */}
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
+        >
+          {/* Loading */}
+          {status === "pending" && (
+            <div className="h-full w-full flex items-center justify-center snap-center">
+              <Loader2 className="h-5 w-5 animate-spin text-white/20" />
+            </div>
+          )}
 
-            {/* Error */}
-            {status === "error" && (
-              <div className="h-full w-full flex flex-col items-center justify-center snap-center gap-3">
-                <p className="text-xs font-medium uppercase tracking-widest text-white/20">
-                  Error
-                </p>
-                <p className="text-base font-semibold text-white/60">
-                  Failed to load feed
-                </p>
-              </div>
-            )}
+          {/* Error */}
+          {status === "error" && (
+            <div className="h-full w-full flex flex-col items-center justify-center snap-center gap-3">
+              <p className="text-2xs font-medium uppercase tracking-widest text-white/20">
+                Error
+              </p>
+              <p className="text-base font-semibold text-white/60">
+                Failed to load feed
+              </p>
+            </div>
+          )}
 
-            {/* Empty */}
-            {status !== "pending" && status !== "error" && buildings.length === 0 && (
-              <div className="h-full w-full flex flex-col items-center justify-center snap-center text-center px-8 gap-4">
-                <p className="text-2xs font-medium tracking-[0.2em] uppercase text-white/20 mb-1">
-                  {locationFilter.label
-                    ? locationFilter.label
-                    : "No results"}
-                </p>
-                <p className="text-2xl font-bold tracking-tight text-white/60 leading-tight">
-                  No buildings found
-                </p>
-                <p className="text-sm text-white/30 max-w-xs leading-relaxed">
-                  Try widening your location filter or check back later.
-                </p>
-              </div>
-            )}
+          {/* Empty */}
+          {status !== "pending" && status !== "error" && buildings.length === 0 && (
+            <div className="h-full w-full flex flex-col items-center justify-center snap-center text-center px-8 gap-4">
+              <p className="text-2xs font-medium tracking-[0.2em] uppercase text-white/20 mb-1">
+                {locationFilter.label || "No results"}
+              </p>
+              <p className="text-2xl font-bold tracking-tight text-white/60 leading-tight">
+                No buildings found
+              </p>
+              <p className="text-sm text-white/30 max-w-xs leading-relaxed">
+                Try widening your location filter or check back later.
+              </p>
+            </div>
+          )}
 
-            {/* Cards */}
-            {buildings.map((building) => (
-              <div
-                key={building.id}
-                className="h-full w-full snap-start snap-always"
-              >
-                <DiscoveryCard
-                  building={building}
-                  onSwipeSave={() => handleSwipeSave(building.id)}
-                  onSwipeHide={() => handleSwipeHide(building.id)}
-                  onSkip={() => handleSkip(building.id)}
-                />
-              </div>
-            ))}
+          {/* Cards */}
+          {buildings.map((building) => (
+            <div
+              key={building.id}
+              className="h-full w-full snap-start snap-always"
+            >
+              <DiscoveryCard
+                building={building}
+                onSwipeSave={() => handleSwipeSave(building.id)}
+                onSwipeHide={() => handleSwipeHide(building.id)}
+                onSkip={() => handleSkip(building.id)}
+                onInteractionStart={handleFirstInteraction}
+              />
+            </div>
+          ))}
 
-            {/* Infinite scroll trigger */}
-            {(hasNextPage || isFetchingNextPage) && (
-              <div
-                ref={containerRef as RefCallback<HTMLDivElement>}
-                className="h-20 w-full flex justify-center items-center p-4 snap-end"
-              >
-                {isFetchingNextPage && (
-                  <Loader2 className="h-4 w-4 animate-spin text-white/20" />
-                )}
-              </div>
-            )}
-          </div>
+          {/* Infinite scroll trigger */}
+          {(hasNextPage || isFetchingNextPage) && (
+            <div
+              ref={containerRef as RefCallback<HTMLDivElement>}
+              className="h-20 w-full flex justify-center items-center p-4 snap-end"
+            >
+              {isFetchingNextPage && (
+                <Loader2 className="h-4 w-4 animate-spin text-white/20" />
+              )}
+            </div>
+          )}
         </div>
-      </AppLayout>
-    </div>
+      </div>
+
+    </AppLayout>
   );
 }

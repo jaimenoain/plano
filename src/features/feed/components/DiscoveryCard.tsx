@@ -30,7 +30,7 @@
 import { useState, useRef, useEffect, useMemo, type RefCallback } from "react";
 import { DiscoveryBuilding, type ArchitectSummary } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
-import { Bookmark, Check, EyeOff } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -46,6 +46,8 @@ interface DiscoveryCardProps {
   onSwipeSave?: () => void;
   onSwipeHide?: () => void;
   onSkip?: () => void;
+  /** Fires on the first drag gesture — used by Explore to collapse the sidebar */
+  onInteractionStart?: () => void;
 }
 
 export function DiscoveryCard({
@@ -54,6 +56,7 @@ export function DiscoveryCard({
   onSwipeSave,
   onSwipeHide,
   onSkip,
+  onInteractionStart,
 }: DiscoveryCardProps) {
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
@@ -166,10 +169,13 @@ export function DiscoveryCard({
     }, 500);
   };
 
-  // ── Framer Motion values (unchanged) ──
+  // ── Framer Motion values ──
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-10, 10]);
-  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 1]);
+  // Card stays fully opaque in both swipe directions — mirrors save behaviour on hide.
+  // Previous: [0, 1, 1, 1, 1] faded the card to black on left swipe, hiding the stamp.
+  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [1, 1, 1, 1, 1]);
+  // Stamps: symmetric — both appear starting at ±20px, fully visible at ±100px (threshold)
   const likeOpacity = useTransform(x, [20, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
   const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.35]);
@@ -240,6 +246,7 @@ export function DiscoveryCard({
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.7}
+      onDragStart={() => onInteractionStart?.()}
       onDragEnd={handleDragEnd}
     >
       {/* View tracker */}
@@ -312,7 +319,7 @@ export function DiscoveryCard({
           className="text-2xl font-bold tracking-[0.2em] uppercase text-feedback-destructive"
           style={{ transform: "rotate(12deg)" }}
         >
-          Skip
+          Hide
         </p>
       </motion.div>
 
@@ -352,32 +359,16 @@ export function DiscoveryCard({
           </p>
         )}
 
-        {/* Building name + save icon — same row */}
-        <div className="flex items-end justify-between gap-4 mb-0.5">
+        {/* Building name — full width, no save icon */}
+        <div className="mb-0.5">
           <Link
             to={`/building/${building.id}/${building.slug || "details"}`}
-            className="pointer-events-auto hover:opacity-80 transition-opacity flex-1 min-w-0"
+            className="pointer-events-auto hover:opacity-80 transition-opacity block"
           >
             <h2 className="text-4xl sm:text-5xl font-bold tracking-tight leading-none">
               {building.name}
             </h2>
           </Link>
-
-          {/* Save — integrated, no separate button component */}
-          <button
-            onClick={handleSave}
-            className="pointer-events-auto shrink-0 mb-0.5 transition-opacity hover:opacity-60"
-            aria-label={isSaved ? "Saved" : "Save building"}
-          >
-            {isSaved ? (
-              <Check className="w-5 h-5 text-brand-primary" />
-            ) : (
-              <Bookmark
-                className="w-5 h-5 text-white/50"
-                strokeWidth={1.5}
-              />
-            )}
-          </button>
         </div>
       </div>
 
@@ -392,7 +383,7 @@ export function DiscoveryCard({
         >
           {/* Label */}
           <p className="text-2xs font-medium tracking-[0.25em] uppercase text-white/30 mb-10">
-            Rate this building
+            Add points (optional)
           </p>
 
           {/* Rating options — pure type, no boxes */}
