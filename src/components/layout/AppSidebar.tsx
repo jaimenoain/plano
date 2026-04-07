@@ -86,6 +86,9 @@ function UserMenu() {
   const { profile } = useUserProfile();
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
+  const ownProfilePath = profile?.username
+    ? `/profile/${encodeURIComponent(profile.username)}`
+    : "/profile";
 
   const handleSignOut = async () => {
     await signOut();
@@ -130,7 +133,7 @@ function UserMenu() {
             sideOffset={4}
           >
             <DropdownMenuItem asChild>
-              <Link to="/profile" className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10">
+              <Link to={ownProfilePath} className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10">
                 <UserIcon className="h-4 w-4" />
                 Your profile
               </Link>
@@ -185,6 +188,14 @@ function CloseButton() {
  */
 export function AppSidebar() {
   const location = useLocation();
+  const { profile } = useUserProfile();
+  const ownProfilePath = profile?.username
+    ? `/profile/${encodeURIComponent(profile.username)}`
+    : "/profile";
+  const isOwnProfileRoute =
+    location.pathname === "/profile" ||
+    (profile?.username != null &&
+      location.pathname.toLowerCase() === `/profile/${profile.username.toLowerCase()}`);
 
   return (
     <Sidebar
@@ -229,8 +240,12 @@ export function AppSidebar() {
                 <NavItem
                   key={item.path}
                   label={item.label}
-                  path={item.path}
-                  isActive={location.pathname === item.path}
+                  path={item.label === "Profile" ? ownProfilePath : item.path}
+                  isActive={
+                    item.label === "Profile"
+                      ? isOwnProfileRoute
+                      : location.pathname === item.path
+                  }
                 />
               ))}
             </SidebarMenu>

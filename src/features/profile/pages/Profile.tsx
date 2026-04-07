@@ -267,14 +267,15 @@ export default function Profile() {
   const [isSavingHeader, setIsSavingHeader] = useState(false);
 
   // ── URL state ──
-  const sectionParam = searchParams.get("section") as SectionKey | null;
+  const rawSectionParam = searchParams.get("section");
+  const sectionParam = rawSectionParam as SectionKey | null;
   const legacyTabParam = searchParams.get("tab");
   const legacyFilterParam = searchParams.get("filter");
   // Backward compat: old ?tab=reviews / ?section=log&filter=visited → 'visited', etc.
   const legacySectionKey: SectionKey | null =
     legacyTabParam === "reviews" || legacyFilterParam === "visited" ? "visited"
     : legacyTabParam === "bucket_list" || legacyFilterParam === "pending" ? "saved"
-    : sectionParam === "log" ? "visited"
+    : rawSectionParam === "log" ? "visited"
     : null;
 
   const searchQuery = searchParams.get("search") || "";
@@ -351,7 +352,10 @@ export default function Profile() {
 
   // ── Derive active section ──
   const defaultSection: SectionKey = verifiedArchitectId ? "portfolio" : "visited";
-  const activeSection: SectionKey = sectionParam || legacySectionKey || defaultSection;
+  const activeSection: SectionKey =
+    legacySectionKey
+    ?? (rawSectionParam === "log" ? null : sectionParam)
+    ?? defaultSection;
 
   // Derive content filter directly from section — no separate filter param needed
   const activeFilter =
@@ -378,11 +382,13 @@ export default function Profile() {
   }, [currentUser, authLoading, navigate, routeUsername]);
 
   useEffect(() => {
+    if (!routeUsername && authLoading) return;
     const fetchProfileData = async () => {
       setLoading(true);
       let uid: string | null = null;
-      // MIGRATION REQUIRED: include 'firm, website' once columns exist
-      let query = supabase.from("profiles").select("id, username, avatar_url, bio, firm, website, favorites, last_online, verified_architect_id");
+      // Select only columns present on `profiles` (see `integrations/supabase/types.ts` / DATA_CONTRACT).
+      // firm/website are optional UI fields until a migration adds those columns.
+      let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id");
       let data: { id: string; username?: string | null; favorites?: unknown; [key: string]: unknown } | null = null;
       if (routeUsername) {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(routeUsername);
@@ -395,21 +401,21 @@ export default function Profile() {
         }
       } else if (currentUser) {
         uid = currentUser.id;
-        const res = await supabase.from("profiles").select("id, username, avatar_url, bio, firm, website, favorites, last_online, verified_architect_id").eq("id", uid).maybeSingle();
+        const res = await supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id").eq("id", uid).maybeSingle();
         data = res.data;
       }
       if (data) {
         setProfile(data as unknown as Profile);
         uid = data.id;
-        setDraftFirm((data.firm as string) || "");
+        setDraftFirm("");
         setDraftBio((data.bio as string) || "");
-        setDraftWebsite((data.website as string) || "");
+        setDraftWebsite("");
       }
       setTargetUserId(uid);
       setLoading(false);
     };
-    fetchProfileData();
-  }, [routeUsername, currentUser, navigate]);
+    void fetchProfileData();
+  }, [routeUsername, currentUser, navigate, authLoading]);
 
   useEffect(() => { if (targetUserId) { fetchStats(); } }, [targetUserId, collectionsRefreshKey]);
   useEffect(() => { if (targetUserId) { checkIfFollowing(); fetchSquad(); } }, [targetUserId, currentUser]);
@@ -564,17 +570,6 @@ export default function Profile() {
     }
   };
 
-  const handleLike = async (reviewId: string) => {
-    if (!currentUser) return;
-    const item = content.find(r => r.id === reviewId);
-    if (!item) return;
-    setContent(prev => prev.map(r => r.id === reviewId ? { ...r, is_liked: !r.is_liked, likes_count: r.is_liked ? r.likes_count - 1 : r.likes_count + 1 } : r));
-    try {
-      if (item.is_liked) { await supabase.from("likes").delete().eq("interaction_id", reviewId).eq("user_id", currentUser.id); }
-      else { await supabase.from("likes").insert({ interaction_id: reviewId, user_id: currentUser.id }); }
-    } catch (_error) { void _error; }
-  };
-
   const handleUpdate = async (id: string, updates: { status?: string; rating?: number | null; content?: string }) => {
     if (!currentUser || !isOwnProfile) return;
     const previousContent = [...content];
@@ -616,12 +611,10 @@ export default function Profile() {
     setIsSavingHeader(true);
     try {
       const { error } = await supabase.from("profiles").update({
-        firm: draftFirm.trim() || null,
         bio: draftBio.trim() || null,
-        website: draftWebsite.trim() || null,
       }).eq("id", targetUserId);
       if (error) throw error;
-      setProfile(prev => prev ? { ...prev, firm: draftFirm.trim() || null, bio: draftBio.trim() || null, website: draftWebsite.trim() || null } : prev);
+      setProfile(prev => prev ? { ...prev, bio: draftBio.trim() || null } : prev);
       setIsEditingHeader(false);
       toast({ description: "Profile updated" });
     } catch (_error) {
@@ -679,7 +672,11 @@ export default function Profile() {
     );
   }
 
-  if (!profile && !loading) {
+  if (!profile) {
+    // Logged-out /profile: redirect runs in an effect — avoid a false "not found" flash.
+    if (!routeUsername && !currentUser) {
+      return null;
+    }
     return (
       <AppLayout title="User Not Found" showLogo={false} showBack>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
@@ -1173,7 +1170,8 @@ export default function Profile() {
 // No card chrome. 3:4 portrait image, bold name, faint meta below.
 function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedReview; showCommunityImages: boolean }) {
   const imageUrl = (showCommunityImages && entry.images?.[0]?.url) || entry.building.main_image_url;
-  const architectName = entry.building.architects?.[0]?.name;
+  const arch0 = entry.building.architects?.[0];
+  const architectName = typeof arch0 === "string" ? arch0 : arch0?.name;
   const meta = [architectName, entry.building.year_completed].filter(Boolean).join(" · ");
   const url = getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id);
 

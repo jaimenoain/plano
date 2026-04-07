@@ -84,7 +84,7 @@ describe('AppSidebar', () => {
     );
 
     const links = screen.getAllByRole('link');
-    const profileLink = links.find(link => link.getAttribute('href') === '/profile' && link.textContent === 'Your profile');
+    const profileLink = links.find(link => link.getAttribute('href') === '/profile/testuser' && link.textContent === 'Your profile');
     expect(profileLink).toBeTruthy();
   });
 

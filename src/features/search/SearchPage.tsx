@@ -1,6 +1,34 @@
+/**
+ * SearchPage.tsx — Refined with A24 editorial aesthetic
+ *
+ * All map logic, search state, debouncing, and event handlers are unchanged.
+ * Only the four layout surfaces owned by this file are touched:
+ *
+ * Desktop sidebar:
+ *   shadow-lg removed — flat is the rule; borders carry hierarchy, not elevation.
+ *   Sidebar search header: bg-surface-card/95 backdrop-blur removed — the sidebar
+ *   already has a solid bg-surface-card background so the blur served no purpose.
+ *   Simple border-b border-border-default separator instead.
+ *
+ * Mobile floating search bar:
+ *   shadow-md removed. bg-surface-card/95 border backdrop-blur retained —
+ *   the frosted glass reads as "floating over the map" without needing shadow depth.
+ *
+ * Mobile List/Map toggle button:
+ *   Button variant="ghost" shadow-md → bare <button> with text-xs uppercase
+ *   tracking-widest, matching the editorial pill treatment from Explore.tsx.
+ *   No shadow. Sharp edges. Icon reduced to h-3.5 w-3.5.
+ *
+ * Mobile list overlay:
+ *   bg-surface-card → bg-surface-default — the list slides in as a page,
+ *   not as a card. Matches the page background colour.
+ *
+ * Map loading placeholder:
+ *   h-8 w-8 text-text-secondary → h-4 w-4 text-text-disabled — subtle,
+ *   consistent with loading states across the rest of the app.
+ */
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
 import { Map as MapIcon, List as ListIcon, Loader2 } from "lucide-react";
 import { ClientOnly } from "@/components/common/ClientOnly";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -15,7 +43,7 @@ import { DiscoverySearchInput, Suggestion } from "@/features/search/components/D
 import { useArchitectSearch } from "@/features/search/hooks/useArchitectSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-/** SSR/hydration skeleton: matches PlanoMap outer shell (`h-full w-full bg-surface-default`) to avoid layout shift. */
+/** SSR/hydration skeleton — matches PlanoMap outer shell to avoid layout shift */
 function MapLoadingPlaceholder() {
   return (
     <div
@@ -23,7 +51,8 @@ function MapLoadingPlaceholder() {
       aria-busy="true"
       aria-label="Loading map"
     >
-      <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
+      {/* Smaller, dimmer spinner — consistent with all other loading states */}
+      <Loader2 className="h-4 w-4 animate-spin text-text-disabled" />
     </div>
   );
 }
@@ -32,53 +61,42 @@ function SearchPageContent() {
   const isMobile = useIsMobile();
   const {
     state: { filters },
-    methods: { setFilter, moveMap, fitMapBounds }
+    methods: { setFilter, moveMap, fitMapBounds },
   } = useMapContext();
 
-  // Local search state
   const [searchValue, setSearchValue] = useState(filters.query || "");
   const debouncedSearchValue = useDebounce(searchValue, 300);
-
-  // Architect Search
   const { architects } = useArchitectSearch({ searchQuery: searchValue });
-
-  // View mode state (map vs list) for mobile
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
-
-  // Location suggestions state
+  const [viewMode, setViewMode] = useState<"list" | "map">("map");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
-  // Sync local search with context filters
   useEffect(() => {
-    // Only update if different to avoid loops/unnecessary updates
     if (filters.query !== debouncedSearchValue) {
-       setFilter('query', debouncedSearchValue);
+      setFilter("query", debouncedSearchValue);
     }
   }, [debouncedSearchValue, filters.query, setFilter]);
 
-  // Sync external filter changes (e.g. back button) to local state
   useEffect(() => {
-      // If filters.query is undefined, we assume empty string
-      const query = filters.query || "";
-      if (query !== searchValue) {
-          setSearchValue(query);
-      }
+    const query = filters.query || "";
+    if (query !== searchValue) {
+      setSearchValue(query);
+    }
   }, [filters.query]);
 
-  // Handlers
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
   };
 
-  const handleLocationSelect = (location: { lat: number; lng: number }, bounds?: Bounds) => {
+  const handleLocationSelect = (
+    location: { lat: number; lng: number },
+    bounds?: Bounds
+  ) => {
     if (bounds) {
-        fitMapBounds(bounds);
+      fitMapBounds(bounds);
     } else {
-        moveMap(location.lat, location.lng, 14); // Zoom to 14 on select
+      moveMap(location.lat, location.lng, 14);
     }
-    if (isMobile) {
-        setViewMode('map');
-    }
+    if (isMobile) setViewMode("map");
   };
 
   const handleLocationResultClick = async (placeId: string) => {
@@ -88,23 +106,22 @@ function SearchPageContent() {
 
       let bounds: Bounds | undefined;
       const viewport = results[0].geometry.viewport;
-      if (viewport && typeof viewport.getNorthEast === 'function') {
+      if (viewport && typeof viewport.getNorthEast === "function") {
         bounds = {
           north: viewport.getNorthEast().lat(),
           south: viewport.getSouthWest().lat(),
           east: viewport.getNorthEast().lng(),
-          west: viewport.getSouthWest().lng()
+          west: viewport.getSouthWest().lng(),
         };
       }
 
       handleLocationSelect({ lat, lng }, bounds);
-      setSearchValue(""); // Clear search value
-    } catch {
-    }
+      setSearchValue("");
+    } catch {}
   };
 
   const toggleViewMode = () => {
-    setViewMode(prev => prev === 'map' ? 'list' : 'map');
+    setViewMode((prev) => (prev === "map" ? "list" : "map"));
   };
 
   const mobileSearchBar = (
@@ -114,7 +131,7 @@ function SearchPageContent() {
         onSearchChange={handleSearchChange}
         onLocationSelect={handleLocationSelect}
         onSuggestionsChange={setSuggestions}
-        disableDropdown={viewMode === 'list'}
+        disableDropdown={viewMode === "list"}
         placeholder="Search..."
         className="flex-1"
       />
@@ -125,81 +142,101 @@ function SearchPageContent() {
   return (
     <AppLayout isFullScreen={true}>
       <div className="relative flex flex-col h-full w-full overflow-hidden">
-        {/* Mobile: search was in the old top header — keep it as a floating bar */}
+
+        {/* ── Mobile: floating search bar ── */}
         {isMobile && (
           <div className="fixed left-14 right-4 top-4 z-40 safe-area-pt md:hidden">
-            <div className="rounded-sm border border-border-default bg-surface-card/95 p-1 shadow-md backdrop-blur supports-[backdrop-filter]:bg-surface-card/90">
+            {/* No shadow — frosted glass border is sufficient over the map */}
+            <div className="border border-border-default bg-surface-card/95 p-1 backdrop-blur supports-[backdrop-filter]:bg-surface-card/90">
               {mobileSearchBar}
             </div>
           </div>
         )}
 
-        {/* Desktop Sidebar (Fixed) */}
-        <div className="absolute bottom-0 left-0 top-0 z-20 hidden w-search-serp flex-col border-r border-border-default bg-surface-card shadow-lg transition-all duration-300 md:flex">
-           <div className="p-4 border-b flex items-center gap-2 bg-surface-card/95 backdrop-blur supports-[backdrop-filter]:bg-surface-card/60">
-              <DiscoverySearchInput
-                 value={searchValue}
-                 onSearchChange={handleSearchChange}
-                 onLocationSelect={handleLocationSelect}
-                 onSuggestionsChange={setSuggestions}
-                 disableDropdown={true}
-                 placeholder="Search buildings, architects..."
-                 className="flex-1"
-              />
-              <MapControls />
-           </div>
-           <div className="flex-1 overflow-hidden relative">
-              <BuildingSidebar
-                suggestions={suggestions}
-                onLocationClick={handleLocationResultClick}
-                architects={architects}
-              />
-           </div>
+        {/* ── Desktop: left sidebar ── */}
+        {/*
+          shadow-lg removed — flat, border-only sidebar matches the editorial
+          principle that borders carry hierarchy, not elevation.
+        */}
+        <div className="absolute bottom-0 left-0 top-0 z-20 hidden w-search-serp flex-col border-r border-border-default bg-surface-card transition-all duration-300 md:flex">
+
+          {/* Sidebar search header — solid background, no backdrop blur needed */}
+          <div className="p-4 border-b border-border-default flex items-center gap-2">
+            <DiscoverySearchInput
+              value={searchValue}
+              onSearchChange={handleSearchChange}
+              onLocationSelect={handleLocationSelect}
+              onSuggestionsChange={setSuggestions}
+              disableDropdown={true}
+              placeholder="Search buildings, architects..."
+              className="flex-1"
+            />
+            <MapControls />
+          </div>
+
+          <div className="flex-1 overflow-hidden relative">
+            <BuildingSidebar
+              suggestions={suggestions}
+              onLocationClick={handleLocationResultClick}
+              architects={architects}
+            />
+          </div>
         </div>
 
-        {/* Map Container (Main) */}
+        {/* ── Map ── */}
         <div className="relative h-full flex-1 transition-all duration-300 md:ml-search-serp">
           <ClientOnly fallback={<MapLoadingPlaceholder />}>
             <PlanoMap showEmptyMessage={true} />
           </ClientOnly>
         </div>
 
-        {/* Mobile Toggle Button */}
+        {/* ── Mobile: List / Map toggle ── */}
+        {/*
+          Button variant="ghost" shadow-md → bare button with editorial
+          typography. Matches the location pill treatment in Explore.tsx.
+          No shadow. Sharp 0-radius edges. Uppercase tracked label.
+        */}
         {isMobile && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
-            <Button
+            <button
+              type="button"
               onClick={toggleViewMode}
-              className="rounded-sm bg-surface-card border border-border-default shadow-md px-6 py-3 flex items-center gap-2"
-              variant="ghost"
-              aria-label={viewMode === 'map' ? 'Show list view' : 'Show map view'}
+              className="inline-flex items-center gap-2 h-9 px-5 bg-surface-card/95 backdrop-blur-md border border-border-default text-xs font-medium uppercase tracking-widest text-text-primary hover:bg-surface-muted transition-colors"
+              aria-label={
+                viewMode === "map" ? "Show list view" : "Show map view"
+              }
             >
-              {viewMode === 'map' ? (
+              {viewMode === "map" ? (
                 <>
-                  <ListIcon className="mr-2 h-4 w-4" />
+                  <ListIcon className="h-3.5 w-3.5" />
                   List
                 </>
               ) : (
                 <>
-                  <MapIcon className="mr-2 h-4 w-4" />
+                  <MapIcon className="h-3.5 w-3.5" />
                   Map
                 </>
               )}
-            </Button>
+            </button>
           </div>
         )}
 
-        {/* Mobile List Overlay */}
-        {isMobile && viewMode === 'list' && (
-           <div className="absolute inset-0 bg-surface-card z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
-              <div className="flex-1 overflow-hidden relative">
-                 <BuildingSidebar
-                    suggestions={suggestions}
-                    onLocationClick={handleLocationResultClick}
-                    architects={architects}
-                    className="pb-24"
-                 />
-              </div>
-           </div>
+        {/* ── Mobile: list overlay ── */}
+        {/*
+          bg-surface-card → bg-surface-default: the list slides in as a page,
+          not as an elevated card surface.
+        */}
+        {isMobile && viewMode === "list" && (
+          <div className="absolute inset-0 bg-surface-default z-40 flex flex-col animate-in slide-in-from-bottom-10 duration-200">
+            <div className="flex-1 overflow-hidden relative">
+              <BuildingSidebar
+                suggestions={suggestions}
+                onLocationClick={handleLocationResultClick}
+                architects={architects}
+                className="pb-24"
+              />
+            </div>
+          </div>
         )}
 
       </div>

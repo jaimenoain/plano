@@ -52,7 +52,7 @@ interface DiscoveryCardProps {
 
 export function DiscoveryCard({
   building,
-  onSave: externalOnSave,
+  onSave: _onSave,
   onSwipeSave,
   onSwipeHide,
   onSkip,
@@ -145,19 +145,6 @@ export function DiscoveryCard({
     } catch (_error) {
       toast.error("Failed to save");
     }
-  };
-
-  const handleSave = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (externalOnSave) externalOnSave(e);
-    if (!user) {
-      toast.error("Please sign in to save buildings");
-      return;
-    }
-    setIsSaved(true);
-    setShowRating(true);
-    toast.success("Saved to your list");
-    saveToSupabase("pending");
   };
 
   const handleRate = async (value: number | null, e: React.MouseEvent) => {

@@ -253,7 +253,8 @@ export default function Explore() {
           type="button"
           onClick={(e) => {
             e.stopPropagation(); // don't fire onPointerDown collapse on open
-            isMobile ? setOpenMobile(true) : setOpen(true);
+            if (isMobile) setOpenMobile(true);
+            else setOpen(true);
           }}
           className={cn(
             "fixed top-4 left-4 z-[55] p-2 text-white transition-opacity",

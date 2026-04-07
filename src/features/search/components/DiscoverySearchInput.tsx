@@ -1,3 +1,19 @@
+/**
+ * DiscoverySearchInput.tsx — Refined with A24 editorial aesthetic
+ *
+ * Visual changes (all Google Maps / Places Autocomplete logic unchanged):
+ *
+ * Input height: h-12 → h-10 (consistent with other inputs in the app).
+ *   Applied in three places: StaticSearchFallback, the !scriptLoaded fallback
+ *   Input, and the main Input inside the Command component.
+ *
+ * Suggestion dropdown:
+ *   shadow-lg removed — border + frosted background is sufficient.
+ *   hover:bg-brand-secondary → hover:bg-surface-muted/50 (monochromatic
+ *   content surface — no neon lime on suggestion hover).
+ *   "Locations" CommandGroup heading removed — obvious from context,
+ *   and the heading rendered a visible label that added visual noise.
+ */
 import { useState, useEffect, useRef } from "react";
 import usePlacesAutocomplete, {
   getGeocode,
@@ -35,7 +51,7 @@ interface DiscoverySearchInputProps {
   onPlaceDetails?: (details: google.maps.GeocoderResult) => void;
 }
 
-/** Non-interactive shell for SSR and pre-hydration: matches the idle `!scriptLoaded` input visually. */
+/** Non-interactive shell for SSR and pre-hydration */
 function StaticSearchFallback({
   value,
   placeholder = "Search...",
@@ -48,7 +64,7 @@ function StaticSearchFallback({
       tabIndex={-1}
       value={value}
       placeholder={placeholder}
-      className={cn("h-12", className)}
+      className={cn("h-10", className)}
     />
   );
 }
@@ -77,20 +93,17 @@ function DiscoverySearchInputInner({
         return;
       }
       const apiKey = config.googleMaps.apiKey;
-      if (!apiKey) {
-        return;
-      }
-
+      if (!apiKey) return;
       try {
         setOptions({ key: apiKey, v: "weekly" });
-        // Add timeout to prevent hanging indefinitely
         await Promise.race([
           Promise.all([importLibrary("places"), importLibrary("geocoding")]),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Google Maps load timeout")), 10000))
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Google Maps load timeout")), 10000)
+          ),
         ]);
         setScriptLoaded(true);
-      } catch {
-      }
+      } catch {}
     };
     initMap();
   }, []);
@@ -103,38 +116,23 @@ function DiscoverySearchInputInner({
     clearSuggestions,
     init,
   } = usePlacesAutocomplete({
-    requestOptions: {
-      types: ["(regions)"],
-    },
+    requestOptions: { types: ["(regions)"] },
     debounce: 300,
     initOnMount: false,
   });
 
-  // Initialize places autocomplete when script is loaded
-  useEffect(() => {
-    if (scriptLoaded) {
-      init();
-    }
-  }, [scriptLoaded, init]);
+  useEffect(() => { if (scriptLoaded) init(); }, [scriptLoaded, init]);
 
-  // Re-trigger search when ready becomes true
   useEffect(() => {
-    if (ready && value) {
-      setPlacesValue(value);
-    }
+    if (ready && value) setPlacesValue(value);
   }, [ready, value, setPlacesValue]);
 
-  // Update suggestions and top location
   useEffect(() => {
     if (status === "OK") {
       const suggestions = data.map(d => ({ place_id: d.place_id, description: d.description }));
       onSuggestionsChange?.(suggestions);
-
       if (data.length > 0) {
-        onTopLocationChange?.({
-          description: data[0].description,
-          place_id: data[0].place_id,
-        });
+        onTopLocationChange?.({ description: data[0].description, place_id: data[0].place_id });
       } else {
         onTopLocationChange?.(null);
       }
@@ -144,14 +142,10 @@ function DiscoverySearchInputInner({
     }
   }, [data, status, onTopLocationChange, onSuggestionsChange]);
 
-  // Sync external value with internal places value to ensure suggestions are relevant
   useEffect(() => {
-      if (value !== placesValue) {
-          setPlacesValue(value);
-      }
+    if (value !== placesValue) setPlacesValue(value);
   }, [value, setPlacesValue, placesValue]);
 
-  // Handle click outside to close suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (commandRef.current && !commandRef.current.contains(event.target as Node)) {
@@ -165,38 +159,33 @@ function DiscoverySearchInputInner({
   const handleSelect = async (address: string) => {
     clearSuggestions();
     setOpen(false);
-
-    // Clear search query to show all buildings in the new location
     onSearchChange("");
-
     try {
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
-
       let bounds: Bounds | undefined;
       const viewport = results[0].geometry.viewport;
-      if (viewport && typeof viewport.getNorthEast === 'function') {
+      if (viewport && typeof viewport.getNorthEast === "function") {
         bounds = {
           north: viewport.getNorthEast().lat(),
           south: viewport.getSouthWest().lat(),
           east: viewport.getNorthEast().lng(),
-          west: viewport.getSouthWest().lng()
+          west: viewport.getSouthWest().lng(),
         };
       }
-
       onLocationSelect({ lat, lng }, bounds);
       onPlaceDetails?.(results[0]);
-    } catch {
-    }
+    } catch {}
   };
 
+  // Pre-hydration fallback with correct height
   if (!scriptLoaded) {
     return (
       <Input
         value={value}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={placeholder}
-        className={cn("h-12", className)}
+        className={cn("h-10", className)}
       />
     );
   }
@@ -215,27 +204,33 @@ function DiscoverySearchInputInner({
             }}
             onFocus={() => setOpen(!!value)}
             placeholder={placeholder}
-            className="w-full h-12"
+            // h-10: reduced from h-12 — tighter, consistent with the rest of the app
+            className="w-full h-10"
             autoComplete="off"
             onKeyDown={onKeyDown}
           />
         </div>
 
         {!disableDropdown && open && status === "OK" && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-sm border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95">
+          <div
+            // shadow-lg removed — border + background is sufficient
+            className="absolute top-[calc(100%+4px)] left-0 w-full z-50 border border-border-default bg-surface-overlay text-text-primary outline-none animate-in fade-in-0 zoom-in-95"
+          >
             <CommandList>
-              <CommandGroup heading="Locations">
+              {/* CommandGroup heading removed — obvious from context */}
+              <CommandGroup>
                 {data.map(({ place_id, description }) => (
-                    <CommandItem
-                      key={place_id}
-                      value={description}
-                      onSelect={() => handleSelect(description)}
-                      className="cursor-pointer hover:bg-brand-secondary"
-                    >
-                      <MapPin className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
-                      <span>{description}</span>
-                    </CommandItem>
-                  ))}
+                  <CommandItem
+                    key={place_id}
+                    value={description}
+                    onSelect={() => handleSelect(description)}
+                    // hover:bg-surface-muted/50 replaces hover:bg-brand-secondary
+                    className="cursor-pointer hover:bg-surface-muted/50"
+                  >
+                    <MapPin className="mr-2 h-3.5 w-3.5 shrink-0 text-text-disabled" strokeWidth={1.5} />
+                    <span className="text-sm">{description}</span>
+                  </CommandItem>
+                ))}
               </CommandGroup>
             </CommandList>
           </div>
