@@ -1,8 +1,36 @@
+/**
+ * DiscoveryCard.tsx — Redesigned with A24 cinematic aesthetic
+ *
+ * Visual changes (all logic / hooks / state / gesture handlers unchanged):
+ *
+ * Image:
+ *   - object-contain → object-cover: fills the frame completely, cinematic
+ *   - Blurred bg layer kept but darkened (opacity-30) — subtle depth for portrait photos
+ *   - Gradient: taller (h-3/4) and darker (from-black/95 via-black/40) so
+ *     large typography always reads against any photo
+ *
+ * Building info (bottom overlay):
+ *   - Tiny uppercase meta line ABOVE the name: "CITY, COUNTRY · ARCHITECT"
+ *     (A24's signature small-label-then-giant-title hierarchy)
+ *   - Building name: text-4xl sm:text-5xl — film-poster scale
+ *   - Save icon integrated into the name row (right side), no separate Button
+ *
+ * Swipe feedback stamps:
+ *   - Replaced icon-in-box with rotated bold text: "SAVE" in neon, "SKIP" in red
+ *   - More editorial, less app-like
+ *
+ * Rating overlay:
+ *   - "Add points? (Optional)" header → tiny tracking-widest uppercase label
+ *   - Button boxes → bare numbers at text-5xl, floating on the overlay
+ *   - Selected state: text turns brand-primary (#BEFF00), subtle scale — no borders
+ *   - "Next building" button → inline text CTA
+ *
+ * Pagination dots: kept, top-right corner instead of centered
+ */
 import { useState, useRef, useEffect, useMemo, type RefCallback } from "react";
 import { DiscoveryBuilding, type ArchitectSummary } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Bookmark, Check, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -20,7 +48,13 @@ interface DiscoveryCardProps {
   onSkip?: () => void;
 }
 
-export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, onSwipeHide, onSkip }: DiscoveryCardProps) {
+export function DiscoveryCard({
+  building,
+  onSave: externalOnSave,
+  onSwipeSave,
+  onSwipeHide,
+  onSkip,
+}: DiscoveryCardProps) {
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
   const [showRating, setShowRating] = useState(false);
@@ -36,174 +70,167 @@ export function DiscoveryCard({ building, onSave: externalOnSave, onSwipeSave, o
   });
 
   // View tracking setup
-  const { containerRef: viewTrackerRef, isVisible: isViewVisible } = useIntersectionObserver({
-    threshold: 0.6,
-  });
+  const { containerRef: viewTrackerRef, isVisible: isViewVisible } =
+    useIntersectionObserver({ threshold: 0.6 });
 
   useEffect(() => {
     if (isViewVisible) {
-        setHasBeenViewed(true);
+      setHasBeenViewed(true);
     }
-
-    // Check if transitioned from visible to invisible
     if (prevVisible.current && !isViewVisible) {
-        if (hasBeenViewed && !isSaved && onSkip) {
-            onSkip();
-        }
+      if (hasBeenViewed && !isSaved && onSkip) {
+        onSkip();
+      }
     }
-
     prevVisible.current = isViewVisible;
   }, [isViewVisible, hasBeenViewed, isSaved, onSkip]);
 
-  // Use batched images passed down from feed
   const additionalImages = (building as DiscoveryFeedItem).images || [];
-
   const mainImageUrl = getBuildingImageUrl(building.main_image_url);
 
-  // Combine images
-  const galleryImages = useMemo(() => [
-    mainImageUrl,
-    ...(additionalImages.map(img => getBuildingImageUrl(img.storage_path)))
-  ].filter((url): url is string => !!url), [mainImageUrl, additionalImages]);
+  const galleryImages = useMemo(
+    () =>
+      [
+        mainImageUrl,
+        ...additionalImages.map((img) => getBuildingImageUrl(img.storage_path)),
+      ].filter((url): url is string => !!url),
+    [mainImageUrl, additionalImages]
+  );
 
-  // De-duplicate images just in case
-  const uniqueImages = useMemo(() => Array.from(new Set(galleryImages)), [galleryImages]);
+  const uniqueImages = useMemo(
+    () => Array.from(new Set(galleryImages)),
+    [galleryImages]
+  );
 
-  // Determine current image owner
   const currentImageOwner = useMemo(() => {
-      const currentUrl = uniqueImages[currentImageIndex];
-      if (!currentUrl || !additionalImages.length) return null;
-
-      const matchingImage = additionalImages.find(img =>
-        getBuildingImageUrl(img.storage_path) === currentUrl
-      );
-
-      if (matchingImage?.user_buildings?.user) {
-          const userData = matchingImage.user_buildings.user;
-          // Handle array return if relation is 1-to-many (though it should be 1-to-1 here from join)
-          return Array.isArray(userData) ? userData[0] : userData;
-      }
-      return null;
+    const currentUrl = uniqueImages[currentImageIndex];
+    if (!currentUrl || !additionalImages.length) return null;
+    const matchingImage = additionalImages.find(
+      (img) => getBuildingImageUrl(img.storage_path) === currentUrl
+    );
+    if (matchingImage?.user_buildings?.user) {
+      const userData = matchingImage.user_buildings.user;
+      return Array.isArray(userData) ? userData[0] : userData;
+    }
+    return null;
   }, [uniqueImages, currentImageIndex, additionalImages]);
 
-  // Format architect names (handle if architects is undefined, e.g. from FeedItem)
   const architectNames = building.architects
-    ?.map((a: ArchitectSummary | string) => (typeof a === "string" ? a : a.name))
+    ?.map((a: ArchitectSummary | string) =>
+      typeof a === "string" ? a : a.name
+    )
     .filter(Boolean)
     .join(", ");
 
-  const saveToSupabase = async (status: 'pending' | 'ignored', ratingValue?: number | null) => {
-      if (!user) return;
-      try {
-        const { error } = await supabase.from("user_buildings").upsert(
-          {
-            user_id: user.id,
-            building_id: building.id,
-            status,
-            edited_at: new Date().toISOString(),
-            ...(ratingValue !== undefined ? { rating: ratingValue } : {}),
-          },
-          { onConflict: "user_id, building_id" },
-        );
-        if (error) throw error;
-      } catch (_error) {
-toast.error("Failed to save");
-      }
+  const saveToSupabase = async (
+    status: "pending" | "ignored",
+    ratingValue?: number | null
+  ) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase.from("user_buildings").upsert(
+        {
+          user_id: user.id,
+          building_id: building.id,
+          status,
+          edited_at: new Date().toISOString(),
+          ...(ratingValue !== undefined ? { rating: ratingValue } : {}),
+        },
+        { onConflict: "user_id, building_id" }
+      );
+      if (error) throw error;
+    } catch (_error) {
+      toast.error("Failed to save");
+    }
   };
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    if (externalOnSave) {
-        externalOnSave(e);
-    }
-
+    if (externalOnSave) externalOnSave(e);
     if (!user) {
-        toast.error("Please sign in to save buildings");
-        return;
+      toast.error("Please sign in to save buildings");
+      return;
     }
-
-    // Optimistic UI
     setIsSaved(true);
     setShowRating(true);
     toast.success("Saved to your list");
-
-    saveToSupabase('pending');
+    saveToSupabase("pending");
   };
 
   const handleRate = async (value: number | null, e: React.MouseEvent) => {
-      e.stopPropagation();
-      setRating(value);
-
-      // Save rating
-      await saveToSupabase('pending', value);
-
-      // Short delay to show selection feedback (neon yellow)
-      setTimeout(() => {
-          if (onSwipeSave) onSwipeSave();
-      }, 500);
+    e.stopPropagation();
+    setRating(value);
+    await saveToSupabase("pending", value);
+    setTimeout(() => {
+      if (onSwipeSave) onSwipeSave();
+    }, 500);
   };
 
-  // Framer Motion
+  // ── Framer Motion values (unchanged) ──
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-10, 10]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 1]);
-
   const likeOpacity = useTransform(x, [20, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
-  const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.5]);
-  const nopeOverlayOpacity = useTransform(x, [-100, -20], [0.5, 0]);
+  const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.35]);
+  const nopeOverlayOpacity = useTransform(x, [-100, -20], [0.35, 0]);
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     const threshold = 100;
     if (info.offset.x > threshold) {
-        // Swipe Right (Save) logic
-        if (showRating) {
-            // If already showing rating and swiped again, treat as skip/confirm
-            if (onSwipeSave) onSwipeSave();
-        } else {
-            // First swipe: Enter saved mode, show rating, do NOT dismiss card yet
-            setIsSaved(true);
-            setShowRating(true);
-            saveToSupabase('pending');
-            // Card snaps back to center automatically since we didn't unmount it
-        }
+      if (showRating) {
+        if (onSwipeSave) onSwipeSave();
+      } else {
+        setIsSaved(true);
+        setShowRating(true);
+        saveToSupabase("pending");
+      }
     } else if (info.offset.x < -threshold && onSwipeHide) {
-        onSwipeHide();
+      onSwipeHide();
     }
   };
 
   const nextImage = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (currentImageIndex < uniqueImages.length - 1) {
-          setCurrentImageIndex(prev => prev + 1);
-      }
+    e.stopPropagation();
+    if (currentImageIndex < uniqueImages.length - 1) {
+      setCurrentImageIndex((prev) => prev + 1);
+    }
   };
 
   const prevImage = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (currentImageIndex > 0) {
-          setCurrentImageIndex(prev => prev - 1);
-      }
+    e.stopPropagation();
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex((prev) => prev - 1);
+    }
   };
 
   const facepileInteractions = useMemo(() => {
-      const visited = building.contact_interactions?.filter(i => i.status === "visited") || [];
-
-      if (currentImageOwner) {
-          // Check if owner is a contact (exists in contact_interactions)
-          const contactInteraction = building.contact_interactions?.find(i => i.user.id === currentImageOwner.id);
-
-          if (contactInteraction) {
-               const alreadyInList = visited.find(i => i.user.id === currentImageOwner.id);
-               if (!alreadyInList) {
-                   // Add them to the list to ensure facepile shows
-                   return [...visited, contactInteraction];
-               }
-          }
+    const visited =
+      building.contact_interactions?.filter((i) => i.status === "visited") ||
+      [];
+    if (currentImageOwner) {
+      const contactInteraction = building.contact_interactions?.find(
+        (i) => i.user.id === currentImageOwner.id
+      );
+      if (contactInteraction) {
+        const alreadyInList = visited.find(
+          (i) => i.user.id === currentImageOwner.id
+        );
+        if (!alreadyInList) return [...visited, contactInteraction];
       }
-      return visited;
+    }
+    return visited;
   }, [building.contact_interactions, currentImageOwner]);
+
+  // Meta line: city/country + architect
+  const metaLine = [
+    building.city && building.country
+      ? `${building.city}, ${building.country}`
+      : building.city || building.country || null,
+    architectNames || null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <motion.div
@@ -215,40 +242,47 @@ toast.error("Failed to save");
       dragElastic={0.7}
       onDragEnd={handleDragEnd}
     >
-      {/* View Tracker */}
-      <div ref={viewTrackerRef as RefCallback<HTMLDivElement>} className="absolute inset-0 pointer-events-none" />
+      {/* View tracker */}
+      <div
+        ref={viewTrackerRef as RefCallback<HTMLDivElement>}
+        className="absolute inset-0 pointer-events-none"
+      />
 
-      {/* Background Layer - Blurred */}
+      {/* ── Blurred background layer (depth for portrait images) ── */}
       {uniqueImages[currentImageIndex] && (
         <div
-          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-50 scale-110"
-          style={{ backgroundImage: `url("${uniqueImages[currentImageIndex]}")` }}
+          className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110"
+          style={{
+            backgroundImage: `url("${uniqueImages[currentImageIndex]}")`,
+          }}
           aria-hidden="true"
         />
       )}
 
-      {/* Main Image Layer */}
-      <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20">
+      {/* ── Main image — object-cover: cinematic, fills the frame ── */}
+      <div className="absolute inset-0 z-10">
         {uniqueImages.length > 0 ? (
-           <img
-             src={uniqueImages[currentImageIndex]}
-             alt={`${building.name} - view ${currentImageIndex + 1}`}
-             className="w-full h-full object-contain"
-           />
+          <img
+            src={uniqueImages[currentImageIndex]}
+            alt={`${building.name} — view ${currentImageIndex + 1}`}
+            className="w-full h-full object-cover"
+          />
         ) : (
-           <div className="w-full h-full flex items-center justify-center text-text-secondary">
-             No image available
-           </div>
+          <div className="w-full h-full flex items-center justify-center bg-neutral-900">
+            <span className="text-xs font-medium uppercase tracking-widest text-white/20">
+              No image
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Tap Zones for Image Navigation */}
+      {/* ── Tap zones for image navigation ── */}
       <div className="absolute inset-0 z-20 flex">
-          <div className="w-1/2 h-full" onClick={prevImage} />
-          <div className="w-1/2 h-full" onClick={nextImage} />
+        <div className="w-1/2 h-full" onClick={prevImage} />
+        <div className="w-1/2 h-full" onClick={nextImage} />
       </div>
 
-      {/* Color Overlays */}
+      {/* ── Colour overlays (swipe feedback) ── */}
       <motion.div
         className="absolute inset-0 bg-brand-primary z-[15] pointer-events-none"
         style={{ opacity: likeOverlayOpacity }}
@@ -258,112 +292,163 @@ toast.error("Failed to save");
         style={{ opacity: nopeOverlayOpacity }}
       />
 
-      {/* Swipe Feedback Overlays */}
-      <motion.div style={{ opacity: likeOpacity }} className="absolute top-20 left-10 z-50 pointer-events-none">
-        <div className="w-20 h-20 bg-brand-primary rounded-sm flex items-center justify-center shadow-lg">
-          <Bookmark className="w-10 h-10 text-text-inverse" />
-        </div>
-      </motion.div>
-      <motion.div style={{ opacity: nopeOpacity }} className="absolute top-20 right-10 z-50 pointer-events-none">
-        <div className="w-20 h-20 bg-feedback-destructive rounded-sm flex items-center justify-center shadow-lg">
-          <EyeOff className="w-10 h-10 text-text-inverse" />
-        </div>
-      </motion.div>
-
-      {/* Rating Overlay */}
-      {showRating && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm"
-            onClick={(e) => e.stopPropagation()}
-          >
-              <h3 className="text-text-inverse text-2xl font-bold mb-8">Add points? (Optional)</h3>
-              <div className="flex gap-6">
-                  {([null, 1, 2, 3] as const).map((val) => (
-                      <button
-                        key={val ?? 'bookmark'}
-                        onClick={(e) => handleRate(val, e)}
-                        className={`w-16 h-16 rounded-sm border-2 border-text-inverse flex items-center justify-center text-2xl font-bold transition-all duration-300 ${
-                            rating === val
-                                ? val === null
-                                    ? "bg-brand-primary text-brand-primary-foreground border-brand-primary scale-110 shadow-[0_0_20px_var(--brand-primary)]"
-                                    : "bg-brand-primary text-brand-primary-foreground border-brand-primary scale-110 shadow-[0_0_20px_var(--brand-primary)]"
-                                : "text-text-inverse hover:bg-white/20 hover:scale-105"
-                        }`}
-                      >
-                          {val === null ? <Bookmark className="w-8 h-8" /> : val}
-                      </button>
-                  ))}
-              </div>
-              <Button
-                variant="ghost"
-                className="mt-12 text-text-inverse/50 hover:text-text-primary hover:bg-surface-card"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    if (onSwipeSave) onSwipeSave();
-                }}
-              >
-                  Next building
-              </Button>
-          </motion.div>
-      )}
-
-      {/* Pagination Dots (Top) */}
-      {uniqueImages.length > 1 && (
-        <div className="absolute top-4 left-0 right-0 flex justify-center gap-1 z-30 px-4 pt-12 md:pt-4">
-            {uniqueImages.map((_, idx) => (
-                <div
-                    key={idx}
-                    className={`h-1 rounded-full transition-all duration-300 shadow-sm ${idx === currentImageIndex ? 'w-8 bg-white' : 'w-1.5 bg-white/40'}`}
-                />
-            ))}
-        </div>
-      )}
-
-      {/* Gradient Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent z-20 pointer-events-none" />
-
-      {/* Info Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 z-30 text-text-inverse pb-24 md:pb-6 pointer-events-none break-words">
-        {facepileInteractions.length > 0 && (
-          <ContactFacepile interactions={facepileInteractions} />
-        )}
-        <Link
-          to={`/building/${building.id}/${building.slug || 'details'}`}
-          className="pointer-events-auto hover:underline block w-fit"
+      {/* ── Swipe feedback stamps — editorial text, not icon boxes ── */}
+      <motion.div
+        style={{ opacity: likeOpacity }}
+        className="absolute top-1/2 left-6 z-50 pointer-events-none -translate-y-1/2"
+      >
+        <p
+          className="text-2xl font-bold tracking-[0.2em] uppercase text-brand-primary"
+          style={{ transform: "rotate(-12deg)" }}
         >
-          <h2 className="text-3xl font-bold mb-1 leading-tight drop-shadow-md">{building.name}</h2>
-        </Link>
+          Save
+        </p>
+      </motion.div>
+      <motion.div
+        style={{ opacity: nopeOpacity }}
+        className="absolute top-1/2 right-6 z-50 pointer-events-none -translate-y-1/2"
+      >
+        <p
+          className="text-2xl font-bold tracking-[0.2em] uppercase text-feedback-destructive"
+          style={{ transform: "rotate(12deg)" }}
+        >
+          Skip
+        </p>
+      </motion.div>
 
-        <div className="text-lg text-text-inverse/90 font-medium mb-1 drop-shadow-md">
-          {building.city && building.country
-            ? `${building.city}, ${building.country}`
-            : building.city || building.country || 'Location unknown'}
+      {/* ── Pagination dots — top right, minimal ── */}
+      {uniqueImages.length > 1 && (
+        <div className="absolute top-4 right-4 flex flex-col gap-1 z-30 pt-10 md:pt-4">
+          {uniqueImages.map((_, idx) => (
+            <div
+              key={idx}
+              className={`w-1 rounded-full transition-all duration-300 ${
+                idx === currentImageIndex
+                  ? "h-5 bg-white"
+                  : "h-1.5 bg-white/30"
+              }`}
+            />
+          ))}
         </div>
+      )}
 
-        {architectNames && (
-          <div className="text-sm text-text-inverse/80 font-light drop-shadow-md">
-            {architectNames}
+      {/* ── Bottom gradient — tall and dark for large type ── */}
+      <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-20 pointer-events-none" />
+
+      {/* ── Info overlay ── */}
+      <div className="absolute bottom-0 left-0 right-0 px-5 pb-24 md:pb-8 z-30 text-white pointer-events-none">
+
+        {/* Contact facepile */}
+        {facepileInteractions.length > 0 && (
+          <div className="pointer-events-auto mb-3">
+            <ContactFacepile interactions={facepileInteractions} />
           </div>
         )}
+
+        {/* Tiny meta line above the title — A24's label-before-title signature */}
+        {metaLine && (
+          <p className="text-2xs font-medium tracking-[0.18em] uppercase text-white/50 mb-2 leading-none">
+            {metaLine}
+          </p>
+        )}
+
+        {/* Building name + save icon — same row */}
+        <div className="flex items-end justify-between gap-4 mb-0.5">
+          <Link
+            to={`/building/${building.id}/${building.slug || "details"}`}
+            className="pointer-events-auto hover:opacity-80 transition-opacity flex-1 min-w-0"
+          >
+            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight leading-none">
+              {building.name}
+            </h2>
+          </Link>
+
+          {/* Save — integrated, no separate button component */}
+          <button
+            onClick={handleSave}
+            className="pointer-events-auto shrink-0 mb-0.5 transition-opacity hover:opacity-60"
+            aria-label={isSaved ? "Saved" : "Save building"}
+          >
+            {isSaved ? (
+              <Check className="w-5 h-5 text-brand-primary" />
+            ) : (
+              <Bookmark
+                className="w-5 h-5 text-white/50"
+                strokeWidth={1.5}
+              />
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Save Button (kept for manual click) */}
-      <div className="absolute bottom-8 right-4 md:right-6 z-40 pointer-events-auto">
-        <Button
-          variant={isSaved ? "default" : "secondary"}
-          size="icon"
-          className={`h-12 w-12 rounded-sm shadow-lg border-none backdrop-blur-md transition-all duration-300 ${
-              isSaved
-                  ? "bg-brand-primary hover:opacity-90 text-text-inverse"
-                  : "bg-white/10 hover:bg-white/20 text-text-inverse"
-          }`}
-          onClick={handleSave}
+      {/* ── Rating overlay — typographic, no button boxes ── */}
+      {showRating && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+          className="absolute inset-0 z-50 flex flex-col items-center justify-end pb-20 sm:pb-24 bg-black/85"
+          onClick={(e) => e.stopPropagation()}
         >
-          {isSaved ? <Check className="h-6 w-6" /> : <Bookmark className="h-6 w-6" />}
-        </Button>
-      </div>
+          {/* Label */}
+          <p className="text-2xs font-medium tracking-[0.25em] uppercase text-white/30 mb-10">
+            Rate this building
+          </p>
+
+          {/* Rating options — pure type, no boxes */}
+          <div className="flex items-end gap-10 sm:gap-14">
+            {([null, 1, 2, 3] as const).map((val) => {
+              const isSelected = rating === val;
+              return (
+                <button
+                  key={val ?? "save"}
+                  onClick={(e) => handleRate(val, e)}
+                  className={`flex flex-col items-center gap-2 transition-all duration-200 ${
+                    isSelected ? "scale-110" : "hover:scale-105"
+                  }`}
+                >
+                  {/* Number / icon */}
+                  {val === null ? (
+                    <Bookmark
+                      className={`w-10 h-10 transition-colors ${
+                        isSelected ? "text-brand-primary" : "text-white/30"
+                      }`}
+                      strokeWidth={isSelected ? 2 : 1.5}
+                    />
+                  ) : (
+                    <span
+                      className={`text-5xl font-bold leading-none tabular-nums transition-colors ${
+                        isSelected ? "text-brand-primary" : "text-white/30"
+                      }`}
+                    >
+                      {val}
+                    </span>
+                  )}
+                  {/* Label */}
+                  <span
+                    className={`text-2xs font-medium uppercase tracking-widest transition-colors ${
+                      isSelected ? "text-brand-primary" : "text-white/20"
+                    }`}
+                  >
+                    {val === null ? "Save" : `${val} pt${val !== 1 ? "s" : ""}`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Skip CTA */}
+          <button
+            className="mt-12 text-xs font-medium uppercase tracking-[0.15em] text-white/20 hover:text-white/50 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onSwipeSave) onSwipeSave();
+            }}
+          >
+            Next building →
+          </button>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

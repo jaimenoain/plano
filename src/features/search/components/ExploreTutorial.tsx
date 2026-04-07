@@ -1,7 +1,14 @@
+/**
+ * ExploreTutorial.tsx — Redesigned with A24 cinematic aesthetic
+ *
+ * Old: Card containers with colored icon boxes + centered layout
+ * New: Full-height typographic layout — giant heading, minimal gesture list,
+ *      text CTA. Like the title sequence of a documentary.
+ *      No card chrome. No colored boxes. Content on darkness.
+ */
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MoveUp, Bookmark, EyeOff } from "lucide-react";
+import { Bookmark, EyeOff, MoveUp } from "lucide-react";
 
 interface ExploreTutorialProps {
   onComplete: () => void;
@@ -18,77 +25,87 @@ export function ExploreTutorial({ onComplete }: ExploreTutorialProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-6 animate-in fade-in duration-300">
-      <div className="w-full max-w-sm space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-        <div className="text-center space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight text-text-inverse">How to Explore</h2>
-          <p className="text-text-inverse/70 text-lg">Swipe to discover architecture</p>
+    <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm animate-in fade-in duration-500">
+      {/* Full-height layout: title top, gestures middle, CTA bottom */}
+      <div className="h-full flex flex-col justify-between px-8 sm:px-12 py-12 sm:py-16 max-w-md">
+
+        {/* ── TOP: Film-title heading ── */}
+        <div>
+          <p className="text-2xs font-medium tracking-[0.25em] uppercase text-white/30 mb-4">
+            Plano · Explore
+          </p>
+          <h2 className="text-6xl sm:text-7xl font-bold tracking-tight text-white leading-none">
+            Discover<br />Architecture
+          </h2>
         </div>
 
-        <div className="space-y-4">
-          {/* Swipe Right */}
-          <div className="flex items-center gap-5 p-4 rounded-sm bg-brand-secondary border border-border-default backdrop-blur-sm transition-colors hover:bg-brand-secondary">
-             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-feedback-success/10 text-feedback-success">
-               <Bookmark className="h-6 w-6" />
-             </div>
-             <div className="flex-1">
-               <p className="text-lg font-medium text-text-primary flex items-center gap-2">
-                 Swipe Right
-               </p>
-               <p className="text-sm text-text-secondary">Save to collection</p>
-             </div>
+        {/* ── MIDDLE: Gesture list — no cards, pure text ── */}
+        <div className="space-y-8 border-t border-white/10 pt-10">
+          <div className="flex items-start gap-5">
+            <Bookmark
+              className="w-4 h-4 text-white/30 shrink-0 mt-1"
+              strokeWidth={1.5}
+            />
+            <div>
+              <p className="text-base font-semibold text-white leading-tight mb-0.5">
+                Swipe right
+              </p>
+              <p className="text-sm text-white/40">Save to your list</p>
+            </div>
           </div>
 
-          {/* Swipe Left */}
-          <div className="flex items-center gap-5 p-4 rounded-sm bg-brand-secondary border border-border-default backdrop-blur-sm transition-colors hover:bg-brand-secondary">
-             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-feedback-destructive/10 text-feedback-destructive">
-               <EyeOff className="h-6 w-6" />
-             </div>
-             <div className="flex-1">
-               <p className="text-lg font-medium text-text-primary flex items-center gap-2">
-                 Swipe Left
-               </p>
-               <p className="text-sm text-text-secondary">Hide from feed</p>
-             </div>
+          <div className="flex items-start gap-5">
+            <EyeOff
+              className="w-4 h-4 text-white/30 shrink-0 mt-1"
+              strokeWidth={1.5}
+            />
+            <div>
+              <p className="text-base font-semibold text-white leading-tight mb-0.5">
+                Swipe left
+              </p>
+              <p className="text-sm text-white/40">Hide from feed</p>
+            </div>
           </div>
 
-          {/* Swipe Up */}
-          <div className="flex items-center gap-5 p-4 rounded-sm bg-brand-secondary border border-border-default backdrop-blur-sm transition-colors hover:bg-brand-secondary">
-             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-surface-muted text-text-secondary">
-               <MoveUp className="h-6 w-6" />
-             </div>
-             <div className="flex-1">
-               <p className="text-lg font-medium text-text-primary flex items-center gap-2">
-                 Swipe Up
-               </p>
-               <p className="text-sm text-text-secondary">Next building</p>
-             </div>
+          <div className="flex items-start gap-5">
+            <MoveUp
+              className="w-4 h-4 text-white/30 shrink-0 mt-1"
+              strokeWidth={1.5}
+            />
+            <div>
+              <p className="text-base font-semibold text-white leading-tight mb-0.5">
+                Scroll up
+              </p>
+              <p className="text-sm text-white/40">Next building</p>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-6 pt-4">
-          <Button
-            className="w-full h-12 text-lg font-semibold"
+        {/* ── BOTTOM: CTA + don't show again ── */}
+        <div className="space-y-6">
+          <button
             onClick={handleComplete}
+            className="text-sm font-medium uppercase tracking-[0.15em] text-white hover:opacity-60 transition-opacity"
           >
-            Got it
-          </Button>
+            Begin exploring →
+          </button>
 
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center gap-3">
             <Checkbox
               id="dont-show"
               checked={dontShowAgain}
               onCheckedChange={(checked) => setDontShowAgain(checked === true)}
-              className="border-white/50 data-[state=checked]:bg-white data-[state=checked]:text-black h-5 w-5 rounded-md"
+              className="border-white/20 data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-black h-4 w-4 rounded-none"
             />
             <label
               htmlFor="dont-show"
-              className="text-sm font-medium leading-none cursor-pointer text-white/60 hover:text-white transition-colors select-none"
+              className="text-xs font-medium uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors cursor-pointer select-none"
             >
-              Don't show again
+              Don&apos;t show again
             </label>
           </div>
         </div>
+
       </div>
     </div>
   );
