@@ -14,6 +14,27 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+function readSidebarOpenFromCookie(): boolean | null {
+  if (typeof document === "undefined") return null;
+  const parts = document.cookie.split(";");
+  for (const part of parts) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    const name = part.slice(0, idx).trim();
+    if (name !== SIDEBAR_COOKIE_NAME) continue;
+    const raw = part.slice(idx + 1).trim();
+    if (raw === "true") return true;
+    if (raw === "false") return false;
+  }
+  return null;
+}
+
+function writeSidebarCookie(openState: boolean) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+}
+
 const SIDEBAR_WIDTH = "18rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "5rem";
@@ -49,30 +70,51 @@ const SidebarProvider = React.forwardRef<
   }
 >(({ defaultOpen = true, open: openProp, onOpenChange: setOpenProp, className, style, children, ...props }, ref) => {
   const isMobile = useIsMobile();
-  const [openMobile, setOpenMobile] = React.useState(false);
+  const isUncontrolled = openProp === undefined;
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen);
+  const [openMobile, _setOpenMobile] = React.useState(() =>
+    openProp !== undefined ? openProp : defaultOpen,
+  );
   const open = openProp ?? _open;
+
+  const setOpenMobile = React.useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+    _setOpenMobile((prev) => {
+      const next = typeof value === "function" ? value(prev) : value;
+      writeSidebarCookie(next);
+      return next;
+    });
+  }, []);
+
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value;
+      writeSidebarCookie(openState);
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
         _setOpen(openState);
       }
-
-      // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
     [setOpenProp, open],
   );
 
+  // Restore persisted open/closed preference after load (full navigation reloads).
+  // Uncontrolled only — controlled callers own the source of truth.
+  React.useLayoutEffect(() => {
+    if (!isUncontrolled) return;
+    const saved = readSidebarOpenFromCookie();
+    if (saved !== null) {
+      _setOpen(saved);
+      _setOpenMobile(saved);
+    }
+  }, [isUncontrolled]);
+
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
-    return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
+    return isMobile ? setOpenMobile((o) => !o) : setOpen((o) => !o);
   }, [isMobile, setOpen, setOpenMobile]);
 
   // Adds a keyboard shortcut to toggle the sidebar.

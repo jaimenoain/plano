@@ -13,7 +13,13 @@
 
 **Reference products:** A24 Films (a24films.com) — aggressive sans-serif typography at extreme scale, monochromatic palette (black/gray/white), zero UI chrome, generous whitespace as structure, content floats directly on white canvas. Contemporary architecture studio websites (OMA, BIG, Zaha Hadid Architects) — photography-first layouts, sharp geometry, zero ornamentation.
 
-**Editorial direction:** The feed and content pages follow an editorial magazine aesthetic. Typography weight and scale create hierarchy — not borders, not shadows, not card containers. Content sits directly on the white surface. The contrast between tiny uppercase category labels and massive bold headlines *is* the design. Whitespace is not empty space — it is editorial pause. Images are presented raw, with sharp edges and no decorative chrome.
+**Editorial direction:** The feed, content detail pages (building, profile, architect), and all primary-surface pages follow an editorial magazine aesthetic. Typography weight and scale create hierarchy — not borders, not shadows, not card containers. Content sits directly on the white surface. The contrast between tiny uppercase category labels and massive bold headlines *is* the design. Whitespace is not empty space — it is editorial pause. Images are presented raw, with sharp edges and no decorative chrome.
+
+**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`) — not `brand-primary`. The neon accent (`#BEFF00`) is reserved exclusively for: primary button backgrounds in app UI (forms, modals, admin), focus rings, and very occasional hover punctuation on CTA arrows. If `brand-primary` appears on a content page outside those contexts, it is an error.
+
+**Single-column editorial layout:** Content detail pages (building detail, profile, architect profile) use a single-column `max-w-4xl` layout. No right sidebars on content pages. The sidebar pattern is restricted to admin and settings contexts.
+
+**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest`. This applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
 
 **Mode:** Light only
 
@@ -413,6 +419,21 @@ convention.
 | Feed sidebar widget title | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
 | Feed sidebar item name | `font-size-base` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
 | Feed sidebar item meta | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| | | | | | |
+| **Content detail pages (building, profile, architect)** | | | | | |
+| Page hero title (building/person name) | `font-size-4xl` / `font-size-5xl` / `font-size-6xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Page section label (divider header) | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Page section body | `font-size-base` | `font-weight-normal` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
+| Tier / category rank label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Inline CTA (text link with arrow) | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-tight` | `text-primary` |
+| Profile stat value | `font-size-2xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Profile stat label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Tab strip item (active) | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-primary` |
+| Tab strip item (inactive) | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-disabled` |
+| Portfolio card title | `font-size-sm` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Portfolio card meta | `font-size-2xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| Highlights sub-section label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-disabled` |
+| Quote blockquote text | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
 
 **Feed editorial typography notes:** The extreme scale contrast between category labels (`font-size-2xs`, uppercase, tracked) and building names (`font-size-5xl`+, bold, tight) is the defining visual signature of the editorial feed. This mirrors A24's approach where a tiny "PODCAST" label sits above a massive 5-line headline. The contrast *is* the design — do not flatten it by making labels larger or headlines smaller. Feed CTA links use uppercase tracked text with a `→` arrow, never a filled button — editorial navigation, not app UI. All feed category labels and CTA links must use `uppercase` text-transform.
 
@@ -455,9 +476,9 @@ context — never a raw palette value.**
 
 ### Brand accent usage
 
-**`brand-primary`** (`#BEFF00`) is the single neon accent. It is used for: primary button backgrounds, active navigation indicators, focus rings, progress bars, selected states, and the building "visited" checkmark. It must appear sparingly — the power of a single-colour system depends on restraint. If the neon appears in more than two places on any given screen, it is overused.
+**`brand-primary`** (`#BEFF00`) is the single neon accent. In **app UI contexts** (admin, settings, forms, modals) it is used for: primary button backgrounds, focus rings, and progress bars. In **all content/feed/detail pages** it is essentially absent — these surfaces are strictly monochromatic. The neon must not appear as: section accent bars, verified badge text, active tab underlines, rating dot fill, bookmark/save icon fill, filter toggle backgrounds, or avatar borders in any content page context. Those elements all use `text-primary` (`#171717`). If the neon appears in more than two places on any given screen, it is overused.
 
-**Editorial feed accent rule:** In the feed, `brand-primary` is even more restrained. It may appear on: the `→` arrow of a CTA link on hover, a like/bookmark action highlight, or a single active state indicator. It must never appear as a background fill in the feed. The feed is monochromatic — black text, gray metadata, white canvas, colour only in photography. The neon accent punctuates, it does not decorate.
+**Editorial and content page accent rule:** Feed, building detail, profile, and architect profile pages are monochromatic. `brand-primary` may appear only as: the `→` arrow of a CTA text link on hover, the focus ring on a focused interactive element, or the background of a primary button inside a modal/dialog opened from these pages. All other accents use `text-primary` or `text-secondary`. The surface is a white canvas — photography provides the colour.
 
 **`brand-primary-foreground`** (`#171717`) is always used for text and icons placed on `brand-primary` surfaces. The neon is a light colour — it requires dark foreground, not white.
 

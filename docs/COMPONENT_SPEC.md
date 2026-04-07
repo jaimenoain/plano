@@ -111,7 +111,9 @@ Plano is an architectural portfolio platform with an **editorial** personality i
 - `spacing-12` (48px): separation between logical page sections — the gap between "Building Details" and "Reviews" sections on a building page
 - `spacing-16` (64px): major page-level vertical rhythm — top-of-page to first content block, between primary page regions
 
-**Section separation method (app UI):** `spacing-12` margin-top plus a `border-t border-border-default` divider line. Plano's flat design uses borders as the primary section separator — not extra whitespace alone, and never shadows.
+**Section separation method (app UI — admin, settings, forms):** `spacing-12` margin-top plus a `border-t border-border-default` divider line. Plano's flat design uses borders as the primary section separator — not extra whitespace alone, and never shadows.
+
+**Section separation method (editorial content pages — building detail, profile, architect profile):** `border-t border-border-default` divider with a `text-2xs font-medium uppercase tracking-widest text-text-secondary` section label immediately after it. The section label replaces a traditional `<h2>` heading — it is structural marginalia, not a headline. Vertical padding above the divider: `pt-8` to `pt-12`. This pattern applies to all named sections: "About", "Portfolio", "Reviews", "Location", "Resources", "Highlights", "All-time Favourites", etc.
 
 **Section separation method (editorial feed):** `spacing-16` to `spacing-20` vertical margin between feed items. No borders between major feed items (hero cards, collection cards). The whitespace *is* the separator — editorial breathing room. Borders may appear only as subtle `border-b` dividers between compact/activity card rows where items are dense enough to merge visually.
 
@@ -260,6 +262,21 @@ Buttons use `inline-flex items-center justify-center gap-2`. Button groups (e.g.
 **Action representation:** Primary and secondary buttons always use text labels. Ghost icon-only buttons are reserved for repeated row/card actions. A primary button should never be icon-only — the neon accent demands a label to justify its visual weight.
 
 **Action hierarchy:** At most one primary (filled neon) button per visible surface. If two actions compete, the less important one is secondary or ghost. Destructive buttons use the destructive variant — never primary, because the neon accent must not be associated with danger.
+
+### Editorial Text CTA (non-button action pattern)
+
+In editorial contexts (feed, building detail, profile, architect profile), actions are represented as uppercase tracked text links with a `→` arrow — never as filled or outlined buttons. This is the primary CTA pattern for all in-page navigation and action links on content surfaces.
+
+| Part | Property | Tailwind class |
+|---|---|---|
+| Text | — | `text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors` |
+| Arrow | — | `→` character (inline after the label text) |
+
+Examples: `VIEW BUILDING →`, `WRITE REVIEW →`, `CLAIM PROFILE →`, `ADD FAVOURITES →`, `DIRECTIONS →`, `EDIT →`.
+
+**When to use text CTAs vs. filled buttons:**
+- **Text CTA:** any action that appears in-page on a content/feed surface — navigation links, profile actions, section-level management, secondary operations
+- **Filled button (primary):** form submissions, modal confirmations, primary actions inside dialogs — contexts where a button's visual weight is semantically appropriate
 
 ### Constraints
 
@@ -527,7 +544,7 @@ Each nav item is `flex items-center gap-3 px-3 py-2 rounded-sm w-full text-left`
 | Nav item (default) | padding | spacing-3 x, spacing-2 y | px-3 py-2 |
 | Nav item (active) | background | surface-card | bg-surface-card |
 | Nav item (active) | border | border-default | border border-border-default |
-| Active indicator | border-left | brand-primary | border-l-2 border-brand-primary |
+| Active indicator | border-left | text-primary | border-l-2 border-text-primary |
 | Footer | border-top | border-default | border-t border-border-default |
 | Footer | padding | spacing-4 | p-4 |
 
@@ -547,7 +564,7 @@ Each nav item is `flex items-center gap-3 px-3 py-2 rounded-sm w-full text-left`
 
 ### Constraints
 
-**Always:** The active nav item uses a `brand-primary` left border accent (2px). This is the only neon accent in the sidebar — it marks "you are here" with the product's single accent colour.
+**Always:** The active nav item uses a `text-primary` (`#171717`) left border accent (2px) — monochromatic, not neon. The sidebar is a structural element, not a brand expression surface. Neon does not appear in navigation.
 
 **Always:** Nav item text uses `text-primary` for all states (default and active). Active vs default is distinguished by background surface and the left border accent, not by text colour. See the Typography Matrix for weight distinction (`font-weight-medium` default, `font-weight-semibold` active).
 
@@ -752,15 +769,16 @@ Horizontal layout: small building thumbnail on the left, text on the right. Text
 | Container | border | none | — |
 | Container | padding-bottom | spacing-8 | pb-8 |
 | Container | border-bottom | border-default | border-b border-border-default (subtle divider between activity rows only) |
-| Building thumbnail | size | 64px | w-16 h-16 |
+| Building thumbnail | size | hero: 112px, compact: 96px | w-28 h-28 (hero) / w-24 h-24 (compact) |
 | Building thumbnail | border-radius | radius-none | rounded-none |
 | Building thumbnail | object-fit | — | object-cover |
 | User name | — | — | text-sm font-medium text-text-primary |
 | Action verb | — | — | text-sm font-normal text-text-secondary |
 | Building name | — | — | text-sm font-semibold text-text-primary |
-| Timestamp | — | — | text-xs font-normal text-text-disabled |
 
 #### Constraints
+
+**Always:** Activity cards use no timestamp — dates are removed from the feed in the editorial aesthetic. Metadata is reduced to the essential: who did what to which building.
 
 **Always:** Activity cards are the smallest editorial unit. They use a subtle `border-b` divider between rows — this is the one place a border appears in the feed, to separate adjacent compact items that would otherwise merge visually.
 
@@ -771,12 +789,10 @@ Horizontal layout: small building thumbnail on the left, text on the right. Text
 ### 13c. Feed Compact Card
 
 #### Purpose
-A text-focused review card without images — displays the review content, rating, and building name with strong typographic treatment.
+A compact review card with a building thumbnail and text — displays building image, building name, review excerpt, and user attribution.
 
 #### Layout Composition
-Vertical stack: category label at top, building name (large), rating indicator, review text excerpt, user attribution. No image. The text itself is the visual content.
-
-When compact cards appear together, they sit in a `grid grid-cols-2 gap-8` row, similar to activity cards.
+Horizontal layout: building thumbnail on the left (`w-24 h-24`, sharp edges), text on the right. Text contains: category label, building name, review excerpt, user attribution row with bookmark icon. When compact cards appear together, they sit in a `grid grid-cols-2 gap-8` row, similar to activity cards.
 
 #### Token Assembly
 
@@ -785,16 +801,20 @@ When compact cards appear together, they sit in a `grid grid-cols-2 gap-8` row, 
 | Container | background | none | — |
 | Container | border | none | — |
 | Container | padding-bottom | spacing-12 | pb-12 |
+| Building thumbnail | size | 96px | w-24 h-24 |
+| Building thumbnail | border-radius | radius-none | rounded-none |
+| Building thumbnail | object-fit | — | object-cover shrink-0 |
 | Category label | — | — | text-2xs font-medium uppercase tracking-widest text-text-secondary |
 | Building name | — | — | text-2xl font-semibold tracking-tight leading-tight text-text-primary |
-| Rating | — | — | Small filled/empty circles, text-text-primary |
 | Review excerpt | — | — | text-base font-normal leading-relaxed text-text-secondary |
 | User name | — | — | text-sm font-medium text-text-primary |
-| Timestamp | — | — | text-xs font-normal text-text-disabled |
+| Bookmark icon | — | — | Bookmark icon, text-text-secondary; fill-text-primary when saved |
 
 #### Constraints
 
 **Always:** Compact cards have no border or background. Structure comes from the building name's typographic weight.
+
+**Always:** No timestamp. Dates are removed from the editorial feed.
 
 **Default:** Review text is truncated at 3 lines with `line-clamp-3`.
 
@@ -816,7 +836,7 @@ Full-width horizontal layout: a row of 4–6 building thumbnails on top (edge-to
 | Container | margin-bottom | spacing-16 | mb-16 |
 | Mosaic row | gap | mosaic-gap | gap-mosaic-gap |
 | Mosaic row | layout | — | flex overflow-hidden |
-| Mosaic image | height | 200px | h-[200px] |
+| Mosaic image | height | 240px | h-[240px] |
 | Mosaic image | border-radius | radius-none | rounded-none |
 | Mosaic image | object-fit | — | object-cover flex-1 min-w-0 |
 | Collection title | — | — | text-2xl font-semibold tracking-tight text-text-primary mt-4 |
@@ -853,40 +873,99 @@ A single line of uppercase tracked text with an optional `→` arrow linking to 
 
 ---
 
-### 13f. Feed Sidebar Widget
+### 13f. Feed Hero Card — Actions
 
-#### Purpose
-Editorial-styled sidebar modules (Trending Buildings, Featured Architect, Explore by Style, etc.) that complement the main feed.
+The only persistent in-feed action is **bookmark** (save building). All other actions (like, comment, visit, rate, hide) are removed from the feed surface. Users engage more deeply by navigating into the building or review detail page.
 
-#### Layout Composition
-Vertical stack: widget title (uppercase tracked label), content items, optional "See all →" CTA. Widgets have no border or background — they sit directly on the sidebar surface with generous spacing between them.
+**Bookmark token assembly:**
 
-#### Token Assembly
+| Part | Property | Tailwind class |
+|---|---|---|
+| Icon at rest | — | `Bookmark`, `text-text-secondary`, `h-5 w-5` |
+| Icon (saved) | — | `fill-text-primary text-text-primary` (monochromatic fill) |
 
-| Part | Property | Token | Tailwind class |
-|---|---|---|---|
-| Container | background | none | — |
-| Container | border | none | — |
-| Container | margin-bottom | spacing-12 | mb-12 |
-| Widget title | — | — | text-xs font-medium uppercase tracking-widest text-text-secondary mb-4 |
-| Item name | — | — | text-base font-semibold text-text-primary leading-tight |
-| Item meta | — | — | text-xs font-normal text-text-secondary |
-| Item gap | — | spacing-4 | gap-4 (between items in the widget) |
-| CTA link | — | — | text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary |
+No other action icons appear in the feed. No date or timestamp is shown on any feed card type.
 
-#### Interaction Design Notes
+---
 
-**Trending Buildings widget:** Numbered list (1–5). The number is `text-2xl font-bold text-text-disabled` — large but quiet. Building name is `text-base font-semibold text-text-primary`. Architect name below in `text-xs text-text-secondary`. The numbered list format echoes editorial "Top 5" sidebars.
+## 14. Content Detail Pages (Building / Profile / Architect)
 
-**Featured Architect widget:** Architect photo (square, `rounded-none`), name as `text-lg font-semibold`, brief tagline as `text-sm text-text-secondary`, `VIEW PROFILE →` CTA.
+### Design Philosophy
 
-**People You May Know widget:** Avatar (`rounded-full` — avatars are the one exception to sharp edges), name as `text-sm font-medium`, follow button as a small ghost button — the only button element permitted in the feed sidebar.
+Content detail pages — building detail, user profile, architect profile — follow the same editorial principles as the feed. They are a continuation of the magazine aesthetic into deep-dive territory. The page is a single-column canvas, not a dashboard.
 
-#### Constraints
+### Layout
 
-**Always:** Widget titles are uppercase tracked labels (`text-xs uppercase tracking-widest text-text-secondary`). They are section markers, not headings — small and structural.
+**Max-width:** `max-w-4xl mx-auto` — all content detail pages are single-column and centred at this width. No right sidebar. The sidebar layout (two-column with a 320px right panel) is prohibited on content pages.
 
-**Always:** Widgets have no borders or card backgrounds. They are open compositions within the sidebar.
+**Hero image:** Flush to the layout edge, no border-radius, no scrim/gradient overlay. Image height: `h-[clamp(200px,40vh,520px)]` (building), shorter for profile headers. Fallback: `bg-surface-muted`.
+
+**Page title:** Appears below the image (not overlaid on it). Size: `text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight`. No subtitle card or header box.
+
+### Section Pattern
+
+Every named section on a content detail page follows this exact structure:
+
+```
+<div class="border-t border-border-default pt-8 mt-12">
+  <span class="text-2xs font-medium tracking-widest uppercase text-text-secondary">Section Name</span>
+  <!-- section content -->
+</div>
+```
+
+The uppercase tracked label *is* the section heading. No `<h2>` or `<h3>` tags at large size. The label is marginalia — structural, not dominant.
+
+### Tab Strip (Profile / Architect pages)
+
+| Part | Property | Tailwind class |
+|---|---|---|
+| Tab list | border-bottom | `border-b border-border-default` |
+| Tab item | typography | `text-xs font-medium uppercase tracking-widest` |
+| Tab item (active) | indicator | `border-b-2 border-text-primary text-text-primary` |
+| Tab item (inactive) | colour | `text-text-disabled` |
+| Tab item gap | — | `gap-6` or `gap-8` |
+
+No `brand-primary` in tab indicators. Active state is monochromatic `border-text-primary`.
+
+### Portfolio Grid (Architect)
+
+The architect portfolio grid uses a flush tile layout:
+
+| Part | Property | Tailwind class |
+|---|---|---|
+| Grid | structure | `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border-default` |
+| Tile | background | `bg-surface-default` |
+| Tile image | border-radius | `rounded-none` |
+| Tile image | aspect | `aspect-[4/3]` |
+| Tile caption | padding | `px-1 py-3` |
+| Tile title | — | `text-sm font-semibold text-text-primary` |
+| Tile meta | — | `text-2xs text-text-secondary` |
+| Save action | — | text CTA pattern: `text-xs font-medium uppercase tracking-widest` |
+
+The `gap-px bg-border-default` pattern produces 1px hairline dividers between tiles — the grid reads as a single photographic array, not as individual cards.
+
+### Profile Highlights & Favourites
+
+| Pattern | Tailwind class |
+|---|---|
+| Section header | `border-t border-border-default pt-4` + uppercase tracked label |
+| Edit/Manage CTA | text CTA: `text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary` |
+| Style tags | Plain text, no pill borders: `px-3 py-1 text-sm font-medium text-text-secondary` |
+| Quote blockquote | `border-l-[3px] border-text-primary pl-4 py-2` (monochromatic) |
+| Architect avatar (people section) | Square `h-20 w-20 rounded-none` — not circular |
+| Favourite poster | `aspect-square rounded-none` sharp image, text below |
+
+### Constraints
+
+**Always:** Content detail pages use a single-column `max-w-4xl` layout. No right sidebar.
+
+**Always:** Page titles appear below the hero image, never overlaid on it. No gradient scrim on the hero.
+
+**Always:** Section labels use the `text-2xs uppercase tracking-widest text-text-secondary` pattern — not `<h2>` or `<h3>` at heading scale.
+
+**Always:** All interactive text links on content detail pages use the text CTA pattern (`uppercase tracking-widest text-xs font-medium`). No filled buttons in content page body sections.
+
+**Always:** No `brand-primary` appears on content detail pages outside of focus rings and modal CTAs.
 
 ---
 
@@ -936,6 +1015,20 @@ documented reason.
 | Feed sidebar widget title | font-size-xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
 | Feed sidebar item name | font-size-base | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
 | Feed sidebar item meta | font-size-xs | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
+| | | | | | |
+| **Content detail pages** | | | | | |
+| Page hero title | font-size-4xl / 5xl / 6xl | font-weight-bold | text-primary | letter-spacing-tight | line-height-tight |
+| Page section label | font-size-2xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
+| Tier / rank label | font-size-2xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
+| Inline CTA (text link + arrow) | font-size-xs | font-weight-medium | text-primary | letter-spacing-wide | line-height-tight |
+| Tab item (active) | font-size-xs | font-weight-medium | text-primary | letter-spacing-wide | line-height-normal |
+| Tab item (inactive) | font-size-xs | font-weight-medium | text-disabled | letter-spacing-wide | line-height-normal |
+| Profile stat value | font-size-2xl | font-weight-bold | text-primary | letter-spacing-tight | line-height-tight |
+| Profile stat label | font-size-2xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
+| Portfolio tile title | font-size-sm | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
+| Portfolio tile meta | font-size-2xs | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
+| Highlights sub-label | font-size-2xs | font-weight-medium | text-disabled | letter-spacing-wide | line-height-normal |
+| Quote blockquote | font-size-sm | font-weight-medium | text-secondary | letter-spacing-normal | line-height-relaxed |
 
 ---
 
@@ -1009,18 +1102,15 @@ place `text-primary` on a dark background.
 
 **Brand accent usage**
 
-`brand-primary` is the single neon accent (`#BEFF00`). Use for: primary
-button backgrounds, active nav indicators, focus rings, progress bars.
-It must appear sparingly — if the neon appears in more than two places
-on any given screen, it is overused.
+`brand-primary` is the single neon accent (`#BEFF00`). In **app UI contexts** (admin, settings, forms, modals) use it for: primary button backgrounds, focus rings, and progress bars. In **editorial content pages** (building detail, profile, architect profile) and the **feed**, it is essentially absent — these are monochromatic surfaces. Do not use `brand-primary` for: section accent bars, verified badges, rating dots, active tab underlines, bookmark fills, filter toggle backgrounds, or avatar borders. All of those use `text-primary` (`#171717`) monochromatic instead. If `brand-primary` appears on any content or feed page outside of a focus ring or modal CTA, it is an error.
 
 `brand-primary-foreground` is always dark (`#171717`). The neon is a
 light colour — it requires dark foreground, not white. Using
 `text-inverse` on `brand-primary` is a contrast failure.
 
 `brand-secondary` is a barely-there neon tint (`#F7FFE0`). Use for
-hovered table rows, selected filter chips, active tab backgrounds.
-It provides a whisper of accent without full neon intensity.
+hovered table rows and selected filter chips in **app UI contexts only**.
+It must not appear on content detail pages or the feed.
 
 **Feedback tokens**
 

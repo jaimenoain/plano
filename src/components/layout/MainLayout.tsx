@@ -9,7 +9,9 @@ import { logDiagnosticError } from "@/features/admin/api/diagnostics";
 import { setSentryUser } from "@/lib/sentry";
 
 /**
- * Sidebar is closed by default; opened via the floating SidebarTrigger below.
+ * Sidebar is open by default on first visit; preference is stored in a cookie
+ * and restored on reload. In-app navigation does not change open/closed state.
+ * The floating SidebarTrigger toggles the menu.
  *
  * collapsible="offcanvas" on AppSidebar means the sidebar overlays the
  * content on desktop (no permanent rail) — same Sheet behaviour as mobile.
@@ -40,7 +42,7 @@ function MainLayout() {
   }, []);
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <div className="pointer-events-none fixed left-4 top-4 z-40 safe-area-pt">
         <SidebarTrigger

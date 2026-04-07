@@ -56,18 +56,10 @@ interface NavItemProps {
 }
 
 function NavItem({ label, path, isActive }: NavItemProps) {
-  const { setOpenMobile, isMobile, setOpen } = useSidebar();
-
-  const handleClick = () => {
-    if (isMobile) setOpenMobile(false);
-    else setOpen(false);
-  };
-
   return (
     <SidebarMenuItem className="list-none">
       <Link
         to={path}
-        onClick={handleClick}
         className={cn(
           "group flex items-center px-8 py-3 w-full transition-colors duration-150",
           "text-2xl font-bold tracking-tight leading-none",
