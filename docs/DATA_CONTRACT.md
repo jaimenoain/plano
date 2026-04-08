@@ -2711,6 +2711,108 @@ No additional environment variables required for this domain.
 
 ---
 
+## 9a. People & Credit Taxonomy (Building Credits v2)
+
+Introduced in Roadmap Phase 1 Task 1.1. Individual practitioners are represented in `people` (migrated from `architects` where `type = 'individual'`, same UUID). Credit role/tier enums are defined for Task 1.4 (`building_credits`).
+
+### Component 1: Database schema
+
+```sql
+CREATE TYPE public.person_claim_status AS ENUM ('unclaimed', 'claimed', 'verified');
+
+CREATE TYPE public.credit_role_enum AS ENUM (
+  'design_architect',
+  'architect_of_record',
+  'executive_architect',
+  'interior_architect',
+  'landscape_architect',
+  'urban_designer',
+  'conservation_architect',
+  'structural_engineer',
+  'mep_engineer',
+  'civil_engineer',
+  'geotechnical_engineer',
+  'facade_engineer',
+  'wind_consultant',
+  'acoustic_consultant',
+  'fire_engineer',
+  'lighting_designer',
+  'developer',
+  'main_contractor',
+  'project_manager',
+  'cost_consultant',
+  'planning_consultant',
+  'graphic_wayfinding_designer',
+  'art_consultant',
+  'sustainability_consultant',
+  'heritage_consultant',
+  'other'
+);
+
+CREATE TYPE public.credit_tier_enum AS ENUM ('primary', 'contributor', 'ancillary');
+
+CREATE TABLE public.people (
+  id uuid NOT NULL,
+  name text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  bio text,
+  nationality text,
+  birth_year integer,
+  death_year integer,
+  avatar_url text,
+  website text,
+  location_note text,
+  claimed_by_user_id uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
+  claim_status public.person_claim_status NOT NULL DEFAULT 'unclaimed',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT people_pkey PRIMARY KEY (id)
+);
+```
+
+Helper: `public.slugify_person_name(text)` — lowercases, replaces non-alphanumeric runs with `-`, trims; used for initial slug generation during migration.
+
+**Migration notes:** `website` and `location_note` are populated from `architects.website_url` and `architects.headquarters`. `avatar_url` is null for migrated rows. Slug collisions on the same base slug use numeric suffixes `-2`, `-3`, … `claimed_by_user_id` is set from `profiles.verified_architect_id`, then from `architect_claims` where `status = 'verified'` for rows still unclaimed; `claim_status` becomes `claimed` for those rows.
+
+### Component 2: RLS (`people`)
+
+**Tenancy model:** not tenant-scoped; claim owner matches `profiles.id` (= auth user id).
+
+**SELECT**
+
+```sql
+CREATE POLICY "people_select" ON public.people
+  FOR SELECT USING (true);
+```
+
+**INSERT**
+
+```sql
+CREATE POLICY "people_insert" ON public.people
+  FOR INSERT TO authenticated
+  WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
+```
+
+**UPDATE**
+
+```sql
+CREATE POLICY "people_update" ON public.people
+  FOR UPDATE TO authenticated
+  USING (
+    public.is_admin()
+    OR claimed_by_user_id = (SELECT auth.uid())
+  )
+  WITH CHECK (
+    public.is_admin()
+    OR claimed_by_user_id = (SELECT auth.uid())
+  );
+```
+
+No `DELETE` policy (rows are not deleted via app in this phase).
+
+---
+
 ## 9. Architect Domain
 
 ### Component 1: Database Schema

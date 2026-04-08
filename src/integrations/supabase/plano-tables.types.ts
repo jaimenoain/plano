@@ -160,6 +160,65 @@ export type PlanoPublicTables = {
     }
     Relationships: []
   }
+  people: {
+    Row: {
+      id: string
+      name: string
+      slug: string
+      bio: string | null
+      nationality: string | null
+      birth_year: number | null
+      death_year: number | null
+      avatar_url: string | null
+      website: string | null
+      location_note: string | null
+      claimed_by_user_id: string | null
+      claim_status: string
+      created_at: string
+      updated_at: string
+    }
+    Insert: {
+      id: string
+      name: string
+      slug: string
+      bio?: string | null
+      nationality?: string | null
+      birth_year?: number | null
+      death_year?: number | null
+      avatar_url?: string | null
+      website?: string | null
+      location_note?: string | null
+      claimed_by_user_id?: string | null
+      claim_status?: string
+      created_at?: string
+      updated_at?: string
+    }
+    Update: {
+      id?: string
+      name?: string
+      slug?: string
+      bio?: string | null
+      nationality?: string | null
+      birth_year?: number | null
+      death_year?: number | null
+      avatar_url?: string | null
+      website?: string | null
+      location_note?: string | null
+      claimed_by_user_id?: string | null
+      claim_status?: string
+      created_at?: string
+      updated_at?: string
+    }
+    Relationships: [
+      {
+        foreignKeyName: "people_claimed_by_user_id_fkey"
+        columns: ["claimed_by_user_id"]
+        isOneToOne: false
+        referencedRelation: "profiles"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
   architectural_styles: {
     Row: {
       id: string
