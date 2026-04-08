@@ -153,6 +153,12 @@ export const useURLMapState = () => {
        accessCosts: getArrayParam(searchParams.get("accessCosts")),
        ratedBy: getArrayParam(searchParams.get("rated_by")),
        filterContacts: getBoolParam(searchParams.get("filterContacts")),
+       creditCompany: (() => {
+         const id = searchParams.get("creditCompany");
+         if (!id) return undefined;
+         return { id, name: id };
+       })(),
+       creditRoles: getArrayParam(searchParams.get("creditRoles")),
     };
 
     return { ...parsed, filters } as MapState;

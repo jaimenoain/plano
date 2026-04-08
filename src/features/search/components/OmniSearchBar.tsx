@@ -15,11 +15,14 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import { MapPin, Building2, Loader2 } from "lucide-react";
+import { MapPin, Building2, Loader2, UserRound, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import { supabase } from "@/integrations/supabase/client";
 import { useMapContext } from "@/features/maps/providers/MapContext";
+import { searchPeople } from "@/features/credits/api/people";
+import { searchCompanies } from "@/features/credits/api/companies";
+import { useNavigate } from "react-router";
 type BuildingSearchRow = {
   id: string;
   name: string;
@@ -37,10 +40,11 @@ interface OmniSearchBarProps {
 }
 
 export function OmniSearchBar({
-  placeholder = "Search places or buildings...",
+  placeholder = "Search places, buildings, people, companies...",
   className,
 }: OmniSearchBarProps) {
   const { methods } = useMapContext();
+  const navigate = useNavigate();
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -83,8 +87,10 @@ export function OmniSearchBar({
     initOnMount: true,
   });
 
+  const entityEnabled = debouncedInput.length >= 2;
+
   // Buildings Query
-  const { data: buildingsData, isLoading: isBuildingsLoading } = useQuery({
+  const { data: buildingsData, isFetching: isBuildingsFetching } = useQuery({
     queryKey: ["search-buildings", debouncedInput],
     queryFn: async () => {
       if (!debouncedInput || debouncedInput.length < 2) return [];
@@ -92,11 +98,27 @@ export function OmniSearchBar({
         query_text: debouncedInput,
       });
       if (error) throw error;
-      return data as BuildingSearchRow[];
+      return (data as BuildingSearchRow[]).slice(0, 5);
     },
-    enabled: debouncedInput.length >= 2,
+    enabled: entityEnabled,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  const { data: peopleData = [], isFetching: peopleFetching } = useQuery({
+    queryKey: ["omni-search-people", debouncedInput],
+    queryFn: async () => (await searchPeople(debouncedInput)).slice(0, 5),
+    enabled: entityEnabled,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: companiesData = [], isFetching: companiesFetching } = useQuery({
+    queryKey: ["omni-search-companies", debouncedInput],
+    queryFn: async () => (await searchCompanies(debouncedInput)).slice(0, 5),
+    enabled: entityEnabled,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const entitiesLoading = isBuildingsFetching || peopleFetching || companiesFetching;
 
   // Sync input value with places
   useEffect(() => {
@@ -143,6 +165,18 @@ export function OmniSearchBar({
     }
   };
 
+  const handlePersonSelect = (slug: string) => {
+    setOpen(false);
+    setInputValue("");
+    navigate(`/person/${slug}`);
+  };
+
+  const handleCompanySelect = (slug: string) => {
+    setOpen(false);
+    setInputValue("");
+    navigate(`/company/${slug}`);
+  };
+
   if (!scriptLoaded) {
     return (
       <Input
@@ -156,7 +190,10 @@ export function OmniSearchBar({
 
   const hasPlaces = placesStatus === "OK" && placesData.length > 0;
   const hasBuildings = buildingsData && buildingsData.length > 0;
-  const showDropdown = open && (hasPlaces || hasBuildings || isBuildingsLoading);
+  const hasPeople = peopleData.length > 0;
+  const hasCompanies = companiesData.length > 0;
+  const showDropdown =
+    open && (hasPlaces || hasBuildings || hasPeople || hasCompanies || entitiesLoading);
 
   return (
     <div className={cn("relative", className)} ref={commandRef}>
@@ -173,7 +210,7 @@ export function OmniSearchBar({
             className="w-full pr-10"
             autoComplete="off"
           />
-          {isBuildingsLoading && (
+          {entityEnabled && entitiesLoading && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
             </div>
@@ -199,11 +236,11 @@ export function OmniSearchBar({
                 </CommandGroup>
               )}
 
-              {hasPlaces && hasBuildings && <CommandSeparator />}
+              {hasPlaces && (hasBuildings || hasPeople || hasCompanies) && <CommandSeparator />}
 
               {hasBuildings && (
                 <CommandGroup heading="Buildings">
-                  {buildingsData.map((building: BuildingResult) => (
+                  {buildingsData!.map((building: BuildingResult) => (
                     <CommandItem
                       key={building.id}
                       value={building.name}
@@ -220,6 +257,44 @@ export function OmniSearchBar({
                           </span>
                         )}
                       </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+
+              {(hasBuildings && (hasPeople || hasCompanies)) || (hasPeople && hasCompanies) ? (
+                <CommandSeparator />
+              ) : null}
+
+              {hasPeople && (
+                <CommandGroup heading="People">
+                  {peopleData.map((person) => (
+                    <CommandItem
+                      key={person.id}
+                      value={person.name}
+                      onSelect={() => handlePersonSelect(person.slug)}
+                      className="cursor-pointer hover:bg-brand-secondary"
+                    >
+                      <UserRound className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
+                      <span>{person.name}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+
+              {hasPeople && hasCompanies ? <CommandSeparator /> : null}
+
+              {hasCompanies && (
+                <CommandGroup heading="Companies">
+                  {companiesData.map((company) => (
+                    <CommandItem
+                      key={company.id}
+                      value={company.name}
+                      onSelect={() => handleCompanySelect(company.slug)}
+                      className="cursor-pointer hover:bg-brand-secondary"
+                    >
+                      <Briefcase className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
+                      <span>{company.name}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

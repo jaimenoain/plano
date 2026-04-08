@@ -35,16 +35,17 @@
  * CTAs: Button variant="outline" → bare text-xs uppercase tracking-widest CTA.
  * Infinite scroll loader: h-4 w-4 text-text-secondary (unchanged — already minimal).
  */
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useMapContext } from '../providers/MapContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, MapPin, UserRound } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, MapPin, UserRound, Building2 } from 'lucide-react';
 import { Link } from 'react-router';
-import { getBuildingImageUrl } from '@/utils/image';
+import { getBuildingImageUrl, getStorageAssetUrl } from '@/utils/image';
 import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
-import { ArchitectSearchResult } from '@/features/search/hooks/useArchitectSearch';
+import type { CompanySummary, PersonSummary } from '@/features/credits/types';
 import { getBoundsFromBuildings } from '@/utils/map';
 import { cn } from '@/lib/utils';
 
@@ -64,11 +65,14 @@ interface Building {
   alt_name?: string | null;
 }
 
+type SearchResultTab = 'buildings' | 'people' | 'companies';
+
 interface BuildingSidebarProps {
   topLocation?: { description: string; place_id: string } | null;
   onLocationClick?: (placeId: string) => void;
   suggestions?: Suggestion[];
-  architects?: ArchitectSearchResult[];
+  people?: PersonSummary[];
+  companies?: CompanySummary[];
   className?: string;
 }
 
@@ -78,7 +82,8 @@ export function BuildingSidebar({
   topLocation,
   onLocationClick,
   suggestions,
-  architects,
+  people = [],
+  companies = [],
   className,
 }: BuildingSidebarProps = {}) {
   const {
@@ -87,6 +92,7 @@ export function BuildingSidebar({
   } = useMapContext();
   const observerTarget = useRef<HTMLDivElement>(null);
   const lastZoomedQuery = useRef<string | null>(null);
+  const [resultTab, setResultTab] = useState<SearchResultTab>('buildings');
 
   const {
     data,
@@ -117,6 +123,9 @@ export function BuildingSidebar({
         hide_hidden: false,
         hide_without_images: filters.hideWithoutImages,
         contact_min_rating: filters.contactMinRating,
+        credit_company_id: filters.creditCompany?.id ?? undefined,
+        credit_roles:
+          filters.creditRoles && filters.creditRoles.length > 0 ? filters.creditRoles : undefined,
       };
       const { data, error } = await supabase.rpc('get_buildings_list', {
         min_lat: bounds.south,
@@ -184,39 +193,36 @@ export function BuildingSidebar({
     });
   }, [data?.pages]);
 
-  return (
-    <div className={cn("h-full w-full min-w-0 bg-surface-card border-l border-border-default", className)}>
-      <ScrollArea className="h-full w-full">
-        <div className="pt-2 pb-6">
+  const peopleCount = people.length;
+  const companiesCount = companies.length;
 
-          {/* ── Architect results ── */}
-          {architects && architects.length > 0 && (
-            <div>
-              <p className="px-4 pt-4 pb-2 text-2xs font-medium tracking-widest uppercase text-text-secondary">
-                Architects
-              </p>
-              {architects.map((architect) => (
-                <Link
-                  to={`/architect/${architect.id}`}
-                  key={architect.id}
-                  className="group flex items-center gap-3 px-4 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/40 transition-colors"
-                >
-                  <UserRound className="h-4 w-4 text-text-disabled shrink-0" strokeWidth={1.5} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium leading-tight text-text-primary group-hover:opacity-70 transition-opacity truncate">
-                      {architect.name}
-                    </p>
-                    {architect.type && (
-                      <p className="text-xs text-text-disabled capitalize mt-0.5">
-                        {architect.type}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              ))}
-              <div className="h-px bg-border-default mx-4 my-2" />
-            </div>
-          )}
+  return (
+    <div className={cn("h-full w-full min-w-0 bg-surface-card border-l border-border-default flex flex-col min-h-0", className)}>
+      <Tabs value={resultTab} onValueChange={(v) => setResultTab(v as SearchResultTab)} className="flex h-full min-h-0 flex-col">
+        <TabsList className="mx-2 mt-2 mb-0 h-auto shrink-0 flex w-auto flex-wrap justify-start gap-1 rounded-none border-0 bg-transparent p-0">
+          <TabsTrigger
+            value="buildings"
+            className="rounded-sm px-3 py-1.5 text-2xs font-medium uppercase tracking-widest data-[state=active]:bg-surface-muted data-[state=inactive]:text-text-secondary"
+          >
+            Buildings
+          </TabsTrigger>
+          <TabsTrigger
+            value="people"
+            className="rounded-sm px-3 py-1.5 text-2xs font-medium uppercase tracking-widest data-[state=active]:bg-surface-muted data-[state=inactive]:text-text-secondary"
+          >
+            People ({peopleCount})
+          </TabsTrigger>
+          <TabsTrigger
+            value="companies"
+            className="rounded-sm px-3 py-1.5 text-2xs font-medium uppercase tracking-widest data-[state=active]:bg-surface-muted data-[state=inactive]:text-text-secondary"
+          >
+            Companies ({companiesCount})
+          </TabsTrigger>
+        </TabsList>
+
+        <ScrollArea className="min-h-0 flex-1 w-full">
+          <TabsContent value="buildings" className="m-0 mt-0 outline-none">
+            <div className="pt-2 pb-6">
 
           {/* ── Location suggestions ── */}
           {suggestions && suggestions.length > 0 ? (
@@ -275,10 +281,6 @@ export function BuildingSidebar({
             </div>
           ) : (
             <>
-              <p className="px-4 pt-4 pb-2 text-2xs font-medium tracking-widest uppercase text-text-secondary">
-                Buildings
-              </p>
-
               {buildings.map((building) => {
                 const imageUrl = getBuildingImageUrl(building.image_url);
                 return (
@@ -379,8 +381,99 @@ export function BuildingSidebar({
               )}
             </>
           )}
-        </div>
-      </ScrollArea>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="people" className="m-0 mt-0 outline-none">
+            <div className="pt-2 pb-6">
+              {peopleCount === 0 ? (
+                <div className="px-4 py-12 text-center">
+                  <p className="text-sm text-text-disabled">No people match this search yet.</p>
+                </div>
+              ) : (
+                people.map((person) => {
+                  const avatarSrc = getStorageAssetUrl(person.avatarUrl ?? null);
+                  const meta = [
+                    person.nationality?.trim() || null,
+                    person.creditCount != null ? `${person.creditCount} credits` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ');
+                  return (
+                    <Link
+                      to={`/person/${person.slug}`}
+                      key={person.id}
+                      className="group flex items-center gap-3 px-4 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/40 transition-colors"
+                    >
+                      {avatarSrc ? (
+                        <img
+                          src={avatarSrc}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-sm object-cover border border-border-default"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <UserRound className="h-4 w-4 text-text-disabled shrink-0" strokeWidth={1.5} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-tight text-text-primary group-hover:opacity-70 transition-opacity truncate">
+                          {person.name}
+                        </p>
+                        {meta ? (
+                          <p className="text-xs text-text-disabled mt-0.5 truncate">{meta}</p>
+                        ) : null}
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="companies" className="m-0 mt-0 outline-none">
+            <div className="pt-2 pb-6">
+              {companiesCount === 0 ? (
+                <div className="px-4 py-12 text-center">
+                  <p className="text-sm text-text-disabled">No companies match this search yet.</p>
+                </div>
+              ) : (
+                companies.map((company) => {
+                  const logoSrc = getStorageAssetUrl(company.logoUrl);
+                  const meta = [company.country?.trim() || null, `${company.creditCount} credits`]
+                    .filter(Boolean)
+                    .join(' · ');
+                  return (
+                    <Link
+                      to={`/company/${company.slug}`}
+                      key={company.id}
+                      className="group flex items-center gap-3 px-4 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/40 transition-colors"
+                    >
+                      {logoSrc ? (
+                        <img
+                          src={logoSrc}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-sm object-cover border border-border-default"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <Building2 className="h-4 w-4 text-text-disabled shrink-0" strokeWidth={1.5} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-tight text-text-primary group-hover:opacity-70 transition-opacity truncate">
+                          {company.name}
+                        </p>
+                        {meta ? (
+                          <p className="text-xs text-text-disabled mt-0.5 truncate">{meta}</p>
+                        ) : null}
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </TabsContent>
+        </ScrollArea>
+      </Tabs>
     </div>
   );
 }

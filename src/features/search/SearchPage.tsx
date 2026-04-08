@@ -34,13 +34,14 @@ import { ClientOnly } from "@/components/common/ClientOnly";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 import { Bounds } from "@/utils/map";
+import { useNavigate } from "react-router";
 
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
 import { BuildingSidebar } from "@/features/maps/components/BuildingSidebar";
 import { MapControls } from "@/features/maps/components/MapControls";
 import { DiscoverySearchInput, Suggestion } from "@/features/search/components/DiscoverySearchInput";
-import { useArchitectSearch } from "@/features/search/hooks/useArchitectSearch";
+import { useGlobalEntitySearch } from "@/features/search/hooks/useGlobalEntitySearch";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 /** SSR/hydration skeleton — matches PlanoMap outer shell to avoid layout shift */
@@ -59,6 +60,7 @@ function MapLoadingPlaceholder() {
 
 function SearchPageContent() {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const {
     state: { filters },
     methods: { setFilter, moveMap, fitMapBounds },
@@ -66,7 +68,7 @@ function SearchPageContent() {
 
   const [searchValue, setSearchValue] = useState(filters.query || "");
   const debouncedSearchValue = useDebounce(searchValue, 300);
-  const { architects } = useArchitectSearch({ searchQuery: searchValue });
+  const { people, companies } = useGlobalEntitySearch({ searchQuery: searchValue });
   const [viewMode, setViewMode] = useState<"list" | "map">("map");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
@@ -95,6 +97,20 @@ function SearchPageContent() {
       fitMapBounds(bounds);
     } else {
       moveMap(location.lat, location.lng, 14);
+    }
+    if (isMobile) setViewMode("map");
+  };
+
+  const handleBuildingPick = (building: {
+    id: string;
+    name: string;
+    location_lat?: number | null;
+    location_lng?: number | null;
+  }) => {
+    setSearchValue("");
+    setFilter("query", building.name);
+    if (building.location_lat != null && building.location_lng != null) {
+      moveMap(building.location_lat, building.location_lng, 16);
     }
     if (isMobile) setViewMode("map");
   };
@@ -132,6 +148,16 @@ function SearchPageContent() {
         onLocationSelect={handleLocationSelect}
         onSuggestionsChange={setSuggestions}
         disableDropdown={viewMode === "list"}
+        showMixedEntitySuggestions={viewMode === "map"}
+        onBuildingPick={handleBuildingPick}
+        onPersonPick={(p) => {
+          setSearchValue("");
+          navigate(`/person/${p.slug}`);
+        }}
+        onCompanyPick={(c) => {
+          setSearchValue("");
+          navigate(`/company/${c.slug}`);
+        }}
         placeholder="Search..."
         className="flex-1"
       />
@@ -168,7 +194,8 @@ function SearchPageContent() {
               onLocationSelect={handleLocationSelect}
               onSuggestionsChange={setSuggestions}
               disableDropdown={true}
-              placeholder="Search buildings, architects..."
+              showMixedEntitySuggestions={false}
+              placeholder="Search buildings, people, companies..."
               className="flex-1"
             />
             <MapControls />
@@ -178,7 +205,8 @@ function SearchPageContent() {
             <BuildingSidebar
               suggestions={suggestions}
               onLocationClick={handleLocationResultClick}
-              architects={architects}
+              people={people}
+              companies={companies}
             />
           </div>
         </div>
@@ -232,7 +260,8 @@ function SearchPageContent() {
               <BuildingSidebar
                 suggestions={suggestions}
                 onLocationClick={handleLocationResultClick}
-                architects={architects}
+                people={people}
+                companies={companies}
                 className="pb-24"
               />
             </div>

@@ -20,6 +20,8 @@ import { filterLocalBuildings } from "../utils/searchFilters";
 import { UserSearchResult } from "./useUserSearch";
 import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 import { Bounds } from "@/utils/map";
+import { CREDIT_ROLES } from "@/features/credits/api/credits";
+import type { CreditRole } from "@/features/credits/types";
 
 // Type definitions for better type safety
 interface BuildingDataItem {
@@ -362,6 +364,62 @@ const getNumParam = (param: string | null, defaultVal: number): number =>
 const getIdListParam = (param: string | null): { id: string; name: string }[] =>
   param ? param.split(",").map(id => ({ id, name: id })) : []; // Name to be hydrated later
 
+const CREDIT_ROLE_SET = new Set<string>(CREDIT_ROLES);
+
+function parseCreditRolesParam(param: string | null): CreditRole[] {
+  if (!param) return [];
+  return param
+    .split(",")
+    .map((s) => s.trim())
+    .filter((x): x is CreditRole => CREDIT_ROLE_SET.has(x));
+}
+
+function getCreditCompanyParam(param: string | null): { id: string; name: string } | null {
+  if (!param || param.length < 32) return null;
+  return { id: param.trim(), name: param.trim() };
+}
+
+async function fetchBuildingIdsMatchingCreditFilters(
+  companyId: string | null,
+  roles: readonly CreditRole[]
+): Promise<Set<string> | null> {
+  if (!companyId && roles.length === 0) return null;
+
+  let byCompany: Set<string> | null = null;
+  let byRole: Set<string> | null = null;
+
+  if (companyId) {
+    const { data, error } = await supabase
+      .from("building_credits")
+      .select("building_id")
+      .eq("company_id", companyId)
+      .neq("status", "hidden")
+      .limit(QUERY_LIMIT);
+    if (error) return new Set();
+    byCompany = new Set((data ?? []).map((r) => r.building_id));
+  }
+
+  if (roles.length > 0) {
+    const { data, error } = await supabase
+      .from("building_credits")
+      .select("building_id")
+      .in("role", roles)
+      .neq("status", "hidden")
+      .limit(QUERY_LIMIT);
+    if (error) return new Set();
+    byRole = new Set((data ?? []).map((r) => r.building_id));
+  }
+
+  if (byCompany && byRole) {
+    const inter = new Set<string>();
+    for (const id of byCompany) {
+      if (byRole.has(id)) inter.add(id);
+    }
+    return inter;
+  }
+  return byCompany ?? byRole ?? null;
+}
+
 export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: { searchTriggerVersion?: number, bounds?: Bounds | null, zoom?: number } = {}) {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -404,6 +462,13 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [accessCosts, setAccessCosts] = useState<string[]>(getArrayParam(searchParams.get("accessCosts")));
 
   const [constructionStatuses, setConstructionStatuses] = useState<string[]>(getArrayParam(searchParams.get("constructionStatuses")));
+
+  const [selectedCreditCompany, setSelectedCreditCompany] = useState<{ id: string; name: string } | null>(
+    () => getCreditCompanyParam(searchParams.get("creditCompany"))
+  );
+  const [selectedCreditRoles, setSelectedCreditRoles] = useState<CreditRole[]>(() =>
+    parseCreditRolesParam(searchParams.get("creditRoles"))
+  );
 
   // Resolve rated_by profiles from URL
   const ratedByParam = searchParams.get("rated_by");
@@ -466,6 +531,14 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
          const { data } = await supabase.from('user_folders').select('id, name').in('id', selectedFolders.map(f => f.id));
          if (data && data.length > 0) setSelectedFolders(data);
       }
+      if (selectedCreditCompany && selectedCreditCompany.id === selectedCreditCompany.name) {
+        const { data } = await supabase
+          .from("companies")
+          .select("id, name")
+          .eq("id", selectedCreditCompany.id)
+          .maybeSingle();
+        if (data) setSelectedCreditCompany({ id: data.id, name: data.name });
+      }
     };
     hydrateMetadata();
   }, []); // Run only once on mount to hydrate if initialized from URL
@@ -515,7 +588,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         accessLevels.length > 0 ||
         accessLogistics.length > 0 ||
         accessCosts.length > 0 ||
-        constructionStatuses.length > 0;
+        constructionStatuses.length > 0 ||
+        selectedCreditCompany !== null ||
+        selectedCreditRoles.length > 0;
 
      if (hasActiveFilters) {
          try {
@@ -528,7 +603,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     debouncedQuery, statusFilters, hideVisited, hideSaved, hideHidden, hideWithoutImages,
     filterContacts, personalMinRating, globalMinRating, contactMinRating, selectedCategory, selectedTypologies,
     selectedAttributes, selectedArchitects, selectedCollections, selectedFolders, selectedContacts,
-    accessLevels, accessLogistics, accessCosts, constructionStatuses
+    accessLevels, accessLogistics, accessCosts, constructionStatuses,
+    selectedCreditCompany, selectedCreditRoles
   ]);
 
   // Sync state to URL params
@@ -609,6 +685,12 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (constructionStatuses.length > 0) params.set("constructionStatuses", constructionStatuses.join(","));
       else params.delete("constructionStatuses");
 
+      if (selectedCreditCompany) params.set("creditCompany", selectedCreditCompany.id);
+      else params.delete("creditCompany");
+
+      if (selectedCreditRoles.length > 0) params.set("creditRoles", selectedCreditRoles.join(","));
+      else params.delete("creditRoles");
+
       // Construct rated_by param
       const ratedByUsers = new Set<string>();
       const authUsername = (user?.user_metadata as { username?: string } | undefined)?.username;
@@ -656,6 +738,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     accessLogistics,
     accessCosts,
     constructionStatuses,
+    selectedCreditCompany,
+    selectedCreditRoles,
     setSearchParams,
     user
   ]);
@@ -715,6 +799,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       selectedAttributes,
       selectedContacts,
       constructionStatuses,
+      selectedCreditCompany?.id,
+      selectedCreditRoles,
       userLocation, // Keep tracking location for distance calculation in local mode? Yes.
       debouncedBounds, // Use debounced bounds
       zoom, // Use zoom level
@@ -845,7 +931,23 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
             }
           }
 
-          if (buildingIds.size === 0) return [];
+          const creditFilteredSet = await fetchBuildingIdsMatchingCreditFilters(
+            selectedCreditCompany?.id ?? null,
+            selectedCreditRoles
+          );
+          if (creditFilteredSet !== null) {
+            if (buildingIds.size === 0) {
+              return [];
+            }
+            for (const bid of [...buildingIds]) {
+              if (!creditFilteredSet.has(bid)) buildingIds.delete(bid);
+            }
+            if (buildingIds.size === 0) {
+              return [];
+            }
+          } else if (buildingIds.size === 0) {
+            return [];
+          }
 
           // 4. Fetch lightweight building data + Metadata for filtering
           try {
@@ -952,7 +1054,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               access_levels: accessLevels.length > 0 ? accessLevels : undefined,
               access_logistics: accessLogistics.length > 0 ? accessLogistics : undefined,
               access_costs: accessCosts.length > 0 ? accessCosts : undefined,
-              construction_statuses: constructionStatuses.length > 0 ? constructionStatuses : undefined
+              construction_statuses: constructionStatuses.length > 0 ? constructionStatuses : undefined,
+              credit_company_id: selectedCreditCompany?.id,
+              credit_roles: selectedCreditRoles.length > 0 ? selectedCreditRoles : undefined,
             }
           });
 
@@ -1121,6 +1225,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setAccessCosts,
     constructionStatuses,
     setConstructionStatuses,
+    selectedCreditCompany,
+    setSelectedCreditCompany,
+    selectedCreditRoles,
+    setSelectedCreditRoles,
     viewMode,
     setViewMode,
     mode,

@@ -2818,7 +2818,7 @@ Browser Supabase client wrappers live in `src/features/credits/api/people.ts`. P
 | Function | Behaviour |
 |----------|-----------|
 | `getPerson(slug)` | `Person` + `credits: PersonCreditWithBuilding[]` (each credit includes `building` summary); `null` if slug missing. |
-| `searchPeople(query)` | `PersonSummary[]` (`associatedCompanies`, `knownBuilding` from affiliations / first visible credit per person). |
+| `searchPeople(query)` | `PersonSummary[]` (`associatedCompanies`, `knownBuilding` from affiliations / first visible credit per person; also `nationality`, `avatarUrl`, `creditCount` for global search UI). |
 | `createPerson(input)` | Zod-validated insert; slug via `slugifyPersonName` + numeric suffix on collision. |
 | `updatePerson(id, input)` | Zod partial update; RLS (owner / admin). Returns `null` if row absent after update. |
 | `getPersonPortfolio(personId)` | `PersonPortfolioByTier` — credits with `building` join, ordered per tier then `display_order` / `is_lead`. |
@@ -3650,6 +3650,8 @@ CREATE POLICY "saved_views_delete" ON saved_views
 | GET | (RPC) search_buildings | Full-text + fuzzy building search | supabase (RPC) |
 | GET | (RPC) get_discovery_filters | Available filter options | supabase (RPC) |
 | GET | (RPC) get_building_leaderboards | Ranked building lists | supabase (RPC) |
+
+**Map/list RPC filters (Phase 10 Task 10.2):** `get_map_clusters`, `get_map_clusters_v2`, and `get_buildings_list` accept optional JSON keys `credit_company_id` (UUID string) and `credit_roles` (text array of `credit_role_enum` values). A building matches if it has at least one non-`hidden` `building_credits` row satisfying each supplied constraint (company and role may be satisfied by different rows). Helper: `building_matches_credit_filters(building_id, company_id, roles)`.
 
 ```typescript
 interface MapClusterDTO {

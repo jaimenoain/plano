@@ -244,7 +244,7 @@ toast.error("Failed to update building");
       await supabase.from('building_architects').delete().eq('building_id', buildingId);
 
       // 2. Insert new links
-      // We assume formData.architects contains valid UUIDs from the ArchitectSelect component
+      // We assume formData.architects contains valid UUIDs from the building form architect picker
       if (formData.architects.length > 0) {
           const links = formData.architects.map(a => ({ building_id: buildingId, architect_id: a.id }));
           const { error: _linkError } = await supabase.from('building_architects').insert(links);

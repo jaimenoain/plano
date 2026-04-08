@@ -41,3 +41,20 @@ export const getBuildingImageUrl = (path: string | null | undefined): string | u
 
   return `${cleanBase}/${encodedPath}`;
 };
+
+/**
+ * Public URL for person avatars, company logos, and other storage paths that are
+ * not under the review-images prefix (see `getBuildingImageUrl`).
+ */
+export function getStorageAssetUrl(path: string | null | undefined): string | undefined {
+  if (!path?.trim()) return undefined;
+  const t = path.trim();
+  if (t.startsWith("http") || t.startsWith("blob:") || t.startsWith("data:")) {
+    return t;
+  }
+  const baseUrl = config.storage.publicUrl;
+  const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanPath = t.startsWith("/") ? t.slice(1) : t;
+  if (!cleanBase) return undefined;
+  return `${cleanBase}/${encodeURI(cleanPath)}`;
+}

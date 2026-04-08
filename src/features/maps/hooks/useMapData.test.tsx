@@ -120,4 +120,30 @@ describe('useMapData', () => {
         })
     );
   });
+
+  it('should pass credit company and role filters to RPC', async () => {
+    const filters = {
+      creditCompany: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', name: 'Acme' },
+      creditRoles: ['structural_engineer', 'mep_engineer'],
+    };
+
+    const bounds = { north: 10, south: 0, east: 10, west: 0 };
+    const zoom = 10;
+
+    const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(rpcMock).toHaveBeenCalledWith(
+      'get_map_clusters_v2',
+      expect.objectContaining({
+        filter_criteria: expect.objectContaining({
+          credit_company_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+          credit_roles: ['structural_engineer', 'mep_engineer'],
+        }),
+      })
+    );
+  });
 });

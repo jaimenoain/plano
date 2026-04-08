@@ -66,6 +66,10 @@ export interface PersonSummary {
   claimStatus: PersonClaimStatus;
   associatedCompanies: string[];
   knownBuilding: string | null;
+  /** Set by `searchPeople` for global search / sidebar (optional for narrow picker queries). */
+  nationality?: string | null;
+  avatarUrl?: string | null;
+  creditCount?: number;
 }
 
 export interface Company {

@@ -11,7 +11,11 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ArchitectSelect } from '@/features/search/components/ArchitectSelect';
+import { PersonFilterSelect } from '@/features/search/components/PersonFilterSelect';
+import { CompanyMapFilterSelect } from '@/features/search/components/CompanyMapFilterSelect';
+import { CREDIT_ROLES } from '@/features/credits/api/credits';
+import { formatCreditRoleLabel } from '@/features/credits/formatCreditRole';
+import type { CreditRole } from '@/features/credits/types';
 import { ContactPicker } from '@/features/search/components/ContactPicker';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useBuildingSearch } from '@/features/search/hooks/useBuildingSearch';
@@ -113,6 +117,10 @@ export function FilterDrawer() {
     setSelectedContacts,
     constructionStatuses,
     setConstructionStatuses,
+    selectedCreditCompany,
+    setSelectedCreditCompany,
+    selectedCreditRoles,
+    setSelectedCreditRoles,
     mode,
     setMode,
   } = useBuildingSearch();
@@ -237,6 +245,19 @@ const handleModeChange = (newMode: string) => {
     setConstructionStatuses(ids);
   };
 
+  const creditRoleItems = useMemo(
+    () =>
+      CREDIT_ROLES.map((role) => ({
+        id: role,
+        name: formatCreditRoleLabel(role, null),
+      })),
+    []
+  );
+
+  const handleCreditRolesChange = (ids: string[]) => {
+    setSelectedCreditRoles(ids as CreditRole[]);
+  };
+
   const handleResetGlobalFilters = () => {
       setSelectedArchitects([]);
       setSelectedContacts([]);
@@ -244,6 +265,8 @@ const handleModeChange = (newMode: string) => {
       setSelectedTypologies([]);
       setSelectedAttributes([]);
       setConstructionStatuses([]);
+      setSelectedCreditCompany(null);
+      setSelectedCreditRoles([]);
   };
 
   const handleClearAll = () => {
@@ -259,6 +282,8 @@ const handleModeChange = (newMode: string) => {
     setStatusFilters([]);
     setSelectedCollections([]);
     setSelectedFolders([]);
+    setSelectedCreditCompany(null);
+    setSelectedCreditRoles([]);
     setHideSaved(false);
     setHideVisited(false);
   };
@@ -287,6 +312,8 @@ const handleModeChange = (newMode: string) => {
     if (currentContexts.length > 0) count++;
     if (currentStyles.length > 0) count++;
     if (constructionStatuses?.length > 0) count++;
+    if (selectedCreditCompany) count++;
+    if (selectedCreditRoles.length > 0) count++;
 
     if (mode === 'discover') {
       if (currentMinRating > 0) count++;
@@ -315,7 +342,9 @@ const handleModeChange = (newMode: string) => {
       currentMaterials,
       currentContexts,
       currentStyles,
-      constructionStatuses
+      constructionStatuses,
+      selectedCreditCompany,
+      selectedCreditRoles
   ]);
 
   // Derived Data for Display
@@ -516,15 +545,39 @@ const handleModeChange = (newMode: string) => {
                   </AccordionItem>
                 )}
 
-                {/* Item 1: Architects */}
+                {/* Item 1: People (building credits — person IDs align with legacy architect UUIDs for individuals) */}
                 <AccordionItem value="architects">
-                    <AccordionTrigger className="text-sm">Architects</AccordionTrigger>
+                    <AccordionTrigger className="text-sm">People</AccordionTrigger>
                     <AccordionContent>
-                        <ArchitectSelect
-                            selectedArchitects={currentArchitects}
-                            setSelectedArchitects={handleArchitectsChange}
-                            placeholder="Search architects..."
+                        <PersonFilterSelect
+                            selectedPeople={currentArchitects}
+                            setSelectedPeople={handleArchitectsChange}
+                            placeholder="Search people..."
                         />
+                    </AccordionContent>
+                </AccordionItem>
+
+                {/* Credits: company + role on building_credits (map/list RPCs) */}
+                <AccordionItem value="credits">
+                    <AccordionTrigger className="text-sm">Credits</AccordionTrigger>
+                    <AccordionContent className="space-y-4 pt-2">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-medium text-text-secondary">Company</Label>
+                            <CompanyMapFilterSelect
+                                selectedCompany={selectedCreditCompany}
+                                setSelectedCompany={setSelectedCreditCompany}
+                                placeholder="Search companies…"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs font-medium text-text-secondary">Role</Label>
+                            <MultiSelectCheckboxList
+                                items={creditRoleItems}
+                                selectedIds={selectedCreditRoles}
+                                onChange={handleCreditRolesChange}
+                                className="h-[180px]"
+                            />
+                        </div>
                     </AccordionContent>
                 </AccordionItem>
 

@@ -70,6 +70,11 @@ export interface MapFilters {
   accessLevels?: string[];
   accessLogistics?: string[];
   accessCosts?: string[];
+
+  /** Map / list RPC: `building_credits` with this `company_id`, excluding hidden credits */
+  creditCompany?: { id: string; name: string } | null;
+  /** Map / list RPC: `building_credits.role` in this set, excluding hidden credits */
+  creditRoles?: string[];
 }
 
 export interface MapState {

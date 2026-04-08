@@ -134,6 +134,9 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         access_levels: filters.accessLevels && filters.accessLevels.length > 0 ? filters.accessLevels : undefined,
         access_logistics: filters.accessLogistics && filters.accessLogistics.length > 0 ? filters.accessLogistics : undefined,
         access_costs: filters.accessCosts && filters.accessCosts.length > 0 ? filters.accessCosts : undefined,
+        credit_company_id: filters.creditCompany?.id ?? undefined,
+        credit_roles:
+          filters.creditRoles && filters.creditRoles.length > 0 ? filters.creditRoles : undefined,
       };
 
       const { data, error } = await supabase.rpc('get_map_clusters_v2', {

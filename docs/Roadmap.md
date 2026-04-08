@@ -450,7 +450,7 @@
 
 ---
 
-**[ ] Task 10.1 — Extend global search to include people and companies; retire architect search components**
+**[x] Task 10.1 — Extend global search to include people and companies; retire architect search components**
 
 - Update global search API to query `people` and `companies` alongside buildings
 - Search results page gains "People" and "Companies" tabs with result counts; people results show name, avatar, nationality, credit count; company results show name, logo, country, credit count
@@ -464,7 +464,7 @@
 
 ---
 
-**[ ] Task 10.2 — Credits filter on building discovery and map**
+**[x] Task 10.2 — Credits filter on building discovery and map**
 
 - Add a "Credits" filter section to the building discovery filter panel
 - Two controls: **Company** (searchable combobox via `searchCompanies`) and **Role** (multi-select from role taxonomy enum)

@@ -60,8 +60,12 @@ vi.mock('./filters/FolderAndCollectionMultiSelect', () => ({
     FolderAndCollectionMultiSelect: () => <div data-testid="folder-collection-multi-select"></div>
 }));
 
-vi.mock('@/features/search/components/ArchitectSelect', () => ({
-    ArchitectSelect: () => <div data-testid="architect-select"></div>
+vi.mock('@/features/search/components/PersonFilterSelect', () => ({
+    PersonFilterSelect: () => <div data-testid="architect-select"></div>
+}));
+
+vi.mock('@/features/search/components/CompanyMapFilterSelect', () => ({
+    CompanyMapFilterSelect: () => <div data-testid="company-map-filter"></div>
 }));
 
 vi.mock('@/features/search/components/ContactPicker', () => ({
@@ -119,10 +123,24 @@ describe('FilterDrawer', () => {
     setSelectedContacts: vi.fn(),
     constructionStatuses: [],
     setConstructionStatuses: vi.fn(),
+    selectedCreditCompany: null,
+    setSelectedCreditCompany: vi.fn(),
+    selectedCreditRoles: [],
+    setSelectedCreditRoles: vi.fn(),
     mode: 'discover',
     setMode: vi.fn(),
-    constructionStatuses: [],
-    setConstructionStatuses: vi.fn(),
+    globalMinRating: 0,
+    setGlobalMinRating: vi.fn(),
+    hideHidden: true,
+    setHideHidden: vi.fn(),
+    hideWithoutImages: false,
+    setHideWithoutImages: vi.fn(),
+    accessLevels: [],
+    setAccessLevels: vi.fn(),
+    accessLogistics: [],
+    setAccessLogistics: vi.fn(),
+    accessCosts: [],
+    setAccessCosts: vi.fn(),
   };
 
   beforeEach(() => {

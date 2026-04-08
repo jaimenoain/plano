@@ -411,7 +411,7 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
 
   const { data: peopleRows, error: pErr } = await supabase
     .from("people")
-    .select("id, name, slug, claim_status")
+    .select("id, name, slug, claim_status, nationality, avatar_url")
     .ilike("name", `%${q}%`)
     .limit(25);
 
@@ -419,6 +419,18 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
   if (!peopleRows?.length) return [];
 
   const ids = peopleRows.map((r) => r.id as string);
+
+  const countResults = await Promise.all(
+    ids.map(async (personId) => {
+      const { count, error: cErr } = await supabase
+        .from("building_credits")
+        .select("id", { count: "exact", head: true })
+        .eq("person_id", personId);
+      if (cErr) throw cErr;
+      return [personId, count ?? 0] as const;
+    }),
+  );
+  const countById = new Map(countResults);
 
   const [{ data: affRows, error: aErr }, { data: creditSampleRows, error: crErr }] = await Promise.all([
     supabase
@@ -450,13 +462,24 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
 
   return peopleRows.map((r) => {
     const id = r.id as string;
+    const row = r as {
+      id: string;
+      name: string;
+      slug: string;
+      claim_status: PersonSummary["claimStatus"];
+      nationality: string | null;
+      avatar_url: string | null;
+    };
     return {
       id,
-      name: r.name as string,
-      slug: r.slug as string,
-      claimStatus: r.claim_status as PersonSummary["claimStatus"],
+      name: row.name,
+      slug: row.slug,
+      claimStatus: row.claim_status,
       associatedCompanies: Array.from(companiesByPerson.get(id) ?? []).sort(),
       knownBuilding: knownBuildingByPerson.get(id) ?? null,
+      nationality: row.nationality,
+      avatarUrl: row.avatar_url,
+      creditCount: countById.get(id) ?? 0,
     };
   });
 }

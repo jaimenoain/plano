@@ -21,22 +21,36 @@ import usePlacesAutocomplete, {
 } from "use-places-autocomplete";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import { config } from "@/config";
+import { useQuery } from "@tanstack/react-query";
 import {
   Command,
   CommandGroup,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import { MapPin } from "lucide-react";
+import { MapPin, Building2, UserRound, Briefcase, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Bounds } from "@/utils/map";
 import { ClientOnly } from "@/components/common/ClientOnly";
+import { supabase } from "@/integrations/supabase/client";
+import { searchPeople } from "@/features/credits/api/people";
+import { searchCompanies } from "@/features/credits/api/companies";
 
 export interface Suggestion {
   place_id: string;
   description: string;
 }
+
+type BuildingSearchRow = {
+  id: string;
+  name: string;
+  city?: string | null;
+  country?: string | null;
+  location_lat?: number | null;
+  location_lng?: number | null;
+};
 
 interface DiscoverySearchInputProps {
   value: string;
@@ -49,6 +63,11 @@ interface DiscoverySearchInputProps {
   disableDropdown?: boolean;
   onSuggestionsChange?: (suggestions: Suggestion[]) => void;
   onPlaceDetails?: (details: google.maps.GeocoderResult) => void;
+  /** When true (and dropdown enabled), show buildings, people, and companies under Places. */
+  showMixedEntitySuggestions?: boolean;
+  onBuildingPick?: (building: BuildingSearchRow) => void;
+  onPersonPick?: (person: { slug: string }) => void;
+  onCompanyPick?: (company: { slug: string }) => void;
 }
 
 /** Non-interactive shell for SSR and pre-hydration */
@@ -80,10 +99,46 @@ function DiscoverySearchInputInner({
   disableDropdown = false,
   onSuggestionsChange,
   onPlaceDetails,
+  showMixedEntitySuggestions = false,
+  onBuildingPick,
+  onPersonPick,
+  onCompanyPick,
 }: DiscoverySearchInputProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+
+  const entitySearchEnabled =
+    showMixedEntitySuggestions && !disableDropdown && open && value.trim().length >= 2;
+
+  const { data: buildingsData = [], isFetching: buildingsFetching } = useQuery({
+    queryKey: ["discovery-search-buildings", value.trim()],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("search_buildings", {
+        query_text: value.trim(),
+      });
+      if (error) throw error;
+      return (data as BuildingSearchRow[]).slice(0, 5);
+    },
+    enabled: entitySearchEnabled,
+    staleTime: 60_000,
+  });
+
+  const { data: peopleData = [], isFetching: peopleFetching } = useQuery({
+    queryKey: ["discovery-search-people", value.trim()],
+    queryFn: async () => (await searchPeople(value.trim())).slice(0, 5),
+    enabled: entitySearchEnabled,
+    staleTime: 60_000,
+  });
+
+  const { data: companiesData = [], isFetching: companiesFetching } = useQuery({
+    queryKey: ["discovery-search-companies", value.trim()],
+    queryFn: async () => (await searchCompanies(value.trim())).slice(0, 5),
+    enabled: entitySearchEnabled,
+    staleTime: 60_000,
+  });
+
+  const entitiesLoading = buildingsFetching || peopleFetching || companiesFetching;
 
   // Load Google Maps Script
   useEffect(() => {
@@ -205,33 +260,122 @@ function DiscoverySearchInputInner({
             onFocus={() => setOpen(!!value)}
             placeholder={placeholder}
             // h-10: reduced from h-12 — tighter, consistent with the rest of the app
-            className="w-full h-10"
+            className="w-full h-10 pr-9"
             autoComplete="off"
             onKeyDown={onKeyDown}
           />
+          {entitySearchEnabled && entitiesLoading ? (
+            <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
+              <Loader2 className="h-4 w-4 animate-spin text-text-secondary" aria-hidden />
+            </div>
+          ) : null}
         </div>
 
-        {!disableDropdown && open && status === "OK" && (
+        {!disableDropdown &&
+          open &&
+          (status === "OK" ||
+            (showMixedEntitySuggestions &&
+              value.trim().length >= 2 &&
+              (buildingsData.length > 0 || peopleData.length > 0 || companiesData.length > 0 || entitiesLoading))) && (
           <div
             // shadow-lg removed — border + background is sufficient
-            className="absolute top-[calc(100%+4px)] left-0 w-full z-50 border border-border-default bg-surface-overlay text-text-primary outline-none animate-in fade-in-0 zoom-in-95"
+            className="absolute top-[calc(100%+4px)] left-0 w-full z-50 border border-border-default bg-surface-overlay text-text-primary outline-none animate-in fade-in-0 zoom-in-95 max-h-[min(24rem,70vh)] overflow-y-auto"
           >
             <CommandList>
-              {/* CommandGroup heading removed — obvious from context */}
-              <CommandGroup>
-                {data.map(({ place_id, description }) => (
-                  <CommandItem
-                    key={place_id}
-                    value={description}
-                    onSelect={() => handleSelect(description)}
-                    // hover:bg-surface-muted/50 replaces hover:bg-brand-secondary
-                    className="cursor-pointer hover:bg-surface-muted/50"
-                  >
-                    <MapPin className="mr-2 h-3.5 w-3.5 shrink-0 text-text-disabled" strokeWidth={1.5} />
-                    <span className="text-sm">{description}</span>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              {status === "OK" && data.length > 0 ? (
+                <CommandGroup>
+                  {data.map(({ place_id, description }) => (
+                    <CommandItem
+                      key={place_id}
+                      value={description}
+                      onSelect={() => handleSelect(description)}
+                      className="cursor-pointer hover:bg-surface-muted/50"
+                    >
+                      <MapPin className="mr-2 h-3.5 w-3.5 shrink-0 text-text-disabled" strokeWidth={1.5} />
+                      <span className="text-sm">{description}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              ) : null}
+
+              {showMixedEntitySuggestions && value.trim().length >= 2 ? (
+                <>
+                  {status === "OK" && data.length > 0 ? <CommandSeparator /> : null}
+
+                  {buildingsData.length > 0 ? (
+                    <CommandGroup heading="Buildings">
+                      {buildingsData.map((building) => (
+                        <CommandItem
+                          key={building.id}
+                          value={`b-${building.id}`}
+                          onSelect={() => {
+                            setOpen(false);
+                            clearSuggestions();
+                            onBuildingPick?.(building);
+                          }}
+                          className="cursor-pointer hover:bg-surface-muted/50"
+                        >
+                          <Building2 className="mr-2 h-3.5 w-3.5 shrink-0 text-text-disabled" strokeWidth={1.5} />
+                          <div className="flex min-w-0 flex-col">
+                            <span className="text-sm truncate">{building.name}</span>
+                            {(building.city || building.country) && (
+                              <span className="text-2xs text-text-secondary truncate">
+                                {[building.city, building.country].filter(Boolean).join(", ")}
+                              </span>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ) : null}
+
+                  {buildingsData.length > 0 && (peopleData.length > 0 || companiesData.length > 0) ? (
+                    <CommandSeparator />
+                  ) : null}
+
+                  {peopleData.length > 0 ? (
+                    <CommandGroup heading="People">
+                      {peopleData.map((person) => (
+                        <CommandItem
+                          key={person.id}
+                          value={`p-${person.id}`}
+                          onSelect={() => {
+                            setOpen(false);
+                            clearSuggestions();
+                            onPersonPick?.({ slug: person.slug });
+                          }}
+                          className="cursor-pointer hover:bg-surface-muted/50"
+                        >
+                          <UserRound className="mr-2 h-3.5 w-3.5 shrink-0 text-text-disabled" strokeWidth={1.5} />
+                          <span className="text-sm truncate">{person.name}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ) : null}
+
+                  {peopleData.length > 0 && companiesData.length > 0 ? <CommandSeparator /> : null}
+
+                  {companiesData.length > 0 ? (
+                    <CommandGroup heading="Companies">
+                      {companiesData.map((company) => (
+                        <CommandItem
+                          key={company.id}
+                          value={`c-${company.id}`}
+                          onSelect={() => {
+                            setOpen(false);
+                            clearSuggestions();
+                            onCompanyPick?.({ slug: company.slug });
+                          }}
+                          className="cursor-pointer hover:bg-surface-muted/50"
+                        >
+                          <Briefcase className="mr-2 h-3.5 w-3.5 shrink-0 text-text-disabled" strokeWidth={1.5} />
+                          <span className="text-sm truncate">{company.name}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ) : null}
+                </>
+              ) : null}
             </CommandList>
           </div>
         )}
