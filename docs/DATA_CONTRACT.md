@@ -3035,6 +3035,10 @@ CREATE TABLE public.company_steward_request_approval_tokens (
 
 **RPC:** `approve_company_steward_request(p_token_hex text)` — **authenticated**; 64-char hex → SHA-256 lookup; requires caller to be an **owner** steward of the request’s company; if request already **`approved`**, returns success (`already_processed: true`) and consumes the token when appropriate; if **`pending`**, inserts `company_stewards` (`role = steward`, `invited_by` = owner), sets request `approved` + `resolved_at`, consumes **all** approval tokens for that request. Returns `jsonb` `{ ok: true, company_slug, request_id, already_processed }` or `{ ok: false, error }` with `error` ∈ `not_authenticated` \| `invalid_token` \| `unknown_token` \| `expired` \| `already_used` \| `not_owner` \| `not_pending`.
 
+**RPC:** `approve_company_steward_request_by_id(p_request_id uuid)` — **authenticated**; migration `20270835000000_steward_request_owner_dashboard_rpcs.sql`. Same approval semantics as the token RPC (owner-only, `pending` → approved, consumes all approval tokens, idempotent when already **`approved`**) but keyed by request id for the in-app company dashboard. Returns the same `jsonb` shape; `error` may also be `not_found` when the id is missing.
+
+**RPC:** `reject_company_steward_request_by_id(p_request_id uuid)` — **authenticated**; same migration. **Owner** only; if **`pending`**, sets request `rejected` + `resolved_at` and consumes unconsumed approval tokens so email links cannot approve afterward. If already **`rejected`**, returns success with `already_processed: true`. Returns `jsonb` `{ ok: true, company_slug, request_id, already_processed }` or `{ ok: false, error }` with `error` ∈ `not_authenticated` \| `not_owner` \| `not_pending` \| `not_found` (e.g. already **`approved`** yields `not_pending`).
+
 **Edge Functions:** `notify-steward-request` — `verify_jwt = false`; manual `getUser`; body `{ requestId }`; caller must be the requester; idempotent if approval tokens already exist for the request; creates one token row per **owner**, emails each owner `{SITE_URL}/approve-steward-request/{64-char hex}` (7-day expiry) when `RESEND_API_KEY` is set. `notify-steward-request-approved` — same auth pattern; body `{ requestId }`; caller must be an **owner** of the company; sends requester email when `RESEND_API_KEY` is set; sets `requester_notified_at` (idempotent).
 
 **SSR route:** `GET /approve-steward-request/:token` — loader runs `approve_company_steward_request` when signed in, then invokes `notify-steward-request-approved`, then **`redirect`** to `/company/:slug?stewardApproved=1`.
@@ -3091,8 +3095,13 @@ Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`
 | `getMyPendingCompanyStewardRequestId(companyId)` | Task 7.3. Returns pending request `id` for the current user or `null`. |
 | `submitCompanyStewardRequest(companyId, message)` | Zod-trimmed message (max 2000); `insert` + `notify-steward-request`. |
 | `approveCompanyStewardRequestWithClient(client, token)` | SSR: RPC `approve_company_steward_request`. |
+| `approveCompanyStewardRequestById(requestId)` | Browser: RPC `approve_company_steward_request_by_id`; then call `notifyStewardRequestApprovedWithClient` when `alreadyProcessed` is false (Roadmap Task 9.2 dashboard). |
+| `rejectCompanyStewardRequestById(requestId)` | Browser: RPC `reject_company_steward_request_by_id` (owner dashboard). |
+| `getMyStewardCompaniesForNav()` | Current user’s `company_stewards` rows joined to `companies` (`id`, `name`, `slug`, steward `role`); sorted by name. |
+| `listPendingStewardRequestsForCompany(companyId)` | `company_steward_requests` with `status = pending`, requester `profiles` username/avatar; stewards may SELECT. |
 | `notifyStewardRequestApprovedWithClient(client, requestId)` | SSR: `notify-steward-request-approved` (best-effort). |
-| `parseApproveCompanyStewardRequestRpcPayload(data)` | Maps approval RPC `jsonb` to typed result. |
+| `parseApproveCompanyStewardRequestRpcPayload(data)` | Maps approval RPC `jsonb` to typed result (includes `not_found` for the by-id RPC). |
+| `parseRejectCompanyStewardRequestRpcPayload(data)` | Maps reject-by-id RPC `jsonb` to typed result. |
 | `getMyOpenCompanyClaimDisputeId(companyId)` | Task 7.4. Returns `open` dispute `id` for the current user or `null`. |
 | `submitCompanyClaimDispute(companyId, { reason, evidenceUrl? })` | Zod-validated; `insert` on `company_claim_disputes` + `notify-admin-dispute`. |
 | `SubmitCompanyClaimDisputeSchema` | Exported Zod object for reason (required) and optional evidence URL. |

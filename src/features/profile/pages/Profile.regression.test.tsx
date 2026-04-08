@@ -121,10 +121,6 @@ vi.mock('@/features/feed/components/ReviewCard', () => ({
     )
 }));
 
-vi.mock('@/features/architect/components/ArchitectPortfolio', () => ({
-    ArchitectPortfolio: () => <div data-testid="architect-portfolio">Architect Portfolio</div>
-}));
-
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: mocks.mockSupabase,
 }));
@@ -284,11 +280,11 @@ describe('Profile Regression Tests', () => {
       expect(mocks.mockChain.eq).toHaveBeenCalledWith('status', 'pending');
   });
 
-  it('should not render ArchitectPortfolio if user is not a verified architect', async () => {
+  it('should not show portfolio dashboard link without a claimed person profile', async () => {
       renderProfileWithUrl();
 
       await screen.findByTestId('review-card-review-1');
 
-      expect(screen.queryByTestId('architect-portfolio')).toBeNull();
+      expect(screen.queryByRole('link', { name: /open portfolio dashboard/i })).toBeNull();
   });
 });

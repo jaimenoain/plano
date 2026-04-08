@@ -418,7 +418,7 @@
 
 ---
 
-**[ ] Task 9.1 — Generalise architect dashboard into person portfolio dashboard + profile tab**
+**[x] Task 9.1 — Generalise architect dashboard into person portfolio dashboard + profile tab**
 
 - Update (or replace) `ArchitectDashboard.tsx` as `PersonDashboard.tsx`: accessible to any user whose `profiles.id` matches a `people.claimed_by_user_id`; route remains authenticated-only
 - Dashboard stats: total buildings credited, number of distinct roles, year range of credits
@@ -432,7 +432,7 @@
 
 ---
 
-**[ ] Task 9.2 — Company steward portfolio dashboard**
+**[x] Task 9.2 — Company steward portfolio dashboard**
 
 - Build `CompanyDashboard.tsx`: accessible to any user who is a steward of at least one company
 - Shows all buildings credited to the steward's company grouped by role, filterable by role

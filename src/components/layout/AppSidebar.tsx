@@ -20,6 +20,10 @@ import {
   LogOut,
   Bell,
   X,
+  Briefcase,
+  Building2,
+  ChevronDown,
+  type LucideIcon,
 } from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
@@ -33,6 +37,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPersonForNav";
+import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
 
 // ─── Nav data ────────────────────────────────────────────────────────────────
 const mainNavItems = [
@@ -53,21 +59,23 @@ interface NavItemProps {
   label: string;
   path: string;
   isActive: boolean;
+  icon?: LucideIcon;
 }
 
-function NavItem({ label, path, isActive }: NavItemProps) {
+function NavItem({ label, path, isActive, icon: Icon }: NavItemProps) {
   return (
     <SidebarMenuItem className="list-none">
       <Link
         to={path}
         className={cn(
-          "group flex items-center px-8 py-3 w-full transition-colors duration-150",
+          "group flex items-center gap-3 px-8 py-3 w-full transition-colors duration-150",
           "text-2xl font-bold tracking-tight leading-none",
           isActive
             ? "text-white"
             : "text-white/50 hover:text-white"
         )}
       >
+        {Icon ? <Icon className="h-6 w-6 shrink-0 opacity-80" strokeWidth={1.5} aria-hidden /> : null}
         <span className="relative">
           {label}
           {/* Active indicator: a thin white underline */}
@@ -86,6 +94,8 @@ function UserMenu() {
   const { profile } = useUserProfile();
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
+  const { data: claimedPersonNav } = useClaimedPersonForNav();
+  const { data: stewardCompanies = [] } = useStewardCompaniesForNav();
   const ownProfilePath = profile?.username
     ? `/profile/${encodeURIComponent(profile.username)}`
     : "/profile";
@@ -138,6 +148,28 @@ function UserMenu() {
                 Your profile
               </Link>
             </DropdownMenuItem>
+            {claimedPersonNav ? (
+              <DropdownMenuItem asChild>
+                <Link
+                  to="/portfolio"
+                  className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
+                >
+                  <Briefcase className="h-4 w-4" />
+                  My portfolio
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
+            {stewardCompanies.length > 0 ? (
+              <DropdownMenuItem asChild>
+                <Link
+                  to="/company-portfolio"
+                  className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
+                >
+                  <Building2 className="h-4 w-4" />
+                  Company portfolio
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem asChild>
               <Link to="/settings" className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10">
                 <Settings className="h-4 w-4" />
@@ -188,7 +220,10 @@ function CloseButton() {
  */
 export function AppSidebar() {
   const location = useLocation();
+  const { isMobile } = useSidebar();
   const { profile } = useUserProfile();
+  const { data: claimedPersonNav } = useClaimedPersonForNav();
+  const { data: stewardCompanies = [] } = useStewardCompaniesForNav();
   const ownProfilePath = profile?.username
     ? `/profile/${encodeURIComponent(profile.username)}`
     : "/profile";
@@ -248,6 +283,65 @@ export function AppSidebar() {
                   }
                 />
               ))}
+              {claimedPersonNav ? (
+                <NavItem
+                  label="My portfolio"
+                  path="/portfolio"
+                  icon={Briefcase}
+                  isActive={location.pathname === "/portfolio"}
+                />
+              ) : null}
+              {stewardCompanies.length === 1 ? (
+                <NavItem
+                  label={stewardCompanies[0].name}
+                  path="/company-portfolio"
+                  icon={Building2}
+                  isActive={location.pathname === "/company-portfolio"}
+                />
+              ) : stewardCompanies.length > 1 ? (
+                <SidebarMenuItem className="list-none">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "group flex w-full items-center gap-3 px-8 py-3 text-left transition-colors duration-150",
+                          "text-2xl font-bold tracking-tight leading-none",
+                          location.pathname === "/company-portfolio"
+                            ? "text-white"
+                            : "text-white/50 hover:text-white"
+                        )}
+                      >
+                        <Building2 className="h-6 w-6 shrink-0 opacity-80" strokeWidth={1.5} aria-hidden />
+                        <span className="relative min-w-0 flex-1 truncate">
+                          My companies
+                          {location.pathname === "/company-portfolio" ? (
+                            <span className="absolute -bottom-0.5 left-0 h-[2px] w-full max-w-[min(100%,12rem)] bg-white" />
+                          ) : null}
+                        </span>
+                        <ChevronDown className="h-5 w-5 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="min-w-56 bg-zinc-900 border border-white/10 text-white"
+                      side={isMobile ? "bottom" : "right"}
+                      align="start"
+                      sideOffset={4}
+                    >
+                      {stewardCompanies.map((c) => (
+                        <DropdownMenuItem key={c.companyId} asChild>
+                          <Link
+                            to={`/company-portfolio?company=${encodeURIComponent(c.slug)}`}
+                            className="cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
+                          >
+                            {c.name}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarMenuItem>
+              ) : null}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

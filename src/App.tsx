@@ -39,6 +39,8 @@ const UserPhotoGallery = lazyWithRetry(() => import("@/features/profile/pages/Us
 const Settings = lazyWithRetry(() => import("@/features/profile/pages/Settings"));
 const BuildingDetails = lazyWithRetry(() => import("@/features/buildings/pages/BuildingDetails"));
 const ArchitectDashboard = lazyWithRetry(() => import("@/features/architect/pages/ArchitectDashboard"));
+const PersonDashboard = lazyWithRetry(() => import("@/features/credits/pages/PersonDashboard"));
+const CompanyDashboard = lazyWithRetry(() => import("@/features/credits/pages/CompanyDashboard"));
 const ArchitectIdRedirect = lazyWithRetry(
   () => import("@/features/credits/pages/ArchitectIdRedirect"),
 );
@@ -196,6 +198,8 @@ const router = createBrowserRouter(
         <Route path="/building/:id/:slug/edit" element={<EditBuilding />} />
         <Route path="/building/:id/edit" element={<EditBuilding />} />
 
+        <Route path="/portfolio" element={<PersonDashboard />} />
+        <Route path="/company-portfolio" element={<CompanyDashboard />} />
         <Route path="/architect/dashboard" element={<ArchitectDashboard />} />
         <Route
           path="/architect/:id"

@@ -1,0 +1,1 @@
+import{w as e}from"./chunk-UVKPFVEO-Ch6iurkT.js";import{j as t}from"./jsx-runtime-3bS28qY1.js";const d=()=>[{title:"System | Plano"}],m=e(function(){return t.jsx("div",{className:"rounded-md border border-border-default bg-surface-card p-8 text-text-secondary",children:"System (coming soon)"})});export{m as default,d as meta};

@@ -11,6 +11,7 @@ import type {
   CompanyPortfolioByTier,
   CompanyPortfolioItem,
   CompanySteward,
+  CompanyStewardRole,
   CompanyStewardWithProfile,
   CompanySummary,
   CompanyWithCredits,
@@ -766,6 +767,7 @@ export type ApproveCompanyStewardRequestError =
   | "already_used"
   | "not_owner"
   | "not_pending"
+  | "not_found"
   | "rpc_error";
 
 export type ApproveCompanyStewardRequestResult =
@@ -791,7 +793,42 @@ export function parseApproveCompanyStewardRequestRpcPayload(data: unknown): Appr
     err === "expired" ||
     err === "already_used" ||
     err === "not_owner" ||
-    err === "not_pending"
+    err === "not_pending" ||
+    err === "not_found"
+  ) {
+    return { ok: false, error: err };
+  }
+  return { ok: false, error: "rpc_error" };
+}
+
+export type RejectCompanyStewardRequestError =
+  | "not_authenticated"
+  | "not_owner"
+  | "not_pending"
+  | "not_found"
+  | "rpc_error";
+
+export type RejectCompanyStewardRequestResult =
+  | { ok: true; companySlug: string; requestId: string; alreadyProcessed: boolean }
+  | { ok: false; error: RejectCompanyStewardRequestError };
+
+export function parseRejectCompanyStewardRequestRpcPayload(data: unknown): RejectCompanyStewardRequestResult {
+  if (!data || typeof data !== "object") return { ok: false, error: "rpc_error" };
+  const o = data as Record<string, unknown>;
+  if (o.ok === true && typeof o.company_slug === "string" && typeof o.request_id === "string") {
+    return {
+      ok: true,
+      companySlug: o.company_slug,
+      requestId: o.request_id,
+      alreadyProcessed: o.already_processed === true,
+    };
+  }
+  const err = o.error;
+  if (
+    err === "not_authenticated" ||
+    err === "not_owner" ||
+    err === "not_pending" ||
+    err === "not_found"
   ) {
     return { ok: false, error: err };
   }
@@ -823,6 +860,139 @@ export async function approveCompanyStewardRequestWithClient(
   }
 
   return parseApproveCompanyStewardRequestRpcPayload(data);
+}
+
+/** Companies the current user stewards (for nav + dashboard). Ordered by company name. */
+export type StewardCompanyNavItem = {
+  companyId: string;
+  name: string;
+  slug: string;
+  stewardRole: CompanyStewardRole;
+};
+
+export async function getMyStewardCompaniesForNav(): Promise<StewardCompanyNavItem[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: rows, error } = await supabase
+    .from("company_stewards")
+    .select(
+      "role, company:companies!company_stewards_company_id_fkey(id, name, slug)"
+    )
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+  if (!rows?.length) return [];
+
+  type Row = {
+    role: string;
+    company: { id: string; name: string; slug: string } | null;
+  };
+
+  const out: StewardCompanyNavItem[] = [];
+  for (const raw of rows as Row[]) {
+    const c = raw.company;
+    if (!c) continue;
+    out.push({
+      companyId: c.id,
+      name: c.name,
+      slug: c.slug,
+      stewardRole: raw.role === "owner" ? "owner" : "steward",
+    });
+  }
+
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
+export function pendingStewardRequestsQueryKey(companyId: string) {
+  return ["pending-steward-requests", companyId] as const;
+}
+
+export type PendingStewardRequestListItem = {
+  id: string;
+  companyId: string;
+  requesterUserId: string;
+  message: string;
+  createdAt: string;
+  requesterUsername: string | null;
+  requesterAvatarUrl: string | null;
+};
+
+type StewardRequestListRow = {
+  id: string;
+  company_id: string;
+  requester_user_id: string;
+  message: string;
+  created_at: string;
+  requester: { username: string | null; avatar_url: string | null } | null;
+};
+
+/**
+ * Pending steward requests for a company (stewards may SELECT per RLS). Owners use this for the dashboard queue.
+ */
+export async function listPendingStewardRequestsForCompany(
+  companyId: string
+): Promise<PendingStewardRequestListItem[]> {
+  const { data: rows, error } = await supabase
+    .from("company_steward_requests")
+    .select(
+      "id, company_id, requester_user_id, message, created_at, requester:profiles!company_steward_requests_requester_user_id_fkey(username, avatar_url)"
+    )
+    .eq("company_id", companyId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return (rows || []).map((raw) => {
+    const r = raw as StewardRequestListRow;
+    const p = r.requester;
+    return {
+      id: r.id,
+      companyId: r.company_id,
+      requesterUserId: r.requester_user_id,
+      message: r.message,
+      createdAt: r.created_at,
+      requesterUsername: p?.username ?? null,
+      requesterAvatarUrl: p?.avatar_url ?? null,
+    };
+  });
+}
+
+/**
+ * Owner-only: approve a pending request from the in-app dashboard (migration `20270835000000_…`).
+ */
+export async function approveCompanyStewardRequestById(
+  requestId: string
+): Promise<ApproveCompanyStewardRequestResult> {
+  const { data, error } = await supabase.rpc("approve_company_steward_request_by_id", {
+    p_request_id: requestId,
+  });
+
+  if (error) {
+    return { ok: false, error: "rpc_error" };
+  }
+
+  return parseApproveCompanyStewardRequestRpcPayload(data);
+}
+
+/**
+ * Owner-only: reject a pending request from the in-app dashboard (migration `20270835000000_…`).
+ */
+export async function rejectCompanyStewardRequestById(
+  requestId: string
+): Promise<RejectCompanyStewardRequestResult> {
+  const { data, error } = await supabase.rpc("reject_company_steward_request_by_id", {
+    p_request_id: requestId,
+  });
+
+  if (error) {
+    return { ok: false, error: "rpc_error" };
+  }
+
+  return parseRejectCompanyStewardRequestRpcPayload(data);
 }
 
 /**

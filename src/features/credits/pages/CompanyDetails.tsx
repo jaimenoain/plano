@@ -325,6 +325,21 @@ export default function CompanyDetails() {
   }, [searchParams, setSearchParams, queryClient, slug, company.id, toast]);
 
   useEffect(() => {
+    if (searchParams.get("edit") !== "1") return;
+    if (stewardsLoading) return;
+    if (!isSteward) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("edit");
+      setSearchParams(next, { replace: true });
+      return;
+    }
+    setEditOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("edit");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, stewardsLoading, isSteward]);
+
+  useEffect(() => {
     if (searchParams.get("claimVerified") !== "1") return;
     let cancelled = false;
     void (async () => {

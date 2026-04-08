@@ -60,6 +60,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -87,7 +88,6 @@ import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { ProfileKanbanView } from "@/features/profile/components/ProfileKanbanView";
 import { handleDragEndLogic } from "@/utils/kanbanLogic";
 import { ProfileListView } from "@/features/profile/components/ProfileListView";
-import { ArchitectPortfolio } from "@/features/architect/components/ArchitectPortfolio";
 import { profileLoader } from "./Profile.loader";
 import {
   profileStructuredData,
@@ -347,7 +347,7 @@ export default function Profile() {
   const [userListDialog, setUserListDialog] = useState<{ open: boolean; type: "followers" | "following" }>({ open: false, type: "followers" });
   const [userList, setUserList] = useState<UserListItem[]>([]);
   const [userListLoading, setUserListLoading] = useState(false);
-  const [professionalProfile, setProfessionalProfile] = useState<{
+  const [claimedPersonForProfile, setClaimedPersonForProfile] = useState<{
     id: string;
     name: string;
     slug: string;
@@ -358,11 +358,13 @@ export default function Profile() {
   const verifiedArchitectId = isOwnProfile ? currentUserProfile?.verified_architect_id : profile?.verified_architect_id;
 
   // ── Derive active section ──
-  const defaultSection: SectionKey = verifiedArchitectId ? "portfolio" : "visited";
-  const activeSection: SectionKey =
+  const defaultSection: SectionKey = claimedPersonForProfile ? "portfolio" : "visited";
+  const rawActiveSection: SectionKey =
     legacySectionKey
     ?? (rawSectionParam === "log" ? null : sectionParam)
     ?? defaultSection;
+  const activeSection: SectionKey =
+    rawActiveSection === "portfolio" && !claimedPersonForProfile ? "visited" : rawActiveSection;
 
   // Derive content filter directly from section — no separate filter param needed
   const activeFilter =
@@ -428,23 +430,23 @@ export default function Profile() {
   useEffect(() => { if (targetUserId) { checkIfFollowing(); fetchSquad(); } }, [targetUserId, currentUser]);
 
   useEffect(() => {
-    if (!targetUserId || !isOwnProfile) {
-      setProfessionalProfile(null);
+    if (!targetUserId) {
+      setClaimedPersonForProfile(null);
       return;
     }
     let cancelled = false;
     void (async () => {
       try {
         const summary = await getClaimedPersonSummaryForProfile(targetUserId);
-        if (!cancelled) setProfessionalProfile(summary);
+        if (!cancelled) setClaimedPersonForProfile(summary);
       } catch {
-        if (!cancelled) setProfessionalProfile(null);
+        if (!cancelled) setClaimedPersonForProfile(null);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [targetUserId, isOwnProfile]);
+  }, [targetUserId]);
 
   useEffect(() => {
     if (activeSection !== "photos" || !targetUserId || userPhotos.length > 0) return;
@@ -721,7 +723,7 @@ export default function Profile() {
 
   // ─── Tab config — metrics as tabs ────────────────────────────────────────
   const tabs: { key: SectionKey; label: string; count: number | null }[] = [
-    ...(verifiedArchitectId ? [{ key: "portfolio" as SectionKey, label: "Portfolio", count: null }] : []),
+    ...(claimedPersonForProfile ? [{ key: "portfolio" as SectionKey, label: "Portfolio", count: null }] : []),
     { key: "visited", label: "Visited", count: stats.reviews },
     { key: "saved", label: "Saved", count: stats.pending },
     { key: "collections", label: "Collections", count: stats.maps },
@@ -876,21 +878,21 @@ export default function Profile() {
           </div>
         </div>
 
-        {isOwnProfile && professionalProfile ? (
+        {isOwnProfile && claimedPersonForProfile ? (
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
             <div className="rounded-sm border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
               <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary mb-2">
                 Professional profile
               </p>
               <Link
-                to={`/person/${professionalProfile.slug}`}
+                to={`/person/${claimedPersonForProfile.slug}`}
                 className="text-lg font-semibold tracking-tight text-text-primary hover:opacity-80 transition-opacity"
               >
-                {professionalProfile.name}
+                {claimedPersonForProfile.name}
               </Link>
               <p className="mt-1 text-sm text-text-secondary">
-                Credited on {professionalProfile.creditCount}{" "}
-                {professionalProfile.creditCount === 1 ? "building" : "buildings"}
+                Credited on {claimedPersonForProfile.creditCount}{" "}
+                {claimedPersonForProfile.creditCount === 1 ? "building" : "buildings"}
               </p>
             </div>
           </div>
@@ -935,10 +937,25 @@ export default function Profile() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="min-h-[60vh] py-10">
 
-            {/* ── PORTFOLIO ── */}
-            {activeSection === "portfolio" && verifiedArchitectId && (
+            {/* ── PORTFOLIO (claimed `people` row — link to full dashboard or public person page) ── */}
+            {activeSection === "portfolio" && claimedPersonForProfile && (
               <WidgetErrorBoundary>
-                <ArchitectPortfolio architectId={verifiedArchitectId} isOwnProfile={isOwnProfile} />
+                <div className="mx-auto max-w-lg space-y-6 border border-border-default bg-surface-muted px-6 py-10 text-center">
+                  <p className="text-sm leading-relaxed text-text-secondary">
+                    {isOwnProfile
+                      ? "Open your portfolio dashboard for a sortable, tier-grouped view of every building you are credited on."
+                      : "View this member’s credited work on their public professional profile."}
+                  </p>
+                  {isOwnProfile ? (
+                    <Button asChild size="lg" className="min-w-[220px]">
+                      <Link to="/portfolio">Open portfolio dashboard</Link>
+                    </Button>
+                  ) : (
+                    <Button asChild size="lg" variant="outline" className="min-w-[220px]">
+                      <Link to={`/person/${claimedPersonForProfile.slug}`}>View public portfolio</Link>
+                    </Button>
+                  )}
+                </div>
               </WidgetErrorBoundary>
             )}
 
@@ -968,7 +985,12 @@ export default function Profile() {
                         className="pl-8 h-7 w-32 text-xs bg-surface-muted/40 border-transparent focus:bg-surface-default focus:w-44 transition-all"
                       />
                       {searchQuery && (
-                        <button type="button" onClick={() => handleSearchChange("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+                        <button
+                          type="button"
+                          onClick={() => handleSearchChange("")}
+                          className="absolute right-2 top-1/2 -translate-y-1/2"
+                          aria-label="Clear search"
+                        >
                           <X className="h-3 w-3 text-text-disabled hover:text-text-primary" />
                         </button>
                       )}

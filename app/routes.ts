@@ -113,6 +113,8 @@ export default [
     route("/building/:id/review", "features/buildings/pages/WriteReview.tsx", {
       id: "building-review-id-only",
     }),
+    route("/portfolio", "features/credits/pages/PersonDashboard.tsx"),
+    route("/company-portfolio", "features/credits/pages/CompanyDashboard.tsx"),
     route("/architect/dashboard", "features/architect/pages/ArchitectDashboard.tsx"),
     route("/architect/:id", "features/credits/pages/ArchitectIdRedirect.tsx"),
     route("/architect/:id/edit", "features/architect/pages/EditArchitect.tsx"),
