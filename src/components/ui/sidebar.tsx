@@ -253,7 +253,14 @@ const Sidebar = React.forwardRef<
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-            : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+            : cn(
+                "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
+                // Offcanvas panels sit flush on the main column; a default border-r here
+                // is not overridden by consumer `border-r-0` (variant + tw-merge), which
+                // reads as a thin seam beside full-bleed heroes.
+                collapsible !== "offcanvas" &&
+                  "group-data-[side=left]:border-r group-data-[side=right]:border-l",
+              ),
           className,
         )}
         style={style}

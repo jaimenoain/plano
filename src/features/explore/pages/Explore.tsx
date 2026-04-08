@@ -81,7 +81,7 @@ export default function Explore() {
       // No tutorial — hide sidebar immediately on page load
       closeSidebar();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [closeSidebar]);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
     useDiscoveryFeed({
