@@ -3759,11 +3759,13 @@ No additional environment variables required for this domain.
 ```sql
 CREATE TABLE public.admin_audit_logs (
   id          uuid NOT NULL DEFAULT gen_random_uuid(),
-  admin_id    uuid NOT NULL,
-  action_type text NOT NULL,              -- 'merge' | 'delete' | 'edit' | 'claim_approval' | etc.
-  target_type text NOT NULL,              -- 'building' | 'user' | 'architect_claim' | etc.
+  admin_id    uuid NOT NULL,              -- acting user (submitter); for admin-only tools this is the admin user
+  action_type text NOT NULL,              -- existing: merge, delete, edit, DIAGNOSTIC_ERROR, …
+                                          -- entity/credit (Task 8.3): credit_added, credit_status_changed,
+                                          -- person_claimed, company_claimed, steward_added, steward_removed
+  target_type text NOT NULL,              -- 'building' | 'user' | 'credit' | 'person' | 'company' | …
   target_id   text NOT NULL,
-  details     jsonb,
+  details     jsonb,                      -- for status-style events include old_value / new_value; credit_* include building_id (uuid string)
   created_at  timestamptz DEFAULT now(),
 
   CONSTRAINT admin_audit_logs_pkey PRIMARY KEY (id),
@@ -3817,6 +3819,9 @@ CREATE POLICY "admin_audit_logs_insert" ON admin_audit_logs
   FOR INSERT
   WITH CHECK (public.is_admin());
 ```
+
+**INSERT (authenticated actor — credit / steward removal)**  
+Migration `20270834000000_entity_audit_logs.sql` adds `entity_audit_logs_actor_insert`: authenticated users may insert rows where `admin_id = auth.uid()` and `action_type` is one of `credit_added`, `credit_status_changed`, `steward_removed`. Claim and steward-add events are written from `SECURITY DEFINER` RPCs (`claim_person`, `redeem_company_claim_token`, `approve_company_steward_request`, `redeem_company_steward_invite`).
 
 -- No UPDATE/DELETE policy: audit logs are append-only and immutable.
 

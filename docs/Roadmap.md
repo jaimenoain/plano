@@ -402,7 +402,7 @@
 
 ---
 
-**[ ] Task 8.3 — Extend audit log to cover credit and entity events**
+**[x] Task 8.3 — Extend audit log to cover credit and entity events**
 
 - Extend `admin_audit_logs` using its existing columns: `action_type` (add new values: `credit_added`, `credit_status_changed`, `person_claimed`, `company_claimed`, `steward_added`, `steward_removed`), `target_type` (add: `credit`, `person`, `company`), `target_id`, `details` (JSONB — store `old_value` and `new_value` as keys inside the existing `details` column to avoid schema conflict)
 - Log events from the relevant API functions and edge functions: `addBuildingCredit` logs `credit_added`; `updateCreditStatus` logs `credit_status_changed` with before/after; claim functions log `person_claimed` / `company_claimed`

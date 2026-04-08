@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { insertEntityAuditLog } from "@/features/credits/api/entity-audit-log";
 import type {
   BuildingCreditWithEntities,
   CreditRole,
@@ -373,7 +374,20 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
     .single();
 
   if (error) throw error;
-  return mapCreditRow(row as CreditRow);
+  const mapped = mapCreditRow(row as CreditRow);
+  await insertEntityAuditLog({
+    actionType: "credit_added",
+    targetType: "credit",
+    targetId: mapped.id,
+    details: {
+      building_id: data.buildingId,
+      role: data.role,
+      credit_tier: mapped.creditTier,
+      person_id: mapped.personId,
+      company_id: mapped.companyId,
+    },
+  });
+  return mapped;
 }
 
 export type FlagCreditRpcError = "not_found_or_not_flaggable" | "notes_too_long" | "rpc_error";
@@ -442,6 +456,14 @@ export async function updateCreditStatus(
 ): Promise<BuildingCreditWithEntities> {
   const { status } = UpdateCreditStatusSchema.parse(input);
 
+  const { data: before, error: beforeErr } = await supabase
+    .from("building_credits")
+    .select("id, building_id, status")
+    .eq("id", creditId)
+    .maybeSingle();
+
+  if (beforeErr) throw beforeErr;
+
   const { data: row, error } = await supabase
     .from("building_credits")
     .update({ status })
@@ -457,7 +479,20 @@ export async function updateCreditStatus(
 
   if (error) throw error;
   if (!row) throw new Error("Credit not found or not permitted to update");
-  return mapCreditRow(row as CreditRow);
+  const mapped = mapCreditRow(row as CreditRow);
+  if (before && before.status !== status) {
+    await insertEntityAuditLog({
+      actionType: "credit_status_changed",
+      targetType: "credit",
+      targetId: creditId,
+      details: {
+        building_id: before.building_id,
+        old_value: before.status,
+        new_value: status,
+      },
+    });
+  }
+  return mapped;
 }
 
 export type RemoveCreditByTokenError =

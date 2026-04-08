@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { slugifyPersonName } from "@/features/credits/api/people";
 import { supabase } from "@/integrations/supabase/client";
+import { insertEntityAuditLog } from "@/features/credits/api/entity-audit-log";
 import type {
   BuildingCreditWithEntities,
   BuildingSummaryForPersonCredit,
@@ -503,8 +504,28 @@ export async function getCompanyStewardsWithProfiles(companyId: string): Promise
  * Remove a steward row. RLS: owners may remove `steward` role rows; any user may remove their own row.
  */
 export async function removeCompanySteward(stewardRowId: string): Promise<void> {
+  const { data: row, error: selErr } = await supabase
+    .from("company_stewards")
+    .select("id, company_id, user_id, role")
+    .eq("id", stewardRowId)
+    .maybeSingle();
+
+  if (selErr) throw selErr;
+  if (!row) throw new Error("Steward row not found");
+
   const { error } = await supabase.from("company_stewards").delete().eq("id", stewardRowId);
   if (error) throw error;
+
+  await insertEntityAuditLog({
+    actionType: "steward_removed",
+    targetType: "company",
+    targetId: row.company_id,
+    details: {
+      old_value: row.role,
+      removed_user_id: row.user_id,
+      steward_row_id: row.id,
+    },
+  });
 }
 
 /**

@@ -1,0 +1,1 @@
+import{o as a,u as t,s as e,l as s,n as i,f as o}from"./types-Bw5VdnvP.js";const r=a({name:e().trim().min(1,"Name is required").max(100,"Name must be at most 100 characters"),description:e().max(500,"Description must be at most 500 characters").optional(),is_public:o().default(!0),external_link:t([e().url("Link must be a valid URL"),s(""),i()]).optional()});export{r as c};
