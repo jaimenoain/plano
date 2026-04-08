@@ -2811,6 +2811,20 @@ CREATE POLICY "people_update" ON public.people
 
 No `DELETE` policy (rows are not deleted via app in this phase).
 
+### Component 3: Application API — `people` (Phase 2 Task 2.2)
+
+Browser Supabase client wrappers live in `src/features/credits/api/people.ts`. Payloads use camelCase TypeScript types from `src/features/credits/types.ts`:
+
+| Function | Behaviour |
+|----------|-----------|
+| `getPerson(slug)` | `Person` + `credits: PersonCreditWithBuilding[]` (each credit includes `building` summary); `null` if slug missing. |
+| `searchPeople(query)` | `PersonSummary[]` (`associatedCompanies`, `knownBuilding` from affiliations / first visible credit per person). |
+| `createPerson(input)` | Zod-validated insert; slug via `slugifyPersonName` + numeric suffix on collision. |
+| `updatePerson(id, input)` | Zod partial update; RLS (owner / admin). Returns `null` if row absent after update. |
+| `getPersonPortfolio(personId)` | `PersonPortfolioByTier` — credits with `building` join, ordered per tier then `display_order` / `is_lead`. |
+
+DTOs: `BuildingSummaryForPersonCredit`, `PersonCreditWithBuilding`, `PersonWithCredits`, `PersonPortfolioItem`, `PersonPortfolioByTier`. `slugifyPersonName` mirrors SQL `public.slugify_person_name`.
+
 ---
 
 ## 9b. Companies & stewards (Building Credits v2)
@@ -2902,6 +2916,21 @@ CREATE POLICY "companies_update" ON public.companies
 **INSERT** — admin; or existing steward of `company_id`; or bootstrap: `user_id = auth.uid()` and `role = owner` and no existing steward row for `company_id`
 
 **UPDATE** / **DELETE** — admin or any steward of the same `company_id`
+
+### Component 4: Application API — `companies` (Phase 2 Task 2.3)
+
+Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`. Payloads use camelCase TypeScript types from `src/features/credits/types.ts`:
+
+| Function | Behaviour |
+|----------|-----------|
+| `getCompany(slug)` | `Company` + `credits: CompanyCreditWithBuilding[]` (each credit includes `building` summary and joined `person` / `company`); `null` if slug missing. |
+| `searchCompanies(query)` | `CompanySummary[]` (`id`, `name`, `slug`, `claimStatus`, `country`, `logoUrl`). |
+| `createCompany(input)` | Zod-validated insert; slug via `slugifyCompanyName` (same rules as `slugify_person_name`) + numeric suffix on collision. |
+| `updateCompany(id, input)` | Zod partial update; RLS (steward / admin). Returns `null` if row absent after update. |
+| `getCompanyPortfolio(companyId, roleFilter?)` | `CompanyPortfolioByTier` — credits with `building` + `person` joins; optional `.eq('role', roleFilter)`; ordered per tier then `display_order` / `is_lead`. |
+| `getCompanyStewards(companyId)` | `CompanySteward[]`; RLS yields empty for users who are not admin, a steward of that company, or the row’s `user_id`. |
+
+DTOs: `CompanyCreditWithBuilding`, `CompanyWithCredits`, `CompanyPortfolioItem`, `CompanyPortfolioByTier`. `slugifyCompanyName` mirrors SQL `public.slugify_person_name` (used for company slugs in migrations).
 
 ---
 
@@ -3033,6 +3062,18 @@ CREATE POLICY "building_credits_insert" ON public.building_credits
 
 **DELETE** — admin or `buildings.created_by` = auth user for the credit’s `building_id` (aligned with `building_architects` delete pattern).
 
+### Component 3: Application API — `building_credits` (Phase 2 Task 2.4)
+
+Browser Supabase client wrappers live in `src/features/credits/api/credits.ts`. Types from `src/features/credits/types.ts` (`BuildingCreditWithEntities`, etc.):
+
+| Function | Behaviour |
+|----------|-----------|
+| `getBuildingCredits(buildingId)` | All credits for the building joined with `people` / `companies` summaries; RLS omits `hidden` for non-admins. Sorted by `credit_tier`, `display_order`, `is_lead` descending. |
+| `addBuildingCredit(input)` | Zod-validated insert; requires at least one of `personId`, `companyId`; `added_by_user_id` from `auth.getUser()` (not client-supplied). |
+| `flagCredit(creditId, reason, notes)` | Sets `status = flagged`, `flag_reason`, `flag_notes`, `flagged_at`, `flagged_by_user_id` from session. Throws if unauthenticated or row not updatable (unknown id / RLS). |
+| `updateCreditStatus(creditId, { status })` | Status-only patch; RLS applies (admin / claim owner / steward per policies). |
+| `removeCreditByToken(token)` | Calls RPC `redeem_credit_removal_token(p_token_hex)`; returns `{ ok, creditId? }` or `{ ok: false, error }` (`invalid_token`, `unknown_token`, `expired`, `already_used`, `rpc_error`). |
+
 ---
 
 ## 9e. Credit notification log & removal tokens (Building Credits v2)
@@ -3082,7 +3123,18 @@ CREATE INDEX credit_notification_log_sent_at_idx ON public.credit_notification_l
 - Inserts one row into `credit_removal_tokens` with `token_hash = digest(secret_bytes, 'sha256')`, `expires_at = now() + 30 days`, `used_at` null.
 - Raises if `credit_id` is not found in `building_credits`.
 
-### Component 4: RLS
+### Component 4: RPC `redeem_credit_removal_token`
+
+Introduced in Roadmap Phase 2 Task 2.4 (migration `20270824000000_redeem_credit_removal_token.sql`). **`SECURITY DEFINER`**. Callable by **`anon` and `authenticated`** so email removal links work without sign-in.
+
+- Argument: `p_token_hex` — trimmed, lowercased; must match `^[0-9a-f]{64}$`.
+- Computes `token_hash = digest(decode(hex, 'hex'), 'sha256')` and locks the matching `credit_removal_tokens` row (`FOR UPDATE`).
+- Returns JSON: `{ "ok": true, "credit_id": "<uuid>" }` on success after setting `building_credits.status = 'hidden'` and `credit_removal_tokens.used_at = now()`.
+- Returns `{ "ok": false, "error": "<code>" }` for `invalid_token`, `unknown_token`, `already_used`, `expired` (no row updates on failure paths).
+
+`REVOKE ALL … FROM PUBLIC`; `GRANT EXECUTE` to `anon`, `authenticated`. Minting remains `generate_credit_removal_token` (**service_role** only).
+
+### Component 5: RLS
 
 `ALTER TABLE … ENABLE ROW LEVEL SECURITY` on both tables; **no policies** (default deny for JWT roles). Service role bypasses RLS for Edge Function access.
 

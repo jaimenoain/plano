@@ -27,6 +27,8 @@ export default defineConfig(() => ({
       devOptions: { enabled: false },
       includeAssets: [
         "robots.txt",
+        "favicon-16x16.png",
+        "favicon-32x32.png",
         "android-chrome-192x192.png",
         "android-chrome-512x512.png",
         "apple-touch-icon.png",
@@ -36,8 +38,8 @@ export default defineConfig(() => ({
         short_name: "Plano",
         description:
           "Track your architecture visits, rate buildings, and discover what friends are exploring.",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
+        theme_color: "#000000",
+        background_color: "#000000",
         display: "standalone",
         start_url: "/",
         icons: [

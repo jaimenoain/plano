@@ -83,7 +83,7 @@
 
 ---
 
-**[ ] Task 2.1 — TypeScript types for all new entities**
+**[x] Task 2.1 — TypeScript types for all new entities**
 
 - Create `src/features/credits/types.ts` exporting: `Person`, `PersonSummary` (for cards and search disambiguation), `Company`, `CompanySummary`, `CompanySteward`, `PersonCompanyAffiliation`, `BuildingCredit`, `BuildingCreditWithEntities` (joined view including resolved person and company name/slug), `CreditRole`, `CreditTier`, `CreditStatus`, `FlagReason`
 - `PersonSummary` must include enough context for disambiguation in the picker UI: `id`, `name`, `slug`, `claim_status`, `associated_companies` (string array), `known_building` (nullable name string)
@@ -96,7 +96,7 @@
 
 ---
 
-**[ ] Task 2.2 — API functions for `people`**
+**[x] Task 2.2 — API functions for `people`**
 
 - Create `src/features/credits/api/people.ts` with: `getPerson(slug)` (returns person + all credits joined with building summaries; null on miss), `searchPeople(query)` (fuzzy ilike search returning `PersonSummary[]` with associated companies and one known building name for disambiguation), `createPerson(data)` (inserts, generates slug with collision handling), `updatePerson(id, data)` (owner/admin only), `getPersonPortfolio(personId)` (all `building_credits` for the person joined with building name, city, year, hero image, grouped by `credit_tier`)
 - Slug collision handling: attempt base slug, then append `-2`, `-3` etc. until unique — implement as a small loop against a `SELECT slug FROM people WHERE slug ILIKE ?` check before insert
@@ -107,7 +107,7 @@
 
 ---
 
-**[ ] Task 2.3 — API functions for `companies`**
+**[x] Task 2.3 — API functions for `companies`**
 
 - Create `src/features/credits/api/companies.ts` with: `getCompany(slug)`, `searchCompanies(query)`, `createCompany(data)`, `updateCompany(id, data)`, `getCompanyPortfolio(companyId, roleFilter?)` (filterable by role), `getCompanyStewards(companyId)` (RLS enforces this is only accessible to stewards)
 - Mirror the structure and slug collision handling from Task 2.2
@@ -118,7 +118,7 @@
 
 ---
 
-**[ ] Task 2.4 — API functions for `building_credits`**
+**[x] Task 2.4 — API functions for `building_credits`**
 
 - Create `src/features/credits/api/credits.ts` with: `getBuildingCredits(buildingId)` (returns all non-hidden credits ordered by `credit_tier`, `display_order`, `is_lead DESC`, joined with person and company summaries), `addBuildingCredit(data)` (validates at-least-one constraint client-side before insert), `flagCredit(creditId, reason, notes, flaggedByUserId?)` (sets `status = 'flagged'`, records reason and timestamp), `updateCreditStatus(creditId, status)` (admin only), `removeCreditByToken(token)` (validates token against `credit_removal_tokens`, checks `used_at` is null and `expires_at` is in the future, sets `status = 'hidden'`, marks `used_at = now()`)
 

@@ -1677,6 +1677,7 @@ export type PlanoPublicFunctions = {
   check_slug_availability: { Args: RpcArgs; Returns: boolean | null }
   find_nearby_buildings: { Args: RpcArgs; Returns: Json }
   generate_credit_removal_token: { Args: { credit_id: string }; Returns: string }
+  redeem_credit_removal_token: { Args: { p_token_hex: string }; Returns: Json }
   get_admin_content_stats: { Args: Record<string, never>; Returns: Json }
   get_admin_leaderboards: { Args: Record<string, never>; Returns: Json }
   get_admin_notifications: { Args: Record<string, never>; Returns: Json }
