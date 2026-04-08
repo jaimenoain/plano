@@ -2995,6 +2995,50 @@ CREATE TABLE public.company_claim_verification_tokens (
 
 **SSR route:** `GET /verify-company-claim/:token` — loader runs `redeem_company_claim_token` when the user is signed in; on success **`redirect`** to `/company/:slug?claimVerified=1`; if signed out, renders sign-in CTA with `redirect` back to the same path.
 
+### Component 3c: `company_steward_requests` + `company_steward_request_approval_tokens` (Roadmap Phase 7 Task 7.3)
+
+Non-owners can request steward access on **claimed** companies. Owners receive per-owner email links with opaque tokens.
+
+```sql
+CREATE TYPE public.company_steward_request_status AS ENUM ('pending', 'approved', 'rejected');
+
+CREATE TABLE public.company_steward_requests (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL REFERENCES public.companies (id) ON DELETE CASCADE,
+  requester_user_id uuid NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
+  message text NOT NULL DEFAULT ''::text,
+  status public.company_steward_request_status NOT NULL DEFAULT 'pending',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  resolved_at timestamptz,
+  requester_notified_at timestamptz,
+  CONSTRAINT company_steward_requests_pkey PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX company_steward_requests_one_pending_per_user_company
+  ON public.company_steward_requests (company_id, requester_user_id)
+  WHERE status = 'pending';
+
+CREATE TABLE public.company_steward_request_approval_tokens (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  request_id uuid NOT NULL REFERENCES public.company_steward_requests (id) ON DELETE CASCADE,
+  token_hash bytea NOT NULL UNIQUE,
+  expires_at timestamptz NOT NULL,
+  consumed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT company_steward_request_approval_tokens_pkey PRIMARY KEY (id)
+);
+```
+
+**RLS (`company_steward_requests`):** **SELECT** — admin, the row’s `requester_user_id`, or any steward of the same `company_id`. **INSERT** — authenticated user with `requester_user_id = auth.uid()`, company `claim_status = 'claimed'`, and **no** `company_stewards` row for that user and company.
+
+**RLS (`company_steward_request_approval_tokens`):** enabled; **no** client policies — Edge Functions + `SECURITY DEFINER` RPC only.
+
+**RPC:** `approve_company_steward_request(p_token_hex text)` — **authenticated**; 64-char hex → SHA-256 lookup; requires caller to be an **owner** steward of the request’s company; if request already **`approved`**, returns success (`already_processed: true`) and consumes the token when appropriate; if **`pending`**, inserts `company_stewards` (`role = steward`, `invited_by` = owner), sets request `approved` + `resolved_at`, consumes **all** approval tokens for that request. Returns `jsonb` `{ ok: true, company_slug, request_id, already_processed }` or `{ ok: false, error }` with `error` ∈ `not_authenticated` \| `invalid_token` \| `unknown_token` \| `expired` \| `already_used` \| `not_owner` \| `not_pending`.
+
+**Edge Functions:** `notify-steward-request` — `verify_jwt = false`; manual `getUser`; body `{ requestId }`; caller must be the requester; idempotent if approval tokens already exist for the request; creates one token row per **owner**, emails each owner `{SITE_URL}/approve-steward-request/{64-char hex}` (7-day expiry) when `RESEND_API_KEY` is set. `notify-steward-request-approved` — same auth pattern; body `{ requestId }`; caller must be an **owner** of the company; sends requester email when `RESEND_API_KEY` is set; sets `requester_notified_at` (idempotent).
+
+**SSR route:** `GET /approve-steward-request/:token` — loader runs `approve_company_steward_request` when signed in, then invokes `notify-steward-request-approved`, then **`redirect`** to `/company/:slug?stewardApproved=1`.
+
 ### Component 4: Application API — `companies` (Phase 2 Task 2.3)
 
 Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`. Payloads use camelCase TypeScript types from `src/features/credits/types.ts`:
@@ -3014,6 +3058,11 @@ Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`
 | `requestCompanyClaimVerification(companyId, email)` | Roadmap Task 7.2. `verify-company-claim` Edge Function; Zod email. Returns `{ ok: true }` or `{ action: 'dispute', companySlug }` when verified domain does not match (client navigates to `/company/:slug/dispute`). |
 | `redeemCompanyClaimTokenWithClient(client, tokenHex)` | SSR / loader: calls RPC `redeem_company_claim_token`; requires authenticated server client session. |
 | `parseRedeemCompanyClaimRpcPayload(data)` | Maps RPC `jsonb` to `{ ok, companySlug }` or `{ ok: false, error }`. |
+| `getMyPendingCompanyStewardRequestId(companyId)` | Task 7.3. Returns pending request `id` for the current user or `null`. |
+| `submitCompanyStewardRequest(companyId, message)` | Zod-trimmed message (max 2000); `insert` + `notify-steward-request`. |
+| `approveCompanyStewardRequestWithClient(client, token)` | SSR: RPC `approve_company_steward_request`. |
+| `notifyStewardRequestApprovedWithClient(client, requestId)` | SSR: `notify-steward-request-approved` (best-effort). |
+| `parseApproveCompanyStewardRequestRpcPayload(data)` | Maps approval RPC `jsonb` to typed result. |
 
 DTOs: `CompanyCreditWithBuilding`, `CompanyWithCredits`, `CompanyPortfolioItem`, `CompanyPortfolioByTier`, `CompanyStewardWithProfile`. `slugifyCompanyName` mirrors SQL `public.slugify_person_name` (used for company slugs in migrations).
 

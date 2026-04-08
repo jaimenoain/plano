@@ -1116,6 +1116,89 @@ export type PlanoPublicTables = {
       },
     ]
   }
+  company_steward_requests: {
+    Row: {
+      id: string
+      company_id: string
+      requester_user_id: string
+      message: string
+      status: string
+      created_at: string
+      resolved_at: string | null
+      requester_notified_at: string | null
+    }
+    Insert: {
+      id?: string
+      company_id: string
+      requester_user_id: string
+      message?: string
+      status?: string
+      created_at?: string
+      resolved_at?: string | null
+      requester_notified_at?: string | null
+    }
+    Update: {
+      id?: string
+      company_id?: string
+      requester_user_id?: string
+      message?: string
+      status?: string
+      created_at?: string
+      resolved_at?: string | null
+      requester_notified_at?: string | null
+    }
+    Relationships: [
+      {
+        foreignKeyName: "company_steward_requests_company_id_fkey"
+        columns: ["company_id"]
+        isOneToOne: false
+        referencedRelation: "companies"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "company_steward_requests_requester_user_id_fkey"
+        columns: ["requester_user_id"]
+        isOneToOne: false
+        referencedRelation: "profiles"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
+  company_steward_request_approval_tokens: {
+    Row: {
+      id: string
+      request_id: string
+      token_hash: string
+      expires_at: string
+      consumed_at: string | null
+      created_at: string
+    }
+    Insert: {
+      id?: string
+      request_id: string
+      token_hash: string
+      expires_at: string
+      consumed_at?: string | null
+      created_at?: string
+    }
+    Update: {
+      id?: string
+      request_id?: string
+      token_hash?: string
+      expires_at?: string
+      consumed_at?: string | null
+      created_at?: string
+    }
+    Relationships: [
+      {
+        foreignKeyName: "company_steward_request_approval_tokens_request_id_fkey"
+        columns: ["request_id"]
+        isOneToOne: false
+        referencedRelation: "company_steward_requests"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
   person_company_affiliations: {
     Row: {
       id: string
@@ -1733,6 +1816,7 @@ export type PlanoPublicFunctions = {
   }
   redeem_company_steward_invite: { Args: { p_token_hex: string }; Returns: Json }
   redeem_company_claim_token: { Args: { p_token_hex: string }; Returns: Json }
+  approve_company_steward_request: { Args: { p_token_hex: string }; Returns: Json }
   get_admin_content_stats: { Args: Record<string, never>; Returns: Json }
   get_admin_leaderboards: { Args: Record<string, never>; Returns: Json }
   get_admin_notifications: { Args: Record<string, never>; Returns: Json }

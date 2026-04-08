@@ -14,6 +14,7 @@ import {
 import { loader as architectIdRedirectLoader } from "@/features/credits/pages/ArchitectIdRedirect";
 import { loader as removeCreditLoader } from "@/features/credits/pages/RemoveCredit";
 import { loader as verifyCompanyClaimLoader } from "@/features/credits/pages/VerifyCompanyClaim";
+import { approveStewardRequestLoader } from "@/features/credits/pages/ApproveStewardRequest.loader";
 import { loader as companyClaimDisputeLoader } from "@/features/credits/pages/CompanyClaimDispute";
 import { AuthProvider, useAuth } from "@/features/auth/hooks/useAuth";
 
@@ -55,6 +56,7 @@ const CompanyDetails = lazyWithRetry(() => import("@/features/credits/pages/Comp
 const AcceptCompanySteward = lazyWithRetry(() => import("@/features/credits/pages/AcceptCompanySteward"));
 const RemoveCredit = lazyWithRetry(() => import("@/features/credits/pages/RemoveCredit"));
 const VerifyCompanyClaim = lazyWithRetry(() => import("@/features/credits/pages/VerifyCompanyClaim"));
+const ApproveStewardRequest = lazyWithRetry(() => import("@/features/credits/pages/ApproveStewardRequest"));
 const CompanyClaimDispute = lazyWithRetry(() => import("@/features/credits/pages/CompanyClaimDispute"));
 
 const AdminDashboard = lazyWithRetry(() => import("@/features/admin/pages/Dashboard"));
@@ -119,6 +121,11 @@ const router = createBrowserRouter(
         path="/verify-company-claim/:token"
         loader={verifyCompanyClaimLoader}
         element={<VerifyCompanyClaim />}
+      />
+      <Route
+        path="/approve-steward-request/:token"
+        loader={approveStewardRequestLoader}
+        element={<ApproveStewardRequest />}
       />
       <Route path="/admin/unauthorized" element={<Unauthorized />} />
 

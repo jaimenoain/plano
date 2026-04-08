@@ -343,7 +343,7 @@
 
 ---
 
-**[ ] Task 7.3 — Request steward invite for an already-claimed company**
+**[x] Task 7.3 — Request steward invite for an already-claimed company**
 
 - On claimed company pages, replace "Claim this company" CTA with "Request access to manage this company"
 - Create `company_steward_requests` table (migration): `id`, `company_id`, `requester_user_id`, `message` (text), `status` enum (`pending` | `approved` | `rejected`), `created_at`

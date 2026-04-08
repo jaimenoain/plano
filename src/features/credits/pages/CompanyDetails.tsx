@@ -55,11 +55,14 @@ import type {
 import { CompanyCreditCard } from "@/features/credits/components/CompanyCreditCard";
 import { EditCompanyForm } from "@/features/credits/components/EditCompanyForm";
 import { ClaimCompanyDialog } from "@/features/credits/components/ClaimCompanyDialog";
+import { RequestStewardAccessDialog } from "@/features/credits/components/RequestStewardAccessDialog";
 import {
   companyQueryKey,
+  companyStewardRequestPendingQueryKey,
   companyStewardsQueryKey,
   getCompany,
   getCompanyStewardsWithProfiles,
+  getMyPendingCompanyStewardRequestId,
   inviteCompanySteward,
   removeCompanySteward,
 } from "@/features/credits/api/companies";
@@ -239,6 +242,7 @@ export default function CompanyDetails() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
+  const [requestAccessOpen, setRequestAccessOpen] = useState(false);
   const [removeStewardId, setRemoveStewardId] = useState<string | null>(null);
   const [removeWorking, setRemoveWorking] = useState(false);
 
@@ -253,7 +257,7 @@ export default function CompanyDetails() {
   const company = queryData?.company ?? loaderData.company;
   const credits = queryData?.credits ?? loaderData.credits;
 
-  const { data: stewards = [] } = useQuery({
+  const { data: stewards = [], isLoading: stewardsLoading } = useQuery({
     queryKey: companyStewardsQueryKey(company.id),
     queryFn: () => getCompanyStewardsWithProfiles(company.id),
     enabled: Boolean(user?.id),
@@ -261,6 +265,19 @@ export default function CompanyDetails() {
   });
 
   const isSteward = Boolean(user?.id && stewards.some((s) => s.userId === user.id));
+
+  const { data: pendingStewardRequestId } = useQuery({
+    queryKey: companyStewardRequestPendingQueryKey(company.id),
+    queryFn: () => getMyPendingCompanyStewardRequestId(company.id),
+    enabled: Boolean(
+      user?.id && company.claimStatus === "claimed" && !stewardsLoading && !isSteward
+    ),
+    staleTime: 30_000,
+  });
+
+  const showStewardRequestBanner =
+    company.claimStatus === "claimed" &&
+    (!user?.id || (!stewardsLoading && !isSteward));
   const isOwner = Boolean(user?.id && stewards.some((s) => s.userId === user.id && s.role === "owner"));
 
   const handleCompanySaved = (updated: Company) => {
@@ -271,6 +288,30 @@ export default function CompanyDetails() {
     void queryClient.invalidateQueries({ queryKey: companyQueryKey(slug) });
     revalidator.revalidate();
   };
+
+  useEffect(() => {
+    if (searchParams.get("stewardApproved") !== "1") return;
+    let cancelled = false;
+    void (async () => {
+      await queryClient.refetchQueries({ queryKey: companyQueryKey(slug) });
+      const pack = queryClient.getQueryData(companyQueryKey(slug)) as CompanyWithCredits | undefined;
+      const cid = pack?.company.id ?? company.id;
+      await queryClient.refetchQueries({ queryKey: companyStewardsQueryKey(cid) });
+      await queryClient.invalidateQueries({ queryKey: companyStewardRequestPendingQueryKey(cid) });
+      if (cancelled) return;
+      toast({
+        title: "Access approved",
+        description: "You can edit this company page as a steward.",
+      });
+      setEditOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("stewardApproved");
+      setSearchParams(next, { replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, setSearchParams, queryClient, slug, company.id, toast]);
 
   useEffect(() => {
     if (searchParams.get("claimVerified") !== "1") return;
@@ -375,6 +416,19 @@ export default function CompanyDetails() {
             companyName={company.name}
             open={claimOpen}
             onOpenChange={setClaimOpen}
+          />
+        ) : null}
+        {user && showStewardRequestBanner ? (
+          <RequestStewardAccessDialog
+            companyId={company.id}
+            companyName={company.name}
+            open={requestAccessOpen}
+            onOpenChange={setRequestAccessOpen}
+            onSubmitted={() => {
+              void queryClient.invalidateQueries({
+                queryKey: companyStewardRequestPendingQueryKey(company.id),
+              });
+            }}
           />
         ) : null}
         {isSteward ? (
@@ -527,6 +581,38 @@ export default function CompanyDetails() {
                 className="inline-flex text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
               >
                 Log in to claim →
+              </Link>
+            )}
+          </div>
+        ) : null}
+
+        {showStewardRequestBanner ? (
+          <div className="mt-10 rounded-sm border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
+            <p className="mb-2 text-sm font-medium text-text-primary">Manage this company on Plano</p>
+            <p className="mb-3 text-sm text-text-secondary">
+              This profile is already claimed. Request access if you should be able to edit details and invite
+              stewards.
+            </p>
+            {pendingStewardRequestId ? (
+              <p className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+                Request pending — owners have been notified by email.
+              </p>
+            ) : user ? (
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="text-xs font-medium uppercase tracking-widest"
+                onClick={() => setRequestAccessOpen(true)}
+              >
+                Request access to manage this company
+              </Button>
+            ) : (
+              <Link
+                to={`/auth?redirect=${encodeURIComponent(`/company/${slug}`)}`}
+                className="inline-flex text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
+              >
+                Log in to request access →
               </Link>
             )}
           </div>

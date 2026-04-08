@@ -17,6 +17,10 @@ export default [
     "/verify-company-claim/:token",
     "features/credits/pages/VerifyCompanyClaim.tsx",
   ),
+  route(
+    "/approve-steward-request/:token",
+    "features/credits/pages/ApproveStewardRequest.tsx",
+  ),
   route("/admin/unauthorized", "features/admin/pages/Unauthorized.tsx"),
   route("/admin/merge", "features/admin/pages/MergeBuildings.tsx"),
   route(

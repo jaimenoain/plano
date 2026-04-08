@@ -663,3 +663,150 @@ export async function requestCompanyClaimVerification(
 
   throw new Error(body?.error ?? "Verification could not be started.");
 }
+
+const StewardRequestMessageSchema = z.string().max(2000).transform((s) => s.trim());
+
+/** TanStack Query key: current user’s pending steward request for a company (or null). */
+export function companyStewardRequestPendingQueryKey(companyId: string) {
+  return ["company-steward-request-pending", companyId] as const;
+}
+
+export async function getMyPendingCompanyStewardRequestId(companyId: string): Promise<string | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("company_steward_requests")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("requester_user_id", user.id)
+    .eq("status", "pending")
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data.id;
+}
+
+/**
+ * Inserts a pending request and notifies company owners (`notify-steward-request` Edge Function).
+ */
+export async function submitCompanyStewardRequest(companyId: string, messageRaw: string): Promise<void> {
+  const message = StewardRequestMessageSchema.parse(messageRaw ?? "");
+  const {
+    data: { user },
+    error: userErr,
+  } = await supabase.auth.getUser();
+  if (userErr || !user) {
+    throw new Error("Sign in to request access.");
+  }
+
+  const { data, error } = await supabase
+    .from("company_steward_requests")
+    .insert({
+      company_id: companyId,
+      requester_user_id: user.id,
+      message,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    if (error.code === "23505") {
+      throw new Error("You already have a pending request for this company.");
+    }
+    throw new Error(error.message || "Could not submit request.");
+  }
+
+  const { error: fnErr, data: fnBody } = await supabase.functions.invoke("notify-steward-request", {
+    body: { requestId: data.id },
+  });
+
+  const fnJson = fnBody as { ok?: boolean; error?: string } | null;
+  if (fnErr) {
+    throw new Error(fnJson?.error ?? fnErr.message ?? "Could not notify company owners.");
+  }
+  if (!fnJson?.ok) {
+    throw new Error(fnJson?.error ?? "Could not notify company owners.");
+  }
+}
+
+export type ApproveCompanyStewardRequestError =
+  | "not_authenticated"
+  | "invalid_token"
+  | "unknown_token"
+  | "expired"
+  | "already_used"
+  | "not_owner"
+  | "not_pending"
+  | "rpc_error";
+
+export type ApproveCompanyStewardRequestResult =
+  | { ok: true; companySlug: string; requestId: string; alreadyProcessed: boolean }
+  | { ok: false; error: ApproveCompanyStewardRequestError };
+
+export function parseApproveCompanyStewardRequestRpcPayload(data: unknown): ApproveCompanyStewardRequestResult {
+  if (!data || typeof data !== "object") return { ok: false, error: "rpc_error" };
+  const o = data as Record<string, unknown>;
+  if (o.ok === true && typeof o.company_slug === "string" && typeof o.request_id === "string") {
+    return {
+      ok: true,
+      companySlug: o.company_slug,
+      requestId: o.request_id,
+      alreadyProcessed: o.already_processed === true,
+    };
+  }
+  const err = o.error;
+  if (
+    err === "not_authenticated" ||
+    err === "invalid_token" ||
+    err === "unknown_token" ||
+    err === "expired" ||
+    err === "already_used" ||
+    err === "not_owner" ||
+    err === "not_pending"
+  ) {
+    return { ok: false, error: err };
+  }
+  return { ok: false, error: "rpc_error" };
+}
+
+export async function approveCompanyStewardRequestWithClient(
+  client: Pick<SupabaseClient, "rpc" | "auth">,
+  token: string
+): Promise<ApproveCompanyStewardRequestResult> {
+  const t = token.trim().toLowerCase();
+  if (!isValidCompanyClaimTokenFormat(t)) {
+    return { ok: false, error: "invalid_token" };
+  }
+
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "not_authenticated" };
+  }
+
+  const { data, error } = await client.rpc("approve_company_steward_request", {
+    p_token_hex: t,
+  });
+
+  if (error) {
+    return { ok: false, error: "rpc_error" };
+  }
+
+  return parseApproveCompanyStewardRequestRpcPayload(data);
+}
+
+/**
+ * Emails the requester after approval (idempotent on the server). Failures are ignored so approval still counts.
+ */
+export async function notifyStewardRequestApprovedWithClient(
+  client: Pick<SupabaseClient, "functions">,
+  requestId: string
+): Promise<void> {
+  await client.functions.invoke("notify-steward-request-approved", {
+    body: { requestId },
+  });
+}

@@ -33,3 +33,9 @@ verify_jwt = false
 
 [functions.verify-company-claim]
 verify_jwt = false
+
+[functions.notify-steward-request]
+verify_jwt = false
+
+[functions.notify-steward-request-approved]
+verify_jwt = false
