@@ -51,7 +51,7 @@
 
 ---
 
-**[ ] Task 1.4 — Create `building_credits` table and migrate `building_architects`**
+**[x] Task 1.4 — Create `building_credits` table and migrate `building_architects`**
 
 - Create `building_credits` table with all columns: `id`, `building_id` → buildings, `person_id` → people (nullable), `company_id` → companies (nullable), `CHECK (person_id IS NOT NULL OR company_id IS NOT NULL)`, `role` (credit_role_enum), `role_custom` (text, nullable), `credit_tier` (credit_tier_enum, default `contributor`), `is_lead` (boolean, default false), `contribution_notes` (text, nullable), `year_from` (integer, nullable), `year_to` (integer, nullable), `project_url` (text, nullable), `status` enum (`active` | `verified` | `flagged` | `hidden`, default `active`), `flag_reason` enum (`wrong_person` | `never_involved` | `wrong_role` | `other`, nullable), `flag_notes` (text, nullable), `flagged_at` (timestamptz, nullable), `flagged_by_user_id` → profiles (nullable), `added_by_user_id` → profiles (nullable), `display_order` (integer), `created_at`, `updated_at`
 - Migrate `building_architects` rows where the referenced architect was `type = 'individual'`: insert into `building_credits` with `person_id` set, `role = 'design_architect'`, `credit_tier = 'primary'`, `is_lead = true`, `status = 'active'`

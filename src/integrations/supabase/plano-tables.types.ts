@@ -551,6 +551,114 @@ export type PlanoPublicTables = {
       },
     ]
   }
+  building_credits: {
+    Row: {
+      id: string
+      building_id: string
+      person_id: string | null
+      company_id: string | null
+      role: string
+      role_custom: string | null
+      credit_tier: string
+      is_lead: boolean
+      contribution_notes: string | null
+      year_from: number | null
+      year_to: number | null
+      project_url: string | null
+      status: string
+      flag_reason: string | null
+      flag_notes: string | null
+      flagged_at: string | null
+      flagged_by_user_id: string | null
+      added_by_user_id: string | null
+      display_order: number
+      created_at: string
+      updated_at: string
+    }
+    Insert: {
+      id?: string
+      building_id: string
+      person_id?: string | null
+      company_id?: string | null
+      role: string
+      role_custom?: string | null
+      credit_tier?: string
+      is_lead?: boolean
+      contribution_notes?: string | null
+      year_from?: number | null
+      year_to?: number | null
+      project_url?: string | null
+      status?: string
+      flag_reason?: string | null
+      flag_notes?: string | null
+      flagged_at?: string | null
+      flagged_by_user_id?: string | null
+      added_by_user_id?: string | null
+      display_order: number
+      created_at?: string
+      updated_at?: string
+    }
+    Update: {
+      id?: string
+      building_id?: string
+      person_id?: string | null
+      company_id?: string | null
+      role?: string
+      role_custom?: string | null
+      credit_tier?: string
+      is_lead?: boolean
+      contribution_notes?: string | null
+      year_from?: number | null
+      year_to?: number | null
+      project_url?: string | null
+      status?: string
+      flag_reason?: string | null
+      flag_notes?: string | null
+      flagged_at?: string | null
+      flagged_by_user_id?: string | null
+      added_by_user_id?: string | null
+      display_order?: number
+      created_at?: string
+      updated_at?: string
+    }
+    Relationships: [
+      {
+        foreignKeyName: "building_credits_building_id_fkey"
+        columns: ["building_id"]
+        isOneToOne: false
+        referencedRelation: "buildings"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "building_credits_person_id_fkey"
+        columns: ["person_id"]
+        isOneToOne: false
+        referencedRelation: "people"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "building_credits_company_id_fkey"
+        columns: ["company_id"]
+        isOneToOne: false
+        referencedRelation: "companies"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "building_credits_flagged_by_user_id_fkey"
+        columns: ["flagged_by_user_id"]
+        isOneToOne: false
+        referencedRelation: "profiles"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "building_credits_added_by_user_id_fkey"
+        columns: ["added_by_user_id"]
+        isOneToOne: false
+        referencedRelation: "profiles"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
   building_functional_typologies: {
     Row: {
       building_id: string

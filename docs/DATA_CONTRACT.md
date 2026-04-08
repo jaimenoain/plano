@@ -2713,7 +2713,7 @@ No additional environment variables required for this domain.
 
 ## 9a. People & Credit Taxonomy (Building Credits v2)
 
-Introduced in Roadmap Phase 1 Task 1.1. Individual practitioners are represented in `people` (migrated from `architects` where `type = 'individual'`, same UUID). Credit role/tier enums are defined for Task 1.4 (`building_credits`).
+Introduced in Roadmap Phase 1 Task 1.1. Individual practitioners are represented in `people` (migrated from `architects` where `type = 'individual'`, same UUID). Credit role/tier enums feed `building_credits` (Task 1.4); credit **status** and **flag_reason** enums are defined in §9d.
 
 ### Component 1: Database schema
 
@@ -2948,6 +2948,90 @@ CREATE POLICY "person_company_affiliations_insert" ON public.person_company_affi
 **UPDATE** / **DELETE** — admin, the person’s `claimed_by_user_id` (= auth user), or any steward of the affiliated company
 
 Same predicate for `USING` and `WITH CHECK` on `UPDATE`; `DELETE` uses the same `USING` predicate.
+
+---
+
+## 9d. Building credits (Building Credits v2)
+
+Introduced in Roadmap Phase 1 Task 1.4. Replaces the logical role of `building_architects` for display and future credit workflows; the legacy junction table remains until Phase 11. Rows are backfilled from `building_architects` with `role = design_architect`, `credit_tier = primary`, `is_lead = true`, `status = active`; `display_order` is `ROW_NUMBER()` per `building_id` ordered by `created_at`, `architect_id`.
+
+### Component 1: Database schema
+
+```sql
+CREATE TYPE public.credit_status_enum AS ENUM (
+  'active',
+  'verified',
+  'flagged',
+  'hidden'
+);
+
+CREATE TYPE public.credit_flag_reason_enum AS ENUM (
+  'wrong_person',
+  'never_involved',
+  'wrong_role',
+  'other'
+);
+
+CREATE TABLE public.building_credits (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  building_id uuid NOT NULL REFERENCES public.buildings (id) ON DELETE CASCADE,
+  person_id uuid REFERENCES public.people (id) ON DELETE CASCADE,
+  company_id uuid REFERENCES public.companies (id) ON DELETE CASCADE,
+  role public.credit_role_enum NOT NULL,
+  role_custom text,
+  credit_tier public.credit_tier_enum NOT NULL DEFAULT 'contributor',
+  is_lead boolean NOT NULL DEFAULT false,
+  contribution_notes text,
+  year_from integer,
+  year_to integer,
+  project_url text,
+  status public.credit_status_enum NOT NULL DEFAULT 'active',
+  flag_reason public.credit_flag_reason_enum,
+  flag_notes text,
+  flagged_at timestamptz,
+  flagged_by_user_id uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
+  added_by_user_id uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
+  display_order integer NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT building_credits_pkey PRIMARY KEY (id),
+  CONSTRAINT building_credits_person_or_company_required
+    CHECK (person_id IS NOT NULL OR company_id IS NOT NULL)
+);
+```
+
+**Indexes:** `building_id`, `person_id`, `company_id`, `status`. Year check constraints mirror `person_company_affiliations` (reasonable range, `year_to >= year_from` when both set).
+
+**Migration notes:** Inserts skip `building_architects` rows whose `architect_id` is not found in `people` (individual) or `companies` (studio). After Tasks 1.1–1.2, row count should match `building_architects`.
+
+### Component 2: RLS (`building_credits`)
+
+**SELECT** — rows with `status <> 'hidden'`, or any row for `public.is_admin()`
+
+```sql
+CREATE POLICY "building_credits_select" ON public.building_credits
+  FOR SELECT
+  USING (
+    public.is_admin()
+    OR status <> 'hidden'::public.credit_status_enum
+  );
+```
+
+**INSERT** — authenticated; at least one of `person_id`, `company_id` must be non-null (`WITH CHECK`)
+
+```sql
+CREATE POLICY "building_credits_insert" ON public.building_credits
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    (SELECT auth.uid()) IS NOT NULL
+    AND (person_id IS NOT NULL OR company_id IS NOT NULL)
+  );
+```
+
+**UPDATE** — admin; or the person row’s `claimed_by_user_id` (= auth user) when `person_id` is set; or any steward of `company_id` when `company_id` is set. Same `USING` and `WITH CHECK`.
+
+**DELETE** — admin or `buildings.created_by` = auth user for the credit’s `building_id` (aligned with `building_architects` delete pattern).
 
 ---
 
