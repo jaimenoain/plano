@@ -317,14 +317,31 @@ export async function searchCompanies(query: string): Promise<CompanySummary[]> 
   if (error) throw error;
   if (!rows?.length) return [];
 
-  return rows.map((r) => ({
-    id: r.id as string,
-    name: r.name as string,
-    slug: r.slug as string,
-    claimStatus: r.claim_status as CompanySummary["claimStatus"],
-    country: r.country as string | null,
-    logoUrl: r.logo_url as string | null,
-  }));
+  const ids = rows.map((r) => r.id as string);
+  const countResults = await Promise.all(
+    ids.map(async (companyId) => {
+      const { count, error: cErr } = await supabase
+        .from("building_credits")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId);
+      if (cErr) throw cErr;
+      return [companyId, count ?? 0] as const;
+    }),
+  );
+  const countById = new Map(countResults);
+
+  return rows.map((r) => {
+    const id = r.id as string;
+    return {
+      id,
+      name: r.name as string,
+      slug: r.slug as string,
+      claimStatus: r.claim_status as CompanySummary["claimStatus"],
+      country: r.country as string | null,
+      logoUrl: r.logo_url as string | null,
+      creditCount: countById.get(id) ?? 0,
+    };
+  });
 }
 
 /**

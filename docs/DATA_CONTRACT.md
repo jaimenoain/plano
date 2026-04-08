@@ -2952,7 +2952,7 @@ Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`
 | Function | Behaviour |
 |----------|-----------|
 | `getCompany(slug)` | `Company` + `credits: CompanyCreditWithBuilding[]` (each credit includes `building` summary and joined `person` / `company`); `null` if slug missing. |
-| `searchCompanies(query)` | `CompanySummary[]` (`id`, `name`, `slug`, `claimStatus`, `country`, `logoUrl`). |
+| `searchCompanies(query)` | `CompanySummary[]` (`id`, `name`, `slug`, `claimStatus`, `country`, `logoUrl`, `creditCount` — visible `building_credits` count per company for picker disambiguation). |
 | `createCompany(input)` | Zod-validated insert; slug via `slugifyCompanyName` (same rules as `slugify_person_name`) + numeric suffix on collision. |
 | `updateCompany(id, input)` | Zod partial update; RLS (steward / admin). Returns `null` if row absent after update. |
 | `getCompanyPortfolio(companyId, roleFilter?)` | `CompanyPortfolioByTier` — credits with `building` + `person` joins; optional `.eq('role', roleFilter)`; ordered per tier then `display_order` / `is_lead`. |
@@ -3101,10 +3101,11 @@ Browser Supabase client wrappers live in `src/features/credits/api/credits.ts`. 
 | Function | Behaviour |
 |----------|-----------|
 | `getBuildingCredits(buildingId)` | All credits for the building joined with `people` / `companies` summaries; RLS omits `hidden` for non-admins. Sorted by `credit_tier`, `display_order`, `is_lead` descending. |
-| `addBuildingCredit(input)` | Zod-validated insert; requires at least one of `personId`, `companyId`; `added_by_user_id` from `auth.getUser()` (not client-supplied). |
+| `addBuildingCredit(input)` | Zod-validated insert; requires at least one of `personId`, `companyId`; `added_by_user_id` from `auth.getUser()` (not client-supplied). `contribution_notes` max **500** characters; `role = other` requires non-empty `role_custom`. |
 | `flagCredit(creditId, reason, notes)` | Calls RPC `flag_building_credit` (SECURITY DEFINER). Sets `status = flagged`, `flag_reason`, `flag_notes`, `flagged_at`; `flagged_by_user_id` is `auth.uid()` when signed in, else `NULL`. Only transitions `active` / `verified` → `flagged`. Refetches the row after RPC success. |
 | `updateCreditStatus(creditId, { status })` | Status-only patch; RLS applies (admin / claim owner / steward per policies). |
 | `removeCreditByToken(token)` | Calls RPC `redeem_credit_removal_token(p_token_hex)`; returns `{ ok, creditId? }` or `{ ok: false, error }` (`invalid_token`, `unknown_token`, `expired`, `already_used`, `rpc_error`). |
+| `notifyCreditedEntities({ creditIds, emails })` | `supabase.functions.invoke('notify-credited-entities')`. **Zod:** unique `creditIds` (1–50 UUIDs), `emails` (1–15). Caller must be authenticated; the Edge Function checks each credit’s `added_by_user_id` matches the JWT user. |
 
 ### Component 4: RPC `flag_building_credit`
 
@@ -3173,6 +3174,15 @@ Introduced in Roadmap Phase 2 Task 2.4 (migration `20270824000000_redeem_credit_
 ### Component 5: RLS
 
 `ALTER TABLE … ENABLE ROW LEVEL SECURITY` on both tables; **no policies** (default deny for JWT roles). Service role bypasses RLS for Edge Function access.
+
+### Component 6: Edge Function `notify-credited-entities`
+
+Roadmap Phase 6 Task 6.3. **`verify_jwt = false`**; manual `getUser` on `Authorization` (same pattern as `invite-company-steward`). **POST** JSON body: `creditIds: string[]`, `emails: string[]` (server enforces max 50 / 15, deduped normalized addresses).
+
+- Loads credits by id with **service role**; rejects unless every row exists, shares one `building_id`, `added_by_user_id` equals the caller’s user id, and `status <> 'hidden'`.
+- For each credit, calls **`generate_credit_removal_token(credit_id)`** (service role only), then sends **one Resend email per recipient** using the **`CreditNotificationEmail`** React template (`supabase/functions/_shared/emails/CreditNotificationEmail.tsx`): building name, optional hero image URL (`PUBLIC_STORAGE_URL` or Supabase public storage base + `main_image_url` / `community_preview_url`), per-credit role + entity line, **Remove this credit** link to `{SITE_URL}/remove-credit/{64-char hex}`, **Claim your profile** CTA to `SITE_URL`.
+- After each successful send, inserts one **`credit_notification_log`** row per credit with **`recipient_hash`** = SHA-256(UTF-8 email) and **`token_hash`** = SHA-256(raw 32-byte secret) matching `credit_removal_tokens`. **No plaintext email** stored.
+- Requires **`RESEND_API_KEY`** on the function; uses **`SITE_URL`** (default `https://plano.app`) for links. Optional **`PUBLIC_STORAGE_URL`** matches app `VITE_PUBLIC_STORAGE_URL` for image URLs in email.
 
 ---
 

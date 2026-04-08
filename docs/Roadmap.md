@@ -256,7 +256,7 @@
 
 ---
 
-**[ ] Task 6.1 — `CreditEntityPicker` component**
+**[x] Task 6.1 — `CreditEntityPicker` component**
 
 - Build a searchable combobox component that queries `searchPeople` and `searchCompanies` in parallel and merges results into a single list with a type indicator (person vs. company)
 - Each result shows name + disambiguation context: associated company names and one known building name for people; country and credit count for companies
@@ -270,7 +270,7 @@
 
 ---
 
-**[ ] Task 6.2 — Credit submission form (full form + batch)**
+**[x] Task 6.2 — Credit submission form (full form + batch)**
 
 - Build `AddCreditForm` in a `Sheet` slide-over, triggered by "Add a credit" on the building detail page
 - Per-credit entry fields: person picker (optional, using `CreditEntityPicker`), company picker (optional), role dropdown (full taxonomy + Other with free text), credit tier selector, is_lead checkbox, contribution notes textarea (max 500 chars), year_from / year_to integer inputs, project_url text input
@@ -284,7 +284,7 @@
 
 ---
 
-**[ ] Task 6.3 — Post-submission notification email flow**
+**[x] Task 6.3 — Post-submission notification email flow**
 
 - After successful credit submission, show a notification step within the same `Sheet`: "Notify the people you've credited — paste their email addresses below"
 - Free-text email input (comma or newline separated); parse, deduplicate, cap at 15 addresses; show parsed address pills before sending

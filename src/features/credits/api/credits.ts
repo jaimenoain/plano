@@ -9,7 +9,8 @@ import type {
   FlagReason,
 } from "@/features/credits/types";
 
-const CREDIT_ROLES = [
+/** Ordered list for role dropdowns; matches `credit_role_enum` / `CreditRole`. */
+export const CREDIT_ROLES = [
   "design_architect",
   "architect_of_record",
   "executive_architect",
@@ -42,7 +43,7 @@ const CREDIT_STATUSES = ["active", "verified", "flagged", "hidden"] as const sat
 
 const FLAG_REASONS = ["wrong_person", "never_involved", "wrong_role", "other"] as const satisfies readonly FlagReason[];
 
-const CREDIT_TIERS = ["primary", "contributor", "ancillary"] as const satisfies readonly CreditTier[];
+export const CREDIT_TIERS = ["primary", "contributor", "ancillary"] as const satisfies readonly CreditTier[];
 
 const AddBuildingCreditSchema = z
   .object({
@@ -53,7 +54,7 @@ const AddBuildingCreditSchema = z
     roleCustom: z.string().max(500).nullable().optional(),
     creditTier: z.enum(CREDIT_TIERS).optional(),
     isLead: z.boolean().optional(),
-    contributionNotes: z.string().max(10000).nullable().optional(),
+    contributionNotes: z.string().max(500).nullable().optional(),
     yearFrom: z.number().int().min(1000).max(2100).nullable().optional(),
     yearTo: z.number().int().min(1000).max(2100).nullable().optional(),
     projectUrl: z.string().max(2000).nullable().optional(),
@@ -62,7 +63,16 @@ const AddBuildingCreditSchema = z
   .refine((d) => d.personId != null || d.companyId != null, {
     message: "At least one of personId or companyId is required",
     path: ["personId"],
-  });
+  })
+  .refine(
+    (d) =>
+      d.role !== "other" ||
+      (typeof d.roleCustom === "string" && d.roleCustom.trim().length > 0),
+    {
+      message: "Describe the role when selecting Other",
+      path: ["roleCustom"],
+    },
+  );
 
 export type AddBuildingCreditInput = z.infer<typeof AddBuildingCreditSchema>;
 
@@ -367,4 +377,38 @@ export async function removeCreditByToken(token: string): Promise<RemoveCreditBy
 
   if (error) return { ok: false, error: "rpc_error" };
   return parseRedeemCreditRemovalRpcPayload(data);
+}
+
+const NotifyCreditedEntitiesSchema = z
+  .object({
+    creditIds: z
+      .array(z.string().uuid())
+      .min(1)
+      .max(50)
+      .refine((ids) => new Set(ids).size === ids.length, { message: "Duplicate credit id" }),
+    emails: z.array(z.string().email()).min(1).max(15),
+  })
+  .strict();
+
+export type NotifyCreditedEntitiesInput = z.infer<typeof NotifyCreditedEntitiesSchema>;
+
+/**
+ * After adding credits, sends one email per recipient via Edge Function `notify-credited-entities`
+ * (manual JWT verification; mints removal tokens server-side; logs hashes only to `credit_notification_log`).
+ */
+export async function notifyCreditedEntities(input: NotifyCreditedEntitiesInput): Promise<{ ok: true }> {
+  const body = NotifyCreditedEntitiesSchema.parse(input);
+  const { data, error } = await supabase.functions.invoke("notify-credited-entities", { body });
+
+  const payload = data as { ok?: boolean; error?: string } | null;
+
+  if (error) {
+    throw new Error(payload?.error ?? error.message);
+  }
+
+  if (!payload?.ok) {
+    throw new Error(payload?.error ?? "Notification request failed");
+  }
+
+  return { ok: true };
 }

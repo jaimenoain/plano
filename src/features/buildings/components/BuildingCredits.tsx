@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, ChevronDown, BadgeCheck, Flag } from "lucide-react";
 import type { BuildingCreditWithEntities, CreditRole, CreditTier, FlagReason } from "@/features/credits/types";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
+import { AddCreditForm } from "@/features/credits/components/AddCreditForm";
 import { flagCredit, buildingCreditsQueryKey } from "@/features/credits/api/credits";
 import { markCreditFlaggedInSession, readSessionFlaggedCreditIds } from "@/features/credits/creditFlagSession";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -444,7 +445,7 @@ function TierRoleSections({
 export interface BuildingCreditsProps {
   credits: BuildingCreditWithEntities[];
   buildingId: string;
-  /** When true, show “Add a credit” and open the Phase 6 submission sheet (stub until Task 6.2). */
+  /** When true, show “Add a credit” and open the submission sheet (`AddCreditForm`). */
   isAuthenticated: boolean;
 }
 
@@ -515,13 +516,14 @@ export function BuildingCredits({ credits, buildingId, isAuthenticated }: Buildi
             Add a credit
           </Button>
           <Sheet open={addOpen} onOpenChange={setAddOpen}>
-            <SheetContent side="right" className="sm:max-w-md">
-              <SheetHeader>
-                <SheetTitle>Add a credit</SheetTitle>
-                <SheetDescription>
-                  Full credit submission opens here after Phase 6. You can close this panel for now.
-                </SheetDescription>
-              </SheetHeader>
+            <SheetContent side="right" className="flex w-full flex-col overflow-hidden sm:max-w-lg sm:px-6">
+              {addOpen ? (
+                <AddCreditForm
+                  buildingId={buildingId}
+                  existingCredits={credits}
+                  onRequestClose={() => setAddOpen(false)}
+                />
+              ) : null}
             </SheetContent>
           </Sheet>
         </div>

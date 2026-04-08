@@ -91,6 +91,8 @@ export interface CompanySummary {
   claimStatus: PersonClaimStatus;
   country: string | null;
   logoUrl: string | null;
+  /** Count of visible `building_credits` rows for this company (search picker disambiguation). */
+  creditCount: number;
 }
 
 export interface CompanySteward {
