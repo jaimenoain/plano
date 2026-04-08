@@ -5,7 +5,10 @@ import { Label } from "@/components/ui/label";
 import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus, X, Check, Info } from "lucide-react";
 import { toast } from "sonner";
-import { ArchitectSelect, Architect } from "@/components/ui/architect-select";
+import {
+  CreditedEntitiesSelect,
+  type CreditedEntityTag,
+} from "@/features/credits/components/CreditedEntitiesSelect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/utils/url";
@@ -55,7 +58,7 @@ export interface BuildingFormData {
   access_cost?: string | null;
   access_notes?: string | null;
   architect_statement?: string | null;
-  architects: Architect[];
+  designCreditEntities: CreditedEntityTag[];
   functional_category_id: string | null;
   functional_typology_ids: string[];
   selected_attribute_ids: string[];
@@ -87,7 +90,9 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [access_cost, setAccessCost] = useState<string>(initialValues.access_cost || "");
   const [access_notes, setAccessNotes] = useState<string>(initialValues.access_notes || "");
   const [architect_statement, setArchitectStatement] = useState<string>(initialValues.architect_statement || "");
-  const [architects, setArchitects] = useState<Architect[]>(initialValues.architects);
+  const [designCreditEntities, setDesignCreditEntities] = useState<CreditedEntityTag[]>(
+    initialValues.designCreditEntities,
+  );
   const [functional_category_id, setCategoryId] = useState<string>(initialValues.functional_category_id || "");
   const [functional_typology_ids, setTypologyIds] = useState<string[]>(initialValues.functional_typology_ids);
   const [selected_attribute_ids, setAttributeIds] = useState<string[]>(initialValues.selected_attribute_ids);
@@ -135,8 +140,8 @@ return true; // Fallback to true on error to avoid blocking UX unnecessarily
   const queryClient = useQueryClient();
 
   const [showYear, setShowYear] = useState(mode === 'create' ? true : !!initialValues.year_completed);
-  const [showArchitects, setShowArchitects] = useState(
-    mode === 'create' ? true : initialValues.architects.length > 0
+  const [showDesignCredits, setShowDesignCredits] = useState(
+    mode === "create" ? true : initialValues.designCreditEntities.length > 0,
   );
   const [showAliases, setShowAliases] = useState(
     mode === 'create' ? true : (!!initialValues.alt_name || (initialValues.aliases?.length ?? 0) > 0)
@@ -178,7 +183,9 @@ return true; // Fallback to true on error to avoid blocking UX unnecessarily
     },
   });
 
-  const isVerifiedArchitect = profile?.verified_architect_id && architects.some((a) => a.id === profile.verified_architect_id);
+  const isVerifiedCreditClaim =
+    !!profile?.verified_architect_id &&
+    designCreditEntities.some((e) => e.id === profile.verified_architect_id);
 
   const { data: attributes, isLoading: isLoadingAttributes } = useQuery({
     queryKey: ["attributes"],
@@ -305,7 +312,7 @@ toast.error("Failed to add attribute");
         access_cost: access_cost || null,
         access_notes: access_notes || null,
         architect_statement: architect_statement || null,
-        architects,
+        designCreditEntities,
         functional_category_id,
         functional_typology_ids,
         selected_attribute_ids,
@@ -472,22 +479,22 @@ toast.error("Failed to add attribute");
           </div>
         )}
 
-        {/* Architects */}
-        {(showArchitects || isVerifiedArchitect) && (
+        {/* Primary design credits (people / companies) */}
+        {(showDesignCredits || isVerifiedCreditClaim) && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Architects</Label>
-              <ArchitectSelect
-                selectedArchitects={architects}
-                setSelectedArchitects={setArchitects}
-                placeholder="Search architects or add new..."
+              <Label>Design credits</Label>
+              <CreditedEntitiesSelect
+                selected={designCreditEntities}
+                onChange={setDesignCreditEntities}
+                placeholder="Search people or companies…"
               />
               <p className="text-xs text-text-secondary">
-                Add multiple architects if applicable. If not found, you can create a new one.
+                Add everyone who should appear as a primary design credit. Create a new person or company if needed.
               </p>
             </div>
 
-            {isVerifiedArchitect && (
+            {isVerifiedCreditClaim && (
               <div className="space-y-2 border border-border-default rounded-sm p-4 bg-surface-muted/30">
                 <ArchitectStatement
                   statement={architect_statement}
@@ -500,7 +507,7 @@ toast.error("Failed to add attribute");
         )}
 
         {/* Add Buttons Row (edit mode only; creation forms show all sections by default) */}
-        {mode !== 'create' && (!showYear || !showArchitects || !showAliases) && (
+        {mode !== "create" && (!showYear || !showDesignCredits || !showAliases) && (
             <div className="flex gap-2 flex-wrap">
                 {!showAliases && (
                     <Button
@@ -524,15 +531,15 @@ toast.error("Failed to add attribute");
                         <Plus className="h-3 w-3 mr-1" /> Add Year
                     </Button>
                 )}
-                {!showArchitects && (
+                {!showDesignCredits && (
                     <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         className="rounded-sm h-8"
-                        onClick={() => setShowArchitects(true)}
+                        onClick={() => setShowDesignCredits(true)}
                     >
-                        <Plus className="h-3 w-3 mr-1" /> Add Architects
+                        <Plus className="h-3 w-3 mr-1" /> Add design credits
                     </Button>
                 )}
             </div>

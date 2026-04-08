@@ -33,7 +33,8 @@ import { BuildingLocationPicker } from "@/features/buildings/components/Building
 import { Loader2, MapPin, Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { parseLocation } from "@/utils/location";
-import type { Architect as ArchitectOption } from "@/components/ui/architect-select";
+import type { CreditedEntityTag } from "@/features/credits/components/CreditedEntitiesSelect";
+import { replacePrimaryDesignCredits } from "@/features/credits/api/credits";
 import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Admin Buildings | Plano" }];
@@ -49,6 +50,7 @@ export default function Buildings() {
   // Edit State
   const [editingBuilding, setEditingBuilding] = useState<AdminBuilding | null>(null);
   const [formValues, setFormValues] = useState<BuildingFormData | null>(null);
+  const [primaryDesignCreditRowIds, setPrimaryDesignCreditRowIds] = useState<string[]>([]);
   const [locationData, setLocationData] = useState<{
     lat: number | null;
     lng: number | null;
@@ -155,14 +157,40 @@ toast.error("Failed to load buildings");
         precision
     });
 
-    // Fetch Relations
-    const { data: relations } = await supabase
-      .from('building_architects')
-      .select('architect:architects(id, name, type)')
-      .eq('building_id', building.id);
+    const { data: creditRows, error: creditErr } = await supabase
+      .from("building_credits")
+      .select(
+        `
+        id,
+        person_id,
+        company_id,
+        person:people(id, name),
+        company:companies(id, name)
+      `,
+      )
+      .eq("building_id", building.id)
+      .eq("role", "design_architect")
+      .eq("credit_tier", "primary")
+      .in("status", ["active", "verified"])
+      .order("display_order", { ascending: true });
 
-    const relationArchitects =
-      (relations as { architect: ArchitectOption }[] | null | undefined)?.map((r) => r.architect) || [];
+    const designTags: CreditedEntityTag[] = [];
+    const rowIds: string[] = [];
+    if (!creditErr && creditRows) {
+      for (const row of creditRows) {
+        rowIds.push(row.id as string);
+        const p = row.person as { id: string; name: string } | null;
+        const c = row.company as { id: string; name: string } | null;
+        if (p && c) {
+          designTags.push({ id: p.id, name: `${p.name} @ ${c.name}`, kind: "person" });
+        } else if (p) {
+          designTags.push({ id: p.id, name: p.name, kind: "person" });
+        } else if (c) {
+          designTags.push({ id: c.id, name: c.name, kind: "company" });
+        }
+      }
+    }
+    setPrimaryDesignCreditRowIds(rowIds);
 
     const { data: typologies } = await supabase
         .from('building_functional_typologies')
@@ -176,12 +204,20 @@ toast.error("Failed to load buildings");
         .eq('building_id', building.id);
     const attributeIds = attributes?.map((a: { attribute_id: string }) => a.attribute_id) || [];
 
+    const b = building as AdminBuilding & { functional_category_id?: string | null; alt_name?: string | null; aliases?: string[] | null; access_notes?: string | null };
     setFormValues({
         name: building.name,
+        alt_name: typeof b.alt_name === "string" ? b.alt_name : "",
+        aliases: Array.isArray(b.aliases) ? b.aliases : [],
         hero_image_url: building.hero_image_url,
         year_completed: building.year_completed ?? null,
-        architects: relationArchitects,
-        functional_category_id: (building as { functional_category_id?: string }).functional_category_id || "",
+        status: typeof building.status === "string" ? building.status : "",
+        access_level: building.access_level ?? "",
+        access_logistics: building.access_logistics ?? "",
+        access_cost: building.access_cost ?? "",
+        access_notes: typeof b.access_notes === "string" ? b.access_notes : "",
+        designCreditEntities: designTags,
+        functional_category_id: b.functional_category_id || "",
         functional_typology_ids: typologyIds,
         selected_attribute_ids: attributeIds,
     });
@@ -221,15 +257,11 @@ toast.error("Failed to load buildings");
 
       const id = editingBuilding.id;
 
-      // Handle Architects Junction Table
-      // 1. Clear existing links
-      await supabase.from('building_architects').delete().eq('building_id', id);
-
-      // 2. Insert new links
-      if (formData.architects.length > 0) {
-          const links = formData.architects.map(a => ({ building_id: id, architect_id: a.id }));
-          const { error: _linkError } = await supabase.from('building_architects').insert(links);
-          }
+      await replacePrimaryDesignCredits(
+        id,
+        primaryDesignCreditRowIds,
+        formData.designCreditEntities.map((e) => ({ kind: e.kind, id: e.id })),
+      );
 
       // Handle Typologies Junction Table
       await supabase.from('building_functional_typologies').delete().eq('building_id', id);
@@ -385,7 +417,16 @@ toast.error("Failed to update building");
          </Button>
       </div>
 
-      <Dialog open={!!editingBuilding} onOpenChange={(open) => !open && setEditingBuilding(null)}>
+      <Dialog
+        open={!!editingBuilding}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingBuilding(null);
+            setFormValues(null);
+            setPrimaryDesignCreditRowIds([]);
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>Edit Building: {editingBuilding?.name}</DialogTitle>

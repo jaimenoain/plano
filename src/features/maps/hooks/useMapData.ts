@@ -117,7 +117,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         category_id: filters.category,
         typology_ids: filters.typologies,
         attribute_ids: uniqueAttributeIds.length > 0 ? uniqueAttributeIds : undefined,
-        architect_ids: filters.architects?.map((a) => a.id),
+        architect_ids: filters.people?.map((p) => p.id),
         status: filters.status,
         min_rating: filters.minRating,
         // Include other potential fields if needed, relying on JSONB flexibility

@@ -684,7 +684,7 @@ export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinera
             hero_image_url: activeBuilding.hero_image_url ?? null,
             community_preview_url: activeBuilding.community_preview_url ?? null,
             location_precision: activeBuilding.location_precision ?? "approximate",
-            building_architects: activeBuilding.building_architects ?? [],
+            building_credits: activeBuilding.building_credits ?? [],
             slug: activeBuilding.slug ?? null,
             short_id: activeBuilding.short_id ?? null,
           },

@@ -31,7 +31,7 @@ describe('DiscoveryBuildingCard Overflow', () => {
     name: 'A very very very very very very very very very very long building name that should be truncated',
     slug: 'test-building',
     main_image_url: 'test-image.jpg',
-    architects: [{ id: 'arch1', name: 'A very very very very very very long architect name' }],
+    credits: [{ id: 'arch1', name: 'A very very very very very very long designer name' }],
     year_completed: 2020,
     city: 'A very very very very long city name',
     country: 'A very very very very long country name',

@@ -31,7 +31,7 @@ describe('DiscoveryBuildingCard', () => {
     name: 'Test Building',
     slug: 'test-building',
     main_image_url: 'test-image.jpg',
-    architects: [{ id: 'arch1', name: 'Test Architect' }],
+    credits: [{ id: 'arch1', name: 'Test Designer' }],
     year_completed: 2020,
     city: 'Test City',
     country: 'Test Country',

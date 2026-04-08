@@ -9,7 +9,8 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { Architect } from "@/components/ui/architect-select";
+import type { CreditedEntityTag } from "@/features/credits/components/CreditedEntitiesSelect";
+import { replacePrimaryDesignCredits } from "@/features/credits/api/credits";
 import { parseLocation } from "@/utils/location";
 import { getBuildingUrl } from "@/utils/url";
 import { classifyBuildingPathIdSegment } from "@/utils/buildingPathId";
@@ -50,6 +51,7 @@ export default function EditBuilding() {
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [buildingSlug, setBuildingSlug] = useState<string | null>(null);
   const [buildingShortId, setBuildingShortId] = useState<number | null>(null);
+  const [primaryDesignCreditRowIds, setPrimaryDesignCreditRowIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (id && user) {
@@ -66,6 +68,7 @@ export default function EditBuilding() {
       setBuildingId(null);
       setBuildingSlug(null);
       setBuildingShortId(null);
+      setPrimaryDesignCreditRowIds([]);
       setDuplicates([]);
 
       let query = supabase.from('buildings').select('*');
@@ -96,17 +99,40 @@ export default function EditBuilding() {
       setBuildingSlug(data.slug);
       setBuildingShortId(data.short_id);
 
-      // Fetch Relations
-      // Architects
-      const { data: relations } = await supabase
-        .from('building_architects')
-        .select('architect:architects(id, name, type)')
-        .eq('building_id', data.id);
+      const { data: creditRows, error: creditErr } = await supabase
+        .from("building_credits")
+        .select(
+          `
+          id,
+          person_id,
+          company_id,
+          person:people(id, name),
+          company:companies(id, name)
+        `,
+        )
+        .eq("building_id", data.id)
+        .eq("role", "design_architect")
+        .eq("credit_tier", "primary")
+        .in("status", ["active", "verified"])
+        .order("display_order", { ascending: true });
 
-      const relationArchitects =
-        (relations as { architect: Architect }[] | null | undefined)?.map((r) => r.architect) || [];
-
-      const finalArchitects: Architect[] = relationArchitects;
+      const designTags: CreditedEntityTag[] = [];
+      const rowIds: string[] = [];
+      if (!creditErr && creditRows) {
+        for (const row of creditRows) {
+          rowIds.push(row.id as string);
+          const p = row.person as { id: string; name: string } | null;
+          const c = row.company as { id: string; name: string } | null;
+          if (p && c) {
+            designTags.push({ id: p.id, name: `${p.name} @ ${c.name}`, kind: "person" });
+          } else if (p) {
+            designTags.push({ id: p.id, name: p.name, kind: "person" });
+          } else if (c) {
+            designTags.push({ id: c.id, name: c.name, kind: "company" });
+          }
+        }
+      }
+      setPrimaryDesignCreditRowIds(rowIds);
 
       // Fetch Typologies
       const { data: typologies } = await supabase
@@ -136,7 +162,7 @@ export default function EditBuilding() {
         access_logistics: (typeof row.access_logistics === "string" ? row.access_logistics : "") || "",
         access_cost: (typeof row.access_cost === "string" ? row.access_cost : "") || "",
         access_notes: (typeof row.access_notes === "string" ? row.access_notes : "") || "",
-        architects: finalArchitects,
+        designCreditEntities: designTags,
         functional_category_id:
           (typeof row.functional_category_id === "string" ? row.functional_category_id : "") || "",
         functional_typology_ids: typologyIds,
@@ -239,16 +265,11 @@ toast.error("Failed to update building");
         return;
       }
 
-      // Handle Architects Junction Table
-      // 1. Clear existing links
-      await supabase.from('building_architects').delete().eq('building_id', buildingId);
-
-      // 2. Insert new links
-      // We assume formData.architects contains valid UUIDs from the building form architect picker
-      if (formData.architects.length > 0) {
-          const links = formData.architects.map(a => ({ building_id: buildingId, architect_id: a.id }));
-          const { error: _linkError } = await supabase.from('building_architects').insert(links);
-          }
+      await replacePrimaryDesignCredits(
+        buildingId,
+        primaryDesignCreditRowIds,
+        formData.designCreditEntities.map((e) => ({ kind: e.kind, id: e.id })),
+      );
 
       // Handle Typologies Junction Table
       await supabase.from('building_functional_typologies').delete().eq('building_id', buildingId);

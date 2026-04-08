@@ -176,7 +176,7 @@ describe('CollectionMapGL - Viewport Fitting Logic', () => {
       year_completed: 2020,
       location_precision: 'exact',
       styles: [],
-      architects: [],
+      credit_names: [],
       main_image_url: '',
     }
   ];

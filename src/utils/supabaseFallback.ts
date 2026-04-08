@@ -10,7 +10,7 @@ export const searchBuildingsRpc = async (params: {
   filters?: {
     cities?: string[];
     styles?: string[];
-    architects?: string[];
+    creditEntityIds?: string[];
     category_id?: string;
     typology_ids?: string[];
     attribute_ids?: string[];
@@ -100,7 +100,7 @@ throw error;
         c.credit_tier === "primary" &&
         (c.status === "active" || c.status === "verified"),
     );
-    const architects = primaryVisible
+    const credits = primaryVisible
       .map((c) => {
         const p = c.person;
         const co = c.company;
@@ -113,7 +113,7 @@ throw error;
     const { building_credits: _bc, ...rest } = row;
     return {
       ...rest,
-      architects,
+      credits,
       styles: (row.styles || []).map((s) => s.style),
       typologies: (row.typologies || []).map((t) => t.typology?.name).filter(Boolean),
     };
@@ -127,7 +127,7 @@ export const getMapPinsRpc = async (params: {
   filters?: {
     cities?: string[];
     styles?: string[]; // Kept for compatibility but unused
-    architects?: string[];
+    creditEntityIds?: string[];
     category_id?: string;
     typology_ids?: string[];
     attribute_ids?: string[];
@@ -189,7 +189,7 @@ export const getBuildingsByIds = async (ids: string[]) => {
         c.credit_tier === "primary" &&
         (c.status === "active" || c.status === "verified"),
     );
-    const architects = primaryVisible
+    const credits = primaryVisible
       .map((c) => {
         const p = c.person;
         const co = c.company;
@@ -200,7 +200,7 @@ export const getBuildingsByIds = async (ids: string[]) => {
       })
       .filter((a): a is { id: string; name: string } => a != null);
     const { building_credits: _bc, ...rest } = row;
-    return { ...rest, architects };
+    return { ...rest, credits };
   });
 };
 
@@ -320,7 +320,7 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
     return {
         ...data,
         styles,
-        architects: [] as { id: string; name: string }[],
+        credits: [] as { id: string; name: string }[],
         category: categoryName,
         typology: typologies,
         materials: materials.length > 0 ? materials : null,

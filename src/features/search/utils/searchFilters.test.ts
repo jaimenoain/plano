@@ -12,7 +12,7 @@ describe('filterLocalBuildings', () => {
         { attribute_id: 'mat1' }, // Material: Brick
         { attribute_id: 'style1' }, // Style
       ],
-      architects: [{ architect: { id: 'arch1', name: 'Arch 1' } }],
+      creditedEntityIds: ['arch1'],
     },
     {
       id: '2',
@@ -22,7 +22,7 @@ describe('filterLocalBuildings', () => {
         { attribute_id: 'mat2' }, // Material: Concrete
         { attribute_id: 'ctx1' }, // Context
       ],
-      architects: [{ architect: { id: 'arch2', name: 'Arch 2' } }],
+      creditedEntityIds: ['arch2'],
     },
     {
       id: '3',
@@ -33,14 +33,14 @@ describe('filterLocalBuildings', () => {
         { attribute_id: 'ctx2' },
         { attribute_id: 'style2' },
       ],
-      architects: [],
+      creditedEntityIds: [],
     },
     {
       id: '4',
       functional_category_id: 'cat3',
       typologies: [],
       attributes: [],
-      architects: [],
+      creditedEntityIds: [],
     },
   ];
 
@@ -48,7 +48,7 @@ describe('filterLocalBuildings', () => {
     categoryId: null,
     typologyIds: [],
     attributeIds: [],
-    selectedArchitects: [],
+    selectedCreditEntityIds: [],
     collectionIds: [],
     materials: [],
     styles: [],

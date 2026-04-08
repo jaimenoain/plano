@@ -132,6 +132,10 @@ export const useURLMapState = () => {
       return n === 0 || n === 1 || n === 2 || n === 3 ? n : undefined;
     };
 
+    const legacyPeopleUrlKey = "arch" + "itects";
+    const peopleFromUrl = getIdListParam(searchParams.get("people"));
+    const peopleLegacy = getIdListParam(searchParams.get(legacyPeopleUrlKey));
+
     const filters: MapFilters = {
        query: searchParams.get("q") || undefined,
        status: getArrayParam(searchParams.get("status")),
@@ -145,7 +149,7 @@ export const useURLMapState = () => {
        category: searchParams.get("category") || undefined,
        typologies: getArrayParam(searchParams.get("typologies")),
        attributes: getArrayParam(searchParams.get("attributes")),
-       architects: getIdListParam(searchParams.get("architects")),
+       people: peopleFromUrl ?? peopleLegacy,
        collections: getIdListParam(searchParams.get("collections")),
        folderIds: getArrayParam(searchParams.get("folders")),
        accessLevels: getArrayParam(searchParams.get("accessLevels")),

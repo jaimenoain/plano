@@ -43,7 +43,7 @@ describe('BuildingSidebar Sorting', () => {
         name: 'Hidden Building 1',
         rating: 3,
         status: 'ignored', // Should go to bottom
-        architects: [],
+        credit_names: [],
         image_url: null,
         slug: 'hidden-1',
         lat: 0,
@@ -54,7 +54,7 @@ describe('BuildingSidebar Sorting', () => {
         name: 'Visible Building 1',
         rating: 3,
         status: 'saved', // Should stay at top
-        architects: [],
+        credit_names: [],
         image_url: null,
         slug: 'visible-1',
         lat: 0,
@@ -65,7 +65,7 @@ describe('BuildingSidebar Sorting', () => {
         name: 'Hidden Building 2',
         rating: 3,
         status: 'ignored', // Should go to bottom
-        architects: [],
+        credit_names: [],
         image_url: null,
         slug: 'hidden-2',
         lat: 0,
@@ -76,7 +76,7 @@ describe('BuildingSidebar Sorting', () => {
         name: 'Visible Building 2',
         rating: 3,
         status: 'visited', // Should stay at top
-        architects: [],
+        credit_names: [],
         image_url: null,
         slug: 'visible-2',
         lat: 0,

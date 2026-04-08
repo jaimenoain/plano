@@ -14,9 +14,10 @@ export interface DiscoveryFeedImageRow {
   } | null;
 }
 
-interface BuildingArchitectJoinRow {
+interface BuildingCreditEmbedRow {
   building_id: string;
-  architects: { id: string; name: string } | null;
+  person: { id: string; name: string } | null;
+  company: { id: string; name: string } | null;
 }
 
 interface UserBuildingInteractionRow {
@@ -36,7 +37,7 @@ export interface DiscoveryFeedItem {
   slug: string | null;
   main_image_url: string | null;
   save_count: number;
-  architects: { id: string; name: string }[] | null;
+  credits: { id: string; name: string }[] | null;
   contact_interactions?: ContactInteraction[];
   images?: DiscoveryFeedImageRow[];
 }
@@ -84,12 +85,22 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         const buildingIds = buildings.map(b => b.id);
 
 
-        // Fetch Architects, Follows, and Images in parallel
-        const [architectsRes, followsRes, ...imageResponses] = await Promise.all([
+        // Fetch primary credits, follows, and images in parallel
+        const [creditsRes, followsRes, ...imageResponses] = await Promise.all([
           supabase
-            .from('building_architects')
-            .select('building_id, architects(id, name)')
-            .in('building_id', buildingIds),
+            .from("building_credits")
+            .select(
+              `
+              building_id,
+              credit_tier,
+              status,
+              person:people(id, name),
+              company:companies(id, name)
+            `,
+            )
+            .in("building_id", buildingIds)
+            .eq("credit_tier", "primary")
+            .in("status", ["active", "verified"]),
           supabase
             .from('follows')
             .select('following_id')
@@ -121,24 +132,27 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
           )
         ]);
 
-        const architectsData = architectsRes.data;
+        const creditsData = creditsRes.data;
         const followsData = followsRes.data;
         // Merge all individual building image results
         const imagesData = imageResponses.flatMap(res => res.data || []);
 
-        // --- Process Architects ---
-        if (architectsData) {
-          const architectsMap: Record<string, { id: string; name: string }[]> = {};
-          (architectsData as unknown as BuildingArchitectJoinRow[]).forEach((item) => {
-            if (item.architects) {
-              if (!architectsMap[item.building_id]) {
-                architectsMap[item.building_id] = [];
-              }
-              architectsMap[item.building_id].push(item.architects);
+        if (creditsData) {
+          const creditsMap: Record<string, { id: string; name: string }[]> = {};
+          (creditsData as unknown as BuildingCreditEmbedRow[]).forEach((item) => {
+            const p = item.person;
+            const c = item.company;
+            let entry: { id: string; name: string } | null = null;
+            if (p && c) entry = { id: p.id, name: `${p.name} @ ${c.name}` };
+            else if (p) entry = { id: p.id, name: p.name };
+            else if (c) entry = { id: c.id, name: c.name };
+            if (entry) {
+              if (!creditsMap[item.building_id]) creditsMap[item.building_id] = [];
+              creditsMap[item.building_id].push(entry);
             }
           });
-          buildings.forEach(building => {
-            building.architects = architectsMap[building.id] || [];
+          buildings.forEach((building) => {
+            building.credits = creditsMap[building.id] || [];
           });
         }
 

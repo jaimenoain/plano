@@ -42,7 +42,7 @@ describe('BuildingSidebar', () => {
       name: 'Test Building',
       rating: 3,
       status: 'saved',
-      architects: ['Test Architect'],
+      credit_names: ['Test Designer'],
       image_url: null,
       slug: 'test-slug',
       lat: 0,

@@ -28,7 +28,7 @@
  * Pagination dots: kept, top-right corner instead of centered
  */
 import { useState, useRef, useEffect, useMemo, type RefCallback } from "react";
-import { DiscoveryBuilding, type ArchitectSummary } from "@/features/search/components/types";
+import { DiscoveryBuilding, type CreditSummary } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { Bookmark } from "lucide-react";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
@@ -118,10 +118,8 @@ export function DiscoveryCard({
     return null;
   }, [uniqueImages, currentImageIndex, additionalImages]);
 
-  const architectNames = building.architects
-    ?.map((a: ArchitectSummary | string) =>
-      typeof a === "string" ? a : a.name
-    )
+  const creditNames = building.credits
+    ?.map((a: CreditSummary | string) => (typeof a === "string" ? a : a.name))
     .filter(Boolean)
     .join(", ");
 
@@ -220,7 +218,7 @@ export function DiscoveryCard({
     building.city && building.country
       ? `${building.city}, ${building.country}`
       : building.city || building.country || null,
-    architectNames || null,
+    creditNames || null,
   ]
     .filter(Boolean)
     .join(" · ");

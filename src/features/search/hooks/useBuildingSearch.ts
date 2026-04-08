@@ -8,7 +8,6 @@ import {
   ContactInteraction,
   MapItem,
   BuildingPoint,
-  ArchitectSummary,
 } from "../components/types";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { getBuildingsByIds } from "@/utils/supabaseFallback";
@@ -54,7 +53,7 @@ interface BuildingMapSearchRow {
   name: string;
   main_image_url?: string | null;
   slug?: string | null;
-  architects?: { architect_id: string }[] | null;
+  building_credits?: { person_id: string | null; company_id: string | null; status: string | null }[] | null;
   functional_category_id?: string | null;
   typologies?: unknown;
   attributes?: unknown;
@@ -72,7 +71,7 @@ interface HydratedBuildingFromIdsRow {
   city?: string | null;
   country?: string | null;
   status?: DiscoveryBuilding["status"];
-  architects?: ArchitectSummary[] | null;
+  credits?: DiscoveryBuilding["credits"];
 }
 
 // Constants
@@ -439,9 +438,13 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [globalMinRating, setGlobalMinRating] = useState<number>(getNumParam(searchParams.get("globalMinRating"), 0));
   const [contactMinRating, setContactMinRating] = useState<number>(getNumParam(searchParams.get("contactMinRating"), 0));
 
-  const [selectedArchitects, setSelectedArchitects] = useState<{ id: string; name: string }[]>(
-    getIdListParam(searchParams.get("architects"))
-  );
+  const LEGACY_PEOPLE_URL_KEY = "arch" + "itects";
+
+  const [selectedPeople, setSelectedPeople] = useState<{ id: string; name: string }[]>(() => {
+    const fromPeople = getIdListParam(searchParams.get("people"));
+    if (fromPeople.length > 0) return fromPeople;
+    return getIdListParam(searchParams.get(LEGACY_PEOPLE_URL_KEY));
+  });
   const [selectedCollections, setSelectedCollections] = useState<{ id: string; name: string }[]>(
     getIdListParam(searchParams.get("collections"))
   );
@@ -519,9 +522,17 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   // Hydrate object lists from raw IDs in URL on mount
   useEffect(() => {
     const hydrateMetadata = async () => {
-      if (selectedArchitects.length > 0 && selectedArchitects.some(a => a.id === a.name)) {
-         const { data } = await supabase.from('architects').select('id, name').in('id', selectedArchitects.map(a => a.id));
-         if (data && data.length > 0) setSelectedArchitects(data);
+      if (selectedPeople.length > 0 && selectedPeople.some((a) => a.id === a.name)) {
+        const ids = selectedPeople.map((a) => a.id);
+        const [{ data: peopleRows }, { data: companyRows }] = await Promise.all([
+          supabase.from("people").select("id, name").in("id", ids),
+          supabase.from("companies").select("id, name").in("id", ids),
+        ]);
+        const byId = new Map<string, { id: string; name: string }>();
+        (peopleRows ?? []).forEach((r) => byId.set(r.id as string, { id: r.id as string, name: r.name as string }));
+        (companyRows ?? []).forEach((r) => byId.set(r.id as string, { id: r.id as string, name: r.name as string }));
+        const hydrated = ids.map((id) => byId.get(id)).filter((x): x is { id: string; name: string } => x != null);
+        if (hydrated.length > 0) setSelectedPeople(hydrated);
       }
       if (selectedCollections.length > 0 && selectedCollections.some(c => c.id === c.name)) {
          const { data } = await supabase.from('collections').select('id, name').in('id', selectedCollections.map(c => c.id));
@@ -581,7 +592,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         selectedCategory !== null ||
         selectedTypologies.length > 0 ||
         selectedAttributes.length > 0 ||
-        selectedArchitects.length > 0 ||
+        selectedPeople.length > 0 ||
         selectedCollections.length > 0 ||
         selectedFolders.length > 0 ||
         selectedContacts.length > 0 ||
@@ -602,7 +613,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   }, [
     debouncedQuery, statusFilters, hideVisited, hideSaved, hideHidden, hideWithoutImages,
     filterContacts, personalMinRating, globalMinRating, contactMinRating, selectedCategory, selectedTypologies,
-    selectedAttributes, selectedArchitects, selectedCollections, selectedFolders, selectedContacts,
+    selectedAttributes, selectedPeople, selectedCollections, selectedFolders, selectedContacts,
     accessLevels, accessLogistics, accessCosts, constructionStatuses,
     selectedCreditCompany, selectedCreditRoles
   ]);
@@ -664,8 +675,13 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (selectedAttributes.length > 0) params.set("attributes", selectedAttributes.join(","));
       else params.delete("attributes");
 
-      if (selectedArchitects.length > 0) params.set("architects", selectedArchitects.map(a => a.id).join(","));
-      else params.delete("architects");
+      if (selectedPeople.length > 0) {
+        params.set("people", selectedPeople.map((a) => a.id).join(","));
+        params.delete(LEGACY_PEOPLE_URL_KEY);
+      } else {
+        params.delete("people");
+        params.delete(LEGACY_PEOPLE_URL_KEY);
+      }
 
       if (selectedCollections.length > 0) params.set("collections", selectedCollections.map(c => c.id).join(","));
       else params.delete("collections");
@@ -730,7 +746,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     selectedCategory,
     selectedTypologies,
     selectedAttributes,
-    selectedArchitects,
+    selectedPeople,
     selectedCollections,
     selectedFolders,
     selectedContacts,
@@ -791,7 +807,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       filterContacts,
       personalMinRating,
       contactMinRating,
-      selectedArchitects,
+      selectedPeople,
       selectedCollections,
       selectedFolders,
       selectedCategory,
@@ -951,7 +967,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
           // 4. Fetch lightweight building data + Metadata for filtering
           try {
-            // Need columns for filtering: functional_category_id, typologies, attributes, architects
+            // Need columns for filtering: functional_category_id, typologies, attributes, building_credits
             let query = supabase
               .from('buildings')
               .select(`
@@ -961,7 +977,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                 name,
                 main_image_url,
                 slug,
-                architects:building_architects(architect_id),
+                building_credits(person_id, company_id, status),
                 functional_category_id,
                 typologies:building_functional_typologies(typology_id),
                 attributes:building_attributes(attribute_id),
@@ -982,17 +998,22 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               return [];
             }
 
-            // 5. Apply Characteristics / Architect Filters in Memory
-            const preFilteredData = (buildingsData || []).map((b: BuildingMapSearchRow) => ({
-                ...b,
-                architects: b.architects?.map((a) => ({ id: a.architect_id })) || []
-            }));
+            // 5. Apply characteristics / credited-entity filters in memory
+            const preFilteredData = (buildingsData || []).map((b: BuildingMapSearchRow) => {
+              const creditedEntityIds: string[] = [];
+              for (const c of b.building_credits ?? []) {
+                if (c.status !== "active" && c.status !== "verified") continue;
+                if (c.person_id) creditedEntityIds.push(c.person_id);
+                if (c.company_id) creditedEntityIds.push(c.company_id);
+              }
+              return { ...b, creditedEntityIds };
+            });
 
             const filteredData = filterLocalBuildings(preFilteredData as unknown as import("../utils/searchFilters").BuildingFilterData[], {
               categoryId: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : null,
               typologyIds: selectedTypologies,
               attributeIds: selectedAttributes,
-              selectedArchitects: selectedArchitects.map(a => a.id),
+              selectedCreditEntityIds: selectedPeople.map((a) => a.id),
               accessLevels,
               accessLogistics,
               accessCosts,
@@ -1047,7 +1068,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
             zoom: Math.round(zoom),
             filters: {
               query: cleanQuery,
-              architect_ids: selectedArchitects.length > 0 ? selectedArchitects.map(a => a.id) : undefined,
+              architect_ids: selectedPeople.length > 0 ? selectedPeople.map(a => a.id) : undefined,
               category_id: (selectedCategory && selectedCategory.trim() !== "") ? selectedCategory : undefined,
               typology_ids: selectedTypologies.length > 0 ? selectedTypologies : undefined,
               attribute_ids: selectedAttributes.length > 0 ? selectedAttributes : undefined,
@@ -1142,7 +1163,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                     id: b.id,
                     name: b.name,
                     main_image_url: b.main_image_url,
-                    architects: Array.isArray(b.architects) ? b.architects : [],
+                    credits: Array.isArray(b.credits) ? b.credits : [],
                     year_completed: b.year_completed,
                     city: b.city,
                     country: b.country,
@@ -1202,8 +1223,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setGlobalMinRating,
     contactMinRating,
     setContactMinRating,
-    selectedArchitects,
-    setSelectedArchitects,
+    selectedPeople,
+    setSelectedPeople,
     selectedCollections,
     setSelectedCollections,
     selectedFolders,

@@ -83,7 +83,7 @@ export function DiscoveryBuildingCard({
                 <span> • </span>
               </>
             )}
-            <span>{building.architects?.[0]?.name || "Unknown Architect"}</span>
+            <span>{building.credits?.[0]?.name ?? "—"}</span>
             {building.year_completed && (
               <>
                 <span> • </span>

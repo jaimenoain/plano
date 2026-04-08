@@ -60,7 +60,12 @@ type UserFolderLinkRow = {
   user_folders: { id: string; name: string } | { id: string; name: string }[] | null;
 };
 
-type ExportBuildingArchitect = { architects: { name: string | null } | null };
+type ExportBuildingCreditRow = {
+  credit_tier: string | null;
+  status: string | null;
+  person: { name: string | null } | null;
+  company: { name: string | null } | null;
+};
 type ExportBuilding = {
   name?: string | null;
   address?: string | null;
@@ -68,7 +73,7 @@ type ExportBuilding = {
   country?: string | null;
   year_completed?: number | null;
   location?: unknown;
-  building_architects?: ExportBuildingArchitect[] | null;
+  building_credits?: ExportBuildingCreditRow[] | null;
 } | null;
 
 type CollectionItemExportRow = {
@@ -341,10 +346,11 @@ toast.error("Failed to add contributor");
             country,
             year_completed,
             location,
-            building_architects (
-              architects (
-                name
-              )
+            building_credits (
+              credit_tier,
+              status,
+              person:people (name),
+              company:companies (name)
             )
           )
         `)
@@ -358,18 +364,28 @@ toast.error("Failed to add contributor");
       }
 
       // Generate CSV
-      const headers = ['Name', 'Address', 'City', 'Country', 'Year', 'Latitude', 'Longitude', 'Architects', 'Note', 'Category'];
+      const headers = ['Name', 'Address', 'City', 'Country', 'Year', 'Latitude', 'Longitude', 'Credits', 'Note', 'Category'];
       const exportRows = data as unknown as CollectionItemExportRow[];
       const rows = exportRows.map((item) => {
         const bRaw = item.buildings;
         const building = Array.isArray(bRaw) ? bRaw[0] : bRaw;
         const location = parseLocation(building?.location);
 
-        // Handle architects
-        const architects = building?.building_architects
-          ?.map((ba) => ba.architects?.name)
-          .filter(Boolean)
-          .join('; ');
+        const credits =
+          building?.building_credits
+            ?.filter(
+              (c) =>
+                c.credit_tier === "primary" &&
+                (c.status === "active" || c.status === "verified"),
+            )
+            .map((c) => {
+              const pn = c.person?.name;
+              const cn = c.company?.name;
+              if (pn && cn) return `${pn} @ ${cn}`;
+              return pn || cn || "";
+            })
+            .filter(Boolean)
+            .join("; ") ?? "";
 
         // Find category label if needed
         const category = collection.custom_categories?.find(c => c.id === item.custom_category_id)?.label || '';
@@ -392,7 +408,7 @@ toast.error("Failed to add contributor");
           escape(building?.year_completed),
           escape(location?.lat),
           escape(location?.lng),
-          escape(architects),
+          escape(credits),
           escape(item.note),
           escape(category)
         ].join(',');

@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Plus, Check, Search, X, MapPin, PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
 import { BuildingDetailPanel } from "@/features/collections/components/BuildingDetailPanel";
@@ -225,11 +226,11 @@ interface UserBuildingResponse {
     location: unknown | null;
     hero_image_url: string | null;
     year_completed: number | null;
-    building_architects: {
-      architect: {
-        id: string;
-        name: string;
-      } | null;
+    building_credits: {
+      credit_tier: string | null;
+      status: string | null;
+      person: { id: string; name: string } | null;
+      company: { id: string; name: string } | null;
     }[];
   } | null;
 }
@@ -286,7 +287,12 @@ export function AddBuildingsToCollectionDialog({
             location,
             hero_image_url,
             year_completed,
-            building_architects(architect:architects(id, name))
+            building_credits(
+              credit_tier,
+              status,
+              person:people(id, name),
+              company:companies(id, name)
+            )
           )
         `)
         .eq("user_id", user.id)
@@ -303,10 +309,7 @@ export function AddBuildingsToCollectionDialog({
             ...b,
             rating: item.rating,
             main_image_url: b.hero_image_url ? getBuildingImageUrl(b.hero_image_url) : null,
-            architects:
-              (b.building_architects ?? [])
-                .map((ba) => ba.architect)
-                .filter((a): a is { id: string; name: string } => a != null),
+            credits: primaryBuildingCreditsToSummaries(b.building_credits ?? []),
             location_lat: location?.lat || 0,
             location_lng: location?.lng || 0,
             styles: [] as StyleSummary[],

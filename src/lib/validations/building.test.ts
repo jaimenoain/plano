@@ -5,7 +5,7 @@ describe('buildingSchema', () => {
     const validBaseData = {
         name: 'Test Building',
         year_completed: 2020,
-        architects: [{ id: '123', name: 'John Doe', type: 'individual' as const }],
+        designCreditEntities: [{ id: '123e4567-e89b-12d3-a456-426614174000', name: 'John Doe', kind: 'person' as const }],
         functional_typology_ids: ['e1e8b2c2-8094-4322-a9ad-4e6f4705cb8f'],
     };
 

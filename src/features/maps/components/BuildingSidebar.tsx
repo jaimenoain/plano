@@ -4,7 +4,7 @@
  * Visual changes (all data-fetching, pagination, map interaction logic unchanged):
  *
  * Row containers:
- *   Card + CardContent removed from all three row types (architects, locations,
+ *   Card + CardContent removed from all three row types (credits line, locations,
  *   buildings). Content now floats directly on the sidebar surface with
  *   border-b border-border-default dividers between rows — the editorial rule
  *   that structure comes from typography and borders, not card containers.
@@ -23,7 +23,7 @@
  *   renders directly, text-text-secondary (not text-brand-primary).
  *   "Location" sub-label removed — it added no information.
  *
- * Architect rows:
+ * People-result rows:
  *   rounded-full icon container removed — UserRound icon renders directly.
  *   group-hover:text-brand-primary → opacity transition.
  *
@@ -58,7 +58,7 @@ interface Building {
   status: string | null;
   lat: number;
   lng: number;
-  architects: string[];
+  credit_names: string[];
   year_completed: number | null;
   city: string | null;
   country: string | null;
@@ -111,7 +111,7 @@ export function BuildingSidebar({
         category_id: filters.category,
         typology_ids: filters.typologies,
         attribute_ids: filters.attributes,
-        architect_ids: filters.architects?.map((a) => a.id),
+        architect_ids: filters.people?.map((p) => p.id),
         status: filters.status,
         min_rating: filters.minRating,
         personal_min_rating: filters.personalMinRating,
@@ -305,11 +305,11 @@ export function BuildingSidebar({
                         </span>
                       )}
 
-                      {/* Architect, year, location */}
+                      {/* Credits, year, location */}
                       <div className="mt-1 flex flex-col gap-0.5">
-                        {building.architects && building.architects.length > 0 && (
+                        {building.credit_names && building.credit_names.length > 0 && (
                           <p className="text-xs text-text-secondary line-clamp-1">
-                            {building.architects.join(', ')}
+                            {building.credit_names.join(', ')}
                           </p>
                         )}
                         {(building.city || building.country || building.year_completed) && (

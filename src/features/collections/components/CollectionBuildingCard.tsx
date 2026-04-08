@@ -12,6 +12,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { getBuildingImageUrl } from "@/utils/image";
+import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
 
 interface CollectionBuildingCardProps {
   item: CollectionItemWithBuilding;
@@ -72,9 +73,8 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
     const currentCategory = customCategories?.find(c => c.id === item.custom_category_id);
     const imageUrl = getBuildingImageUrl(item.building.hero_image_url || item.building.community_preview_url);
 
-    const architectNames = item.building.building_architects
-      ?.map((ba) => ba.architects?.name)
-      .filter(Boolean)
+    const creditNames = primaryBuildingCreditsToSummaries(item.building.building_credits ?? [])
+      .map((c) => c.name)
       .join(", ");
 
     return (
@@ -132,7 +132,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                         </div>
 
                         <div className="text-xs text-text-secondary mt-1 line-clamp-1">
-                             <span>{architectNames || "Unknown Architect"}</span>
+                             <span>{creditNames || "—"}</span>
                              {item.building.year_completed && (
                                 <>
                                   <span className="mx-1">•</span>

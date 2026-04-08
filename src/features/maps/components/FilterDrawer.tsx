@@ -101,8 +101,8 @@ export function FilterDrawer() {
     setGlobalMinRating,
     contactMinRating: _contactMinRating,
     setContactMinRating,
-    selectedArchitects: currentArchitects,
-    setSelectedArchitects,
+    selectedPeople: currentPeople,
+    setSelectedPeople,
     selectedCollections: currentCollectionIds,
     setSelectedCollections,
     selectedFolders: currentFolderIds,
@@ -149,8 +149,8 @@ const handleModeChange = (newMode: string) => {
     }
   };
 
-  const handleArchitectsChange = (architects: { id: string; name: string }[]) => {
-    setSelectedArchitects(architects);
+  const handlePeopleFilterChange = (people: { id: string; name: string }[]) => {
+    setSelectedPeople(people);
   };
 
   const handleContactsChange = (newContacts: UserSearchResult[]) => {
@@ -259,7 +259,7 @@ const handleModeChange = (newMode: string) => {
   };
 
   const handleResetGlobalFilters = () => {
-      setSelectedArchitects([]);
+      setSelectedPeople([]);
       setSelectedContacts([]);
       setSelectedCategory(null);
       setSelectedTypologies([]);
@@ -270,7 +270,7 @@ const handleModeChange = (newMode: string) => {
   };
 
   const handleClearAll = () => {
-    setSelectedArchitects([]);
+    setSelectedPeople([]);
     setSelectedContacts([]);
     setSelectedCategory(null);
     setSelectedTypologies([]);
@@ -304,7 +304,7 @@ const handleModeChange = (newMode: string) => {
     let count = 0;
 
     // Global filters
-    if (currentArchitects.length > 0) count++;
+    if (currentPeople.length > 0) count++;
     if (currentContacts.length > 0) count++;
     if (currentCategory) count++;
     if (currentTypologies.length > 0) count++;
@@ -329,7 +329,7 @@ const handleModeChange = (newMode: string) => {
     return count;
   }, [
       mode,
-      currentArchitects,
+      currentPeople,
       currentContacts,
       currentMinRating,
       hideSaved,
@@ -545,13 +545,13 @@ const handleModeChange = (newMode: string) => {
                   </AccordionItem>
                 )}
 
-                {/* Item 1: People (building credits — person IDs align with legacy architect UUIDs for individuals) */}
-                <AccordionItem value="architects">
+                {/* Item 1: People (credited people / companies on buildings) */}
+                <AccordionItem value="people">
                     <AccordionTrigger className="text-sm">People</AccordionTrigger>
                     <AccordionContent>
                         <PersonFilterSelect
-                            selectedPeople={currentArchitects}
-                            setSelectedPeople={handleArchitectsChange}
+                            selectedPeople={currentPeople}
+                            setSelectedPeople={handlePeopleFilterChange}
                             placeholder="Search people..."
                         />
                     </AccordionContent>

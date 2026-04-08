@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { BuildingForm, BuildingFormData } from "./BuildingForm";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { replacePrimaryDesignCredits } from "@/features/credits/api/credits";
 
 interface AddBuildingDetailsProps {
   locationData: {
@@ -86,22 +87,16 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         void _err;
       }
 
-      // 4. Insert Architect Links (Junction Table Logic)
-      if (data.architects.length > 0) {
-          try {
-            const links = data.architects.map(a => ({
-                building_id: buildingId,
-                architect_id: a.id
-            }));
-
-            const { error: linkError } = await supabase
-                .from('building_architects')
-                .insert(links);
-
-            if (linkError) throw linkError;
-          } catch (_err) {
-            void _err;
-          }
+      if (data.designCreditEntities.length > 0) {
+        try {
+          await replacePrimaryDesignCredits(
+            buildingId,
+            [],
+            data.designCreditEntities.map((e) => ({ kind: e.kind, id: e.id })),
+          );
+        } catch (_err) {
+          void _err;
+        }
       }
 
       // 5. Insert Typologies (Junction Table)
@@ -157,7 +152,7 @@ toast.error(`Failed to save building: ${error instanceof Error ? error.message :
     access_logistics: null,
     access_cost: null,
     access_notes: null,
-    architects: [],
+    designCreditEntities: [],
     functional_category_id: "",
     functional_typology_ids: [],
     selected_attribute_ids: [],

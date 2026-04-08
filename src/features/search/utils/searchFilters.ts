@@ -4,7 +4,8 @@ export interface BuildingFilterData {
   functional_category_id?: string | null;
   typologies?: { typology_id: string }[];
   attributes?: { attribute_id: string }[];
-  architects?: { architect: { name: string; id: string } }[];
+  /** Person or company UUIDs with a non-hidden credit on this building */
+  creditedEntityIds?: string[];
   access_level?: string | null;
   access_logistics?: string | null;
   access_cost?: string | null;
@@ -16,7 +17,7 @@ export interface FilterCriteria {
   categoryId?: string | null;
   typologyIds: string[];
   attributeIds: string[];
-  selectedArchitects: string[]; // IDs
+  selectedCreditEntityIds: string[]; // person or company UUIDs
   collectionIds?: string[];
   folderIds?: string[];
   personalMinRating?: number;
@@ -101,13 +102,10 @@ export function filterLocalBuildings(
       if (!hasMatch) return false;
     }
 
-    // Architects (Any Match / OR)
-    if (filters.selectedArchitects.length > 0) {
-      const architectIds =
-        b.architects?.map((a) => a.architect.id) || [];
-      const hasMatch = filters.selectedArchitects.some((id) =>
-        architectIds.includes(id)
-      );
+    // Credited people / companies (Any Match / OR)
+    if (filters.selectedCreditEntityIds.length > 0) {
+      const ids = b.creditedEntityIds ?? [];
+      const hasMatch = filters.selectedCreditEntityIds.some((id) => ids.includes(id));
       if (!hasMatch) return false;
     }
 

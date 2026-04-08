@@ -82,7 +82,7 @@ export function SortableItineraryItem({
       hero_image_url: building.hero_image_url || null,
       community_preview_url: building.community_preview_url || null,
       location_precision: building.location_precision || "approximate",
-      building_architects: building.building_architects || [],
+      building_credits: building.building_credits || [],
       slug: building.slug || null,
       short_id: building.short_id || null
     }

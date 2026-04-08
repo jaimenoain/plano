@@ -13,7 +13,7 @@ export interface ItineraryBuilding {
   city?: string | null;
   country?: string | null;
   location_precision?: "exact" | "approximate";
-  building_architects?: { architects: { id: string; name: string } | null }[];
+  building_credits?: CollectionItemWithBuilding["building"]["building_credits"];
   year_completed?: number | null;
   slug?: string | null;
   short_id?: number | null;
@@ -83,7 +83,7 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
           city: item.building.city,
           country: item.building.country,
           location_precision: item.building.location_precision,
-          building_architects: item.building.building_architects,
+          building_credits: item.building.building_credits,
           year_completed: item.building.year_completed,
           slug: item.building.slug,
           short_id: item.building.short_id,

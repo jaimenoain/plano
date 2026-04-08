@@ -37,6 +37,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
+import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
 
 const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
@@ -65,11 +66,11 @@ interface SavedCandidateResponse {
     hero_image_url: string | null;
     community_preview_url: string | null;
     location_precision: "exact" | "approximate";
-    building_architects: {
-      architects: {
-        id: string;
-        name: string;
-      } | null;
+    building_credits: {
+      credit_tier: string | null;
+      status: string | null;
+      person: { id: string; name: string } | null;
+      company: { id: string; name: string } | null;
     }[];
   } | null;
 }
@@ -216,7 +217,12 @@ export default function CollectionMap() {
             hero_image_url,
             community_preview_url,
             location_precision,
-            building_architects(architects(id, name))
+            building_credits(
+              credit_tier,
+              status,
+              person:people(id, name),
+              company:companies(id, name)
+            )
           )
         `)
         .eq("collection_id", collection.id);
@@ -247,7 +253,7 @@ export default function CollectionMap() {
               ...b,
               location_lat: location?.lat || 0,
               location_lng: location?.lng || 0,
-              building_architects: b.building_architects || [],
+              building_credits: b.building_credits || [],
             }
           };
         }) as CollectionItemWithBuilding[];
@@ -306,7 +312,12 @@ export default function CollectionMap() {
             hero_image_url,
             community_preview_url,
             location_precision,
-            building_architects(architects(id, name))
+            building_credits(
+              credit_tier,
+              status,
+              person:people(id, name),
+              company:companies(id, name)
+            )
           )
         `)
         .eq("user_id", user.id)
@@ -332,7 +343,7 @@ export default function CollectionMap() {
                 short_id: b.short_id,
                 year_completed: b.year_completed,
                 location_precision: b.location_precision,
-                architects: b.building_architects?.map((ba) => ba.architects).filter(Boolean) || [],
+                credits: primaryBuildingCreditsToSummaries(b.building_credits ?? []),
                 styles: [],
                 color: null // Let BuildingDiscoveryMap use status color
             } as DiscoveryBuilding;
@@ -533,10 +544,7 @@ export default function CollectionMap() {
             short_id: item.building.short_id,
             year_completed: item.building.year_completed,
             location_precision: item.building.location_precision,
-            architects:
-                item.building.building_architects
-                  ?.map((ba) => ba.architects)
-                  .filter((a): a is { id: string; name: string } => a != null) ?? null,
+            credits: primaryBuildingCreditsToSummaries(item.building.building_credits ?? []),
             styles: null as StyleSummary[] | null,
             color: color,
             personal_rating: interaction?.rating || null,
@@ -555,7 +563,7 @@ export default function CollectionMap() {
             location_lng: marker.lng,
             city: null,
             country: null,
-            architects: [],
+            credits: [],
             styles: [] as StyleSummary[],
             year_completed: null,
             isMarker: true,

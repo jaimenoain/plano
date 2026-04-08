@@ -42,7 +42,8 @@ export interface MapFilters {
   styles?: string[];
   contexts?: string[];
   attributes?: string[];
-  architects?: { id: string; name: string }[];
+  /** Filter map RPC by credited person or company UUIDs */
+  people?: { id: string; name: string }[];
 
   // User Data / Social
   status?: string[];

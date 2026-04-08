@@ -23,13 +23,13 @@ export const buildingSchema = z.object({
   access_logistics: z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only']).nullable().optional(),
   access_cost: z.enum(['free', 'paid', 'customers_only']).nullable().optional(),
   access_notes: z.string().max(500, "Notes must be less than 500 characters").nullable().optional(),
-  // Updated to accept Architect objects
-  architects: z.array(
+  /** Primary design credits: people and/or companies (`building_credits` / `replacePrimaryDesignCredits`). */
+  designCreditEntities: z.array(
     z.object({
-      id: z.string(),
+      id: z.string().uuid(),
       name: z.string(),
-      type: z.enum(['individual', 'studio'])
-    })
+      kind: z.enum(["person", "company"]),
+    }),
   ),
   functional_category_id: z.union([
       z.string().uuid(),
@@ -84,13 +84,15 @@ export const editBuildingSchema = z.object({
   access_logistics: z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only']).nullable().optional(),
   access_cost: z.enum(['free', 'paid', 'customers_only']).nullable().optional(),
   access_notes: z.string().max(500, "Notes must be less than 500 characters").nullable().optional(),
-  architects: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      type: z.enum(['individual', 'studio'])
-    })
-  ).optional(),
+  designCreditEntities: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        name: z.string(),
+        kind: z.enum(["person", "company"]),
+      }),
+    )
+    .optional(),
   functional_category_id: z.union([
       z.string().uuid(),
       z.literal(""),

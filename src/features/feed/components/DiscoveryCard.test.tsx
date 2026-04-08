@@ -62,7 +62,7 @@ describe('DiscoveryCard', () => {
     country: 'Test Country',
     slug: 'test-building',
     main_image_url: 'test.jpg',
-    architects: [{ name: 'Test Architect' }],
+    credits: [{ id: "123e4567-e89b-12d3-a456-426614174000", name: "Test Designer" }],
     contact_interactions: [],
   } as any;
 
@@ -74,6 +74,6 @@ describe('DiscoveryCard', () => {
     );
     expect(screen.getByText('Test Building')).toBeTruthy();
     expect(screen.getByText('Test City, Test Country')).toBeTruthy();
-    expect(screen.getByText('Test Architect')).toBeTruthy();
+    expect(screen.getByText("Test Designer")).toBeTruthy();
   });
 });

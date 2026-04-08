@@ -390,6 +390,62 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
   return mapped;
 }
 
+export type PrimaryCreditFormEntity = { kind: "person" | "company"; id: string };
+
+/** Embedded `building_credits` row shape from PostgREST selects (person/company joins). */
+export type BuildingCreditEmbed = {
+  credit_tier?: string | null;
+  status?: string | null;
+  person?: { id: string; name: string } | null;
+  company?: { id: string; name: string } | null;
+};
+
+/** Primary tier, active/verified only — for lists and map cards. */
+export function primaryBuildingCreditsToSummaries(
+  rows: BuildingCreditEmbed[] | null | undefined,
+): { id: string; name: string }[] {
+  const raw = rows ?? [];
+  const primaryVisible = raw.filter(
+    (c) =>
+      c.credit_tier === "primary" && (c.status === "active" || c.status === "verified"),
+  );
+  return primaryVisible
+    .map((c) => {
+      const p = c.person;
+      const co = c.company;
+      if (p && co) return { id: p.id, name: `${p.name} @ ${co.name}` };
+      if (p) return { id: p.id, name: p.name };
+      if (co) return { id: co.id, name: co.name };
+      return null;
+    })
+    .filter((x): x is { id: string; name: string } => x != null);
+}
+
+/**
+ * Replace primary `design_architect` credits from building edit forms (deletes prior row ids, then inserts via `addBuildingCredit`).
+ */
+export async function replacePrimaryDesignCredits(
+  buildingId: string,
+  previousRowIds: string[],
+  entities: PrimaryCreditFormEntity[],
+): Promise<void> {
+  if (previousRowIds.length > 0) {
+    const { error: delErr } = await supabase.from("building_credits").delete().in("id", previousRowIds);
+    if (delErr) throw delErr;
+  }
+  for (let i = 0; i < entities.length; i++) {
+    const e = entities[i];
+    await addBuildingCredit({
+      buildingId,
+      personId: e.kind === "person" ? e.id : undefined,
+      companyId: e.kind === "company" ? e.id : undefined,
+      role: "design_architect",
+      creditTier: "primary",
+      isLead: i === 0,
+    });
+  }
+}
+
 export type FlagCreditRpcError = "not_found_or_not_flaggable" | "notes_too_long" | "rpc_error";
 
 function parseFlagBuildingCreditRpcPayload(data: unknown): { ok: true } | { ok: false; error: FlagCreditRpcError } {

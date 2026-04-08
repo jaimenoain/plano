@@ -1,6 +1,6 @@
 import { CollectionMarkerCategory } from "@/features/collections/types";
 
-export interface ArchitectSummary {
+export interface CreditSummary {
   id: string;
   name: string;
 }
@@ -40,7 +40,7 @@ export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
   // This can be a full URL (legacy/external) or a storage path (user uploads).
   // Use getBuildingImageUrl() utility to display it.
   main_image_url?: string | null;
-  architects: ArchitectSummary[] | null;
+  credits: CreditSummary[] | null;
   styles: StyleSummary[] | null;
   year_completed: number | null;
   city: string | null;
