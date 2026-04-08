@@ -810,3 +810,97 @@ export async function notifyStewardRequestApprovedWithClient(
     body: { requestId },
   });
 }
+
+/** Zod input for `submitCompanyClaimDispute` (exported for unit tests). */
+export const SubmitCompanyClaimDisputeSchema = z
+  .object({
+    reason: z.string().trim().min(1, "Describe why you believe this claim is incorrect.").max(10000),
+    evidenceUrl: z.string().max(2000).trim().optional(),
+  })
+  .superRefine((val, ctx) => {
+    const u = val.evidenceUrl?.trim();
+    if (!u) return;
+    const parsed = z.string().url().safeParse(u);
+    if (!parsed.success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["evidenceUrl"],
+        message: "Enter a valid URL or leave evidence blank.",
+      });
+    }
+  });
+
+export type SubmitCompanyClaimDisputeInput = z.infer<typeof SubmitCompanyClaimDisputeSchema>;
+
+/** TanStack Query key: current user’s open company claim dispute for a company (or null). */
+export function companyClaimDisputeOpenQueryKey(companyId: string) {
+  return ["company-claim-dispute-open", companyId] as const;
+}
+
+export async function getMyOpenCompanyClaimDisputeId(companyId: string): Promise<string | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("company_claim_disputes")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("disputed_by_user_id", user.id)
+    .eq("status", "open")
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data.id;
+}
+
+/**
+ * Roadmap Task 7.4: insert open dispute and email admins (`notify-admin-dispute` Edge Function).
+ */
+export async function submitCompanyClaimDispute(
+  companyId: string,
+  raw: { reason: string; evidenceUrl?: string }
+): Promise<void> {
+  const parsed = SubmitCompanyClaimDisputeSchema.parse(raw);
+  const evidenceTrimmed = parsed.evidenceUrl?.trim();
+  const evidence_url = evidenceTrimmed && evidenceTrimmed.length > 0 ? evidenceTrimmed : null;
+
+  const {
+    data: { user },
+    error: userErr,
+  } = await supabase.auth.getUser();
+  if (userErr || !user) {
+    throw new Error("Sign in to submit a dispute.");
+  }
+
+  const { data, error } = await supabase
+    .from("company_claim_disputes")
+    .insert({
+      company_id: companyId,
+      disputed_by_user_id: user.id,
+      reason: parsed.reason,
+      evidence_url,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    if (error.code === "23505") {
+      throw new Error("You already have an open dispute for this company.");
+    }
+    throw new Error(error.message || "Could not submit dispute.");
+  }
+
+  const { error: fnErr, data: fnBody } = await supabase.functions.invoke("notify-admin-dispute", {
+    body: { disputeId: data.id },
+  });
+
+  const fnJson = fnBody as { ok?: boolean; error?: string } | null;
+  if (fnErr) {
+    throw new Error(fnJson?.error ?? fnErr.message ?? "Could not notify the team.");
+  }
+  if (!fnJson?.ok) {
+    throw new Error(fnJson?.error ?? "Could not notify the team.");
+  }
+}

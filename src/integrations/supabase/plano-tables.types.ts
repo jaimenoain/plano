@@ -1199,6 +1199,51 @@ export type PlanoPublicTables = {
       },
     ]
   }
+  company_claim_disputes: {
+    Row: {
+      id: string
+      company_id: string
+      disputed_by_user_id: string
+      reason: string
+      evidence_url: string | null
+      status: string
+      created_at: string
+    }
+    Insert: {
+      id?: string
+      company_id: string
+      disputed_by_user_id: string
+      reason: string
+      evidence_url?: string | null
+      status?: string
+      created_at?: string
+    }
+    Update: {
+      id?: string
+      company_id?: string
+      disputed_by_user_id?: string
+      reason?: string
+      evidence_url?: string | null
+      status?: string
+      created_at?: string
+    }
+    Relationships: [
+      {
+        foreignKeyName: "company_claim_disputes_company_id_fkey"
+        columns: ["company_id"]
+        isOneToOne: false
+        referencedRelation: "companies"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "company_claim_disputes_disputed_by_user_id_fkey"
+        columns: ["disputed_by_user_id"]
+        isOneToOne: false
+        referencedRelation: "profiles"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
   person_company_affiliations: {
     Row: {
       id: string

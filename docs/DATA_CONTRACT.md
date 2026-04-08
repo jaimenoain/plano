@@ -2991,7 +2991,7 @@ CREATE TABLE public.company_claim_verification_tokens (
 
 **RPC:** `redeem_company_claim_token(p_token_hex text)` — **`authenticated`** only; 64-char hex → SHA-256 lookup; requires `requester_user_id = auth.uid()`; rejects used/expired tokens; requires `companies.claim_status = 'unclaimed'` and **no** `company_stewards` rows for that `company_id`; inserts `company_stewards` (`role = owner`, `invited_by` null); sets `companies.claim_status = 'claimed'`, `companies.verified_domain` from the email host (lowercase, strips leading `www.`); sets `consumed_at`. Returns `jsonb` `{ ok: true, company_slug }` or `{ ok: false, error }` with `error` ∈ `not_authenticated` \| `invalid_token` \| `unknown_token` \| `expired` \| `already_used` \| `wrong_user` \| `not_claimable`.
 
-**Edge Function:** `verify-company-claim` — `verify_jwt = false`; manual `getUser` on `Authorization`; body `{ companyId, email }`. If the company is **not** claimable (`claim_status <> 'unclaimed'` or any `company_stewards` exist) **and** `companies.verified_domain` is set: compares normalized email host to `verified_domain` (lowercase, strips `www.`); on mismatch returns JSON `{ ok: false, action: 'dispute', companySlug }` (**HTTP 200**) so the client routes to **`/company/:slug/dispute`** (stub until Task 7.4). Otherwise if already claimed returns **`already_claimed`** (**HTTP 409**). If claimable: inserts token row (service role), emails verification link **`{SITE_URL}/verify-company-claim/{64-char hex}`** (7-day expiry) when `RESEND_API_KEY` is set.
+**Edge Function:** `verify-company-claim` — `verify_jwt = false`; manual `getUser` on `Authorization`; body `{ companyId, email }`. If the company is **not** claimable (`claim_status <> 'unclaimed'` or any `company_stewards` exist) **and** `companies.verified_domain` is set: compares normalized email host to `verified_domain` (lowercase, strips `www.`); on mismatch returns JSON `{ ok: false, action: 'dispute', companySlug }` (**HTTP 200**) so the client routes to **`/company/:slug/dispute`** (Task 7.4 dispute form). Otherwise if already claimed returns **`already_claimed`** (**HTTP 409**). If claimable: inserts token row (service role), emails verification link **`{SITE_URL}/verify-company-claim/{64-char hex}`** (7-day expiry) when `RESEND_API_KEY` is set.
 
 **SSR route:** `GET /verify-company-claim/:token` — loader runs `redeem_company_claim_token` when the user is signed in; on success **`redirect`** to `/company/:slug?claimVerified=1`; if signed out, renders sign-in CTA with `redirect` back to the same path.
 
@@ -3039,6 +3039,36 @@ CREATE TABLE public.company_steward_request_approval_tokens (
 
 **SSR route:** `GET /approve-steward-request/:token` — loader runs `approve_company_steward_request` when signed in, then invokes `notify-steward-request-approved`, then **`redirect`** to `/company/:slug?stewardApproved=1`.
 
+### Component 3d: `company_claim_disputes` (Roadmap Phase 7 Task 7.4)
+
+Users may dispute an existing company claim; admins resolve manually (Phase 8). Migration `20270831000000_company_claim_disputes.sql`.
+
+```sql
+CREATE TYPE public.company_claim_dispute_status AS ENUM ('open', 'resolved');
+
+CREATE TABLE public.company_claim_disputes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL REFERENCES public.companies (id) ON DELETE CASCADE,
+  disputed_by_user_id uuid NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
+  reason text NOT NULL,
+  evidence_url text,
+  status public.company_claim_dispute_status NOT NULL DEFAULT 'open',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT company_claim_disputes_pkey PRIMARY KEY (id),
+  CONSTRAINT company_claim_disputes_reason_nonempty CHECK (length(trim(reason)) > 0)
+);
+
+CREATE UNIQUE INDEX company_claim_disputes_one_open_per_user_company
+  ON public.company_claim_disputes (company_id, disputed_by_user_id)
+  WHERE status = 'open';
+```
+
+**RLS (`company_claim_disputes`):** **SELECT** — admin or the row’s `disputed_by_user_id`. **INSERT** — authenticated user with `disputed_by_user_id = auth.uid()`, company `claim_status = 'claimed'`, and **no** `company_stewards` row for that user and company. **UPDATE** — admin only (for resolving disputes in Phase 8).
+
+**Edge Function:** `notify-admin-dispute` — `verify_jwt = false`; manual `getUser`; body `{ disputeId }`; caller must be the disputant; dispute must be `open`; emails **`PLANO_ADMIN_NOTIFY_EMAIL`** or **`COMPANY_CLAIM_DISPUTE_NOTIFY_EMAIL`** if set, otherwise **`hello@plano.app`**, with company name, profile URL, reason, and evidence URL when `RESEND_API_KEY` is set.
+
+**SSR route:** `GET /company/:slug/dispute` — claimed companies only; company stewards are redirected to `/company/:slug`; form submits `insert` + `notify-admin-dispute`, then **`redirect`** to `/company/:slug?disputeSubmitted=1`. Claimed company page shows **Dispute this claim** (or **Log in to dispute**) below the steward-request CTA, and a **Dispute under review** notice visible only to the submitter while an `open` row exists for them.
+
 ### Component 4: Application API — `companies` (Phase 2 Task 2.3)
 
 Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`. Payloads use camelCase TypeScript types from `src/features/credits/types.ts`:
@@ -3063,6 +3093,9 @@ Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`
 | `approveCompanyStewardRequestWithClient(client, token)` | SSR: RPC `approve_company_steward_request`. |
 | `notifyStewardRequestApprovedWithClient(client, requestId)` | SSR: `notify-steward-request-approved` (best-effort). |
 | `parseApproveCompanyStewardRequestRpcPayload(data)` | Maps approval RPC `jsonb` to typed result. |
+| `getMyOpenCompanyClaimDisputeId(companyId)` | Task 7.4. Returns `open` dispute `id` for the current user or `null`. |
+| `submitCompanyClaimDispute(companyId, { reason, evidenceUrl? })` | Zod-validated; `insert` on `company_claim_disputes` + `notify-admin-dispute`. |
+| `SubmitCompanyClaimDisputeSchema` | Exported Zod object for reason (required) and optional evidence URL. |
 
 DTOs: `CompanyCreditWithBuilding`, `CompanyWithCredits`, `CompanyPortfolioItem`, `CompanyPortfolioByTier`, `CompanyStewardWithProfile`. `slugifyCompanyName` mirrors SQL `public.slugify_person_name` (used for company slugs in migrations).
 

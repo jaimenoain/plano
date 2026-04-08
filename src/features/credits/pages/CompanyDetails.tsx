@@ -57,11 +57,13 @@ import { EditCompanyForm } from "@/features/credits/components/EditCompanyForm";
 import { ClaimCompanyDialog } from "@/features/credits/components/ClaimCompanyDialog";
 import { RequestStewardAccessDialog } from "@/features/credits/components/RequestStewardAccessDialog";
 import {
+  companyClaimDisputeOpenQueryKey,
   companyQueryKey,
   companyStewardRequestPendingQueryKey,
   companyStewardsQueryKey,
   getCompany,
   getCompanyStewardsWithProfiles,
+  getMyOpenCompanyClaimDisputeId,
   getMyPendingCompanyStewardRequestId,
   inviteCompanySteward,
   removeCompanySteward,
@@ -275,6 +277,15 @@ export default function CompanyDetails() {
     staleTime: 30_000,
   });
 
+  const { data: openCompanyClaimDisputeId } = useQuery({
+    queryKey: companyClaimDisputeOpenQueryKey(company.id),
+    queryFn: () => getMyOpenCompanyClaimDisputeId(company.id),
+    enabled: Boolean(
+      user?.id && company.claimStatus === "claimed" && !stewardsLoading && !isSteward
+    ),
+    staleTime: 30_000,
+  });
+
   const showStewardRequestBanner =
     company.claimStatus === "claimed" &&
     (!user?.id || (!stewardsLoading && !isSteward));
@@ -335,6 +346,21 @@ export default function CompanyDetails() {
       cancelled = true;
     };
   }, [searchParams, setSearchParams, queryClient, slug, company.id, toast]);
+
+  useEffect(() => {
+    if (searchParams.get("disputeSubmitted") !== "1") return;
+    let cancelled = false;
+    void (async () => {
+      await queryClient.invalidateQueries({ queryKey: companyClaimDisputeOpenQueryKey(company.id) });
+      if (cancelled) return;
+      const next = new URLSearchParams(searchParams);
+      next.delete("disputeSubmitted");
+      setSearchParams(next, { replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, setSearchParams, queryClient, company.id]);
 
   const confirmRemoveSteward = async () => {
     if (!removeStewardId) return;
@@ -614,6 +640,29 @@ export default function CompanyDetails() {
               >
                 Log in to request access →
               </Link>
+            )}
+            {openCompanyClaimDisputeId ? (
+              <p className="mt-4 border-t border-border-default pt-4 text-sm text-text-secondary">
+                Dispute under review — we have received your report. Our team will follow up by email if needed.
+              </p>
+            ) : (
+              <div className="mt-4 border-t border-border-default pt-4">
+                {user ? (
+                  <Link
+                    to={`/company/${slug}/dispute`}
+                    className="inline-flex text-2xs font-medium uppercase tracking-widest text-text-primary hover:underline"
+                  >
+                    Dispute this claim
+                  </Link>
+                ) : (
+                  <Link
+                    to={`/auth?redirect=${encodeURIComponent(`/company/${slug}/dispute`)}`}
+                    className="inline-flex text-2xs font-medium uppercase tracking-widest text-text-primary hover:underline"
+                  >
+                    Log in to dispute this claim →
+                  </Link>
+                )}
+              </div>
             )}
           </div>
         ) : null}

@@ -356,7 +356,7 @@
 
 ---
 
-**[ ] Task 7.4 — Dispute a company claim**
+**[x] Task 7.4 — Dispute a company claim**
 
 - Show "Dispute this claim" link on claimed company pages (below the steward request CTA)
 - Create `company_claim_disputes` table (migration): `id`, `company_id`, `disputed_by_user_id`, `reason` (text, required), `evidence_url` (nullable), `status` enum (`open` | `resolved`), `created_at`

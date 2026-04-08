@@ -39,3 +39,6 @@ verify_jwt = false
 
 [functions.notify-steward-request-approved]
 verify_jwt = false
+
+[functions.notify-admin-dispute]
+verify_jwt = false
