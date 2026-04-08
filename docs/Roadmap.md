@@ -330,7 +330,7 @@
 
 ---
 
-**[ ] Task 7.2 — Claim a company (first claimant)**
+**[x] Task 7.2 — Claim a company (first claimant)**
 
 - Build `ClaimCompanyDialog` on the company page: collects a work email address
 - On submit: call edge function `verify-company-claim` which sends a verification email with a signed token (same pattern as removal tokens: `gen_random_bytes` stored as hash)

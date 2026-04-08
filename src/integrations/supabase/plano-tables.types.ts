@@ -1732,6 +1732,7 @@ export type PlanoPublicFunctions = {
     Returns: Json
   }
   redeem_company_steward_invite: { Args: { p_token_hex: string }; Returns: Json }
+  redeem_company_claim_token: { Args: { p_token_hex: string }; Returns: Json }
   get_admin_content_stats: { Args: Record<string, never>; Returns: Json }
   get_admin_leaderboards: { Args: Record<string, never>; Returns: Json }
   get_admin_notifications: { Args: Record<string, never>; Returns: Json }

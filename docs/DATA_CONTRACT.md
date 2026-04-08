@@ -2967,6 +2967,34 @@ CREATE TABLE public.company_steward_invites (
 
 **Edge Function:** `invite-company-steward` — `verify_jwt = false`; manual `getUser` on `Authorization`; caller must be an **owner** steward of `companyId`; inserts invite row (service role); logs `company_steward_invite_created` to function logs; sends email via Resend when `RESEND_API_KEY` is set (accept URL: `/accept-company-steward?token=…`).
 
+### Component 3b: `company_claim_verification_tokens` (Roadmap Phase 7 Task 7.2)
+
+First company claimant: work-email verification before inserting the **owner** `company_stewards` row. Migration `20270829000000_company_claim_verification_tokens.sql`.
+
+```sql
+CREATE TABLE public.company_claim_verification_tokens (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL REFERENCES public.companies (id) ON DELETE CASCADE,
+  requester_user_id uuid NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
+  email_normalized text NOT NULL,
+  token_hash bytea NOT NULL,
+  expires_at timestamptz NOT NULL,
+  consumed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT company_claim_verification_tokens_pkey PRIMARY KEY (id),
+  CONSTRAINT company_claim_verification_tokens_token_hash_key UNIQUE (token_hash)
+);
+```
+
+**RLS:** enabled; **no** policies for `anon` / `authenticated` — Edge Function + `SECURITY DEFINER` RPC only.
+
+**RPC:** `redeem_company_claim_token(p_token_hex text)` — **`authenticated`** only; 64-char hex → SHA-256 lookup; requires `requester_user_id = auth.uid()`; rejects used/expired tokens; requires `companies.claim_status = 'unclaimed'` and **no** `company_stewards` rows for that `company_id`; inserts `company_stewards` (`role = owner`, `invited_by` null); sets `companies.claim_status = 'claimed'`, `companies.verified_domain` from the email host (lowercase, strips leading `www.`); sets `consumed_at`. Returns `jsonb` `{ ok: true, company_slug }` or `{ ok: false, error }` with `error` ∈ `not_authenticated` \| `invalid_token` \| `unknown_token` \| `expired` \| `already_used` \| `wrong_user` \| `not_claimable`.
+
+**Edge Function:** `verify-company-claim` — `verify_jwt = false`; manual `getUser` on `Authorization`; body `{ companyId, email }`. If the company is **not** claimable (`claim_status <> 'unclaimed'` or any `company_stewards` exist) **and** `companies.verified_domain` is set: compares normalized email host to `verified_domain` (lowercase, strips `www.`); on mismatch returns JSON `{ ok: false, action: 'dispute', companySlug }` (**HTTP 200**) so the client routes to **`/company/:slug/dispute`** (stub until Task 7.4). Otherwise if already claimed returns **`already_claimed`** (**HTTP 409**). If claimable: inserts token row (service role), emails verification link **`{SITE_URL}/verify-company-claim/{64-char hex}`** (7-day expiry) when `RESEND_API_KEY` is set.
+
+**SSR route:** `GET /verify-company-claim/:token` — loader runs `redeem_company_claim_token` when the user is signed in; on success **`redirect`** to `/company/:slug?claimVerified=1`; if signed out, renders sign-in CTA with `redirect` back to the same path.
+
 ### Component 4: Application API — `companies` (Phase 2 Task 2.3)
 
 Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`. Payloads use camelCase TypeScript types from `src/features/credits/types.ts`:
@@ -2983,6 +3011,9 @@ Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`
 | `removeCompanySteward(stewardRowId)` | `DELETE` on `company_stewards`; RLS per owner/self rules above. |
 | `inviteCompanySteward(companyId, email)` | `supabase.functions.invoke('invite-company-steward')`; owner-only server-side check. |
 | `redeemCompanyStewardInvite(tokenHex)` | Calls RPC `redeem_company_steward_invite`; browser must have a logged-in session whose email matches the invite. |
+| `requestCompanyClaimVerification(companyId, email)` | Roadmap Task 7.2. `verify-company-claim` Edge Function; Zod email. Returns `{ ok: true }` or `{ action: 'dispute', companySlug }` when verified domain does not match (client navigates to `/company/:slug/dispute`). |
+| `redeemCompanyClaimTokenWithClient(client, tokenHex)` | SSR / loader: calls RPC `redeem_company_claim_token`; requires authenticated server client session. |
+| `parseRedeemCompanyClaimRpcPayload(data)` | Maps RPC `jsonb` to `{ ok, companySlug }` or `{ ok: false, error }`. |
 
 DTOs: `CompanyCreditWithBuilding`, `CompanyWithCredits`, `CompanyPortfolioItem`, `CompanyPortfolioByTier`, `CompanyStewardWithProfile`. `slugifyCompanyName` mirrors SQL `public.slugify_person_name` (used for company slugs in migrations).
 

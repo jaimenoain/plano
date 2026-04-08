@@ -30,3 +30,6 @@ verify_jwt = false
 
 [functions.notify-entity-claimed]
 verify_jwt = false
+
+[functions.verify-company-claim]
+verify_jwt = false

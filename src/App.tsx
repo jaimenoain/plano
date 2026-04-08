@@ -13,6 +13,8 @@ import {
 } from "react-router";
 import { loader as architectIdRedirectLoader } from "@/features/credits/pages/ArchitectIdRedirect";
 import { loader as removeCreditLoader } from "@/features/credits/pages/RemoveCredit";
+import { loader as verifyCompanyClaimLoader } from "@/features/credits/pages/VerifyCompanyClaim";
+import { loader as companyClaimDisputeLoader } from "@/features/credits/pages/CompanyClaimDispute";
 import { AuthProvider, useAuth } from "@/features/auth/hooks/useAuth";
 
 import Index from "@/features/feed/pages/Index";
@@ -52,6 +54,8 @@ const PersonDetails = lazyWithRetry(() => import("@/features/credits/pages/Perso
 const CompanyDetails = lazyWithRetry(() => import("@/features/credits/pages/CompanyDetails"));
 const AcceptCompanySteward = lazyWithRetry(() => import("@/features/credits/pages/AcceptCompanySteward"));
 const RemoveCredit = lazyWithRetry(() => import("@/features/credits/pages/RemoveCredit"));
+const VerifyCompanyClaim = lazyWithRetry(() => import("@/features/credits/pages/VerifyCompanyClaim"));
+const CompanyClaimDispute = lazyWithRetry(() => import("@/features/credits/pages/CompanyClaimDispute"));
 
 const AdminDashboard = lazyWithRetry(() => import("@/features/admin/pages/Dashboard"));
 const Buildings = lazyWithRetry(() => import("@/features/admin/pages/Buildings"));
@@ -111,6 +115,11 @@ const router = createBrowserRouter(
         loader={removeCreditLoader}
         element={<RemoveCredit />}
       />
+      <Route
+        path="/verify-company-claim/:token"
+        loader={verifyCompanyClaimLoader}
+        element={<VerifyCompanyClaim />}
+      />
       <Route path="/admin/unauthorized" element={<Unauthorized />} />
 
       {/* Accessible Merge Tools */}
@@ -158,6 +167,11 @@ const router = createBrowserRouter(
         <Route path="/settings" element={<Settings />} />
 
         <Route path="/person/:slug" element={<PersonDetails />} />
+        <Route
+          path="/company/:slug/dispute"
+          loader={companyClaimDisputeLoader}
+          element={<CompanyClaimDispute />}
+        />
         <Route path="/company/:slug" element={<CompanyDetails />} />
         <Route path="/accept-company-steward" element={<AcceptCompanySteward />} />
         <Route path="/:username/map/:slug" element={<CollectionMap />} />

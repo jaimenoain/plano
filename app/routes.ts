@@ -13,6 +13,10 @@ export default [
   route("/onboarding", "features/auth/pages/Onboarding.tsx"),
   route("/terms", "pages/Terms.tsx"),
   route("/remove-credit/:token", "features/credits/pages/RemoveCredit.tsx"),
+  route(
+    "/verify-company-claim/:token",
+    "features/credits/pages/VerifyCompanyClaim.tsx",
+  ),
   route("/admin/unauthorized", "features/admin/pages/Unauthorized.tsx"),
   route("/admin/merge", "features/admin/pages/MergeBuildings.tsx"),
   route(
@@ -62,6 +66,10 @@ export default [
     ),
     route("/settings", "features/profile/pages/Settings.tsx"),
     route("/person/:slug", "features/credits/pages/PersonDetails.tsx"),
+    route(
+      "/company/:slug/dispute",
+      "features/credits/pages/CompanyClaimDispute.tsx",
+    ),
     route("/company/:slug", "features/credits/pages/CompanyDetails.tsx"),
     route(
       "/accept-company-steward",

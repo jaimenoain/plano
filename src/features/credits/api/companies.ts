@@ -550,3 +550,116 @@ export async function redeemCompanyStewardInvite(tokenHex: string): Promise<Rede
   const err = typeof raw.error === "string" ? raw.error : "redeem_failed";
   return { ok: false, error: err };
 }
+
+/** 64-char hex secret for `company_claim_verification_tokens` (same shape as steward invites). */
+export function isValidCompanyClaimTokenFormat(token: string): boolean {
+  return /^[0-9a-fA-F]{64}$/.test(token.trim());
+}
+
+export type RedeemCompanyClaimTokenError =
+  | "not_authenticated"
+  | "invalid_token"
+  | "unknown_token"
+  | "expired"
+  | "already_used"
+  | "wrong_user"
+  | "not_claimable"
+  | "rpc_error";
+
+export type RedeemCompanyClaimTokenResult =
+  | { ok: true; companySlug: string }
+  | { ok: false; error: RedeemCompanyClaimTokenError };
+
+export function parseRedeemCompanyClaimRpcPayload(data: unknown): RedeemCompanyClaimTokenResult {
+  if (!data || typeof data !== "object") return { ok: false, error: "rpc_error" };
+  const o = data as Record<string, unknown>;
+  if (o.ok === true && typeof o.company_slug === "string") {
+    return { ok: true, companySlug: o.company_slug };
+  }
+  const err = o.error;
+  if (
+    err === "not_authenticated" ||
+    err === "invalid_token" ||
+    err === "unknown_token" ||
+    err === "expired" ||
+    err === "already_used" ||
+    err === "wrong_user" ||
+    err === "not_claimable"
+  ) {
+    return { ok: false, error: err };
+  }
+  return { ok: false, error: "rpc_error" };
+}
+
+/**
+ * Completes first company claim from email link (`redeem_company_claim_token` RPC, migration `20270829`).
+ */
+export async function redeemCompanyClaimTokenWithClient(
+  client: Pick<SupabaseClient, "rpc" | "auth">,
+  token: string
+): Promise<RedeemCompanyClaimTokenResult> {
+  const t = token.trim().toLowerCase();
+  if (!isValidCompanyClaimTokenFormat(t)) return { ok: false, error: "invalid_token" };
+
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) return { ok: false, error: "not_authenticated" };
+
+  const { data, error } = await client.rpc("redeem_company_claim_token", {
+    p_token_hex: t,
+  });
+
+  if (error) return { ok: false, error: "rpc_error" };
+  return parseRedeemCompanyClaimRpcPayload(data);
+}
+
+export type RequestCompanyClaimVerificationResult =
+  | { ok: true }
+  | { action: "dispute"; companySlug: string };
+
+/**
+ * Starts work-email verification for claiming an unclaimed company (`verify-company-claim` Edge Function).
+ * When the company is already claimed and `verified_domain` does not match the email domain, returns `action: "dispute"`.
+ */
+export async function requestCompanyClaimVerification(
+  companyId: string,
+  email: string
+): Promise<RequestCompanyClaimVerificationResult> {
+  const parsed = z.string().email().max(320).safeParse(email.trim().toLowerCase());
+  if (!parsed.success) {
+    throw new Error("Enter a valid work email address.");
+  }
+
+  const { data, error } = await supabase.functions.invoke("verify-company-claim", {
+    body: { companyId, email: parsed.data },
+  });
+
+  const body = data as {
+    ok?: boolean;
+    action?: string;
+    companySlug?: string;
+    error?: string;
+  } | null;
+
+  if (!error && body?.action === "dispute" && typeof body.companySlug === "string") {
+    return { action: "dispute", companySlug: body.companySlug };
+  }
+
+  if (error) {
+    const code = body?.error;
+    if (code === "already_claimed") {
+      throw new Error("This company is already managed on Plano.");
+    }
+    if (code === "already_member") {
+      throw new Error("You already have access to this company.");
+    }
+    throw new Error(typeof code === "string" ? code : error.message);
+  }
+
+  if (body?.ok === true) {
+    return { ok: true };
+  }
+
+  throw new Error(body?.error ?? "Verification could not be started.");
+}

@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Link,
   useLoaderData,
   useParams,
   useRevalidator,
   useRouteError,
+  useSearchParams,
   isRouteErrorResponse,
   type MetaFunction,
 } from "react-router";
@@ -44,9 +45,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { Company, CompanyCreditWithBuilding, CreditRole, CreditTier } from "@/features/credits/types";
+import type {
+  Company,
+  CompanyCreditWithBuilding,
+  CompanyWithCredits,
+  CreditRole,
+  CreditTier,
+} from "@/features/credits/types";
 import { CompanyCreditCard } from "@/features/credits/components/CompanyCreditCard";
 import { EditCompanyForm } from "@/features/credits/components/EditCompanyForm";
+import { ClaimCompanyDialog } from "@/features/credits/components/ClaimCompanyDialog";
 import {
   companyQueryKey,
   companyStewardsQueryKey,
@@ -223,9 +231,11 @@ export default function CompanyDetails() {
   const revalidator = useRevalidator();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [roleFilter, setRoleFilter] = useState<RoleFilter>(ALL_ROLES);
   const [ancillaryOpen, setAncillaryOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [claimOpen, setClaimOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
@@ -261,6 +271,29 @@ export default function CompanyDetails() {
     void queryClient.invalidateQueries({ queryKey: companyQueryKey(slug) });
     revalidator.revalidate();
   };
+
+  useEffect(() => {
+    if (searchParams.get("claimVerified") !== "1") return;
+    let cancelled = false;
+    void (async () => {
+      await queryClient.refetchQueries({ queryKey: companyQueryKey(slug) });
+      const pack = queryClient.getQueryData(companyQueryKey(slug)) as CompanyWithCredits | undefined;
+      const cid = pack?.company.id ?? company.id;
+      await queryClient.refetchQueries({ queryKey: companyStewardsQueryKey(cid) });
+      if (cancelled) return;
+      toast({
+        title: "Company claimed",
+        description: "You can edit public details and invite stewards below.",
+      });
+      setEditOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("claimVerified");
+      setSearchParams(next, { replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, setSearchParams, queryClient, slug, company.id, toast]);
 
   const confirmRemoveSteward = async () => {
     if (!removeStewardId) return;
@@ -336,6 +369,14 @@ export default function CompanyDetails() {
   return (
     <AppLayout showBack>
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        {user && company.claimStatus === "unclaimed" ? (
+          <ClaimCompanyDialog
+            companyId={company.id}
+            companyName={company.name}
+            open={claimOpen}
+            onOpenChange={setClaimOpen}
+          />
+        ) : null}
         {isSteward ? (
           <EditCompanyForm
             open={editOpen}
@@ -467,15 +508,27 @@ export default function CompanyDetails() {
           <div className="mt-10 rounded-sm border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
             <p className="mb-2 text-sm font-medium text-text-primary">This company hasn&apos;t been claimed yet</p>
             <p className="mb-3 text-sm text-text-secondary">
-              If you represent this organization, you can link it from account settings when company claiming is
-              available.
+              If you represent this organization, verify a work email—we&apos;ll send a one-time link to finish
+              claiming.
             </p>
-            <Link
-              to="/settings"
-              className="text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
-            >
-              Claim this company →
-            </Link>
+            {user ? (
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="text-xs font-medium uppercase tracking-widest"
+                onClick={() => setClaimOpen(true)}
+              >
+                Claim this company
+              </Button>
+            ) : (
+              <Link
+                to={`/auth?redirect=${encodeURIComponent(`/company/${slug}`)}`}
+                className="inline-flex text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
+              >
+                Log in to claim →
+              </Link>
+            )}
           </div>
         ) : null}
 
