@@ -157,8 +157,6 @@ export interface BuildingDetails {
   address: string | null;
   city: string | null;
   country: string | null;
-  /** Legacy: always empty from loader; credits replace `building_architects`. */
-  architects?: { id: string; name: string }[];
   year_completed: number;
   styles: { id: string, name: string }[];
   created_by: string;

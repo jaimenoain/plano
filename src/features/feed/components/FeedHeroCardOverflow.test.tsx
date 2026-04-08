@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { FeedHeroCard } from './FeedHeroCard';
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, afterEach } from 'vitest';
 import { BrowserRouter } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FeedReview } from '@/types/feed';
@@ -41,10 +41,13 @@ const mockEntry = {
   content: "Some content here"
 };
 
-const queryClient = new QueryClient();
-
 describe('FeedHeroCard Overflow Protection', () => {
-  it('images should have max-w-full class', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('images fill the frame with object-cover', () => {
+    const queryClient = new QueryClient();
     render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -52,15 +55,16 @@ describe('FeedHeroCard Overflow Protection', () => {
         </BrowserRouter>
       </QueryClientProvider>
     );
-    // Filter for building images (alt="Building")
     const buildingImages = screen.getAllByAltText('Building');
-    buildingImages.forEach(img => {
-      expect(img.className).toContain('max-w-full');
+    buildingImages.forEach((img) => {
+      expect(img.className).toContain('object-cover');
+      expect(img.className).toContain('w-full');
     });
   });
 
-  it('text containers should have max-w-full and overflow-hidden', () => {
-     render(
+  it('review excerpt uses line-clamp for overflow', () => {
+    const queryClient = new QueryClient();
+    render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <FeedHeroCard entry={mockEntry as unknown as FeedReview} />
@@ -68,19 +72,8 @@ describe('FeedHeroCard Overflow Protection', () => {
       </QueryClientProvider>
     );
 
-    // Header text container
-    // We can find it by text content and checking parent
-    const username = screen.getAllByText('tester')[0];
-    // username is in a span, inside div, inside div.flex-1.min-w-0
-    const headerTextContainer = username.closest('.flex-col.min-w-0');
-    expect(headerTextContainer?.className).toContain('max-w-full');
-    expect(headerTextContainer?.className).toContain('overflow-hidden');
-
-    // Content body container
-    const content = screen.getAllByText('Some content here')[0];
-    // content is in p, inside div.px-4
-    const contentContainer = content.closest('div');
-    expect(contentContainer?.className).toContain('max-w-full');
-    expect(contentContainer?.className).toContain('overflow-hidden');
+    const [content] = screen.getAllByText('Some content here');
+    expect(content.className).toContain('line-clamp-4');
+    expect(content.className).toContain('max-w-md');
   });
 });

@@ -11,7 +11,10 @@ import {
   Outlet,
   ScrollRestoration,
 } from "react-router";
-import { loader as architectIdRedirectLoader } from "@/features/credits/pages/ArchitectIdRedirect";
+import {
+  architectIdRedirectLoader,
+  architectEditRedirectLoader,
+} from "@/features/credits/pages/architectIdRedirect.loader";
 import { loader as removeCreditLoader } from "@/features/credits/pages/RemoveCredit";
 import { loader as verifyCompanyClaimLoader } from "@/features/credits/pages/VerifyCompanyClaim";
 import { approveStewardRequestLoader } from "@/features/credits/pages/ApproveStewardRequest.loader";
@@ -38,13 +41,17 @@ const Profile = lazyWithRetry(() => import("@/features/profile/pages/Profile"));
 const UserPhotoGallery = lazyWithRetry(() => import("@/features/profile/pages/UserPhotoGallery"));
 const Settings = lazyWithRetry(() => import("@/features/profile/pages/Settings"));
 const BuildingDetails = lazyWithRetry(() => import("@/features/buildings/pages/BuildingDetails"));
-const ArchitectDashboard = lazyWithRetry(() => import("@/features/architect/pages/ArchitectDashboard"));
+const ArchitectDashboardRedirect = lazyWithRetry(
+  () => import("@/features/credits/pages/ArchitectDashboardRedirect"),
+);
 const PersonDashboard = lazyWithRetry(() => import("@/features/credits/pages/PersonDashboard"));
 const CompanyDashboard = lazyWithRetry(() => import("@/features/credits/pages/CompanyDashboard"));
 const ArchitectIdRedirect = lazyWithRetry(
   () => import("@/features/credits/pages/ArchitectIdRedirect"),
 );
-const EditArchitect = lazyWithRetry(() => import("@/features/architect/pages/EditArchitect"));
+const ArchitectEditRedirect = lazyWithRetry(
+  () => import("@/features/credits/pages/ArchitectEditRedirect"),
+);
 const ReviewDetails = lazyWithRetry(() => import("@/features/buildings/pages/ReviewDetails"));
 const Notifications = lazyWithRetry(() => import("@/features/notifications/pages/Notifications"));
 const Connect = lazyWithRetry(() => import("@/features/connect/pages/Connect"));
@@ -200,7 +207,7 @@ const router = createBrowserRouter(
 
         <Route path="/portfolio" element={<PersonDashboard />} />
         <Route path="/company-portfolio" element={<CompanyDashboard />} />
-        <Route path="/architect/dashboard" element={<ArchitectDashboard />} />
+        <Route path="/architect/dashboard" element={<ArchitectDashboardRedirect />} />
         <Route
           path="/architect/:id"
           loader={architectIdRedirectLoader}
@@ -210,7 +217,15 @@ const router = createBrowserRouter(
             </Suspense>
           }
         />
-        <Route path="/architect/:id/edit" element={<EditArchitect />} />
+        <Route
+          path="/architect/:id/edit"
+          loader={architectEditRedirectLoader}
+          element={
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <ArchitectEditRedirect />
+            </Suspense>
+          }
+        />
         {/* Review Flow */}
         <Route path="/building/:id/:slug/review" element={<WriteReview />} />
         <Route path="/building/:id/review" element={<WriteReview />} />

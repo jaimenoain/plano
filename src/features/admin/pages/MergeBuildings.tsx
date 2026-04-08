@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Merge, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,18 +35,19 @@ type PotentialDuplicate = {
   score: number;
 };
 
-type ArchitectJoinCell = { architect: { id: string; name: string } | null } | null;
 type BuildingSearchRow = Record<string, unknown> & {
   id: string;
-  architects?: ArchitectJoinCell[] | null;
+  building_credits?: {
+    credit_tier: string | null;
+    status: string | null;
+    person: { id: string; name: string } | null;
+    company: { id: string; name: string } | null;
+  }[] | null;
 };
 
 function toAdminBuilding(b: BuildingSearchRow): AdminBuilding {
-  const architects =
-    b.architects
-      ?.map((row) => row?.architect)
-      .filter((a): a is NonNullable<typeof a> => Boolean(a)) ?? [];
-  return { ...b, architects } as AdminBuilding;
+  const designCreditSummaries = primaryBuildingCreditsToSummaries(b.building_credits ?? []);
+  return { ...b, designCreditSummaries } as AdminBuilding;
 }
 
 export default function MergeBuildings() {
@@ -100,7 +102,15 @@ toast.error("Failed to fetch potential duplicates");
     try {
       const { data, error } = await supabase
         .from('buildings')
-        .select('*, architects:building_architects(architect:architects(name, id))')
+        .select(`
+          *,
+          building_credits(
+            credit_tier,
+            status,
+            person:people(id, name),
+            company:companies(id, name)
+          )
+        `)
         .ilike('name', `%${query}%`)
         .eq('is_deleted', false)
         .limit(10);
@@ -159,7 +169,15 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
     try {
        const { data: rawData, error: loadError } = await supabase
         .from('buildings')
-        .select('*, architects:building_architects(architect:architects(name, id))')
+        .select(`
+          *,
+          building_credits(
+            credit_tier,
+            status,
+            person:people(id, name),
+            company:companies(id, name)
+          )
+        `)
         .in('id', [id1, id2]);
 
        if (loadError) throw loadError;
@@ -195,8 +213,8 @@ toast.error("Failed to merge buildings. Ensure SQL migration is applied.");
         </CardHeader>
         <CardContent className="text-sm space-y-2">
             {building.address && <div className="text-text-secondary line-clamp-2" title={building.address}>{building.address}</div>}
-            {building.architects && Array.isArray(building.architects) && building.architects.length > 0 && (
-                <div className="line-clamp-2">Architects: {building.architects.map((a) => a.name).join(", ")}</div>
+            {building.designCreditSummaries && building.designCreditSummaries.length > 0 && (
+                <div className="line-clamp-2">Credits: {building.designCreditSummaries.map((a) => a.name).join(", ")}</div>
             )}
             <div className="text-xs text-text-secondary break-all">ID: {building.id}</div>
         </CardContent>

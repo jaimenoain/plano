@@ -1,10 +1,12 @@
 // @vitest-environment happy-dom
+import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import Profile from './Profile';
-import { BrowserRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock IntersectionObserver
 const intersectionObserverMock = () => ({
@@ -14,12 +16,21 @@ const intersectionObserverMock = () => ({
 });
 window.IntersectionObserver = vi.fn().mockImplementation(intersectionObserverMock);
 
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  };
+});
+
 const mocks = vi.hoisted(() => {
   return {
     navigate: vi.fn(),
     signOut: vi.fn(),
     toast: vi.fn(),
     update: vi.fn(),
+    authUser: { id: 'user-123', email: 'test@example.com' },
     loaderProfile: {
       id: 'user-123',
       username: 'testuser',
@@ -40,6 +51,30 @@ vi.mock('react-router', async (importOriginal) => {
   };
 });
 
+vi.mock('@/features/credits/api/people', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/credits/api/people')>();
+  return {
+    ...actual,
+    getClaimedPersonSummaryForProfile: vi.fn().mockResolvedValue(null),
+  };
+});
+
+vi.mock('@/components/ui/sidebar', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/components/ui/sidebar')>();
+  return {
+    ...actual,
+    useSidebar: () => ({
+      state: "expanded" as const,
+      open: true,
+      setOpen: vi.fn(),
+      openMobile: false,
+      setOpenMobile: vi.fn(),
+      toggleSidebar: vi.fn(),
+      isMobile: false,
+    }),
+  };
+});
+
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
     toast: mocks.toast,
@@ -48,7 +83,7 @@ vi.mock('@/hooks/use-toast', () => ({
 
 vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 'user-123', email: 'test@example.com' },
+    user: mocks.authUser,
     loading: false,
     signOut: mocks.signOut,
   }),
@@ -105,7 +140,9 @@ vi.mock('@/integrations/supabase/client', () => {
         main_image_url: 'img.jpg',
         slug: 'test-building',
         short_id: 'tb',
-        architects: [{ architect: { name: 'Arch One', id: 'a1' } }]
+        building_credits: [
+          { status: 'active', credit_tier: 'primary', person: { name: 'Arch One', id: 'a1' }, company: null },
+        ]
       }
     }
   ];
@@ -129,12 +166,14 @@ vi.mock('@/integrations/supabase/client', () => {
 
     builder.select = vi.fn().mockImplementation((cols, opts) => {
         if (opts && opts.count) {
-             // Stats query: returns a chain that resolves to count
-             return {
-                 eq: () => ({
-                     eq: () => Promise.resolve({ count: 5, data: null })
-                 })
-             };
+          const resolved = { count: 0, data: null };
+          const chain: { eq: ReturnType<typeof vi.fn>; then: typeof Promise.prototype.then } = {
+            eq: vi.fn(),
+            then: (onFulfilled, onRejected) =>
+              Promise.resolve(resolved).then(onFulfilled, onRejected),
+          };
+          chain.eq.mockImplementation(() => chain);
+          return chain;
         }
         return builder;
     });
@@ -146,8 +185,11 @@ vi.mock('@/integrations/supabase/client', () => {
     builder.range = vi.fn().mockReturnThis();
     builder.limit = vi.fn().mockReturnThis();
 
-    // maybeSingle also returns the result
-    builder.maybeSingle = vi.fn().mockResolvedValue(result);
+    builder.maybeSingle = vi.fn().mockImplementation(() => {
+      if (table === 'profiles') return Promise.resolve({ data: profileData, error: null });
+      if (table === 'follows') return Promise.resolve({ data: null, error: null });
+      return Promise.resolve(result);
+    });
 
     // Update setup
     const updateBuilder = {
@@ -187,56 +229,44 @@ describe('Profile Integration', () => {
   });
 
   it('updates status optimistically and shows toast', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <TooltipProvider>
-        <BrowserRouter>
-          <SidebarProvider>
-            <Profile />
-          </SidebarProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <MemoryRouter initialEntries={["/profile/testuser"]}>
+            <Routes>
+              <Route
+                path="/profile/:username"
+                element={
+                  <SidebarProvider>
+                    <Profile />
+                  </SidebarProvider>
+                }
+              />
+            </Routes>
+          </MemoryRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
     );
 
-    // Wait for content to load
+    // Wait for profile grid (EditorialBuildingCard — no UserCard in v2 layout)
     await waitFor(() => {
-        expect(screen.getByTestId('user-card')).toBeTruthy();
+        expect(screen.getByTestId('review-card-review-1')).toBeTruthy();
     });
 
-    // Switch to List View
-    const listViewButton = screen.getAllByLabelText('List View');
-    fireEvent.click(listViewButton[0]);
+    const listRadio = await screen.findByRole('radio', { name: 'List' });
+    fireEvent.click(listRadio);
 
     // Wait for list view to render "Test Building"
     await waitFor(() => {
         expect(screen.getByText('Test Building')).toBeTruthy();
     });
 
-    // Wait for the specific status badge container to be rendered and clickable
-    // In ProfileListView, the status badge might be within a div or span
-    await waitFor(() => {
-        const badges = screen.getAllByText('Visited');
-        expect(badges.length).toBeGreaterThan(0);
-    });
-
-    const statusBadges = screen.getAllByText('Visited');
-    // We try to find a clickable element, or default to the badge itself
-    // Some implementations use onClick on a parent, some on the element itself
-    let clickableBadge = statusBadges[0];
-
-    // Try to find a button parent if it exists
-    const buttonParent = statusBadges[0].closest('button');
-    if (buttonParent) {
-      clickableBadge = buttonParent;
-    } else {
-      // If it's the custom StatusBadge component, it might have an onClick handler on a container div
-      const divParentWithClick = statusBadges[0].closest('div[role="button"]') || statusBadges[0].closest('div[class*="cursor-pointer"]');
-      if (divParentWithClick) {
-        clickableBadge = divParentWithClick as HTMLElement;
-      }
-    }
-
-    // Attempt the click
-    fireEvent.click(clickableBadge);
+    const table = await waitFor(() => screen.getByRole('table'), { timeout: 5000 });
+    const visitedInRow = await within(table).findByText('Visited');
+    const visitedBadge = visitedInRow.closest('button');
+    expect(visitedBadge).toBeTruthy();
+    fireEvent.click(visitedBadge!);
 
     // Provide a small timeout for the state to update
     await new Promise(r => setTimeout(r, 100));

@@ -21,7 +21,8 @@ export interface ReviewBuilding {
   main_image_url?: string | null;
   /** Mapped: community_preview_url — top community review image path; feed fallback when no hero/main. */
   community_preview_url?: string | null;
-  architects?: string[] | { id: string; name: string }[] | null;
+  /** From feed RPCs `building_data.credited_entities` or embedded `building_credits`. */
+  creditedEntities?: { id: string; name: string }[] | null;
   year_completed?: number | null;
   city?: string | null;
   country?: string | null;
@@ -72,8 +73,26 @@ export interface RawFeedBuildingData {
   country?: string | null;
   main_image_url?: string | null;
   community_preview_url?: string | null;
-  architects?: unknown;
+  credited_entities?: unknown;
   year_completed?: number | null;
+}
+
+/** Normalize `get_feed` / `get_suggested_posts` `building_data.credited_entities` JSON. */
+export function creditedEntitiesFromRpcJson(
+  raw: unknown,
+): { id: string; name: string }[] | null {
+  if (raw == null) return null;
+  if (!Array.isArray(raw)) return null;
+  if (raw.length === 0) return [];
+  const out: { id: string; name: string }[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const rec = item as Record<string, unknown>;
+    const id = rec.id != null ? String(rec.id) : "";
+    const name = rec.name != null ? String(rec.name) : "";
+    if (name) out.push({ id, name });
+  }
+  return out;
 }
 
 export interface RawFeedReviewImageRow {

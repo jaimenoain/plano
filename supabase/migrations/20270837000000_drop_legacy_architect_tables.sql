@@ -1656,6 +1656,42 @@ GRANT EXECUTE ON FUNCTION search_buildings(text, double precision, double precis
 GRANT EXECUTE ON FUNCTION search_buildings(text, double precision, double precision, int, jsonb, text, text[], text[], text[], int) TO service_role;
 
 -- ---------------------------------------------------------------------------
+-- Official-field RLS/trigger helper: must not reference building_architects
+-- after this migration drops that table. True when the user is the claimed
+-- owner of a credited person row, or a steward of a credited company row,
+-- with a non-hidden credit on the building.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.is_verified_architect_for_building(user_uuid UUID, building_uuid UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF user_uuid IS NULL OR building_uuid IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.building_credits bc
+    INNER JOIN public.people pe ON pe.id = bc.person_id
+    WHERE bc.building_id = building_uuid
+      AND bc.status IS DISTINCT FROM 'hidden'::public.credit_status_enum
+      AND pe.claimed_by_user_id = user_uuid
+  )
+  OR EXISTS (
+    SELECT 1
+    FROM public.building_credits bc
+    INNER JOIN public.company_stewards cs ON cs.company_id = bc.company_id
+    WHERE bc.building_id = building_uuid
+      AND bc.status IS DISTINCT FROM 'hidden'::public.credit_status_enum
+      AND cs.user_id = user_uuid
+  );
+END;
+$$;
+
+-- ---------------------------------------------------------------------------
 -- Drop FKs and legacy tables (order matters)
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.architect_claims

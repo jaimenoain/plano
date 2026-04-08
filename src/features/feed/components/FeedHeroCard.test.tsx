@@ -53,56 +53,31 @@ const renderCard = () => {
   );
 };
 
-describe('FeedHeroCard Aspect Ratio', () => {
+describe('FeedHeroCard layout', () => {
   afterEach(() => {
     cleanup();
   });
 
-  it('should have aspect-[4/5] placeholder initially', () => {
+  it('wraps a single hero image in a min-height muted frame', () => {
     renderCard();
     const imgElement = screen.getByAltText('Building');
     const imgContainer = imgElement.parentElement;
-    expect(imgContainer?.className).toContain('aspect-[4/5]');
-  });
-
-  it('should use aspect-[0.8] and bg-black for tall images (9:16)', async () => {
-    renderCard();
-    const imgElement = screen.getByAltText('Building') as HTMLImageElement;
-
-    // Simulate tall image load
-    Object.defineProperty(imgElement, 'naturalWidth', { value: 900 });
-    Object.defineProperty(imgElement, 'naturalHeight', { value: 1600 });
-
-    await act(async () => {
-      fireEvent.load(imgElement);
-    });
-
-    const imgContainer = imgElement.parentElement;
-    expect(imgContainer?.className).toContain('bg-black');
-    // Aspect ratio 0.8 is 4:5.
-    // The style should be set. happy-dom may normalize to "0.8 / 1"
-    const ar = imgContainer?.style.aspectRatio;
-    expect(ar === '0.8' || ar === '0.8 / 1').toBe(true);
-    expect(imgElement.className).toContain('object-contain');
-  });
-
-  it('should use natural aspect ratio for wide images (16:9)', async () => {
-    renderCard();
-    const imgElement = screen.getByAltText('Building') as HTMLImageElement;
-
-    // Simulate wide image load
-    Object.defineProperty(imgElement, 'naturalWidth', { value: 1600 });
-    Object.defineProperty(imgElement, 'naturalHeight', { value: 900 });
-
-    await act(async () => {
-      fireEvent.load(imgElement);
-    });
-
-    const imgContainer = imgElement.parentElement;
+    expect(imgContainer?.className).toContain('min-h-[300px]');
+    expect(imgContainer?.className).toContain('md:min-h-0');
     expect(imgContainer?.className).toContain('bg-surface-muted');
-    // Aspect ratio 1600/900 = 1.777...
-    expect(imgContainer?.style.aspectRatio).toContain('1.777');
+  });
+
+  it('uses object-cover on the building image after load', async () => {
+    renderCard();
+    const imgElement = screen.getByAltText('Building') as HTMLImageElement;
+
+    await act(async () => {
+      fireEvent.load(imgElement);
+    });
+
     expect(imgElement.className).toContain('object-cover');
+    expect(imgElement.className).toContain('w-full');
+    expect(imgElement.className).toContain('h-full');
   });
 
   it('renders FeedPhotoCarousel for multi-image entries (one slide visible, 4/5 frame)', () => {

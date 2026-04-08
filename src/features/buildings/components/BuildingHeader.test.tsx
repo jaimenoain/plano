@@ -19,7 +19,6 @@ describe('BuildingHeader', () => {
         tier_rank: 'Top 1%',
         location: { lat: 0, lng: 0 },
         address: '123 Main St',
-        architects: [],
         year_completed: 2020,
         styles: [],
         created_by: 'user1',

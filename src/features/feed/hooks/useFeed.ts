@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { FeedReview, RawFeedRow } from "@/types/feed";
+import { FeedReview, RawFeedRow, creditedEntitiesFromRpcJson } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
 
 const INITIAL_PAGE_SIZE = 10;
@@ -63,7 +63,9 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
           main_image_url: review.building_data?.main_image_url || null,
           community_preview_url:
             review.building_data?.community_preview_url ?? null,
-          architects: review.building_data?.architects || null,
+          creditedEntities: creditedEntitiesFromRpcJson(
+            review.building_data?.credited_entities,
+          ),
           year_completed: review.building_data?.year_completed || null,
         },
         likes_count: review.likes_count || 0,

@@ -42,6 +42,14 @@ vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: () => false,
 }));
 
+vi.mock('@/features/credits/hooks/useClaimedPersonForNav', () => ({
+  useClaimedPersonForNav: () => ({ data: undefined }),
+}));
+
+vi.mock('@/features/credits/hooks/useStewardCompaniesForNav', () => ({
+  useStewardCompaniesForNav: () => ({ data: [] }),
+}));
+
 // Mock UI components to avoid Portal issues
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -74,7 +82,7 @@ describe('AppSidebar', () => {
     expect(notificationLink).toBeTruthy();
   });
 
-  it('should render Your profile link', () => {
+  it('should render Profile nav link to own profile path', () => {
     render(
       <BrowserRouter>
         <SidebarProvider>
@@ -84,7 +92,11 @@ describe('AppSidebar', () => {
     );
 
     const links = screen.getAllByRole('link');
-    const profileLink = links.find(link => link.getAttribute('href') === '/profile/testuser' && link.textContent === 'Your profile');
+    const profileLink = links.find(
+      (link) =>
+        link.getAttribute('href') === '/profile/testuser' &&
+        link.textContent?.includes('Profile'),
+    );
     expect(profileLink).toBeTruthy();
   });
 

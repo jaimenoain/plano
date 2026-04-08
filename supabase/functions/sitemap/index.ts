@@ -35,25 +35,6 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
-  let architectIdsWithProfile = new Set<string>();
-  try {
-    const { data: verifiedLinks, error: verifiedErr } = await supabase
-      .from("profiles")
-      .select("verified_architect_id")
-      .not("verified_architect_id", "is", null);
-    if (verifiedErr) {
-      console.error("sitemap: verified_architect_id query error", verifiedErr.message);
-    } else {
-      architectIdsWithProfile = new Set(
-        (verifiedLinks ?? [])
-          .map((row) => row.verified_architect_id)
-          .filter((id): id is string => typeof id === "string" && id.length > 0),
-      );
-    }
-  } catch (e) {
-    console.error("sitemap: verified_architect_id query exception", e);
-  }
-
   let buildings: { short_id: string; slug: string; updated_at: string | null }[] | null = null;
   try {
     const { data, error } = await supabase
@@ -73,23 +54,41 @@ Deno.serve(async (req) => {
     console.error("sitemap: buildings query exception", e);
   }
 
-  let architects: { id: string; created_at: string | null }[] | null = null;
+  let people: { slug: string; updated_at: string | null }[] | null = null;
   try {
     const { data, error } = await supabase
-      .from("architects")
-      .select("id, created_at")
-      .order("created_at", { ascending: false })
+      .from("people")
+      .select("slug, updated_at")
+      .not("slug", "is", null)
+      .order("updated_at", { ascending: false })
       .limit(5000);
     if (error) {
-      console.error("sitemap: architects query error", error.message);
+      console.error("sitemap: people query error", error.message);
     } else {
-      architects = data;
+      people = data;
     }
   } catch (e) {
-    console.error("sitemap: architects query exception", e);
+    console.error("sitemap: people query exception", e);
   }
 
-  // Public profile URLs (includes users with verified_architect_id — canonical is /profile/:username, not /architect/:id).
+  let companies: { slug: string; updated_at: string | null }[] | null = null;
+  try {
+    const { data, error } = await supabase
+      .from("companies")
+      .select("slug, updated_at")
+      .not("slug", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(5000);
+    if (error) {
+      console.error("sitemap: companies query error", error.message);
+    } else {
+      companies = data;
+    }
+  } catch (e) {
+    console.error("sitemap: companies query exception", e);
+  }
+
+  // Public profile URLs — canonical /profile/:username.
   // No public.banned_users table: exclude banned usernames here if that table is added later.
   let profiles: { username: string; updated_at: string | null }[] | null = null;
   try {
@@ -143,15 +142,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (architects) {
-      for (const a of architects) {
-        if (architectIdsWithProfile.has(a.id)) continue;
-        const lastmod = formatLastmod(a.created_at);
-        const loc = `${SITE_URL}/architect/${a.id}`;
+    if (people) {
+      for (const row of people) {
+        const lastmod = formatLastmod(row.updated_at ?? undefined);
+        const loc = `${SITE_URL}/person/${row.slug}`;
         xml += `  <url>
     <loc>${escapeXml(loc)}</loc>${lastmod ? `
     <lastmod>${lastmod}</lastmod>` : ""}
-    <changefreq>monthly</changefreq>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+      }
+    }
+
+    if (companies) {
+      for (const row of companies) {
+        const lastmod = formatLastmod(row.updated_at ?? undefined);
+        const loc = `${SITE_URL}/company/${row.slug}`;
+        xml += `  <url>
+    <loc>${escapeXml(loc)}</loc>${lastmod ? `
+    <lastmod>${lastmod}</lastmod>` : ""}
+    <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
 `;

@@ -49,39 +49,6 @@ export type PlanoPublicTables = {
     }
     Relationships: []
   }
-  architect_affiliations: {
-    Row: {
-      studio_id: string
-      individual_id: string
-      created_at: string
-    }
-    Insert: {
-      studio_id: string
-      individual_id: string
-      created_at?: string
-    }
-    Update: {
-      studio_id?: string
-      individual_id?: string
-      created_at?: string
-    }
-    Relationships: [
-      {
-        foreignKeyName: "architect_affiliations_studio_id_fkey"
-        columns: ["studio_id"]
-        isOneToOne: false
-        referencedRelation: "architects"
-        referencedColumns: ["id"]
-      },
-      {
-        foreignKeyName: "architect_affiliations_individual_id_fkey"
-        columns: ["individual_id"]
-        isOneToOne: false
-        referencedRelation: "architects"
-        referencedColumns: ["id"]
-      },
-    ]
-  }
   architect_claims: {
     Row: {
       id: string
@@ -118,47 +85,7 @@ export type PlanoPublicTables = {
         referencedRelation: "profiles"
         referencedColumns: ["id"]
       },
-      {
-        foreignKeyName: "architect_claims_architect_id_fkey"
-        columns: ["architect_id"]
-        isOneToOne: false
-        referencedRelation: "architects"
-        referencedColumns: ["id"]
-      },
     ]
-  }
-  architects: {
-    Row: {
-      id: string
-      name: string
-      type: string
-      headquarters: string | null
-      website_url: string | null
-      bio: string | null
-      nationality: string | null
-      created_at: string | null
-    }
-    Insert: {
-      id?: string
-      name: string
-      type: string
-      headquarters?: string | null
-      website_url?: string | null
-      bio?: string | null
-      nationality?: string | null
-      created_at?: string | null
-    }
-    Update: {
-      id?: string
-      name?: string
-      type?: string
-      headquarters?: string | null
-      website_url?: string | null
-      bio?: string | null
-      nationality?: string | null
-      created_at?: string | null
-    }
-    Relationships: []
   }
   people: {
     Row: {
@@ -295,36 +222,6 @@ export type PlanoPublicTables = {
         columns: ["group_id"]
         isOneToOne: false
         referencedRelation: "attribute_groups"
-        referencedColumns: ["id"]
-      },
-    ]
-  }
-  building_architects: {
-    Row: {
-      building_id: string
-      architect_id: string
-    }
-    Insert: {
-      building_id: string
-      architect_id: string
-    }
-    Update: {
-      building_id?: string
-      architect_id?: string
-    }
-    Relationships: [
-      {
-        foreignKeyName: "building_architects_building_id_fkey"
-        columns: ["building_id"]
-        isOneToOne: false
-        referencedRelation: "buildings"
-        referencedColumns: ["id"]
-      },
-      {
-        foreignKeyName: "building_architects_architect_id_fkey"
-        columns: ["architect_id"]
-        isOneToOne: false
-        referencedRelation: "architects"
         referencedColumns: ["id"]
       },
     ]
@@ -1574,13 +1471,6 @@ export type PlanoPublicTables = {
         columns: ["user_id"]
         isOneToOne: false
         referencedRelation: "profiles"
-        referencedColumns: ["id"]
-      },
-      {
-        foreignKeyName: "notifications_architect_id_fkey"
-        columns: ["architect_id"]
-        isOneToOne: false
-        referencedRelation: "architects"
         referencedColumns: ["id"]
       },
     ]

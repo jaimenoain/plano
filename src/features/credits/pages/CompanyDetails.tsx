@@ -268,6 +268,11 @@ export default function CompanyDetails() {
 
   const isSteward = Boolean(user?.id && stewards.some((s) => s.userId === user.id));
 
+  useEffect(() => {
+    if (searchParams.get("edit") !== "1" || !isSteward) return;
+    setEditOpen(true);
+  }, [searchParams, isSteward]);
+
   const { data: pendingStewardRequestId } = useQuery({
     queryKey: companyStewardRequestPendingQueryKey(company.id),
     queryFn: () => getMyPendingCompanyStewardRequestId(company.id),

@@ -48,14 +48,12 @@ describe('FeedClusterCard', () => {
     );
 
     const usernameElement = screen.getByText('testuser');
-    const textContainer = usernameElement.closest('div');
+    expect(usernameElement.className).toContain('text-sm');
+    expect(usernameElement.className).toContain('text-text-primary');
+    expect(usernameElement.className).not.toContain('truncate');
 
-    expect(textContainer).not.toBeNull();
-    expect(textContainer?.className).toContain('text-sm');
-    expect(textContainer?.className).toContain('text-text-primary');
-    expect(textContainer?.className).toContain('truncate');
-
-    const parentContainer = textContainer?.parentElement;
-    expect(parentContainer?.className).toContain('min-w-0');
+    const row = usernameElement.parentElement;
+    expect(row?.className).toContain('flex');
+    expect(row?.className).toContain('items-center');
   });
 });

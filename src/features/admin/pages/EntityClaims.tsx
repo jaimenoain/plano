@@ -83,8 +83,7 @@ export default function EntityClaims() {
         .select(
           `
           *,
-          user:user_id(username, avatar_url),
-          architect:architect_id(name, type)
+          user:user_id(username, avatar_url)
         `,
         )
         .eq("status", "pending")
@@ -92,7 +91,46 @@ export default function EntityClaims() {
 
       if (error) throw error;
 
-      setClaims((data as ArchitectClaimRow[] | null) ?? []);
+      const raw = (data ?? []) as Array<
+        Omit<ArchitectClaimRow, "architect" | "user"> & {
+          user: ArchitectClaimRow["user"] | ArchitectClaimRow["user"][];
+        }
+      >;
+
+      const ids = [...new Set(raw.map((r) => r.architect_id))];
+      const [peopleRes, companiesRes] = await Promise.all([
+        ids.length > 0
+          ? supabase.from("people").select("id, name").in("id", ids)
+          : Promise.resolve({ data: [] as { id: string; name: string }[] | null }),
+        ids.length > 0
+          ? supabase.from("companies").select("id, name").in("id", ids)
+          : Promise.resolve({ data: [] as { id: string; name: string }[] | null }),
+      ]);
+
+      const nameById = new Map<string, { name: string; type: string }>();
+      peopleRes.data?.forEach((p) => nameById.set(p.id, { name: p.name, type: "person" }));
+      companiesRes.data?.forEach((c) => nameById.set(c.id, { name: c.name, type: "company" }));
+
+      const mapped: ArchitectClaimRow[] = raw.map((r) => {
+        const u = Array.isArray(r.user) ? r.user[0] : r.user;
+        return {
+          id: r.id,
+          user_id: r.user_id,
+          architect_id: r.architect_id,
+          status: r.status,
+          proof_email: r.proof_email,
+          created_at: r.created_at,
+          resolved_at: r.resolved_at,
+          user: u ?? { username: null, avatar_url: null },
+          architect:
+            nameById.get(r.architect_id) ?? {
+              name: "Unknown entity",
+              type: "unknown",
+            },
+        };
+      });
+
+      setClaims(mapped);
     } catch {
       toast.error("Failed to load architect claims");
     } finally {

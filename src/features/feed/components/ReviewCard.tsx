@@ -127,22 +127,20 @@ export function ReviewCard({
   const userInitial = username.charAt(0).toUpperCase();
 
   const mainTitle = entry.building.name;
-  const architects = entry.building.architects;
+  const credits = entry.building.creditedEntities;
   const year_completed = entry.building.year_completed;
-  const architectNames = architects
-    ? architects.map((a) => (typeof a === "string" ? a : a.name)).filter(Boolean)
-    : [];
+  const creditNames = credits ? credits.map((c) => c.name).filter(Boolean) : [];
 
   let subTitle = entry.building.address;
   if (variant === 'compact') {
       const parts: (string | number)[] = [];
-      if (architectNames.length > 0) parts.push(architectNames.slice(0, 2).join(", "));
+      if (creditNames.length > 0) parts.push(creditNames.slice(0, 2).join(", "));
       if (year_completed) parts.push(year_completed);
       subTitle = parts.length > 0 ? parts.join(" • ") : entry.building.address;
   } else {
-      const architectsList = architectNames.slice(0, 2).join(", ");
-      if (architectsList) {
-          subTitle = architectsList;
+      const creditsList = creditNames.slice(0, 2).join(", ");
+      if (creditsList) {
+          subTitle = creditsList;
           if (year_completed) subTitle += ` • ${year_completed}`;
       } else if (year_completed) {
           subTitle = `${year_completed}`;

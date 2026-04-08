@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { FeedReview, RawFeedRow } from "@/types/feed";
+import { FeedReview, RawFeedRow, creditedEntitiesFromRpcJson } from "@/types/feed";
 
 interface ReviewImageDbRow {
   id: string;
@@ -115,7 +115,9 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
             main_image_url: buildingData?.main_image_url || null,
             community_preview_url:
               buildingData?.community_preview_url ?? null,
-            architects: buildingData?.architects || null,
+            creditedEntities: creditedEntitiesFromRpcJson(
+              buildingData?.credited_entities,
+            ),
             year_completed: buildingData?.year_completed || null,
           },
           likes_count: post.likes_count || 0,

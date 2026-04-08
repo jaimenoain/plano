@@ -30,19 +30,19 @@ const ARCHITECTURAL_STYLES: Record<number, string> = {
 interface ManageHighlightsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  favorites: FavoriteItem[]; // Contains styles, architects, quotes
+  favorites: FavoriteItem[]; // Contains styles, people highlights, quotes
   onSave: (highlights: FavoriteItem[]) => Promise<void>;
 }
 
 export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }: ManageHighlightsDialogProps) {
   const [styles, setStyles] = useState<FavoriteItem[]>([]);
-  const [architects, setArchitects] = useState<FavoriteItem[]>([]);
+  const [peopleHighlights, setPeopleHighlights] = useState<FavoriteItem[]>([]);
   const [quotes, setQuotes] = useState<FavoriteItem[]>([]);
 
   const [activeTab, setActiveTab] = useState("styles");
-  const [architectQuery, setArchitectQuery] = useState("");
-  const debouncedArchitectQuery = useDebounce(architectQuery, 500);
-  const [architectResults, setArchitectResults] = useState<FavoriteItem[]>([]);
+  const [peopleQuery, setPeopleQuery] = useState("");
+  const debouncedPeopleQuery = useDebounce(peopleQuery, 500);
+  const [peopleResults, setPeopleResults] = useState<FavoriteItem[]>([]);
   const [loading, _setLoading] = useState(false);
 
   // Quote input state
@@ -53,13 +53,13 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
   useEffect(() => {
     if (open) {
-      // Filter by the new types: 'style' (formerly genre) and 'architect' (formerly person)
+      // Filter by type: style (formerly genre), person highlight (stored as architect|person), quote
       setStyles(favorites.filter(f => f.type === 'style' || f.type === 'genre'));
-      setArchitects(favorites.filter(f => f.type === 'architect' || f.type === 'person'));
+      setPeopleHighlights(favorites.filter(f => f.type === 'architect' || f.type === 'person'));
       setQuotes(favorites.filter(f => f.type === 'quote'));
       
-      setArchitectQuery("");
-      setArchitectResults([]);
+      setPeopleQuery("");
+      setPeopleResults([]);
       // Reset quote input state
       setQuoteText("");
       setQuoteSource("");
@@ -70,13 +70,13 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
     const initialStyles = favorites.filter(f => f.type === 'style' || f.type === 'genre').map(f => f.id).sort().join(',');
     const currentStyles = styles.map(f => f.id).sort().join(',');
 
-    const initialArchitects = favorites.filter(f => f.type === 'architect' || f.type === 'person').map(f => f.id).sort().join(',');
-    const currentArchitects = architects.map(f => f.id).sort().join(',');
+    const initialPeople = favorites.filter(f => f.type === 'architect' || f.type === 'person').map(f => f.id).sort().join(',');
+    const currentPeople = peopleHighlights.map(f => f.id).sort().join(',');
 
     const initialQuotes = favorites.filter(f => f.type === 'quote').map(f => f.id).sort().join(',');
     const currentQuotes = quotes.map(f => f.id).sort().join(',');
 
-    return initialStyles !== currentStyles || initialArchitects !== currentArchitects || initialQuotes !== currentQuotes;
+    return initialStyles !== currentStyles || initialPeople !== currentPeople || initialQuotes !== currentQuotes;
   };
 
   const hasUnsavedQuote = quoteText.trim().length > 0;
@@ -107,26 +107,24 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
     }
   };
 
-  // --- Architects Search ---
+  // --- People search (highlights) ---
   useEffect(() => {
-    if (debouncedArchitectQuery.length < 2) {
-      setArchitectResults([]);
+    if (debouncedPeopleQuery.length < 2) {
+      setPeopleResults([]);
       return;
     }
 
-    // TODO: Implement actual architect search against a profiles table or external API
-    // For now, we are disabling this to prevent errors as no dedicated architect database exists yet.
-setArchitectResults([]);
+    // TODO: Wire to people/company search when highlights picker is productized.
+    setPeopleResults([]);
 
-  }, [debouncedArchitectQuery]);
+  }, [debouncedPeopleQuery]);
 
-  const toggleArchitect = (architect: FavoriteItem) => {
-    if (architects.find(p => p.id === architect.id)) {
-      setArchitects(prev => prev.filter(p => p.id !== architect.id));
+  const togglePeopleHighlight = (item: FavoriteItem) => {
+    if (peopleHighlights.find(p => p.id === item.id)) {
+      setPeopleHighlights(prev => prev.filter(p => p.id !== item.id));
     } else {
-      if (architects.length >= 5) return;
-      // Ensure type is set to 'architect'
-      setArchitects(prev => [...prev, { ...architect, type: 'architect' }]);
+      if (peopleHighlights.length >= 5) return;
+      setPeopleHighlights(prev => [...prev, { ...item, type: 'architect' }]);
     }
   };
 
@@ -153,7 +151,7 @@ setArchitectResults([]);
     // Combine all and ensure types are strictly the new values before saving
     const combined: FavoriteItem[] = [
       ...styles.map((s) => ({ ...s, type: 'style' as const })),
-      ...architects.map((a) => ({ ...a, type: 'architect' as const })),
+      ...peopleHighlights.map((a) => ({ ...a, type: 'architect' as const })),
       ...quotes,
     ];
     await onSave(combined);
@@ -166,7 +164,7 @@ setArchitectResults([]);
         <DialogContent className="sm:max-w-lg h-[80vh] flex flex-col p-0 gap-0">
           <DialogHeader className="p-4 border-b">
             <DialogTitle>Edit Profile Highlights</DialogTitle>
-            <DialogDescription>Share your favorite styles, architects, and quotes.</DialogDescription>
+            <DialogDescription>Share your favorite styles, people, and quotes.</DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-hidden flex flex-col">
@@ -174,7 +172,7 @@ setArchitectResults([]);
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                       <TabsList className="w-full grid grid-cols-3">
                           <TabsTrigger value="styles">Styles</TabsTrigger>
-                          <TabsTrigger value="architects">Architects</TabsTrigger>
+                          <TabsTrigger value="people">People</TabsTrigger>
                           <TabsTrigger value="quotes">Quotes</TabsTrigger>
                       </TabsList>
                   </Tabs>
@@ -210,29 +208,28 @@ setArchitectResults([]);
                       </div>
                   )}
 
-                  {/* ARCHITECTS TAB */}
-                  {activeTab === "architects" && (
+                  {/* People highlights tab */}
+                  {activeTab === "people" && (
                       <div className="space-y-4">
                           <div className="relative">
                               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
                               <Input
-                                  placeholder="Search architects..."
-                                  value={architectQuery}
-                                  onChange={e => setArchitectQuery(e.target.value)}
+                                  placeholder="Search people…"
+                                  value={peopleQuery}
+                                  onChange={e => setPeopleQuery(e.target.value)}
                                   className="pl-9"
                               />
                           </div>
 
                           <p className="text-sm text-text-secondary text-center py-4">
-                              Architect search is coming soon.
+                              People search is coming soon.
                           </p>
 
-                          {/* Selected Architects */}
-                          {architects.length > 0 && (
+                          {peopleHighlights.length > 0 && (
                               <div className="space-y-2">
-                                  <span className="text-xs text-text-secondary font-bold uppercase">Selected ({architects.length}/5)</span>
+                                  <span className="text-xs text-text-secondary font-bold uppercase">Selected ({peopleHighlights.length}/5)</span>
                                   <div className="space-y-1">
-                                      {architects.map(p => (
+                                      {peopleHighlights.map(p => (
                                           <div key={p.id} className="flex items-center justify-between p-2 rounded-md bg-surface-muted/50">
                                               <div className="flex items-center gap-3">
                                                   <div className="h-10 w-10 rounded-full bg-surface-muted overflow-hidden">
@@ -240,7 +237,7 @@ setArchitectResults([]);
                                                   </div>
                                                   <span className="text-sm font-medium">{p.title}</span>
                                               </div>
-                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-text-secondary hover:text-feedback-destructive" onClick={() => toggleArchitect(p)}>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-text-secondary hover:text-feedback-destructive" onClick={() => togglePeopleHighlight(p)}>
                                                   <X className="h-4 w-4" />
                                               </Button>
                                           </div>
@@ -249,18 +246,17 @@ setArchitectResults([]);
                               </div>
                           )}
 
-                          {/* Search Results */}
-                          {architectResults.length > 0 && (
+                          {peopleResults.length > 0 && (
                                <div className="space-y-2 mt-4">
                                   <span className="text-xs text-text-secondary font-bold uppercase">Results</span>
                                   <div className="space-y-1">
-                                      {architectResults.map(p => {
-                                          const isSelected = !!architects.find(sel => sel.id === p.id);
+                                      {peopleResults.map(p => {
+                                          const isSelected = !!peopleHighlights.find(sel => sel.id === p.id);
                                           return (
                                               <button
                                                   key={p.id}
-                                                  onClick={() => !isSelected && toggleArchitect(p)}
-                                                  disabled={!isSelected && architects.length >= 5}
+                                                  onClick={() => !isSelected && togglePeopleHighlight(p)}
+                                                  disabled={!isSelected && peopleHighlights.length >= 5}
                                                   className={cn(
                                                       "flex items-center gap-3 p-2 rounded-md w-full text-left transition-colors",
                                                       isSelected ? "bg-brand-primary/10 opacity-50 cursor-default" : "hover:bg-surface-muted"

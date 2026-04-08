@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Link,
   useLoaderData,
@@ -6,6 +6,7 @@ import {
   useRevalidator,
   useRouteError,
   isRouteErrorResponse,
+  useSearchParams,
   type MetaFunction,
 } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -151,6 +152,7 @@ export default function PersonDetails() {
   const loaderData = useLoaderData() as PersonDetailsLoaderData;
   const { slug: slugParam } = useParams();
   const slug = slugParam?.trim() ?? "";
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const revalidator = useRevalidator();
   const { user } = useAuth();
@@ -170,6 +172,11 @@ export default function PersonDetails() {
   const credits = queryData?.credits ?? loaderData.credits;
 
   const isOwner = Boolean(user?.id && person.claimedByUserId === user.id);
+
+  useEffect(() => {
+    if (searchParams.get("edit") !== "1" || !isOwner) return;
+    setEditOpen(true);
+  }, [searchParams, isOwner]);
 
   const handlePersonSaved = (updated: Person) => {
     queryClient.setQueryData(personQueryKey(slug), (prev) => {

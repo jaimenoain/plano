@@ -120,15 +120,7 @@ export function buildingStructuredData(
       : [];
 
   const architect =
-    architectFromCredits.length > 0
-      ? architectFromCredits
-      : building.architects && building.architects.length > 0
-        ? building.architects.map((a) => ({
-            "@type": "Person" as const,
-            name: a.name,
-            url: `${SITE_URL}/architect/${a.id}`,
-          }))
-        : undefined;
+    architectFromCredits.length > 0 ? architectFromCredits : undefined;
 
   const styleProperties =
     building.styles && building.styles.length > 0
@@ -171,25 +163,11 @@ export function buildingDescription(
       : [];
   if (creditLabels.length > 0) {
     parts.push(`Designed by ${creditLabels.join(", ")}.`);
-  } else if (building.architects?.length) {
-    parts.push(
-      `Designed by ${building.architects.map((a) => a.name).join(", ")}.`,
-    );
   }
   if (parts.length === 0) {
     return `Discover ${building.name} on Plano — the world's architecture, cataloged.`;
   }
   return `${building.name}. ${parts.join(" ")} Discover this building on Plano.`;
-}
-
-export function architectStructuredData(architect: { id: string; name: string }) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    name: architect.name,
-    url: `${SITE_URL}/architect/${architect.id}`,
-    jobTitle: "Architect",
-  };
 }
 
 /** Schema.org Person for `/person/:slug` (Roadmap Task 3.1). */

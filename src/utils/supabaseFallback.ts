@@ -2,6 +2,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { classifyBuildingPathIdSegment } from "@/utils/buildingPathId";
 import { DiscoveryBuilding, DiscoveryBuildingMapPin, LeaderboardData } from "@/features/search/components/types";
+import {
+  visibleCreditSummariesFromEmbed,
+  type BuildingCreditEmbed,
+} from "@/features/credits/api/credits";
 
 export const searchBuildingsRpc = async (params: {
   query_text: string | null;
@@ -264,7 +268,8 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
       styles:building_styles(style:architectural_styles(id, name)),
       category:functional_categories(name),
       typologies:building_functional_typologies(typology:functional_typologies(name, id)),
-      attributes:building_attributes(attribute:attributes(name, id, group_id, group:attribute_groups(slug)))
+      attributes:building_attributes(attribute:attributes(name, id, group_id, group:attribute_groups(slug))),
+      building_credits(status, person:people(id, name), company:companies(id, name))
     `);
 
     const segment = classifyBuildingPathIdSegment(id);
@@ -317,10 +322,15 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
         .map((a) => a.name)
         .join(', ') || null;
 
+    type Row = typeof data & { building_credits?: BuildingCreditEmbed[] | null };
+    const row = data as Row;
+    const bc = row.building_credits;
+    const { building_credits: _omitCredits, ...rest } = row;
+
     return {
-        ...data,
+        ...rest,
         styles,
-        credits: [] as { id: string; name: string }[],
+        creditedEntities: visibleCreditSummariesFromEmbed(bc ?? undefined),
         category: categoryName,
         typology: typologies,
         materials: materials.length > 0 ? materials : null,

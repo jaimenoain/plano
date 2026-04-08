@@ -73,7 +73,8 @@ describe('DiscoveryCard', () => {
       </BrowserRouter>
     );
     expect(screen.getByText('Test Building')).toBeTruthy();
-    expect(screen.getByText('Test City, Test Country')).toBeTruthy();
-    expect(screen.getByText("Test Designer")).toBeTruthy();
+    expect(
+      screen.getByText((content) => content.includes('Test City') && content.includes('Test Designer')),
+    ).toBeTruthy();
   });
 });

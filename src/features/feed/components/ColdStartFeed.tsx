@@ -33,7 +33,7 @@ export function ColdStartFeed({
             Discover architecture with friends
           </h2>
           <p className="text-sm text-text-secondary leading-normal">
-            Follow architects and enthusiasts to see their visits, ratings, and
+            Follow designers and enthusiasts to see their visits, ratings, and
             collections here.
           </p>
         </div>

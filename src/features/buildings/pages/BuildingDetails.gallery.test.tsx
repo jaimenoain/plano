@@ -166,7 +166,6 @@ describe('BuildingDetails Gallery', () => {
         year_completed: 2000,
         slug: 'test-building',
         short_id: 'tb',
-        architects: [],
         location: { type: 'Point', coordinates: [0, 0] },
         created_by: 'other-user',
         styles: [],

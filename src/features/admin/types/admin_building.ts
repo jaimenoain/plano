@@ -1,4 +1,3 @@
-import type { Architect } from "@/features/architect/types";
 import type { TierRank } from "@/types/plano-map";
 
 export type AccessLevel = "public" | "private" | "restricted" | "commercial";
@@ -10,7 +9,7 @@ export type AccessLogistics =
 export type AccessCost = "free" | "paid" | "customers_only";
 
 /**
- * Baseline row shape for `public.buildings` used by admin UIs.
+ * Baseline row shape for `public.buildings` used in admin UIs.
  * Generated `Database` types omit this table until `npm run gen-types` is refreshed.
  */
 export type BuildingRow = {
@@ -27,7 +26,6 @@ export type BuildingRow = {
   location?: unknown;
   status?: string | null;
   year_completed?: number | null;
-  architects?: unknown;
   access_level?: AccessLevel | null;
   access_logistics?: AccessLogistics | null;
   access_cost?: AccessCost | null;
@@ -38,6 +36,7 @@ export type BuildingRow = {
   tier_rank?: TierRank | null;
 };
 
-export interface AdminBuilding extends Omit<BuildingRow, "architects"> {
-  architects: Architect[] | null;
+/** Primary visible design credits (person or company summaries); optional on table list until embedded in select. */
+export interface AdminBuilding extends BuildingRow {
+  designCreditSummaries?: { id: string; name: string }[] | null;
 }

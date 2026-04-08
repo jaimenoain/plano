@@ -72,15 +72,15 @@ describe('BuildingSidebar', () => {
 
     // Check for rating dots
     // The dots are divs with specific classes inside a container with aria-label
-    const ratingContainer = screen.getByLabelText('Rating: 3 stars');
+    const ratingContainer = screen.getByLabelText('Rating: 3');
     expect(ratingContainer).toBeDefined();
 
     // Check the dots inside
     const dots = ratingContainer.querySelectorAll('div');
     expect(dots.length).toBe(3);
 
-    // Verify the class name contains bg-brand-primary
-    expect(dots[0].className).toContain('bg-brand-primary');
+    // Monochrome SERP pins — text-primary squares (see BuildingSidebar doc block)
+    expect(dots[0].className).toContain('bg-text-primary');
     expect(dots[0].className).not.toContain('bg-yellow-400');
   });
 });

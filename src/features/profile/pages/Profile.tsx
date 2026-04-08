@@ -14,7 +14,7 @@
  *  - 'Visited' and 'Saved' replace the old 'log' + filter combo as first-class sections
  *  - Editorial building grid: no borders, no icons, bold name / faint meta
  *  - Photos: CSS masonry, featured items at positions 0, 7, 14…
- *  - Architects: inline-editable firm name, bio, website link in header
+ *  - Header: inline-editable firm name, bio, website link
  */
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo, ReactNode, useCallback } from "react";
@@ -94,6 +94,10 @@ import {
   SITE_URL,
 } from "@/features/buildings/utils/structuredData";
 import { getBuildingUrl } from "@/utils/url";
+import {
+  visibleCreditSummariesFromEmbed,
+  type BuildingCreditEmbed,
+} from "@/features/credits/api/credits";
 import { getClaimedPersonSummaryForProfile } from "@/features/credits/api/people";
 
 export { profileLoader as loader } from "./Profile.loader";
@@ -395,33 +399,42 @@ export default function Profile() {
     const fetchProfileData = async () => {
       setLoading(true);
       let uid: string | null = null;
-      // Select only columns present on `profiles` (see `integrations/supabase/types.ts` / DATA_CONTRACT).
-      // firm/website are optional UI fields until a migration adds those columns.
-      let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id");
-      let data: { id: string; username?: string | null; favorites?: unknown; [key: string]: unknown } | null = null;
-      if (routeUsername) {
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(routeUsername);
-        if (isUuid) { query = query.eq("id", routeUsername); } else { query = query.ilike("username", routeUsername); }
-        const res = await query.maybeSingle();
-        data = res.data;
-        if (data) {
-          if (isUuid && data.username) { navigate(`/profile/${data.username.toLowerCase()}`, { replace: true }); return; }
-          if (!isUuid && routeUsername && routeUsername !== routeUsername.toLowerCase()) { navigate(`/profile/${routeUsername.toLowerCase()}`, { replace: true }); return; }
+      try {
+        // Select only columns present on `profiles` (see `integrations/supabase/types.ts` / DATA_CONTRACT).
+        // firm/website are optional UI fields until a migration adds those columns.
+        let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id");
+        let data: { id: string; username?: string | null; favorites?: unknown; [key: string]: unknown } | null = null;
+        if (routeUsername) {
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(routeUsername);
+          if (isUuid) { query = query.eq("id", routeUsername); } else { query = query.ilike("username", routeUsername); }
+          const res = await query.maybeSingle();
+          data = res.data;
+          if (data) {
+            if (isUuid && data.username) {
+              navigate(`/profile/${data.username.toLowerCase()}`, { replace: true });
+              return;
+            }
+            if (!isUuid && routeUsername && routeUsername !== routeUsername.toLowerCase()) {
+              navigate(`/profile/${routeUsername.toLowerCase()}`, { replace: true });
+              return;
+            }
+          }
+        } else if (currentUser) {
+          uid = currentUser.id;
+          const res = await supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id").eq("id", uid).maybeSingle();
+          data = res.data;
         }
-      } else if (currentUser) {
-        uid = currentUser.id;
-        const res = await supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id").eq("id", uid).maybeSingle();
-        data = res.data;
+        if (data) {
+          setProfile(data as unknown as Profile);
+          uid = data.id;
+          setDraftFirm("");
+          setDraftBio((data.bio as string) || "");
+          setDraftWebsite("");
+        }
+        setTargetUserId(uid);
+      } finally {
+        setLoading(false);
       }
-      if (data) {
-        setProfile(data as unknown as Profile);
-        uid = data.id;
-        setDraftFirm("");
-        setDraftBio((data.bio as string) || "");
-        setDraftWebsite("");
-      }
-      setTargetUserId(uid);
-      setLoading(false);
     };
     void fetchProfileData();
   }, [routeUsername, currentUser, navigate, authLoading]);
@@ -481,7 +494,7 @@ export default function Profile() {
       let query = supabase
         .from("user_buildings")
         .select(`id, content, rating, created_at, edited_at, user_id, building_id, status,
-          building:buildings ( id, name, address, city, country, year_completed, main_image_url, community_preview_url, slug, short_id, architects:building_architects(architect:architects(name, id)) )`)
+          building:buildings ( id, name, address, city, country, year_completed, main_image_url, community_preview_url, slug, short_id, building_credits ( status, credit_tier, person:people (id, name), company:companies (id, name) ) )`)
         .eq("user_id", targetUserId)
         .order("edited_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
@@ -521,7 +534,7 @@ export default function Profile() {
       type ProfileFeedRow = {
         id: string; content: string | null; rating: number | null; created_at: string;
         edited_at?: string | null; status: "visited" | "pending"; building_id: string;
-        building?: { id?: string; name?: string | null; address?: string | null; city?: string | null; country?: string | null; year_completed?: number | null; main_image_url?: string | null; community_preview_url?: string | null; slug?: string | null; short_id?: number | null; architects?: { architect: { id: string; name: string } | null }[] | null; } | null;
+        building?: { id?: string; name?: string | null; address?: string | null; city?: string | null; country?: string | null; year_completed?: number | null; main_image_url?: string | null; community_preview_url?: string | null; slug?: string | null; short_id?: number | null; building_credits?: BuildingCreditEmbed[] | null; } | null;
       };
       const formattedContent: FeedReview[] = (entriesData as ProfileFeedRow[]).map(item => {
         const reviewLikes = likesCount.get(item.id) || 0;
@@ -530,7 +543,7 @@ export default function Profile() {
         return {
           id: item.id, content: item.content, rating: item.rating, created_at: item.created_at, edited_at: item.edited_at ?? null, status: item.status,
           user: { username: profile?.username || "Unknown", avatar_url: profile?.avatar_url || null },
-          building: { id: item.building?.id || item.building_id, name: item.building?.name || "Unknown Building", address: item.building?.address || null, city: item.building?.city || null, country: item.building?.country || null, year_completed: item.building?.year_completed || null, main_image_url: item.building?.main_image_url || null, community_preview_url: item.building?.community_preview_url ?? null, slug: item.building?.slug || null, short_id: item.building?.short_id || null, architects: item.building?.architects?.flatMap(a => a.architect ? [a.architect] : []) || [] },
+          building: { id: item.building?.id || item.building_id, name: item.building?.name || "Unknown Building", address: item.building?.address || null, city: item.building?.city || null, country: item.building?.country || null, year_completed: item.building?.year_completed || null, main_image_url: item.building?.main_image_url || null, community_preview_url: item.building?.community_preview_url ?? null, slug: item.building?.slug || null, short_id: item.building?.short_id || null, creditedEntities: visibleCreditSummariesFromEmbed(item.building?.building_credits) },
           tags: [] as string[], likes_count: reviewLikes + imageLikes, comments_count: commentsCount.get(item.id) || 0, is_liked: userLikes.has(item.id), watch_with_users: [] as WatchWithUser[], images: itemImages,
         };
       });
@@ -1242,13 +1255,12 @@ function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedRevi
     getBuildingImageUrl(entry.building.community_preview_url);
   const imageUrl =
     (showCommunityImages && entry.images?.[0]?.url) || heroFromBuilding;
-  const arch0 = entry.building.architects?.[0];
-  const architectName = typeof arch0 === "string" ? arch0 : arch0?.name;
-  const meta = [architectName, entry.building.year_completed].filter(Boolean).join(" · ");
+  const topCredit = entry.building.creditedEntities?.[0];
+  const meta = [topCredit?.name, entry.building.year_completed].filter(Boolean).join(" · ");
   const url = getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id);
 
   return (
-    <Link to={url} className="group block">
+    <Link to={url} className="group block" data-testid={`review-card-${entry.id}`}>
       {/* 3:4 portrait image, no rounding */}
       <div className="aspect-[3/4] overflow-hidden bg-surface-muted mb-3">
         {imageUrl ? (

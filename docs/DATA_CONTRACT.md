@@ -2,7 +2,7 @@
 
 **Product:** Plano — The world's architecture, cataloged.
 **Document type:** Data & API Contract
-**Last updated:** March 2026
+**Last updated:** April 2026
 **Database:** Supabase (PostgreSQL 15 + PostGIS)
 
 ---
@@ -19,7 +19,7 @@
 |------|-------------|-------------------|-------------------|-------------------|
 | `user` (default) | `/` | `/` (home feed) | — | Admin tables, admin RPCs |
 | `admin` / `app_admin` | `/admin` | `/admin` (dashboard) | Admin panel, audit logs, moderation tools, deletion jobs | — (superset of user) |
-| Verified architect | `/architect` | `/architect/dashboard` | Architect dashboard, privileged building editing | — (superset of user) |
+| Credited professional (person or company) | `/person/:slug`, `/company/:slug` | `/portfolio` or `/company-portfolio` | Portfolio dashboards; building credits via `building_credits` | — (superset of user) |
 
 ---
 
@@ -51,14 +51,13 @@ CREATE TABLE public.profiles (
   favorites     jsonb       DEFAULT '[]',         -- Array of pinned building IDs
   notification_preferences jsonb DEFAULT '{}',    -- Per-type boolean toggles
   profile_sections jsonb    DEFAULT '{"favorites": false, "highlights": false}',
-  verified_architect_id uuid,
+  verified_architect_id uuid,   -- Legacy: optional column; FK to `architects` removed in migration `20270837000000_drop_legacy_architect_tables.sql`. App UX uses `people.claimed_by_user_id` / `building_credits` instead of this link.
   last_online   timestamptz,
   created_at    timestamptz NOT NULL DEFAULT timezone('utc', now()),
   updated_at    timestamptz,
 
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
-  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
-  CONSTRAINT profiles_verified_architect_id_fkey FOREIGN KEY (verified_architect_id) REFERENCES public.architects(id)
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
 
 -- Auto-incrementing profile creation
@@ -338,15 +337,8 @@ CREATE TABLE public.buildings (
   CONSTRAINT buildings_hero_image_id_fkey FOREIGN KEY (hero_image_id) REFERENCES public.review_images(id)
 );
 
-CREATE TABLE public.building_architects (
-  building_id  uuid NOT NULL,
-  architect_id uuid NOT NULL,
-  created_at   timestamptz NOT NULL DEFAULT now(),
-
-  CONSTRAINT building_architects_pkey PRIMARY KEY (building_id, architect_id),
-  CONSTRAINT building_architects_building_id_fkey FOREIGN KEY (building_id) REFERENCES public.buildings(id),
-  CONSTRAINT building_architects_architect_id_fkey FOREIGN KEY (architect_id) REFERENCES public.architects(id)
-);
+-- `building_architects` — **REMOVED** in migration `20270837000000_drop_legacy_architect_tables.sql`.
+-- Display and search use `building_credits` + `people` / `companies` (see §9d).
 
 CREATE TABLE public.building_attributes (
   building_id  uuid NOT NULL,
@@ -445,40 +437,15 @@ CREATE POLICY "buildings_update" ON buildings
     OR public.is_admin()
   );
   -- Creator or admin can update.
-  -- Verified architects have additional field-level privileges
-  -- enforced at the application layer via is_verified_architect_for_building().
+  -- Additional field-level rules for credited professionals use `building_credits`
+  -- and steward/claim RLS (see §9d / §9b); `is_verified_architect_for_building` is redefined in migration `20270837000000` to query credits + claimed `people` / `company_stewards`.
 ```
 
 -- No DELETE policy: buildings use soft-delete (is_deleted = true), not hard delete.
 
 ### RLS: building_architects
 
-**Tenancy model:** not tenant-scoped
-
-**SELECT**
-```sql
-CREATE POLICY "building_architects_select" ON building_architects
-  FOR SELECT USING (true);
-```
-
-**INSERT**
-```sql
-CREATE POLICY "building_architects_insert" ON building_architects
-  FOR INSERT
-  WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
-```
-
-**DELETE**
-```sql
-CREATE POLICY "building_architects_delete" ON building_architects
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM buildings b
-      WHERE b.id = building_id
-      AND (b.created_by = (SELECT auth.uid()) OR public.is_admin())
-    )
-  );
-```
+**Removed** with table `building_architects` (migration `20270837000000_drop_legacy_architect_tables.sql`).
 
 ### RLS: building_attributes
 
@@ -640,18 +607,12 @@ interface BuildingDTO {
   isVerified: boolean;                           // Mapped: is_verified
   createdBy: string | null;                      // Mapped: created_by
   createdAt: string;                             // ISO 8601
-  // Joined fields (populated via separate queries or joins):
-  architects: ArchitectSummaryDTO[];
+  // Joined from `building_credits` + `people` / `companies` (non-hidden, ordered for display):
+  creditedEntities: { id: string; name: string }[];
   functionalCategory: { id: string; name: string; slug: string } | null;
   typologies: { id: string; name: string; slug: string }[];
   attributes: { id: string; name: string; groupSlug: string }[];
   styles: { id: string; name: string; slug: string }[];
-}
-
-interface ArchitectSummaryDTO {
-  id: string;
-  name: string;
-  type: 'individual' | 'studio';
 }
 
 /*
@@ -684,8 +645,8 @@ Example payload:
   "isVerified": true,
   "createdBy": "d4e5f6a7-b8c9-4d0e-a1f2-b3c4d5e6f7a8",
   "createdAt": "2025-01-10T12:00:00Z",
-  "architects": [
-    { "id": "a1b2c3d4-0000-0000-0000-000000000001", "name": "Chamberlin, Powell and Bon", "type": "studio" }
+  "creditedEntities": [
+    { "id": "a1b2c3d4-0000-0000-0000-000000000001", "name": "Chamberlin, Powell and Bon" }
   ],
   "functionalCategory": { "id": "c3d4e5f6-a7b8-9012-cdef-345678901234", "name": "Cultural", "slug": "cultural" },
   "typologies": [
@@ -724,7 +685,14 @@ const CreateBuildingSchema = z.object({
   accessCost: z.enum(['free', 'paid', 'customers_only']).optional().nullable(),
   accessNotes: z.string().max(1000).optional().nullable(),
   functionalCategoryId: z.string().uuid().optional().nullable(),
-  architectIds: z.array(z.string().uuid()).optional(),
+  /** Primary design credits at create time (`building_credits`); see `src/lib/validations/building.ts` (`designCreditEntities`). */
+  designCreditEntities: z.array(
+    z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      kind: z.enum(["person", "company"]),
+    }),
+  ),
   typologyIds: z.array(z.string().uuid()).optional(),
   attributeIds: z.array(z.string().uuid()).optional(),
   styleIds: z.array(z.string().uuid()).optional(),
@@ -1629,7 +1597,7 @@ CREATE TABLE public.notifications (
   )),
   resource_id       uuid,                         -- References user_buildings.id (for like/comment)
   recommendation_id uuid,
-  architect_id      uuid,
+  architect_id      uuid,                         -- Legacy; FK to `architects` dropped in `20270837000000_drop_legacy_architect_tables.sql`
   metadata          jsonb,
   is_read           boolean NOT NULL DEFAULT false,
   created_at        timestamptz NOT NULL DEFAULT now(),
@@ -1638,8 +1606,7 @@ CREATE TABLE public.notifications (
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT notifications_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.profiles(id),
   CONSTRAINT notifications_resource_id_fkey FOREIGN KEY (resource_id) REFERENCES public.user_buildings(id),
-  CONSTRAINT notifications_recommendation_id_fkey FOREIGN KEY (recommendation_id) REFERENCES public.recommendations(id),
-  CONSTRAINT notifications_architect_id_fkey FOREIGN KEY (architect_id) REFERENCES public.architects(id)
+  CONSTRAINT notifications_recommendation_id_fkey FOREIGN KEY (recommendation_id) REFERENCES public.recommendations(id)
 );
 
 CREATE TABLE public.suggested_profile_hides (
@@ -3158,7 +3125,7 @@ Same predicate for `USING` and `WITH CHECK` on `UPDATE`; `DELETE` uses the same 
 
 ## 9d. Building credits (Building Credits v2)
 
-Introduced in Roadmap Phase 1 Task 1.4. Replaces the logical role of `building_architects` for display and future credit workflows; the legacy junction table remains until Phase 11. Rows are backfilled from `building_architects` with `role = design_architect`, `credit_tier = primary`, `is_lead = true`, `status = active`; `display_order` is `ROW_NUMBER()` per `building_id` ordered by `created_at`, `architect_id`.
+Introduced in Roadmap Phase 1 Task 1.4. Replaces the logical role of **`building_architects`** for display and steward workflows. Migration **`20270837000000_drop_legacy_architect_tables.sql`** removes **`building_architects`**; **`building_credits`** is the sole junction. Historical backfill: from **`building_architects`** with `role = design_architect`, `credit_tier = primary`, `is_lead = true`, `status = active`; `display_order` was `ROW_NUMBER()` per `building_id` ordered by `created_at`, `architect_id`.
 
 ### Component 1: Database schema
 
@@ -3209,7 +3176,7 @@ CREATE TABLE public.building_credits (
 
 **Indexes:** `building_id`, `person_id`, `company_id`, `status`. Year check constraints mirror `person_company_affiliations` (reasonable range, `year_to >= year_from` when both set).
 
-**Migration notes:** Inserts skip `building_architects` rows whose `architect_id` is not found in `people` (individual) or `companies` (studio). After Tasks 1.1–1.2, row count should match `building_architects`.
+**Migration notes (Phase 1 backfill):** Inserts skipped **`building_architects`** rows whose `architect_id` was not found in **`people`** (individual) or **`companies`** (studio). After Tasks 1.1–1.2, row count matched **`building_architects`**; that table is later dropped in Phase 11.
 
 ### Component 2: RLS (`building_credits`)
 
@@ -3237,7 +3204,7 @@ CREATE POLICY "building_credits_insert" ON public.building_credits
 
 **UPDATE** — admin; or the person row’s `claimed_by_user_id` (= auth user) when `person_id` is set; or any steward of `company_id` when `company_id` is set. Same `USING` and `WITH CHECK`.
 
-**DELETE** — admin or `buildings.created_by` = auth user for the credit’s `building_id` (aligned with `building_architects` delete pattern).
+**DELETE** — admin or `buildings.created_by` = auth user for the credit’s `building_id` (same intent as the former **`building_architects`** delete policy, now on **`building_credits`** only).
 
 ### Component 3: Application API — `building_credits` (Phase 2 Task 2.4)
 
@@ -3337,46 +3304,16 @@ Roadmap Phase 6 Task 6.3. **`verify_jwt = false`**; manual `getUser` on `Authori
 
 ---
 
-## 9. Architect Domain
+## 9. Legacy architect removal & residual `architect_claims`
 
-### Component 1: Database Schema
+**Phase 11 (Roadmap Task 11.1):** Migration `20270837000000_drop_legacy_architect_tables.sql` drops **`architects`**, **`architect_affiliations`**, **`building_architects`**, and enum **`architect_type`**. It drops FKs from **`architect_claims.architect_id`**, **`profiles.verified_architect_id`**, and **`notifications.architect_id`** to the removed `architects` table.
+
+**Public catalog entities** live in **`people`** and **`companies`** (§9a / §9b). **Credits** on buildings live in **`building_credits`** (§9d). **App routes:** `/person/:slug`, `/company/:slug`, `/portfolio`, `/company-portfolio`; **`/architect/:uuid`** is a **301 redirect** to the matching person or company row when the UUID was preserved from migration; **`/architect/dashboard`** redirects to **`/portfolio`**.
+
+### Component 1: Database schema (residual)
 
 ```sql
--- ============================================================
--- ENUM
--- ============================================================
-
-CREATE TYPE public.architect_type AS ENUM ('individual', 'studio');
-
--- ============================================================
--- TABLES
--- ============================================================
-
-CREATE TABLE public.architects (
-  id           uuid NOT NULL DEFAULT gen_random_uuid(),
-  name         text NOT NULL UNIQUE,
-  type         architect_type NOT NULL DEFAULT 'individual',
-  headquarters text,
-  website_url  text,
-  bio          text,
-  import_ref   text,
-  created_by   uuid,
-  created_at   timestamptz NOT NULL DEFAULT now(),
-
-  CONSTRAINT architects_pkey PRIMARY KEY (id),
-  CONSTRAINT architects_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
-);
-
-CREATE TABLE public.architect_affiliations (
-  studio_id     uuid NOT NULL,
-  individual_id uuid NOT NULL,
-  created_at    timestamptz NOT NULL DEFAULT now(),
-
-  CONSTRAINT architect_affiliations_pkey PRIMARY KEY (studio_id, individual_id),
-  CONSTRAINT architect_affiliations_studio_id_fkey FOREIGN KEY (studio_id) REFERENCES public.architects(id),
-  CONSTRAINT architect_affiliations_individual_id_fkey FOREIGN KEY (individual_id) REFERENCES public.architects(id)
-);
-
+-- architect_claims — retained for admin review of historical claims; architect_id is a legacy UUID (no FK).
 CREATE TABLE public.architect_claims (
   id           uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id      uuid NOT NULL,
@@ -3388,196 +3325,34 @@ CREATE TABLE public.architect_claims (
   created_at   timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT architect_claims_pkey PRIMARY KEY (id),
-  CONSTRAINT architect_claims_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT architect_claims_architect_id_fkey FOREIGN KEY (architect_id) REFERENCES public.architects(id)
+  CONSTRAINT architect_claims_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 ```
 
-### Component 2: Security Policies
+### Component 2: RLS — architect_claims
 
-### RLS: architects
+Unchanged intent: submitter and admins can read; submitter inserts; admins update.
 
-**Tenancy model:** not tenant-scoped
-
-**SELECT**
-```sql
-CREATE POLICY "architects_select" ON architects
-  FOR SELECT USING (true);
-```
-
-**INSERT**
-```sql
-CREATE POLICY "architects_insert" ON architects
-  FOR INSERT
-  WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
-```
-
-**UPDATE**
-```sql
-CREATE POLICY "architects_update" ON architects
-  FOR UPDATE
-  USING (
-    created_by = (SELECT auth.uid())
-    OR public.is_admin()
-    OR EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = (SELECT auth.uid())
-      AND p.verified_architect_id = architects.id
-    )
-  )
-  WITH CHECK (
-    created_by = (SELECT auth.uid())
-    OR public.is_admin()
-    OR EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = (SELECT auth.uid())
-      AND p.verified_architect_id = architects.id
-    )
-  );
-```
-
--- No DELETE policy: architects are not deleted.
-
-### RLS: architect_affiliations
-
-**Tenancy model:** not tenant-scoped
-
-**SELECT**
-```sql
-CREATE POLICY "architect_affiliations_select" ON architect_affiliations
-  FOR SELECT USING (true);
-```
-
-**INSERT**
-```sql
-CREATE POLICY "architect_affiliations_insert" ON architect_affiliations
-  FOR INSERT
-  WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
-```
-
-**DELETE**
-```sql
-CREATE POLICY "architect_affiliations_delete" ON architect_affiliations
-  FOR DELETE USING (
-    public.is_admin()
-    OR EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = (SELECT auth.uid())
-      AND (p.verified_architect_id = studio_id OR p.verified_architect_id = individual_id)
-    )
-  );
-```
-
--- No UPDATE policy: affiliations are immutable junction records.
-
-### RLS: architect_claims
-
-**Tenancy model:** not tenant-scoped
-
-**SELECT**
-```sql
-CREATE POLICY "architect_claims_select" ON architect_claims
-  FOR SELECT USING (
-    user_id = (SELECT auth.uid())
-    OR public.is_admin()
-  );
-```
-
-**INSERT**
-```sql
-CREATE POLICY "architect_claims_insert" ON architect_claims
-  FOR INSERT
-  WITH CHECK (user_id = (SELECT auth.uid()));
-```
-
-**UPDATE**
-```sql
-CREATE POLICY "architect_claims_update" ON architect_claims
-  FOR UPDATE
-  USING (public.is_admin())
-  WITH CHECK (public.is_admin());
-  -- Only admins can approve/reject claims via handle_architect_claim_approval RPC.
-```
-
--- No DELETE policy: claims are not deleted; they transition to 'verified' or 'rejected'.
-
-### Component 3: API Route Registry & DTOs
+### Component 3: Routes & RPCs (current product)
 
 | Method | Endpoint | Purpose | Runtime |
 |--------|----------|---------|---------|
-| GET | /architect/:id | Fetch architect detail + portfolio | supabase (client-side) |
-| POST | /architects/new | Create architect record | supabase (client-side) |
-| PATCH | /architect/:id | Update architect metadata | supabase (client-side) |
-| POST | /architect/:id/claim | Submit verification claim | supabase (client-side) |
-| GET | /architect/dashboard | Verified architect dashboard | supabase (client-side) |
-| GET | (RPC) get_architect_claim_status | Check claim status | supabase (RPC) |
-| GET | (RPC) is_verified_architect_for_building | Verify architect-building link | supabase (RPC) |
-| POST | (RPC) handle_architect_claim_approval | Admin: process claim | supabase (RPC, admin-only) |
-| POST | (RPC) sync_verified_architect_id | Sync profile ↔ architect | supabase (RPC, trigger) |
+| GET | /architect/:uuid | **301** to `/person/:slug` or `/company/:slug` when a row exists with that `id` | SSR loader |
+| GET | /architect/:uuid/edit | **301** to person/company with `?edit=1` when allowed | SSR loader |
+| GET | /portfolio | Person portfolio (claimed `people` row) | client |
+| GET | /company-portfolio | Company steward portfolio | client |
+| GET | /person/:slug | Public person + credits | client + SSR |
+| GET | /company/:slug | Public company + credits | client + SSR |
 
-⚠️ STATIC ROUTE REQUIRED — `/architects/new` and `/architect/dashboard` must take precedence over `/architect/:id`.
+**`get_architect_claim_status`** / **`handle_architect_claim_approval`** operate on **`architect_claims`** (residual table). **`is_verified_architect_for_building`** is redefined in migration **`20270837000000`** to use **`building_credits`** (see RPC registry). **`sync_verified_architect_id`** may remain for legacy profile columns without an FK to **`architects`**. **Edge `og-tags`:** `?path=/architect/{uuid}` resolves OG metadata via **`people`** / **`companies`** and canonical **`/person/`** or **`/company/`** URLs. **Edge `sitemap`:** emits **`/person/{slug}`** and **`/company/{slug}`** (not `/architect/{id}`).
 
-```typescript
-interface ArchitectDTO {
-  id: string;
-  name: string;
-  type: 'individual' | 'studio';
-  headquarters: string | null;
-  websiteUrl: string | null;       // Mapped: website_url
-  bio: string | null;
-  createdAt: string;               // ISO 8601
-  // Joined:
-  buildings: BuildingSummaryDTO[];
-  affiliations: ArchitectSummaryDTO[];   // Studios for individuals, members for studios
-  isClaimedByViewer: boolean;      // Computed: exists in architect_claims for current user
-}
-
-/*
-Example payload:
-{
-  "id": "a1b2c3d4-0000-0000-0000-000000000001",
-  "name": "Chamberlin, Powell and Bon",
-  "type": "studio",
-  "headquarters": "London, UK",
-  "websiteUrl": null,
-  "bio": "British architectural practice responsible for the Barbican Estate and the New Hall at Cambridge.",
-  "createdAt": "2025-01-01T00:00:00Z",
-  "buildings": [
-    {
-      "id": "b1c2d3e4-f5a6-7890-bcde-f12345678901",
-      "name": "Barbican Centre",
-      "slug": "barbican-centre",
-      "city": "London",
-      "country": "United Kingdom",
-      "heroImageUrl": "review_images/b1c2d3e4/hero.jpg",
-      "tierRank": "Top 1%"
-    }
-  ],
-  "affiliations": [
-    { "id": "a2b3c4d5-0000-0000-0000-000000000002", "name": "Geoffrey Powell", "type": "individual" }
-  ],
-  "isClaimedByViewer": false
-}
-*/
-```
-
-### Component 4: Input Validation (Zod Schemas) & Environment Variables
+### Component 4: Zod (historical claims UI only)
 
 ```typescript
 import { z } from 'zod';
 
-const CreateArchitectSchema = z.object({
-  name: z.string().min(1).max(300),
-  type: z.enum(['individual', 'studio']).default('individual'),
-  headquarters: z.string().max(300).optional().nullable(),
-  websiteUrl: z.string().url().max(2000).optional().nullable(),
-  bio: z.string().max(5000).optional().nullable(),
-});
-
-const UpdateArchitectSchema = CreateArchitectSchema.partial();
-
 const SubmitArchitectClaimSchema = z.object({
-  architectId: z.string().uuid(),
+  architectId: z.string().uuid(), // legacy UUID stored on architect_claims; no architects table row
   proofEmail: z.string().email().max(320),
 });
 ```
@@ -3742,7 +3517,9 @@ const MapFilterSchema = z.object({
   typologyIds: z.array(z.string().uuid()).optional(),
   attributeIds: z.array(z.string().uuid()).optional(),
   styleIds: z.array(z.string().uuid()).optional(),
-  architectIds: z.array(z.string().uuid()).optional(),
+  people: z.array(z.string().uuid()).optional(), // URL `people=`; legacy bookmark key may still be read once client-side
+  creditCompany: z.string().uuid().optional(),   // URL `creditCompany=` — filter map/list RPCs by `building_credits.company_id`
+  creditRoles: z.array(z.string()).optional(),   // URL `creditRoles=` — subset of `credit_role_enum`
   statuses: z.array(z.enum(['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary', 'Lost'])).optional(),
   accessLevels: z.array(z.enum(['public', 'private', 'restricted', 'commercial'])).optional(),
   accessLogistics: z.array(z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only'])).optional(),
@@ -4007,10 +3784,10 @@ CREATE TABLE public.spatial_ref_sys (
 | Admin | `get_admin_retention` | admin | Retention analysis |
 | Admin | `get_admin_notifications` | admin | Notification analytics |
 | Admin | `get_photo_heatmap_data` | admin | Photo density heatmap |
-| Architects | `get_architect_claim_status` | authenticated | Claim review status |
-| Architects | `is_verified_architect_for_building` | authenticated | Verify architect–building link |
-| Architects | `handle_architect_claim_approval` | admin | Process claim approval |
-| Architects | `sync_verified_architect_id` | trigger | Sync profile ↔ architect |
+| Legacy claims | `get_architect_claim_status` | authenticated | Status of rows in **`architect_claims`** (no FK to removed **`architects`** table) |
+| Building updates | `is_verified_architect_for_building` | authenticated | Redefined in **`20270837000000_drop_legacy_architect_tables.sql`**: true when **`building_credits`** links the building to the user’s claimed **`people`** row or **`company_stewards`** membership (non-hidden credits only) |
+| Legacy claims | `handle_architect_claim_approval` | admin | Approve/reject **`architect_claims`** |
+| Profiles (legacy) | `sync_verified_architect_id` | trigger | Historical sync with **`profiles.verified_architect_id`**; column may remain without FK post Phase 11 |
 | Leaderboards | `get_building_leaderboards` | anon | Ranked building lists |
 | Maintenance | `fix_orphaned_user_buildings` | admin | Data integrity repair |
 | Maintenance | `handle_new_user` | trigger | Auto-create profile on signup |
@@ -4031,7 +3808,7 @@ CREATE TABLE public.spatial_ref_sys (
 | `fetch-url-metadata` | OpenGraph metadata scraping | manual JWT (`verify_jwt = false`) | — |
 | `send-welcome-email` | Branded welcome email via React Email | webhook trigger | `SUPABASE_SERVICE_ROLE_KEY` |
 | `og-tags` | Crawler-facing HTML with OG/Twitter meta for shared links (`?path=…`) | none (`verify_jwt = false`); anon reads only | Optional `STORAGE_PUBLIC_URL` to absolutize relative image paths (default S3 public base) |
-| `sitemap` | Dynamic `sitemap.xml` for public buildings, architects, profiles | none (`verify_jwt = false`); anon reads only | — |
+| `sitemap` | Dynamic `sitemap.xml` for public buildings, **`/person/{slug}`**, **`/company/{slug}`**, profiles | none (`verify_jwt = false`); anon reads only | — |
 
 ### Global Environment Variable Registry
 

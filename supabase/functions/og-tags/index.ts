@@ -124,27 +124,41 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Legacy share URLs: /architect/:uuid → app 301s to /person/:slug or /company/:slug (same UUID as migrated rows).
     const architectMatch = path.match(/^\/architect\/([^/]+)/);
     if (architectMatch) {
-      const architectId = architectMatch[1];
-      const { data: architect } = await supabase
-        .from("architects")
-        .select("name, type")
-        .eq("id", architectId)
-        .maybeSingle();
-
-      if (architect) {
-        const title = `${architect.name} — Architect on Plano`;
-        const description = `Explore buildings by ${architect.name} on Plano.`;
-        return new Response(
-          renderOgHtml({
-            title,
-            description,
-            image: DEFAULT_IMAGE,
-            url: `${SITE_URL}/architect/${architectId}`,
-          }),
-          { headers: corsHeaders },
-        );
+      const entityId = architectMatch[1];
+      const uuidRe =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRe.test(entityId)) {
+        const { data: person } = await supabase
+          .from("people")
+          .select("name, slug")
+          .eq("id", entityId)
+          .maybeSingle();
+        if (person?.slug) {
+          const canonicalUrl = `${SITE_URL}/person/${person.slug}`;
+          const title = `${person.name} — Plano`;
+          const description = `Explore buildings credited to ${person.name} on Plano.`;
+          return new Response(
+            renderOgHtml({ title, description, image: DEFAULT_IMAGE, url: canonicalUrl }),
+            { headers: corsHeaders },
+          );
+        }
+        const { data: company } = await supabase
+          .from("companies")
+          .select("name, slug")
+          .eq("id", entityId)
+          .maybeSingle();
+        if (company?.slug) {
+          const canonicalUrl = `${SITE_URL}/company/${company.slug}`;
+          const title = `${company.name} — Plano`;
+          const description = `Explore buildings credited to ${company.name} on Plano.`;
+          return new Response(
+            renderOgHtml({ title, description, image: DEFAULT_IMAGE, url: canonicalUrl }),
+            { headers: corsHeaders },
+          );
+        }
       }
     }
 

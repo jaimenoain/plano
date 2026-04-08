@@ -400,6 +400,24 @@ export type BuildingCreditEmbed = {
   company?: { id: string; name: string } | null;
 };
 
+/** All non-hidden credits from an embedded `building_credits` select (profile, review detail, post preview). */
+export function visibleCreditSummariesFromEmbed(
+  rows: BuildingCreditEmbed[] | null | undefined,
+): { id: string; name: string }[] {
+  return (rows ?? [])
+    .filter((c) => c.status !== "hidden")
+    .map((c) => {
+      const p = c.person;
+      const co = c.company;
+      if (p && co) return { id: p.id, name: `${p.name} @ ${co.name}` };
+      if (p) return { id: p.id, name: p.name };
+      if (co) return { id: co.id, name: co.name };
+      return null;
+    })
+    .filter((x): x is { id: string; name: string } => x != null)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /** Primary tier, active/verified only — for lists and map cards. */
 export function primaryBuildingCreditsToSummaries(
   rows: BuildingCreditEmbed[] | null | undefined,
@@ -419,6 +437,38 @@ export function primaryBuildingCreditsToSummaries(
       return null;
     })
     .filter((x): x is { id: string; name: string } => x != null);
+}
+
+/** Row from PostgREST when selecting `building_credits` with `id` + `display_order`. */
+export type BuildingCreditEmbedRow = BuildingCreditEmbed & {
+  id: string;
+  display_order?: number | null;
+};
+
+/** For admin merge / edit: primary design credits as tags + row ids for `replacePrimaryDesignCredits`. */
+export function primaryDesignCreditRowsToTagsAndRowIds(
+  rows: BuildingCreditEmbedRow[] | null | undefined,
+): {
+  rowIds: string[];
+  tags: { id: string; name: string; kind: "person" | "company" }[];
+} {
+  const raw = rows ?? [];
+  const primaryVisible = raw.filter(
+    (c) =>
+      c.credit_tier === "primary" && (c.status === "active" || c.status === "verified"),
+  );
+  primaryVisible.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+  const rowIds: string[] = [];
+  const tags: { id: string; name: string; kind: "person" | "company" }[] = [];
+  for (const row of primaryVisible) {
+    rowIds.push(row.id);
+    const p = row.person;
+    const co = row.company;
+    if (p && co) tags.push({ id: p.id, name: `${p.name} @ ${co.name}`, kind: "person" });
+    else if (p) tags.push({ id: p.id, name: p.name, kind: "person" });
+    else if (co) tags.push({ id: co.id, name: co.name, kind: "company" });
+  }
+  return { rowIds, tags };
 }
 
 /**

@@ -106,10 +106,9 @@ export function FeedHeroCard({
   const avatarUrl = entry.user?.avatar_url || undefined;
   const userInitial = username.charAt(0).toUpperCase();
   const mainTitle = entry.building.name;
-  const architects = entry.building.architects;
-  const architectName = architects && architects.length > 0
-    ? architects.map((a) => (typeof a === "string" ? a : a.name)).join(", ")
-    : null;
+  const credits = entry.building.creditedEntities;
+  const primaryCreditLine =
+    credits && credits.length > 0 ? credits.map((c) => c.name).join(", ") : null;
   const city = entry.building.city || entry.building.address?.split(",").pop()?.trim() || "";
 
   const handleImageError = (imageId: string) => {
@@ -190,9 +189,9 @@ export function FeedHeroCard({
           </h2>
 
           {/* Architect + location */}
-          {(architectName || city) && (
+          {(primaryCreditLine || city) && (
             <p className="text-sm text-text-secondary mb-4">
-              {architectName}{architectName && city ? " · " : ""}{city}
+              {primaryCreditLine}{primaryCreditLine && city ? " · " : ""}{city}
             </p>
           )}
 

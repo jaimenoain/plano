@@ -27,3 +27,4 @@ test-results/
 .env
 .react-router/
 .vercel
+build/

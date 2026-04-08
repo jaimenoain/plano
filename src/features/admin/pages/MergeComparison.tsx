@@ -23,7 +23,13 @@ import {
 import { getBuildingImageUrl } from "@/utils/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArchitectSelect, Architect as SelectArchitect } from "@/components/ui/architect-select";
+import { CreditedEntitiesSelect, type CreditedEntityTag } from "@/features/credits/components/CreditedEntitiesSelect";
+import {
+  replacePrimaryDesignCredits,
+  primaryDesignCreditRowsToTagsAndRowIds,
+  primaryBuildingCreditsToSummaries,
+  type BuildingCreditEmbedRow,
+} from "@/features/credits/api/credits";
 import { BuildingMap } from "@/features/admin/components/BuildingMap";
 import { parseLocation } from "@/utils/location";
 import {
@@ -34,23 +40,26 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-interface ComparisonBuilding extends Omit<AdminBuilding, 'architects'> {
-    architects: { id: string; name: string; type?: 'individual' | 'studio' }[];
-    address?: string | null;
+interface ComparisonBuilding extends AdminBuilding {
+  designCreditEntities: CreditedEntityTag[];
+  primaryDesignCreditRowIds: string[];
+  address?: string | null;
 }
 
-type ArchitectJoinCell = { architect: { id: string; name: string; type?: 'individual' | 'studio' } | null } | null;
 type BuildingComparisonRow = Record<string, unknown> & {
   id: string;
-  architects?: ArchitectJoinCell[] | null;
+  building_credits?: BuildingCreditEmbedRow[] | null;
 };
 
 function toComparisonBuilding(b: BuildingComparisonRow): ComparisonBuilding {
-  const architects =
-    b.architects
-      ?.map((row) => row?.architect)
-      .filter((a): a is NonNullable<typeof a> => Boolean(a)) ?? [];
-  return { ...b, architects } as ComparisonBuilding;
+  const { rowIds, tags } = primaryDesignCreditRowsToTagsAndRowIds(b.building_credits ?? []);
+  const { building_credits: _bc, ...rest } = b;
+  return {
+    ...(rest as Omit<AdminBuilding, "designCreditSummaries">),
+    designCreditSummaries: primaryBuildingCreditsToSummaries(b.building_credits),
+    designCreditEntities: tags.map((t) => ({ ...t })),
+    primaryDesignCreditRowIds: rowIds,
+  } as ComparisonBuilding;
 }
 
 export const meta: MetaFunction = () => [
@@ -101,9 +110,19 @@ export default function MergeComparison() {
         setLoading(true);
         try {
             const { data, error } = await supabase
-                .from('buildings')
-                .select('*, architects:building_architects(architect:architects(name, id, type))')
-                .in('id', [id1, id2]);
+                .from("buildings")
+                .select(`
+                  *,
+                  building_credits(
+                    id,
+                    credit_tier,
+                    status,
+                    display_order,
+                    person:people(id, name),
+                    company:companies(id, name)
+                  )
+                `)
+                .in("id", [id1, id2]);
 
             if (error) throw error;
 
@@ -136,7 +155,7 @@ export default function MergeComparison() {
                 setReviewImages(imgMap);
             }
         } catch (_error) {
-toast.error("Failed to load buildings");
+            toast.error("Failed to load buildings");
         } finally {
             setLoading(false);
         }
@@ -155,7 +174,8 @@ toast.error("Failed to load buildings");
                 photos: photos.count || 0
             });
         } catch (_e) {
-} finally {
+            /* ignore */
+        } finally {
             setImpactLoading(false);
         }
     };
@@ -193,31 +213,17 @@ toast.error("Failed to load buildings");
 
             if (buildError) throw buildError;
 
-            // 2. Update Architects
-            // First delete existing
-            const { error: delError } = await supabase
-                .from('building_architects')
-                .delete()
-                .eq('building_id', targetPointer);
+            await replacePrimaryDesignCredits(
+              targetPointer,
+              editForm.primaryDesignCreditRowIds,
+              editForm.designCreditEntities.map((e) => ({ kind: e.kind, id: e.id })),
+            );
 
-            if (delError) throw delError;
-
-            // Then insert new
-            if (editForm.architects && editForm.architects.length > 0) {
-                const { error: insError } = await supabase
-                    .from('building_architects')
-                    .insert(
-                        editForm.architects.map(a => ({
-                            building_id: targetPointer,
-                            architect_id: a.id
-                        }))
-                    );
-
-                if (insError) throw insError;
+            if (targetId && sourceId) {
+              await fetchBuildings(targetId, sourceId);
             }
 
-            // 3. Update local state
-            setBuildings(prev => prev.map(b => b.id === targetPointer ? editForm : b));
+            // 3. Local state refreshed by fetchBuildings
             setIsEditing(false);
             toast.success("Target building updated successfully");
 
@@ -354,11 +360,11 @@ toast.error("Failed to load buildings");
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="text-xs text-text-secondary font-semibold uppercase">Architect</div>
-                                    <ArchitectSelect
-                                        selectedArchitects={editForm.architects as SelectArchitect[]}
-                                        setSelectedArchitects={(a) => setEditForm({ ...editForm, architects: a })}
-                                        placeholder="Select architects..."
+                                    <div className="text-xs text-text-secondary font-semibold uppercase">Design credits</div>
+                                    <CreditedEntitiesSelect
+                                        selected={editForm.designCreditEntities}
+                                        onChange={(next) => setEditForm({ ...editForm, designCreditEntities: next })}
+                                        placeholder="Search people or companies…"
                                         className="bg-white"
                                     />
                                 </div>
@@ -406,9 +412,9 @@ toast.error("Failed to load buildings");
                                     <div className="text-xl font-bold truncate" title={targetBuilding.name}>{targetBuilding.name}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Architect</div>
+                                    <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Design credits</div>
                                     <div className="text-lg truncate">
-                                        {targetBuilding.architects?.map(a => a.name).join(", ") || "Unknown Architect"}
+                                        {targetBuilding.designCreditSummaries?.map((a) => a.name).join(", ") || "—"}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -508,9 +514,9 @@ toast.error("Failed to load buildings");
                             <div className="text-xl font-bold text-red-900/80 line-through decoration-red-500/50 truncate" title={sourceBuilding.name}>{sourceBuilding.name}</div>
                         </div>
                         <div>
-                            <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Architect</div>
+                            <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Design credits</div>
                             <div className="text-lg text-red-900/80 truncate">
-                                {sourceBuilding.architects?.map(a => a.name).join(", ") || "Unknown Architect"}
+                                {sourceBuilding.designCreditSummaries?.map((a) => a.name).join(", ") || "—"}
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">

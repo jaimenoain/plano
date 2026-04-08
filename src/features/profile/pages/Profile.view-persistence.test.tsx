@@ -1,14 +1,23 @@
 // @vitest-environment happy-dom
+import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import Profile from './Profile';
-import { BrowserRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { handleDragEndLogic } from '@/utils/kanbanLogic';
 
 // --- Global Mock State ---
 let mockIsVisible = false;
+
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  };
+});
 
 // --- Mocks ---
 const mocks = vi.hoisted(() => {
@@ -48,8 +57,15 @@ vi.mock('react-router', async (importOriginal) => {
   return {
     ...actual,
     useNavigate: () => mocks.navigate,
-    useParams: () => ({ username: 'testuser' }),
     useLoaderData: () => ({ profile: mocks.loaderProfile }),
+  };
+});
+
+vi.mock('@/features/credits/api/people', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/credits/api/people')>();
+  return {
+    ...actual,
+    getClaimedPersonSummaryForProfile: vi.fn().mockResolvedValue(null),
   };
 });
 
@@ -213,16 +229,23 @@ describe('Profile Verification', () => {
     cleanup();
   });
 
-  const renderProfile = () => {
-       return render(
-        <QueryClientProvider client={queryClient}>
-          <SidebarProvider>
-            <BrowserRouter>
+  const profileTree = () => (
+    <MemoryRouter initialEntries={["/profile/testuser"]}>
+      <Routes>
+        <Route
+          path="/profile/:username"
+          element={
+            <SidebarProvider>
               <Profile />
-            </BrowserRouter>
-          </SidebarProvider>
-        </QueryClientProvider>
-      );
+            </SidebarProvider>
+          }
+        />
+      </Routes>
+    </MemoryRouter>
+  );
+
+  const renderProfile = () => {
+    return render(<QueryClientProvider client={queryClient}>{profileTree()}</QueryClientProvider>);
   };
 
   it('should maintain search query when switching views', async () => {
@@ -230,16 +253,15 @@ describe('Profile Verification', () => {
     await screen.findByTestId('review-card-review-1');
 
     // 1. Enter search query
-    const searchInput = screen.getByPlaceholderText('Search reviews...');
+    const searchInput = screen.getByPlaceholderText('Search...');
     fireEvent.change(searchInput, { target: { value: 'Empire' } });
 
-    // Check Grid filtered
-    expect(screen.getByText('Empire State')).toBeTruthy();
-    expect(screen.queryByText('Chrysler Building')).toBeNull();
+    // Check Grid filtered (building name appears twice in EditorialBuildingCard: alt + title)
+    expect(screen.getByTestId('review-card-review-1')).toHaveTextContent('Empire State');
+    expect(screen.queryByTestId('review-card-review-2')).toBeNull();
 
     // 2. Switch to Kanban
-    const kanbanToggle = screen.getByLabelText('Kanban View');
-    fireEvent.click(kanbanToggle);
+    fireEvent.click(screen.getByRole('radio', { name: 'Kanban' }));
     await screen.findByTestId('kanban-view');
 
     // Check Kanban filtered
@@ -247,8 +269,7 @@ describe('Profile Verification', () => {
     expect(screen.queryByTestId('kanban-item-review-2')).toBeNull(); // Chrysler
 
     // 3. Switch to List
-    const listToggle = screen.getByLabelText('List View');
-    fireEvent.click(listToggle);
+    fireEvent.click(screen.getByRole('radio', { name: 'List' }));
     await screen.findByTestId('list-view');
 
     // Check List filtered
@@ -260,22 +281,19 @@ describe('Profile Verification', () => {
     renderProfile();
     await screen.findByTestId('review-card-review-1');
 
-    // 1. Select "Bucket List" (Pending)
-    const bucketListTab = screen.getByText('Bucket List');
-    fireEvent.click(bucketListTab);
+    // 1. Saved tab (pending / bucket list)
+    fireEvent.click(screen.getByRole('button', { name: /Saved/i }));
 
     await waitFor(() => {
         expect(mocks.mockChain.eq).toHaveBeenCalledWith('status', 'pending');
     });
 
     // 2. Switch to Kanban
-    const kanbanToggle = screen.getByLabelText('Kanban View');
-    fireEvent.click(kanbanToggle);
+    fireEvent.click(screen.getByRole('radio', { name: 'Kanban' }));
     await screen.findByTestId('kanban-view');
 
-    // Switch back to 'All'
-    const allTab = screen.getByText('All');
-    fireEvent.click(allTab);
+    // 3. Collections uses activeFilter "all" → .in('visited','pending')
+    fireEvent.click(screen.getByRole('button', { name: /Collections/i }));
 
     await waitFor(() => {
          expect(mocks.mockChain.in).toHaveBeenCalledWith('status', ['visited', 'pending']);
@@ -296,15 +314,7 @@ describe('Profile Verification', () => {
 
       // Simulate Scroll to bottom (Intersection Observer visible)
       mockIsVisible = true;
-      rerender(
-        <QueryClientProvider client={queryClient}>
-          <SidebarProvider>
-            <BrowserRouter>
-              <Profile />
-            </BrowserRouter>
-          </SidebarProvider>
-        </QueryClientProvider>
-      );
+      rerender(<QueryClientProvider client={queryClient}>{profileTree()}</QueryClientProvider>);
 
       await waitFor(() => {
           // Check if range(15, 29) was called
@@ -317,13 +327,11 @@ describe('Profile Verification', () => {
       await screen.findByTestId('review-card-review-1');
 
       // Switch to Kanban
-      const kanbanToggle = screen.getByLabelText('Kanban View');
-      fireEvent.click(kanbanToggle);
+      fireEvent.click(screen.getByRole('radio', { name: 'Kanban' }));
       await screen.findByTestId('kanban-view');
 
-      // Trigger Drop (get the second trigger button, since first one is Collections section now)
       const triggers = screen.getAllByTestId('trigger-drag-end');
-      fireEvent.click(triggers[1]);
+      fireEvent.click(triggers[0]);
 
       await waitFor(() => {
           expect(handleDragEndLogic).toHaveBeenCalledWith(expect.objectContaining({

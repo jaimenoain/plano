@@ -47,7 +47,7 @@ describe('DiscoveryBuildingCard', () => {
     );
 
     expect(screen.getByText('Test Building')).toBeDefined();
-    expect(screen.getByText('Test Architect')).toBeDefined();
+    expect(screen.getByText('Test Designer')).toBeDefined();
   });
 
   it('renders the image container with correct class', () => {

@@ -1,4 +1,4 @@
-import { as, at, au, av, aw, ax, ay, az, aA, aB, aC, aD } from "./assets/server-build-D6F9PGsw.js";
+import { as, at, au, av, aw, ax, ay, az, aA, aB, aC, aD } from "./assets/server-build-3Gr1-3d_.js";
 import "@vercel/react-router/entry.server";
 import "react-router";
 import "react/jsx-runtime";
@@ -51,8 +51,6 @@ import "@dnd-kit/sortable";
 import "@dnd-kit/utilities";
 import "@radix-ui/react-hover-card";
 import "zustand";
-import "react-hook-form";
-import "@hookform/resolvers/zod";
 export {
   as as allowedActionOrigins,
   at as assets,

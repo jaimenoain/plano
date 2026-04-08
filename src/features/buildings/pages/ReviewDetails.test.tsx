@@ -58,8 +58,13 @@ describe("ReviewDetails", () => {
         year_completed: 2020,
         address: "123 Test St",
         main_image_url: "building.jpg",
-        architects: [
-             { architect: { id: "arch-1", name: "Test Architect" } }
+        building_credits: [
+          {
+            status: "active",
+            credit_tier: "primary",
+            person: { id: "arch-1", name: "Test Architect" },
+            company: null,
+          },
         ],
       },
       images: [

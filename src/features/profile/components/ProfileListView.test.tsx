@@ -27,7 +27,7 @@ const mockData: FeedReview[] = [
     building: {
       id: 'b1',
       name: 'Test Building',
-      architects: ['Architect 1'],
+      creditedEntities: [{ id: 'p1', name: 'Designer One' }],
       year_completed: 2020,
       city: 'Test City',
       country: 'Test Country',
@@ -76,11 +76,11 @@ describe('ProfileListView', () => {
     expect(screen.getByText('Status')).toBeTruthy();
     expect(screen.getByText('Points')).toBeTruthy();
     expect(screen.getByText('Review')).toBeTruthy();
-    expect(screen.getByText('Architect')).toBeTruthy();
+    expect(screen.getByText('Credits')).toBeTruthy();
     expect(screen.getByText('Test Building')).toBeTruthy();
 
     // Check Data Content
-    expect(screen.getByText('Architect 1')).toBeTruthy();
+    expect(screen.getByText('Designer One')).toBeTruthy();
     expect(screen.getByText('2020')).toBeTruthy();
     expect(screen.getByText('Test City')).toBeTruthy();
     expect(screen.getByText('Test Country')).toBeTruthy();
@@ -113,7 +113,7 @@ describe('ProfileListView', () => {
     expect(screen.queryByText('Status')).toBeNull();
     expect(screen.queryByText('Points')).toBeNull();
     expect(screen.queryByText('Review')).toBeNull();
-    expect(screen.queryByText('Architect')).toBeNull();
+    expect(screen.queryByText('Credits')).toBeNull();
     expect(screen.queryByText('Year')).toBeNull();
     expect(screen.queryByText('Country')).toBeNull();
 
@@ -124,7 +124,7 @@ describe('ProfileListView', () => {
     expect(screen.getByRole('button', { name: 'Visited' })).toBeTruthy();
 
     // Hidden column content
-    expect(screen.queryByText('Architect 1')).toBeNull();
+    expect(screen.queryByText('Designer One')).toBeNull();
     expect(screen.queryByText('Test Country')).toBeNull();
   });
 

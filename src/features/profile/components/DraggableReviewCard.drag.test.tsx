@@ -26,7 +26,7 @@ const mockReview: FeedReview = {
     main_image_url: null,
     slug: 'test-building',
     short_id: 'tb1',
-    architects: [],
+    creditedEntities: [],
   },
   tags: [],
   likes_count: 5,

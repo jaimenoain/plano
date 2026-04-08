@@ -38,12 +38,10 @@ describe('FeedCompactCard', () => {
     );
 
     const usernameElement = screen.getByText('testuser');
+    expect(usernameElement.className).toContain('text-xs');
+    expect(usernameElement.className).toContain('font-medium');
     const container = usernameElement.closest('div.min-w-0');
-
     expect(container).not.toBeNull();
-    expect(container?.className).toContain('break-words');
-    expect(container?.className).not.toContain('truncate');
-    expect(container?.className).toContain('text-sm');
     expect(container?.className).toContain('flex-1');
   });
 });

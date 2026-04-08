@@ -52,7 +52,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
             {!isMobile && <TableHead className="w-[10%]">Status</TableHead>}
             {!isMobile && <TableHead className="w-[10%]">Points</TableHead>}
             {!isMobile && <TableHead className="w-[15%]">Review</TableHead>}
-            {!isMobile && <TableHead className="w-[15%]">Architect</TableHead>}
+            {!isMobile && <TableHead className="w-[15%]">Credits</TableHead>}
             {!isMobile && <TableHead className="w-[10%]">Year</TableHead>}
             {!isMobile && <TableHead className="w-[10%]">Location</TableHead>}
             {!isMobile && <TableHead className="w-[10%]">Country</TableHead>}
@@ -61,9 +61,10 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
         </TableHeader>
         <TableBody>
           {data.map((review) => {
-            const architectNames = review.building.architects && review.building.architects.length > 0
-              ? review.building.architects.map((a) => (typeof a === 'string' ? a : a.name)).join(", ")
-              : "—";
+            const creditNames =
+              review.building.creditedEntities && review.building.creditedEntities.length > 0
+                ? review.building.creditedEntities.map((c) => c.name).join(", ")
+                : "—";
 
             const location = review.building.city || getCityFromAddress(review.building.address);
             const imageUrl =
@@ -156,7 +157,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                       />
                     </TableCell>
                     <TableCell className="text-text-secondary py-1 truncate">
-                      {architectNames}
+                      {creditNames}
                     </TableCell>
                     <TableCell className="text-text-secondary py-1">
                       {review.building.year_completed || "—"}

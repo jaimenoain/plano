@@ -17,6 +17,10 @@ import { cn } from "@/lib/utils";
 import NotFound from "@/pages/NotFound";
 import { getBuildingImageUrl } from "@/utils/image";
 import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
+import {
+  visibleCreditSummariesFromEmbed,
+  type BuildingCreditEmbed,
+} from "@/features/credits/api/credits";
 import { reviewLoader } from "./ReviewDetails.loader";
 
 export { reviewLoader as loader };
@@ -60,7 +64,7 @@ interface FeedReview {
     year_completed: number | null;
     address: string | null;
     main_image_url: string | null;
-    architects: { id: string; name: string }[] | null;
+    creditedEntities: { id: string; name: string }[] | null;
   };
   images: { id: string; url: string; is_generated?: boolean }[];
   likes_count: number;
@@ -142,7 +146,7 @@ export default function ReviewDetails() {
                 .select(`
                     id, content, rating, tags, created_at, user_id, building_id, status,
                     user:profiles(username, avatar_url),
-                    building:buildings(id, name, year_completed, address, main_image_url, architects:building_architects(architect:architects(name, id))),
+                    building:buildings(id, name, year_completed, address, main_image_url, building_credits(status, credit_tier, person:people(id, name), company:companies(id, name))),
                     images:review_images(id, storage_path, is_generated)
                 `)
                 .eq("id", paramId)
@@ -172,14 +176,21 @@ export default function ReviewDetails() {
             ]);
 
             const rawBuilding = Array.isArray(reviewData.building) ? reviewData.building[0] : reviewData.building;
+            const rb = rawBuilding as {
+              id: string;
+              name: string;
+              year_completed: number | null;
+              address: string | null;
+              main_image_url: string | null;
+              building_credits?: BuildingCreditEmbed[] | null;
+            };
             const formattedBuilding = {
-                ...rawBuilding,
-                architects:
-                    (
-                        rawBuilding.architects as unknown as
-                            | { architect: { id: string; name: string } }[]
-                            | undefined
-                    )?.map((a) => a.architect) || []
+              id: rb.id,
+              name: rb.name,
+              year_completed: rb.year_completed,
+              address: rb.address,
+              main_image_url: rb.main_image_url,
+              creditedEntities: visibleCreditSummariesFromEmbed(rb.building_credits),
             };
 
             const images: { id: string; url: string; is_generated?: boolean }[] = [];
@@ -875,16 +886,16 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                       <span>{review.building.year_completed}</span>
                     </div>
                   )}
-                  {review.building.architects &&
-                    review.building.architects.length > 0 && (
+                  {review.building.creditedEntities &&
+                    review.building.creditedEntities.length > 0 && (
                       <div className="flex flex-wrap gap-1 pt-1">
-                        {review.building.architects.map((arch) => (
+                        {review.building.creditedEntities.map((c) => (
                           <Badge
-                            key={arch.id}
+                            key={c.id}
                             variant="secondary"
                             className="text-xs bg-surface-muted/50 hover:bg-surface-muted"
                           >
-                            {arch.name}
+                            {c.name}
                           </Badge>
                         ))}
                       </div>

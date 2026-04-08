@@ -61,7 +61,7 @@ vi.mock('./filters/FolderAndCollectionMultiSelect', () => ({
 }));
 
 vi.mock('@/features/search/components/PersonFilterSelect', () => ({
-    PersonFilterSelect: () => <div data-testid="architect-select"></div>
+    PersonFilterSelect: () => <div data-testid="person-filter-select"></div>
 }));
 
 vi.mock('@/features/search/components/CompanyMapFilterSelect', () => ({

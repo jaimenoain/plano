@@ -20,7 +20,7 @@ import { NavigationBlocker } from "@/components/common/NavigationBlocker";
 import { ManageFavoritesDialog } from "@/features/profile/components/ManageFavoritesDialog";
 import { ManageHighlightsDialog } from "@/features/profile/components/ManageHighlightsDialog";
 import { FavoriteItem } from "@/features/profile/components/types";
-import { DisconnectArchitectDialog } from "@/features/profile/components/DisconnectArchitectDialog";
+import { DisconnectLegacyClaimDialog } from "@/features/profile/components/DisconnectLegacyClaimDialog";
 import { resizeImage } from "@/lib/image-compression";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -518,7 +518,7 @@ toast({
               <div className="flex items-center justify-between">
                 <div>
                    <h3 className="font-medium text-text-primary">Highlights</h3>
-                   <p className="text-sm text-text-secondary">Add favorite styles, architects, and quotes.</p>
+                   <p className="text-sm text-text-secondary">Add favorite styles, people, and quotes.</p>
                 </div>
                 <Button type="button" variant="outline" onClick={() => setShowManageHighlights(true)}>Manage</Button>
               </div>
@@ -590,9 +590,9 @@ toast({
               <div className="pt-4 mt-4 border-t border-border-default group">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-feedback-destructive">Disconnect Architect Profile</h3>
+                    <h3 className="font-medium text-feedback-destructive">Legacy verification claim</h3>
                     <p className="text-sm text-text-secondary">
-                      Unlink your account from your verified architect or studio profile.
+                      Remove an old verification record still linked to your account.
                     </p>
                   </div>
                   <Button
@@ -601,7 +601,7 @@ toast({
                     className="opacity-0 group-hover:opacity-100 transition-opacity duration-150"
                     onClick={() => setShowDisconnectDialog(true)}
                   >
-                    Disconnect
+                    Remove
                   </Button>
                 </div>
               </div>
@@ -666,12 +666,12 @@ toast({
         onSave={handleSaveHighlights}
       />
 
-      {/* Disconnect Architect Profile Dialog */}
+      {/* Legacy architect_claims row (profiles.verified_architect_id) */}
       {profile?.verified_architect_id && (
-        <DisconnectArchitectDialog
+        <DisconnectLegacyClaimDialog
           open={showDisconnectDialog}
           onOpenChange={setShowDisconnectDialog}
-          architectId={profile.verified_architect_id}
+          legacyEntityId={profile.verified_architect_id}
           onSuccess={() => {
             refetchProfile();
           }}

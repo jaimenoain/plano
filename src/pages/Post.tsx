@@ -194,8 +194,8 @@ export default function Post() {
                 {subTitle && <p className="text-sm text-text-secondary mt-0.5">{subTitle}</p>}
                 
                 <div className="text-sm text-text-secondary mt-1 space-y-0.5">
-                  {buildingDetails?.architects && buildingDetails.architects.length > 0 && (
-                    <p>Architect: {buildingDetails.architects.map((a: { name: string }) => a.name).join(", ")}</p>
+                  {buildingDetails?.creditedEntities && buildingDetails.creditedEntities.length > 0 && (
+                    <p>Design credits: {buildingDetails.creditedEntities.map((e) => e.name).join(", ")}</p>
                   )}
                   {buildingDetails?.year_completed && <p>Year: {buildingDetails.year_completed}</p>}
                 </div>

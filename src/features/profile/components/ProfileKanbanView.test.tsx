@@ -34,7 +34,7 @@ describe('ProfileKanbanView', () => {
         id, rating,
         content: null, created_at: '', likes_count: 0, comments_count: 0, is_liked: false,
         user: { username: 'u', avatar_url: null },
-        building: { id: 'b', name: 'B', architects: [] }
+        building: { id: 'b', name: 'B', creditedEntities: [] }
     });
 
     const kanbanData = {

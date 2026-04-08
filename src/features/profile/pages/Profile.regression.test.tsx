@@ -1,10 +1,19 @@
 // @vitest-environment happy-dom
+import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import Profile from './Profile';
-import { BrowserRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  };
+});
 
 // Mocks
 const mocks = vi.hoisted(() => {
@@ -46,8 +55,15 @@ vi.mock('react-router', async (importOriginal) => {
   return {
     ...actual,
     useNavigate: () => mocks.navigate,
-    useParams: () => ({ username: 'testuser' }),
     useLoaderData: () => ({ profile: mocks.loaderProfile }),
+  };
+});
+
+vi.mock('@/features/credits/api/people', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/credits/api/people')>();
+  return {
+    ...actual,
+    getClaimedPersonSummaryForProfile: vi.fn().mockResolvedValue(null),
   };
 });
 
@@ -188,43 +204,46 @@ describe('Profile Regression Tests', () => {
   });
 
   const renderProfileWithUrl = (url: string = '/profile/testuser') => {
-      window.history.pushState({}, 'Test page', url);
-       return render(
-        <QueryClientProvider client={queryClient}>
-          <SidebarProvider>
-            <BrowserRouter>
-              <Profile />
-            </BrowserRouter>
-          </SidebarProvider>
-        </QueryClientProvider>
-      );
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={[url]}>
+          <Routes>
+            <Route
+              path="/profile/:username"
+              element={
+                <SidebarProvider>
+                  <Profile />
+                </SidebarProvider>
+              }
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
   };
 
   it('should render items in Grid view by default', async () => {
      renderProfileWithUrl();
 
      await screen.findByTestId('review-card-review-1');
-     expect(screen.getByText('Empire State')).toBeTruthy();
-     expect(screen.getByText('Chrysler Building')).toBeTruthy();
-     expect(screen.getByText('Burj Khalifa')).toBeTruthy();
+     expect(screen.getByTestId('review-card-review-1')).toHaveTextContent('Empire State');
+     expect(screen.getByTestId('review-card-review-2')).toHaveTextContent('Chrysler Building');
+     expect(screen.getByTestId('review-card-review-3')).toHaveTextContent('Burj Khalifa');
   });
 
   it('should filter items by Search Query in Grid View', async () => {
       renderProfileWithUrl('/profile/testuser?search=Empire');
 
       await screen.findByTestId('review-card-review-1');
-      expect(screen.getByText('Empire State')).toBeTruthy();
-      expect(screen.queryByText('Chrysler Building')).toBeNull();
+      expect(screen.getByTestId('review-card-review-1')).toHaveTextContent('Empire State');
+      expect(screen.queryByTestId('review-card-review-2')).toBeNull();
   });
 
   it('should switch to Kanban view and render columns with correct data', async () => {
       renderProfileWithUrl('/profile/testuser');
       await screen.findByTestId('review-card-review-1');
 
-      // Use label or some identifier for the toggle
-      // In Profile.tsx: aria-label="Kanban View"
-      const kanbanToggle = screen.getByLabelText('Kanban View');
-      fireEvent.click(kanbanToggle);
+      fireEvent.click(screen.getByRole('radio', { name: 'Kanban' }));
 
       await screen.findByTestId('kanban-view');
 
@@ -243,21 +262,21 @@ describe('Profile Regression Tests', () => {
 
       await screen.findByTestId('review-card-review-1');
 
-      const kanbanToggle = screen.getByLabelText('Kanban View');
-      fireEvent.click(kanbanToggle);
+      fireEvent.click(screen.getByRole('radio', { name: 'Kanban' }));
 
       await screen.findByTestId('kanban-view');
 
-      expect(screen.getByText('Empire State')).toBeTruthy();
-      expect(screen.queryByText('Chrysler Building')).toBeNull();
+      await waitFor(() => {
+        expect(screen.getByTestId('kanban-view').textContent).toContain('Empire');
+      });
+      expect(screen.getByTestId('kanban-view').textContent).not.toContain('Chrysler');
   });
 
   it('should switch to List view and render table', async () => {
       renderProfileWithUrl();
       await screen.findByTestId('review-card-review-1');
 
-      const listToggle = screen.getByLabelText('List View');
-      fireEvent.click(listToggle);
+      fireEvent.click(await screen.findByRole('radio', { name: 'List' }));
 
       expect(await screen.findByText('Name')).toBeTruthy();
       expect(screen.getByText('Empire State')).toBeTruthy();

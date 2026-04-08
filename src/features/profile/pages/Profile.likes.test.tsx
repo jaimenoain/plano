@@ -1,10 +1,12 @@
 // @vitest-environment happy-dom
+import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent, within } from '@testing-library/react';
 import Profile from './Profile';
-import { BrowserRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock IntersectionObserver
 const intersectionObserverMock = () => ({
@@ -14,11 +16,21 @@ const intersectionObserverMock = () => ({
 });
 window.IntersectionObserver = vi.fn().mockImplementation(intersectionObserverMock);
 
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  };
+});
+
 const mocks = vi.hoisted(() => {
   return {
     navigate: vi.fn(),
     signOut: vi.fn(),
     toast: vi.fn(),
+    /** Stable reference — Profile’s fetch effect depends on `currentUser` identity. */
+    authUser: { id: 'user-123', email: 'test@example.com' },
     loaderProfile: {
       id: 'user-123',
       username: 'testuser',
@@ -39,6 +51,14 @@ vi.mock('react-router', async (importOriginal) => {
   };
 });
 
+vi.mock('@/features/credits/api/people', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/credits/api/people')>();
+  return {
+    ...actual,
+    getClaimedPersonSummaryForProfile: vi.fn().mockResolvedValue(null),
+  };
+});
+
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
     toast: mocks.toast,
@@ -47,7 +67,7 @@ vi.mock('@/hooks/use-toast', () => ({
 
 vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 'user-123', email: 'test@example.com' },
+    user: mocks.authUser,
     loading: false,
     signOut: mocks.signOut,
   }),
@@ -82,6 +102,22 @@ vi.mock('@/features/profile/hooks/useProfileComparison', () => ({
   }),
 }));
 
+vi.mock('@/components/ui/sidebar', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/components/ui/sidebar')>();
+  return {
+    ...actual,
+    useSidebar: () => ({
+      state: "expanded" as const,
+      open: true,
+      setOpen: vi.fn(),
+      openMobile: false,
+      setOpenMobile: vi.fn(),
+      toggleSidebar: vi.fn(),
+      isMobile: false,
+    }),
+  };
+});
+
 // Supabase Mock
 vi.mock('@/integrations/supabase/client', () => {
   const userBuildingsData = [
@@ -104,7 +140,9 @@ vi.mock('@/integrations/supabase/client', () => {
         main_image_url: 'img.jpg',
         slug: 'test-building',
         short_id: 'tb',
-        architects: [{ architect: { name: 'Arch One', id: 'a1' } }]
+        building_credits: [
+          { status: 'active', credit_tier: 'primary', person: { name: 'Arch One', id: 'a1' }, company: null },
+        ]
       }
     }
   ];
@@ -139,11 +177,14 @@ vi.mock('@/integrations/supabase/client', () => {
 
     builder.select = vi.fn().mockImplementation((cols, opts) => {
         if (opts && opts.count) {
-             return {
-                 eq: () => ({
-                     eq: () => Promise.resolve({ count: 5, data: null })
-                 })
-             };
+          const resolved = { count: 0, data: null };
+          const chain: { eq: ReturnType<typeof vi.fn>; then: typeof Promise.prototype.then } = {
+            eq: vi.fn(),
+            then: (onFulfilled, onRejected) =>
+              Promise.resolve(resolved).then(onFulfilled, onRejected),
+          };
+          chain.eq.mockImplementation(() => chain);
+          return chain;
         }
         return builder;
     });
@@ -154,7 +195,11 @@ vi.mock('@/integrations/supabase/client', () => {
     builder.order = vi.fn().mockReturnThis();
     builder.range = vi.fn().mockReturnThis();
     builder.limit = vi.fn().mockReturnThis();
-    builder.maybeSingle = vi.fn().mockResolvedValue(result);
+    builder.maybeSingle = vi.fn().mockImplementation(() => {
+      if (table === 'profiles') return Promise.resolve({ data: profileData, error: null });
+      if (table === 'follows') return Promise.resolve({ data: null, error: null });
+      return Promise.resolve(result);
+    });
 
     // Mock delete and insert for interactions
     builder.delete = vi.fn().mockReturnThis();
@@ -185,33 +230,38 @@ describe('Profile Likes Integration', () => {
   });
 
   it('calculates total likes as sum of review likes and image likes', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <TooltipProvider>
-        <BrowserRouter>
-          <SidebarProvider>
-            <Profile />
-          </SidebarProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <MemoryRouter initialEntries={["/profile/testuser"]}>
+            <Routes>
+              <Route
+                path="/profile/:username"
+                element={
+                  <SidebarProvider>
+                    <Profile />
+                  </SidebarProvider>
+                }
+              />
+            </Routes>
+          </MemoryRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
     );
 
-    // Wait for content to load
     await waitFor(() => {
-        expect(screen.getByTestId('user-card')).toBeTruthy();
+        expect(screen.getByTestId('review-card-review-1')).toBeTruthy();
     });
 
-    // We expect "9" likes (1 review + 5 img1 + 3 img2)
-    // If the fix is NOT implemented, it will likely show "1" (just review likes) or "0".
+    const listRadio = await screen.findByRole('radio', { name: 'List' });
+    fireEvent.click(listRadio);
 
+    const table = await screen.findByRole('table');
     await waitFor(() => {
-        // We look for text "9" specifically.
-        // We can be looser and check that it is NOT "1".
-        const likesCount = screen.queryByText('9');
-        if (!likesCount) {
-             // If we don't find 9, let's see what we find to debug (if we were debugging manually)
-             // But for the test, we just assert it exists.
-             throw new Error('Expected to find like count "9"');
-        }
+      expect(within(table).getByText('Test Building')).toBeTruthy();
     });
+    // 9 = 1 review like + 5 + 3 image likes (aggregated in fetchUserContent)
+    expect(within(table).getByText('9', { exact: true })).toBeTruthy();
   });
 });
