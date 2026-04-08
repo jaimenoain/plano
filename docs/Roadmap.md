@@ -65,7 +65,7 @@
 
 ---
 
-**[ ] Task 1.5 — Add credit notification log and signed-token infrastructure**
+**[x] Task 1.5 — Add credit notification log and signed-token infrastructure**
 
 - Create `credit_notification_log` table: `id`, `credit_id` → building_credits, `sent_at`, `recipient_hash` (SHA-256 of email address — no plaintext stored), `token_hash` (SHA-256 of the issued removal token)
 - Create `credit_removal_tokens` table: `id`, `credit_id` → building_credits, `token_hash`, `expires_at` (timestamptz, default now() + 30 days), `used_at` (nullable timestamptz)

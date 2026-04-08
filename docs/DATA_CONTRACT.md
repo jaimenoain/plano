@@ -3035,6 +3035,59 @@ CREATE POLICY "building_credits_insert" ON public.building_credits
 
 ---
 
+## 9e. Credit notification log & removal tokens (Building Credits v2)
+
+Introduced in Roadmap Phase 1 Task 1.5. Supports post-notification one-click credit removal (Task 6.4): **no plaintext email** in the database; **hashes only** (`bytea`, 32-octet SHA-256 digests). Edge Functions use the **service role** for reads/writes; **RLS is enabled with no policies** so `anon` / `authenticated` have no access. `public.generate_credit_removal_token(credit_id uuid)` is **`SECURITY DEFINER`**, **`REVOKE ALL … FROM PUBLIC`**, **`GRANT EXECUTE` to `service_role` only** — clients must not call it with the user JWT.
+
+### Component 1: `credit_removal_tokens`
+
+```sql
+CREATE TABLE public.credit_removal_tokens (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  credit_id uuid NOT NULL REFERENCES public.building_credits (id) ON DELETE CASCADE,
+  token_hash bytea NOT NULL,
+  expires_at timestamptz NOT NULL DEFAULT (now() + interval '30 days'),
+  used_at timestamptz,
+
+  CONSTRAINT credit_removal_tokens_pkey PRIMARY KEY (id),
+  CONSTRAINT credit_removal_tokens_token_hash_len CHECK (octet_length(token_hash) = 32)
+);
+
+CREATE UNIQUE INDEX credit_removal_tokens_token_hash_uidx ON public.credit_removal_tokens (token_hash);
+CREATE INDEX credit_removal_tokens_credit_id_idx ON public.credit_removal_tokens (credit_id);
+```
+
+### Component 2: `credit_notification_log`
+
+```sql
+CREATE TABLE public.credit_notification_log (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  credit_id uuid NOT NULL REFERENCES public.building_credits (id) ON DELETE CASCADE,
+  sent_at timestamptz NOT NULL DEFAULT now(),
+  recipient_hash bytea NOT NULL,
+  token_hash bytea NOT NULL,
+
+  CONSTRAINT credit_notification_log_pkey PRIMARY KEY (id),
+  CONSTRAINT credit_notification_log_recipient_hash_len CHECK (octet_length(recipient_hash) = 32),
+  CONSTRAINT credit_notification_log_token_hash_len CHECK (octet_length(token_hash) = 32)
+);
+
+CREATE INDEX credit_notification_log_credit_id_idx ON public.credit_notification_log (credit_id);
+CREATE INDEX credit_notification_log_sent_at_idx ON public.credit_notification_log (sent_at DESC);
+```
+
+### Component 3: RPC `generate_credit_removal_token`
+
+- Generates `32` random bytes, returns `encode(bytes, 'hex')` (64-character hex string — URL-safe).
+- Inserts one row into `credit_removal_tokens` with `token_hash = digest(secret_bytes, 'sha256')`, `expires_at = now() + 30 days`, `used_at` null.
+- Raises if `credit_id` is not found in `building_credits`.
+
+### Component 4: RLS
+
+`ALTER TABLE … ENABLE ROW LEVEL SECURITY` on both tables; **no policies** (default deny for JWT roles). Service role bypasses RLS for Edge Function access.
+
+---
+
 ## 9. Architect Domain
 
 ### Component 1: Database Schema

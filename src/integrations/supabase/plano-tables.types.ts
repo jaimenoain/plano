@@ -659,6 +659,70 @@ export type PlanoPublicTables = {
       },
     ]
   }
+  credit_notification_log: {
+    Row: {
+      id: string
+      credit_id: string
+      sent_at: string
+      recipient_hash: string
+      token_hash: string
+    }
+    Insert: {
+      id?: string
+      credit_id: string
+      sent_at?: string
+      recipient_hash: string
+      token_hash: string
+    }
+    Update: {
+      id?: string
+      credit_id?: string
+      sent_at?: string
+      recipient_hash?: string
+      token_hash?: string
+    }
+    Relationships: [
+      {
+        foreignKeyName: "credit_notification_log_credit_id_fkey"
+        columns: ["credit_id"]
+        isOneToOne: false
+        referencedRelation: "building_credits"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
+  credit_removal_tokens: {
+    Row: {
+      id: string
+      credit_id: string
+      token_hash: string
+      expires_at: string
+      used_at: string | null
+    }
+    Insert: {
+      id?: string
+      credit_id: string
+      token_hash: string
+      expires_at?: string
+      used_at?: string | null
+    }
+    Update: {
+      id?: string
+      credit_id?: string
+      token_hash?: string
+      expires_at?: string
+      used_at?: string | null
+    }
+    Relationships: [
+      {
+        foreignKeyName: "credit_removal_tokens_credit_id_fkey"
+        columns: ["credit_id"]
+        isOneToOne: false
+        referencedRelation: "building_credits"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
   building_functional_typologies: {
     Row: {
       building_id: string
@@ -1612,6 +1676,7 @@ export type PlanoPublicTables = {
 export type PlanoPublicFunctions = {
   check_slug_availability: { Args: RpcArgs; Returns: boolean | null }
   find_nearby_buildings: { Args: RpcArgs; Returns: Json }
+  generate_credit_removal_token: { Args: { credit_id: string }; Returns: string }
   get_admin_content_stats: { Args: Record<string, never>; Returns: Json }
   get_admin_leaderboards: { Args: Record<string, never>; Returns: Json }
   get_admin_notifications: { Args: Record<string, never>; Returns: Json }
