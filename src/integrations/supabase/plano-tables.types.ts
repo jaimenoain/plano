@@ -799,6 +799,103 @@ export type PlanoPublicTables = {
       },
     ]
   }
+  companies: {
+    Row: {
+      id: string
+      name: string
+      slug: string
+      bio: string | null
+      country: string | null
+      founded_year: number | null
+      dissolved_year: number | null
+      logo_url: string | null
+      website: string | null
+      verified_domain: string | null
+      claim_status: string
+      created_at: string
+      updated_at: string
+    }
+    Insert: {
+      id: string
+      name: string
+      slug: string
+      bio?: string | null
+      country?: string | null
+      founded_year?: number | null
+      dissolved_year?: number | null
+      logo_url?: string | null
+      website?: string | null
+      verified_domain?: string | null
+      claim_status?: string
+      created_at?: string
+      updated_at?: string
+    }
+    Update: {
+      id?: string
+      name?: string
+      slug?: string
+      bio?: string | null
+      country?: string | null
+      founded_year?: number | null
+      dissolved_year?: number | null
+      logo_url?: string | null
+      website?: string | null
+      verified_domain?: string | null
+      claim_status?: string
+      created_at?: string
+      updated_at?: string
+    }
+    Relationships: []
+  }
+  company_stewards: {
+    Row: {
+      id: string
+      company_id: string
+      user_id: string
+      role: string
+      invited_by: string | null
+      created_at: string
+    }
+    Insert: {
+      id?: string
+      company_id: string
+      user_id: string
+      role: string
+      invited_by?: string | null
+      created_at?: string
+    }
+    Update: {
+      id?: string
+      company_id?: string
+      user_id?: string
+      role?: string
+      invited_by?: string | null
+      created_at?: string
+    }
+    Relationships: [
+      {
+        foreignKeyName: "company_stewards_company_id_fkey"
+        columns: ["company_id"]
+        isOneToOne: false
+        referencedRelation: "companies"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "company_stewards_user_id_fkey"
+        columns: ["user_id"]
+        isOneToOne: false
+        referencedRelation: "profiles"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "company_stewards_invited_by_fkey"
+        columns: ["invited_by"]
+        isOneToOne: false
+        referencedRelation: "profiles"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
   deletion_jobs: {
     Row: {
       id: string

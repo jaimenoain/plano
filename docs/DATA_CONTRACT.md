@@ -2813,6 +2813,98 @@ No `DELETE` policy (rows are not deleted via app in this phase).
 
 ---
 
+## 9b. Companies & stewards (Building Credits v2)
+
+Introduced in Roadmap Phase 1 Task 1.2. Practices / studios live in `companies` (migrated from `architects` where `type = 'studio'`, same UUID). `claim_status` reuses `person_claim_status`. Membership is `company_stewards`.
+
+### Component 1: Database schema
+
+```sql
+CREATE TYPE public.company_steward_role AS ENUM ('owner', 'steward');
+
+CREATE TABLE public.companies (
+  id uuid NOT NULL,
+  name text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  bio text,
+  country text,
+  founded_year integer,
+  dissolved_year integer,
+  logo_url text,
+  website text,
+  verified_domain text,
+  claim_status public.person_claim_status NOT NULL DEFAULT 'unclaimed',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT companies_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.company_stewards (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL REFERENCES public.companies (id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
+  role public.company_steward_role NOT NULL,
+  invited_by uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT company_stewards_pkey PRIMARY KEY (id),
+  CONSTRAINT company_stewards_company_id_user_id_key UNIQUE (company_id, user_id)
+);
+```
+
+**Migration notes:** `website` and `country` come from `architects.website_url` and `architects.headquarters` (best-effort). `logo_url` and `verified_domain` are null for migrated rows. Slugs use `slugify_person_name(name)` with `-2`, `-3`, … suffixes on collision. Initial `claim_status` is `unclaimed`; rows with `profiles.verified_architect_id` pointing at that company get an `company_stewards` row (`role = owner`) and `claim_status` becomes `claimed`.
+
+### Component 2: RLS (`companies`)
+
+**SELECT**
+
+```sql
+CREATE POLICY "companies_select" ON public.companies
+  FOR SELECT USING (true);
+```
+
+**INSERT** — authenticated
+
+```sql
+CREATE POLICY "companies_insert" ON public.companies
+  FOR INSERT TO authenticated
+  WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
+```
+
+**UPDATE** — admin or any steward of that company
+
+```sql
+CREATE POLICY "companies_update" ON public.companies
+  FOR UPDATE TO authenticated
+  USING (
+    public.is_admin()
+    OR EXISTS (
+      SELECT 1 FROM public.company_stewards cs
+      WHERE cs.company_id = companies.id
+        AND cs.user_id = (SELECT auth.uid())
+    )
+  )
+  WITH CHECK (
+    public.is_admin()
+    OR EXISTS (
+      SELECT 1 FROM public.company_stewards cs
+      WHERE cs.company_id = companies.id
+        AND cs.user_id = (SELECT auth.uid())
+    )
+  );
+```
+
+### Component 3: RLS (`company_stewards`)
+
+**SELECT** — admin, row’s `user_id`, or any steward of the same `company_id`
+
+**INSERT** — admin; or existing steward of `company_id`; or bootstrap: `user_id = auth.uid()` and `role = owner` and no existing steward row for `company_id`
+
+**UPDATE** / **DELETE** — admin or any steward of the same `company_id`
+
+---
+
 ## 9. Architect Domain
 
 ### Component 1: Database Schema

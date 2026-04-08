@@ -22,7 +22,7 @@
 
 ---
 
-**[ ] Task 1.2 — Create `companies` table and migrate `type = 'studio'` architects**
+**[x] Task 1.2 — Create `companies` table and migrate `type = 'studio'` architects**
 
 - Create `companies` table: `id`, `name`, `slug`, `bio`, `country`, `founded_year`, `dissolved_year`, `logo_url`, `website`, `verified_domain`, `claim_status` enum (`unclaimed` | `claimed` | `verified`), `created_at`, `updated_at`
 - Create `company_stewards` junction table: `id`, `company_id`, `user_id`, `role` enum (`owner` | `steward`), `invited_by` (nullable), `created_at`
