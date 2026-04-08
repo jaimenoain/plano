@@ -37,12 +37,12 @@ function MosaicCell({ imageSrc }: { imageSrc: string | undefined }) {
 export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
   const navigate = useNavigate();
 
-  const username = collection.owner?.username ?? "unknown";
+  const ownerUsername = collection.owner?.username ?? "user";
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
-    navigate(`/${username}/list/${collection.slug}`);
+    navigate(`/${ownerUsername}/map/${collection.slug}`);
   };
 
   const slots = Array.from({ length: 6 }).map((_, i) =>
@@ -75,7 +75,7 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
 
         {/* Details row */}
         <p className="text-sm text-text-secondary mt-1">
-          {username} · {collection.buildingCount ?? 0} buildings
+          {ownerUsername} · {collection.buildingCount ?? 0} buildings
         </p>
 
         {/* Description */}
