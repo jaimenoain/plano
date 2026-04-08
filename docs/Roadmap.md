@@ -389,7 +389,7 @@
 
 ---
 
-**[ ] Task 8.2 — Admin: people and companies management + unified entity claims**
+**[x] Task 8.2 — Admin: people and companies management + unified entity claims**
 
 - Build `AdminPeople.tsx`: searchable list of all people with claim status, credit count, and person page link; inline `claim_status` edit (admin can manually set `verified`); "Merge" action opens a side-by-side view (modelled on existing `MergeBuildings.tsx`) that transfers all `building_credits` rows from source to target person then deletes the source
 - Build `AdminCompanies.tsx`: same pattern for companies; additionally shows steward count with a "View stewards" expandable row

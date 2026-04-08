@@ -12,6 +12,8 @@ import {
   Trash2,
   FileCheck,
   Flag,
+  UserCircle,
+  Factory,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -51,11 +53,6 @@ const managementItems = [
     icon: Users,
   },
   {
-    title: "Pending Claims",
-    url: "/admin/claims",
-    icon: FileCheck,
-  },
-  {
     title: "Moderation",
     url: "/admin/moderation",
     icon: ShieldAlert,
@@ -92,6 +89,21 @@ const creditsItems = [
     title: "Flagged credits",
     url: "/admin/credits/flagged",
     icon: Flag,
+  },
+  {
+    title: "Entity claims",
+    url: "/admin/claims",
+    icon: FileCheck,
+  },
+  {
+    title: "People",
+    url: "/admin/credits/people",
+    icon: UserCircle,
+  },
+  {
+    title: "Companies",
+    url: "/admin/credits/companies",
+    icon: Factory,
   },
 ];
 

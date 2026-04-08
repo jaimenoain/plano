@@ -69,8 +69,10 @@ const ImageWall = lazyWithRetry(() => import("@/features/admin/pages/ImageWall")
 const PhotoAnalytics = lazyWithRetry(() => import("@/features/admin/pages/PhotoAnalytics"));
 const BuildingAudit = lazyWithRetry(() => import("@/features/admin/pages/BuildingAudit"));
 const StorageJobs = lazyWithRetry(() => import("@/features/admin/pages/StorageJobs"));
-const ArchitectClaims = lazyWithRetry(() => import("@/features/admin/pages/ArchitectClaims"));
+const EntityClaims = lazyWithRetry(() => import("@/features/admin/pages/EntityClaims"));
 const FlaggedCredits = lazyWithRetry(() => import("@/features/admin/pages/FlaggedCredits"));
+const AdminPeople = lazyWithRetry(() => import("@/features/admin/pages/AdminPeople"));
+const AdminCompanies = lazyWithRetry(() => import("@/features/admin/pages/AdminCompanies"));
 const Unauthorized = lazyWithRetry(() => import("@/features/admin/pages/Unauthorized"));
 
 import { AdminGuard } from "@/features/admin/components/AdminGuard";
@@ -147,8 +149,10 @@ const router = createBrowserRouter(
         <Route path="/admin/images" element={<ImageWall />} />
         <Route path="/admin/photos" element={<PhotoAnalytics />} />
         <Route path="/admin/audit" element={<BuildingAudit />} />
-        <Route path="/admin/claims" element={<ArchitectClaims />} />
+        <Route path="/admin/claims" element={<EntityClaims />} />
         <Route path="/admin/credits/flagged" element={<FlaggedCredits />} />
+        <Route path="/admin/credits/people" element={<AdminPeople />} />
+        <Route path="/admin/credits/companies" element={<AdminCompanies />} />
         {/* Storage management tool */}
         <Route path="/admin/storage-jobs" element={<StorageJobs />} />
         <Route path="/admin/system" element={<AdminSystemPlaceholder />} />

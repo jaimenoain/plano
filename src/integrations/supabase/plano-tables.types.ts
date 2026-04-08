@@ -1888,6 +1888,14 @@ export type PlanoPublicFunctions = {
   get_photo_heatmap_data: { Args: Record<string, never>; Returns: Json }
   get_potential_duplicates: { Args: RpcArgs; Returns: Json }
   get_suggested_posts: { Args: RpcArgs; Returns: Json }
+  admin_merge_companies: {
+    Args: { p_source_company_id: string; p_target_company_id: string }
+    Returns: Json
+  }
+  admin_merge_people: {
+    Args: { p_source_person_id: string; p_target_person_id: string }
+    Returns: Json
+  }
   merge_buildings: { Args: RpcArgs; Returns: undefined }
   revert_building_change: { Args: RpcArgs; Returns: undefined }
   search_buildings: { Args: RpcArgs; Returns: Json }

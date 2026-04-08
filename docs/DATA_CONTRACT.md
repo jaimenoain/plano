@@ -3860,6 +3860,8 @@ CREATE POLICY "deletion_jobs_update" ON deletion_jobs
 | GET | (RPC) get_admin_notifications | Notification analytics | supabase (RPC, admin-only) |
 | GET | (RPC) get_photo_heatmap_data | Photo geographic density | supabase (RPC, admin-only) |
 | POST | (RPC) merge_buildings | Merge duplicate buildings | supabase (RPC, admin-only) |
+| POST | (RPC) admin_merge_people | Merge duplicate `people` rows (credits → target, delete source) | supabase (RPC, admin-only; migration `20270833000000_admin_merge_people_companies.sql`) |
+| POST | (RPC) admin_merge_companies | Merge duplicate `companies` rows (credits, affiliations, stewards → target, delete source) | supabase (RPC, admin-only; same migration) |
 | POST | (RPC) revert_building_change | Undo a building edit | supabase (RPC, admin-only) |
 | POST | (RPC) fix_orphaned_user_buildings | Data integrity repair | supabase (RPC, admin-only) |
 
@@ -3909,6 +3911,27 @@ Example payload (AdminPulseDTO):
 ### Component 4: Input Validation (Zod Schemas) & Environment Variables
 
 Admin RPCs are SECURITY DEFINER functions that internally verify `is_admin()`. No additional Zod schemas are required for admin dashboard read operations.
+
+### Component 5: Admin entity management UI (Roadmap Phase 8 Task 8.2)
+
+Browser Supabase client helpers in `src/features/admin/api/entity-management.ts` (admin-guarded routes only):
+
+| Function | Behaviour |
+|----------|-----------|
+| `searchAdminPeople(search)` | Requires `search.trim()` length ≥ 2 (commas stripped to avoid breaking `.or` filters). Up to 50 `people` rows matching name or slug (ilike); `creditCount` from `building_credits` aggregation. |
+| `updateAdminPersonClaimStatus(personId, claimStatus)` | `claim_status` ∈ `unclaimed` \| `claimed` \| `verified`; RLS allows admin `people` UPDATE. |
+| `adminMergePeople(sourcePersonId, targetPersonId)` | Calls RPC `admin_merge_people`; throws on `{ ok: false }` payload. |
+| `searchAdminCompanies(search)` | Same search rules as people; adds `stewardCount` from `company_stewards`. |
+| `updateAdminCompanyClaimStatus(companyId, claimStatus)` | Same enum; RLS allows admin `companies` UPDATE. |
+| `adminMergeCompanies(sourceCompanyId, targetCompanyId)` | Calls RPC `admin_merge_companies`; throws on `{ ok: false }`. |
+| `fetchOpenCompanyClaimDisputesForAdmin()` | `company_claim_disputes` where `status = open`, ordered by `created_at` desc; embeds `companies` (name, slug) and `profiles` (username). |
+| `resolveCompanyClaimDispute(disputeId)` | Sets `status = resolved` where `id` matches and `status = open` (RLS: admin UPDATE). |
+
+**RPC `admin_merge_people`:** arguments `p_source_person_id`, `p_target_person_id`. Returns JSON `{ "ok": true }` or `{ "ok": false, "error": "forbidden" \| "same_id" \| "source_not_found" \| "target_not_found" }`. Moves `building_credits.person_id`, deletes `person_company_affiliations` for the source person, deletes the source `people` row. **`GRANT EXECUTE` to `authenticated`** (authorization inside function).
+
+**RPC `admin_merge_companies`:** arguments `p_source_company_id`, `p_target_company_id`; same error shape. Updates `building_credits.company_id`; dedupes `person_company_affiliations` then re-points remaining rows to the target; merges `company_stewards` with `ON CONFLICT (company_id, user_id) DO UPDATE` (owner role preferred); deletes the source `companies` row (CASCADE removes source-side invites, tokens, disputes, etc.).
+
+**UI:** `EntityClaims.tsx` at `/admin/claims` — tabs for legacy `architect_claims` (pending) and open `company_claim_disputes` with **Resolved** action. `AdminPeople.tsx` at `/admin/credits/people`, `AdminCompanies.tsx` at `/admin/credits/companies` — directory search, inline claim status, side-by-side merge (patterned on `MergeBuildings.tsx`). Sidebar **Credits** group lists Flagged credits, Entity claims, People, Companies.
 
 ```
 SUPABASE_SERVICE_ROLE_KEY

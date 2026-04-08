@@ -10,5 +10,7 @@ export { default as ImageWall } from './pages/ImageWall';
 export { default as PhotoAnalytics } from './pages/PhotoAnalytics';
 export { default as BuildingAudit } from './pages/BuildingAudit';
 export { default as StorageJobs } from './pages/StorageJobs';
-export { default as ArchitectClaims } from './pages/ArchitectClaims';
+export { default as EntityClaims } from './pages/EntityClaims';
+export { default as AdminPeople } from './pages/AdminPeople';
+export { default as AdminCompanies } from './pages/AdminCompanies';
 export { default as Unauthorized } from './pages/Unauthorized';
