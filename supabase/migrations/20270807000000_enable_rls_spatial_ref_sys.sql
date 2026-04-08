@@ -1,10 +1,4 @@
--- Enable RLS on public.spatial_ref_sys
-ALTER TABLE public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
-
--- Create policy to allow public read access
--- Drop the policy first to ensure idempotency
-DROP POLICY IF EXISTS "Allow public read access on spatial_ref_sys" ON public.spatial_ref_sys;
-CREATE POLICY "Allow public read access on spatial_ref_sys" ON public.spatial_ref_sys
-    FOR SELECT
-    TO public
-    USING (true);
+-- See `20270818000000_ensure_spatial_ref_sys_rls.sql` for rationale.
+-- RLS on `spatial_ref_sys` is not applicable when the table owner is `supabase_admin` (hosted Supabase).
+REVOKE ALL PRIVILEGES ON TABLE public.spatial_ref_sys FROM anon, authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public.spatial_ref_sys FROM PUBLIC;
