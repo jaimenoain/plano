@@ -2905,6 +2905,52 @@ CREATE POLICY "companies_update" ON public.companies
 
 ---
 
+## 9c. Person–company affiliations (Building Credits v2)
+
+Introduced in Roadmap Phase 1 Task 1.3. Replaces the logical role of `architect_affiliations` (studio ↔ individual) with `person_id` → `people` and `company_id` → `companies`. The legacy `architect_affiliations` table remains until Phase 11 removal; rows were copied here where both endpoints exist in `people` / `companies`.
+
+### Component 1: Database schema
+
+```sql
+CREATE TABLE public.person_company_affiliations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  person_id uuid NOT NULL REFERENCES public.people (id) ON DELETE CASCADE,
+  company_id uuid NOT NULL REFERENCES public.companies (id) ON DELETE CASCADE,
+  year_from integer,
+  year_to integer,
+  role_note text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT person_company_affiliations_pkey PRIMARY KEY (id),
+  CONSTRAINT person_company_affiliations_person_id_company_id_key UNIQUE (person_id, company_id)
+);
+```
+
+**Migration notes:** `year_from`, `year_to`, and `role_note` are null for rows copied from `architect_affiliations`. `created_at` preserves the source row’s timestamp. Check constraints enforce sensible years and `year_to >= year_from` when both are set.
+
+### Component 2: RLS (`person_company_affiliations`)
+
+**SELECT** — public read
+
+```sql
+CREATE POLICY "person_company_affiliations_select" ON public.person_company_affiliations
+  FOR SELECT USING (true);
+```
+
+**INSERT** — authenticated
+
+```sql
+CREATE POLICY "person_company_affiliations_insert" ON public.person_company_affiliations
+  FOR INSERT TO authenticated
+  WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
+```
+
+**UPDATE** / **DELETE** — admin, the person’s `claimed_by_user_id` (= auth user), or any steward of the affiliated company
+
+Same predicate for `USING` and `WITH CHECK` on `UPDATE`; `DELETE` uses the same `USING` predicate.
+
+---
+
 ## 9. Architect Domain
 
 ### Component 1: Database Schema

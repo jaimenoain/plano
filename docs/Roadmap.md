@@ -37,7 +37,7 @@
 
 ---
 
-**[ ] Task 1.3 — Create `person_company_affiliations` table and migrate `architect_affiliations`**
+**[x] Task 1.3 — Create `person_company_affiliations` table and migrate `architect_affiliations`**
 
 - Create `person_company_affiliations` table: `id`, `person_id` → people, `company_id` → companies, `year_from` (nullable integer), `year_to` (nullable integer), `role_note` (nullable text — free description of the relationship, e.g. "founding partner"), `created_at`
 - Migrate all rows from `architect_affiliations` (studio_id ↔ individual_id) into `person_company_affiliations`; `person_id` maps from the individual, `company_id` maps from the studio (now a company); `year_from`/`year_to` null for all migrated rows (the old table didn't carry this data)

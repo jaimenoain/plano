@@ -896,6 +896,51 @@ export type PlanoPublicTables = {
       },
     ]
   }
+  person_company_affiliations: {
+    Row: {
+      id: string
+      person_id: string
+      company_id: string
+      year_from: number | null
+      year_to: number | null
+      role_note: string | null
+      created_at: string
+    }
+    Insert: {
+      id?: string
+      person_id: string
+      company_id: string
+      year_from?: number | null
+      year_to?: number | null
+      role_note?: string | null
+      created_at?: string
+    }
+    Update: {
+      id?: string
+      person_id?: string
+      company_id?: string
+      year_from?: number | null
+      year_to?: number | null
+      role_note?: string | null
+      created_at?: string
+    }
+    Relationships: [
+      {
+        foreignKeyName: "person_company_affiliations_person_id_fkey"
+        columns: ["person_id"]
+        isOneToOne: false
+        referencedRelation: "people"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "person_company_affiliations_company_id_fkey"
+        columns: ["company_id"]
+        isOneToOne: false
+        referencedRelation: "companies"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
   deletion_jobs: {
     Row: {
       id: string
