@@ -28,6 +28,7 @@ function mapCollectionRow(row: RawCollectionFeedRow): FeedCollection {
       buildingId: pb.building_id,
       name: pb.name,
       mainImageUrl: pb.main_image_url,
+      communityPreviewUrl: pb.community_preview_url ?? null,
     })),
     buildingCount: row.building_count,
   };

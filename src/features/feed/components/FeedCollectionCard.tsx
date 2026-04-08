@@ -1,22 +1,31 @@
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedCollection } from "@/types/feed";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface FeedCollectionCardProps {
   collection: FeedCollection;
 }
 
-function MosaicCell({ mainImageUrl }: { mainImageUrl: string | null | undefined }) {
+function resolvePreviewSrc(pb: FeedCollection["previewBuildings"][number] | undefined) {
+  if (!pb) return undefined;
+  return (
+    getBuildingImageUrl(pb.mainImageUrl) ??
+    getBuildingImageUrl(pb.communityPreviewUrl)
+  );
+}
+
+function MosaicCell({ imageSrc }: { imageSrc: string | undefined }) {
   const [errored, setErrored] = useState(false);
 
-  if (!mainImageUrl || errored) {
+  if (!imageSrc || errored) {
     return <div className="flex-1 min-w-0 h-full bg-surface-muted" />;
   }
 
   return (
     <div className="flex-1 min-w-0 h-full overflow-hidden bg-surface-muted">
       <img
-        src={mainImageUrl}
+        src={imageSrc}
         alt=""
         className="w-full h-full object-cover"
         onError={() => setErrored(true)}
@@ -36,8 +45,8 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
     navigate(`/${username}/list/${collection.slug}`);
   };
 
-  const slots = Array.from({ length: 6 }).map(
-    (_, i) => collection.previewBuildings?.[i]?.mainImageUrl ?? null
+  const slots = Array.from({ length: 6 }).map((_, i) =>
+    resolvePreviewSrc(collection.previewBuildings?.[i])
   );
 
   return (
@@ -48,7 +57,7 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
       {/* Horizontal photo strip */}
       <div className="flex gap-mosaic-gap w-full h-[240px] overflow-hidden">
         {slots.map((url, i) => (
-          <MosaicCell key={i} mainImageUrl={url} />
+          <MosaicCell key={i} imageSrc={url} />
         ))}
       </div>
 

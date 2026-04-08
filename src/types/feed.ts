@@ -108,6 +108,7 @@ export interface CollectionPreviewBuilding {
   building_id: string;
   name: string;
   main_image_url: string | null;
+  community_preview_url?: string | null;
 }
 
 /** Raw JSON row from `get_collections_feed` RPC (snake_case). */
@@ -145,6 +146,7 @@ export interface FeedCollection {
     buildingId: string;
     name: string;
     mainImageUrl: string | null;
+    communityPreviewUrl: string | null;
   }>;
   buildingCount: number;
   isLiked?: boolean;
