@@ -61,6 +61,11 @@ export default [
     ),
     route("/settings", "features/profile/pages/Settings.tsx"),
     route("/person/:slug", "features/credits/pages/PersonDetails.tsx"),
+    route("/company/:slug", "features/credits/pages/CompanyDetails.tsx"),
+    route(
+      "/accept-company-steward",
+      "features/credits/pages/AcceptCompanySteward.tsx",
+    ),
     route(
       "/:username/map/:slug",
       "features/collections/components/CollectionMapPage.tsx",

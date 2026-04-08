@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { slugifyPersonName } from "@/features/credits/api/people";
 import { supabase } from "@/integrations/supabase/client";
 import type {
@@ -9,6 +10,7 @@ import type {
   CompanyPortfolioByTier,
   CompanyPortfolioItem,
   CompanySteward,
+  CompanyStewardWithProfile,
   CompanySummary,
   CompanyWithCredits,
   CreditRole,
@@ -19,6 +21,16 @@ import type {
 
 /** Company slugs use the same SQL helper as people: `public.slugify_person_name`. */
 export const slugifyCompanyName = slugifyPersonName;
+
+/** TanStack Query key for `getCompany(slug)` payloads (`CompanyWithCredits`). */
+export function companyQueryKey(slug: string) {
+  return ["company", slug] as const;
+}
+
+/** TanStack Query key for steward list with profiles (stewards / admins only under RLS). */
+export function companyStewardsQueryKey(companyId: string) {
+  return ["company-stewards", companyId] as const;
+}
 
 const CreateCompanySchema = z.object({
   name: z.string().min(1).max(500).trim(),
@@ -240,8 +252,11 @@ const creditSelectWithJoins = `
  * Company by slug with all credits visible under RLS, each joined to a building summary.
  * Returns `null` if no row matches.
  */
-export async function getCompany(slug: string): Promise<CompanyWithCredits | null> {
-  const { data: companyRow, error: cErr } = await supabase
+export async function getCompanyWithClient(
+  client: SupabaseClient,
+  slug: string
+): Promise<CompanyWithCredits | null> {
+  const { data: companyRow, error: cErr } = await client
     .from("companies")
     .select("*")
     .eq("slug", slug)
@@ -253,7 +268,7 @@ export async function getCompany(slug: string): Promise<CompanyWithCredits | nul
   const company = mapCompany(companyRow as CompanyRow);
   const companySummary = { id: company.id, name: company.name, slug: company.slug };
 
-  const { data: creditRows, error: crErr } = await supabase
+  const { data: creditRows, error: crErr } = await client
     .from("building_credits")
     .select(creditSelectWithJoins)
     .eq("company_id", company.id);
@@ -277,6 +292,13 @@ export async function getCompany(slug: string): Promise<CompanyWithCredits | nul
   );
 
   return { company, credits };
+}
+
+/**
+ * Company by slug (browser Supabase client).
+ */
+export async function getCompany(slug: string): Promise<CompanyWithCredits | null> {
+  return getCompanyWithClient(supabase, slug);
 }
 
 /**
@@ -423,4 +445,91 @@ export async function getCompanyStewards(companyId: string): Promise<CompanyStew
 
   if (error) throw error;
   return (rows || []).map((r) => mapSteward(r as StewardRow));
+}
+
+type StewardProfileEmbed = { username: string | null; avatar_url: string | null } | null;
+
+type StewardRowWithProfile = StewardRow & { profile: StewardProfileEmbed };
+
+function mapStewardWithProfile(row: StewardRowWithProfile): CompanyStewardWithProfile {
+  const base = mapSteward(row);
+  const p = row.profile;
+  return {
+    ...base,
+    username: p?.username ?? null,
+    avatarUrl: p?.avatar_url ?? null,
+  };
+}
+
+/**
+ * Stewards with `profiles` username/avatar for display. RLS returns rows only for stewards of this company (or self).
+ */
+export async function getCompanyStewardsWithProfiles(companyId: string): Promise<CompanyStewardWithProfile[]> {
+  const { data: rows, error } = await supabase
+    .from("company_stewards")
+    .select(
+      "id, company_id, user_id, role, invited_by, created_at, profile:profiles!company_stewards_user_id_fkey(username, avatar_url)"
+    )
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return (rows || []).map((r) => mapStewardWithProfile(r as StewardRowWithProfile));
+}
+
+/**
+ * Remove a steward row. RLS: owners may remove `steward` role rows; any user may remove their own row.
+ */
+export async function removeCompanySteward(stewardRowId: string): Promise<void> {
+  const { error } = await supabase.from("company_stewards").delete().eq("id", stewardRowId);
+  if (error) throw error;
+}
+
+/**
+ * Owner-only: creates a pending invite and emails the recipient when `RESEND_API_KEY` is configured on the function.
+ */
+export async function inviteCompanySteward(companyId: string, email: string): Promise<{ ok: true; inviteId: string }> {
+  const { data, error } = await supabase.functions.invoke("invite-company-steward", {
+    body: { companyId, email: email.trim() },
+  });
+
+  const body = data as { ok?: boolean; inviteId?: string; error?: string } | null;
+
+  if (error) {
+    throw new Error(body?.error ?? error.message);
+  }
+
+  if (!body?.ok || !body.inviteId) {
+    throw new Error(body?.error ?? "Invite failed");
+  }
+
+  return { ok: true, inviteId: body.inviteId };
+}
+
+export type RedeemCompanyStewardInviteResult =
+  | { ok: true; companySlug: string }
+  | { ok: false; error: string };
+
+/**
+ * Logged-in user accepts invite from email link (`redeem_company_steward_invite` RPC).
+ */
+export async function redeemCompanyStewardInvite(tokenHex: string): Promise<RedeemCompanyStewardInviteResult> {
+  const trimmed = tokenHex.trim();
+  const { data, error } = await supabase.rpc("redeem_company_steward_invite", {
+    p_token_hex: trimmed,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const raw = data as { ok?: boolean; error?: string; company_slug?: string } | null;
+  if (!raw || typeof raw !== "object") {
+    return { ok: false, error: "unknown_response" };
+  }
+  if (raw.ok === true && typeof raw.company_slug === "string") {
+    return { ok: true, companySlug: raw.company_slug };
+  }
+  const err = typeof raw.error === "string" ? raw.error : "redeem_failed";
+  return { ok: false, error: err };
 }

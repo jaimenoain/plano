@@ -48,6 +48,8 @@ const WriteReview = lazyWithRetry(() => import("@/features/buildings/pages/Write
 const CollectionMap = lazyWithRetry(() => import("@/features/collections/components/CollectionMapPage"));
 const FolderView = lazyWithRetry(() => import("@/features/profile/pages/FolderView"));
 const PersonDetails = lazyWithRetry(() => import("@/features/credits/pages/PersonDetails"));
+const CompanyDetails = lazyWithRetry(() => import("@/features/credits/pages/CompanyDetails"));
+const AcceptCompanySteward = lazyWithRetry(() => import("@/features/credits/pages/AcceptCompanySteward"));
 
 const AdminDashboard = lazyWithRetry(() => import("@/features/admin/pages/Dashboard"));
 const Buildings = lazyWithRetry(() => import("@/features/admin/pages/Buildings"));
@@ -149,6 +151,8 @@ const router = createBrowserRouter(
         <Route path="/settings" element={<Settings />} />
 
         <Route path="/person/:slug" element={<PersonDetails />} />
+        <Route path="/company/:slug" element={<CompanyDetails />} />
+        <Route path="/accept-company-steward" element={<AcceptCompanySteward />} />
         <Route path="/:username/map/:slug" element={<CollectionMap />} />
         <Route path="/:username/folders/:slug" element={<FolderView />} />
 

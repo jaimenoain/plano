@@ -28,9 +28,15 @@ export const meta: MetaFunction = () => [
   { name: "robots", content: "noindex, nofollow" },
 ];
 
+function safeInternalRedirect(raw: string | null): string | null {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return null;
+  return raw;
+}
+
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const invitedBy = searchParams.get("invited_by");
+  const postAuthRedirect = safeInternalRedirect(searchParams.get("redirect"));
   
   const [isSignUp, setIsSignUp] = useState(!!invitedBy);
   const [isResetPassword, setIsResetPassword] = useState(false);
@@ -50,11 +56,9 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      // CHANGED: Redirect to home instead of onboarding. 
-      // The home page (Index.tsx) will handle the onboarding check.
-      navigate("/");
+      navigate(postAuthRedirect ?? "/");
     }
-  }, [user, navigate]);
+  }, [user, navigate, postAuthRedirect]);
 
   useEffect(() => {
     async function loadInviterData() {

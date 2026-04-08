@@ -164,6 +164,41 @@ export function personPageStructuredData(person: {
   };
 }
 
+/** Schema.org Organization for `/company/:slug` (Roadmap Task 4.1). */
+export function companyPageStructuredData(company: {
+  name: string;
+  slug: string;
+  country: string | null;
+  logoAbsoluteUrl: string | null;
+  website: string | null;
+}) {
+  const url = `${SITE_URL}/company/${company.slug}`;
+  const sameAs =
+    company.website?.trim() != null && company.website.trim().length > 0
+      ? company.website.trim().startsWith("http")
+        ? company.website.trim()
+        : `https://${company.website.trim()}`
+      : undefined;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: company.name,
+    url,
+    ...(company.country?.trim()
+      ? {
+          address: {
+            "@type": "PostalAddress" as const,
+            addressCountry: company.country.trim(),
+          },
+        }
+      : {}),
+    ...(company.logoAbsoluteUrl
+      ? { logo: company.logoAbsoluteUrl, image: company.logoAbsoluteUrl }
+      : {}),
+    ...(sameAs ? { sameAs } : {}),
+  };
+}
+
 export function profileStructuredData(profile: {
   username: string;
   avatar_url?: string | null;

@@ -177,7 +177,7 @@
 
 ---
 
-**[ ] Task 4.1 — Company detail page (unclaimed state)**
+**[x] Task 4.1 — Company detail page (unclaimed state)**
 
 - Create route `/company/:slug` in `app/routes` with loader calling `getCompany(slug)`; 404 on null
 - Build `CompanyDetails.tsx`: name, bio, country, founded/dissolved year, logo (fallback to initial letter), website link
@@ -192,7 +192,7 @@
 
 ---
 
-**[ ] Task 4.2 — Company detail page (claimed state) + steward edit controls**
+**[x] Task 4.2 — Company detail page (claimed state) + steward edit controls**
 
 - When `currentUser` is a steward of the company, show edit controls: bio, country, years, logo upload, website
 - Build `EditCompanyForm` (inline sheet); call `updateCompany` on save

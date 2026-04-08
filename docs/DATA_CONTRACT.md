@@ -2917,7 +2917,33 @@ CREATE POLICY "companies_update" ON public.companies
 
 **INSERT** — admin; or existing steward of `company_id`; or bootstrap: `user_id = auth.uid()` and `role = owner` and no existing steward row for `company_id`
 
-**UPDATE** / **DELETE** — admin or any steward of the same `company_id`
+**UPDATE** — admin or any steward of the same `company_id`
+
+**DELETE** — admin; or the row’s `user_id` (leave company); or an **owner** steward of the same `company_id` removing a row whose `role` is `steward` (owners cannot delete other owners via this policy).
+
+### Component 3a: `company_steward_invites` (Task 4.2)
+
+```sql
+CREATE TABLE public.company_steward_invites (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL REFERENCES public.companies (id) ON DELETE CASCADE,
+  email_normalized text NOT NULL,
+  token_hash bytea NOT NULL,
+  invited_by uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
+  expires_at timestamptz NOT NULL,
+  consumed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT company_steward_invites_pkey PRIMARY KEY (id),
+  CONSTRAINT company_steward_invites_token_hash_key UNIQUE (token_hash)
+);
+```
+
+**RLS:** enabled; **no** policies for `anon` / `authenticated` — rows are written and read by **Edge Functions** using the **service role** (and by `SECURITY DEFINER` RPC logic as needed).
+
+**RPC:** `redeem_company_steward_invite(p_token_hex text)` — authenticated only; validates 64-char hex secret → SHA-256 lookup; requires `auth.users.email` (lower(trim)) to match `email_normalized`; rejects used/expired tokens; inserts `company_stewards` (`role = steward`, `invited_by` from invite); sets `consumed_at`. Returns `jsonb` `{ ok, company_slug }` or `{ ok: false, error }`.
+
+**Edge Function:** `invite-company-steward` — `verify_jwt = false`; manual `getUser` on `Authorization`; caller must be an **owner** steward of `companyId`; inserts invite row (service role); logs `company_steward_invite_created` to function logs; sends email via Resend when `RESEND_API_KEY` is set (accept URL: `/accept-company-steward?token=…`).
 
 ### Component 4: Application API — `companies` (Phase 2 Task 2.3)
 
@@ -2931,8 +2957,12 @@ Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`
 | `updateCompany(id, input)` | Zod partial update; RLS (steward / admin). Returns `null` if row absent after update. |
 | `getCompanyPortfolio(companyId, roleFilter?)` | `CompanyPortfolioByTier` — credits with `building` + `person` joins; optional `.eq('role', roleFilter)`; ordered per tier then `display_order` / `is_lead`. |
 | `getCompanyStewards(companyId)` | `CompanySteward[]`; RLS yields empty for users who are not admin, a steward of that company, or the row’s `user_id`. |
+| `getCompanyStewardsWithProfiles(companyId)` | `CompanyStewardWithProfile[]` — same as above plus `profiles.username` / `avatar_url` for display. |
+| `removeCompanySteward(stewardRowId)` | `DELETE` on `company_stewards`; RLS per owner/self rules above. |
+| `inviteCompanySteward(companyId, email)` | `supabase.functions.invoke('invite-company-steward')`; owner-only server-side check. |
+| `redeemCompanyStewardInvite(tokenHex)` | Calls RPC `redeem_company_steward_invite`; browser must have a logged-in session whose email matches the invite. |
 
-DTOs: `CompanyCreditWithBuilding`, `CompanyWithCredits`, `CompanyPortfolioItem`, `CompanyPortfolioByTier`. `slugifyCompanyName` mirrors SQL `public.slugify_person_name` (used for company slugs in migrations).
+DTOs: `CompanyCreditWithBuilding`, `CompanyWithCredits`, `CompanyPortfolioItem`, `CompanyPortfolioByTier`, `CompanyStewardWithProfile`. `slugifyCompanyName` mirrors SQL `public.slugify_person_name` (used for company slugs in migrations).
 
 ---
 

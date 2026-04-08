@@ -102,6 +102,12 @@ export interface CompanySteward {
   createdAt: string;
 }
 
+/** Steward row with public profile fields for company admin UI (RLS: stewards only). */
+export interface CompanyStewardWithProfile extends CompanySteward {
+  username: string | null;
+  avatarUrl: string | null;
+}
+
 export interface PersonCompanyAffiliation {
   id: string;
   personId: string;

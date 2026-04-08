@@ -1,0 +1,1 @@
+import{R as e,C as l,a as s}from"./index-BCi90gK5.js";const r=e,p=l,o=s;function b(i,a){return i==="other"&&(a!=null&&a.trim())?a.trim():i.split("_").map(t=>t.charAt(0).toUpperCase()+t.slice(1)).join(" ")}export{r as C,p as a,o as b,b as f};
