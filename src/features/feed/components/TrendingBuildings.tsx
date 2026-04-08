@@ -12,7 +12,7 @@ interface TrendingBuilding {
   country: string | null;
   slug: string | null;
   short_id: number | null;
-  main_image_url: string | null;
+  hero_image_url: string | null;
   visitCount: number;
 }
 
@@ -27,7 +27,7 @@ interface BuildingRow {
   country: string | null;
   slug: string | null;
   short_id: number | null;
-  main_image_url: string | null;
+  hero_image_url: string | null;
 }
 
 async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
@@ -60,7 +60,7 @@ async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
   // Step 3: fetch building details for the top IDs
   const { data: buildingRows, error: buildingError } = await supabase
     .from("buildings")
-    .select("id, name, city, country, slug, short_id, main_image_url")
+    .select("id, name, city, country, slug, short_id, hero_image_url")
     .in("id", topIds);
 
   if (buildingError) throw buildingError;
@@ -119,7 +119,7 @@ export function TrendingBuildings() {
             </p>
           )
           : buildings.map((building, index) => {
-              const imageUrl = getBuildingImageUrl(building.main_image_url);
+              const imageUrl = getBuildingImageUrl(building.hero_image_url);
               const href = `/building/${building.id}/${building.slug ?? "details"}`;
               return (
                 <Link

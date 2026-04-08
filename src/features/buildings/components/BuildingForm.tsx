@@ -48,6 +48,8 @@ const ACCESS_COST_OPTIONS = [
 
 export interface BuildingFormData {
   name: string;
+  /** URL slug from `check_slug_availability` / collision suffix (create + edit flows). */
+  slug?: string;
   alt_name?: string | null;
   aliases?: string[];
   hero_image_url?: string | null;
@@ -122,7 +124,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
 
       const { data, error } = await supabase.rpc('check_slug_availability', {
         target_slug: baseSlug,
-        exclude_id: buildingId || null,
+        ...(buildingId ? { exclude_id: buildingId } : {}),
       });
 
       if (error) {

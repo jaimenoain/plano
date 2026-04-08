@@ -1,5 +1,3 @@
-import type { PlanoPublicFunctions, PlanoPublicTables } from "./plano-tables.types"
-
 export type Json =
   | string
   | number
@@ -8,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-type DatabaseCore = {
+export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
@@ -16,56 +14,168 @@ type DatabaseCore = {
   }
   public: {
     Tables: {
-      admin_diagnostic_logs: {
+      admin_audit_logs: {
         Row: {
+          action_type: string
+          admin_id: string
           created_at: string | null
-          error_type: string
+          details: Json | null
           id: string
-          message: string
-          stack_trace: string | null
-          url: string | null
-          user_agent: string | null
-          user_id: string | null
+          target_id: string
+          target_type: string
         }
         Insert: {
+          action_type: string
+          admin_id: string
           created_at?: string | null
-          error_type: string
+          details?: Json | null
           id?: string
-          message: string
-          stack_trace?: string | null
-          url?: string | null
-          user_agent?: string | null
-          user_id?: string | null
+          target_id: string
+          target_type: string
         }
         Update: {
+          action_type?: string
+          admin_id?: string
           created_at?: string | null
-          error_type?: string
+          details?: Json | null
           id?: string
-          message?: string
-          stack_trace?: string | null
-          url?: string | null
-          user_agent?: string | null
-          user_id?: string | null
+          target_id?: string
+          target_type?: string
         }
         Relationships: []
       }
-      app_config: {
+      allowed_emails: {
         Row: {
-          description: string | null
-          key: string
-          value: string | null
+          created_at: string | null
+          email: string
+          first_name: string | null
+          id: string
         }
         Insert: {
-          description?: string | null
-          key: string
-          value?: string | null
+          created_at?: string | null
+          email: string
+          first_name?: string | null
+          id?: string
         }
         Update: {
-          description?: string | null
-          key?: string
-          value?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
         }
         Relationships: []
+      }
+      architect_claims: {
+        Row: {
+          architect_id: string
+          created_at: string
+          id: string
+          proof_email: string
+          resolved_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          architect_id: string
+          created_at?: string
+          id?: string
+          proof_email: string
+          resolved_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          architect_id?: string
+          created_at?: string
+          id?: string
+          proof_email?: string
+          resolved_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "architect_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      architectural_styles: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      attribute_groups: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      attributes: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attributes_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "attribute_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blocks: {
         Row: {
@@ -100,6 +210,673 @@ type DatabaseCore = {
           {
             foreignKeyName: "blocks_blocker_id_fkey"
             columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      building_attributes: {
+        Row: {
+          attribute_id: string
+          building_id: string
+        }
+        Insert: {
+          attribute_id: string
+          building_id: string
+        }
+        Update: {
+          attribute_id?: string
+          building_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_attributes_attribute_id_fkey"
+            columns: ["attribute_id"]
+            isOneToOne: false
+            referencedRelation: "attributes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_attributes_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      building_audit_logs: {
+        Row: {
+          building_id: string
+          created_at: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          operation: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          building_id: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          building_id?: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_audit_logs_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      building_credits: {
+        Row: {
+          added_by_user_id: string | null
+          building_id: string
+          company_id: string | null
+          contribution_notes: string | null
+          created_at: string
+          credit_tier: Database["public"]["Enums"]["credit_tier_enum"]
+          display_order: number
+          flag_notes: string | null
+          flag_reason:
+            | Database["public"]["Enums"]["credit_flag_reason_enum"]
+            | null
+          flagged_at: string | null
+          flagged_by_user_id: string | null
+          flagged_from_status:
+            | Database["public"]["Enums"]["credit_status_enum"]
+            | null
+          id: string
+          is_lead: boolean
+          person_id: string | null
+          project_url: string | null
+          role: Database["public"]["Enums"]["credit_role_enum"]
+          role_custom: string | null
+          status: Database["public"]["Enums"]["credit_status_enum"]
+          updated_at: string
+          year_from: number | null
+          year_to: number | null
+        }
+        Insert: {
+          added_by_user_id?: string | null
+          building_id: string
+          company_id?: string | null
+          contribution_notes?: string | null
+          created_at?: string
+          credit_tier?: Database["public"]["Enums"]["credit_tier_enum"]
+          display_order: number
+          flag_notes?: string | null
+          flag_reason?:
+            | Database["public"]["Enums"]["credit_flag_reason_enum"]
+            | null
+          flagged_at?: string | null
+          flagged_by_user_id?: string | null
+          flagged_from_status?:
+            | Database["public"]["Enums"]["credit_status_enum"]
+            | null
+          id?: string
+          is_lead?: boolean
+          person_id?: string | null
+          project_url?: string | null
+          role: Database["public"]["Enums"]["credit_role_enum"]
+          role_custom?: string | null
+          status?: Database["public"]["Enums"]["credit_status_enum"]
+          updated_at?: string
+          year_from?: number | null
+          year_to?: number | null
+        }
+        Update: {
+          added_by_user_id?: string | null
+          building_id?: string
+          company_id?: string | null
+          contribution_notes?: string | null
+          created_at?: string
+          credit_tier?: Database["public"]["Enums"]["credit_tier_enum"]
+          display_order?: number
+          flag_notes?: string | null
+          flag_reason?:
+            | Database["public"]["Enums"]["credit_flag_reason_enum"]
+            | null
+          flagged_at?: string | null
+          flagged_by_user_id?: string | null
+          flagged_from_status?:
+            | Database["public"]["Enums"]["credit_status_enum"]
+            | null
+          id?: string
+          is_lead?: boolean
+          person_id?: string | null
+          project_url?: string | null
+          role?: Database["public"]["Enums"]["credit_role_enum"]
+          role_custom?: string | null
+          status?: Database["public"]["Enums"]["credit_status_enum"]
+          updated_at?: string
+          year_from?: number | null
+          year_to?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_credits_added_by_user_id_fkey"
+            columns: ["added_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_credits_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_credits_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_credits_flagged_by_user_id_fkey"
+            columns: ["flagged_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_credits_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      building_functional_typologies: {
+        Row: {
+          building_id: string
+          typology_id: string
+        }
+        Insert: {
+          building_id: string
+          typology_id: string
+        }
+        Update: {
+          building_id?: string
+          typology_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_functional_typologies_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_functional_typologies_typology_id_fkey"
+            columns: ["typology_id"]
+            isOneToOne: false
+            referencedRelation: "functional_typologies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      building_styles: {
+        Row: {
+          building_id: string
+          created_at: string | null
+          style_id: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string | null
+          style_id: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string | null
+          style_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_styles_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_styles_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "architectural_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buildings: {
+        Row: {
+          access: Database["public"]["Enums"]["building_access"] | null
+          access_cost:
+            | Database["public"]["Enums"]["building_access_cost"]
+            | null
+          access_level:
+            | Database["public"]["Enums"]["building_access_level"]
+            | null
+          access_logistics:
+            | Database["public"]["Enums"]["building_access_logistics"]
+            | null
+          access_notes: string | null
+          address: string | null
+          aliases: string[]
+          alt_name: string | null
+          architect_statement: string | null
+          city: string | null
+          community_preview_url: string | null
+          country: string | null
+          created_at: string | null
+          created_by: string | null
+          functional_category_id: string | null
+          hero_image_id: string | null
+          hero_image_url: string | null
+          id: string
+          import_id: string | null
+          is_deleted: boolean | null
+          is_verified: boolean | null
+          location: unknown
+          location_precision: Database["public"]["Enums"]["location_precision"]
+          merged_into_id: string | null
+          name: string
+          popularity_score: number
+          short_id: number
+          slug: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["building_status"] | null
+          tier_rank: Database["public"]["Enums"]["building_tier_rank"] | null
+          updated_at: string
+          year_completed: number | null
+        }
+        Insert: {
+          access?: Database["public"]["Enums"]["building_access"] | null
+          access_cost?:
+            | Database["public"]["Enums"]["building_access_cost"]
+            | null
+          access_level?:
+            | Database["public"]["Enums"]["building_access_level"]
+            | null
+          access_logistics?:
+            | Database["public"]["Enums"]["building_access_logistics"]
+            | null
+          access_notes?: string | null
+          address?: string | null
+          aliases?: string[]
+          alt_name?: string | null
+          architect_statement?: string | null
+          city?: string | null
+          community_preview_url?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          functional_category_id?: string | null
+          hero_image_id?: string | null
+          hero_image_url?: string | null
+          id?: string
+          import_id?: string | null
+          is_deleted?: boolean | null
+          is_verified?: boolean | null
+          location: unknown
+          location_precision?: Database["public"]["Enums"]["location_precision"]
+          merged_into_id?: string | null
+          name: string
+          popularity_score?: number
+          short_id?: number
+          slug?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["building_status"] | null
+          tier_rank?: Database["public"]["Enums"]["building_tier_rank"] | null
+          updated_at?: string
+          year_completed?: number | null
+        }
+        Update: {
+          access?: Database["public"]["Enums"]["building_access"] | null
+          access_cost?:
+            | Database["public"]["Enums"]["building_access_cost"]
+            | null
+          access_level?:
+            | Database["public"]["Enums"]["building_access_level"]
+            | null
+          access_logistics?:
+            | Database["public"]["Enums"]["building_access_logistics"]
+            | null
+          access_notes?: string | null
+          address?: string | null
+          aliases?: string[]
+          alt_name?: string | null
+          architect_statement?: string | null
+          city?: string | null
+          community_preview_url?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          functional_category_id?: string | null
+          hero_image_id?: string | null
+          hero_image_url?: string | null
+          id?: string
+          import_id?: string | null
+          is_deleted?: boolean | null
+          is_verified?: boolean | null
+          location?: unknown
+          location_precision?: Database["public"]["Enums"]["location_precision"]
+          merged_into_id?: string | null
+          name?: string
+          popularity_score?: number
+          short_id?: number
+          slug?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["building_status"] | null
+          tier_rank?: Database["public"]["Enums"]["building_tier_rank"] | null
+          updated_at?: string
+          year_completed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buildings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buildings_functional_category_id_fkey"
+            columns: ["functional_category_id"]
+            isOneToOne: false
+            referencedRelation: "functional_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buildings_hero_image_id_fkey"
+            columns: ["hero_image_id"]
+            isOneToOne: false
+            referencedRelation: "review_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buildings_merged_into_id_fkey"
+            columns: ["merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collection_contributors: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_contributors_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_contributors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collection_favorites: {
+        Row: {
+          collection_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_favorites_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collection_items: {
+        Row: {
+          building_id: string
+          collection_id: string
+          created_at: string
+          custom_category_id: string | null
+          id: string
+          is_hidden: boolean
+          note: string | null
+          order_index: number
+        }
+        Insert: {
+          building_id: string
+          collection_id: string
+          created_at?: string
+          custom_category_id?: string | null
+          id?: string
+          is_hidden?: boolean
+          note?: string | null
+          order_index?: number
+        }
+        Update: {
+          building_id?: string
+          collection_id?: string
+          created_at?: string
+          custom_category_id?: string | null
+          id?: string
+          is_hidden?: boolean
+          note?: string | null
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_items_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collection_markers: {
+        Row: {
+          address: string | null
+          category: string
+          collection_id: string
+          created_at: string
+          created_by: string
+          google_place_id: string | null
+          id: string
+          lat: number
+          lng: number
+          name: string
+          notes: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category: string
+          collection_id: string
+          created_at?: string
+          created_by: string
+          google_place_id?: string | null
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          notes?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string
+          collection_id?: string
+          created_at?: string
+          created_by?: string
+          google_place_id?: string | null
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          notes?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_markers_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          categorization_method: string | null
+          categorization_selected_members: string[] | null
+          created_at: string
+          custom_categories: Json | null
+          description: string | null
+          external_link: string | null
+          id: string
+          is_public: boolean
+          itinerary: Json | null
+          name: string
+          owner_id: string
+          rating_mode: string | null
+          rating_source_user_id: string | null
+          show_community_images: boolean
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          categorization_method?: string | null
+          categorization_selected_members?: string[] | null
+          created_at?: string
+          custom_categories?: Json | null
+          description?: string | null
+          external_link?: string | null
+          id?: string
+          is_public?: boolean
+          itinerary?: Json | null
+          name: string
+          owner_id: string
+          rating_mode?: string | null
+          rating_source_user_id?: string | null
+          show_community_images?: boolean
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          categorization_method?: string | null
+          categorization_selected_members?: string[] | null
+          created_at?: string
+          custom_categories?: Json | null
+          description?: string | null
+          external_link?: string | null
+          id?: string
+          is_public?: boolean
+          itinerary?: Json | null
+          name?: string
+          owner_id?: string
+          rating_mode?: string | null
+          rating_source_user_id?: string | null
+          show_community_images?: boolean
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_rating_source_user_id_fkey"
+            columns: ["rating_source_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -147,41 +924,6 @@ type DatabaseCore = {
           content: string
           created_at: string
           id: string
-          resource_id: string
-          resource_type: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          resource_id: string
-          resource_type: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          resource_id?: string
-          resource_type?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comments_new_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      comments_old: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
           interaction_id: string
           user_id: string
         }
@@ -201,17 +943,10 @@ type DatabaseCore = {
         }
         Relationships: [
           {
-            foreignKeyName: "comments_interaction_id_fkey"
+            foreignKeyName: "comments_user_building_id_fkey"
             columns: ["interaction_id"]
             isOneToOne: false
-            referencedRelation: "log"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_interaction_id_fkey"
-            columns: ["interaction_id"]
-            isOneToOne: false
-            referencedRelation: "user_films"
+            referencedRelation: "user_buildings"
             referencedColumns: ["id"]
           },
           {
@@ -223,170 +958,439 @@ type DatabaseCore = {
           },
         ]
       }
-      error_logs: {
+      companies: {
         Row: {
-          context: Json | null
-          created_at: string | null
+          bio: string | null
+          claim_status: Database["public"]["Enums"]["person_claim_status"]
+          country: string | null
+          created_at: string
+          dissolved_year: number | null
+          founded_year: number | null
           id: string
-          message: string
-          resolved: boolean | null
-          severity: string
-          stack_trace: string | null
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+          verified_domain: string | null
+          website: string | null
         }
         Insert: {
-          context?: Json | null
-          created_at?: string | null
-          id?: string
-          message: string
-          resolved?: boolean | null
-          severity: string
-          stack_trace?: string | null
+          bio?: string | null
+          claim_status?: Database["public"]["Enums"]["person_claim_status"]
+          country?: string | null
+          created_at?: string
+          dissolved_year?: number | null
+          founded_year?: number | null
+          id: string
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+          verified_domain?: string | null
+          website?: string | null
         }
         Update: {
-          context?: Json | null
-          created_at?: string | null
+          bio?: string | null
+          claim_status?: Database["public"]["Enums"]["person_claim_status"]
+          country?: string | null
+          created_at?: string
+          dissolved_year?: number | null
+          founded_year?: number | null
           id?: string
-          message?: string
-          resolved?: boolean | null
-          severity?: string
-          stack_trace?: string | null
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+          verified_domain?: string | null
+          website?: string | null
         }
         Relationships: []
       }
-      film_availability: {
+      company_claim_disputes: {
         Row: {
-          buy: Json | null
-          country_code: string
-          film_id: string
+          company_id: string
+          created_at: string
+          disputed_by_user_id: string
+          evidence_url: string | null
           id: string
-          last_updated: string | null
-          rent: Json | null
-          stream: Json | null
+          reason: string
+          status: Database["public"]["Enums"]["company_claim_dispute_status"]
         }
         Insert: {
-          buy?: Json | null
-          country_code: string
-          film_id: string
+          company_id: string
+          created_at?: string
+          disputed_by_user_id: string
+          evidence_url?: string | null
           id?: string
-          last_updated?: string | null
-          rent?: Json | null
-          stream?: Json | null
+          reason: string
+          status?: Database["public"]["Enums"]["company_claim_dispute_status"]
         }
         Update: {
-          buy?: Json | null
-          country_code?: string
-          film_id?: string
+          company_id?: string
+          created_at?: string
+          disputed_by_user_id?: string
+          evidence_url?: string | null
           id?: string
-          last_updated?: string | null
-          rent?: Json | null
-          stream?: Json | null
+          reason?: string
+          status?: Database["public"]["Enums"]["company_claim_dispute_status"]
         }
         Relationships: [
           {
-            foreignKeyName: "film_availability_film_id_fkey"
-            columns: ["film_id"]
+            foreignKeyName: "company_claim_disputes_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "films"
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_claim_disputes_disputed_by_user_id_fkey"
+            columns: ["disputed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      films: {
+      company_claim_verification_tokens: {
         Row: {
-          backdrop_path: string | null
-          community_rating_count: number | null
-          community_vote_average: number | null
-          countries: Json | null
-          credits: Json | null
-          genre_ids: number[] | null
+          company_id: string
+          consumed_at: string | null
+          created_at: string
+          email_normalized: string
+          expires_at: string
           id: string
-          imdb_id: string | null
-          media_type: string
-          original_language: string | null
-          original_title: string | null
-          overview: string | null
-          poster_path: string | null
-          release_date: string | null
-          runtime: number | null
-          spoken_languages: Json | null
-          title: string
-          tmdb_id: number | null
-          trailer: string | null
-          vote_average: number | null
-          watch_providers: Json | null
+          requester_user_id: string
+          token_hash: string
         }
         Insert: {
-          backdrop_path?: string | null
-          community_rating_count?: number | null
-          community_vote_average?: number | null
-          countries?: Json | null
-          credits?: Json | null
-          genre_ids?: number[] | null
+          company_id: string
+          consumed_at?: string | null
+          created_at?: string
+          email_normalized: string
+          expires_at: string
           id?: string
-          imdb_id?: string | null
-          media_type?: string
-          original_language?: string | null
-          original_title?: string | null
-          overview?: string | null
-          poster_path?: string | null
-          release_date?: string | null
-          runtime?: number | null
-          spoken_languages?: Json | null
-          title: string
-          tmdb_id?: number | null
-          trailer?: string | null
-          vote_average?: number | null
-          watch_providers?: Json | null
+          requester_user_id: string
+          token_hash: string
         }
         Update: {
-          backdrop_path?: string | null
-          community_rating_count?: number | null
-          community_vote_average?: number | null
-          countries?: Json | null
-          credits?: Json | null
-          genre_ids?: number[] | null
+          company_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          email_normalized?: string
+          expires_at?: string
           id?: string
-          imdb_id?: string | null
-          media_type?: string
-          original_language?: string | null
-          original_title?: string | null
-          overview?: string | null
-          poster_path?: string | null
-          release_date?: string | null
-          runtime?: number | null
-          spoken_languages?: Json | null
-          title?: string
-          tmdb_id?: number | null
-          trailer?: string | null
-          vote_average?: number | null
-          watch_providers?: Json | null
+          requester_user_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_claim_verification_tokens_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_claim_verification_tokens_requester_user_id_fkey"
+            columns: ["requester_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_steward_invites: {
+        Row: {
+          company_id: string
+          consumed_at: string | null
+          created_at: string
+          email_normalized: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          consumed_at?: string | null
+          created_at?: string
+          email_normalized: string
+          expires_at: string
+          id?: string
+          invited_by?: string | null
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          email_normalized?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_steward_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_steward_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_steward_request_approval_tokens: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          request_id: string
+          token_hash: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          request_id: string
+          token_hash: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          request_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_steward_request_approval_tokens_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "company_steward_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_steward_requests: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          message: string
+          requester_notified_at: string | null
+          requester_user_id: string
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["company_steward_request_status"]
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          message?: string
+          requester_notified_at?: string | null
+          requester_user_id: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["company_steward_request_status"]
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          requester_notified_at?: string | null
+          requester_user_id?: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["company_steward_request_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_steward_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_steward_requests_requester_user_id_fkey"
+            columns: ["requester_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_stewards: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["company_steward_role"]
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role: Database["public"]["Enums"]["company_steward_role"]
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["company_steward_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_stewards_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_stewards_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_stewards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_notification_log: {
+        Row: {
+          credit_id: string
+          id: string
+          recipient_hash: string
+          sent_at: string
+          token_hash: string
+        }
+        Insert: {
+          credit_id: string
+          id?: string
+          recipient_hash: string
+          sent_at?: string
+          token_hash: string
+        }
+        Update: {
+          credit_id?: string
+          id?: string
+          recipient_hash?: string
+          sent_at?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notification_log_credit_id_fkey"
+            columns: ["credit_id"]
+            isOneToOne: false
+            referencedRelation: "building_credits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_removal_tokens: {
+        Row: {
+          credit_id: string
+          expires_at: string
+          id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          credit_id: string
+          expires_at?: string
+          id?: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          credit_id?: string
+          expires_at?: string
+          id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_removal_tokens_credit_id_fkey"
+            columns: ["credit_id"]
+            isOneToOne: false
+            referencedRelation: "building_credits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deletion_jobs: {
+        Row: {
+          bucket_name: string
+          created_at: string | null
+          id: string
+          logs: Json | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bucket_name?: string
+          created_at?: string | null
+          id?: string
+          logs?: Json | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bucket_name?: string
+          created_at?: string | null
+          id?: string
+          logs?: Json | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
       follows: {
         Row: {
-          compatibility_score: number | null
           created_at: string
           follower_id: string
           following_id: string
-          is_close_friend: boolean | null
-          last_synced_at: string | null
+          is_close_friend: boolean
         }
         Insert: {
-          compatibility_score?: number | null
           created_at?: string
           follower_id: string
           following_id: string
-          is_close_friend?: boolean | null
-          last_synced_at?: string | null
+          is_close_friend?: boolean
         }
         Update: {
-          compatibility_score?: number | null
           created_at?: string
           follower_id?: string
           following_id?: string
-          is_close_friend?: boolean | null
-          last_synced_at?: string | null
+          is_close_friend?: boolean
         }
         Relationships: [
           {
@@ -405,403 +1409,169 @@ type DatabaseCore = {
           },
         ]
       }
-      global_stats: {
+      functional_categories: {
         Row: {
-          key: string
-          last_updated: string | null
-          value: number | null
+          created_at: string | null
+          id: string
+          name: string
+          slug: string
         }
         Insert: {
-          key: string
-          last_updated?: string | null
-          value?: number | null
+          created_at?: string | null
+          id?: string
+          name: string
+          slug: string
         }
         Update: {
-          key?: string
-          last_updated?: string | null
-          value?: number | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          slug?: string
         }
         Relationships: []
       }
-      group_backlog_items: {
-        Row: {
-          admin_note: string | null
-          created_at: string | null
-          cycle_id: string | null
-          group_id: string
-          id: string
-          priority: string
-          status: string
-          tmdb_id: number
-          user_id: string
-        }
-        Insert: {
-          admin_note?: string | null
-          created_at?: string | null
-          cycle_id?: string | null
-          group_id: string
-          id?: string
-          priority?: string
-          status?: string
-          tmdb_id: number
-          user_id: string
-        }
-        Update: {
-          admin_note?: string | null
-          created_at?: string | null
-          cycle_id?: string | null
-          group_id?: string
-          id?: string
-          priority?: string
-          status?: string
-          tmdb_id?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_backlog_items_cycle_id_fkey"
-            columns: ["cycle_id"]
-            isOneToOne: false
-            referencedRelation: "group_cycles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_backlog_items_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_backlog_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      group_cycles: {
+      functional_typologies: {
         Row: {
           created_at: string | null
-          description: string | null
-          group_id: string
-          host_notes: string | null
           id: string
-          is_active: boolean | null
-          status: string | null
-          title: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          group_id: string
-          host_notes?: string | null
-          id?: string
-          is_active?: boolean | null
-          status?: string | null
-          title: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          group_id?: string
-          host_notes?: string | null
-          id?: string
-          is_active?: boolean | null
-          status?: string | null
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_cycles_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      group_members: {
-        Row: {
-          group_id: string
-          id: string
-          joined_at: string | null
-          note: string | null
-          role: string | null
-          status: string | null
-          user_id: string
-        }
-        Insert: {
-          group_id: string
-          id?: string
-          joined_at?: string | null
-          note?: string | null
-          role?: string | null
-          status?: string | null
-          user_id: string
-        }
-        Update: {
-          group_id?: string
-          id?: string
-          joined_at?: string | null
-          note?: string | null
-          role?: string | null
-          status?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_members_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      group_private_info: {
-        Row: {
-          group_id: string
-          home_base: string | null
-        }
-        Insert: {
-          group_id: string
-          home_base?: string | null
-        }
-        Update: {
-          group_id?: string
-          home_base?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_private_info_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: true
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      group_sessions: {
-        Row: {
-          announced_at: string | null
-          created_at: string | null
-          cycle_id: string | null
-          description: string | null
-          group_id: string
-          host_notes: string | null
-          id: string
-          location: string | null
-          meeting_link: string | null
-          resources: Json | null
-          session_date: string
-          session_timezone: string | null
-          session_type: string | null
-          status: string | null
-          title: string | null
-        }
-        Insert: {
-          announced_at?: string | null
-          created_at?: string | null
-          cycle_id?: string | null
-          description?: string | null
-          group_id: string
-          host_notes?: string | null
-          id?: string
-          location?: string | null
-          meeting_link?: string | null
-          resources?: Json | null
-          session_date: string
-          session_timezone?: string | null
-          session_type?: string | null
-          status?: string | null
-          title?: string | null
-        }
-        Update: {
-          announced_at?: string | null
-          created_at?: string | null
-          cycle_id?: string | null
-          description?: string | null
-          group_id?: string
-          host_notes?: string | null
-          id?: string
-          location?: string | null
-          meeting_link?: string | null
-          resources?: Json | null
-          session_date?: string
-          session_timezone?: string | null
-          session_type?: string | null
-          status?: string | null
-          title?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_sessions_cycle_id_fkey"
-            columns: ["cycle_id"]
-            isOneToOne: false
-            referencedRelation: "group_cycles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_sessions_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      group_stats: {
-        Row: {
-          compatibility: Json
-          group_id: string
-          last_error: string | null
-          members: Json
-          scope: string
-          summary: Json
-          updated_at: string | null
-        }
-        Insert: {
-          compatibility?: Json
-          group_id: string
-          last_error?: string | null
-          members?: Json
-          scope?: string
-          summary?: Json
-          updated_at?: string | null
-        }
-        Update: {
-          compatibility?: Json
-          group_id?: string
-          last_error?: string | null
-          members?: Json
-          scope?: string
-          summary?: Json
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_stats_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      group_stats_queue: {
-        Row: {
-          created_at: string | null
-          group_id: string
-          id: number
-          last_update_request: string | null
-          processing_status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          group_id: string
-          id?: number
-          last_update_request?: string | null
-          processing_status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          group_id?: string
-          id?: number
-          last_update_request?: string | null
-          processing_status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_stats_queue_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      groups: {
-        Row: {
-          active_tabs: string[] | null
-          announce_email_number: number | null
-          announce_email_relative: string | null
-          announce_email_unit: string | null
-          cover_url: string | null
-          created_at: string | null
-          created_by: string
-          description: string | null
-          id: string
-          is_public: boolean | null
-          legacy_session_time: string | null
-          links: Json | null
           name: string
-          ranking_cache: Json | null
-          session_time: string | null
-          session_timezone: string | null
+          parent_category_id: string
           slug: string
-          stats_cache: Json | null
         }
         Insert: {
-          active_tabs?: string[] | null
-          announce_email_number?: number | null
-          announce_email_relative?: string | null
-          announce_email_unit?: string | null
-          cover_url?: string | null
           created_at?: string | null
-          created_by: string
-          description?: string | null
           id?: string
-          is_public?: boolean | null
-          legacy_session_time?: string | null
-          links?: Json | null
           name: string
-          ranking_cache?: Json | null
-          session_time?: string | null
-          session_timezone?: string | null
+          parent_category_id: string
           slug: string
-          stats_cache?: Json | null
         }
         Update: {
-          active_tabs?: string[] | null
-          announce_email_number?: number | null
-          announce_email_relative?: string | null
-          announce_email_unit?: string | null
-          cover_url?: string | null
           created_at?: string | null
-          created_by?: string
-          description?: string | null
           id?: string
-          is_public?: boolean | null
-          legacy_session_time?: string | null
-          links?: Json | null
           name?: string
-          ranking_cache?: Json | null
-          session_time?: string | null
-          session_timezone?: string | null
+          parent_category_id?: string
           slug?: string
-          stats_cache?: Json | null
         }
         Relationships: [
           {
-            foreignKeyName: "groups_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "functional_typologies_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "functional_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          image_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          image_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          image_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_comments_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "review_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_comments_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      image_likes: {
+        Row: {
+          created_at: string
+          id: string
+          image_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_likes_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "review_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_buildings: {
+        Row: {
+          city: string | null
+          country: string | null
+          import_id: string
+          latitude: number | null
+          location_precision: string | null
+          longitude: number | null
+          name: string | null
+          source: string | null
+          year_completed: number | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          import_id: string
+          latitude?: number | null
+          location_precision?: string | null
+          longitude?: number | null
+          name?: string | null
+          source?: string | null
+          year_completed?: number | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          import_id?: string
+          latitude?: number | null
+          location_precision?: string | null
+          longitude?: number | null
+          name?: string | null
+          source?: string | null
+          year_completed?: number | null
+        }
+        Relationships: []
       }
       likes: {
         Row: {
@@ -824,21 +1594,50 @@ type DatabaseCore = {
         }
         Relationships: [
           {
-            foreignKeyName: "likes_interaction_id_fkey"
+            foreignKeyName: "likes_user_building_id_fkey"
             columns: ["interaction_id"]
             isOneToOne: false
-            referencedRelation: "log"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "likes_interaction_id_fkey"
-            columns: ["interaction_id"]
-            isOneToOne: false
-            referencedRelation: "user_films"
+            referencedRelation: "user_buildings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      link_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          link_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          link_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          link_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_likes_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "review_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "link_likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -875,40 +1674,37 @@ type DatabaseCore = {
       notifications: {
         Row: {
           actor_id: string
+          architect_id: string | null
           created_at: string
-          group_id: string | null
           id: string
           is_read: boolean
           metadata: Json | null
           recommendation_id: string | null
           resource_id: string | null
-          session_id: string | null
           type: string
           user_id: string
         }
         Insert: {
           actor_id: string
+          architect_id?: string | null
           created_at?: string
-          group_id?: string | null
           id?: string
           is_read?: boolean
           metadata?: Json | null
           recommendation_id?: string | null
           resource_id?: string | null
-          session_id?: string | null
           type: string
           user_id: string
         }
         Update: {
           actor_id?: string
+          architect_id?: string | null
           created_at?: string
-          group_id?: string | null
           id?: string
           is_read?: boolean
           metadata?: Json | null
           recommendation_id?: string | null
           resource_id?: string | null
-          session_id?: string | null
           type?: string
           user_id?: string
         }
@@ -918,13 +1714,6 @@ type DatabaseCore = {
             columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
             referencedColumns: ["id"]
           },
           {
@@ -938,21 +1727,7 @@ type DatabaseCore = {
             foreignKeyName: "notifications_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
-            referencedRelation: "log"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "user_films"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "group_sessions"
+            referencedRelation: "user_buildings"
             referencedColumns: ["id"]
           },
           {
@@ -964,244 +1739,106 @@ type DatabaseCore = {
           },
         ]
       }
-      poll_options: {
+      people: {
         Row: {
-          content_type: string
+          avatar_url: string | null
+          bio: string | null
+          birth_year: number | null
+          claim_status: Database["public"]["Enums"]["person_claim_status"]
+          claimed_by_user_id: string | null
+          created_at: string
+          death_year: number | null
           id: string
-          is_correct: boolean | null
-          label: string | null
-          media_url: string | null
-          option_text: string | null
-          order_index: number | null
-          question_id: string
-          tmdb_id: number | null
+          location_note: string | null
+          name: string
+          nationality: string | null
+          slug: string
+          updated_at: string
+          website: string | null
         }
         Insert: {
-          content_type?: string
-          id?: string
-          is_correct?: boolean | null
-          label?: string | null
-          media_url?: string | null
-          option_text?: string | null
-          order_index?: number | null
-          question_id: string
-          tmdb_id?: number | null
+          avatar_url?: string | null
+          bio?: string | null
+          birth_year?: number | null
+          claim_status?: Database["public"]["Enums"]["person_claim_status"]
+          claimed_by_user_id?: string | null
+          created_at?: string
+          death_year?: number | null
+          id: string
+          location_note?: string | null
+          name: string
+          nationality?: string | null
+          slug: string
+          updated_at?: string
+          website?: string | null
         }
         Update: {
-          content_type?: string
+          avatar_url?: string | null
+          bio?: string | null
+          birth_year?: number | null
+          claim_status?: Database["public"]["Enums"]["person_claim_status"]
+          claimed_by_user_id?: string | null
+          created_at?: string
+          death_year?: number | null
           id?: string
-          is_correct?: boolean | null
-          label?: string | null
-          media_url?: string | null
-          option_text?: string | null
-          order_index?: number | null
-          question_id?: string
-          tmdb_id?: number | null
+          location_note?: string | null
+          name?: string
+          nationality?: string | null
+          slug?: string
+          updated_at?: string
+          website?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "poll_options_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "poll_questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      poll_questions: {
-        Row: {
-          allow_custom_answer: boolean | null
-          created_at: string | null
-          id: string
-          is_live_active: boolean | null
-          is_revealed: boolean | null
-          max_selections: number | null
-          media_data: Json | null
-          media_type: string | null
-          media_url: string | null
-          min_selections: number | null
-          order_index: number | null
-          poll_id: string
-          question_text: string
-          response_type: string
-        }
-        Insert: {
-          allow_custom_answer?: boolean | null
-          created_at?: string | null
-          id?: string
-          is_live_active?: boolean | null
-          is_revealed?: boolean | null
-          max_selections?: number | null
-          media_data?: Json | null
-          media_type?: string | null
-          media_url?: string | null
-          min_selections?: number | null
-          order_index?: number | null
-          poll_id: string
-          question_text: string
-          response_type?: string
-        }
-        Update: {
-          allow_custom_answer?: boolean | null
-          created_at?: string | null
-          id?: string
-          is_live_active?: boolean | null
-          is_revealed?: boolean | null
-          max_selections?: number | null
-          media_data?: Json | null
-          media_type?: string | null
-          media_url?: string | null
-          min_selections?: number | null
-          order_index?: number | null
-          poll_id?: string
-          question_text?: string
-          response_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "poll_questions_poll_id_fkey"
-            columns: ["poll_id"]
-            isOneToOne: false
-            referencedRelation: "polls"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      poll_votes: {
-        Row: {
-          created_at: string | null
-          custom_answer: string | null
-          id: string
-          option_id: string | null
-          poll_id: string
-          question_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          custom_answer?: string | null
-          id?: string
-          option_id?: string | null
-          poll_id: string
-          question_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          custom_answer?: string | null
-          id?: string
-          option_id?: string | null
-          poll_id?: string
-          question_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "poll_votes_option_id_fkey"
-            columns: ["option_id"]
-            isOneToOne: false
-            referencedRelation: "poll_options"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "poll_votes_poll_id_fkey"
-            columns: ["poll_id"]
-            isOneToOne: false
-            referencedRelation: "polls"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "poll_votes_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "poll_questions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "poll_votes_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "people_claimed_by_user_id_fkey"
+            columns: ["claimed_by_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      polls: {
+      person_company_affiliations: {
         Row: {
-          allow_multiple_votes: boolean | null
-          created_at: string | null
-          created_by: string
-          cycle_id: string | null
-          description: string | null
-          group_id: string
+          company_id: string
+          created_at: string
           id: string
-          session_id: string | null
-          show_results_before_close: boolean | null
-          slug: string | null
-          status: string
-          title: string
-          type: string
-          updated_at: string | null
+          person_id: string
+          role_note: string | null
+          year_from: number | null
+          year_to: number | null
         }
         Insert: {
-          allow_multiple_votes?: boolean | null
-          created_at?: string | null
-          created_by: string
-          cycle_id?: string | null
-          description?: string | null
-          group_id: string
+          company_id: string
+          created_at?: string
           id?: string
-          session_id?: string | null
-          show_results_before_close?: boolean | null
-          slug?: string | null
-          status?: string
-          title: string
-          type?: string
-          updated_at?: string | null
+          person_id: string
+          role_note?: string | null
+          year_from?: number | null
+          year_to?: number | null
         }
         Update: {
-          allow_multiple_votes?: boolean | null
-          created_at?: string | null
-          created_by?: string
-          cycle_id?: string | null
-          description?: string | null
-          group_id?: string
+          company_id?: string
+          created_at?: string
           id?: string
-          session_id?: string | null
-          show_results_before_close?: boolean | null
-          slug?: string | null
-          status?: string
-          title?: string
-          type?: string
-          updated_at?: string | null
+          person_id?: string
+          role_note?: string | null
+          year_from?: number | null
+          year_to?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "polls_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "person_company_affiliations_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "polls_cycle_id_fkey"
-            columns: ["cycle_id"]
+            foreignKeyName: "person_company_affiliations_person_id_fkey"
+            columns: ["person_id"]
             isOneToOne: false
-            referencedRelation: "group_cycles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "polls_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "polls_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "group_sessions"
+            referencedRelation: "people"
             referencedColumns: ["id"]
           },
         ]
@@ -1212,20 +1849,14 @@ type DatabaseCore = {
           bio: string | null
           country: string | null
           created_at: string
-          email_session_verdicts: boolean | null
           favorites: Json | null
-          first_name: string | null
           id: string
           invited_by: string | null
-          language: string | null
-          last_digest_sent_at: string | null
-          last_name: string | null
           last_online: string | null
           location: string | null
           notification_preferences: Json | null
+          profile_sections: Json | null
           role: string | null
-          show_favorites: boolean | null
-          show_highlights: boolean | null
           subscribed_platforms: string[] | null
           updated_at: string | null
           username: string | null
@@ -1236,20 +1867,14 @@ type DatabaseCore = {
           bio?: string | null
           country?: string | null
           created_at?: string
-          email_session_verdicts?: boolean | null
           favorites?: Json | null
-          first_name?: string | null
           id: string
           invited_by?: string | null
-          language?: string | null
-          last_digest_sent_at?: string | null
-          last_name?: string | null
           last_online?: string | null
           location?: string | null
           notification_preferences?: Json | null
+          profile_sections?: Json | null
           role?: string | null
-          show_favorites?: boolean | null
-          show_highlights?: boolean | null
           subscribed_platforms?: string[] | null
           updated_at?: string | null
           username?: string | null
@@ -1260,20 +1885,14 @@ type DatabaseCore = {
           bio?: string | null
           country?: string | null
           created_at?: string
-          email_session_verdicts?: boolean | null
           favorites?: Json | null
-          first_name?: string | null
           id?: string
           invited_by?: string | null
-          language?: string | null
-          last_digest_sent_at?: string | null
-          last_name?: string | null
           last_online?: string | null
           location?: string | null
           notification_preferences?: Json | null
+          profile_sections?: Json | null
           role?: string | null
-          show_favorites?: boolean | null
-          show_highlights?: boolean | null
           subscribed_platforms?: string[] | null
           updated_at?: string | null
           username?: string | null
@@ -1375,6 +1994,102 @@ type DatabaseCore = {
           },
         ]
       }
+      review_images: {
+        Row: {
+          created_at: string
+          height_px: number | null
+          id: string
+          is_generated: boolean | null
+          is_official: boolean | null
+          likes_count: number | null
+          review_id: string
+          storage_path: string
+          user_id: string
+          width_px: number | null
+        }
+        Insert: {
+          created_at?: string
+          height_px?: number | null
+          id?: string
+          is_generated?: boolean | null
+          is_official?: boolean | null
+          likes_count?: number | null
+          review_id: string
+          storage_path: string
+          user_id: string
+          width_px?: number | null
+        }
+        Update: {
+          created_at?: string
+          height_px?: number | null
+          id?: string
+          is_generated?: boolean | null
+          is_official?: boolean | null
+          likes_count?: number | null
+          review_id?: string
+          storage_path?: string
+          user_id?: string
+          width_px?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_images_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "user_buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_images_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          review_id: string
+          title: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          review_id: string
+          title?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          review_id?: string
+          title?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_links_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "user_buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_views: {
         Row: {
           created_at: string
@@ -1410,128 +2125,56 @@ type DatabaseCore = {
           },
         ]
       }
-      search_cache: {
+      spatial_ref_sys: {
         Row: {
-          created_at: string
-          query_hash: string
-          results: Json
+          auth_name: string | null
+          auth_srid: number | null
+          proj4text: string | null
+          srid: number
+          srtext: string | null
         }
         Insert: {
-          created_at?: string
-          query_hash: string
-          results: Json
+          auth_name?: string | null
+          auth_srid?: number | null
+          proj4text?: string | null
+          srid: number
+          srtext?: string | null
         }
         Update: {
-          created_at?: string
-          query_hash?: string
-          results?: Json
+          auth_name?: string | null
+          auth_srid?: number | null
+          proj4text?: string | null
+          srid?: number
+          srtext?: string | null
         }
         Relationships: []
       }
-      session_comments_old: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          session_id: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          session_id: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          session_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_comments_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "group_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      session_films: {
-        Row: {
-          film_id: string
-          id: string
-          is_main: boolean | null
-          session_id: string
-        }
-        Insert: {
-          film_id: string
-          id?: string
-          is_main?: boolean | null
-          session_id: string
-        }
-        Update: {
-          film_id?: string
-          id?: string
-          is_main?: boolean | null
-          session_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_films_film_id_fkey"
-            columns: ["film_id"]
-            isOneToOne: false
-            referencedRelation: "films"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_films_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "group_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      session_likes: {
+      suggested_profile_hides: {
         Row: {
           created_at: string
-          id: string
-          session_id: string
+          suggested_user_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          id?: string
-          session_id: string
+          suggested_user_id: string
           user_id: string
         }
         Update: {
           created_at?: string
-          id?: string
-          session_id?: string
+          suggested_user_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "session_likes_session_id_fkey"
-            columns: ["session_id"]
+            foreignKeyName: "suggested_profile_hides_suggested_user_id_fkey"
+            columns: ["suggested_user_id"]
             isOneToOne: false
-            referencedRelation: "group_sessions"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_likes_user_id_fkey"
+            foreignKeyName: "suggested_profile_hides_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1539,171 +2182,59 @@ type DatabaseCore = {
           },
         ]
       }
-      signup_errors: {
+      user_buildings: {
         Row: {
-          created_at: string | null
-          error_detail: string | null
-          error_message: string | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          error_detail?: string | null
-          error_message?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          error_detail?: string | null
-          error_message?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      suggestion_dismissals: {
-        Row: {
-          created_at: string | null
-          dismissed_user_id: string | null
-          id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          dismissed_user_id?: string | null
-          id?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          dismissed_user_id?: string | null
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "suggestion_dismissals_dismissed_user_id_fkey"
-            columns: ["dismissed_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "suggestion_dismissals_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_aliases: {
-        Row: {
-          alias: string
-          created_at: string
-          id: string
-          target_user_id: string
-          user_id: string
-        }
-        Insert: {
-          alias: string
-          created_at?: string
-          id?: string
-          target_user_id: string
-          user_id: string
-        }
-        Update: {
-          alias?: string
-          created_at?: string
-          id?: string
-          target_user_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_aliases_target_user_id_fkey"
-            columns: ["target_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_aliases_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_films: {
-        Row: {
+          building_id: string
           content: string | null
           created_at: string
           edited_at: string | null
-          film_id: string
-          group_id: string | null
           id: string
-          original_language: string | null
           rating: number | null
           status: string
           tags: string[] | null
-          translated_content: string | null
           user_id: string
+          video_url: string | null
           visibility: string | null
-          watched_at: string | null
+          visited_at: string | null
         }
         Insert: {
+          building_id: string
           content?: string | null
           created_at?: string
           edited_at?: string | null
-          film_id: string
-          group_id?: string | null
           id?: string
-          original_language?: string | null
           rating?: number | null
           status?: string
           tags?: string[] | null
-          translated_content?: string | null
           user_id: string
+          video_url?: string | null
           visibility?: string | null
-          watched_at?: string | null
+          visited_at?: string | null
         }
         Update: {
+          building_id?: string
           content?: string | null
           created_at?: string
           edited_at?: string | null
-          film_id?: string
-          group_id?: string | null
           id?: string
-          original_language?: string | null
           rating?: number | null
           status?: string
           tags?: string[] | null
-          translated_content?: string | null
           user_id?: string
+          video_url?: string | null
           visibility?: string | null
-          watched_at?: string | null
+          visited_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "log_film_id_fkey"
-            columns: ["film_id"]
+            foreignKeyName: "user_buildings_building_id_fkey"
+            columns: ["building_id"]
             isOneToOne: false
-            referencedRelation: "films"
+            referencedRelation: "buildings"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "log_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "log_user_id_fkey"
+            foreignKeyName: "user_buildings_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1711,125 +2242,257 @@ type DatabaseCore = {
           },
         ]
       }
-      watchlist_notifications: {
+      user_folder_items: {
         Row: {
+          collection_id: string
           created_at: string
-          film_id: string | null
-          id: string
-          provider_name: string
-          user_id: string | null
+          folder_id: string
         }
         Insert: {
+          collection_id: string
           created_at?: string
-          film_id?: string | null
-          id?: string
-          provider_name: string
-          user_id?: string | null
+          folder_id: string
         }
         Update: {
+          collection_id?: string
           created_at?: string
-          film_id?: string | null
-          id?: string
-          provider_name?: string
-          user_id?: string | null
+          folder_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "watchlist_notifications_film_id_fkey"
-            columns: ["film_id"]
+            foreignKeyName: "user_folder_items_collection_id_fkey"
+            columns: ["collection_id"]
             isOneToOne: false
-            referencedRelation: "films"
+            referencedRelation: "collections"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "watchlist_notifications_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_folder_items_folder_id_fkey"
+            columns: ["folder_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "user_folders"
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_folders: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          name: string
+          owner_id: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name: string
+          owner_id: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          owner_id?: string
+          slug?: string
+        }
+        Relationships: []
       }
     }
     Views: {
-      log: {
+      geography_columns: {
         Row: {
-          content: string | null
-          created_at: string | null
-          edited_at: string | null
-          film_id: string | null
-          group_id: string | null
-          id: string | null
-          original_language: string | null
-          rating: number | null
-          status: string | null
-          tags: string[] | null
-          translated_content: string | null
-          user_id: string | null
-          visibility: string | null
-          watched_at: string | null
+          coord_dimension: number | null
+          f_geography_column: unknown
+          f_table_catalog: unknown
+          f_table_name: unknown
+          f_table_schema: unknown
+          srid: number | null
+          type: string | null
+        }
+        Relationships: []
+      }
+      geometry_columns: {
+        Row: {
+          coord_dimension: number | null
+          f_geometry_column: unknown
+          f_table_catalog: string | null
+          f_table_name: unknown
+          f_table_schema: unknown
+          srid: number | null
+          type: string | null
         }
         Insert: {
-          content?: string | null
-          created_at?: string | null
-          edited_at?: string | null
-          film_id?: string | null
-          group_id?: string | null
-          id?: string | null
-          original_language?: string | null
-          rating?: number | null
-          status?: string | null
-          tags?: string[] | null
-          translated_content?: string | null
-          user_id?: string | null
-          visibility?: string | null
-          watched_at?: string | null
+          coord_dimension?: number | null
+          f_geometry_column?: unknown
+          f_table_catalog?: string | null
+          f_table_name?: unknown
+          f_table_schema?: unknown
+          srid?: number | null
+          type?: string | null
         }
         Update: {
-          content?: string | null
-          created_at?: string | null
-          edited_at?: string | null
-          film_id?: string | null
-          group_id?: string | null
-          id?: string | null
-          original_language?: string | null
-          rating?: number | null
-          status?: string | null
-          tags?: string[] | null
-          translated_content?: string | null
-          user_id?: string | null
-          visibility?: string | null
-          watched_at?: string | null
+          coord_dimension?: number | null
+          f_geometry_column?: unknown
+          f_table_catalog?: string | null
+          f_table_name?: unknown
+          f_table_schema?: unknown
+          srid?: number | null
+          type?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "log_film_id_fkey"
-            columns: ["film_id"]
-            isOneToOne: false
-            referencedRelation: "films"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "log_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
-      _calc_compatibility: {
-        Args: { user_a: string; user_b: string }
+      _postgis_deprecate: {
+        Args: { newname: string; oldname: string; version: string }
+        Returns: undefined
+      }
+      _postgis_index_extent: {
+        Args: { col: string; tbl: unknown }
+        Returns: unknown
+      }
+      _postgis_pgsql_version: { Args: never; Returns: string }
+      _postgis_scripts_pgsql_version: { Args: never; Returns: string }
+      _postgis_selectivity: {
+        Args: { att_name: string; geom: unknown; mode?: string; tbl: unknown }
         Returns: number
+      }
+      _postgis_stats: {
+        Args: { ""?: string; att_name: string; tbl: unknown }
+        Returns: string
+      }
+      _st_3dintersects: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      _st_contains: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      _st_containsproperly: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      _st_coveredby:
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      _st_covers:
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      _st_crosses: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      _st_dwithin: {
+        Args: {
+          geog1: unknown
+          geog2: unknown
+          tolerance: number
+          use_spheroid?: boolean
+        }
+        Returns: boolean
+      }
+      _st_equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      _st_intersects: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      _st_linecrossingdirection: {
+        Args: { line1: unknown; line2: unknown }
+        Returns: number
+      }
+      _st_longestline: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      _st_maxdistance: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      _st_orderingequals: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      _st_overlaps: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      _st_sortablehash: { Args: { geom: unknown }; Returns: number }
+      _st_touches: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      _st_voronoi: {
+        Args: {
+          clip?: unknown
+          g1: unknown
+          return_polygons?: boolean
+          tolerance?: number
+        }
+        Returns: unknown
+      }
+      _st_within: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      addauth: { Args: { "": string }; Returns: boolean }
+      addgeometrycolumn:
+        | {
+            Args: {
+              catalog_name: string
+              column_name: string
+              new_dim: number
+              new_srid_in: number
+              new_type: string
+              schema_name: string
+              table_name: string
+              use_typmod?: boolean
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              column_name: string
+              new_dim: number
+              new_srid: number
+              new_type: string
+              schema_name: string
+              table_name: string
+              use_typmod?: boolean
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              column_name: string
+              new_dim: number
+              new_srid: number
+              new_type: string
+              table_name: string
+              use_typmod?: boolean
+            }
+            Returns: string
+          }
+      admin_merge_companies: {
+        Args: { p_source_company_id: string; p_target_company_id: string }
+        Returns: Json
+      }
+      admin_merge_people: {
+        Args: { p_source_person_id: string; p_target_person_id: string }
+        Returns: Json
+      }
+      approve_company_steward_request: {
+        Args: { p_token_hex: string }
+        Returns: Json
+      }
+      approve_company_steward_request_by_id: {
+        Args: { p_request_id: string }
+        Returns: Json
       }
       block_user: {
         Args: {
@@ -1840,78 +2503,408 @@ type DatabaseCore = {
         }
         Returns: undefined
       }
-      calculate_global_average_rating: { Args: never; Returns: undefined }
-      calculate_scope_stats: {
-        Args: {
-          p_filter_film_ids: string[]
-          p_group_id: string
-          p_member_ids: string[]
-          p_session_dates: Json
-        }
-        Returns: Json
+      building_matches_credit_filters: {
+        Args: { p_building_id: string; p_company_id: string; p_roles: string[] }
+        Returns: boolean
       }
+      calculate_building_score: {
+        Args: { building_uuid: string }
+        Returns: undefined
+      }
+      calculate_scope_stats:
+        | {
+            Args: {
+              p_filter_building_ids: string[]
+              p_group_id: string
+              p_member_ids: string[]
+              p_session_dates: Json
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_filter_film_ids: string[]
+              p_group_id: string
+              p_member_ids: string[]
+              p_session_dates: Json
+            }
+            Returns: Json
+          }
       check_group_member: {
         Args: { target_group_id: string }
         Returns: boolean
       }
-      debug_group_stats: { Args: never; Returns: Json }
-      generate_unique_slug: {
-        Args: { group_id: string; name: string }
+      check_slug_availability: {
+        Args: { exclude_id?: string; target_slug: string }
+        Returns: boolean
+      }
+      claim_person: { Args: { p_person_id: string }; Returns: Json }
+      disablelongtransactions: { Args: never; Returns: string }
+      dropgeometrycolumn:
+        | {
+            Args: {
+              catalog_name: string
+              column_name: string
+              schema_name: string
+              table_name: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              column_name: string
+              schema_name: string
+              table_name: string
+            }
+            Returns: string
+          }
+        | { Args: { column_name: string; table_name: string }; Returns: string }
+      dropgeometrytable:
+        | {
+            Args: {
+              catalog_name: string
+              schema_name: string
+              table_name: string
+            }
+            Returns: string
+          }
+        | { Args: { schema_name: string; table_name: string }; Returns: string }
+        | { Args: { table_name: string }; Returns: string }
+      enablelongtransactions: { Args: never; Returns: string }
+      equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      find_nearby_buildings:
+        | {
+            Args: { lat: number; long: number; radius_meters?: number }
+            Returns: {
+              address: string
+              dist_meters: number
+              id: string
+              location_lat: number
+              location_lng: number
+              name: string
+            }[]
+          }
+        | {
+            Args: {
+              lat: number
+              long: number
+              name_query?: string
+              radius_meters?: number
+            }
+            Returns: {
+              address: string
+              dist_meters: number
+              id: string
+              location_lat: number
+              location_lng: number
+              main_image_url: string
+              name: string
+              short_id: number
+              similarity_score: number
+              slug: string
+            }[]
+          }
+      fix_orphaned_user_buildings: { Args: never; Returns: undefined }
+      flag_building_credit: {
+        Args: {
+          p_credit_id: string
+          p_notes: string
+          p_reason: Database["public"]["Enums"]["credit_flag_reason_enum"]
+        }
+        Returns: Json
+      }
+      generate_credit_removal_token: {
+        Args: { credit_id: string }
         Returns: string
       }
+      geometry: { Args: { "": string }; Returns: unknown }
+      geometry_above: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_below: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_cmp: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      geometry_contained_3d: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_contains: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_contains_3d: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_distance_box: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      geometry_distance_centroid: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      geometry_eq: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_ge: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_gt: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_le: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_left: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_lt: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_overabove: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_overbelow: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_overlaps: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_overlaps_3d: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_overleft: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_overright: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_right: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_same: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_same_3d: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geometry_within: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_admin_content_stats: { Args: never; Returns: Json }
       get_admin_dashboard_stats: { Args: never; Returns: Json }
-      get_app_config: {
+      get_admin_leaderboards: { Args: never; Returns: Json }
+      get_admin_notifications: { Args: never; Returns: Json }
+      get_admin_pulse: { Args: never; Returns: Json }
+      get_admin_retention: { Args: never; Returns: Json }
+      get_admin_trends: { Args: never; Returns: Json }
+      get_architect_claim_status: {
+        Args: { p_architect_id: string }
+        Returns: Json
+      }
+      get_building_leaderboards: { Args: never; Returns: Json }
+      get_building_reviews: {
+        Args: { p_building_id: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          images: Json
+          rating: number
+          status: string
+          tags: string[]
+          user_data: Json
+          user_id: string
+          video_url: string
+        }[]
+      }
+      get_building_top_links: {
+        Args: { p_building_id: string; p_limit?: number }
+        Returns: {
+          like_count: number
+          link_id: string
+          title: string
+          url: string
+          user_avatar: string
+          user_username: string
+        }[]
+      }
+      get_buildings_list: {
+        Args: {
+          filter_criteria?: Json
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          page?: number
+          page_size?: number
+        }
+        Returns: {
+          alt_name: string
+          city: string
+          country: string
+          credit_names: string[]
+          id: string
+          image_url: string
+          lat: number
+          lng: number
+          name: string
+          popularity_score: number
+          rating: number
+          slug: string
+          status: string
+          tier_rank: string
+          year_completed: number
+        }[]
+      }
+      get_buildings_missing_address: {
         Args: never
         Returns: {
-          description: string | null
-          key: string
-          value: string | null
+          city: string
+          country: string
+          id: string
+          lat: number
+          lng: number
+          name: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "app_config"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
-      get_cine_sync_stats: {
-        Args: { p_contact_ids: string[]; p_viewer_id: string }
+      get_collection_buildings: {
+        Args: { p_collection_id: string }
         Returns: {
-          compatibility_score: number
-          last_watched_backdrop: string
-          trend_indicator: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+        }[]
+      }
+      get_collection_stats: {
+        Args: { collection_uuid: string }
+        Returns: {
+          building_id: string
+          rating: number
+          status: string
           user_id: string
         }[]
       }
+      get_collections_feed: {
+        Args: { p_limit: number; p_offset: number }
+        Returns: {
+          building_count: number
+          description: string
+          id: string
+          name: string
+          owner: Json
+          owner_id: string
+          preview_buildings: Json
+          primary_tag: string
+          slug: string
+          updated_at: string
+        }[]
+      }
+      get_discovery_feed:
+        | {
+            Args: {
+              p_city_filter?: string
+              p_limit: number
+              p_offset: number
+              p_user_id: string
+            }
+            Returns: {
+              address: string
+              city: string
+              country: string
+              id: string
+              main_image_url: string
+              name: string
+              save_count: number
+              slug: string
+              year_completed: number
+            }[]
+          }
+        | {
+            Args: {
+              p_architect_ids?: string[]
+              p_attribute_ids?: string[]
+              p_category_id?: string
+              p_city_filter?: string
+              p_country_filter?: string
+              p_limit: number
+              p_offset: number
+              p_region_filter?: string
+              p_typology_ids?: string[]
+              p_user_id: string
+            }
+            Returns: {
+              address: string
+              city: string
+              country: string
+              id: string
+              main_image_url: string
+              name: string
+              save_count: number
+              slug: string
+              year_completed: number
+            }[]
+          }
+      get_discovery_filters: { Args: never; Returns: Json }
       get_explorer_feed: {
-        Args: { p_exclude_ids?: string[]; p_limit?: number; p_user_id: string }
+        Args: { p_limit?: number; p_user_id: string }
         Returns: {
           backdrop_path: string
           id: string
           media_type: string
-          original_title: string
           overview: string
           poster_path: string
-          recommenders: Json
+          recommender_avatar: string
+          recommender_id: string
+          recommender_username: string
           title: string
           tmdb_id: number
           trailer: string
         }[]
       }
-      get_friend_suggestions: {
-        Args: { p_limit?: number; p_offset?: number }
+      get_feed: {
+        Args: { p_limit: number; p_offset: number }
         Returns: {
-          avatar_url: string
-          bio: string
-          country: string
+          building_data: Json
+          building_id: string
+          comments_count: number
+          content: string
           created_at: string
+          edited_at: string
           id: string
-          invited_by: string
-          location: string
-          mutual_count: number
-          shared_group_count: number
-          updated_at: string
-          username: string
+          is_liked: boolean
+          likes_count: number
+          rating: number
+          review_images: Json
+          status: string
+          tags: string[]
+          user_data: Json
+          user_id: string
         }[]
       }
       get_group_film_stats:
@@ -1931,29 +2924,6 @@ type DatabaseCore = {
               log_count: number
             }[]
           }
-      get_group_smart_backlog: {
-        Args: {
-          p_exclude_seen?: boolean
-          p_group_id: string
-          p_max_runtime?: number
-          p_member_ids: string[]
-          p_providers?: string[]
-        }
-        Returns: {
-          id: string
-          interested_users: Json
-          overlap_count: number
-          overview: string
-          poster_path: string
-          release_date: string
-          runtime: number
-          title: string
-          tmdb_id: number
-          total_selected_members: number
-          trailer: string
-          vote_average: number
-        }[]
-      }
       get_inviter_facepile: {
         Args: { inviter_id: string }
         Returns: {
@@ -1969,98 +2939,184 @@ type DatabaseCore = {
           p_show_group_activity: boolean
         }
         Returns: {
+          building_id: string
           content: string | null
           created_at: string
           edited_at: string | null
-          film_id: string
-          group_id: string | null
           id: string
-          original_language: string | null
           rating: number | null
           status: string
           tags: string[] | null
-          translated_content: string | null
           user_id: string
+          video_url: string | null
           visibility: string | null
-          watched_at: string | null
+          visited_at: string | null
         }[]
         SetofOptions: {
           from: "*"
-          to: "user_films"
+          to: "user_buildings"
           isOneToOne: false
           isSetofReturn: true
         }
       }
-      get_monthly_log_counts: { Args: { p_group_id: string }; Returns: Json }
-      get_mutual_affinity_users: {
-        Args: { user_a_id: string; user_b_id: string }
+      get_map_clusters:
+        | {
+            Args: {
+              filters?: Json
+              max_lat: number
+              max_lng: number
+              min_lat: number
+              min_lng: number
+              row_limit?: number
+              zoom: number
+            }
+            Returns: {
+              architect_names: string[]
+              count: number
+              id: string
+              image_url: string
+              is_cluster: boolean
+              lat: number
+              lng: number
+              name: string
+              popularity_score: number
+              slug: string
+              tier_rank: string
+            }[]
+          }
+        | {
+            Args: {
+              filters?: Json
+              max_lat: number
+              max_lng: number
+              min_lat: number
+              min_lng: number
+              zoom: number
+            }
+            Returns: {
+              architect_names: string[]
+              count: number
+              id: string
+              image_url: string
+              is_cluster: boolean
+              lat: number
+              lng: number
+              name: string
+              slug: string
+            }[]
+          }
+      get_map_clusters_v2: {
+        Args: {
+          filter_criteria?: Json
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          zoom_level: number
+        }
         Returns: {
-          alias: string
-          avatar_url: string
-          combined_score: number
-          score_with_a: number
-          score_with_b: number
-          user_id: string
-          username: string
-        }[]
-      }
-      get_mutual_follows: {
-        Args: { target_user_id: string }
-        Returns: {
-          avatar_url: string
+          count: number
           id: string
-          total_count: number
+          image_url: string
+          is_cluster: boolean
+          lat: number
+          lng: number
+          max_tier: number
+          name: string
+          popularity_score: number
+          slug: string
+          status: string
+          tier_rank: string
+        }[]
+      }
+      get_map_pins:
+        | {
+            Args: {
+              filters?: Json
+              location_coordinates?: Json
+              p_limit?: number
+              query_text?: string
+              radius_meters?: number
+            }
+            Returns: {
+              id: string
+              is_candidate: boolean
+              location_lat: number
+              location_lng: number
+              name: string
+              status: string
+            }[]
+          }
+        | {
+            Args: {
+              filters?: Json
+              location_coordinates?: Json
+              max_lat?: number
+              max_lng?: number
+              min_lat?: number
+              min_lng?: number
+              p_limit?: number
+              query_text?: string
+              radius_meters?: number
+            }
+            Returns: {
+              id: string
+              is_candidate: boolean
+              location_lat: number
+              location_lng: number
+              name: string
+              status: string
+            }[]
+          }
+      get_my_group_ids: { Args: never; Returns: string[] }
+      get_people_you_may_know: {
+        Args: { p_limit?: number }
+        Returns: {
+          avatar_url: string
+          group_mutual_count: number
+          id: string
+          is_follows_me: boolean
+          mutual_count: number
           username: string
         }[]
       }
-      get_my_group_ids: { Args: never; Returns: string[] }
-      get_shared_directors: {
-        Args: { user_a_id: string; user_b_id: string }
+      get_photo_heatmap_data: {
+        Args: never
         Returns: {
-          director_id: number
-          name: string
-          profile_path: string
+          lat: number
+          lng: number
+          weight: number
+        }[]
+      }
+      get_potential_duplicates: {
+        Args: { limit_count?: number; similarity_threshold?: number }
+        Returns: {
+          id1: string
+          id2: string
+          name1: string
+          name2: string
           score: number
         }[]
       }
-      get_shared_exploration_candidates: {
-        Args: {
-          p_exclude_ids?: string[]
-          p_friend_id: string
-          p_limit?: number
-          p_user_id: string
-        }
+      get_suggested_posts: {
+        Args: { p_limit: number; p_offset: number }
         Returns: {
-          backdrop_path: string
+          building_data: Json
+          building_id: string
+          comments_count: number
+          content: string
+          created_at: string
+          edited_at: string
           id: string
-          media_type: string
-          original_title: string
-          overview: string
-          poster_path: string
-          recommenders: Json
-          title: string
-          tmdb_id: number
-          trailer: string
-        }[]
-      }
-      get_user_digest_activity: {
-        Args: { p_since: string; p_user_id: string }
-        Returns: Json
-      }
-      get_user_groups_summary: {
-        Args: { p_limit?: number; p_type?: string; p_user_id: string }
-        Returns: {
-          cover_url: string
-          description: string
-          id: string
-          is_public: boolean
-          last_session_date: string
-          member_avatars: string[]
-          member_count: number
-          name: string
-          next_session_date: string
-          recent_posters: string[]
-          slug: string
+          is_liked: boolean
+          is_suggested: boolean
+          likes_count: number
+          rating: number
+          status: string
+          suggestion_reason: string
+          tags: string[]
+          user_data: Json
+          user_id: string
         }[]
       }
       get_user_tags: {
@@ -2069,15 +3125,16 @@ type DatabaseCore = {
           tag: string
         }[]
       }
-      invoke_group_stats_update: {
-        Args: { p_group_id: string }
-        Returns: undefined
-      }
-      invoke_translate_review: {
-        Args: { p_content: string; p_review_id: string }
-        Returns: undefined
-      }
+      gettransactionid: { Args: never; Returns: unknown }
       is_admin: { Args: never; Returns: boolean }
+      is_collection_admin: {
+        Args: { _collection_id: string }
+        Returns: boolean
+      }
+      is_collection_contributor: {
+        Args: { _collection_id: string }
+        Returns: boolean
+      }
       is_group_admin: { Args: { check_group_id: string }; Returns: boolean }
       is_group_member: { Args: { _group_id: string }; Returns: boolean }
       is_mutual: { Args: { user_a: string; user_b: string }; Returns: boolean }
@@ -2085,36 +3142,136 @@ type DatabaseCore = {
         Args: { user_id_a: string; user_id_b: string }
         Returns: boolean
       }
-      merge_group_stats_compatibility: {
-        Args: {
-          p_group_id: string
-          p_last_error: string
-          p_payload: Json
-          p_scope: string
-          p_updated_at?: string
-        }
+      is_verified_architect_for_building: {
+        Args: { building_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
+      longtransactionsenabled: { Args: never; Returns: boolean }
+      main_image_url: {
+        Args: { b: Database["public"]["Tables"]["buildings"]["Row"] }
+        Returns: string
+      }
+      merge_buildings: {
+        Args: { source_id: string; target_id: string }
         Returns: undefined
       }
-      merge_group_stats_members: {
-        Args: {
-          p_group_id: string
-          p_scope: string
-          p_superlatives: Json
-          p_updated_at?: string
-        }
-        Returns: undefined
+      migrate_tags_to_collections: { Args: never; Returns: undefined }
+      populate_geometry_columns:
+        | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
+        | { Args: { use_typmod?: boolean }; Returns: string }
+      postgis_constraint_dims: {
+        Args: { geomcolumn: string; geomschema: string; geomtable: string }
+        Returns: number
       }
-      merge_group_stats_summary: {
-        Args: {
-          p_group_id: string
-          p_scope: string
-          p_summary: Json
-          p_updated_at?: string
-        }
-        Returns: undefined
+      postgis_constraint_srid: {
+        Args: { geomcolumn: string; geomschema: string; geomtable: string }
+        Returns: number
       }
-      process_session_announcements: { Args: never; Returns: undefined }
-      process_session_verdicts: { Args: never; Returns: undefined }
+      postgis_constraint_type: {
+        Args: { geomcolumn: string; geomschema: string; geomtable: string }
+        Returns: string
+      }
+      postgis_extensions_upgrade: { Args: never; Returns: string }
+      postgis_full_version: { Args: never; Returns: string }
+      postgis_geos_version: { Args: never; Returns: string }
+      postgis_lib_build_date: { Args: never; Returns: string }
+      postgis_lib_revision: { Args: never; Returns: string }
+      postgis_lib_version: { Args: never; Returns: string }
+      postgis_libjson_version: { Args: never; Returns: string }
+      postgis_liblwgeom_version: { Args: never; Returns: string }
+      postgis_libprotobuf_version: { Args: never; Returns: string }
+      postgis_libxml_version: { Args: never; Returns: string }
+      postgis_proj_version: { Args: never; Returns: string }
+      postgis_scripts_build_date: { Args: never; Returns: string }
+      postgis_scripts_installed: { Args: never; Returns: string }
+      postgis_scripts_released: { Args: never; Returns: string }
+      postgis_svn_version: { Args: never; Returns: string }
+      postgis_type_name: {
+        Args: {
+          coord_dimension: number
+          geomname: string
+          use_new_name?: boolean
+        }
+        Returns: string
+      }
+      postgis_version: { Args: never; Returns: string }
+      postgis_wagyu_version: { Args: never; Returns: string }
+      redeem_company_claim_token: {
+        Args: { p_token_hex: string }
+        Returns: Json
+      }
+      redeem_company_steward_invite: {
+        Args: { p_token_hex: string }
+        Returns: Json
+      }
+      redeem_credit_removal_token: {
+        Args: { p_token_hex: string }
+        Returns: Json
+      }
+      reject_company_steward_request_by_id: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      revert_building_change: { Args: { log_id: string }; Returns: undefined }
+      search_buildings:
+        | {
+            Args: {
+              p_architects?: string[]
+              p_bucket_list_user_id?: string
+              p_limit?: number
+              p_min_rating?: number
+              p_not_visited_by_user_id?: string
+              p_offset?: number
+              p_query?: string
+              p_rated_by_user_ids?: string[]
+              p_styles?: string[]
+              p_visited_by_user_id?: string
+              p_year_max?: number
+              p_year_min?: number
+            }
+            Returns: {
+              address: string
+              architects: string[]
+              avg_rating: number
+              id: string
+              main_image_url: string
+              name: string
+              styles: string[]
+              visit_count: number
+              year_completed: number
+            }[]
+          }
+        | {
+            Args: {
+              filters?: Json
+              p_access_costs?: string[]
+              p_access_levels?: string[]
+              p_access_logistics?: string[]
+              p_lat?: number
+              p_limit?: number
+              p_lng?: number
+              query_text?: string
+              radius_meters?: number
+              sort_by?: string
+            }
+            Returns: {
+              address: string
+              city: string
+              country: string
+              credited_entities: Json
+              distance_meters: number
+              id: string
+              location_lat: number
+              location_lng: number
+              location_precision: Database["public"]["Enums"]["location_precision"]
+              name: string
+              social_context: string
+              social_score: number
+              styles: Json
+              visitors: Json
+              year_completed: number
+            }[]
+          }
       search_films_debug: {
         Args: {
           p_countries?: string[]
@@ -2145,81 +3302,703 @@ type DatabaseCore = {
           vote_count: number
         }[]
       }
-      search_films_tiered: {
-        Args: {
-          p_countries?: string[]
-          p_decade_starts?: number[]
-          p_friends_min_rating?: number
-          p_genre_ids?: number[]
-          p_limit?: number
-          p_match_any_personal_filter?: boolean
-          p_media_type?: string
-          p_min_rating?: number
-          p_my_platforms?: string[]
-          p_not_seen_by_user_id?: string
-          p_offset?: number
-          p_only_my_platforms?: boolean
-          p_query?: string
-          p_rated_by_user_ids?: string[]
-          p_rent_buy?: boolean
-          p_runtime_max?: number
-          p_runtime_min?: number
-          p_seen_by_user_id?: string
-          p_shuffle_seed?: number
-          p_tag?: string
-          p_user_country?: string
-          p_watchlist_user_id?: string
-        }
-        Returns: {
-          community_vote_average: number
-          countries: Json
-          friend_avg_rating: number
-          genre_ids: number[]
-          id: string
-          latest_interaction: string
-          media_type: string
-          original_title: string
-          overview: string
-          poster_path: string
-          release_date: string
-          runtime: number
-          tier: number
-          title: string
-          tmdb_id: number
-          vote_count: number
-        }[]
-      }
       send_session_reminders: { Args: never; Returns: undefined }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      slugify_person_name: { Args: { raw: string }; Returns: string }
+      st_3dclosestpoint: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_3ddistance: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      st_3dintersects: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      st_3dlongestline: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_3dmakebox: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_3dmaxdistance: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      st_3dshortestline: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_addpoint: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_angle:
+        | { Args: { line1: unknown; line2: unknown }; Returns: number }
+        | {
+            Args: { pt1: unknown; pt2: unknown; pt3: unknown; pt4?: unknown }
+            Returns: number
+          }
+      st_area:
+        | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
+        | { Args: { "": string }; Returns: number }
+      st_asencodedpolyline: {
+        Args: { geom: unknown; nprecision?: number }
+        Returns: string
+      }
+      st_asewkt: { Args: { "": string }; Returns: string }
+      st_asgeojson:
+        | {
+            Args: { geog: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | {
+            Args: {
+              geom_column?: string
+              maxdecimaldigits?: number
+              pretty_bool?: boolean
+              r: Record<string, unknown>
+            }
+            Returns: string
+          }
+        | { Args: { "": string }; Returns: string }
+      st_asgml:
+        | {
+            Args: {
+              geog: unknown
+              id?: string
+              maxdecimaldigits?: number
+              nprefix?: string
+              options?: number
+            }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | { Args: { "": string }; Returns: string }
+        | {
+            Args: {
+              geog: unknown
+              id?: string
+              maxdecimaldigits?: number
+              nprefix?: string
+              options?: number
+              version: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              geom: unknown
+              id?: string
+              maxdecimaldigits?: number
+              nprefix?: string
+              options?: number
+              version: number
+            }
+            Returns: string
+          }
+      st_askml:
+        | {
+            Args: { geog: unknown; maxdecimaldigits?: number; nprefix?: string }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; nprefix?: string }
+            Returns: string
+          }
+        | { Args: { "": string }; Returns: string }
+      st_aslatlontext: {
+        Args: { geom: unknown; tmpl?: string }
+        Returns: string
+      }
+      st_asmarc21: { Args: { format?: string; geom: unknown }; Returns: string }
+      st_asmvtgeom: {
+        Args: {
+          bounds: unknown
+          buffer?: number
+          clip_geom?: boolean
+          extent?: number
+          geom: unknown
+        }
+        Returns: unknown
+      }
+      st_assvg:
+        | {
+            Args: { geog: unknown; maxdecimaldigits?: number; rel?: number }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; rel?: number }
+            Returns: string
+          }
+        | { Args: { "": string }; Returns: string }
+      st_astext: { Args: { "": string }; Returns: string }
+      st_astwkb:
+        | {
+            Args: {
+              geom: unknown
+              prec?: number
+              prec_m?: number
+              prec_z?: number
+              with_boxes?: boolean
+              with_sizes?: boolean
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              geom: unknown[]
+              ids: number[]
+              prec?: number
+              prec_m?: number
+              prec_z?: number
+              with_boxes?: boolean
+              with_sizes?: boolean
+            }
+            Returns: string
+          }
+      st_asx3d: {
+        Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+        Returns: string
+      }
+      st_azimuth:
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: number }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
+      st_boundingdiagonal: {
+        Args: { fits?: boolean; geom: unknown }
+        Returns: unknown
+      }
+      st_buffer:
+        | {
+            Args: { geom: unknown; options?: string; radius: number }
+            Returns: unknown
+          }
+        | {
+            Args: { geom: unknown; quadsegs: number; radius: number }
+            Returns: unknown
+          }
+      st_centroid: { Args: { "": string }; Returns: unknown }
+      st_clipbybox2d: {
+        Args: { box: unknown; geom: unknown }
+        Returns: unknown
+      }
+      st_closestpoint: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_collect: { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
+      st_concavehull: {
+        Args: {
+          param_allow_holes?: boolean
+          param_geom: unknown
+          param_pctconvex: number
+        }
+        Returns: unknown
+      }
+      st_contains: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      st_containsproperly: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      st_coorddim: { Args: { geometry: unknown }; Returns: number }
+      st_coveredby:
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      st_covers:
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      st_crosses: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      st_curvetoline: {
+        Args: { flags?: number; geom: unknown; tol?: number; toltype?: number }
+        Returns: unknown
+      }
+      st_delaunaytriangles: {
+        Args: { flags?: number; g1: unknown; tolerance?: number }
+        Returns: unknown
+      }
+      st_difference: {
+        Args: { geom1: unknown; geom2: unknown; gridsize?: number }
+        Returns: unknown
+      }
+      st_disjoint: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      st_distance:
+        | {
+            Args: { geog1: unknown; geog2: unknown; use_spheroid?: boolean }
+            Returns: number
+          }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
+      st_distancesphere:
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
+        | {
+            Args: { geom1: unknown; geom2: unknown; radius: number }
+            Returns: number
+          }
+      st_distancespheroid: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      st_dwithin: {
+        Args: {
+          geog1: unknown
+          geog2: unknown
+          tolerance: number
+          use_spheroid?: boolean
+        }
+        Returns: boolean
+      }
+      st_equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      st_expand:
+        | { Args: { box: unknown; dx: number; dy: number }; Returns: unknown }
+        | {
+            Args: { box: unknown; dx: number; dy: number; dz?: number }
+            Returns: unknown
+          }
+        | {
+            Args: {
+              dm?: number
+              dx: number
+              dy: number
+              dz?: number
+              geom: unknown
+            }
+            Returns: unknown
+          }
+      st_force3d: { Args: { geom: unknown; zvalue?: number }; Returns: unknown }
+      st_force3dm: {
+        Args: { geom: unknown; mvalue?: number }
+        Returns: unknown
+      }
+      st_force3dz: {
+        Args: { geom: unknown; zvalue?: number }
+        Returns: unknown
+      }
+      st_force4d: {
+        Args: { geom: unknown; mvalue?: number; zvalue?: number }
+        Returns: unknown
+      }
+      st_generatepoints:
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
+        | {
+            Args: { area: unknown; npoints: number; seed: number }
+            Returns: unknown
+          }
+      st_geogfromtext: { Args: { "": string }; Returns: unknown }
+      st_geographyfromtext: { Args: { "": string }; Returns: unknown }
+      st_geohash:
+        | { Args: { geog: unknown; maxchars?: number }; Returns: string }
+        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
+      st_geomcollfromtext: { Args: { "": string }; Returns: unknown }
+      st_geometricmedian: {
+        Args: {
+          fail_if_not_converged?: boolean
+          g: unknown
+          max_iter?: number
+          tolerance?: number
+        }
+        Returns: unknown
+      }
+      st_geometryfromtext: { Args: { "": string }; Returns: unknown }
+      st_geomfromewkt: { Args: { "": string }; Returns: unknown }
+      st_geomfromgeojson:
+        | { Args: { "": Json }; Returns: unknown }
+        | { Args: { "": Json }; Returns: unknown }
+        | { Args: { "": string }; Returns: unknown }
+      st_geomfromgml: { Args: { "": string }; Returns: unknown }
+      st_geomfromkml: { Args: { "": string }; Returns: unknown }
+      st_geomfrommarc21: { Args: { marc21xml: string }; Returns: unknown }
+      st_geomfromtext: { Args: { "": string }; Returns: unknown }
+      st_gmltosql: { Args: { "": string }; Returns: unknown }
+      st_hasarc: { Args: { geometry: unknown }; Returns: boolean }
+      st_hausdorffdistance: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      st_hexagon: {
+        Args: { cell_i: number; cell_j: number; origin?: unknown; size: number }
+        Returns: unknown
+      }
+      st_hexagongrid: {
+        Args: { bounds: unknown; size: number }
+        Returns: Record<string, unknown>[]
+      }
+      st_interpolatepoint: {
+        Args: { line: unknown; point: unknown }
+        Returns: number
+      }
+      st_intersection: {
+        Args: { geom1: unknown; geom2: unknown; gridsize?: number }
+        Returns: unknown
+      }
+      st_intersects:
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      st_isvaliddetail: {
+        Args: { flags?: number; geom: unknown }
+        Returns: Database["public"]["CompositeTypes"]["valid_detail"]
+        SetofOptions: {
+          from: "*"
+          to: "valid_detail"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      st_length:
+        | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
+        | { Args: { "": string }; Returns: number }
+      st_letters: { Args: { font?: Json; letters: string }; Returns: unknown }
+      st_linecrossingdirection: {
+        Args: { line1: unknown; line2: unknown }
+        Returns: number
+      }
+      st_linefromencodedpolyline: {
+        Args: { nprecision?: number; txtin: string }
+        Returns: unknown
+      }
+      st_linefromtext: { Args: { "": string }; Returns: unknown }
+      st_linelocatepoint: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      st_linetocurve: { Args: { geometry: unknown }; Returns: unknown }
+      st_locatealong: {
+        Args: { geometry: unknown; leftrightoffset?: number; measure: number }
+        Returns: unknown
+      }
+      st_locatebetween: {
+        Args: {
+          frommeasure: number
+          geometry: unknown
+          leftrightoffset?: number
+          tomeasure: number
+        }
+        Returns: unknown
+      }
+      st_locatebetweenelevations: {
+        Args: { fromelevation: number; geometry: unknown; toelevation: number }
+        Returns: unknown
+      }
+      st_longestline: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_makebox2d: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_makeline: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_makevalid: {
+        Args: { geom: unknown; params: string }
+        Returns: unknown
+      }
+      st_maxdistance: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: number
+      }
+      st_minimumboundingcircle: {
+        Args: { inputgeom: unknown; segs_per_quarter?: number }
+        Returns: unknown
+      }
+      st_mlinefromtext: { Args: { "": string }; Returns: unknown }
+      st_mpointfromtext: { Args: { "": string }; Returns: unknown }
+      st_mpolyfromtext: { Args: { "": string }; Returns: unknown }
+      st_multilinestringfromtext: { Args: { "": string }; Returns: unknown }
+      st_multipointfromtext: { Args: { "": string }; Returns: unknown }
+      st_multipolygonfromtext: { Args: { "": string }; Returns: unknown }
+      st_node: { Args: { g: unknown }; Returns: unknown }
+      st_normalize: { Args: { geom: unknown }; Returns: unknown }
+      st_offsetcurve: {
+        Args: { distance: number; line: unknown; params?: string }
+        Returns: unknown
+      }
+      st_orderingequals: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      st_overlaps: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: boolean
+      }
+      st_perimeter: {
+        Args: { geog: unknown; use_spheroid?: boolean }
+        Returns: number
+      }
+      st_pointfromtext: { Args: { "": string }; Returns: unknown }
+      st_pointm: {
+        Args: {
+          mcoordinate: number
+          srid?: number
+          xcoordinate: number
+          ycoordinate: number
+        }
+        Returns: unknown
+      }
+      st_pointz: {
+        Args: {
+          srid?: number
+          xcoordinate: number
+          ycoordinate: number
+          zcoordinate: number
+        }
+        Returns: unknown
+      }
+      st_pointzm: {
+        Args: {
+          mcoordinate: number
+          srid?: number
+          xcoordinate: number
+          ycoordinate: number
+          zcoordinate: number
+        }
+        Returns: unknown
+      }
+      st_polyfromtext: { Args: { "": string }; Returns: unknown }
+      st_polygonfromtext: { Args: { "": string }; Returns: unknown }
+      st_project: {
+        Args: { azimuth: number; distance: number; geog: unknown }
+        Returns: unknown
+      }
+      st_quantizecoordinates: {
+        Args: {
+          g: unknown
+          prec_m?: number
+          prec_x: number
+          prec_y?: number
+          prec_z?: number
+        }
+        Returns: unknown
+      }
+      st_reduceprecision: {
+        Args: { geom: unknown; gridsize: number }
+        Returns: unknown
+      }
+      st_relate: { Args: { geom1: unknown; geom2: unknown }; Returns: string }
+      st_removerepeatedpoints: {
+        Args: { geom: unknown; tolerance?: number }
+        Returns: unknown
+      }
+      st_segmentize: {
+        Args: { geog: unknown; max_segment_length: number }
+        Returns: unknown
+      }
+      st_setsrid:
+        | { Args: { geog: unknown; srid: number }; Returns: unknown }
+        | { Args: { geom: unknown; srid: number }; Returns: unknown }
+      st_sharedpaths: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_shortestline: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_simplifypolygonhull: {
+        Args: { geom: unknown; is_outer?: boolean; vertex_fraction: number }
+        Returns: unknown
+      }
+      st_split: { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
+      st_square: {
+        Args: { cell_i: number; cell_j: number; origin?: unknown; size: number }
+        Returns: unknown
+      }
+      st_squaregrid: {
+        Args: { bounds: unknown; size: number }
+        Returns: Record<string, unknown>[]
+      }
+      st_srid:
+        | { Args: { geog: unknown }; Returns: number }
+        | { Args: { geom: unknown }; Returns: number }
+      st_subdivide: {
+        Args: { geom: unknown; gridsize?: number; maxvertices?: number }
+        Returns: unknown[]
+      }
+      st_swapordinates: {
+        Args: { geom: unknown; ords: unknown }
+        Returns: unknown
+      }
+      st_symdifference: {
+        Args: { geom1: unknown; geom2: unknown; gridsize?: number }
+        Returns: unknown
+      }
+      st_symmetricdifference: {
+        Args: { geom1: unknown; geom2: unknown }
+        Returns: unknown
+      }
+      st_tileenvelope: {
+        Args: {
+          bounds?: unknown
+          margin?: number
+          x: number
+          y: number
+          zoom: number
+        }
+        Returns: unknown
+      }
+      st_touches: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      st_transform:
+        | {
+            Args: { from_proj: string; geom: unknown; to_proj: string }
+            Returns: unknown
+          }
+        | {
+            Args: { from_proj: string; geom: unknown; to_srid: number }
+            Returns: unknown
+          }
+        | { Args: { geom: unknown; to_proj: string }; Returns: unknown }
+      st_triangulatepolygon: { Args: { g1: unknown }; Returns: unknown }
+      st_union:
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
+        | {
+            Args: { geom1: unknown; geom2: unknown; gridsize: number }
+            Returns: unknown
+          }
+      st_voronoilines: {
+        Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
+        Returns: unknown
+      }
+      st_voronoipolygons: {
+        Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
+        Returns: unknown
+      }
+      st_within: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      st_wkbtosql: { Args: { wkb: string }; Returns: unknown }
+      st_wkttosql: { Args: { "": string }; Returns: unknown }
+      st_wrapx: {
+        Args: { geom: unknown; move: number; wrap: number }
+        Returns: unknown
+      }
       track_login: { Args: never; Returns: undefined }
-      update_app_config: {
-        Args: { p_key: string; p_value: string }
+      unaccent: { Args: { "": string }; Returns: string }
+      unlockrows: { Args: { "": string }; Returns: number }
+      update_building_community_preview: {
+        Args: { p_building_id: string }
         Returns: undefined
       }
-      update_group_ranking_cache: {
-        Args: { p_group_id: string }
-        Returns: undefined
-      }
+      update_building_tiers: { Args: never; Returns: undefined }
       update_group_stats: {
         Args: { target_group_id: string }
         Returns: undefined
       }
       update_presence: { Args: never; Returns: undefined }
+      updategeometrysrid: {
+        Args: {
+          catalogn_name: string
+          column_name: string
+          new_srid_in: number
+          schema_name: string
+          table_name: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      building_access:
+        | "Open Access"
+        | "Admission Fee"
+        | "Customers Only"
+        | "Appointment Only"
+        | "Exterior View Only"
+        | "No Access"
+      building_access_cost: "free" | "paid" | "customers_only"
+      building_access_level: "public" | "private" | "restricted" | "commercial"
+      building_access_logistics:
+        | "walk-in"
+        | "booking_required"
+        | "tour_only"
+        | "exterior_only"
+      building_status:
+        | "Built"
+        | "Under Construction"
+        | "Unbuilt"
+        | "Demolished"
+        | "Temporary"
+        | "Lost"
+      building_tier_rank:
+        | "Top 1%"
+        | "Top 5%"
+        | "Top 10%"
+        | "Top 25%"
+        | "Top 20%"
+        | "Standard"
+      company_claim_dispute_status: "open" | "resolved"
+      company_steward_request_status: "pending" | "approved" | "rejected"
+      company_steward_role: "owner" | "steward"
+      credit_flag_reason_enum:
+        | "wrong_person"
+        | "never_involved"
+        | "wrong_role"
+        | "other"
+      credit_role_enum:
+        | "design_architect"
+        | "architect_of_record"
+        | "executive_architect"
+        | "interior_architect"
+        | "landscape_architect"
+        | "urban_designer"
+        | "conservation_architect"
+        | "structural_engineer"
+        | "mep_engineer"
+        | "civil_engineer"
+        | "geotechnical_engineer"
+        | "facade_engineer"
+        | "wind_consultant"
+        | "acoustic_consultant"
+        | "fire_engineer"
+        | "lighting_designer"
+        | "developer"
+        | "main_contractor"
+        | "project_manager"
+        | "cost_consultant"
+        | "planning_consultant"
+        | "graphic_wayfinding_designer"
+        | "art_consultant"
+        | "sustainability_consultant"
+        | "heritage_consultant"
+        | "other"
+      credit_status_enum: "active" | "verified" | "flagged" | "hidden"
+      credit_tier_enum: "primary" | "contributor" | "ancillary"
+      location_precision: "exact" | "approximate"
+      person_claim_status: "unclaimed" | "claimed" | "verified"
+      poll_status:
+        | "draft"
+        | "open"
+        | "closed"
+        | "archived"
+        | "live"
+        | "published"
+      poll_type: "general" | "film_selection" | "quiz"
     }
     CompositeTypes: {
-      [_ in never]: never
+      geometry_dump: {
+        path: number[] | null
+        geom: unknown
+      }
+      valid_detail: {
+        valid: boolean | null
+        reason: string | null
+        location: unknown
+      }
     }
-  }
-}
-
-export type Database = Omit<DatabaseCore, "public"> & {
-  public: Omit<DatabaseCore["public"], "Tables" | "Functions"> & {
-    /** Plano definitions replace legacy rows for same table name (no `&` merge). */
-    Tables: Omit<DatabaseCore["public"]["Tables"], keyof PlanoPublicTables> &
-      PlanoPublicTables
-    Functions: DatabaseCore["public"]["Functions"] & PlanoPublicFunctions
   }
 }
 
@@ -2342,6 +4121,82 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      building_access: [
+        "Open Access",
+        "Admission Fee",
+        "Customers Only",
+        "Appointment Only",
+        "Exterior View Only",
+        "No Access",
+      ],
+      building_access_cost: ["free", "paid", "customers_only"],
+      building_access_level: ["public", "private", "restricted", "commercial"],
+      building_access_logistics: [
+        "walk-in",
+        "booking_required",
+        "tour_only",
+        "exterior_only",
+      ],
+      building_status: [
+        "Built",
+        "Under Construction",
+        "Unbuilt",
+        "Demolished",
+        "Temporary",
+        "Lost",
+      ],
+      building_tier_rank: [
+        "Top 1%",
+        "Top 5%",
+        "Top 10%",
+        "Top 25%",
+        "Top 20%",
+        "Standard",
+      ],
+      company_claim_dispute_status: ["open", "resolved"],
+      company_steward_request_status: ["pending", "approved", "rejected"],
+      company_steward_role: ["owner", "steward"],
+      credit_flag_reason_enum: [
+        "wrong_person",
+        "never_involved",
+        "wrong_role",
+        "other",
+      ],
+      credit_role_enum: [
+        "design_architect",
+        "architect_of_record",
+        "executive_architect",
+        "interior_architect",
+        "landscape_architect",
+        "urban_designer",
+        "conservation_architect",
+        "structural_engineer",
+        "mep_engineer",
+        "civil_engineer",
+        "geotechnical_engineer",
+        "facade_engineer",
+        "wind_consultant",
+        "acoustic_consultant",
+        "fire_engineer",
+        "lighting_designer",
+        "developer",
+        "main_contractor",
+        "project_manager",
+        "cost_consultant",
+        "planning_consultant",
+        "graphic_wayfinding_designer",
+        "art_consultant",
+        "sustainability_consultant",
+        "heritage_consultant",
+        "other",
+      ],
+      credit_status_enum: ["active", "verified", "flagged", "hidden"],
+      credit_tier_enum: ["primary", "contributor", "ancillary"],
+      location_precision: ["exact", "approximate"],
+      person_claim_status: ["unclaimed", "claimed", "verified"],
+      poll_status: ["draft", "open", "closed", "archived", "live", "published"],
+      poll_type: ["general", "film_selection", "quiz"],
+    },
   },
 } as const

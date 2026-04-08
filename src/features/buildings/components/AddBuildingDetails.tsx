@@ -8,6 +8,9 @@ import { useNavigate } from "react-router";
 import { BuildingForm, BuildingFormData } from "./BuildingForm";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { replacePrimaryDesignCredits } from "@/features/credits/api/credits";
+import type { Database } from "@/integrations/supabase/types";
+
+type BuildingEnums = Database["public"]["Enums"];
 
 interface AddBuildingDetailsProps {
   locationData: {
@@ -42,16 +45,15 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         .from('buildings')
         .insert({
           name: data.name,
-          // @ts-expect-error -- legacy Supabase row typing
-          slug: data.slug || undefined,
+          slug: data.slug ?? undefined,
           alt_name: data.alt_name || null,
           aliases: data.aliases || [],
           year_completed: data.year_completed,
-          status: data.status,
-          access_level: data.access_level,
-          access_logistics: data.access_logistics,
-          access_cost: data.access_cost,
-          access_notes: data.access_notes,
+          status: (data.status || null) as BuildingEnums["building_status"] | null,
+          access_level: (data.access_level || null) as BuildingEnums["building_access_level"] | null,
+          access_logistics: (data.access_logistics || null) as BuildingEnums["building_access_logistics"] | null,
+          access_cost: (data.access_cost || null) as BuildingEnums["building_access_cost"] | null,
+          access_notes: data.access_notes || null,
 
           // Location Data (Merged from Main & Feature branches)
           address: locationData.address,

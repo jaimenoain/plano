@@ -112,7 +112,11 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
             address: buildingData?.address || null,
             city: buildingData?.city || null,
             country: buildingData?.country || null,
-            main_image_url: buildingData?.main_image_url || null,
+            main_image_url:
+              (buildingData as { hero_image_url?: string | null; main_image_url?: string | null } | null)
+                ?.hero_image_url ??
+              (buildingData as { main_image_url?: string | null } | null)?.main_image_url ??
+              null,
             community_preview_url:
               buildingData?.community_preview_url ?? null,
             creditedEntities: creditedEntitiesFromRpcJson(

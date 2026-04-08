@@ -38,6 +38,8 @@ The rewrite proxies the upstream response: HTTP status codes from the Edge Funct
 
 [`public/robots.txt`](../public/robots.txt) references `https://plano.app/sitemap.xml` — ensure production serves the sitemap URL above at that path.
 
+The stock file uses **`User-agent: *`** + **`Allow: /`** (no `Disallow` rules), so **`/person/`** and **`/company/`** are crawlable unless you add exclusions later.
+
 ## Google Search Console (site owner)
 
 **Sitemap URL to submit:** `https://plano.app/sitemap.xml` (same path `robots.txt` advertises; apex may redirect to `www` — either host is fine if the property matches how users reach the site).
@@ -46,7 +48,7 @@ The rewrite proxies the upstream response: HTTP status codes from the Edge Funct
 
 1. Open **Sitemaps**, enter `https://plano.app/sitemap.xml`, use Test then Submit.
 2. After processing, confirm the reported discovered URL count is non-zero and errors are addressed (fix code or data, then resubmit).
-3. Use **URL Inspection** on a few sample URLs from the sitemap (buildings, architects, profiles) and request indexing where you want faster recrawls.
+3. Use **URL Inspection** on a few sample URLs from the sitemap (buildings, `/person/:slug`, `/company/:slug`, profiles) and request indexing where you want faster recrawls.
 4. Use **URL Inspection** on private URLs such as `/settings`, `/auth`, and one `/building/<id>/edit` URL — status should be **not indexed**, with **noindex** given as the reason.
 
 **Vercel rewrite (sitemap proxy)** — in [`vercel.json`](../vercel.json):

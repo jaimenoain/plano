@@ -13,7 +13,15 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { getBuildingImageUrl } from "@/utils/image";
 
 type SuggestionLogRow = {
-  building: { id: string; name: string; main_image_url: string | null; year_completed: number | null } | { id: string; name: string; main_image_url: string | null; year_completed: number | null }[] | null;
+  building:
+    | { id: string; name: string; hero_image_url: string | null; year_completed: number | null }
+    | {
+        id: string;
+        name: string;
+        hero_image_url: string | null;
+        year_completed: number | null;
+      }[]
+    | null;
 };
 
 type UserRatingRow = { building_id: string; rating: number | null };
@@ -53,7 +61,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
         .from("user_buildings")
         .select(`
            rating,
-           building:buildings ( id, name, main_image_url, year_completed )
+           building:buildings ( id, name, hero_image_url, year_completed )
         `)
         .eq("user_id", user.id)
         .eq("rating", 10)
@@ -68,7 +76,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
              id: b.id,
              media_type: "building" as const,
              title: b.name,
-             image_url: getBuildingImageUrl(b.main_image_url),
+             image_url: getBuildingImageUrl(b.hero_image_url),
              rating: 10 as number,
              year_completed: b.year_completed ? String(b.year_completed) : undefined
            } satisfies FavoriteItem];

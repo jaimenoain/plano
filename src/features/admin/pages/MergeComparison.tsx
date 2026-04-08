@@ -136,16 +136,23 @@ export default function MergeComparison() {
 
             setBuildings(transformed);
 
-            // Fetch review images
-            const { data: images } = await supabase
-                .from('review_images')
-                .select('building_id, storage_path')
-                .in('building_id', [id1, id2]);
+            // Review images attach to `user_buildings` rows (`review_id`), not `buildings.id`.
+            const { data: userReviews } = await supabase
+                .from("user_buildings")
+                .select("id, building_id")
+                .in("building_id", [id1, id2]);
 
-            if (images) {
+            if (userReviews && userReviews.length > 0) {
+                const reviewIds = userReviews.map((r) => r.id);
+                const bidByReview = new Map(userReviews.map((r) => [r.id, r.building_id] as const));
+                const { data: images } = await supabase
+                    .from("review_images")
+                    .select("review_id, storage_path")
+                    .in("review_id", reviewIds);
+
                 const imgMap: Record<string, string[]> = {};
-                images.forEach((img) => {
-                    const bid = img.building_id;
+                (images ?? []).forEach((img) => {
+                    const bid = bidByReview.get(img.review_id);
                     if (img.storage_path && bid) {
                         if (!imgMap[bid]) imgMap[bid] = [];
                         const fullUrl = getBuildingImageUrl(img.storage_path);
@@ -153,6 +160,8 @@ export default function MergeComparison() {
                     }
                 });
                 setReviewImages(imgMap);
+            } else {
+                setReviewImages({});
             }
         } catch (_error) {
             toast.error("Failed to load buildings");
@@ -164,14 +173,25 @@ export default function MergeComparison() {
     const fetchImpact = async (sourceId: string) => {
         setImpactLoading(true);
         try {
-            const [reviews, photos] = await Promise.all([
-                supabase.from('user_buildings').select('*', { count: 'exact', head: true }).eq('building_id', sourceId),
-                supabase.from('review_images').select('*', { count: 'exact', head: true }).eq('building_id', sourceId)
-            ]);
+            const { count: reviewCount } = await supabase
+                .from("user_buildings")
+                .select("*", { count: "exact", head: true })
+                .eq("building_id", sourceId);
+
+            const { data: ubRows } = await supabase.from("user_buildings").select("id").eq("building_id", sourceId);
+            const reviewIds = ubRows?.map((r) => r.id) ?? [];
+            let photoCount = 0;
+            if (reviewIds.length > 0) {
+                const { count } = await supabase
+                    .from("review_images")
+                    .select("*", { count: "exact", head: true })
+                    .in("review_id", reviewIds);
+                photoCount = count ?? 0;
+            }
 
             setImpact({
-                reviews: reviews.count || 0,
-                photos: photos.count || 0
+                reviews: reviewCount || 0,
+                photos: photoCount,
             });
         } catch (_e) {
             /* ignore */

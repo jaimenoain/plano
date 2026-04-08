@@ -26,7 +26,7 @@ import type { CreditRole } from "@/features/credits/types";
 interface BuildingDataItem {
   id: string;
   status: string | null;
-  main_image_url: string | null;
+  hero_image_url: string | null;
 }
 
 interface ContactInteractionData {
@@ -51,7 +51,7 @@ interface BuildingMapSearchRow {
   /** DB returns plain string; narrowed again in filter layer if needed */
   status: string | null;
   name: string;
-  main_image_url?: string | null;
+  hero_image_url?: string | null;
   slug?: string | null;
   building_credits?: { person_id: string | null; company_id: string | null; status: string | null }[] | null;
   functional_category_id?: string | null;
@@ -192,7 +192,7 @@ async function enrichBuildings(
   if (idsToFetch.length > 0) {
     const { data: fetchedData, error } = await supabase
       .from('buildings')
-      .select('id, status, main_image_url')
+      .select('id, status, hero_image_url')
       .in('id', idsToFetch)
       .limit(QUERY_LIMIT);
 
@@ -202,7 +202,7 @@ async function enrichBuildings(
 
       (fetchedData as unknown as BuildingDataItem[]).forEach((item) => {
         statusMap.set(item.id, item.status);
-        imageMap.set(item.id, item.main_image_url);
+        imageMap.set(item.id, item.hero_image_url);
       });
 
       enrichedBuildings = enrichedBuildings.map(b => {
@@ -485,7 +485,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, username, avatar_url, first_name, last_name')
+          .select('id, username, avatar_url')
           .in('username', usernames)
           .limit(QUERY_LIMIT);
 
@@ -497,7 +497,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
           id: p.id,
           username: p.username,
           avatar_url: p.avatar_url,
-          name: p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : p.username,
+          name: p.username?.trim() ? p.username : "Member",
           bio: null
         } as UserSearchResult)) || [];
       } catch {
@@ -975,7 +975,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                 location,
                 status,
                 name,
-                main_image_url,
+                hero_image_url,
                 slug,
                 building_credits(person_id, company_id, status),
                 functional_category_id,
@@ -1035,7 +1035,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                   is_cluster: false,
                   name: b.name,
                   slug: b.slug,
-                  image_url: b.main_image_url,
+                  image_url: b.hero_image_url ?? null,
                   architect_names: []
                 } as BuildingPoint;
               })

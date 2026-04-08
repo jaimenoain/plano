@@ -482,7 +482,7 @@
 
 ---
 
-**[ ] Task 11.1 — Remove all deprecated architect components and tables**
+**[x] Task 11.1 — Remove all deprecated architect components and tables**
 
 - Confirm zero references to `architects` or `building_architects` remain in TypeScript, SQL, RPC names, or Supabase query strings (run a codebase-wide grep before proceeding)
 - Remove: `src/components/ui/architect-select.tsx`, `src/features/search/components/ArchitectSelect.tsx` (both files), `src/features/architect/components/ArchitectPortfolio.tsx`, `src/features/architect/hooks/useArchitectPortfolio.ts`, `src/features/architect/pages/ArchitectDetails.tsx` and its loader, `src/features/architect/pages/ArchitectDashboard.tsx` (replaced by PersonDashboard), `src/features/architect/components/ClaimProfileDialog.tsx` (replaced by ClaimPersonDialog), `FeaturedArchitect.tsx` (update to query `people` and `building_credits` or remove if the feed is no longer used), `DisconnectArchitectDialog.tsx` (replace with a "Remove claimed profile link" action on the person page settings)
@@ -496,7 +496,7 @@
 
 ---
 
-**[ ] Task 11.2 — SEO: structured data, meta tags, and sitemap edge function**
+**[x] Task 11.2 — SEO: structured data, meta tags, and sitemap edge function**
 
 - Confirm `PersonDetails.tsx` and `CompanyDetails.tsx` have correct Schema.org JSON-LD (`Person` and `Organization`), canonical URLs, and `MetaHead` titles (covered in Tasks 3.1 and 4.1 — this task audits and fixes any gaps)
 - Update the `sitemap` edge function: replace `/architect/:id` URL generation with `/person/:slug` and add `/company/:slug` URL generation; remove the `profiles.verified_architect_id` exclusion logic (no longer relevant); ensure unclaimed person and company pages are included (they are publicly valuable for SEO)

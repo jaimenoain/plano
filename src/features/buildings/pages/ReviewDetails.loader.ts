@@ -23,7 +23,7 @@ export async function reviewLoader({ request, params }: LoaderFunctionArgs) {
       id,
       content,
       user:profiles(username),
-      building:buildings(id, name, short_id, slug, main_image_url),
+      building:buildings(id, name, short_id, slug, hero_image_url),
       images:review_images(id, storage_path)
     `,
     )
@@ -62,8 +62,8 @@ export async function reviewLoader({ request, params }: LoaderFunctionArgs) {
   }
 
   const mainFallback =
-    building.main_image_url != null
-      ? getBuildingImageUrl(building.main_image_url)
+    building.hero_image_url != null
+      ? getBuildingImageUrl(building.hero_image_url)
       : undefined;
 
   const ogImage = firstImageUrl ?? mainFallback ?? `${SITE_URL}/cover.jpg`;

@@ -494,7 +494,7 @@ export default function Profile() {
       let query = supabase
         .from("user_buildings")
         .select(`id, content, rating, created_at, edited_at, user_id, building_id, status,
-          building:buildings ( id, name, address, city, country, year_completed, main_image_url, community_preview_url, slug, short_id, building_credits ( status, credit_tier, person:people (id, name), company:companies (id, name) ) )`)
+          building:buildings ( id, name, address, city, country, year_completed, hero_image_url, community_preview_url, slug, short_id, building_credits ( status, credit_tier, person:people (id, name), company:companies (id, name) ) )`)
         .eq("user_id", targetUserId)
         .order("edited_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
@@ -534,7 +534,7 @@ export default function Profile() {
       type ProfileFeedRow = {
         id: string; content: string | null; rating: number | null; created_at: string;
         edited_at?: string | null; status: "visited" | "pending"; building_id: string;
-        building?: { id?: string; name?: string | null; address?: string | null; city?: string | null; country?: string | null; year_completed?: number | null; main_image_url?: string | null; community_preview_url?: string | null; slug?: string | null; short_id?: number | null; building_credits?: BuildingCreditEmbed[] | null; } | null;
+        building?: { id?: string; name?: string | null; address?: string | null; city?: string | null; country?: string | null; year_completed?: number | null; hero_image_url?: string | null; community_preview_url?: string | null; slug?: string | null; short_id?: number | null; building_credits?: BuildingCreditEmbed[] | null; } | null;
       };
       const formattedContent: FeedReview[] = (entriesData as ProfileFeedRow[]).map(item => {
         const reviewLikes = likesCount.get(item.id) || 0;
@@ -543,7 +543,7 @@ export default function Profile() {
         return {
           id: item.id, content: item.content, rating: item.rating, created_at: item.created_at, edited_at: item.edited_at ?? null, status: item.status,
           user: { username: profile?.username || "Unknown", avatar_url: profile?.avatar_url || null },
-          building: { id: item.building?.id || item.building_id, name: item.building?.name || "Unknown Building", address: item.building?.address || null, city: item.building?.city || null, country: item.building?.country || null, year_completed: item.building?.year_completed || null, main_image_url: item.building?.main_image_url || null, community_preview_url: item.building?.community_preview_url ?? null, slug: item.building?.slug || null, short_id: item.building?.short_id || null, creditedEntities: visibleCreditSummariesFromEmbed(item.building?.building_credits) },
+          building: { id: item.building?.id || item.building_id, name: item.building?.name || "Unknown Building", address: item.building?.address || null, city: item.building?.city || null, country: item.building?.country || null, year_completed: item.building?.year_completed || null, main_image_url: item.building?.hero_image_url || null, community_preview_url: item.building?.community_preview_url ?? null, slug: item.building?.slug || null, short_id: item.building?.short_id || null, creditedEntities: visibleCreditSummariesFromEmbed(item.building?.building_credits) },
           tags: [] as string[], likes_count: reviewLikes + imageLikes, comments_count: commentsCount.get(item.id) || 0, is_liked: userLikes.has(item.id), watch_with_users: [] as WatchWithUser[], images: itemImages,
         };
       });

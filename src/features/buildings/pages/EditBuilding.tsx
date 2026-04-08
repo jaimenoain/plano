@@ -14,6 +14,9 @@ import { replacePrimaryDesignCredits } from "@/features/credits/api/credits";
 import { parseLocation } from "@/utils/location";
 import { getBuildingUrl } from "@/utils/url";
 import { classifyBuildingPathIdSegment } from "@/utils/buildingPathId";
+import type { Database } from "@/integrations/supabase/types";
+
+type BuildingEnums = Database["public"]["Enums"];
 
 interface LocationData {
     lat: number | null;
@@ -202,9 +205,13 @@ toast.error("Error loading building");
     const checkDuplicates = async (): Promise<void> => {
       setCheckingDuplicates(true);
       try {
+        const lat = locationData.lat;
+        const lng = locationData.lng;
+        if (lat == null || lng == null) return;
+
         const { data, error } = await supabase.rpc('find_nearby_buildings', {
-          lat: locationData.lat,
-          long: locationData.lng,
+          lat,
+          long: lng,
           radius_meters: 50,
           name_query: initialValues?.name || ""
         });
@@ -243,11 +250,11 @@ toast.error("Error loading building");
           alt_name: formData.alt_name || null,
           aliases: formData.aliases || [],
           year_completed: formData.year_completed,
-          status: formData.status,
-          access_level: formData.access_level,
-          access_logistics: formData.access_logistics,
-          access_cost: formData.access_cost,
-          access_notes: formData.access_notes,
+          status: (formData.status || null) as BuildingEnums["building_status"] | null,
+          access_level: (formData.access_level || null) as BuildingEnums["building_access_level"] | null,
+          access_logistics: (formData.access_logistics || null) as BuildingEnums["building_access_logistics"] | null,
+          access_cost: (formData.access_cost || null) as BuildingEnums["building_access_cost"] | null,
+          access_notes: formData.access_notes || null,
           functional_category_id: formData.functional_category_id,
           // Removed legacy column updates for typologies/attributes
 

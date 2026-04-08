@@ -44,7 +44,9 @@ export type DashboardStats = {
       building_id: string;
       name: string;
       visit_count: number;
+      /** Legacy RPC field; prefer `hero_image_url` when present. */
       main_image_url?: string | null;
+      hero_image_url?: string | null;
     }[];
   };
   user_leaderboard: {

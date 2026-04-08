@@ -13,7 +13,7 @@ interface BucketBuilding {
   city: string | null;
   country: string | null;
   slug: string | null;
-  main_image_url: string | null;
+  hero_image_url: string | null;
   userBuildingId?: string;
 }
 
@@ -26,7 +26,7 @@ interface BucketRow {
     city: string | null;
     country: string | null;
     slug: string | null;
-    main_image_url: string | null;
+    hero_image_url: string | null;
   } | null;
 }
 
@@ -40,7 +40,7 @@ export function BucketListWidget() {
       if (!user) return [];
       const { data, error } = await supabase
         .from("user_buildings")
-        .select("id, building_id, building:buildings(id, name, city, country, slug, main_image_url)")
+        .select("id, building_id, building:buildings(id, name, city, country, slug, hero_image_url)")
         .eq("user_id", user.id)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -114,7 +114,7 @@ export function BucketListWidget() {
               </div>
             ))
           : items.map((building) => {
-              const imageUrl = getBuildingImageUrl(building.main_image_url);
+              const imageUrl = getBuildingImageUrl(building.hero_image_url);
               const href = `/building/${building.id}/${building.slug ?? "details"}`;
               return (
                 <div

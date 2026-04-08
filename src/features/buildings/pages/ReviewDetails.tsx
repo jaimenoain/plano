@@ -146,7 +146,7 @@ export default function ReviewDetails() {
                 .select(`
                     id, content, rating, tags, created_at, user_id, building_id, status,
                     user:profiles(username, avatar_url),
-                    building:buildings(id, name, year_completed, address, main_image_url, building_credits(status, credit_tier, person:people(id, name), company:companies(id, name))),
+                    building:buildings(id, name, year_completed, address, hero_image_url, building_credits(status, credit_tier, person:people(id, name), company:companies(id, name))),
                     images:review_images(id, storage_path, is_generated)
                 `)
                 .eq("id", paramId)
@@ -181,7 +181,7 @@ export default function ReviewDetails() {
               name: string;
               year_completed: number | null;
               address: string | null;
-              main_image_url: string | null;
+              hero_image_url: string | null;
               building_credits?: BuildingCreditEmbed[] | null;
             };
             const formattedBuilding = {
@@ -189,7 +189,7 @@ export default function ReviewDetails() {
               name: rb.name,
               year_completed: rb.year_completed,
               address: rb.address,
-              main_image_url: rb.main_image_url,
+              main_image_url: rb.hero_image_url ?? null,
               creditedEntities: visibleCreditSummariesFromEmbed(rb.building_credits),
             };
 

@@ -68,13 +68,13 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         p_user_id: user.id,
         p_limit: LIMIT,
         p_offset: pageParam,
-        p_city_filter: city || null,
-        p_country_filter: country || null,
-        p_region_filter: region || null,
-        p_category_id: categoryId || null,
-        p_typology_ids: typologyIds && typologyIds.length > 0 ? typologyIds : null,
-        p_attribute_ids: attributeIds && attributeIds.length > 0 ? attributeIds : null,
-        p_architect_ids: architectIds && architectIds.length > 0 ? architectIds : null,
+        ...(city ? { p_city_filter: city } : {}),
+        ...(country ? { p_country_filter: country } : {}),
+        ...(region ? { p_region_filter: region } : {}),
+        ...(categoryId ? { p_category_id: categoryId } : {}),
+        ...(typologyIds && typologyIds.length > 0 ? { p_typology_ids: typologyIds } : {}),
+        ...(attributeIds && attributeIds.length > 0 ? { p_attribute_ids: attributeIds } : {}),
+        ...(architectIds && architectIds.length > 0 ? { p_architect_ids: architectIds } : {}),
       });
 
       if (error) throw error;

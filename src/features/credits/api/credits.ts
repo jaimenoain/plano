@@ -525,7 +525,7 @@ export async function flagCredit(
   const { data, error } = await supabase.rpc("flag_building_credit", {
     p_credit_id: creditId,
     p_reason: reason,
-    p_notes: cleanNotes,
+    p_notes: cleanNotes ?? "",
   });
 
   if (error) throw error;

@@ -51,7 +51,6 @@ export const buildingSchema = z.object({
 
   const { data: isAvailable, error } = await supabase.rpc('check_slug_availability', {
     target_slug: data.slug,
-    exclude_id: null,
   });
 
   if (error) {
@@ -115,7 +114,7 @@ export const editBuildingSchema = z.object({
 
   const { data: isAvailable, error } = await supabase.rpc('check_slug_availability', {
     target_slug: data.slug,
-    exclude_id: data.id || null,
+    ...(data.id ? { exclude_id: data.id } : {}),
   });
 
   if (error) {

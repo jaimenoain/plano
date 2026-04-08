@@ -20,7 +20,7 @@ interface Collection {
   owner?: { username: string | null };
 }
 
-type CollectionItemPin = { building?: { main_image_url?: string | null } | null };
+type CollectionItemPin = { building?: { hero_image_url?: string | null } | null };
 type NestedCollection = {
   collection_items?: CollectionItemPin[] | null;
 };
@@ -82,7 +82,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
              collection:collections (
                collection_items (
                  building:buildings (
-                   main_image_url
+                   hero_image_url
                  )
                )
              )
@@ -107,7 +107,7 @@ return;
         const images: string[] = [];
         folder.user_folder_items?.forEach((item) => {
             item.collection?.collection_items?.forEach((ci) => {
-                const rawUrl = ci.building?.main_image_url;
+                const rawUrl = ci.building?.hero_image_url;
                 if (rawUrl) {
                   const resolvedUrl = getBuildingImageUrl(rawUrl);
                   if (resolvedUrl && !images.includes(resolvedUrl)) {

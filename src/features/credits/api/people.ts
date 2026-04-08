@@ -202,7 +202,6 @@ type BuildingEmbed = {
   country: string | null;
   year_completed: number | null;
   hero_image_url: string | null;
-  main_image_url: string | null;
   community_preview_url: string | null;
 } | null;
 
@@ -263,7 +262,7 @@ function mapBuildingSummary(b: BuildingEmbed): BuildingSummaryForPersonCredit | 
     country: b.country,
     yearCompleted: b.year_completed,
     heroImageUrl: b.hero_image_url,
-    mainImageUrl: b.main_image_url,
+    mainImageUrl: b.hero_image_url,
     communityPreviewUrl: b.community_preview_url,
   };
 }
@@ -347,7 +346,7 @@ async function allocateUniquePeopleSlug(name: string): Promise<string> {
 const PERSON_BUILDING_CREDIT_SELECT = `
       *,
       company:companies(id, name, slug),
-      building:buildings(id, name, slug, short_id, city, country, year_completed, hero_image_url, main_image_url, community_preview_url)
+      building:buildings(id, name, slug, short_id, city, country, year_completed, hero_image_url, community_preview_url)
     `;
 
 /**

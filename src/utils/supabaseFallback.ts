@@ -1,5 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+type AccessLevel = Database["public"]["Enums"]["building_access_level"];
+type AccessLogistics = Database["public"]["Enums"]["building_access_logistics"];
+type AccessCost = Database["public"]["Enums"]["building_access_cost"];
 import { classifyBuildingPathIdSegment } from "@/utils/buildingPathId";
 import { DiscoveryBuilding, DiscoveryBuildingMapPin, LeaderboardData } from "@/features/search/components/types";
 import {
@@ -34,7 +39,7 @@ export const searchBuildingsRpc = async (params: {
     country,
     slug,
     short_id,
-    main_image_url,
+    hero_image_url,
     year_completed,
     popularity_score,
     access_level,
@@ -66,13 +71,13 @@ export const searchBuildingsRpc = async (params: {
   }
 
   if (params.p_access_levels && params.p_access_levels.length > 0) {
-    query = query.in('access_level', params.p_access_levels);
+    query = query.in('access_level', params.p_access_levels as AccessLevel[]);
   }
   if (params.p_access_logistics && params.p_access_logistics.length > 0) {
-    query = query.in('access_logistics', params.p_access_logistics);
+    query = query.in('access_logistics', params.p_access_logistics as AccessLogistics[]);
   }
   if (params.p_access_costs && params.p_access_costs.length > 0) {
-    query = query.in('access_cost', params.p_access_costs);
+    query = query.in('access_cost', params.p_access_costs as AccessCost[]);
   }
 
   // To prevent errors and as we don't have all PostGIS distance features easy without RPC
@@ -94,6 +99,7 @@ throw error;
 
   return (data || []).map((b: unknown) => {
     const row = b as Record<string, unknown> & {
+      hero_image_url?: string | null;
       building_credits?: CreditEmbed[] | null;
       styles?: { style: unknown }[];
       typologies?: { typology?: { name?: string } }[];
@@ -114,9 +120,10 @@ throw error;
         return null;
       })
       .filter((a): a is { id: string; name: string } => a != null);
-    const { building_credits: _bc, ...rest } = row;
+    const { building_credits: _bc, hero_image_url, ...rest } = row;
     return {
       ...rest,
+      main_image_url: hero_image_url ?? null,
       credits,
       styles: (row.styles || []).map((s) => s.style),
       typologies: (row.typologies || []).map((t) => t.typology?.name).filter(Boolean),
@@ -142,7 +149,12 @@ export const getMapPinsRpc = async (params: {
   min_lng?: number;
   max_lng?: number;
 }): Promise<DiscoveryBuildingMapPin[]> => {
-  const { data, error } = await supabase.rpc('get_map_pins', params);
+  const { query_text, ...rest } = params;
+  const rpcArgs = {
+    ...rest,
+    ...(query_text != null && query_text.trim() !== "" ? { query_text: query_text.trim() } : {}),
+  };
+  const { data, error } = await supabase.rpc('get_map_pins', rpcArgs);
   if (error) throw error;
 
   // Map snake_case to camelCase
@@ -163,7 +175,6 @@ export const getBuildingsByIds = async (ids: string[]) => {
     .from('buildings')
     .select(`
       *,
-      main_image_url,
       building_credits(
         credit_tier,
         status,
@@ -186,7 +197,10 @@ export const getBuildingsByIds = async (ids: string[]) => {
   };
 
   return (data || []).map((b: unknown) => {
-    const row = b as Record<string, unknown> & { building_credits?: CreditEmbed[] | null };
+    const row = b as Record<string, unknown> & {
+      building_credits?: CreditEmbed[] | null;
+      hero_image_url?: string | null;
+    };
     const rawCredits = row.building_credits ?? [];
     const primaryVisible = rawCredits.filter(
       (c) =>
@@ -203,8 +217,8 @@ export const getBuildingsByIds = async (ids: string[]) => {
         return null;
       })
       .filter((a): a is { id: string; name: string } => a != null);
-    const { building_credits: _bc, ...rest } = row;
-    return { ...rest, credits };
+    const { building_credits: _bc, hero_image_url, ...rest } = row;
+    return { ...rest, main_image_url: hero_image_url ?? null, credits };
   });
 };
 

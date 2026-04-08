@@ -15,7 +15,9 @@ export function ContentIntelligenceZone({ trendingBuildings }: ContentIntelligen
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {trendingBuildings.map((building) => {
-            const imageUrl = getBuildingImageUrl(building.main_image_url);
+            const imageUrl = getBuildingImageUrl(
+              building.hero_image_url ?? building.main_image_url,
+            );
             return (
             <div key={building.building_id} className="flex flex-col items-center text-center space-y-2">
               <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-surface-muted">

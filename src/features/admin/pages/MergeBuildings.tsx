@@ -141,8 +141,8 @@ toast.error("Failed to fetch potential duplicates");
     setIsMerging(true);
     try {
       const { error } = await supabase.rpc('merge_buildings', {
-        master_id: selectedMaster.id,
-        duplicate_id: selectedDup.id
+        target_id: selectedMaster.id,
+        source_id: selectedDup.id,
       });
 
       if (error) throw error;

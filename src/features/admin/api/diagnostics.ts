@@ -78,7 +78,7 @@ export async function fetchDiagnosticLogs(): Promise<DiagnosticLog[]> {
         : null;
     return {
       id: log.id,
-      created_at: log.created_at,
+      created_at: log.created_at ?? "",
       error_type: (details?.error_type as string | undefined) || "Unknown",
       message: (details?.message as string | undefined) || "No message",
       stack_trace: (details?.stack_trace as string | null | undefined) ?? null,

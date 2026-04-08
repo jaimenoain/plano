@@ -24,7 +24,7 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
     supabase.rpc('get_admin_notifications'),
     supabase.from('buildings').select('*', { count: 'exact', head: true }).eq('is_deleted', false),
     supabase.from('user_buildings').select('*', { count: 'exact', head: true }).not('content', 'is', null),
-    supabase.from('buildings').select('*', { count: 'exact', head: true }).not('main_image_url', 'is', null).eq('is_deleted', false),
+    supabase.from('buildings').select('*', { count: 'exact', head: true }).not('hero_image_url', 'is', null).eq('is_deleted', false),
     supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
   ]);
 
