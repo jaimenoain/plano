@@ -37,7 +37,12 @@ export const searchBuildingsRpc = async (params: {
     access_logistics,
     access_cost,
     status,
-    architects:building_architects(architect:architects(id, name)),
+    building_credits(
+      credit_tier,
+      status,
+      person:people(id, name),
+      company:companies(id, name)
+    ),
     styles:building_styles(style:architectural_styles(id, name)),
     typologies:building_functional_typologies(typology:functional_typologies(name, id))
   `);
@@ -76,15 +81,39 @@ export const searchBuildingsRpc = async (params: {
 throw error;
   }
 
+  type CreditEmbed = {
+    credit_tier?: string;
+    status?: string;
+    person?: { id: string; name: string } | null;
+    company?: { id: string; name: string } | null;
+  };
+
   return (data || []).map((b: unknown) => {
     const row = b as Record<string, unknown> & {
-      architects?: { architect: unknown }[];
+      building_credits?: CreditEmbed[] | null;
       styles?: { style: unknown }[];
       typologies?: { typology?: { name?: string } }[];
     };
+    const rawCredits = row.building_credits ?? [];
+    const primaryVisible = rawCredits.filter(
+      (c) =>
+        c.credit_tier === "primary" &&
+        (c.status === "active" || c.status === "verified"),
+    );
+    const architects = primaryVisible
+      .map((c) => {
+        const p = c.person;
+        const co = c.company;
+        if (p && co) return { id: p.id, name: `${p.name} @ ${co.name}` };
+        if (p) return { id: p.id, name: p.name };
+        if (co) return { id: co.id, name: co.name };
+        return null;
+      })
+      .filter((a): a is { id: string; name: string } => a != null);
+    const { building_credits: _bc, ...rest } = row;
     return {
-      ...row,
-      architects: (row.architects || []).map((ba) => ba.architect),
+      ...rest,
+      architects,
       styles: (row.styles || []).map((s) => s.style),
       typologies: (row.typologies || []).map((t) => t.typology?.name).filter(Boolean),
     };
@@ -131,7 +160,12 @@ export const getBuildingsByIds = async (ids: string[]) => {
     .select(`
       *,
       main_image_url,
-      architects:building_architects(architect:architects(name, id)),
+      building_credits(
+        credit_tier,
+        status,
+        person:people(id, name),
+        company:companies(id, name)
+      ),
       functional_category_id,
       typologies:building_functional_typologies(typology_id),
       attributes:building_attributes(attribute_id)
@@ -139,7 +173,35 @@ export const getBuildingsByIds = async (ids: string[]) => {
     .in('id', ids);
 
   if (error) throw error;
-  return data || [];
+
+  type CreditEmbed = {
+    credit_tier?: string;
+    status?: string;
+    person?: { id: string; name: string } | null;
+    company?: { id: string; name: string } | null;
+  };
+
+  return (data || []).map((b: unknown) => {
+    const row = b as Record<string, unknown> & { building_credits?: CreditEmbed[] | null };
+    const rawCredits = row.building_credits ?? [];
+    const primaryVisible = rawCredits.filter(
+      (c) =>
+        c.credit_tier === "primary" &&
+        (c.status === "active" || c.status === "verified"),
+    );
+    const architects = primaryVisible
+      .map((c) => {
+        const p = c.person;
+        const co = c.company;
+        if (p && co) return { id: p.id, name: `${p.name} @ ${co.name}` };
+        if (p) return { id: p.id, name: p.name };
+        if (co) return { id: co.id, name: co.name };
+        return null;
+      })
+      .filter((a): a is { id: string; name: string } => a != null);
+    const { building_credits: _bc, ...rest } = row;
+    return { ...rest, architects };
+  });
 };
 
 export const getDiscoveryFiltersRpc = async (): Promise<{ cities: string[]; styles: {id: string, name: string, slug: string}[] }> => {
@@ -200,7 +262,6 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
       alt_name,
       aliases,
       styles:building_styles(style:architectural_styles(id, name)),
-      architects:building_architects(architect:architects(id, name)),
       category:functional_categories(name),
       typologies:building_functional_typologies(typology:functional_typologies(name, id)),
       attributes:building_attributes(attribute:attributes(name, id, group_id, group:attribute_groups(slug)))
@@ -224,9 +285,6 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
     type AttrRow = { group?: { slug?: string }; name?: string };
     const styles = Array.isArray(data.styles)
       ? data.styles.map((s: unknown) => (s as { style: unknown }).style)
-      : [];
-    const architects = Array.isArray(data.architects)
-      ? data.architects.map((a: unknown) => (a as { architect: unknown }).architect)
       : [];
 
     const categoryName =
@@ -262,7 +320,7 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
     return {
         ...data,
         styles,
-        architects,
+        architects: [] as { id: string; name: string }[],
         category: categoryName,
         typology: typologies,
         materials: materials.length > 0 ? materials : null,

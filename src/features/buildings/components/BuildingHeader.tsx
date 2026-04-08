@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PopularityBadge } from "./PopularityBadge";
 import { getBuildingUrl } from "@/utils/url";
-import { Architect } from "@/features/architect/types";
+import type { BuildingCreditWithEntities } from "@/features/credits/types";
 import { synthesizeAccess } from "@/utils/accessSynthesis";
 import { BuildingAttributes } from "./BuildingAttributes";
+import { PrimaryCreditsLinks } from "./PrimaryCreditsLinks";
 
 interface BuildingDetails {
   id: string;
@@ -22,7 +23,6 @@ interface BuildingDetails {
   address: string | null;
   city: string | null;
   country: string | null;
-  architects: Architect[];
   year_completed: number;
   styles: { id: string, name: string }[];
   created_by: string;
@@ -37,6 +37,8 @@ interface BuildingDetails {
 
 interface BuildingHeaderProps {
   building: BuildingDetails;
+  /** Primary-tier credits (active/verified) for header attribution links */
+  primaryCredits?: BuildingCreditWithEntities[];
   showEditLink: boolean;
   className?: string;
   isEditing?: boolean;
@@ -48,6 +50,7 @@ interface BuildingHeaderProps {
 
 export const BuildingHeader = ({
   building,
+  primaryCredits = [],
   showEditLink,
   className,
   isEditing,
@@ -113,16 +116,12 @@ export const BuildingHeader = ({
                         />
                     </div>
                 )}
-                {(building.architects && building.architects.length > 0) && (
+                {primaryCredits.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5">
-                        {building.architects.map((arch, i) => (
-                            <span key={arch.id}>
-                                <Link to={`/architect/${arch.id}`} className="hover:underline text-brand-primary">
-                                    {arch.name}
-                                </Link>
-                                {i < building.architects.length - 1 && ", "}
-                            </span>
-                        ))}
+                        <PrimaryCreditsLinks
+                          credits={primaryCredits}
+                          linkClassName="hover:underline text-brand-primary"
+                        />
                     </div>
                 )}
             </div>

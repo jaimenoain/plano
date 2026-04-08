@@ -1,4 +1,9 @@
 import type { BuildingDetails } from "../pages/BuildingDetails";
+import type { BuildingCreditWithEntities } from "@/features/credits/types";
+import {
+  visiblePrimaryCredits,
+  primaryCreditPlainLabel,
+} from "@/features/credits/buildingCreditDisplay";
 import { getBuildingUrl } from "@/utils/url";
 
 export const SITE_URL = "https://plano.app";
@@ -67,7 +72,10 @@ export function buildingAbsoluteUrl(building: BuildingDetails): string {
   return `${SITE_URL}${getBuildingUrl(building.id, building.slug, building.short_id)}`;
 }
 
-export function buildingStructuredData(building: BuildingDetails) {
+export function buildingStructuredData(
+  building: BuildingDetails,
+  credits?: BuildingCreditWithEntities[],
+) {
   const url = buildingAbsoluteUrl(building);
   const year = building.year_completed;
   const yearIso =
@@ -86,14 +94,41 @@ export function buildingStructuredData(building: BuildingDetails) {
       }
     : undefined;
 
+  const architectFromCredits =
+    credits && credits.length > 0
+      ? visiblePrimaryCredits(credits).flatMap((c) => {
+          const nodes: Array<
+            | { "@type": "Person"; name: string; url: string }
+            | { "@type": "Organization"; name: string; url: string }
+          > = [];
+          if (c.person) {
+            nodes.push({
+              "@type": "Person",
+              name: c.person.name,
+              url: `${SITE_URL}/person/${c.person.slug}`,
+            });
+          }
+          if (c.company) {
+            nodes.push({
+              "@type": "Organization",
+              name: c.company.name,
+              url: `${SITE_URL}/company/${c.company.slug}`,
+            });
+          }
+          return nodes;
+        })
+      : [];
+
   const architect =
-    building.architects && building.architects.length > 0
-      ? building.architects.map((a) => ({
-          "@type": "Person" as const,
-          name: a.name,
-          url: `${SITE_URL}/architect/${a.id}`,
-        }))
-      : undefined;
+    architectFromCredits.length > 0
+      ? architectFromCredits
+      : building.architects && building.architects.length > 0
+        ? building.architects.map((a) => ({
+            "@type": "Person" as const,
+            name: a.name,
+            url: `${SITE_URL}/architect/${a.id}`,
+          }))
+        : undefined;
 
   const styleProperties =
     building.styles && building.styles.length > 0
@@ -117,7 +152,10 @@ export function buildingStructuredData(building: BuildingDetails) {
   };
 }
 
-export function buildingDescription(building: BuildingDetails): string {
+export function buildingDescription(
+  building: BuildingDetails,
+  credits?: BuildingCreditWithEntities[],
+): string {
   const parts: string[] = [];
   if (building.city && building.country) {
     parts.push(`Located in ${building.city}, ${building.country}.`);
@@ -125,7 +163,15 @@ export function buildingDescription(building: BuildingDetails): string {
   if (building.year_completed) {
     parts.push(`Completed in ${building.year_completed}.`);
   }
-  if (building.architects?.length) {
+  const creditLabels =
+    credits && credits.length > 0
+      ? visiblePrimaryCredits(credits)
+          .map(primaryCreditPlainLabel)
+          .filter((s) => s.length > 0)
+      : [];
+  if (creditLabels.length > 0) {
+    parts.push(`Designed by ${creditLabels.join(", ")}.`);
+  } else if (building.architects?.length) {
     parts.push(
       `Designed by ${building.architects.map((a) => a.name).join(", ")}.`,
     );

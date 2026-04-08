@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => {
     loaderData: {
       building: null as Record<string, unknown> | null,
       heroImageUrl: null as string | null,
+      buildingCredits: [] as unknown[],
     },
   };
 });
@@ -181,6 +182,7 @@ describe('BuildingDetails Rating Hover', () => {
     vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue(building as any);
     mocks.loaderData.building = building;
     mocks.loaderData.heroImageUrl = null;
+    mocks.loaderData.buildingCredits = [];
   });
 
   afterEach(() => {
@@ -201,7 +203,9 @@ describe('BuildingDetails Rating Hover', () => {
     );
 
     // Wait for content to load
-    await waitFor(() => screen.getByText('Your Activity'));
+    await waitFor(() => {
+      expect(screen.getByText('Visited')).toBeTruthy();
+    });
 
     // Find the 3 circles. We can look for the SVG circles or the wrapper div.
     // The circles are Lucide 'Circle' components which render as <svg><circle .../></svg>
@@ -230,8 +234,8 @@ describe('BuildingDetails Rating Hover', () => {
     // Expect 1st and 2nd to be filled, 3rd to be transparent
     // Wait for re-render
     await waitFor(() => {
-        expect(circle1.getAttribute('class')).toContain('fill-brand-primary');
-        expect(circle2.getAttribute('class')).toContain('fill-brand-primary');
+        expect(circle1.getAttribute('class')).toContain('fill-text-primary');
+        expect(circle2.getAttribute('class')).toContain('fill-text-primary');
         expect(circle3.getAttribute('class')).toContain('fill-transparent');
     });
 

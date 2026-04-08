@@ -3102,9 +3102,13 @@ Browser Supabase client wrappers live in `src/features/credits/api/credits.ts`. 
 |----------|-----------|
 | `getBuildingCredits(buildingId)` | All credits for the building joined with `people` / `companies` summaries; RLS omits `hidden` for non-admins. Sorted by `credit_tier`, `display_order`, `is_lead` descending. |
 | `addBuildingCredit(input)` | Zod-validated insert; requires at least one of `personId`, `companyId`; `added_by_user_id` from `auth.getUser()` (not client-supplied). |
-| `flagCredit(creditId, reason, notes)` | Sets `status = flagged`, `flag_reason`, `flag_notes`, `flagged_at`, `flagged_by_user_id` from session. Throws if unauthenticated or row not updatable (unknown id / RLS). |
+| `flagCredit(creditId, reason, notes)` | Calls RPC `flag_building_credit` (SECURITY DEFINER). Sets `status = flagged`, `flag_reason`, `flag_notes`, `flagged_at`; `flagged_by_user_id` is `auth.uid()` when signed in, else `NULL`. Only transitions `active` / `verified` → `flagged`. Refetches the row after RPC success. |
 | `updateCreditStatus(creditId, { status })` | Status-only patch; RLS applies (admin / claim owner / steward per policies). |
 | `removeCreditByToken(token)` | Calls RPC `redeem_credit_removal_token(p_token_hex)`; returns `{ ok, creditId? }` or `{ ok: false, error }` (`invalid_token`, `unknown_token`, `expired`, `already_used`, `rpc_error`). |
+
+### Component 4: RPC `flag_building_credit`
+
+Migration `20270826000000_flag_building_credit_rpc.sql` (Roadmap Phase 5 Task 5.3). **`SECURITY DEFINER`**. **`GRANT EXECUTE`** to **`anon`** and **`authenticated`**. Arguments: `p_credit_id`, `p_reason` (`credit_flag_reason_enum`), `p_notes` (nullable text, max 10 000 characters). Updates one row from `active` / `verified` to `flagged` with `flag_reason`, `flag_notes`, `flagged_at`, `flagged_by_user_id = auth.uid()` (null when anonymous), `updated_at`. Returns JSON `{ "ok": true, "credit_id": "<uuid>" }` or `{ "ok": false, "error": "not_found_or_not_flaggable" | "notes_too_long" }`.
 
 ---
 

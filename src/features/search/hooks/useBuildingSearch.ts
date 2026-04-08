@@ -70,7 +70,7 @@ interface HydratedBuildingFromIdsRow {
   city?: string | null;
   country?: string | null;
   status?: DiscoveryBuilding["status"];
-  architects?: { architect: ArchitectSummary | null }[] | null;
+  architects?: ArchitectSummary[] | null;
 }
 
 // Constants
@@ -1038,7 +1038,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                     id: b.id,
                     name: b.name,
                     main_image_url: b.main_image_url,
-                    architects: b.architects?.map((a) => a.architect).filter(Boolean) || [],
+                    architects: Array.isArray(b.architects) ? b.architects : [],
                     year_completed: b.year_completed,
                     city: b.city,
                     country: b.country,

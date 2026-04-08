@@ -1,6 +1,7 @@
 import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { fetchBuildingDetails } from "@/utils/supabaseFallback";
+import { getBuildingCreditsWithClient } from "@/features/credits/api/credits";
 import { getBuildingImageUrl } from "@/utils/image";
 import {
   isBuildingHeroEligibleSize,
@@ -118,5 +119,7 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
     }
   }
 
-  return data({ building, heroImageUrl }, { headers });
+  const buildingCredits = await getBuildingCreditsWithClient(supabase, buildingId);
+
+  return data({ building, heroImageUrl, buildingCredits }, { headers });
 }

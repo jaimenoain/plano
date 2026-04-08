@@ -209,7 +209,7 @@
 
 ---
 
-**[ ] Task 5.1 — Replace architect display in `BuildingHeader` and fix downstream queries**
+**[x] Task 5.1 — Replace architect display in `BuildingHeader` and fix downstream queries**
 
 - Update `BuildingHeader.tsx`: replace current architect name display with `primary`-tier credits fetched via `getBuildingCredits`; render each as a link to `/person/:slug` or `/company/:slug`; if a credit has both person and company, render as "Person Name @ Company Name"
 - Update `BuildingDetails.loader.ts`: remove the `building_architects` join; add a parallel TanStack Query call for `getBuildingCredits(buildingId)`
@@ -223,7 +223,7 @@
 
 ---
 
-**[ ] Task 5.2 — Full credits section on building detail page**
+**[x] Task 5.2 — Full credits section on building detail page**
 
 - Add `BuildingCredits` component below building metadata; renders all credits grouped by `credit_tier` (`primary`, `contributor`, `ancillary`)
 - Within each tier, group by `role`; within each role group, `is_lead = true` entries appear first with a subtle "Lead" label
@@ -238,7 +238,7 @@
 
 ---
 
-**[ ] Task 5.3 — Flag a credit UI**
+**[x] Task 5.3 — Flag a credit UI**
 
 - Add a discreet flag icon button to each credit row in `BuildingCredits`
 - Clicking opens a popover (desktop) or bottom sheet (mobile) with: reason selector (`Wrong person`, `Never involved`, `Wrong role`, `Other`) and an optional notes field

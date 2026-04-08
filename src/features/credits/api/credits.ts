@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   BuildingCreditWithEntities,
@@ -145,24 +146,37 @@ function sortCreditsForBuilding(rows: CreditRow[]): CreditRow[] {
   });
 }
 
+export function buildingCreditsQueryKey(buildingId: string) {
+  return ["building-credits", buildingId] as const;
+}
+
 /**
  * Credits for a building: RLS hides `hidden` rows for non-admins.
  * Ordered by `credit_tier`, `display_order`, `is_lead` descending.
  */
-export async function getBuildingCredits(buildingId: string): Promise<BuildingCreditWithEntities[]> {
-  const { data: rows, error } = await supabase
+export async function getBuildingCreditsWithClient(
+  client: SupabaseClient,
+  buildingId: string,
+): Promise<BuildingCreditWithEntities[]> {
+  const { data: rows, error } = await client
     .from("building_credits")
     .select(
       `
       *,
       person:people(id, name, slug),
       company:companies(id, name, slug)
-    `
+    `,
     )
     .eq("building_id", buildingId);
 
   if (error) throw error;
   return sortCreditsForBuilding((rows || []) as CreditRow[]).map(mapCreditRow);
+}
+
+export async function getBuildingCredits(
+  buildingId: string,
+): Promise<BuildingCreditWithEntities[]> {
+  return getBuildingCreditsWithClient(supabase, buildingId);
 }
 
 /**
@@ -221,9 +235,22 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
   return mapCreditRow(row as CreditRow);
 }
 
+export type FlagCreditRpcError = "not_found_or_not_flaggable" | "notes_too_long" | "rpc_error";
+
+function parseFlagBuildingCreditRpcPayload(data: unknown): { ok: true } | { ok: false; error: FlagCreditRpcError } {
+  if (!data || typeof data !== "object") return { ok: false, error: "rpc_error" };
+  const o = data as Record<string, unknown>;
+  if (o.ok === true) return { ok: true };
+  const err = o.error;
+  if (err === "not_found_or_not_flaggable" || err === "notes_too_long") {
+    return { ok: false, error: err };
+  }
+  return { ok: false, error: "rpc_error" };
+}
+
 /**
- * Sets `status = flagged` with reason, notes, and timestamps.
- * `flagged_by_user_id` is always the authenticated user (`profiles.id`); do not pass a client-supplied user id.
+ * Sets `status = flagged` with reason, notes, and timestamps via `flag_building_credit` RPC.
+ * Works when signed out (`flagged_by_user_id` null). Authenticated users get `flagged_by_user_id` from JWT.
  */
 export async function flagCredit(
   creditId: string,
@@ -231,24 +258,25 @@ export async function flagCredit(
   notes: string | null
 ): Promise<BuildingCreditWithEntities> {
   z.enum(FLAG_REASONS).parse(reason);
+  const trimmed = notes?.trim() ?? "";
+  const cleanNotes = trimmed.length > 0 ? trimmed.slice(0, 10000) : null;
 
-  const {
-    data: { user },
-    error: authErr,
-  } = await supabase.auth.getUser();
-  if (authErr) throw authErr;
-  if (!user) throw new Error("Authentication required to flag a credit");
+  const { data, error } = await supabase.rpc("flag_building_credit", {
+    p_credit_id: creditId,
+    p_reason: reason,
+    p_notes: cleanNotes,
+  });
 
-  const { data: row, error } = await supabase
+  if (error) throw error;
+
+  const parsed = parseFlagBuildingCreditRpcPayload(data);
+  if (!parsed.ok) {
+    if (parsed.error === "notes_too_long") throw new Error("Notes are too long");
+    throw new Error("Could not report this credit");
+  }
+
+  const { data: row, error: fetchErr } = await supabase
     .from("building_credits")
-    .update({
-      status: "flagged",
-      flag_reason: reason,
-      flag_notes: notes,
-      flagged_at: new Date().toISOString(),
-      flagged_by_user_id: user.id,
-    })
-    .eq("id", creditId)
     .select(
       `
       *,
@@ -256,10 +284,11 @@ export async function flagCredit(
       company:companies(id, name, slug)
     `
     )
+    .eq("id", creditId)
     .maybeSingle();
 
-  if (error) throw error;
-  if (!row) throw new Error("Credit not found or not permitted to flag");
+  if (fetchErr) throw fetchErr;
+  if (!row) throw new Error("Credit not found after report");
   return mapCreditRow(row as CreditRow);
 }
 

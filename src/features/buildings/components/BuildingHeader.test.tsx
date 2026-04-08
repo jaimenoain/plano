@@ -3,6 +3,7 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { BuildingHeader } from './BuildingHeader';
 import { MemoryRouter } from 'react-router';
 import { describe, it, expect, afterEach } from 'vitest';
+import type { BuildingCreditWithEntities } from '@/features/credits/types';
 
 describe('BuildingHeader', () => {
     afterEach(() => {
@@ -70,5 +71,48 @@ describe('BuildingHeader', () => {
 
         const h2 = screen.queryByRole('heading', { level: 2 });
         expect(h2).toBeNull();
+    });
+
+    it('renders primary credits as person and company links', () => {
+        const primaryCredits: BuildingCreditWithEntities[] = [
+            {
+                id: 'c1',
+                buildingId: '123',
+                personId: 'p1',
+                companyId: 'co1',
+                role: 'design_architect',
+                roleCustom: null,
+                creditTier: 'primary',
+                isLead: true,
+                contributionNotes: null,
+                yearFrom: null,
+                yearTo: null,
+                projectUrl: null,
+                status: 'active',
+                flagReason: null,
+                flagNotes: null,
+                flaggedAt: null,
+                flaggedByUserId: null,
+                addedByUserId: null,
+                displayOrder: 0,
+                createdAt: '',
+                updatedAt: '',
+                person: { id: 'p1', name: 'Jane Architect', slug: 'jane-architect' },
+                company: { id: 'co1', name: 'Studio Co', slug: 'studio-co' },
+            },
+        ];
+        render(
+            <MemoryRouter>
+                <BuildingHeader
+                    building={mockBuilding}
+                    primaryCredits={primaryCredits}
+                    showEditLink={false}
+                />
+            </MemoryRouter>
+        );
+        const personLink = screen.getByRole('link', { name: 'Jane Architect' });
+        expect(personLink.getAttribute('href')).toBe('/person/jane-architect');
+        const companyLink = screen.getByRole('link', { name: 'Studio Co' });
+        expect(companyLink.getAttribute('href')).toBe('/company/studio-co');
     });
 });

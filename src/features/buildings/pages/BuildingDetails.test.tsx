@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => {
     loaderData: {
       building: null as Record<string, unknown> | null,
       heroImageUrl: null as string | null,
+      buildingCredits: [] as unknown[],
     },
   };
 });
@@ -198,6 +199,7 @@ describe('BuildingDetails Interaction', () => {
     vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue(building as any);
     mocks.loaderData.building = building;
     mocks.loaderData.heroImageUrl = null;
+    mocks.loaderData.buildingCredits = [];
   });
 
   afterEach(() => {
@@ -223,19 +225,12 @@ describe('BuildingDetails Interaction', () => {
         expect(elements.length).toBeGreaterThan(0);
     }, { timeout: 3000 });
 
-    // Initial state: "Visited" (from mock)
-    // Wait for "Your Activity" section
     await waitFor(() => {
-        expect(screen.getByText('Your Activity')).toBeTruthy();
+        expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
-    const visitedBadges = screen.getAllByText('Visited');
-    const interactiveBadge = visitedBadges.find(el => el.classList.contains('cursor-pointer'));
-
-    expect(interactiveBadge).toBeTruthy();
-
-    // Click to toggle
-    fireEvent.click(interactiveBadge!);
+    const saveButton = screen.getByRole("button", { name: /^save$/i });
+    fireEvent.click(saveButton);
 
     // Verify Supabase upsert call
     await waitFor(() => {
@@ -251,9 +246,8 @@ describe('BuildingDetails Interaction', () => {
 
     // Optimistic Update: Should see "Saved" now (in place of Visited badge)
     await waitFor(() => {
-        const savedBadges = screen.getAllByText('Saved');
-        const interactiveSaved = savedBadges.find(el => el.classList.contains('cursor-pointer'));
-        expect(interactiveSaved).toBeTruthy();
+        const save = screen.getByRole("button", { name: /^save$/i });
+        expect(save.className).toContain("text-text-primary");
     });
   });
 
@@ -276,6 +270,7 @@ describe('BuildingDetails Interaction', () => {
     vi.mocked(supabaseFallback.fetchBuildingDetails).mockResolvedValue(lostBuilding as any);
     mocks.loaderData.building = lostBuilding;
     mocks.loaderData.heroImageUrl = null;
+    mocks.loaderData.buildingCredits = [];
 
     render(
       <TooltipProvider>
@@ -298,6 +293,6 @@ describe('BuildingDetails Interaction', () => {
     expect(screen.getByText('This building is lost to time. It no longer stands at this location.')).toBeTruthy();
 
     // Assert that the directions button says "Navigate to Site"
-    expect(screen.getByText('Navigate to Site')).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Navigate to Site/i })).toBeTruthy();
   });
 });

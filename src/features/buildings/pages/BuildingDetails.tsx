@@ -39,22 +39,31 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { UserPicker } from "@/components/common/UserPicker";
 import { parseLocation } from "@/utils/location";
 import { getBuildingImageUrl } from "@/utils/image";
 import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
-import { Architect } from "@/features/architect/types";
+import {
+  buildingCreditsQueryKey,
+  getBuildingCredits,
+} from "@/features/credits/api/credits";
+import {
+  leadAttributionFromCredits,
+  visiblePrimaryCredits,
+} from "@/features/credits/buildingCreditDisplay";
 import { getBuildingUrl } from "@/utils/url";
 import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 import { BuildingImageCard } from "../components/BuildingImageCard";
 import { BuildingHeader } from "../components/BuildingHeader";
+import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
 import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingHero } from "../components/BuildingHero";
 import { BuildingAttributes } from "../components/BuildingAttributes";
+import { BuildingCredits } from "../components/BuildingCredits";
 import { buildingLoader } from "./BuildingDetails.loader";
 import {
   buildingAbsoluteUrl,
@@ -148,7 +157,8 @@ export interface BuildingDetails {
   address: string | null;
   city: string | null;
   country: string | null;
-  architects: Architect[];
+  /** Legacy: always empty from loader; credits replace `building_architects`. */
+  architects?: { id: string; name: string }[];
   year_completed: number;
   styles: { id: string, name: string }[];
   created_by: string;
@@ -168,9 +178,9 @@ export interface BuildingDetails {
 
 export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
   if (!data || !data.building) return [{ title: "Plano" }];
-  const { building: rawBuilding, heroImageUrl } = data;
+  const { building: rawBuilding, heroImageUrl, buildingCredits = [] } = data;
   const building = rawBuilding as BuildingDetails;
-  const description = buildingDescription(building);
+  const description = buildingDescription(building, buildingCredits);
   const image = heroImageUrl ?? `${SITE_URL}/cover.jpg`;
   const canonical = buildingAbsoluteUrl(building);
   return [
@@ -187,7 +197,7 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
     { name: "twitter:description", content: description },
     { name: "twitter:image", content: image },
     { tagName: "link", rel: "canonical", href: canonical },
-    { "script:ld+json": buildingStructuredData(building) },
+    { "script:ld+json": buildingStructuredData(building, buildingCredits) },
   ];
 };
 
@@ -255,12 +265,39 @@ export default function BuildingDetails() {
   const { profile } = useUserProfile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { building: initialBuilding, heroImageUrl: initialHeroImageUrl } =
-    useLoaderData<typeof buildingLoader>();
+  const {
+    building: loaderBuilding,
+    heroImageUrl: initialHeroImageUrl,
+    buildingCredits: initialBuildingCredits = [],
+  } = useLoaderData<typeof buildingLoader>();
 
-  const [building, setBuilding] = useState<BuildingDetails | null>(
-    () => initialBuilding as BuildingDetails,
-  );
+  const [building, setBuilding] = useState<BuildingDetails | null>(() => {
+    const b = loaderBuilding as BuildingDetails | null | undefined;
+    return b ?? null;
+  });
+
+  useEffect(() => {
+    const b = loaderBuilding as BuildingDetails | null | undefined;
+    if (b) setBuilding(b);
+  }, [loaderBuilding]);
+
+  const { data: buildingCredits = initialBuildingCredits } = useQuery({
+    queryKey: buildingCreditsQueryKey(building?.id ?? ""),
+    queryFn: () => getBuildingCredits(building!.id),
+    enabled: !!building?.id,
+    initialData: initialBuildingCredits,
+    staleTime: 60_000,
+  });
+
+  const buildingCreditsFingerprint = useMemo(() => {
+    const sorted = [...buildingCredits].sort((a, b) => a.id.localeCompare(b.id));
+    return sorted
+      .map(
+        (c) =>
+          `${c.id}:${c.personId ?? ""}:${c.companyId ?? ""}:${c.status}:${c.isLead ? "1" : "0"}`,
+      )
+      .join("|");
+  }, [buildingCredits]);
   const [loading, setLoading] = useState(false);
   const [isCreator, setIsCreator] = useState(false);
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
@@ -279,10 +316,18 @@ export default function BuildingDetails() {
   const [verifiedClaims, setVerifiedClaims] = useState<string[]>([]);
   const [hasVerifiedArchitect, setHasVerifiedArchitect] = useState(false);
 
+  const primaryPersonIds = useMemo(
+    () =>
+      visiblePrimaryCredits(buildingCredits)
+        .map((c) => c.personId)
+        .filter((id): id is string => id != null),
+    [buildingCredits],
+  );
+
   const isVerifiedArchitect = useMemo(() => {
-    if (!building?.architects || verifiedClaims.length === 0) return false;
-    return building.architects.some(a => verifiedClaims.includes(a.id));
-  }, [building, verifiedClaims]);
+    if (primaryPersonIds.length === 0 || verifiedClaims.length === 0) return false;
+    return primaryPersonIds.some((id) => verifiedClaims.includes(id));
+  }, [primaryPersonIds, verifiedClaims]);
 
   const canEditOfficialData = profile?.role === 'admin' || isVerifiedArchitect || (isCreator && !hasVerifiedArchitect);
 
@@ -373,26 +418,35 @@ export default function BuildingDetails() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isMapExpanded]);
 
-  useEffect(() => { if (id) fetchUserSpecificData(); }, [id, user]);
+  useEffect(() => {
+    if (id) void fetchUserSpecificData();
+  }, [id, user, buildingCreditsFingerprint]);
   useEffect(() => { setInteractiveUiReady(true); }, []);
 
   // ─── DATA FETCHING ───────────────────────────────────────────────────────
 
   const fetchUserSpecificData = async () => {
-    setLoading(true);
     if (!id || !building) return;
+    setLoading(true);
     try {
       const resolvedBuildingId = building.id;
       if (user && building.created_by === user.id) setIsCreator(true);
       const tasks: Promise<void>[] = [];
 
-      if (building.architects && building.architects.length > 0) {
+      const personIdsForVerified = visiblePrimaryCredits(buildingCredits)
+        .map((c) => c.personId)
+        .filter((pid): pid is string => pid != null);
+      if (personIdsForVerified.length > 0) {
         tasks.push((async () => {
-          const architectIds = building.architects.map((a: Architect) => a.id);
           const { data: verifiedProfiles } = await supabase
-            .from('profiles').select('id').in('verified_architect_id', architectIds).limit(1);
+            .from("profiles")
+            .select("id")
+            .in("verified_architect_id", personIdsForVerified)
+            .limit(1);
           setHasVerifiedArchitect(!!(verifiedProfiles && verifiedProfiles.length > 0));
         })());
+      } else {
+        setHasVerifiedArchitect(false);
       }
 
       tasks.push(fetchTopLinks(resolvedBuildingId));
@@ -821,11 +875,20 @@ export default function BuildingDetails() {
 
   const googleSearchUrl = useMemo(() => {
     if (!building) return "";
-    const query = [building.name, building.city, building.architects?.map(a => a.name).join(" ")].filter(Boolean).join(" ");
+    const creditPart = visiblePrimaryCredits(buildingCredits)
+      .map((c) => {
+        const p = c.person?.name;
+        const co = c.company?.name;
+        if (p && co) return `${p} ${co}`;
+        return p ?? co ?? "";
+      })
+      .filter(Boolean)
+      .join(" ");
+    const query = [building.name, building.city, creditPart].filter(Boolean).join(" ");
     const params = new URLSearchParams();
     params.set('q', query); params.set('udm', '2');
     return `https://www.google.com/search?${params.toString()}`;
-  }, [building]);
+  }, [building, buildingCredits]);
 
   // ─── GALLERY RENDERER ────────────────────────────────────────────────────
 
@@ -901,11 +964,18 @@ export default function BuildingDetails() {
         <div className="p-4 sm:p-6 lg:p-8">
           <div className="max-w-4xl mx-auto space-y-6">
             <BuildingHeader
-              building={building} showEditLink={false} isEditing={false}
-              nameValue={draftOfficialData.name} yearValue={draftOfficialData.year_completed}
-              onNameChange={() => {}} onYearChange={() => {}}
+              building={building}
+              primaryCredits={initialBuildingCredits}
+              showEditLink={false}
+              isEditing={false}
+              nameValue={draftOfficialData.name}
+              yearValue={draftOfficialData.year_completed}
+              onNameChange={() => {}}
+              onYearChange={() => {}}
             />
-            <p className="text-base text-text-secondary leading-relaxed">{buildingDescription(building)}</p>
+            <p className="text-base text-text-secondary leading-relaxed">
+              {buildingDescription(building, initialBuildingCredits)}
+            </p>
           </div>
         </div>
       </AppLayout>
@@ -951,17 +1021,13 @@ export default function BuildingDetails() {
 
             {/* Architect · Year · Location */}
             <div className="flex flex-wrap items-center gap-2 mt-4 text-sm text-text-secondary">
-              {building.architects && building.architects.length > 0 && (
+              {visiblePrimaryCredits(buildingCredits).length > 0 && (
                 <>
                   <div className="flex flex-wrap gap-1">
-                    {building.architects.map((arch, i) => (
-                      <span key={arch.id}>
-                        <Link to={`/architect/${arch.id}`} className="font-medium text-text-primary hover:underline">
-                          {arch.name}
-                        </Link>
-                        {i < building.architects.length - 1 && ", "}
-                      </span>
-                    ))}
+                    <PrimaryCreditsLinks
+                      credits={buildingCredits}
+                      linkClassName="font-medium text-text-primary hover:underline"
+                    />
                   </div>
                   <span className="text-text-disabled">·</span>
                 </>
@@ -1105,7 +1171,7 @@ export default function BuildingDetails() {
             statement={draftOfficialData.architect_statement}
             isEditing={isOfficialEditing}
             onChange={(val) => setDraftOfficialData(p => ({ ...p, architect_statement: val }))}
-            architectName={building.architects?.[0]?.name}
+            architectName={leadAttributionFromCredits(buildingCredits)}
           />
 
           {/* ── About — attributes, no card container ── */}
@@ -1126,6 +1192,8 @@ export default function BuildingDetails() {
               </div>
             )}
           </section>
+
+          <BuildingCredits buildingId={building.id} credits={buildingCredits} isAuthenticated={Boolean(user)} />
 
           {/* ── Photo Gallery ── */}
           <section className="border-t border-border-default pt-10">
