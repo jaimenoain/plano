@@ -132,7 +132,7 @@
 
 ---
 
-**[ ] Task 3.1 — Person detail page (unclaimed state)**
+**[x] Task 3.1 — Person detail page (unclaimed state)**
 
 - Create route `/person/:slug` in `app/routes` (not `src/routes.ts` — routes file lives outside `src/`) with loader `PersonDetails.loader.ts` calling `getPerson(slug)`; throw 404 response on null
 - Build `PersonDetails.tsx`: name, bio, nationality, years, `location_note`, website link, avatar (fallback to initials avatar if null)
@@ -147,7 +147,7 @@
 
 ---
 
-**[ ] Task 3.2 — Person detail page (claimed state) + edit controls**
+**[x] Task 3.2 — Person detail page (claimed state) + edit controls**
 
 - When `claimed_by_user_id = currentUser.id`, show inline edit controls on the person page
 - Build `EditPersonForm` (inline sheet or modal): bio, nationality, birth/death year, `location_note`, avatar upload (reuse existing avatar upload pattern from profiles), website
@@ -161,7 +161,7 @@
 
 ---
 
-**[ ] Task 3.3 — Retire `/architect/:id` routing and `ArchitectDetails` loader redirect**
+**[x] Task 3.3 — Retire `/architect/:id` routing and `ArchitectDetails` loader redirect**
 
 - Add a route for `/architect/:id` in `app/routes` that loads the person by UUID (preserved from `architects` migration) and issues `redirect` with `replace: true` to `/person/:slug`; return 404 if no person found with that ID
 - In `ArchitectDetails.loader.ts`, remove the existing redirect to `/profile/:username` (which fires for claimed architects) — this logic is now superseded; the loader itself will be deleted in Phase 11 but the redirect must be neutralised now to prevent both firing simultaneously

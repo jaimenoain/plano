@@ -70,6 +70,7 @@ type BuildingEmbed = {
   id: string;
   name: string;
   slug: string | null;
+  short_id: number | null;
   city: string | null;
   country: string | null;
   year_completed: number | null;
@@ -138,6 +139,7 @@ function mapBuildingSummary(b: BuildingEmbed): BuildingSummaryForPersonCredit | 
     id: b.id,
     name: b.name,
     slug: b.slug,
+    shortId: b.short_id,
     city: b.city,
     country: b.country,
     yearCompleted: b.year_completed,
@@ -231,7 +233,7 @@ const creditSelectWithJoins = `
   *,
   person:people(id, name, slug),
   company:companies(id, name, slug),
-  building:buildings(id, name, slug, city, country, year_completed, hero_image_url, main_image_url, community_preview_url)
+  building:buildings(id, name, slug, short_id, city, country, year_completed, hero_image_url, main_image_url, community_preview_url)
 `;
 
 /**

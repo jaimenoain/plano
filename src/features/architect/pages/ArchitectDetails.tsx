@@ -1,8 +1,8 @@
 /**
  * ArchitectDetails.tsx — Redesigned with A24 editorial aesthetic
  *
- * This page is only rendered for UNCLAIMED architect profiles.
- * Claimed profiles are redirected to /profile/:username by the loader.
+ * Legacy architect detail UI. `/architect/:id` is handled by `ArchitectIdRedirect`
+ * (→ `/person/:slug` or `/company/:slug`); this module remains for Phase 11 cleanup.
  *
  * Visual changes (all logic / hooks / effects unchanged):
  *  - Sticky compact header → editorial hero with two-column layout

@@ -147,6 +147,7 @@ export interface BuildingSummaryForPersonCredit {
   id: string;
   name: string;
   slug: string | null;
+  shortId: number | null;
   city: string | null;
   country: string | null;
   yearCompleted: number | null;

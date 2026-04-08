@@ -76,3 +76,9 @@ Use this when reviewing Search Console **Pages** / **Indexing** reports after th
 | `GET /settings` | `meta name="robots"` contains noindex + nofollow |
 
 **Note:** `/terms` SSR meta (canonical + description) is in app code (SEO Task 5.1); confirm again after the next production deploy if the live response still omits those tags.
+
+## Legacy `/architect/:id` URLs (Building Credits Phase 3)
+
+The app answers `/architect/<uuid>` with **301** to `/person/<slug>` when the UUID matches `people.id`, or to `/company/<slug>` when it matches `companies.id` (studio rows migrated from `architects`). In-app navigations use React Router’s `replace` response so the history entry is the canonical `/person/` or `/company/` URL, not the intermediate `/architect/` path.
+
+If TLS terminates at a CDN or proxy in front of Vercel, you usually do **not** need a separate edge rule: letting the request reach the app is enough. Add a static **301** at the edge only if you must redirect without hitting the SSR app (then mirror the same slug rules as the loader, or accept a second hop via the app).

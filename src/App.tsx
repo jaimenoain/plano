@@ -3,7 +3,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route, Outlet, ScrollRestoration } from "react-router";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  createRoutesFromElements,
+  Route,
+  Outlet,
+  ScrollRestoration,
+} from "react-router";
+import { loader as architectIdRedirectLoader } from "@/features/credits/pages/ArchitectIdRedirect";
 import { AuthProvider, useAuth } from "@/features/auth/hooks/useAuth";
 
 import Index from "@/features/feed/pages/Index";
@@ -27,7 +35,9 @@ const UserPhotoGallery = lazyWithRetry(() => import("@/features/profile/pages/Us
 const Settings = lazyWithRetry(() => import("@/features/profile/pages/Settings"));
 const BuildingDetails = lazyWithRetry(() => import("@/features/buildings/pages/BuildingDetails"));
 const ArchitectDashboard = lazyWithRetry(() => import("@/features/architect/pages/ArchitectDashboard"));
-const ArchitectDetails = lazyWithRetry(() => import("@/features/architect/pages/ArchitectDetails"));
+const ArchitectIdRedirect = lazyWithRetry(
+  () => import("@/features/credits/pages/ArchitectIdRedirect"),
+);
 const EditArchitect = lazyWithRetry(() => import("@/features/architect/pages/EditArchitect"));
 const ReviewDetails = lazyWithRetry(() => import("@/features/buildings/pages/ReviewDetails"));
 const Notifications = lazyWithRetry(() => import("@/features/notifications/pages/Notifications"));
@@ -37,6 +47,7 @@ const EditBuilding = lazyWithRetry(() => import("@/features/buildings/pages/Edit
 const WriteReview = lazyWithRetry(() => import("@/features/buildings/pages/WriteReview"));
 const CollectionMap = lazyWithRetry(() => import("@/features/collections/components/CollectionMapPage"));
 const FolderView = lazyWithRetry(() => import("@/features/profile/pages/FolderView"));
+const PersonDetails = lazyWithRetry(() => import("@/features/credits/pages/PersonDetails"));
 
 const AdminDashboard = lazyWithRetry(() => import("@/features/admin/pages/Dashboard"));
 const Buildings = lazyWithRetry(() => import("@/features/admin/pages/Buildings"));
@@ -137,6 +148,7 @@ const router = createBrowserRouter(
         <Route path="/profile/:username/photos" element={<UserPhotoGallery />} />
         <Route path="/settings" element={<Settings />} />
 
+        <Route path="/person/:slug" element={<PersonDetails />} />
         <Route path="/:username/map/:slug" element={<CollectionMap />} />
         <Route path="/:username/folders/:slug" element={<FolderView />} />
 
@@ -147,7 +159,15 @@ const router = createBrowserRouter(
         <Route path="/building/:id/edit" element={<EditBuilding />} />
 
         <Route path="/architect/dashboard" element={<ArchitectDashboard />} />
-        <Route path="/architect/:id" element={<ArchitectDetails />} />
+        <Route
+          path="/architect/:id"
+          loader={architectIdRedirectLoader}
+          element={
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <ArchitectIdRedirect />
+            </Suspense>
+          }
+        />
         <Route path="/architect/:id/edit" element={<EditArchitect />} />
         {/* Review Flow */}
         <Route path="/building/:id/:slug/review" element={<WriteReview />} />

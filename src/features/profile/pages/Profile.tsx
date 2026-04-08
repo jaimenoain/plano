@@ -94,6 +94,7 @@ import {
   SITE_URL,
 } from "@/features/buildings/utils/structuredData";
 import { getBuildingUrl } from "@/utils/url";
+import { getClaimedPersonSummaryForProfile } from "@/features/credits/api/people";
 
 export { profileLoader as loader } from "./Profile.loader";
 
@@ -346,6 +347,12 @@ export default function Profile() {
   const [userListDialog, setUserListDialog] = useState<{ open: boolean; type: "followers" | "following" }>({ open: false, type: "followers" });
   const [userList, setUserList] = useState<UserListItem[]>([]);
   const [userListLoading, setUserListLoading] = useState(false);
+  const [professionalProfile, setProfessionalProfile] = useState<{
+    id: string;
+    name: string;
+    slug: string;
+    creditCount: number;
+  } | null>(null);
   const isOwnProfile = currentUser?.id === targetUserId;
   const { profile: currentUserProfile } = useUserProfile();
   const verifiedArchitectId = isOwnProfile ? currentUserProfile?.verified_architect_id : profile?.verified_architect_id;
@@ -419,6 +426,25 @@ export default function Profile() {
 
   useEffect(() => { if (targetUserId) { fetchStats(); } }, [targetUserId, collectionsRefreshKey]);
   useEffect(() => { if (targetUserId) { checkIfFollowing(); fetchSquad(); } }, [targetUserId, currentUser]);
+
+  useEffect(() => {
+    if (!targetUserId || !isOwnProfile) {
+      setProfessionalProfile(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const summary = await getClaimedPersonSummaryForProfile(targetUserId);
+        if (!cancelled) setProfessionalProfile(summary);
+      } catch {
+        if (!cancelled) setProfessionalProfile(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [targetUserId, isOwnProfile]);
 
   useEffect(() => {
     if (activeSection !== "photos" || !targetUserId || userPhotos.length > 0) return;
@@ -849,6 +875,26 @@ export default function Profile() {
 
           </div>
         </div>
+
+        {isOwnProfile && professionalProfile ? (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="rounded-sm border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
+              <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary mb-2">
+                Professional profile
+              </p>
+              <Link
+                to={`/person/${professionalProfile.slug}`}
+                className="text-lg font-semibold tracking-tight text-text-primary hover:opacity-80 transition-opacity"
+              >
+                {professionalProfile.name}
+              </Link>
+              <p className="mt-1 text-sm text-text-secondary">
+                Credited on {professionalProfile.creditCount}{" "}
+                {professionalProfile.creditCount === 1 ? "building" : "buildings"}
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         {/* ══ METRICS AS TABS ══════════════════════════════════════════════ */}
         <div className="sticky top-0 z-20 bg-surface-default border-b border-border-default">

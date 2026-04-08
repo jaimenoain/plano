@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   BuildingCreditWithEntities,
@@ -14,6 +15,45 @@ import type {
   PersonSummary,
   PersonWithCredits,
 } from "@/features/credits/types";
+
+/** TanStack Query key for `getPerson(slug)` payloads (`PersonWithCredits`). */
+export function personQueryKey(slug: string) {
+  return ["person", slug] as const;
+}
+
+/**
+ * For the signed-in user’s profile: linked `people` row (claim owner) and a visible credit count.
+ * Returns `null` if this user has not claimed a person profile.
+ */
+export async function getClaimedPersonSummaryForProfile(userId: string): Promise<{
+  id: string;
+  name: string;
+  slug: string;
+  creditCount: number;
+} | null> {
+  const { data: personRow, error: pErr } = await supabase
+    .from("people")
+    .select("id, name, slug")
+    .eq("claimed_by_user_id", userId)
+    .maybeSingle();
+
+  if (pErr) throw pErr;
+  if (!personRow) return null;
+
+  const { count, error: cErr } = await supabase
+    .from("building_credits")
+    .select("id", { count: "exact", head: true })
+    .eq("person_id", personRow.id as string);
+
+  if (cErr) throw cErr;
+
+  return {
+    id: personRow.id as string,
+    name: personRow.name as string,
+    slug: personRow.slug as string,
+    creditCount: count ?? 0,
+  };
+}
 
 /** Mirrors `public.slugify_person_name` in migrations (§9a). */
 export function slugifyPersonName(raw: string): string | null {
@@ -73,6 +113,7 @@ type BuildingEmbed = {
   id: string;
   name: string;
   slug: string | null;
+  short_id: number | null;
   city: string | null;
   country: string | null;
   year_completed: number | null;
@@ -132,6 +173,7 @@ function mapBuildingSummary(b: BuildingEmbed): BuildingSummaryForPersonCredit | 
     id: b.id,
     name: b.name,
     slug: b.slug,
+    shortId: b.short_id,
     city: b.city,
     country: b.country,
     yearCompleted: b.year_completed,
@@ -213,12 +255,22 @@ async function allocateUniquePeopleSlug(name: string): Promise<string> {
   }
 }
 
+const PERSON_BUILDING_CREDIT_SELECT = `
+      *,
+      company:companies(id, name, slug),
+      building:buildings(id, name, slug, short_id, city, country, year_completed, hero_image_url, main_image_url, community_preview_url)
+    `;
+
 /**
  * Person by slug with all credits visible under RLS, each joined to a building summary.
+ * Use in SSR loaders with `createSupabaseServerClient`; use `getPerson` in the browser.
  * Returns `null` if no row matches.
  */
-export async function getPerson(slug: string): Promise<PersonWithCredits | null> {
-  const { data: personRow, error: pErr } = await supabase
+export async function getPersonWithClient(
+  client: SupabaseClient,
+  slug: string
+): Promise<PersonWithCredits | null> {
+  const { data: personRow, error: pErr } = await client
     .from("people")
     .select("*")
     .eq("slug", slug)
@@ -230,15 +282,9 @@ export async function getPerson(slug: string): Promise<PersonWithCredits | null>
   const person = mapPerson(personRow as PersonRow);
   const personSummary = { id: person.id, name: person.name, slug: person.slug };
 
-  const { data: creditRows, error: cErr } = await supabase
+  const { data: creditRows, error: cErr } = await client
     .from("building_credits")
-    .select(
-      `
-      *,
-      company:companies(id, name, slug),
-      building:buildings(id, name, slug, city, country, year_completed, hero_image_url, main_image_url, community_preview_url)
-    `
-    )
+    .select(PERSON_BUILDING_CREDIT_SELECT)
     .eq("person_id", person.id);
 
   if (cErr) throw cErr;
@@ -258,6 +304,13 @@ export async function getPerson(slug: string): Promise<PersonWithCredits | null>
   );
 
   return { person, credits };
+}
+
+/**
+ * Person by slug (browser Supabase client).
+ */
+export async function getPerson(slug: string): Promise<PersonWithCredits | null> {
+  return getPersonWithClient(supabase, slug);
 }
 
 /**
@@ -395,13 +448,7 @@ export async function getPersonPortfolio(personId: string): Promise<PersonPortfo
 
   const { data: creditRows, error: cErr } = await supabase
     .from("building_credits")
-    .select(
-      `
-      *,
-      company:companies(id, name, slug),
-      building:buildings(id, name, slug, city, country, year_completed, hero_image_url, main_image_url, community_preview_url)
-    `
-    )
+    .select(PERSON_BUILDING_CREDIT_SELECT)
     .eq("person_id", personId);
 
   if (cErr) throw cErr;

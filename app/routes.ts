@@ -60,6 +60,7 @@ export default [
       },
     ),
     route("/settings", "features/profile/pages/Settings.tsx"),
+    route("/person/:slug", "features/credits/pages/PersonDetails.tsx"),
     route(
       "/:username/map/:slug",
       "features/collections/components/CollectionMapPage.tsx",
@@ -92,7 +93,7 @@ export default [
       id: "building-review-id-only",
     }),
     route("/architect/dashboard", "features/architect/pages/ArchitectDashboard.tsx"),
-    route("/architect/:id", "features/architect/pages/ArchitectDetails.tsx"),
+    route("/architect/:id", "features/credits/pages/ArchitectIdRedirect.tsx"),
     route("/architect/:id/edit", "features/architect/pages/EditArchitect.tsx"),
     route("/review/:id", "features/buildings/pages/ReviewDetails.tsx"),
     route("*", "pages/NotFound.tsx", { id: "root-not-found" }),

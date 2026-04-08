@@ -146,6 +146,24 @@ export function architectStructuredData(architect: { id: string; name: string })
   };
 }
 
+/** Schema.org Person for `/person/:slug` (Roadmap Task 3.1). */
+export function personPageStructuredData(person: {
+  name: string;
+  slug: string;
+  nationality: string | null;
+  imageAbsoluteUrl: string | null;
+}) {
+  const url = `${SITE_URL}/person/${person.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: person.name,
+    url,
+    ...(person.nationality ? { nationality: person.nationality } : {}),
+    ...(person.imageAbsoluteUrl ? { image: person.imageAbsoluteUrl } : {}),
+  };
+}
+
 export function profileStructuredData(profile: {
   username: string;
   avatar_url?: string | null;

@@ -2822,6 +2822,8 @@ Browser Supabase client wrappers live in `src/features/credits/api/people.ts`. P
 | `createPerson(input)` | Zod-validated insert; slug via `slugifyPersonName` + numeric suffix on collision. |
 | `updatePerson(id, input)` | Zod partial update; RLS (owner / admin). Returns `null` if row absent after update. |
 | `getPersonPortfolio(personId)` | `PersonPortfolioByTier` — credits with `building` join, ordered per tier then `display_order` / `is_lead`. |
+| `personQueryKey(slug)` | TanStack Query key factory for `getPerson(slug)` cache entries. |
+| `getClaimedPersonSummaryForProfile(userId)` | For account settings / own profile: the `people` row where `claimed_by_user_id` matches, plus a `building_credits` count for that person; `null` if unclaimed. |
 
 DTOs: `BuildingSummaryForPersonCredit`, `PersonCreditWithBuilding`, `PersonWithCredits`, `PersonPortfolioItem`, `PersonPortfolioByTier`. `slugifyPersonName` mirrors SQL `public.slugify_person_name`.
 

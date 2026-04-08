@@ -1,4 +1,4 @@
-import { ar, as, at, au, av, aw, ax, ay, az, aA, aB, aC } from "./assets/server-build-B3otyVl-.js";
+import { ar, as, at, au, av, aw, ax, ay, az, aA, aB, aC } from "./assets/server-build-BdUx4RUq.js";
 import "@vercel/react-router/entry.server";
 import "react-router";
 import "react/jsx-runtime";
@@ -49,6 +49,7 @@ import "@dnd-kit/core";
 import "@dnd-kit/sortable";
 import "@dnd-kit/utilities";
 import "@radix-ui/react-hover-card";
+import "@radix-ui/react-collapsible";
 import "zustand";
 import "react-hook-form";
 import "@hookform/resolvers/zod";
