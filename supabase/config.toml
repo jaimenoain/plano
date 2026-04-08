@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.notify-credited-entities]
 verify_jwt = false
+
+[functions.notify-entity-claimed]
+verify_jwt = false

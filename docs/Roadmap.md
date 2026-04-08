@@ -315,7 +315,7 @@
 
 ---
 
-**[ ] Task 7.1 — Claim a person profile**
+**[x] Task 7.1 — Claim a person profile**
 
 - Build `ClaimPersonDialog` (replaces `ClaimProfileDialog` for the new flow) triggered from the person page CTA
 - Form: radio group "This is me" / "I represent this person" — no proof email required (lighter trust model; admin moderation is the backstop)

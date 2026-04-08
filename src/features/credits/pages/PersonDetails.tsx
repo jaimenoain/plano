@@ -20,6 +20,7 @@ import type { Person, PersonCreditWithBuilding } from "@/features/credits/types"
 import { PersonCreditCard } from "@/features/credits/components/PersonCreditCard";
 import { EditPersonForm } from "@/features/credits/components/EditPersonForm";
 import { getPerson, personQueryKey } from "@/features/credits/api/people";
+import { ClaimPersonDialog } from "@/features/credits/components/ClaimPersonDialog";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { personDetailsLoader, type PersonDetailsLoaderData } from "./PersonDetails.loader";
@@ -154,6 +155,7 @@ export default function PersonDetails() {
   const revalidator = useRevalidator();
   const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
+  const [claimOpen, setClaimOpen] = useState(false);
   const [ancillaryOpen, setAncillaryOpen] = useState(false);
 
   const { data: queryData } = useQuery({
@@ -178,6 +180,11 @@ export default function PersonDetails() {
     revalidator.revalidate();
   };
 
+  const handlePersonClaimed = (updated: Person) => {
+    handlePersonSaved(updated);
+    setEditOpen(true);
+  };
+
   const { primary, contributor, ancillary } = useMemo(() => groupByTier(credits), [credits]);
 
   const lifeSpan =
@@ -196,6 +203,16 @@ export default function PersonDetails() {
             onOpenChange={setEditOpen}
             person={person}
             onSaved={handlePersonSaved}
+          />
+        ) : null}
+        {user && person.claimStatus === "unclaimed" ? (
+          <ClaimPersonDialog
+            personId={person.id}
+            personSlug={slug}
+            personName={person.name}
+            open={claimOpen}
+            onOpenChange={setClaimOpen}
+            onClaimed={handlePersonClaimed}
           />
         ) : null}
         <header className="border-b border-border-default pb-10">
@@ -263,14 +280,26 @@ export default function PersonDetails() {
           <div className="mt-10 rounded-sm border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
             <p className="mb-2 text-sm font-medium text-text-primary">This profile hasn&apos;t been claimed yet</p>
             <p className="mb-3 text-sm text-text-secondary">
-              If this is you, you can link this professional profile from account settings when claiming is available.
+              If this is you or you represent this person, you can link this profile to your Plano account.
             </p>
-            <Link
-              to="/settings"
-              className="text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
-            >
-              Claim this profile →
-            </Link>
+            {user ? (
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="text-xs font-medium uppercase tracking-widest"
+                onClick={() => setClaimOpen(true)}
+              >
+                Claim this profile
+              </Button>
+            ) : (
+              <Link
+                to={`/auth?redirect=${encodeURIComponent(`/person/${slug}`)}`}
+                className="inline-flex text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
+              >
+                Log in to claim →
+              </Link>
+            )}
           </div>
         ) : null}
 

@@ -2824,8 +2824,30 @@ Browser Supabase client wrappers live in `src/features/credits/api/people.ts`. P
 | `getPersonPortfolio(personId)` | `PersonPortfolioByTier` — credits with `building` join, ordered per tier then `display_order` / `is_lead`. |
 | `personQueryKey(slug)` | TanStack Query key factory for `getPerson(slug)` cache entries. |
 | `getClaimedPersonSummaryForProfile(userId)` | For account settings / own profile: the `people` row where `claimed_by_user_id` matches, plus a `building_credits` count for that person; `null` if unclaimed. |
+| `claimPerson(personId, slug, reason)` | Roadmap Phase 7 Task 7.1. Zod `reason` ∈ `self` \| `representative` (form only; not persisted). Calls RPC `claim_person(p_person_id)`, then `getPerson(slug)` to return the updated `Person`. Best-effort `notify-entity-claimed` after a successful claim. Throws `ClaimPersonError` with codes matching RPC / refresh failures. |
+| `notifyEntityClaimed(personId)` | `supabase.functions.invoke('notify-entity-claimed')` with `{ personId }`. Redundant if the caller already used `claimPerson` (which invokes the function). |
 
 DTOs: `BuildingSummaryForPersonCredit`, `PersonCreditWithBuilding`, `PersonWithCredits`, `PersonPortfolioItem`, `PersonPortfolioByTier`. `slugifyPersonName` mirrors SQL `public.slugify_person_name`.
+
+### Component 4: RPC `claim_person`
+
+Migration `20270828000000_claim_person_rpc.sql` (Roadmap Phase 7 Task 7.1). **`SECURITY DEFINER`**, `SET search_path = public, pg_temp`. **`REVOKE ALL` from `PUBLIC`**; **`GRANT EXECUTE`** to **`authenticated`** only. Argument: `p_person_id uuid`.
+
+- Requires `auth.uid()`; returns `{ "ok": false, "error": "not_authenticated" }` if null.
+- Returns `{ "ok": false, "error": "already_claimed_other" }` if another `people` row already has `claimed_by_user_id = auth.uid()`.
+- **Idempotent:** if the row already has `claimed_by_user_id = auth.uid()` and `claim_status = 'claimed'`, returns `{ "ok": true, "person_id": "<uuid>" }` without error.
+- Otherwise requires `claim_status = 'unclaimed'` and `claimed_by_user_id IS NULL`; else `{ "ok": false, "error": "not_claimable" }`.
+- **Not found:** `{ "ok": false, "error": "not_found" }`.
+- On success: sets `claimed_by_user_id`, `claim_status = 'claimed'`, `updated_at`.
+
+### Component 5: Edge Function `notify-entity-claimed`
+
+Roadmap Phase 7 Task 7.1. **`verify_jwt = false`**; manual `getUser` on `Authorization` (same pattern as `notify-credited-entities`). **POST** JSON body: `{ "personId": "<uuid>" }`.
+
+- Verifies the `people` row exists, `claimed_by_user_id` equals the JWT user, and `claim_status = 'claimed'`.
+- Selects non-`hidden` `building_credits` with `person_id = personId`, collects distinct `added_by_user_id` (excluding the caller).
+- For each contributor, **`auth.admin.getUserById`** (service role) to read email; sends one Resend message per address using **`EntityClaimedEmail`** (`supabase/functions/_shared/emails/EntityClaimedEmail.tsx`): copy explains the profile was claimed and to flag from the building page if incorrect.
+- Requires **`RESEND_API_KEY`**; **`SITE_URL`** (default `https://plano.app`). Logs `notify_entity_claimed` with `{ personId, contributorCount, sent }`.
 
 ---
 

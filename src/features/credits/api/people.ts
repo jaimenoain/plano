@@ -91,6 +91,90 @@ const UpdatePersonSchema = z
 
 export type UpdatePersonInput = z.infer<typeof UpdatePersonSchema>;
 
+const ClaimPersonReasonSchema = z.enum(["self", "representative"]);
+export type ClaimPersonReason = z.infer<typeof ClaimPersonReasonSchema>;
+
+export type ClaimPersonErrorCode =
+  | "not_authenticated"
+  | "not_found"
+  | "not_claimable"
+  | "already_claimed_other"
+  | "rpc_error";
+
+export class ClaimPersonError extends Error {
+  readonly code: ClaimPersonErrorCode;
+
+  constructor(code: ClaimPersonErrorCode, message?: string) {
+    super(message ?? code);
+    this.name = "ClaimPersonError";
+    this.code = code;
+  }
+}
+
+function parseClaimPersonRpcPayload(raw: unknown): {
+  ok: boolean;
+  error?: string;
+} {
+  if (!raw || typeof raw !== "object") {
+    return { ok: false, error: "rpc_error" };
+  }
+  const o = raw as Record<string, unknown>;
+  if (o.ok === true) return { ok: true };
+  const err = o.error;
+  if (typeof err === "string") return { ok: false, error: err };
+  return { ok: false, error: "rpc_error" };
+}
+
+/**
+ * Claim an unclaimed person profile for the signed-in user (`claim_person` RPC), refresh by slug,
+ * then notify credit contributors via `notify-entity-claimed` (best-effort).
+ * `reason` is validated for the form contract; the RPC does not persist it (moderation backstop is Phase 8).
+ */
+export async function claimPerson(
+  personId: string,
+  slug: string,
+  reason: ClaimPersonReason
+): Promise<Person> {
+  ClaimPersonReasonSchema.parse(reason);
+
+  const { data: rpcRaw, error: rpcError } = await supabase.rpc("claim_person", {
+    p_person_id: personId,
+  });
+
+  if (rpcError) {
+    throw new ClaimPersonError("rpc_error", rpcError.message);
+  }
+
+  const parsed = parseClaimPersonRpcPayload(rpcRaw);
+  if (!parsed.ok) {
+    const e = parsed.error ?? "rpc_error";
+    if (e === "not_authenticated") throw new ClaimPersonError("not_authenticated");
+    if (e === "not_found") throw new ClaimPersonError("not_found");
+    if (e === "not_claimable") throw new ClaimPersonError("not_claimable");
+    if (e === "already_claimed_other") throw new ClaimPersonError("already_claimed_other");
+    throw new ClaimPersonError("rpc_error", e);
+  }
+
+  const fresh = await getPerson(slug);
+  if (!fresh || fresh.person.claimedByUserId == null || fresh.person.claimStatus !== "claimed") {
+    throw new ClaimPersonError("rpc_error", "claim_not_reflected");
+  }
+
+  const { error: notifyErr } = await supabase.functions.invoke("notify-entity-claimed", {
+    body: { personId },
+  });
+  if (notifyErr) {
+    /* claim succeeded; notification is best-effort */
+  }
+
+  return fresh.person;
+}
+
+/** Fire-and-forget notification to `added_by_user_id` on active credits (after claim). Prefer `claimPerson`. */
+export async function notifyEntityClaimed(personId: string): Promise<void> {
+  await supabase.functions.invoke("notify-entity-claimed", { body: { personId } });
+}
+
 type PersonRow = {
   id: string;
   name: string;
