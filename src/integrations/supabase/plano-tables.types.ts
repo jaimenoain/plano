@@ -569,6 +569,7 @@ export type PlanoPublicTables = {
       flag_reason: string | null
       flag_notes: string | null
       flagged_at: string | null
+      flagged_from_status: string | null
       flagged_by_user_id: string | null
       added_by_user_id: string | null
       display_order: number
@@ -592,6 +593,7 @@ export type PlanoPublicTables = {
       flag_reason?: string | null
       flag_notes?: string | null
       flagged_at?: string | null
+      flagged_from_status?: string | null
       flagged_by_user_id?: string | null
       added_by_user_id?: string | null
       display_order: number
@@ -615,6 +617,7 @@ export type PlanoPublicTables = {
       flag_reason?: string | null
       flag_notes?: string | null
       flagged_at?: string | null
+      flagged_from_status?: string | null
       flagged_by_user_id?: string | null
       added_by_user_id?: string | null
       display_order?: number

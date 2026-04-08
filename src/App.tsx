@@ -70,6 +70,7 @@ const PhotoAnalytics = lazyWithRetry(() => import("@/features/admin/pages/PhotoA
 const BuildingAudit = lazyWithRetry(() => import("@/features/admin/pages/BuildingAudit"));
 const StorageJobs = lazyWithRetry(() => import("@/features/admin/pages/StorageJobs"));
 const ArchitectClaims = lazyWithRetry(() => import("@/features/admin/pages/ArchitectClaims"));
+const FlaggedCredits = lazyWithRetry(() => import("@/features/admin/pages/FlaggedCredits"));
 const Unauthorized = lazyWithRetry(() => import("@/features/admin/pages/Unauthorized"));
 
 import { AdminGuard } from "@/features/admin/components/AdminGuard";
@@ -147,6 +148,7 @@ const router = createBrowserRouter(
         <Route path="/admin/photos" element={<PhotoAnalytics />} />
         <Route path="/admin/audit" element={<BuildingAudit />} />
         <Route path="/admin/claims" element={<ArchitectClaims />} />
+        <Route path="/admin/credits/flagged" element={<FlaggedCredits />} />
         {/* Storage management tool */}
         <Route path="/admin/storage-jobs" element={<StorageJobs />} />
         <Route path="/admin/system" element={<AdminSystemPlaceholder />} />

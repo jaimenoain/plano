@@ -65,6 +65,7 @@ const baseCredit = (over: Partial<BuildingCreditWithEntities>): BuildingCreditWi
   flagReason: over.flagReason ?? null,
   flagNotes: over.flagNotes ?? null,
   flaggedAt: over.flaggedAt ?? null,
+  flaggedFromStatus: over.flaggedFromStatus ?? null,
   flaggedByUserId: over.flaggedByUserId ?? null,
   addedByUserId: over.addedByUserId ?? null,
   displayOrder: over.displayOrder ?? 0,

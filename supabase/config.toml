@@ -42,3 +42,6 @@ verify_jwt = false
 
 [functions.notify-admin-dispute]
 verify_jwt = false
+
+[functions.notify-credit-outcome]
+verify_jwt = false

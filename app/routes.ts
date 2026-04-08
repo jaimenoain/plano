@@ -38,6 +38,7 @@ export default [
     route("/admin/photos", "features/admin/pages/PhotoAnalytics.tsx"),
     route("/admin/audit", "features/admin/pages/BuildingAudit.tsx"),
     route("/admin/claims", "features/admin/pages/ArchitectClaims.tsx"),
+    route("/admin/credits/flagged", "features/admin/pages/FlaggedCredits.tsx"),
     route("/admin/storage-jobs", "features/admin/pages/StorageJobs.tsx"),
     route("/admin/system", "pages/AdminSystemPlaceholder.tsx"),
   ]),

@@ -108,6 +108,7 @@ type CreditRow = {
   flag_reason: string | null;
   flag_notes: string | null;
   flagged_at: string | null;
+  flagged_from_status?: string | null;
   flagged_by_user_id: string | null;
   added_by_user_id: string | null;
   display_order: number;
@@ -179,6 +180,10 @@ function mapCreditRow(row: CreditRow): BuildingCreditWithEntities {
     flagReason: row.flag_reason as FlagReason | null,
     flagNotes: row.flag_notes,
     flaggedAt: row.flagged_at,
+    flaggedFromStatus:
+      row.flagged_from_status === "active" || row.flagged_from_status === "verified"
+        ? row.flagged_from_status
+        : null,
     flaggedByUserId: row.flagged_by_user_id,
     addedByUserId: row.added_by_user_id,
     displayOrder: row.display_order,

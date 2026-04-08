@@ -11,6 +11,7 @@ import {
   History,
   Trash2,
   FileCheck,
+  Flag,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -28,7 +29,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
-const items = [
+const managementItems = [
   {
     title: "Dashboard",
     url: "/admin",
@@ -86,6 +87,14 @@ const items = [
   },
 ];
 
+const creditsItems = [
+  {
+    title: "Flagged credits",
+    url: "/admin/credits/flagged",
+    icon: Flag,
+  },
+];
+
 export function AdminSidebar() {
   const location = useLocation();
   const { signOut } = useAuth();
@@ -120,7 +129,28 @@ export function AdminSidebar() {
           <SidebarGroupLabel>Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {managementItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === item.url}
+                    tooltip={item.title}
+                  >
+                    <Link to={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Credits</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {creditsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

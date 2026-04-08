@@ -92,6 +92,7 @@ describe('BuildingHeader', () => {
                 flagReason: null,
                 flagNotes: null,
                 flaggedAt: null,
+                flaggedFromStatus: null,
                 flaggedByUserId: null,
                 addedByUserId: null,
                 displayOrder: 0,

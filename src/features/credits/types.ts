@@ -137,6 +137,8 @@ export interface BuildingCredit {
   flagReason: FlagReason | null;
   flagNotes: string | null;
   flaggedAt: string | null;
+  /** Set when `status === 'flagged'`: prior status (`active` or `verified`) from `flag_building_credit`. */
+  flaggedFromStatus: Extract<CreditStatus, "active" | "verified"> | null;
   flaggedByUserId: string | null;
   addedByUserId: string | null;
   displayOrder: number;
@@ -148,6 +150,14 @@ export interface BuildingCredit {
 export interface BuildingCreditWithEntities extends BuildingCredit {
   person: { id: string; name: string; slug: string } | null;
   company: { id: string; name: string; slug: string } | null;
+}
+
+/** Flagged-credits admin queue row with claim context for countdown / warnings. */
+export interface FlaggedCreditModerationItem extends BuildingCredit {
+  person: { id: string; name: string; slug: string; claimStatus: PersonClaimStatus } | null;
+  company: { id: string; name: string; slug: string; claimStatus: PersonClaimStatus } | null;
+  building: { id: string; name: string; slug: string | null; shortId: number | null };
+  addedByUsername: string | null;
 }
 
 /** Building fields joined to a credit on person views (maps to `buildings` columns; camelCase). */

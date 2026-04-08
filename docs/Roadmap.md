@@ -374,7 +374,7 @@
 
 ---
 
-**[ ] Task 8.1 — Admin: flagged credits moderation queue**
+**[x] Task 8.1 — Admin: flagged credits moderation queue**
 
 - Add a "Credits" section to the admin sidebar
 - Build `FlaggedCredits.tsx` admin page: list of all `status = 'flagged'` credits showing flag reason, flag notes, who added the credit (`added_by_user_id`), flagged timestamp, building name (link), and credited entity name (link)

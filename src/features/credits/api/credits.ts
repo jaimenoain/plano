@@ -7,6 +7,8 @@ import type {
   CreditStatus,
   CreditTier,
   FlagReason,
+  FlaggedCreditModerationItem,
+  PersonClaimStatus,
 } from "@/features/credits/types";
 
 /** Ordered list for role dropdowns; matches `credit_role_enum` / `CreditRole`. */
@@ -102,6 +104,7 @@ type CreditRow = {
   flag_reason: string | null;
   flag_notes: string | null;
   flagged_at: string | null;
+  flagged_from_status?: string | null;
   flagged_by_user_id: string | null;
   added_by_user_id: string | null;
   display_order: number;
@@ -110,6 +113,42 @@ type CreditRow = {
   person: PersonEmbed;
   company: CompanyEmbed;
 };
+
+type ModerationPersonEmbed = {
+  id: string;
+  name: string;
+  slug: string;
+  claim_status: string;
+} | null;
+
+type ModerationCompanyEmbed = {
+  id: string;
+  name: string;
+  slug: string;
+  claim_status: string;
+} | null;
+
+type ModerationBuildingEmbed = {
+  id: string;
+  name: string;
+  slug: string | null;
+  short_id: number | null;
+} | null;
+
+type ModerationAddedByEmbed = { username: string | null } | null;
+
+type ModerationCreditRow = CreditRow & {
+  person: ModerationPersonEmbed;
+  company: ModerationCompanyEmbed;
+  building: ModerationBuildingEmbed;
+  added_by: ModerationAddedByEmbed;
+};
+
+function mapFlaggedFromStatus(
+  v: string | null | undefined,
+): Extract<CreditStatus, "active" | "verified"> | null {
+  return v === "active" || v === "verified" ? v : null;
+}
 
 const TIER_SORT: Record<CreditTier, number> = {
   primary: 0,
@@ -135,6 +174,7 @@ function mapCreditRow(row: CreditRow): BuildingCreditWithEntities {
     flagReason: row.flag_reason as FlagReason | null,
     flagNotes: row.flag_notes,
     flaggedAt: row.flagged_at,
+    flaggedFromStatus: mapFlaggedFromStatus(row.flagged_from_status),
     flaggedByUserId: row.flagged_by_user_id,
     addedByUserId: row.added_by_user_id,
     displayOrder: row.display_order,
@@ -158,6 +198,97 @@ function sortCreditsForBuilding(rows: CreditRow[]): CreditRow[] {
 
 export function buildingCreditsQueryKey(buildingId: string) {
   return ["building-credits", buildingId] as const;
+}
+
+export function adminFlaggedCreditsQueryKey() {
+  return ["admin", "flagged-credits"] as const;
+}
+
+function mapFlaggedModerationRow(row: ModerationCreditRow): FlaggedCreditModerationItem {
+  const base = mapCreditRow(row as CreditRow);
+  const building = row.building;
+  if (!building) {
+    throw new Error("Flagged credit missing building join");
+  }
+  return {
+    ...base,
+    person: row.person
+      ? {
+          id: row.person.id,
+          name: row.person.name,
+          slug: row.person.slug,
+          claimStatus: row.person.claim_status as PersonClaimStatus,
+        }
+      : null,
+    company: row.company
+      ? {
+          id: row.company.id,
+          name: row.company.name,
+          slug: row.company.slug,
+          claimStatus: row.company.claim_status as PersonClaimStatus,
+        }
+      : null,
+    building: {
+      id: building.id,
+      name: building.name,
+      slug: building.slug,
+      shortId: building.short_id,
+    },
+    addedByUsername: row.added_by?.username ?? null,
+  };
+}
+
+/**
+ * All `status = flagged` credits for the admin moderation queue (admin RLS).
+ * Joins building, entities with `claim_status`, and submitter username.
+ */
+export async function getFlaggedCreditsForAdmin(): Promise<FlaggedCreditModerationItem[]> {
+  const { data: rows, error } = await supabase
+    .from("building_credits")
+    .select(
+      `
+      *,
+      person:people(id, name, slug, claim_status),
+      company:companies(id, name, slug, claim_status),
+      building:buildings!building_credits_building_id_fkey(id, name, slug, short_id),
+      added_by:profiles!building_credits_added_by_user_id_fkey(username)
+    `,
+    )
+    .eq("status", "flagged")
+    .order("flagged_at", { ascending: false, nullsFirst: false });
+
+  if (error) throw error;
+  return ((rows ?? []) as ModerationCreditRow[]).map(mapFlaggedModerationRow);
+}
+
+const NotifyCreditOutcomeSchema = z
+  .object({
+    creditId: z.string().uuid(),
+    outcome: z.enum(["verified", "hidden"]),
+  })
+  .strict();
+
+export type NotifyCreditOutcomeInput = z.infer<typeof NotifyCreditOutcomeSchema>;
+
+/**
+ * Emails `added_by_user_id` after Verify or Hide (Edge Function `notify-credit-outcome`).
+ * Caller must have already updated the credit to `verified` or `hidden`.
+ */
+export async function notifyCreditOutcome(input: NotifyCreditOutcomeInput): Promise<{ ok: true }> {
+  const body = NotifyCreditOutcomeSchema.parse(input);
+  const { data, error } = await supabase.functions.invoke("notify-credit-outcome", { body });
+
+  const payload = data as { ok?: boolean; error?: string } | null;
+
+  if (error) {
+    throw new Error(payload?.error ?? error.message);
+  }
+
+  if (!payload?.ok) {
+    throw new Error(payload?.error ?? "Notification request failed");
+  }
+
+  return { ok: true };
 }
 
 /**

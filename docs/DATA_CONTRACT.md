@@ -3185,6 +3185,7 @@ CREATE TABLE public.building_credits (
   flag_reason public.credit_flag_reason_enum,
   flag_notes text,
   flagged_at timestamptz,
+  flagged_from_status public.credit_status_enum,
   flagged_by_user_id uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
   added_by_user_id uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
   display_order integer NOT NULL,
@@ -3237,14 +3238,18 @@ Browser Supabase client wrappers live in `src/features/credits/api/credits.ts`. 
 |----------|-----------|
 | `getBuildingCredits(buildingId)` | All credits for the building joined with `people` / `companies` summaries; RLS omits `hidden` for non-admins. Sorted by `credit_tier`, `display_order`, `is_lead` descending. |
 | `addBuildingCredit(input)` | Zod-validated insert; requires at least one of `personId`, `companyId`; `added_by_user_id` from `auth.getUser()` (not client-supplied). `contribution_notes` max **500** characters; `role = other` requires non-empty `role_custom`. |
-| `flagCredit(creditId, reason, notes)` | Calls RPC `flag_building_credit` (SECURITY DEFINER). Sets `status = flagged`, `flag_reason`, `flag_notes`, `flagged_at`; `flagged_by_user_id` is `auth.uid()` when signed in, else `NULL`. Only transitions `active` / `verified` → `flagged`. Refetches the row after RPC success. |
+| `flagCredit(creditId, reason, notes)` | Calls RPC `flag_building_credit` (SECURITY DEFINER). Sets `status = flagged`, `flagged_from_status` to the prior `active` / `verified` value, `flag_reason`, `flag_notes`, `flagged_at`; `flagged_by_user_id` is `auth.uid()` when signed in, else `NULL`. Only transitions `active` / `verified` → `flagged`. Refetches the row after RPC success. |
 | `updateCreditStatus(creditId, { status })` | Status-only patch; RLS applies (admin / claim owner / steward per policies). |
+| `getFlaggedCreditsForAdmin()` | Admin queue: `status = flagged`, ordered by `flagged_at` descending. Select joins `people` / `companies` (incl. `claim_status`), `buildings` (`id`, `name`, `slug`, `short_id`), `profiles` for `added_by_user_id` → `username`. Returns `FlaggedCreditModerationItem[]`. |
+| `notifyCreditOutcome({ creditId, outcome })` | `outcome` ∈ `verified` \| `hidden`. Invokes Edge Function `notify-credit-outcome` after the credit row already matches that status; emails `added_by_user_id` (skips when null). Zod-validated. |
 | `removeCreditByToken(token)` | Calls RPC `redeem_credit_removal_token(p_token_hex)`; returns `{ ok: true, creditId, buildingId?, buildingName?, buildingSlug? }` (building fields after migration `20270827000000`) or `{ ok: false, error }` (`invalid_token`, `unknown_token`, `expired`, `already_used`, `rpc_error`). **`removeCreditByTokenWithClient(client, token)`** is the same for SSR (server Supabase client). |
 | `notifyCreditedEntities({ creditIds, emails })` | `supabase.functions.invoke('notify-credited-entities')`. **Zod:** unique `creditIds` (1–50 UUIDs), `emails` (1–15). Caller must be authenticated; the Edge Function checks each credit’s `added_by_user_id` matches the JWT user. |
 
 ### Component 4: RPC `flag_building_credit`
 
-Migration `20270826000000_flag_building_credit_rpc.sql` (Roadmap Phase 5 Task 5.3). **`SECURITY DEFINER`**. **`GRANT EXECUTE`** to **`anon`** and **`authenticated`**. Arguments: `p_credit_id`, `p_reason` (`credit_flag_reason_enum`), `p_notes` (nullable text, max 10 000 characters). Updates one row from `active` / `verified` to `flagged` with `flag_reason`, `flag_notes`, `flagged_at`, `flagged_by_user_id = auth.uid()` (null when anonymous), `updated_at`. Returns JSON `{ "ok": true, "credit_id": "<uuid>" }` or `{ "ok": false, "error": "not_found_or_not_flaggable" | "notes_too_long" }`.
+Migration `20270826000000_flag_building_credit_rpc.sql` (Roadmap Phase 5 Task 5.3), extended by **`20270832000000_building_credits_flagged_from_status.sql`** (Phase 8 Task 8.1) adding column **`flagged_from_status`** and setting it on flag to the row’s prior **`active` \| `verified`** status. **`SECURITY DEFINER`**. **`GRANT EXECUTE`** to **`anon`** and **`authenticated`**. Arguments: `p_credit_id`, `p_reason` (`credit_flag_reason_enum`), `p_notes` (nullable text, max 10 000 characters). Updates one row from `active` / `verified` to `flagged` with `flagged_from_status`, `flag_reason`, `flag_notes`, `flagged_at`, `flagged_by_user_id = auth.uid()` (null when anonymous), `updated_at`. Returns JSON `{ "ok": true, "credit_id": "<uuid>" }` or `{ "ok": false, "error": "not_found_or_not_flaggable" | "notes_too_long" }`.
+
+**Edge Function:** `notify-credit-outcome` — `verify_jwt = false`; manual `getUser` + `is_admin()` RPC on user JWT; body `{ creditId, outcome }` with `outcome` ∈ `verified` \| `hidden`. Service role loads the credit (building + entity names); requires `building_credits.status` to already equal `outcome`; resolves contributor email via `added_by_user_id` + `auth.admin.getUserById`; sends React email `CreditOutcomeEmail` via Resend when `RESEND_API_KEY` is set (otherwise returns `{ ok: true, emailed: false }`). Uses `SITE_URL` for absolute links.
 
 ---
 
