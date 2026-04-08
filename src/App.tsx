@@ -12,6 +12,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 import { loader as architectIdRedirectLoader } from "@/features/credits/pages/ArchitectIdRedirect";
+import { loader as removeCreditLoader } from "@/features/credits/pages/RemoveCredit";
 import { AuthProvider, useAuth } from "@/features/auth/hooks/useAuth";
 
 import Index from "@/features/feed/pages/Index";
@@ -50,6 +51,7 @@ const FolderView = lazyWithRetry(() => import("@/features/profile/pages/FolderVi
 const PersonDetails = lazyWithRetry(() => import("@/features/credits/pages/PersonDetails"));
 const CompanyDetails = lazyWithRetry(() => import("@/features/credits/pages/CompanyDetails"));
 const AcceptCompanySteward = lazyWithRetry(() => import("@/features/credits/pages/AcceptCompanySteward"));
+const RemoveCredit = lazyWithRetry(() => import("@/features/credits/pages/RemoveCredit"));
 
 const AdminDashboard = lazyWithRetry(() => import("@/features/admin/pages/Dashboard"));
 const Buildings = lazyWithRetry(() => import("@/features/admin/pages/Buildings"));
@@ -104,6 +106,11 @@ const router = createBrowserRouter(
       <Route path="/update-password" element={<UpdatePassword />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/terms" element={<Terms />} />
+      <Route
+        path="/remove-credit/:token"
+        loader={removeCreditLoader}
+        element={<RemoveCredit />}
+      />
       <Route path="/admin/unauthorized" element={<Unauthorized />} />
 
       {/* Accessible Merge Tools */}

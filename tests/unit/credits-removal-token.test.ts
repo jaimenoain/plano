@@ -26,6 +26,36 @@ describe("parseRedeemCreditRemovalRpcPayload", () => {
       ok: true,
       creditId: "u1",
     });
+    expect(
+      parseRedeemCreditRemovalRpcPayload({
+        ok: true,
+        credit_id: "u1",
+        building_id: "b1",
+        building_name: "Test Tower",
+        building_slug: "test-tower",
+      })
+    ).toEqual({
+      ok: true,
+      creditId: "u1",
+      buildingId: "b1",
+      buildingName: "Test Tower",
+      buildingSlug: "test-tower",
+    });
+    expect(
+      parseRedeemCreditRemovalRpcPayload({
+        ok: true,
+        credit_id: "u1",
+        building_id: "b1",
+        building_name: "Solo",
+        building_slug: null,
+      })
+    ).toEqual({
+      ok: true,
+      creditId: "u1",
+      buildingId: "b1",
+      buildingName: "Solo",
+      buildingSlug: null,
+    });
     expect(parseRedeemCreditRemovalRpcPayload({ ok: false, error: "expired" })).toEqual({
       ok: false,
       error: "expired",

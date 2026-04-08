@@ -12,6 +12,7 @@ export default [
   route("/update-password", "features/auth/pages/UpdatePassword.tsx"),
   route("/onboarding", "features/auth/pages/Onboarding.tsx"),
   route("/terms", "pages/Terms.tsx"),
+  route("/remove-credit/:token", "features/credits/pages/RemoveCredit.tsx"),
   route("/admin/unauthorized", "features/admin/pages/Unauthorized.tsx"),
   route("/admin/merge", "features/admin/pages/MergeBuildings.tsx"),
   route(

@@ -337,7 +337,14 @@ export type RemoveCreditByTokenError =
   | "rpc_error";
 
 export type RemoveCreditByTokenResult =
-  | { ok: true; creditId: string }
+  | {
+      ok: true;
+      creditId: string;
+      /** Present when RPC returns building fields (migration `20270827000000`). */
+      buildingId?: string;
+      buildingName?: string;
+      buildingSlug?: string | null;
+    }
   | { ok: false; error: RemoveCreditByTokenError };
 
 /** True if the string is exactly 64 hex characters (raw secret from `generate_credit_removal_token`). */
@@ -349,7 +356,19 @@ export function parseRedeemCreditRemovalRpcPayload(data: unknown): RemoveCreditB
   if (!data || typeof data !== "object") return { ok: false, error: "rpc_error" };
   const o = data as Record<string, unknown>;
   if (o.ok === true && typeof o.credit_id === "string") {
-    return { ok: true, creditId: o.credit_id };
+    const buildingId = typeof o.building_id === "string" ? o.building_id : undefined;
+    const buildingName = typeof o.building_name === "string" ? o.building_name : undefined;
+    const buildingSlug =
+      o.building_slug === null
+        ? null
+        : typeof o.building_slug === "string"
+          ? o.building_slug
+          : undefined;
+    return {
+      ok: true,
+      creditId: o.credit_id,
+      ...(buildingId !== undefined ? { buildingId, buildingName, buildingSlug } : {}),
+    };
   }
   const err = o.error;
   if (
@@ -365,18 +384,25 @@ export function parseRedeemCreditRemovalRpcPayload(data: unknown): RemoveCreditB
 
 /**
  * Redeem a one-time removal link. Calls `redeem_credit_removal_token` (after migration 20270824).
- * Works for signed-out users (`anon`).
+ * Works for signed-out users (`anon`). Use {@link removeCreditByTokenWithClient} in SSR loaders.
  */
-export async function removeCreditByToken(token: string): Promise<RemoveCreditByTokenResult> {
+export async function removeCreditByTokenWithClient(
+  client: Pick<SupabaseClient, "rpc">,
+  token: string
+): Promise<RemoveCreditByTokenResult> {
   const t = token.trim();
   if (!isValidRemovalTokenFormat(t)) return { ok: false, error: "invalid_token" };
 
-  const { data, error } = await supabase.rpc("redeem_credit_removal_token", {
+  const { data, error } = await client.rpc("redeem_credit_removal_token", {
     p_token_hex: t.toLowerCase(),
   });
 
   if (error) return { ok: false, error: "rpc_error" };
   return parseRedeemCreditRemovalRpcPayload(data);
+}
+
+export async function removeCreditByToken(token: string): Promise<RemoveCreditByTokenResult> {
+  return removeCreditByTokenWithClient(supabase, token);
 }
 
 const NotifyCreditedEntitiesSchema = z

@@ -298,7 +298,7 @@
 
 ---
 
-**[ ] Task 6.4 — One-click credit removal via token**
+**[x] Task 6.4 — One-click credit removal via token**
 
 - Create route `/remove-credit/:token` in `app/routes`; minimal full-page layout (no app chrome required)
 - Loader calls `removeCreditByToken(token)`; on success render: "Credit removed — thank you" with a CTA back to the building page (use the building name/link from the credit record); on invalid/expired/used token render an appropriate error state with a link to contact support

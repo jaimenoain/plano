@@ -3104,7 +3104,7 @@ Browser Supabase client wrappers live in `src/features/credits/api/credits.ts`. 
 | `addBuildingCredit(input)` | Zod-validated insert; requires at least one of `personId`, `companyId`; `added_by_user_id` from `auth.getUser()` (not client-supplied). `contribution_notes` max **500** characters; `role = other` requires non-empty `role_custom`. |
 | `flagCredit(creditId, reason, notes)` | Calls RPC `flag_building_credit` (SECURITY DEFINER). Sets `status = flagged`, `flag_reason`, `flag_notes`, `flagged_at`; `flagged_by_user_id` is `auth.uid()` when signed in, else `NULL`. Only transitions `active` / `verified` → `flagged`. Refetches the row after RPC success. |
 | `updateCreditStatus(creditId, { status })` | Status-only patch; RLS applies (admin / claim owner / steward per policies). |
-| `removeCreditByToken(token)` | Calls RPC `redeem_credit_removal_token(p_token_hex)`; returns `{ ok, creditId? }` or `{ ok: false, error }` (`invalid_token`, `unknown_token`, `expired`, `already_used`, `rpc_error`). |
+| `removeCreditByToken(token)` | Calls RPC `redeem_credit_removal_token(p_token_hex)`; returns `{ ok: true, creditId, buildingId?, buildingName?, buildingSlug? }` (building fields after migration `20270827000000`) or `{ ok: false, error }` (`invalid_token`, `unknown_token`, `expired`, `already_used`, `rpc_error`). **`removeCreditByTokenWithClient(client, token)`** is the same for SSR (server Supabase client). |
 | `notifyCreditedEntities({ creditIds, emails })` | `supabase.functions.invoke('notify-credited-entities')`. **Zod:** unique `creditIds` (1–50 UUIDs), `emails` (1–15). Caller must be authenticated; the Edge Function checks each credit’s `added_by_user_id` matches the JWT user. |
 
 ### Component 4: RPC `flag_building_credit`
@@ -3166,7 +3166,9 @@ Introduced in Roadmap Phase 2 Task 2.4 (migration `20270824000000_redeem_credit_
 
 - Argument: `p_token_hex` — trimmed, lowercased; must match `^[0-9a-f]{64}$`.
 - Computes `token_hash = digest(decode(hex, 'hex'), 'sha256')` and locks the matching `credit_removal_tokens` row (`FOR UPDATE`).
-- Returns JSON: `{ "ok": true, "credit_id": "<uuid>" }` on success after setting `building_credits.status = 'hidden'` and `credit_removal_tokens.used_at = now()`.
+- Returns JSON on success after setting `building_credits.status = 'hidden'` and `credit_removal_tokens.used_at = now()`:
+  - Baseline (migration `20270824`): `{ "ok": true, "credit_id": "<uuid>" }`.
+  - Roadmap Task 6.4 (migration `20270827000000_redeem_credit_removal_token_building_payload.sql`): adds **`building_id`**, **`building_name`**, **`building_slug`** (from `buildings` joined via the credit) so the `/remove-credit/:token` page can link back without reading hidden `building_credits` under RLS.
 - Returns `{ "ok": false, "error": "<code>" }` for `invalid_token`, `unknown_token`, `already_used`, `expired` (no row updates on failure paths).
 
 `REVOKE ALL … FROM PUBLIC`; `GRANT EXECUTE` to `anon`, `authenticated`. Minting remains `generate_credit_removal_token` (**service_role** only).
