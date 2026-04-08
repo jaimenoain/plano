@@ -4,6 +4,7 @@
 **Document type:** Data & API Contract
 **Last updated:** April 2026
 **Database:** Supabase (PostgreSQL 15 + PostGIS)
+**Related:** Opaque token and verification-link security patterns are summarized in **`docs/SECURITY.md`** (see §9b / §9e).
 
 ---
 
@@ -51,7 +52,7 @@ CREATE TABLE public.profiles (
   favorites     jsonb       DEFAULT '[]',         -- Array of pinned building IDs
   notification_preferences jsonb DEFAULT '{}',    -- Per-type boolean toggles
   profile_sections jsonb    DEFAULT '{"favorites": false, "highlights": false}',
-  verified_architect_id uuid,   -- Legacy: optional column; FK to `architects` removed in migration `20270837000000_drop_legacy_architect_tables.sql`. App UX uses `people.claimed_by_user_id` / `building_credits` instead of this link.
+  verified_architect_id uuid,   -- Optional legacy column; no foreign key (migration `20270837000000_drop_legacy_architect_tables.sql`). App authorization uses `people.claimed_by_user_id` and `building_credits` instead of this link.
   last_online   timestamptz,
   created_at    timestamptz NOT NULL DEFAULT timezone('utc', now()),
   updated_at    timestamptz,
@@ -336,10 +337,11 @@ CREATE TABLE public.buildings (
   CONSTRAINT buildings_merged_into_id_fkey FOREIGN KEY (merged_into_id) REFERENCES public.buildings(id),
   CONSTRAINT buildings_hero_image_id_fkey FOREIGN KEY (hero_image_id) REFERENCES public.review_images(id)
 );
+```
 
--- `building_architects` — **REMOVED** in migration `20270837000000_drop_legacy_architect_tables.sql`.
--- Display and search use `building_credits` + `people` / `companies` (see §9d).
+**Building ↔ credited entities:** The only junction from `buildings` to professionals is **`building_credits`** (§9d), referencing **`people`** and/or **`companies`** (§9a / §9b). Map filters, discovery, and `is_verified_architect_for_building` use those rows.
 
+```sql
 CREATE TABLE public.building_attributes (
   building_id  uuid NOT NULL,
   attribute_id uuid NOT NULL,
@@ -442,10 +444,6 @@ CREATE POLICY "buildings_update" ON buildings
 ```
 
 -- No DELETE policy: buildings use soft-delete (is_deleted = true), not hard delete.
-
-### RLS: building_architects
-
-**Removed** with table `building_architects` (migration `20270837000000_drop_legacy_architect_tables.sql`).
 
 ### RLS: building_attributes
 
@@ -1597,7 +1595,7 @@ CREATE TABLE public.notifications (
   )),
   resource_id       uuid,                         -- References user_buildings.id (for like/comment)
   recommendation_id uuid,
-  architect_id      uuid,                         -- Legacy; FK to `architects` dropped in `20270837000000_drop_legacy_architect_tables.sql`
+  architect_id      uuid,                         -- Optional; historical notification correlation; no foreign key (migration `20270837000000_drop_legacy_architect_tables.sql`)
   metadata          jsonb,
   is_read           boolean NOT NULL DEFAULT false,
   created_at        timestamptz NOT NULL DEFAULT now(),
@@ -2680,7 +2678,7 @@ No additional environment variables required for this domain.
 
 ## 9a. People & Credit Taxonomy (Building Credits v2)
 
-Introduced in Roadmap Phase 1 Task 1.1. Individual practitioners are represented in `people` (migrated from `architects` where `type = 'individual'`, same UUID). Credit role/tier enums feed `building_credits` (Task 1.4); credit **status** and **flag_reason** enums are defined in §9d.
+Introduced in Roadmap Phase 1 Task 1.1. Individual practitioners are represented in **`people`**. Primary keys were preserved across the Phase 1 catalog migration where applicable. Credit role/tier enums feed **`building_credits`** (Task 1.4); credit **status** and **flag_reason** enums are defined in §9d.
 
 ### Component 1: Database schema
 
@@ -2740,7 +2738,7 @@ CREATE TABLE public.people (
 
 Helper: `public.slugify_person_name(text)` — lowercases, replaces non-alphanumeric runs with `-`, trims; used for initial slug generation during migration.
 
-**Migration notes:** `website` and `location_note` are populated from `architects.website_url` and `architects.headquarters`. `avatar_url` is null for migrated rows. Slug collisions on the same base slug use numeric suffixes `-2`, `-3`, … `claimed_by_user_id` is set from `profiles.verified_architect_id`, then from `architect_claims` where `status = 'verified'` for rows still unclaimed; `claim_status` becomes `claimed` for those rows.
+**Migration notes:** Initial rows came from Phase 1 SQL against the pre-v2 catalog (`website` / `location_note` from imported URL and headquarters text). `avatar_url` may be null on older rows. Slug collisions on the same base slug use numeric suffixes `-2`, `-3`, … `claimed_by_user_id` is set from `profiles.verified_architect_id`, then from `architect_claims` where `status = 'verified'` for rows still unclaimed; `claim_status` becomes `claimed` for those rows.
 
 ### Component 2: RLS (`people`)
 
@@ -2820,7 +2818,7 @@ Roadmap Phase 7 Task 7.1. **`verify_jwt = false`**; manual `getUser` on `Authori
 
 ## 9b. Companies & stewards (Building Credits v2)
 
-Introduced in Roadmap Phase 1 Task 1.2. Practices / studios live in `companies` (migrated from `architects` where `type = 'studio'`, same UUID). `claim_status` reuses `person_claim_status`. Membership is `company_stewards`.
+Introduced in Roadmap Phase 1 Task 1.2. Practices and studios live in **`companies`**. Primary keys were preserved across the Phase 1 catalog migration where applicable. `claim_status` reuses `person_claim_status`. Membership is **`company_stewards`**.
 
 ### Component 1: Database schema
 
@@ -2858,7 +2856,7 @@ CREATE TABLE public.company_stewards (
 );
 ```
 
-**Migration notes:** `website` and `country` come from `architects.website_url` and `architects.headquarters` (best-effort). `logo_url` and `verified_domain` are null for migrated rows. Slugs use `slugify_person_name(name)` with `-2`, `-3`, … suffixes on collision. Initial `claim_status` is `unclaimed`; rows with `profiles.verified_architect_id` pointing at that company get an `company_stewards` row (`role = owner`) and `claim_status` becomes `claimed`.
+**Migration notes:** Initial rows used Phase 1 SQL from the pre-v2 catalog (`website` / `country` best-effort from imported URL and headquarters text). `logo_url` and `verified_domain` may be null on older rows. Slugs use `slugify_person_name(name)` with `-2`, `-3`, … suffixes on collision. Initial `claim_status` is `unclaimed`; rows with `profiles.verified_architect_id` pointing at that company get an `company_stewards` row (`role = owner`) and `claim_status` becomes `claimed`.
 
 ### Component 2: RLS (`companies`)
 
@@ -3079,7 +3077,7 @@ DTOs: `CompanyCreditWithBuilding`, `CompanyWithCredits`, `CompanyPortfolioItem`,
 
 ## 9c. Person–company affiliations (Building Credits v2)
 
-Introduced in Roadmap Phase 1 Task 1.3. Replaces the logical role of `architect_affiliations` (studio ↔ individual) with `person_id` → `people` and `company_id` → `companies`. The legacy `architect_affiliations` table remains until Phase 11 removal; rows were copied here where both endpoints exist in `people` / `companies`.
+Introduced in Roadmap Phase 1 Task 1.3. Links **`person_id`** → **`people`** and **`company_id`** → **`companies`**. Pre-v2 affiliation rows were copied here where both endpoints resolved; the source table was removed in migration **`20270837000000_drop_legacy_architect_tables.sql`**.
 
 ### Component 1: Database schema
 
@@ -3098,7 +3096,7 @@ CREATE TABLE public.person_company_affiliations (
 );
 ```
 
-**Migration notes:** `year_from`, `year_to`, and `role_note` are null for rows copied from `architect_affiliations`. `created_at` preserves the source row’s timestamp. Check constraints enforce sensible years and `year_to >= year_from` when both are set.
+**Migration notes:** `year_from`, `year_to`, and `role_note` may be null for rows imported from the pre-v2 affiliation data. `created_at` preserves the source row’s timestamp. Check constraints enforce sensible years and `year_to >= year_from` when both are set.
 
 ### Component 2: RLS (`person_company_affiliations`)
 
@@ -3125,7 +3123,7 @@ Same predicate for `USING` and `WITH CHECK` on `UPDATE`; `DELETE` uses the same 
 
 ## 9d. Building credits (Building Credits v2)
 
-Introduced in Roadmap Phase 1 Task 1.4. Replaces the logical role of **`building_architects`** for display and steward workflows. Migration **`20270837000000_drop_legacy_architect_tables.sql`** removes **`building_architects`**; **`building_credits`** is the sole junction. Historical backfill: from **`building_architects`** with `role = design_architect`, `credit_tier = primary`, `is_lead = true`, `status = active`; `display_order` was `ROW_NUMBER()` per `building_id` ordered by `created_at`, `architect_id`.
+Introduced in Roadmap Phase 1 Task 1.4. **`building_credits`** is the **sole** junction between **`buildings`** and credited **`people`** / **`companies`**. It drives building headers, search, map credit filters, moderation, and **`is_verified_architect_for_building`**. Phase 1 backfill mapped each legacy building–entity link to `role = design_architect`, `credit_tier = primary`, `is_lead = true`, `status = active`, with `display_order` as `ROW_NUMBER()` per `building_id` ordered by creation time.
 
 ### Component 1: Database schema
 
@@ -3176,7 +3174,7 @@ CREATE TABLE public.building_credits (
 
 **Indexes:** `building_id`, `person_id`, `company_id`, `status`. Year check constraints mirror `person_company_affiliations` (reasonable range, `year_to >= year_from` when both set).
 
-**Migration notes (Phase 1 backfill):** Inserts skipped **`building_architects`** rows whose `architect_id` was not found in **`people`** (individual) or **`companies`** (studio). After Tasks 1.1–1.2, row count matched **`building_architects`**; that table is later dropped in Phase 11.
+**Migration notes (Phase 1 backfill):** Inserts skipped source rows that did not resolve to a **`people`** (individual) or **`companies`** (studio) row after Tasks 1.1–1.2. Counts were reconciled at cutover; the pre-v2 junction table was removed in migration **`20270837000000_drop_legacy_architect_tables.sql`**.
 
 ### Component 2: RLS (`building_credits`)
 
@@ -3204,7 +3202,7 @@ CREATE POLICY "building_credits_insert" ON public.building_credits
 
 **UPDATE** — admin; or the person row’s `claimed_by_user_id` (= auth user) when `person_id` is set; or any steward of `company_id` when `company_id` is set. Same `USING` and `WITH CHECK`.
 
-**DELETE** — admin or `buildings.created_by` = auth user for the credit’s `building_id` (same intent as the former **`building_architects`** delete policy, now on **`building_credits`** only).
+**DELETE** — admin or `buildings.created_by` = auth user for the credit’s `building_id`.
 
 ### Component 3: Application API — `building_credits` (Phase 2 Task 2.4)
 
@@ -3304,16 +3302,16 @@ Roadmap Phase 6 Task 6.3. **`verify_jwt = false`**; manual `getUser` on `Authori
 
 ---
 
-## 9. Legacy architect removal & residual `architect_claims`
+## 9. Historical entity claims (admin) & legacy URL redirects
 
-**Phase 11 (Roadmap Task 11.1):** Migration `20270837000000_drop_legacy_architect_tables.sql` drops **`architects`**, **`architect_affiliations`**, **`building_architects`**, and enum **`architect_type`**. It drops FKs from **`architect_claims.architect_id`**, **`profiles.verified_architect_id`**, and **`notifications.architect_id`** to the removed `architects` table.
+Migration **`20270837000000_drop_legacy_architect_tables.sql`** retires the pre-v2 catalog schema; **§9a–§9e** document the current model (**`people`**, **`companies`**, **`building_credits`**, tokens, stewards). **`profiles.verified_architect_id`** and **`notifications.architect_id`** may remain as nullable columns **without foreign keys** for historical data.
 
-**Public catalog entities** live in **`people`** and **`companies`** (§9a / §9b). **Credits** on buildings live in **`building_credits`** (§9d). **App routes:** `/person/:slug`, `/company/:slug`, `/portfolio`, `/company-portfolio`; **`/architect/:uuid`** is a **301 redirect** to the matching person or company row when the UUID was preserved from migration; **`/architect/dashboard`** redirects to **`/portfolio`**.
+**App routes:** `/person/:slug`, `/company/:slug`, `/portfolio`, `/company-portfolio`. **`/architect/:uuid`** returns **301** to `/person/:slug` or `/company/:slug` when a row exists with that UUID (preserved from migration). **`/architect/dashboard`** redirects to **`/portfolio`**.
 
-### Component 1: Database schema (residual)
+### Component 1: Database schema — `architect_claims` (admin queue)
 
 ```sql
--- architect_claims — retained for admin review of historical claims; architect_id is a legacy UUID (no FK).
+-- architect_claims — admin review of historical claims; architect_id is an opaque UUID (no catalog FK).
 CREATE TABLE public.architect_claims (
   id           uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id      uuid NOT NULL,
@@ -3344,7 +3342,7 @@ Unchanged intent: submitter and admins can read; submitter inserts; admins updat
 | GET | /person/:slug | Public person + credits | client + SSR |
 | GET | /company/:slug | Public company + credits | client + SSR |
 
-**`get_architect_claim_status`** / **`handle_architect_claim_approval`** operate on **`architect_claims`** (residual table). **`is_verified_architect_for_building`** is redefined in migration **`20270837000000`** to use **`building_credits`** (see RPC registry). **`sync_verified_architect_id`** may remain for legacy profile columns without an FK to **`architects`**. **Edge `og-tags`:** `?path=/architect/{uuid}` resolves OG metadata via **`people`** / **`companies`** and canonical **`/person/`** or **`/company/`** URLs. **Edge `sitemap`:** emits **`/person/{slug}`** and **`/company/{slug}`** (not `/architect/{id}`).
+**`get_architect_claim_status`** / **`handle_architect_claim_approval`** operate on **`architect_claims`**. **`is_verified_architect_for_building`** is defined in migration **`20270837000000_drop_legacy_architect_tables.sql`** to use **`building_credits`** plus claimed **`people`** / **`company_stewards`** (see RPC registry). **`sync_verified_architect_id`** may remain for legacy profile columns without a catalog FK. **Edge `og-tags`:** `?path=/architect/{uuid}` resolves OG metadata via **`people`** / **`companies`** and canonical **`/person/`** or **`/company/`** URLs. **Edge `sitemap`:** emits **`/person/{slug}`** and **`/company/{slug}`**.
 
 ### Component 4: Zod (historical claims UI only)
 
@@ -3352,7 +3350,7 @@ Unchanged intent: submitter and admins can read; submitter inserts; admins updat
 import { z } from 'zod';
 
 const SubmitArchitectClaimSchema = z.object({
-  architectId: z.string().uuid(), // legacy UUID stored on architect_claims; no architects table row
+  architectId: z.string().uuid(), // opaque UUID on architect_claims; no FK to people/companies
   proofEmail: z.string().email().max(320),
 });
 ```
@@ -3784,10 +3782,10 @@ CREATE TABLE public.spatial_ref_sys (
 | Admin | `get_admin_retention` | admin | Retention analysis |
 | Admin | `get_admin_notifications` | admin | Notification analytics |
 | Admin | `get_photo_heatmap_data` | admin | Photo density heatmap |
-| Legacy claims | `get_architect_claim_status` | authenticated | Status of rows in **`architect_claims`** (no FK to removed **`architects`** table) |
-| Building updates | `is_verified_architect_for_building` | authenticated | Redefined in **`20270837000000_drop_legacy_architect_tables.sql`**: true when **`building_credits`** links the building to the user’s claimed **`people`** row or **`company_stewards`** membership (non-hidden credits only) |
+| Legacy claims | `get_architect_claim_status` | authenticated | Status of rows in **`architect_claims`** (`architect_id` is not a foreign key) |
+| Building updates | `is_verified_architect_for_building` | authenticated | True when **`building_credits`** links the building to the user’s claimed **`people`** row or **`company_stewards`** membership (non-hidden credits only); see **`20270837000000_drop_legacy_architect_tables.sql`** |
 | Legacy claims | `handle_architect_claim_approval` | admin | Approve/reject **`architect_claims`** |
-| Profiles (legacy) | `sync_verified_architect_id` | trigger | Historical sync with **`profiles.verified_architect_id`**; column may remain without FK post Phase 11 |
+| Profiles (legacy) | `sync_verified_architect_id` | trigger | Historical sync with **`profiles.verified_architect_id`** (column may exist without FK) |
 | Leaderboards | `get_building_leaderboards` | anon | Ranked building lists |
 | Maintenance | `fix_orphaned_user_buildings` | admin | Data integrity repair |
 | Maintenance | `handle_new_user` | trigger | Auto-create profile on signup |

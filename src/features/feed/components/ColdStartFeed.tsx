@@ -1,10 +1,93 @@
+/**
+ * ColdStartFeed.tsx
+ *
+ * Shown when the user follows nobody yet.
+ *
+ * Layout
+ * ──────
+ * 1. Editorial "Discover" prompt — bare text + underlined text link; no card chrome.
+ * 2. Two-column grid:
+ *    Left  — PeopleYouMayKnow flat list
+ *    Right — FeaturedBuildingCard: first community discovery review
+ * 3. SectionDivider → community discovery feed
+ */
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router";
-import { Button } from "@/components/ui/button";
 import { FeedReview } from "@/types/feed";
 import { FeedHeroCard } from "./FeedHeroCard";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import { SectionDivider } from "./SectionDivider";
+import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
+import { useState } from "react";
+
+// ─── Featured building card (right column) ───────────────────────────────────
+
+interface FeaturedBuildingCardProps {
+  review: FeedReview;
+}
+
+function FeaturedBuildingCard({ review }: FeaturedBuildingCardProps) {
+  const { building } = review;
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  const imageUrl = building.main_image_url
+    ? getBuildingImageUrl(building.main_image_url)
+    : building.community_preview_url ?? null;
+
+  const architects = Array.isArray(building.architects)
+    ? building.architects
+        .map((a) => (typeof a === "string" ? a : a.name))
+        .filter(Boolean)
+        .join(", ")
+    : null;
+
+  const href = getBuildingUrl(building);
+
+  return (
+    <Link to={href} className="group block h-full">
+      <div className="flex flex-col h-full">
+        {/* Image */}
+        <div className="relative w-full overflow-hidden bg-surface-muted" style={{ aspectRatio: "4/5" }}>
+          {!imgLoaded && (
+            <div className="absolute inset-0 bg-surface-muted animate-pulse" />
+          )}
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={building.name}
+              onLoad={() => setImgLoaded(true)}
+              className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.02] ${
+                imgLoaded ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-surface-muted" />
+          )}
+        </div>
+
+        {/* Meta */}
+        <div className="pt-3 flex flex-col gap-0.5">
+          {building.city && (
+            <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+              {building.city}
+              {building.country ? `, ${building.country}` : ""}
+            </p>
+          )}
+          <h3 className="text-lg font-bold leading-tight text-text-primary group-hover:underline underline-offset-2">
+            {building.name}
+          </h3>
+          {architects && (
+            <p className="text-xs text-text-secondary">{architects}</p>
+          )}
+          {building.year_completed && (
+            <p className="text-xs text-text-disabled">{building.year_completed}</p>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -23,34 +106,45 @@ export function ColdStartFeed({
   onImageLike,
   isDiscoveryLoading,
 }: ColdStartFeedProps) {
-  return (
-    <div className="flex flex-col gap-6 w-full">
+  // First community review used as the featured right-column card.
+  // Skip it in the discovery list below so it isn't shown twice.
+  const featuredReview = discoveryReviews[0] ?? null;
+  const remainingReviews = featuredReview ? discoveryReviews.slice(1) : discoveryReviews;
 
-      {/* ── Section 1: Follow prompt card ─────────────────────────────────── */}
-      <div className="w-full bg-surface-card border border-border-default rounded-sm p-6 flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <h2 className="text-xl font-semibold text-text-primary leading-tight">
-            Discover architecture with friends
-          </h2>
-          <p className="text-sm text-text-secondary leading-normal">
-            Follow designers and enthusiasts to see their visits, ratings, and
-            collections here.
-          </p>
-        </div>
-        <div>
-          <Button
-            asChild
-            className="bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm font-medium text-sm"
-          >
-            <Link to="/connect">Find people to follow</Link>
-          </Button>
-        </div>
+  return (
+    <div className="flex flex-col gap-10 w-full">
+
+      {/* ── Section 1: Editorial "Discover" prompt ────────────────────────── */}
+      <div className="border-t border-border-default pt-6">
+        <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-4">
+          Get started
+        </p>
+        <h2 className="text-2xl font-bold text-text-primary leading-tight mb-2">
+          Discover architecture<br />with friends
+        </h2>
+        <p className="text-sm text-text-secondary mb-5 max-w-sm">
+          Follow architects and enthusiasts to see their visits, ratings, and collections here.
+        </p>
+        <Link
+          to="/connect"
+          className="text-sm font-medium text-text-primary underline underline-offset-4 hover:text-text-secondary transition-colors"
+        >
+          Find people to follow →
+        </Link>
       </div>
 
-      {/* ── Section 2: People you may know ────────────────────────────────── */}
-      <PeopleYouMayKnow />
+      {/* ── Section 2: People you may know + Featured building ───────────── */}
+      <div className="grid grid-cols-2 gap-8 items-start">
+        {/* Left: flat suggestion list */}
+        <PeopleYouMayKnow />
 
-      {/* ── Section 3: Discovery content ──────────────────────────────────── */}
+        {/* Right: featured community building */}
+        {featuredReview && (
+          <FeaturedBuildingCard review={featuredReview} />
+        )}
+      </div>
+
+      {/* ── Section 3: Community discovery feed ──────────────────────────── */}
       <SectionDivider label="From the community" href="/explore" />
 
       {isDiscoveryLoading ? (
@@ -59,7 +153,7 @@ export function ColdStartFeed({
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          {discoveryReviews.map((review) => (
+          {remainingReviews.map((review) => (
             <FeedHeroCard
               key={review.id}
               entry={review}

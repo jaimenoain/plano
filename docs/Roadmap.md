@@ -1,5 +1,7 @@
 # Implementation Roadmap: Building Credits (v2)
 
+**Status:** Shipped — v2 credits model (`people`, `companies`, `building_credits`, related tables) is live in app and contract docs; remaining roadmap items are polish and verification.
+
 ---
 
 ## Phase 1 — Database Schema
@@ -509,7 +511,7 @@
 
 ---
 
-**[ ] Task 11.3 — Update `DATA_CONTRACT.md`, `PRD.md`, and `ROADMAP.md`**
+**[x] Task 11.3 — Update `DATA_CONTRACT.md`, `PRD.md`, and `ROADMAP.md`**
 
 - Rewrite the building-architect section of `DATA_CONTRACT.md` to document: `people`, `companies`, `company_stewards`, `person_company_affiliations`, `building_credits`, `credit_notification_log`, `credit_removal_tokens`, `company_steward_requests`, `company_claim_disputes`; include all enums, constraints, and RLS policies
 - Remove all references to `architects` and `building_architects` from `DATA_CONTRACT.md`

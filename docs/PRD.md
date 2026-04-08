@@ -164,8 +164,8 @@ Each building shall support designation of a hero image via `hero_image_id`, wit
 **FR-4.1.7 Popularity & Tier Ranking**
 The system shall compute a `popularity_score` for each building based on visit count, rating count, and photo count. Buildings shall be assigned a `tier_rank` (Top 1%, Top 5%, Top 10%, Top 20%, Standard) via a periodic scoring function with enforced tier distribution limits.
 
-**FR-4.1.8 Architect Link**
-Buildings shall link to one or more architects via a `building_architects` junction table. An `architect_statement` text field shall be editable by the building's verified architect.
+**FR-4.1.8 Building credits (people & companies)**
+Buildings shall link to one or more credited entities via `building_credits`: each row references either a `people` row or a `companies` row (exactly one), with a role from the credit taxonomy, tier, optional years and notes, and moderation status. The `architect_statement` text field on the building shall be editable by users who are authorized as a verified credited party for that building (claimed person or company steward with a non-hidden credit), in addition to the building creator and admins.
 
 **FR-4.1.9 Soft Delete & Merge**
 Buildings shall support soft deletion (`is_deleted` flag) and merge tracking (`merged_into_id` referencing the target building).
@@ -178,7 +178,7 @@ Buildings shall support soft deletion (`is_deleted` flag) and merge tracking (`m
 The building detail page shall display a full-width hero image (or video) with fallback to community preview thumbnail.
 
 **FR-4.2.2 Header**
-The header shall show: building name, alt name (if set), city/country, year completed, linked architect names (as navigable links to architect pages), and a construction status badge.
+The header shall show: building name, alt name (if set), city/country, year completed, primary credited people and companies (as navigable links to `/person/:slug` and `/company/:slug`), and a construction status badge.
 
 **FR-4.2.3 Popularity Badge**
 If the building has a tier rank above Standard, a popularity badge shall be displayed (e.g., "Top 1%").
@@ -189,8 +189,8 @@ The page shall display the building's taxonomy data: functional category, typolo
 **FR-4.2.5 Access Information**
 The page shall display a synthesised access badge combining level, logistics, and cost into one label with an appropriate icon, plus any access notes.
 
-**FR-4.2.6 Architect Statement**
-If an architect statement exists, it shall be displayed in a dedicated section. Verified architects shall see an edit control for this field.
+**FR-4.2.6 Professional statement**
+If an `architect_statement` exists, it shall be displayed in a dedicated section. Users who may edit official building fields per FR-4.3.2 (including verified credited parties via `building_credits`) shall see an edit control for this field.
 
 **FR-4.2.7 Image Gallery**
 The page shall display a scrollable gallery of all images associated with the building (user uploads and community images). Each image card shall show its like count. Clicking an image shall open a full-screen detail dialog with prev/next navigation, uploader info, timestamp, and the ability to like the image.
@@ -221,10 +221,10 @@ The page shall display a chronological feed of user reviews for this building, s
 #### Requirements
 
 **FR-4.3.1 Add Building Form**
-Authenticated users shall be able to create new building entries via a full form containing all fields defined in FR-4.1.1 through FR-4.1.8.
+Authenticated users shall be able to create new building entries via a full form containing all fields defined in FR-4.1.1 through FR-4.1.8 (including credit linkage via the entity picker in FR-4.3.5 where the form collects credits).
 
 **FR-4.3.2 Edit Building**
-Building editing shall be available to: the building creator, admin users, or (for official data fields: name, year, city, country, architect statement) verified architects linked to the building. If a verified architect is linked, the original creator loses official data editing rights.
+Building editing shall be available to: the building creator, admin users, or (for official data fields: name, year, city, country, architect statement) users who are a verified credited party for that building via `building_credits` (claimed `people` row or `company_stewards` membership on a credited company, with a non-hidden credit). If such a verified credited party exists, the original creator loses official data editing rights for those fields.
 
 **FR-4.3.3 Location Picker**
 The building form shall include a map-based location picker with search functionality for setting geographic coordinates.
@@ -232,8 +232,8 @@ The building form shall include a map-based location picker with search function
 **FR-4.3.4 Slug Preview**
 The form shall display a live preview of the generated slug and check availability in real-time via the `check_slug_availability` RPC.
 
-**FR-4.3.5 Architect Selector**
-The form shall include a searchable architect select component for linking existing architects to the building.
+**FR-4.3.5 Credit entity picker**
+The form shall include a searchable **`CreditEntityPicker`** (or equivalent) for linking existing **people** and **companies** to the building as `building_credits` rows, with role, tier, and optional notes per the credits data model.
 
 ### 4.4 Building Administration
 
@@ -797,48 +797,48 @@ Folders shall be available as a filter criterion in the map filter drawer and se
 
 ---
 
-## 15. Architect System
+## 15. Professional entities (people, companies & credits)
 
-### 15.1 Architect Profiles
-
-#### Requirements
-
-**FR-15.1.1 Architect Table**
-Architects shall be stored in a normalised `architects` table with `id` and `name`, linked to buildings via a `building_architects` junction table.
-
-**FR-15.1.2 Architect Detail Page**
-Each architect shall have a detail page (`/architect/:id`) showing a portfolio of all their buildings with metadata (city, country, year, image).
-
-**FR-15.1.3 Architect Portfolio**
-The architect detail page shall use a dedicated portfolio hook to load and display the architect's buildings.
-
-**FR-15.1.4 Edit Architect**
-Admin users and verified architects shall be able to edit architect name and metadata.
-
-### 15.2 Architect Verification & Claims
+### 15.1 Public profiles & catalog
 
 #### Requirements
 
-**FR-15.2.1 Claim Profile**
-Real-world architects shall be able to claim their Plano architect profile via a claim dialog.
+**FR-15.1.1 People and companies**
+Individual practitioners shall be stored in **`people`**; practices and studios in **`companies`**. Buildings shall link to them only through **`building_credits`** (role taxonomy, tier, status, optional years and notes) as specified in FR-4.1.8.
 
-**FR-15.2.2 Claim Status**
-The system shall provide a `get_architect_claim_status` RPC to check pending/approved claims.
+**FR-15.1.2 Public detail pages**
+Each person shall have a public page at **`/person/:slug`** and each company at **`/company/:slug`**, showing credits (with building summaries), claim state, and entity metadata.
 
-**FR-15.2.3 Admin Approval**
-Admin users shall review and approve/reject architect claims via the admin panel. Approval shall trigger `handle_architect_claim_approval` which links the user's profile to the architect record.
+**FR-15.1.3 Portfolios**
+Claimed individuals shall use **`/portfolio`** (person portfolio). Company stewards shall use **`/company-portfolio`**. Both surfaces shall be driven by **`building_credits`** for the claimed person or stewarded companies.
 
-**FR-15.2.4 Verified Badge**
-Verified architects shall receive a badge icon (`BadgeCheck`) displayed on their reviews, profile, and building detail pages.
+**FR-15.1.4 Edit entity profile**
+Admins, the claimed person (for **`people`**), or company stewards (for **`companies`**, per RLS) shall be able to edit entity fields (bio, imagery, slug-governed URLs, etc.) within policy limits.
 
-**FR-15.2.5 Architect Dashboard**
-Verified architects shall have access to a dashboard (`/architect/dashboard`) for managing their buildings and statements.
+### 15.2 Claims, verification & legacy queue
 
-**FR-15.2.6 Synced Identity**
-The `profiles.verified_architect_id` field shall link a user to their verified architect record. A database trigger (`sync_verified_architect_id`) shall keep them in sync.
+#### Requirements
 
-**FR-15.2.7 Official Data Privileges**
-Verified architects shall be able to edit the following fields on their own buildings: name, year completed, city, country, and architect statement.
+**FR-15.2.1 Claim flows**
+Unclaimed **`people`** shall be claimable via **`ClaimPersonDialog`** (self / representative). Unclaimed **`companies`** shall use the work-email verification flow (Edge Function + redemption RPC). Steward access requests and company claim disputes shall follow the flows documented in the data contract (§9b).
+
+**FR-15.2.2 Claim status (legacy + current)**
+The system shall expose **`get_architect_claim_status`** for the residual admin queue table **`architect_claims`**. Person and company claim state shall be reflected on **`people`** / **`companies`** and related RPCs (`claim_person`, `redeem_company_claim_token`, etc.).
+
+**FR-15.2.3 Admin actions**
+Admins shall review historical rows in **`architect_claims`** via **`handle_architect_claim_approval`**. Person/company directory management, merges, and company claim disputes shall use the admin credits surfaces (`EntityClaims`, **`AdminPeople`**, **`AdminCompanies`**) as implemented.
+
+**FR-15.2.4 Verified badge**
+Where **`claim_status`** (or equivalent) is **`verified`**, the UI shall show a **`BadgeCheck`** (or equivalent) on the entity profile and other surfaces defined in the design system.
+
+**FR-15.2.5 Dashboards and redirects**
+**`/architect/dashboard`** shall redirect to **`/portfolio`**. **`/architect/:uuid`** shall **301** to **`/person/:slug`** or **`/company/:slug`** when a catalog row exists with that UUID (legacy URL compatibility).
+
+**FR-15.2.6 Profile linkage**
+**`people.claimed_by_user_id`** and **`company_stewards`** shall be the authoritative links from users to entities. **`profiles.verified_architect_id`** may remain as an optional legacy column without a catalog foreign key; **`sync_verified_architect_id`** may still run for historical consistency.
+
+**FR-15.2.7 Official data privileges**
+Users who are a verified credited party for a building via **`building_credits`** (per FR-4.3.2) shall be able to edit the same official building fields as specified there (name, year, city, country, architect statement).
 
 ---
 
