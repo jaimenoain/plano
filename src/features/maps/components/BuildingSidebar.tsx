@@ -16,7 +16,7 @@
  *   monochromatic). Per DESIGN_TOKENS: brand-primary must not appear as active
  *   state fill on content pages.
  *   Status badge: rounded-full pill → plain text-2xs text-text-disabled label.
- *   Image thumbnail: flush to right edge (pr-0 on row), sharp crop.
+ *   Image thumbnail: inset from right column edge (pr-3 on row), sharp crop.
  *
  * Location suggestion rows:
  *   rounded-full bg-brand-primary/10 icon container removed — MapPin icon
@@ -287,7 +287,7 @@ export function BuildingSidebar({
                   <Link
                     to={`/building/${building.slug || building.id}`}
                     key={building.id}
-                    className="group flex pl-4 pr-0 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/30 transition-colors"
+                    className="group flex pl-4 pr-3 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/30 transition-colors"
                     onMouseEnter={() => setHighlightedId(building.id)}
                     onMouseLeave={() => setHighlightedId(null)}
                   >
@@ -305,20 +305,16 @@ export function BuildingSidebar({
                         </span>
                       )}
 
-                      {/* Credits, year, location */}
+                      {/* Architect (credits) and locality (city only) */}
                       <div className="mt-1 flex flex-col gap-0.5">
                         {building.credit_names && building.credit_names.length > 0 && (
                           <p className="text-xs text-text-secondary line-clamp-1">
                             {building.credit_names.join(', ')}
                           </p>
                         )}
-                        {(building.city || building.country || building.year_completed) && (
-                          <p className="text-xs text-text-disabled line-clamp-1">
-                            {[building.city, building.country, building.year_completed]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </p>
-                        )}
+                        {building.city ? (
+                          <p className="text-xs text-text-disabled line-clamp-1">{building.city}</p>
+                        ) : null}
                       </div>
 
                       {/* Status + rating */}
@@ -341,7 +337,7 @@ export function BuildingSidebar({
                       )}
                     </div>
 
-                    {/* Image — flush to right edge */}
+                    {/* Image — inset from column edge via row pr-3 */}
                     <div className="relative w-24 shrink-0 bg-surface-muted overflow-hidden">
                       {imageUrl ? (
                         <img
