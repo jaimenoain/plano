@@ -2900,7 +2900,7 @@ CREATE POLICY "companies_update" ON public.companies
 
 ### Component 3: RLS (`company_stewards`)
 
-**SELECT** — admin, row’s `user_id`, or any steward of the same `company_id`
+**SELECT** — admin, row’s `user_id`, or any steward of the same `company_id` (membership for co-stewards is evaluated via SQL helper `plano_auth_is_company_steward(company_id)` — `SECURITY DEFINER` — so the policy does not sub-select `company_stewards` under the same RLS rules, avoiding infinite recursion on REST reads; migration `20270839000000_feed_main_image_and_steward_rls.sql`).
 
 **INSERT** — admin; or existing steward of `company_id`; or bootstrap: `user_id = auth.uid()` and `role = owner` and no existing steward row for `company_id`
 

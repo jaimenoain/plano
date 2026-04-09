@@ -58,6 +58,9 @@ export default defineConfig(() => ({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         maximumFileSizeToCacheInBytes: 5000000,
+        // React Router SSR client build has no precached `index.html`; a NavigationRoute
+        // bound to it throws workbox "non-precached-url". Offline shell is server-driven.
+        navigateFallback: null,
       },
     }),
   ].filter(Boolean),

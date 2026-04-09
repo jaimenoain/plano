@@ -73,7 +73,7 @@ BEGIN
     jsonb_build_object(
       'id', b.id,
       'name', b.name,
-      'main_image_url', b.main_image_url,
+      'main_image_url', public.main_image_url(b),
       'community_preview_url', b.community_preview_url,
       'address', b.address,
       'credited_entities', (
@@ -195,7 +195,7 @@ BEGIN
     jsonb_build_object(
       'id', b.id,
       'name', b.name,
-      'main_image_url', b.main_image_url,
+      'main_image_url', public.main_image_url(b),
       'community_preview_url', b.community_preview_url,
       'address', b.address,
       'credited_entities', (
