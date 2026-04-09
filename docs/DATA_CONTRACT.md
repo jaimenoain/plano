@@ -1114,6 +1114,7 @@ CREATE POLICY "comment_likes_delete" ON comment_likes
 | GET | (RPC) get_feed | Home feed | supabase (RPC) |
 | GET | (RPC) get_discovery_feed | Explore feed | supabase (RPC) |
 | GET | (RPC) get_suggested_posts | Suggested content | supabase (RPC) |
+| GET | (RPC) get_building_reviews | All `user_buildings` rows for a building (with `user_data` / review images JSON); `user_data` flags match `get_feed` (claimed person, credits/stewards) | supabase (RPC; migration `20270841000000_get_building_reviews_restore.sql`) |
 
 ```typescript
 interface UserBuildingDTO {

@@ -86,6 +86,25 @@ export function BuildingLocationMap({
     );
   }
 
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return (
+      <div
+        className={outerClass}
+        onClick={isExpanded && onToggleExpand ? onToggleExpand : undefined}
+        data-testid="map-backdrop"
+      >
+        <div
+          className={`${innerClass} flex min-h-48 flex-col items-center justify-center gap-2 bg-surface-muted text-text-secondary`}
+          onClick={isExpanded ? (e) => e.stopPropagation() : undefined}
+          data-testid="map-inner-container"
+          role="status"
+        >
+          <span className="text-xs uppercase tracking-widest">Location unavailable</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={outerClass}

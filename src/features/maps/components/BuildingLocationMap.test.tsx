@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { BuildingLocationMap } from './BuildingLocationMap';
 import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
@@ -135,5 +135,14 @@ describe('BuildingLocationMap', () => {
     fireEvent.click(innerContainer);
 
     expect(onToggleExpand).not.toHaveBeenCalled();
+  });
+
+  it('shows fallback when coordinates are not finite', async () => {
+    render(<BuildingLocationMap {...defaultProps} lat={NaN} lng={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('Location unavailable');
+    });
+    expect(screen.queryByTestId('map-container')).not.toBeInTheDocument();
   });
 });
