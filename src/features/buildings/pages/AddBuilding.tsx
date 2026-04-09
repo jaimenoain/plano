@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { supabase } from "@/integrations/supabase/client";
-import { getGeocode, getLatLng } from "use-places-autocomplete";
+import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { config } from "@/config";
 import { Loader2, MapPin, ArrowRight, Building2, Layers } from "lucide-react";

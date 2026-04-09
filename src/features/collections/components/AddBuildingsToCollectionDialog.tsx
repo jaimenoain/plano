@@ -19,10 +19,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
 import { config } from "@/config";
-import usePlacesAutocomplete, {
-  getGeocode,
-  getLatLng,
-} from "use-places-autocomplete";
+import { useAutocompleteSuggestions } from "@/hooks/useAutocompleteSuggestions";
+import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import {
   Command,
@@ -120,7 +118,7 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
     setValue,
     suggestions: { status, data },
     clearSuggestions,
-  } = usePlacesAutocomplete({
+  } = useAutocompleteSuggestions({
     debounce: 300,
     initOnMount: true,
   });

@@ -1,9 +1,7 @@
 // Not wired in product; candidate for removal.
 import { useState, useEffect, useRef } from "react";
-import usePlacesAutocomplete, {
-  getGeocode,
-  getLatLng,
-} from "use-places-autocomplete";
+import { useAutocompleteSuggestions } from "@/hooks/useAutocompleteSuggestions";
+import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import { config } from "@/config";
 import { useQuery } from "@tanstack/react-query";
@@ -72,20 +70,20 @@ export function OmniSearchBar({
     initMap();
   }, []);
 
-  // Places Autocomplete
   const {
-    ready: _ready,
-    value: _placesValue,
     setValue: setPlacesValue,
     suggestions: { status: placesStatus, data: placesData },
     clearSuggestions,
-  } = usePlacesAutocomplete({
-    requestOptions: {
-      types: ["(regions)"],
-    },
+    init: initPlacesAutocomplete,
+  } = useAutocompleteSuggestions({
+    types: ["(regions)"],
     debounce: 300,
-    initOnMount: true,
+    initOnMount: false,
   });
+
+  useEffect(() => {
+    if (scriptLoaded) initPlacesAutocomplete();
+  }, [scriptLoaded, initPlacesAutocomplete]);
 
   const entityEnabled = debouncedInput.length >= 2;
 
@@ -120,10 +118,10 @@ export function OmniSearchBar({
 
   const entitiesLoading = isBuildingsFetching || peopleFetching || companiesFetching;
 
-  // Sync input value with places
   useEffect(() => {
+    if (!scriptLoaded) return;
     setPlacesValue(inputValue);
-  }, [inputValue, setPlacesValue]);
+  }, [inputValue, setPlacesValue, scriptLoaded]);
 
   // Handle click outside
   useEffect(() => {

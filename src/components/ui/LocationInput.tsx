@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import usePlacesAutocomplete, {
-  getGeocode,
-} from "use-places-autocomplete";
+import { useAutocompleteSuggestions } from "@/hooks/useAutocompleteSuggestions";
+import { getGeocode } from "@/lib/googleMapsGeocoding";
 // CHANGED: Import new functional API instead of the removed Loader class
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader"; 
 import { config } from "@/config";
@@ -127,11 +126,8 @@ function PlacesAutocomplete({
     setValue,
     suggestions: { status, data },
     clearSuggestions,
-  } = usePlacesAutocomplete({
-    requestOptions: {
-      // If searchTypes is empty, pass undefined to search all types
-      types: searchTypes && searchTypes.length > 0 ? searchTypes : undefined,
-    },
+  } = useAutocompleteSuggestions({
+    types: searchTypes && searchTypes.length > 0 ? searchTypes : undefined,
     defaultValue,
     debounce: 300,
     initOnMount: true,

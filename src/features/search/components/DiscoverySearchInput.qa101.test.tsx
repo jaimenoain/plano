@@ -16,16 +16,18 @@ vi.mock("@/config", () => ({
 }));
 
 const clearSuggestions = vi.fn();
-vi.mock("use-places-autocomplete", () => ({
-  __esModule: true,
-  default: () => ({
+vi.mock("@/hooks/useAutocompleteSuggestions", () => ({
+  useAutocompleteSuggestions: () => ({
     ready: true,
     value: "",
     setValue: vi.fn(),
-    suggestions: { status: "ZERO_RESULTS", data: [] },
+    suggestions: { status: "ZERO_RESULTS", data: [], loading: false },
     clearSuggestions,
     init: vi.fn(),
   }),
+}));
+
+vi.mock("@/lib/googleMapsGeocoding", () => ({
   getGeocode: vi.fn(),
   getLatLng: vi.fn(),
 }));

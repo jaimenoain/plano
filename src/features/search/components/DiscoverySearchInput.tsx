@@ -1,7 +1,7 @@
 /**
  * DiscoverySearchInput.tsx — Refined with A24 editorial aesthetic
  *
- * Visual changes (all Google Maps / Places Autocomplete logic unchanged):
+ * Visual changes. Place suggestions use `AutocompleteSuggestion.fetchAutocompleteSuggestions` (new API).
  *
  * Input height: h-12 → h-10 (consistent with other inputs in the app).
  *   Applied in three places: StaticSearchFallback, the !scriptLoaded fallback
@@ -15,10 +15,8 @@
  *   and the heading rendered a visible label that added visual noise.
  */
 import { useState, useEffect, useRef } from "react";
-import usePlacesAutocomplete, {
-  getGeocode,
-  getLatLng,
-} from "use-places-autocomplete";
+import { useAutocompleteSuggestions } from "@/hooks/useAutocompleteSuggestions";
+import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import { config } from "@/config";
 import { useQuery } from "@tanstack/react-query";
@@ -170,8 +168,8 @@ function DiscoverySearchInputInner({
     suggestions: { status, data },
     clearSuggestions,
     init,
-  } = usePlacesAutocomplete({
-    requestOptions: { types: ["(regions)"] },
+  } = useAutocompleteSuggestions({
+    types: ["(regions)"],
     debounce: 300,
     initOnMount: false,
   });

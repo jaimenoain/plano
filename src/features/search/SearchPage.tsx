@@ -32,7 +32,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Map as MapIcon, List as ListIcon, Loader2 } from "lucide-react";
 import { ClientOnly } from "@/components/common/ClientOnly";
 import { useDebounce } from "@/hooks/useDebounce";
-import { getGeocode, getLatLng } from "use-places-autocomplete";
+import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { Bounds } from "@/utils/map";
 import { useNavigate } from "react-router";
 

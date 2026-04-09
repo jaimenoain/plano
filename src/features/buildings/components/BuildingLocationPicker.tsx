@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { LocationInput } from "@/components/ui/LocationInput";
-import { getGeocode, getLatLng } from "use-places-autocomplete";
+import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { MapPin, Layers } from "lucide-react";
 import Map, { Marker, NavigationControl, MapMouseEvent, type MarkerDragEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
