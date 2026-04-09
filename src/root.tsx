@@ -29,7 +29,10 @@ import { useLoginTracker } from "@/features/auth/hooks/useLoginTracker";
 import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
 import { logDiagnosticError } from "@/features/admin/api/diagnostics";
 import { setSentryUser } from "@/lib/sentry";
-import { createSupabaseServerClient } from "@/lib/supabase.server";
+import {
+  createSupabaseServerClient,
+  getSessionForClientHydration,
+} from "@/lib/supabase.server";
 import { parseSidebarOpenFromRequest } from "@/lib/sidebar-cookie";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import type { Session } from "@supabase/supabase-js";
@@ -51,12 +54,7 @@ function makeQueryClient() {
 export async function loader({ request }: LoaderFunctionArgs) {
   const responseHeaders = new Headers();
   const supabase = createSupabaseServerClient(request, responseHeaders);
-
-  // getSession() is safe here — we only need the session for initial hydration.
-  // Privileged server operations in loaders (Phase 4+) will use getUser() instead.
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getSessionForClientHydration(supabase);
 
   return Response.json(
     {

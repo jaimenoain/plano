@@ -77,7 +77,7 @@ BEGIN
         WHERE bc.building_id = ub.building_id
           AND bc.status IS DISTINCT FROM 'hidden'::public.credit_status_enum
           AND (
-            bc.person_id IN (SELECT id FROM public.people WHERE claimed_by_user_id = p.id)
+            bc.person_id IN (SELECT pe_sub.id FROM public.people pe_sub WHERE pe_sub.claimed_by_user_id = p.id)
             OR bc.company_id IN (SELECT cs.company_id FROM public.company_stewards cs WHERE cs.user_id = p.id)
           )
       )

@@ -1,10 +1,9 @@
 import { supabase } from '../integrations/supabase/client';
 
 export async function uploadFile(file: File, folderName?: string): Promise<string> {
-  // 1. Explicitly get the current session to ensure we have a valid token
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (authError || !user) {
     throw new Error('User not authenticated. Please log in to upload files.');
   }
 
@@ -45,9 +44,9 @@ export async function uploadFileWithProgress(
   onProgress?: (progress: number) => void,
   folderName?: string
 ): Promise<string> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (authError || !user) {
     throw new Error('User not authenticated. Please log in to upload files.');
   }
 
@@ -98,9 +97,9 @@ throw new Error(`Failed to generate upload URL: ${error.message || 'Unknown erro
 export async function deleteFiles(fileKeys: string[]): Promise<void> {
   if (fileKeys.length === 0) return;
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (authError || !user) {
     throw new Error('User not authenticated. Please log in to delete files.');
   }
 

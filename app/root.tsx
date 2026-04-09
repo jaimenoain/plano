@@ -18,14 +18,15 @@ import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { PwaPrompt } from "@/components/pwa/PwaPrompt";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
+import {
+  createSupabaseServerClient,
+  getSessionForClientHydration,
+} from "~/lib/supabase.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getSessionForClientHydration(supabase);
   return Response.json({ session }, { headers });
 }
 
