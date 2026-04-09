@@ -328,6 +328,7 @@ export default function BuildingDetails() {
   }, [primaryPersonIds, verifiedClaims]);
 
   const canEditOfficialData = profile?.role === 'admin' || isVerifiedArchitect || (isCreator && !hasVerifiedArchitect);
+  const isCreditsAdmin = profile?.role === "admin" || profile?.role === "app_admin";
 
   const [draftOfficialData, setDraftOfficialData] = useState({ name: "", year_completed: 0, city: "", country: "", architect_statement: "" });
   const [isSavingOfficial, setIsSavingOfficial] = useState(false);
@@ -1191,7 +1192,12 @@ export default function BuildingDetails() {
             )}
           </section>
 
-          <BuildingCredits buildingId={building.id} credits={buildingCredits} isAuthenticated={Boolean(user)} />
+          <BuildingCredits
+            buildingId={building.id}
+            credits={buildingCredits}
+            isAuthenticated={Boolean(user)}
+            isAdmin={isCreditsAdmin}
+          />
 
           {/* ── Photo Gallery ── */}
           <section className="border-t border-border-default pt-10">

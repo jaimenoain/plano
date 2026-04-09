@@ -1,4 +1,4 @@
-// @deprecated — not currently imported; candidate for removal in Phase 2 cleanup
+// Not wired in product; candidate for removal.
 import { useState, useEffect, useRef } from "react";
 import usePlacesAutocomplete, {
   getGeocode,

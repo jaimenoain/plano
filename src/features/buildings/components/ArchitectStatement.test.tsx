@@ -68,4 +68,17 @@ describe("ArchitectStatement Component", () => {
     expect(screen.getByRole("textbox")).toBeInTheDocument();
     expect(screen.getByRole("textbox")).toHaveValue("Edit me");
   });
+
+  it("shows architectName attribution from lead credit label (QA 5.1)", () => {
+    render(
+      <ArchitectStatement
+        statement="We shaped light and mass."
+        isEditing={false}
+        onChange={vi.fn()}
+        architectName="Jane Architect @ Studio Co"
+      />,
+    );
+    expect(screen.getByText(/We shaped light and mass/)).toBeInTheDocument();
+    expect(screen.getByText(/^— Jane Architect @ Studio Co$/)).toBeInTheDocument();
+  });
 });

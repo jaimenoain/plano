@@ -177,4 +177,19 @@ describe('FilterDrawer', () => {
     expect(screen.queryByText('Curators & Friends')).toBeNull();
     expect(screen.queryByTestId('contact-picker')).toBeNull();
   });
+
+  describe('QA 10.2 — map credit filters', () => {
+    it('renders Credits accordion with Company combobox stub, Role multi-select, and role labels', () => {
+      (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
+
+      render(<FilterDrawer />);
+
+      expect(screen.getByText('Credits')).toBeDefined();
+      expect(screen.getByText('Company')).toBeDefined();
+      expect(screen.getByText('Role')).toBeDefined();
+      expect(screen.getByTestId('company-map-filter')).toBeDefined();
+      expect(screen.getByText('Structural Engineer')).toBeDefined();
+      expect(screen.getByText('Design Architect')).toBeDefined();
+    });
+  });
 });

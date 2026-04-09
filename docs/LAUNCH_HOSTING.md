@@ -81,6 +81,10 @@ Use this when reviewing Search Console **Pages** / **Indexing** reports after th
 
 ## Legacy `/architect/:id` URLs (Building Credits Phase 3)
 
-The app answers `/architect/<uuid>` with **301** to `/person/<slug>` when the UUID matches `people.id`, or to `/company/<slug>` when it matches `companies.id` (studio rows migrated from `architects`). In-app navigations use React Router’s `replace` response so the history entry is the canonical `/person/` or `/company/` URL, not the intermediate `/architect/` path.
+The app answers `/architect/<uuid>` with **301** to `/person/<slug>` when the UUID matches `people.id`, or to `/company/<slug>` when it matches `companies.id` (studio rows migrated from `architects`). Invalid UUIDs or unknown IDs get **404** (no redirect loop). Legacy `/architect/<uuid>/edit` maps to the same targets with **`?edit=1`**. In-app navigations use React Router’s `replace` response so the history entry is the canonical `/person/` or `/company/` URL, not the intermediate `/architect/` path — there is no second hop to `/profile/:username`.
+
+### Vercel / `vercel.json`
+
+There is **no** `rewrites` or `redirects` entry for `/architect/*` in [`vercel.json`](../vercel.json). Traffic hits the React Router SSR app; the route loader resolves the UUID to a slug and returns the **301** (see `architectIdRedirect.loader.ts`). Automated checks live in **`architectIdRedirect.loader.test.ts`**.
 
 If TLS terminates at a CDN or proxy in front of Vercel, you usually do **not** need a separate edge rule: letting the request reach the app is enough. Add a static **301** at the edge only if you must redirect without hitting the SSR app (then mirror the same slug rules as the loader, or accept a second hop via the app).

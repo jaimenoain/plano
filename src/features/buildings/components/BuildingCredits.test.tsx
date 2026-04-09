@@ -9,10 +9,18 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BuildingCredits } from "./BuildingCredits";
 import type { BuildingCreditWithEntities } from "@/features/credits/types";
 
-const flagCreditMock = vi.fn();
+const { flagCreditMock, toastMock, useIsMobileMock } = vi.hoisted(() => ({
+  flagCreditMock: vi.fn(),
+  toastMock: vi.fn(),
+  useIsMobileMock: vi.fn(() => false),
+}));
 
 vi.mock("@/hooks/use-toast", () => ({
-  useToast: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: toastMock }),
+}));
+
+vi.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => useIsMobileMock(),
 }));
 
 vi.mock("@/features/credits/api/credits", async (importOriginal) => {
@@ -67,10 +75,15 @@ describe("BuildingCredits", () => {
   beforeEach(() => {
     sessionStorage.clear();
     flagCreditMock.mockReset();
+    toastMock.mockReset();
+    useIsMobileMock.mockReturnValue(false);
     flagCreditMock.mockImplementation(async () =>
       baseCredit({ id: "c1", status: "flagged", flagReason: "wrong_person" }),
     );
     Object.defineProperty(window, "innerWidth", { value: 1024, configurable: true });
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
   });
 
   afterEach(() => {
@@ -158,7 +171,7 @@ describe("BuildingCredits", () => {
     expect(screen.getByRole("button", { name: /add a credit/i })).toBeTruthy();
   });
 
-  it("hides report control for flagged credits", () => {
+  it("hides flagged credits from non-admin viewers (QA 5.2)", () => {
     const credits: BuildingCreditWithEntities[] = [
       baseCredit({
         id: "f",
@@ -166,7 +179,22 @@ describe("BuildingCredits", () => {
         person: { id: "p1", name: "Flagged Person", slug: "fp" },
       }),
     ];
-    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} isAdmin={false} />);
+    expect(screen.queryByRole("link", { name: "Flagged Person" })).toBeNull();
+    expect(screen.getByText(/No credits listed yet/i)).toBeInTheDocument();
+  });
+
+  it("shows flagged credits to admins with Flagged badge and no report control (QA 5.2)", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "f",
+        status: "flagged",
+        person: { id: "p1", name: "Flagged Person", slug: "fp" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated isAdmin />);
+    expect(screen.getByRole("link", { name: "Flagged Person" })).toBeInTheDocument();
+    expect(screen.getByText("Flagged")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /report issue with this credit/i })).toBeNull();
   });
 
@@ -180,8 +208,273 @@ describe("BuildingCredits", () => {
     ];
     wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
     await user.click(screen.getByRole("button", { name: /report issue with this credit/i }));
+    await user.click(screen.getByRole("radio", { name: /wrong person/i }));
     await user.click(screen.getByRole("button", { name: /submit report/i }));
     expect(flagCreditMock).toHaveBeenCalledWith("rep", "wrong_person", null);
     expect(screen.queryByRole("button", { name: /report issue with this credit/i })).toBeNull();
+  });
+});
+
+describe("BuildingCredits (QA 5.2)", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    flagCreditMock.mockReset();
+    toastMock.mockReset();
+    useIsMobileMock.mockReturnValue(false);
+    Object.defineProperty(window, "innerWidth", { value: 1024, configurable: true });
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+    sessionStorage.clear();
+  });
+
+  it("primary and contributor tiers visible by default; ancillary behind Show all credits", async () => {
+    const user = userEvent.setup();
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "p1",
+        creditTier: "primary",
+        role: "design_architect",
+        person: { id: "a", name: "Primary Arch", slug: "pa" },
+      }),
+      baseCredit({
+        id: "co1",
+        creditTier: "contributor",
+        role: "structural_engineer",
+        person: { id: "b", name: "Contributor Eng", slug: "ce" },
+      }),
+      baseCredit({
+        id: "an1",
+        creditTier: "ancillary",
+        role: "landscape_architect",
+        person: { id: "c", name: "Ancillary Land", slug: "al" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+
+    expect(screen.getByRole("region", { name: /primary credits/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /contributor credits/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Primary Arch" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Contributor Eng" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ancillary Land" })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: /show all credits/i }));
+    expect(screen.getByRole("link", { name: "Ancillary Land" })).toBeInTheDocument();
+  });
+
+  it("renders Lead label on is_lead primary credit", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "lead",
+        isLead: true,
+        person: { id: "p1", name: "Lead Only", slug: "lo" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    const region = screen.getByRole("region", { name: /primary credits/i });
+    expect(within(region).getByText("Lead")).toBeInTheDocument();
+  });
+
+  it("verified credit shows tooltip content on hover; active credit has no verified icon", async () => {
+    const user = userEvent.setup();
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "a",
+        status: "active",
+        person: { id: "p1", name: "Active Only", slug: "ao" },
+      }),
+      baseCredit({
+        id: "v",
+        status: "verified",
+        person: { id: "p2", name: "Verified Only", slug: "vo" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    expect(screen.getAllByLabelText("Verified credit")).toHaveLength(1);
+    await user.hover(screen.getByLabelText("Verified credit"));
+    expect(await screen.findByRole("tooltip", { name: "Verified credit" })).toBeInTheDocument();
+  });
+
+  it("shows contribution notes when set", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "n",
+        contributionNotes: "Facade study and sun paths.",
+        person: { id: "p1", name: "With Notes", slug: "wn" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    expect(screen.getByText("Facade study and sun paths.")).toBeInTheDocument();
+  });
+
+  it("project_url renders external link with https href and opens in new tab", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "pu",
+        projectUrl: "example.org/project",
+        person: { id: "p1", name: "Project Person", slug: "pp" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    const ext = screen.getByRole("link", { name: "Open project link" });
+    expect(ext).toHaveAttribute("href", "https://example.org/project");
+    expect(ext).toHaveAttribute("target", "_blank");
+    expect(ext).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("renders year_from–year_to range when both set", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "y",
+        yearFrom: 2018,
+        yearTo: 2023,
+        person: { id: "p1", name: "Year Person", slug: "yp" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    const region = screen.getByRole("region", { name: /primary credits/i });
+    expect(within(region).getByText("2018–2023")).toBeInTheDocument();
+  });
+
+  it("renders no year line when year_from and year_to are both null", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "ny",
+        yearFrom: null,
+        yearTo: null,
+        person: { id: "p1", name: "No Years", slug: "ny" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    const region = screen.getByRole("region", { name: /primary credits/i });
+    expect(within(region).queryByText(/\d{4}–\d{4}/)).toBeNull();
+  });
+});
+
+describe("BuildingCredits flag flow (QA 5.3)", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    flagCreditMock.mockReset();
+    toastMock.mockReset();
+    useIsMobileMock.mockReturnValue(false);
+    flagCreditMock.mockImplementation(async (creditId: string, reason: string, notes: string | null) =>
+      baseCredit({
+        id: creditId,
+        status: "flagged",
+        flagReason: reason as "wrong_role",
+        flagNotes: notes,
+        flaggedByUserId: null,
+      }),
+    );
+    Object.defineProperty(window, "innerWidth", { value: 1024, configurable: true });
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+    sessionStorage.clear();
+  });
+
+  it("opens popover with reason radios and optional notes on desktop", async () => {
+    const user = userEvent.setup();
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({ id: "fx", person: { id: "p1", name: "Flag UX", slug: "fx" } }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    await user.click(screen.getByRole("button", { name: /report issue with this credit/i }));
+    expect(screen.getByRole("group", { name: /reason/i })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /notes \(optional\)/i })).toBeInTheDocument();
+  });
+
+  it("opens bottom sheet on mobile viewport", async () => {
+    const user = userEvent.setup();
+    useIsMobileMock.mockReturnValue(true);
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({ id: "mb", person: { id: "p1", name: "Mobile", slug: "mb" } }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    await user.click(screen.getByRole("button", { name: /report issue with this credit/i }));
+    expect(screen.getByRole("dialog", { name: /report credit/i })).toBeInTheDocument();
+  });
+
+  it("submit without choosing a reason shows validation toast and does not call flagCredit", async () => {
+    const user = userEvent.setup();
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({ id: "nv", person: { id: "p1", name: "No Val", slug: "nv" } }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    await user.click(screen.getByRole("button", { name: /report issue with this credit/i }));
+    await user.click(screen.getByRole("button", { name: /submit report/i }));
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variant: "destructive",
+        description: "Select a reason before submitting.",
+      }),
+    );
+    expect(flagCreditMock).not.toHaveBeenCalled();
+  });
+
+  it("submits wrong_role with null notes (anonymous) via flagCredit", async () => {
+    const user = userEvent.setup();
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({ id: "wr", person: { id: "p1", name: "Wrong Role", slug: "wr" } }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    await user.click(screen.getByRole("button", { name: /report issue with this credit/i }));
+    await user.click(screen.getByRole("radio", { name: /wrong role/i }));
+    await user.click(screen.getByRole("button", { name: /submit report/i }));
+    await vi.waitFor(() => {
+      expect(flagCreditMock).toHaveBeenCalledWith("wr", "wrong_role", null);
+    });
+  });
+
+  it("allows flagging a verified credit; RPC result stays flagged (not hidden)", async () => {
+    const user = userEvent.setup();
+    flagCreditMock.mockImplementation(async () =>
+      baseCredit({
+        id: "ver",
+        status: "flagged",
+        flagReason: "wrong_person",
+        flaggedFromStatus: "verified",
+      }),
+    );
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "ver",
+        status: "verified",
+        person: { id: "p1", name: "Verified Target", slug: "vt" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    await user.click(screen.getByRole("button", { name: /report issue with this credit/i }));
+    await user.click(screen.getByRole("radio", { name: /wrong person/i }));
+    await user.click(screen.getByRole("button", { name: /submit report/i }));
+    await vi.waitFor(() => expect(flagCreditMock).toHaveBeenCalled());
+    const ret = (await flagCreditMock.mock.results[0].value) as BuildingCreditWithEntities;
+    expect(ret.status).toBe("flagged");
+    expect(ret.status).not.toBe("hidden");
+  });
+
+  it("after flagging, clearing sessionStorage restores the report control on a fresh mount", async () => {
+    const user = userEvent.setup();
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({ id: "sess", person: { id: "p1", name: "Session", slug: "sess" } }),
+    ];
+    const { unmount } = wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    await user.click(screen.getByRole("button", { name: /report issue with this credit/i }));
+    await user.click(screen.getByRole("radio", { name: /wrong person/i }));
+    await user.click(screen.getByRole("button", { name: /submit report/i }));
+    await vi.waitFor(() => expect(flagCreditMock).toHaveBeenCalled());
+    expect(screen.queryByRole("button", { name: /report issue with this credit/i })).toBeNull();
+    unmount();
+    sessionStorage.clear();
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    expect(screen.getByRole("button", { name: /report issue with this credit/i })).toBeInTheDocument();
   });
 });

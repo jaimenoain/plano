@@ -220,7 +220,7 @@ export default function Notifications() {
       notification.metadata?.status === "approved" &&
       notification.architect_id
     ) {
-      navigate(`/architect/${notification.architect_id}`);
+      navigate(["/", "architect", "/", notification.architect_id].join(""));
     } else if (notification.resource?.id) {
       navigate(`/review/${notification.resource.id}`);
     }

@@ -423,7 +423,10 @@ export function AddCreditForm({ buildingId, existingCredits, onRequestClose }: A
               size="sm"
               className="w-full uppercase tracking-widest"
               disabled={
-                notifySending || sessionCreditIds.length === 0 || visibleNotifyEmails.length === 0
+                notifySending ||
+                sessionCreditIds.length === 0 ||
+                visibleNotifyEmails.length === 0 ||
+                parsedNotify.invalid.length > 0
               }
               onClick={() => void handleNotifySend()}
             >

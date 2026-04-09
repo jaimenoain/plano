@@ -35,6 +35,16 @@ const norman: PersonSummary = {
   knownBuilding: "Gherkin",
 };
 
+const fosterPartnersCo: CompanySummary = {
+  id: "co-fp",
+  name: "Foster + Partners Ltd",
+  slug: "foster-partners-ltd",
+  claimStatus: "unclaimed",
+  country: "UK",
+  logoUrl: null,
+  creditCount: 12,
+};
+
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -55,6 +65,9 @@ describe("findSimilarEntityCandidates", () => {
 describe("CreditEntityPicker", () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
     searchPeopleMock.mockReset();
     searchCompaniesMock.mockReset();
     createPersonMock.mockReset();
@@ -63,7 +76,10 @@ describe("CreditEntityPicker", () => {
       if (q.toLowerCase().includes("foster")) return [norman];
       return [];
     });
-    searchCompaniesMock.mockResolvedValue([]);
+    searchCompaniesMock.mockImplementation(async (q: string) => {
+      if (q.toLowerCase().includes("foster")) return [fosterPartnersCo];
+      return [];
+    });
   });
 
   afterEach(() => {
@@ -83,8 +99,8 @@ describe("CreditEntityPicker", () => {
     await waitFor(() => {
       expect(screen.getByText("Norman Foster")).toBeInTheDocument();
     });
-    expect(screen.getByText(/Foster \+ Partners/)).toBeInTheDocument();
-    expect(screen.getByText(/Gherkin/)).toBeInTheDocument();
+    expect(screen.getByText(/Foster \+ Partners · Gherkin/)).toBeInTheDocument();
+    expect(screen.getByText("Foster + Partners Ltd")).toBeInTheDocument();
   });
 
   it("blocks create when similarity is high until user dismisses", async () => {
@@ -138,5 +154,161 @@ describe("CreditEntityPicker", () => {
     await waitFor(() => {
       expect(createPersonMock).toHaveBeenCalledWith({ name: "Norman Fostr" });
     });
+  });
+});
+
+describe("CreditEntityPicker (QA 6.1)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
+    searchPeopleMock.mockReset();
+    searchCompaniesMock.mockReset();
+    createPersonMock.mockReset();
+    createCompanyMock.mockReset();
+    searchPeopleMock.mockImplementation(async (q: string) => {
+      if (q.toLowerCase().includes("foster")) return [norman];
+      return [];
+    });
+    searchCompaniesMock.mockImplementation(async (q: string) => {
+      if (q.toLowerCase().includes("foster")) return [fosterPartnersCo];
+      return [];
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    cleanup();
+  });
+
+  it("merges person and company hits with Person / Company labels for the same query", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    wrap(<CreditEntityPicker value={null} onChange={vi.fn()} />);
+    await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByPlaceholderText("Type at least 2 characters…"), "foster");
+    await act(async () => {
+      vi.advanceTimersByTime(350);
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Norman Foster")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Foster + Partners Ltd")).toBeInTheDocument();
+    const personRows = screen.getAllByText("Person");
+    const companyRows = screen.getAllByText("Company");
+    expect(personRows.length).toBeGreaterThanOrEqual(1);
+    expect(companyRows.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows Create new person and Create new company when search returns no matches", async () => {
+    searchPeopleMock.mockResolvedValue([]);
+    searchCompaniesMock.mockResolvedValue([]);
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    wrap(<CreditEntityPicker value={null} onChange={vi.fn()} />);
+    await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByPlaceholderText("Type at least 2 characters…"), "zz");
+    await act(async () => {
+      vi.advanceTimersByTime(350);
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Create new person")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Create new company")).toBeInTheDocument();
+  });
+
+  it("accepting Did you mean selects the existing person without calling createPerson", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const onChange = vi.fn();
+    searchPeopleMock.mockImplementation(async () => [norman]);
+    searchCompaniesMock.mockResolvedValue([]);
+
+    wrap(<CreditEntityPicker value={null} onChange={onChange} allowedKinds={["person"]} />);
+    await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByPlaceholderText("Type at least 2 characters…"), "foster");
+    await act(async () => {
+      vi.advanceTimersByTime(350);
+    });
+    await waitFor(() => screen.getByText("Create new person"));
+    await user.click(screen.getByText("Create new person"));
+    const nameField = screen.getByLabelText("New entity name");
+    await user.clear(nameField);
+    await user.type(nameField, "Norman Fostr");
+    await user.click(screen.getByRole("button", { name: /Create person/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Did you mean an existing record/i)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /Norman Foster/i }));
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith({
+        kind: "person",
+        id: "p1",
+        name: "Norman Foster",
+        slug: "norman-foster",
+      });
+    });
+    expect(createPersonMock).not.toHaveBeenCalled();
+  });
+
+  it("creates a novel person without similarity prompt when search finds no close match", async () => {
+    searchPeopleMock.mockResolvedValue([]);
+    searchCompaniesMock.mockResolvedValue([]);
+    createPersonMock.mockResolvedValue({
+      id: "new-id-99",
+      name: "Zyzzyva Unique",
+      slug: "zyzzyva-unique",
+      bio: null,
+      nationality: null,
+      birthYear: null,
+      deathYear: null,
+      avatarUrl: null,
+      website: null,
+      locationNote: null,
+      claimedByUserId: null,
+      claimStatus: "unclaimed",
+      createdAt: "",
+      updatedAt: "",
+    });
+
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    wrap(<CreditEntityPicker value={null} onChange={vi.fn()} allowedKinds={["person"]} />);
+    await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByPlaceholderText("Type at least 2 characters…"), "zy");
+    await act(async () => {
+      vi.advanceTimersByTime(350);
+    });
+    await waitFor(() => screen.getByText("Create new person"));
+    await user.click(screen.getByText("Create new person"));
+    const nameField = screen.getByLabelText("New entity name");
+    await user.clear(nameField);
+    await user.type(nameField, "Zyzzyva Unique");
+    await user.click(screen.getByRole("button", { name: /Create person/i }));
+
+    await waitFor(() => {
+      expect(createPersonMock).toHaveBeenCalledWith({ name: "Zyzzyva Unique" });
+    });
+    expect(screen.queryByText(/Did you mean an existing record/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps the results list scroll-contained on a narrow viewport (QA 6.1)", async () => {
+    Object.defineProperty(window, "innerWidth", { value: 375, configurable: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    wrap(
+      <div className="w-72 max-w-xs">
+        <CreditEntityPicker value={null} onChange={vi.fn()} />
+      </div>,
+    );
+    await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByPlaceholderText("Type at least 2 characters…"), "foster");
+    await act(async () => {
+      vi.advanceTimersByTime(350);
+    });
+    await waitFor(() => screen.getByText("Norman Foster"));
+    const list = document.body.querySelector("[cmdk-list]");
+    expect(list).toBeTruthy();
+    expect(list?.className).toMatch(/overflow-y-auto/);
+    expect(list?.className).toMatch(/max-h-\[300px\]/);
   });
 });

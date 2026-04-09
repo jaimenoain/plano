@@ -141,7 +141,7 @@ function CreditFlagFormFields({
   onNotesChange,
   disabled,
 }: {
-  reason: FlagReason;
+  reason: FlagReason | null;
   onReasonChange: (r: FlagReason) => void;
   notes: string;
   onNotesChange: (v: string) => void;
@@ -202,20 +202,25 @@ function CreditFlagTrigger({
 }) {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState<FlagReason>("wrong_person");
+  const [reason, setReason] = useState<FlagReason | null>(null);
   const [notes, setNotes] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: () => flagCredit(creditId, reason, notes.trim() || null),
+    mutationFn: () => {
+      if (reason == null) {
+        throw new Error("CreditFlagTrigger: missing reason");
+      }
+      return flagCredit(creditId, reason, notes.trim() || null);
+    },
     onSuccess: () => {
       onReported();
       void queryClient.invalidateQueries({ queryKey: buildingCreditsQueryKey(buildingId) });
       toast({ title: "Credit reported — we'll review it" });
       setOpen(false);
       setNotes("");
-      setReason("wrong_person");
+      setReason(null);
     },
     onError: () => {
       toast({ variant: "destructive", title: "Could not send report" });
@@ -245,7 +250,18 @@ function CreditFlagTrigger({
       >
         Cancel
       </Button>
-      <Button type="button" size="sm" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
+      <Button
+        type="button"
+        size="sm"
+        disabled={mutation.isPending}
+        onClick={() => {
+          if (reason == null) {
+            toast({ variant: "destructive", description: "Select a reason before submitting." });
+            return;
+          }
+          mutation.mutate();
+        }}
+      >
         {mutation.isPending ? "Sending…" : "Submit report"}
       </Button>
     </div>
@@ -276,7 +292,16 @@ function CreditFlagTrigger({
         >
           <Flag className="h-4 w-4" aria-hidden />
         </Button>
-        <Sheet open={open} onOpenChange={setOpen}>
+        <Sheet
+          open={open}
+          onOpenChange={(next) => {
+            setOpen(next);
+            if (!next) {
+              setNotes("");
+              setReason(null);
+            }
+          }}
+        >
           <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-sm">
             <SheetHeader>
               <SheetTitle>Report credit</SheetTitle>
@@ -301,7 +326,7 @@ function CreditFlagTrigger({
         setOpen(next);
         if (!next) {
           setNotes("");
-          setReason("wrong_person");
+          setReason(null);
         }
       }}
     >
@@ -359,6 +384,9 @@ function BuildingCreditRow({
                 </TooltipTrigger>
                 <TooltipContent>Verified credit</TooltipContent>
               </Tooltip>
+            ) : null}
+            {credit.status === "flagged" ? (
+              <span className="text-2xs font-medium uppercase tracking-widest text-destructive">Flagged</span>
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-secondary">
@@ -447,12 +475,23 @@ export interface BuildingCreditsProps {
   buildingId: string;
   /** When true, show “Add a credit” and open the submission sheet (`AddCreditForm`). */
   isAuthenticated: boolean;
+  /** When true, include `status = flagged` rows and show a Flagged badge (building moderators). */
+  isAdmin?: boolean;
 }
 
-export function BuildingCredits({ credits, buildingId, isAuthenticated }: BuildingCreditsProps) {
+export function BuildingCredits({
+  credits,
+  buildingId,
+  isAuthenticated,
+  isAdmin = false,
+}: BuildingCreditsProps) {
   const [ancillaryOpen, setAncillaryOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const { primary, contributor, ancillary } = groupByTier(credits);
+  const visibleCredits = useMemo(
+    () => (isAdmin ? credits : credits.filter((c) => c.status !== "flagged")),
+    [credits, isAdmin],
+  );
+  const { primary, contributor, ancillary } = groupByTier(visibleCredits);
   const { sessionIds, markAndBump } = useSessionFlaggedCreditBump();
 
   return (
@@ -461,7 +500,7 @@ export function BuildingCredits({ credits, buildingId, isAuthenticated }: Buildi
         Credits
       </h2>
 
-      {credits.length === 0 ? (
+      {visibleCredits.length === 0 ? (
         <p className="text-sm text-text-secondary">No credits listed yet.</p>
       ) : (
         <>

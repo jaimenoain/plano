@@ -1,6 +1,6 @@
 import { Navigate } from "react-router";
 
-/** Bookmarks: `/architect/dashboard` → `/portfolio` (PersonDashboard). */
+/** Bookmarks: legacy dashboard entry → `/portfolio` (PersonDashboard). */
 export default function ArchitectDashboardRedirect() {
   return <Navigate to="/portfolio" replace />;
 }

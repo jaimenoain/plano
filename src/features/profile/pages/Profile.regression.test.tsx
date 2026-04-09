@@ -41,6 +41,7 @@ const mocks = vi.hoisted(() => {
     mockSupabase,
     mockChain,
     stableAuthUser,
+    getClaimedPersonSummaryMock: vi.fn().mockResolvedValue(null),
     loaderProfile: {
       id: 'user-123',
       username: 'testuser',
@@ -63,7 +64,8 @@ vi.mock('@/features/credits/api/people', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/credits/api/people')>();
   return {
     ...actual,
-    getClaimedPersonSummaryForProfile: vi.fn().mockResolvedValue(null),
+    getClaimedPersonSummaryForProfile: (...args: unknown[]) =>
+      mocks.getClaimedPersonSummaryMock(...args),
   };
 });
 
@@ -186,6 +188,9 @@ describe('Profile Regression Tests', () => {
         },
     });
 
+    mocks.getClaimedPersonSummaryMock.mockReset();
+    mocks.getClaimedPersonSummaryMock.mockResolvedValue(null);
+
     // Reset default behaviors
     mocks.mockChain.maybeSingle.mockResolvedValue({
         data: { id: 'user-123', username: 'testuser', avatar_url: null, bio: 'Test Bio' }
@@ -305,5 +310,32 @@ describe('Profile Regression Tests', () => {
       await screen.findByTestId('review-card-review-1');
 
       expect(screen.queryByRole('link', { name: /open portfolio dashboard/i })).toBeNull();
+  });
+
+  it('QA 3.2: shows Professional profile card with person link and credit count when linked', async () => {
+    mocks.getClaimedPersonSummaryMock.mockResolvedValue({
+      id: 'p1',
+      name: 'Alex Architect',
+      slug: 'alex-architect',
+      creditCount: 12,
+    });
+    renderProfileWithUrl();
+    await waitFor(
+      () => {
+        expect(screen.getByText('Professional profile')).toBeInTheDocument();
+      },
+      { timeout: 4000 },
+    );
+    expect(screen.getByRole('link', { name: 'Alex Architect' })).toHaveAttribute('href', '/person/alex-architect');
+    expect(screen.getByText(/Credited on 12 buildings/)).toBeInTheDocument();
+  });
+
+  it('QA 3.2: hides Professional profile card when no linked person', async () => {
+    mocks.getClaimedPersonSummaryMock.mockResolvedValue(null);
+    renderProfileWithUrl();
+    await screen.findByTestId('review-card-review-1');
+    await waitFor(() => {
+      expect(screen.queryByText('Professional profile')).not.toBeInTheDocument();
+    });
   });
 });

@@ -42,7 +42,7 @@ async function redirectLegacyProfileId(
   throw new Response("Not found", { status: 404 });
 }
 
-/** Legacy `/architect/:id` */
+/** Legacy profile UUID route (ArchitectIdRedirect). */
 export async function architectIdRedirectLoader({
   request,
   params,
@@ -54,7 +54,7 @@ export async function architectIdRedirectLoader({
   return redirectLegacyProfileId(request, id, false);
 }
 
-/** Legacy `/architect/:id/edit` */
+/** Legacy profile UUID edit route (ArchitectEditRedirect). */
 export async function architectEditRedirectLoader({
   request,
   params,

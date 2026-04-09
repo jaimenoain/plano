@@ -146,4 +146,19 @@ describe('useMapData', () => {
       })
     );
   });
+
+  it('should omit credit_company_id and credit_roles when no credit filters are set', async () => {
+    const bounds = { north: 10, south: 0, east: 10, west: 0 };
+    const zoom = 10;
+
+    const { result } = renderHook(() => useMapData({ bounds, zoom, filters: {} }), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const filterCriteria = rpcMock.mock.calls[0][1].filter_criteria;
+    expect(filterCriteria.credit_company_id).toBeUndefined();
+    expect(filterCriteria.credit_roles).toBeUndefined();
+  });
 });

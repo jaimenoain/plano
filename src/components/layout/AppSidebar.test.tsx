@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => {
   return {
     navigate: vi.fn(),
     signOut: vi.fn(),
+    /** Truthy when signed-in user has a claimed `people` row (nav hook shape). */
+    claimedPersonNavData: undefined as { id: string; slug: string } | undefined,
   };
 });
 
@@ -43,7 +45,7 @@ vi.mock('@/hooks/use-mobile', () => ({
 }));
 
 vi.mock('@/features/credits/hooks/useClaimedPersonForNav', () => ({
-  useClaimedPersonForNav: () => ({ data: undefined }),
+  useClaimedPersonForNav: () => ({ data: mocks.claimedPersonNavData }),
 }));
 
 vi.mock('@/features/credits/hooks/useStewardCompaniesForNav', () => ({
@@ -64,6 +66,7 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
 describe('AppSidebar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.claimedPersonNavData = undefined;
     // Reset cookie for SidebarProvider
     document.cookie = 'sidebar:state=; Max-Age=0; path=/;';
   });
@@ -98,6 +101,41 @@ describe('AppSidebar', () => {
         link.textContent?.includes('Profile'),
     );
     expect(profileLink).toBeTruthy();
+  });
+
+  it('QA 11.5: omits My portfolio links when there is no claimed person profile', () => {
+    mocks.claimedPersonNavData = undefined;
+    render(
+      <BrowserRouter>
+        <SidebarProvider>
+          <AppSidebar />
+        </SidebarProvider>
+      </BrowserRouter>,
+    );
+
+    const portfolioLinks = screen
+      .getAllByRole('link')
+      .filter((link) => link.getAttribute('href') === '/portfolio');
+    expect(portfolioLinks).toHaveLength(0);
+  });
+
+  it('QA 11.5: shows My portfolio links when the user has a claimed person profile', () => {
+    mocks.claimedPersonNavData = { id: 'p1', slug: 'jane-doe' };
+    render(
+      <BrowserRouter>
+        <SidebarProvider>
+          <AppSidebar />
+        </SidebarProvider>
+      </BrowserRouter>,
+    );
+
+    const portfolioLinks = screen
+      .getAllByRole('link')
+      .filter((link) => link.getAttribute('href') === '/portfolio');
+    expect(portfolioLinks.length).toBeGreaterThanOrEqual(1);
+    expect(
+      portfolioLinks.some((link) => /my portfolio/i.test(link.textContent ?? '')),
+    ).toBe(true);
   });
 
   // it('should call signOut and navigate to / when sign out is clicked', async () => {

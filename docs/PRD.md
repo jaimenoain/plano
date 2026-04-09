@@ -440,7 +440,7 @@ The following filter categories shall be available:
 
 | Filter | Description |
 |---|---|
-| Taxonomy | Category, typologies, materials, styles, contexts, attributes, architects |
+| Taxonomy | Category, typologies, materials, styles, contexts, attributes, credited people & companies |
 | Construction status | Built, Under Construction, Unbuilt, Lost, Temporary |
 | Global rating | Minimum Michelin-style rating (0–3) |
 | Personal rating | Minimum personal rating |
@@ -457,7 +457,7 @@ The following filter categories shall be available:
 #### Requirements
 
 **FR-8.6.1 Sidebar List**
-A scrollable sidebar shall display a list of buildings visible in the current map viewport, showing each building's name, image, architect, and tier badge, with sorting options.
+A scrollable sidebar shall display a list of buildings visible in the current map viewport, showing each building's name, image, primary credited entities (people/companies), and tier badge, with sorting options.
 
 ### 8.7 Collection Map
 
@@ -475,26 +475,26 @@ Collections shall have a dedicated map view displaying all buildings and markers
 #### Requirements
 
 **FR-9.1.1 Omni Search Bar**
-The search page shall provide a unified search input that accepts queries across buildings, architects, and users. The search bar shall support location-aware queries via Google Places integration.
+The search page shall provide a unified search input that accepts queries across buildings, people, companies, and users. The search bar shall support location-aware queries via Google Places integration.
 
 **FR-9.1.2 Building Search**
-Building search shall use the `search_buildings` RPC supporting full-text and fuzzy matching against building name, alt name, aliases, city, country, and architect names.
+Building search shall use the `search_buildings` RPC supporting full-text and fuzzy matching against building name, alt name, aliases, city, country, and names of credited people and companies (via `building_credits`).
 
-**FR-9.1.3 Architect Search**
-Users shall be able to search for architects by name across the normalised `architects` table.
+**FR-9.1.3 People & company search**
+Users shall be able to search for **people** and **companies** by name via `searchPeople` and `searchCompanies` (see `docs/DATA_CONTRACT.md`), not a removed `architects` catalog table.
 
 **FR-9.1.4 User Search**
 Users shall be able to search for other users by username.
 
 **FR-9.1.5 Mode Toggle**
-The search page shall include a mode toggle to switch result display between buildings, architects, and users.
+The search page shall include a mode toggle to switch result display between buildings, people, companies, and users.
 
 ### 9.2 Search Filters
 
 #### Requirements
 
 **FR-9.2.1 Filter Criteria**
-Building search shall support filtering by: category, typologies, attributes (materials, styles, contexts), architects, collections, folders, personal minimum rating, access dimensions (level, logistics, cost), and construction status.
+Building search shall support filtering by: category, typologies, attributes (materials, styles, contexts), credited people and companies (including map URL filters for credit company and roles where implemented), collections, folders, personal minimum rating, access dimensions (level, logistics, cost), and construction status.
 
 ### 9.3 Building Leaderboard
 
@@ -508,14 +508,14 @@ The system shall provide a building leaderboard ranking buildings by popularity 
 #### Requirements
 
 **FR-9.4.1 Building Cards**
-Search and discovery results shall display rich building cards showing: image, name, architect(s), city/country, year completed, tier badge, user's personal rating (if any), and social context (friends who visited).
+Search and discovery results shall display rich building cards showing: image, name, primary credited people/companies, city/country, year completed, tier badge, user's personal rating (if any), and social context (friends who visited).
 
 ### 9.5 Search Nudges
 
 #### Requirements
 
 **FR-9.5.1 Cross-Entity Nudges**
-When building search results are sparse, the system shall display contextual nudges suggesting the user try searching for architects or users instead.
+When building search results are sparse, the system shall display contextual nudges suggesting the user try searching for people, companies, or users instead.
 
 ---
 
@@ -1076,10 +1076,10 @@ The following remote procedure calls (RPCs) shall be implemented as PostgreSQL f
 | Admin | `get_admin_retention` | Retention analysis data. |
 | Admin | `get_admin_notifications` | Notification analytics. |
 | Admin | `get_photo_heatmap_data` | Photo geographic density. |
-| Architects | `get_architect_claim_status` | Claim review status. |
-| Architects | `is_verified_architect_for_building` | Verify architect–building link. |
-| Architects | `handle_architect_claim_approval` | Process claim approval. |
-| Architects | `sync_verified_architect_id` | Sync profile ↔ architect link. |
+| People & claims | `get_architect_claim_status` | Legacy-named RPC: claim review status on `architect_claims`. |
+| People & credits | `is_verified_architect_for_building` | Legacy-named RPC: whether the caller may edit official building fields via `building_credits` + claimed `people` / `company_stewards`. |
+| People & claims | `handle_architect_claim_approval` | Legacy-named RPC: process claim approval. |
+| Profiles | `sync_verified_architect_id` | Legacy-named RPC: sync profile column ↔ historical claim linkage (no `architects` catalog table). |
 | Leaderboards | `get_building_leaderboards` | Ranked building lists. |
 | Maintenance | `fix_orphaned_user_buildings` | Data integrity repair. |
 | Maintenance | `handle_new_user` | Auto-create profile on signup. |

@@ -114,5 +114,87 @@ describe('BuildingHeader', () => {
         expect(personLink.getAttribute('href')).toBe('/person/jane-architect');
         const companyLink = screen.getByRole('link', { name: 'Studio Co' });
         expect(companyLink.getAttribute('href')).toBe('/company/studio-co');
+
+        const attribution = screen.getByRole('link', { name: 'Jane Architect' }).parentElement;
+        expect(attribution?.textContent).toMatch(/Jane Architect\s*@\s*Studio Co/);
+        expect(attribution?.textContent).not.toMatch(
+            new RegExp('/' + 'architect' + '/'),
+        );
+    });
+
+    it('primary credit hrefs use person or company paths only', () => {
+        const primaryCredits: BuildingCreditWithEntities[] = [
+            {
+                id: 'c-person',
+                buildingId: '123',
+                personId: 'p1',
+                companyId: null,
+                role: 'design_architect',
+                roleCustom: null,
+                creditTier: 'primary',
+                isLead: true,
+                contributionNotes: null,
+                yearFrom: null,
+                yearTo: null,
+                projectUrl: null,
+                status: 'active',
+                flagReason: null,
+                flagNotes: null,
+                flaggedAt: null,
+                flaggedFromStatus: null,
+                flaggedByUserId: null,
+                addedByUserId: null,
+                displayOrder: 0,
+                createdAt: '',
+                updatedAt: '',
+                person: { id: 'p1', name: 'Solo Person', slug: 'solo-person' },
+                company: null,
+            },
+            {
+                id: 'c-co',
+                buildingId: '123',
+                personId: null,
+                companyId: 'co1',
+                role: 'structural_engineer',
+                roleCustom: null,
+                creditTier: 'primary',
+                isLead: false,
+                contributionNotes: null,
+                yearFrom: null,
+                yearTo: null,
+                projectUrl: null,
+                status: 'active',
+                flagReason: null,
+                flagNotes: null,
+                flaggedAt: null,
+                flaggedFromStatus: null,
+                flaggedByUserId: null,
+                addedByUserId: null,
+                displayOrder: 1,
+                createdAt: '',
+                updatedAt: '',
+                person: null,
+                company: { id: 'co1', name: 'Solo Co', slug: 'solo-co' },
+            },
+        ];
+        render(
+            <MemoryRouter>
+                <BuildingHeader
+                    building={mockBuilding}
+                    primaryCredits={primaryCredits}
+                    showEditLink={false}
+                />
+            </MemoryRouter>
+        );
+        expect(screen.getByRole('link', { name: 'Solo Person' })).toHaveAttribute(
+            'href',
+            '/person/solo-person',
+        );
+        expect(screen.getByRole('link', { name: 'Solo Co' })).toHaveAttribute('href', '/company/solo-co');
+        const links = screen.getAllByRole('link');
+        for (const a of links) {
+            const href = a.getAttribute('href') ?? '';
+            expect(href).not.toMatch(new RegExp('/' + 'architect' + '/'));
+        }
     });
 });

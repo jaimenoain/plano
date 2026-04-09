@@ -35,14 +35,14 @@ function FeaturedBuildingCard({ review }: FeaturedBuildingCardProps) {
     ? getBuildingImageUrl(building.main_image_url)
     : building.community_preview_url ?? null;
 
-  const architects = Array.isArray(building.architects)
-    ? building.architects
-        .map((a) => (typeof a === "string" ? a : a.name))
+  const creditNames = Array.isArray(building.creditedEntities)
+    ? building.creditedEntities
+        .map((e) => e.name)
         .filter(Boolean)
         .join(", ")
     : null;
 
-  const href = getBuildingUrl(building);
+  const href = getBuildingUrl(building.id, building.slug, building.short_id ?? null);
 
   return (
     <Link to={href} className="group block h-full">
@@ -77,8 +77,8 @@ function FeaturedBuildingCard({ review }: FeaturedBuildingCardProps) {
           <h3 className="text-lg font-bold leading-tight text-text-primary group-hover:underline underline-offset-2">
             {building.name}
           </h3>
-          {architects && (
-            <p className="text-xs text-text-secondary">{architects}</p>
+          {creditNames && (
+            <p className="text-xs text-text-secondary">{creditNames}</p>
           )}
           {building.year_completed && (
             <p className="text-xs text-text-disabled">{building.year_completed}</p>
