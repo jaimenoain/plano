@@ -1,33 +1,27 @@
 /**
  * ColdStartFeed.tsx
+ * Replaces: src/features/feed/components/ColdStartFeed.tsx
  *
- * Shown when the user follows nobody yet.
- *
- * Layout
- * ──────
- * 1. Editorial "Discover" prompt — bare text + underlined text link; no card chrome.
+ * Layout:
+ * 1. Editorial "Discover" prompt — bare text + underlined text link, no card chrome.
  * 2. Two-column grid:
  *    Left  — PeopleYouMayKnow flat list
- *    Right — FeaturedBuildingCard: first community discovery review
- * 3. SectionDivider → community discovery feed
+ *    Right — FeaturedBuildingCard from the first community discovery review
+ * 3. SectionDivider → remaining community discovery feed
  */
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router";
+import { useState } from "react";
 import { FeedReview } from "@/types/feed";
 import { FeedHeroCard } from "./FeedHeroCard";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import { SectionDivider } from "./SectionDivider";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
-import { useState } from "react";
 
 // ─── Featured building card (right column) ───────────────────────────────────
 
-interface FeaturedBuildingCardProps {
-  review: FeedReview;
-}
-
-function FeaturedBuildingCard({ review }: FeaturedBuildingCardProps) {
+function FeaturedBuildingCard({ review }: { review: FeedReview }) {
   const { building } = review;
   const [imgLoaded, setImgLoaded] = useState(false);
 
@@ -35,20 +29,20 @@ function FeaturedBuildingCard({ review }: FeaturedBuildingCardProps) {
     ? getBuildingImageUrl(building.main_image_url)
     : building.community_preview_url ?? null;
 
-  const creditNames = Array.isArray(building.creditedEntities)
-    ? building.creditedEntities
-        .map((e) => e.name)
+  const architects = Array.isArray(building.architects)
+    ? building.architects
+        .map((a) => (typeof a === "string" ? a : a.name))
         .filter(Boolean)
         .join(", ")
     : null;
 
-  const href = getBuildingUrl(building.id, building.slug, building.short_id ?? null);
-
   return (
-    <Link to={href} className="group block h-full">
+    <Link to={getBuildingUrl(building)} className="group block h-full">
       <div className="flex flex-col h-full">
-        {/* Image */}
-        <div className="relative w-full overflow-hidden bg-surface-muted" style={{ aspectRatio: "4/5" }}>
+        <div
+          className="relative w-full overflow-hidden bg-surface-muted"
+          style={{ aspectRatio: "4/5" }}
+        >
           {!imgLoaded && (
             <div className="absolute inset-0 bg-surface-muted animate-pulse" />
           )}
@@ -65,8 +59,6 @@ function FeaturedBuildingCard({ review }: FeaturedBuildingCardProps) {
             <div className="absolute inset-0 bg-surface-muted" />
           )}
         </div>
-
-        {/* Meta */}
         <div className="pt-3 flex flex-col gap-0.5">
           {building.city && (
             <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
@@ -77,8 +69,8 @@ function FeaturedBuildingCard({ review }: FeaturedBuildingCardProps) {
           <h3 className="text-lg font-bold leading-tight text-text-primary group-hover:underline underline-offset-2">
             {building.name}
           </h3>
-          {creditNames && (
-            <p className="text-xs text-text-secondary">{creditNames}</p>
+          {architects && (
+            <p className="text-xs text-text-secondary">{architects}</p>
           )}
           {building.year_completed && (
             <p className="text-xs text-text-disabled">{building.year_completed}</p>
@@ -106,8 +98,6 @@ export function ColdStartFeed({
   onImageLike,
   isDiscoveryLoading,
 }: ColdStartFeedProps) {
-  // First community review used as the featured right-column card.
-  // Skip it in the discovery list below so it isn't shown twice.
   const featuredReview = discoveryReviews[0] ?? null;
   const remainingReviews = featuredReview ? discoveryReviews.slice(1) : discoveryReviews;
 
@@ -135,13 +125,8 @@ export function ColdStartFeed({
 
       {/* ── Section 2: People you may know + Featured building ───────────── */}
       <div className="grid grid-cols-2 gap-8 items-start">
-        {/* Left: flat suggestion list */}
         <PeopleYouMayKnow />
-
-        {/* Right: featured community building */}
-        {featuredReview && (
-          <FeaturedBuildingCard review={featuredReview} />
-        )}
+        {featuredReview && <FeaturedBuildingCard review={featuredReview} />}
       </div>
 
       {/* ── Section 3: Community discovery feed ──────────────────────────── */}

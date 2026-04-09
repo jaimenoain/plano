@@ -1,5 +1,14 @@
-import { MapPin, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+/**
+ * EmptyFeed.tsx
+ * Replaces: src/features/feed/components/EmptyFeed.tsx
+ *
+ * A24 editorial aesthetic applied:
+ * - Zero-posts state: no MapPin icon, no Button component — bare text + text link
+ * - Posts-with-suggestions state: "Welcome to Plano!" centered heading replaced
+ *   with a SectionDivider-style eyebrow label; PeopleYouMayKnow now renders as
+ *   the flat list (updated component) inside a contained border-t block
+ */
+import { Loader2 } from "lucide-react";
 import { Link } from "react-router";
 import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -10,7 +19,6 @@ import React from "react";
 export function EmptyFeed() {
   const { user: _user } = useAuth();
   const { data, isLoading, toggleLike, toggleImageLike } = useSuggestedFeed();
-
   const posts = data?.pages.flatMap((page) => page) || [];
 
   if (isLoading) {
@@ -21,34 +29,44 @@ export function EmptyFeed() {
     );
   }
 
+  // ── Zero posts: bare editorial prompt ──────────────────────────────────────
   if (posts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center text-center py-16 px-8 gap-4">
-        <MapPin className="h-12 w-12 text-text-disabled" />
-        <h2 className="text-lg font-semibold text-text-primary">Welcome to Plano</h2>
-        <p className="text-sm text-text-secondary max-w-sm">
-          Your feed is empty. Follow others to see their building logs and visits.
+      <div className="py-16 px-2">
+        <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-4">
+          Get started
         </p>
-        <Button asChild variant="default">
-          <Link to="/search?tab=users">Find People</Link>
-        </Button>
-        <div>
-          <Button variant="ghost" asChild>
-            <Link to="/search" className="text-text-secondary hover:text-text-primary">
-              Log a building visit
-            </Link>
-          </Button>
+        <h2 className="text-2xl font-bold text-text-primary leading-tight mb-2">
+          Your feed is empty
+        </h2>
+        <p className="text-sm text-text-secondary mb-6 max-w-sm">
+          Follow others to see their building logs, ratings, and visits here.
+        </p>
+        <div className="flex flex-col gap-3">
+          <Link
+            to="/search?tab=users"
+            className="text-sm font-medium text-text-primary underline underline-offset-4 hover:text-text-secondary transition-colors"
+          >
+            Find people to follow →
+          </Link>
+          <Link
+            to="/search"
+            className="text-sm text-text-secondary underline underline-offset-4 hover:text-text-primary transition-colors"
+          >
+            Log a building visit →
+          </Link>
         </div>
       </div>
     );
   }
 
+  // ── Posts exist: community inspiration + inline suggestions ────────────────
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto pb-10">
-      <div className="text-center py-8 space-y-2">
-        <h2 className="text-2xl font-bold">Welcome to Plano!</h2>
-        <p className="text-sm text-text-secondary">
-          Here is some inspiration from our community to get you started.
+    <div className="flex flex-col gap-6 pb-10">
+      {/* Eyebrow label — replaces centered "Welcome to Plano!" heading */}
+      <div className="border-t border-border-default pt-6">
+        <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+          From the community
         </p>
       </div>
 
@@ -61,8 +79,9 @@ export function EmptyFeed() {
               onImageLike={toggleImageLike}
               showCommunityImages={true}
             />
+            {/* Inject PeopleYouMayKnow after 3rd post as a contained section */}
             {index === 2 && (
-              <div className="py-2">
+              <div className="border-t border-border-default pt-6">
                 <PeopleYouMayKnow />
               </div>
             )}

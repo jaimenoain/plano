@@ -1165,40 +1165,6 @@ export default function BuildingDetails() {
             </Alert>
           )}
 
-          {/* ── Architect Statement ── */}
-          <ArchitectStatement
-            statement={draftOfficialData.architect_statement}
-            isEditing={isOfficialEditing}
-            onChange={(val) => setDraftOfficialData(p => ({ ...p, architect_statement: val }))}
-            architectName={leadAttributionFromCredits(buildingCredits)}
-          />
-
-          {/* ── About — attributes, no card container ── */}
-          <section className="border-t border-border-default pt-10">
-            <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary mb-6">About</h2>
-            <BuildingAttributes building={building} />
-            {(accessSynthesis || building.access_notes) && (
-              <div className="mt-6 space-y-2">
-                {accessSynthesis && (
-                  <Badge variant={accessBadgeVariant()} className="flex items-center gap-1.5 w-fit">
-                    {createElement(accessSynthesis.icon, { className: "w-3.5 h-3.5" })}
-                    {accessSynthesis.label}
-                  </Badge>
-                )}
-                {building.access_notes && (
-                  <div className="text-sm text-text-secondary border-l-2 border-text-primary/20 pl-3 py-1">{building.access_notes}</div>
-                )}
-              </div>
-            )}
-          </section>
-
-          <BuildingCredits
-            buildingId={building.id}
-            credits={buildingCredits}
-            isAuthenticated={Boolean(user)}
-            isAdmin={isCreditsAdmin}
-          />
-
           {/* ── Photo Gallery ── */}
           <section className="border-t border-border-default pt-10">
             <div className="flex items-center justify-between mb-4">
@@ -1252,6 +1218,40 @@ export default function BuildingDetails() {
               </a>
             </div>
           </section>
+
+          {/* ── Architect Statement ── */}
+          <ArchitectStatement
+            statement={draftOfficialData.architect_statement}
+            isEditing={isOfficialEditing}
+            onChange={(val) => setDraftOfficialData(p => ({ ...p, architect_statement: val }))}
+            architectName={leadAttributionFromCredits(buildingCredits)}
+          />
+
+          {/* ── About — attributes, no card container ── */}
+          <section className="border-t border-border-default pt-10">
+            <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary mb-6">About</h2>
+            <BuildingAttributes building={building} />
+            {(accessSynthesis || building.access_notes) && (
+              <div className="mt-6 space-y-2">
+                {accessSynthesis && (
+                  <Badge variant={accessBadgeVariant()} className="flex items-center gap-1.5 w-fit">
+                    {createElement(accessSynthesis.icon, { className: "w-3.5 h-3.5" })}
+                    {accessSynthesis.label}
+                  </Badge>
+                )}
+                {building.access_notes && (
+                  <div className="text-sm text-text-secondary border-l-2 border-text-primary/20 pl-3 py-1">{building.access_notes}</div>
+                )}
+              </div>
+            )}
+          </section>
+
+          <BuildingCredits
+            buildingId={building.id}
+            credits={buildingCredits}
+            isAuthenticated={Boolean(user)}
+            isAdmin={isCreditsAdmin}
+          />
 
           {/* ── Location ── */}
           <section className="border-t border-border-default pt-10">

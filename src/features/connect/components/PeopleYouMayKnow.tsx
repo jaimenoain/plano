@@ -1,9 +1,9 @@
 /**
- * PeopleYouMayKnow.tsx (feed) — A24 editorial aesthetic
+ * PeopleYouMayKnow.tsx  (feed)
+ * Replaces: src/features/feed/components/PeopleYouMayKnow.tsx
  *
- * Ported from src/features/connect/components/PeopleYouMayKnow.tsx.
- * Renders as a flat border-separated list; no card chrome, no carousel.
- * Designed to sit in the left half of a two-column cold-start grid.
+ * A24 editorial aesthetic — flat border-separated list, no card chrome,
+ * no carousel. Reuses UserRow from the connect feature.
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -112,7 +112,7 @@ export function PeopleYouMayKnow() {
     }
   };
 
-  // ── Loading skeleton ──
+  // ── Loading skeleton — rectangular blocks, no rounded corners ──
   if (loading) {
     return (
       <div className="space-y-4">
