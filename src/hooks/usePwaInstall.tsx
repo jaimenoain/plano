@@ -15,8 +15,6 @@ interface PwaContextType {
   promptInstall: () => void;
   dismissPrompt: () => void;
   shouldShowPrompt: () => boolean;
-  needRefresh: boolean;
-  updateServiceWorker: (reloadPage?: boolean) => Promise<void>;
 }
 
 const PwaContext = createContext<PwaContextType | undefined>(undefined);
@@ -28,10 +26,7 @@ export function PwaProvider({ children }: { children: ReactNode }) {
   const [showIOSDrawer, setShowIOSDrawer] = useState(false);
   const [isInstallable, setIsInstallable] = useState(false);
 
-  const {
-    needRefresh: [needRefresh, _setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
+  useRegisterSW({
     onRegistered() {},
     onRegisterError() {},
   });
@@ -131,8 +126,6 @@ export function PwaProvider({ children }: { children: ReactNode }) {
       promptInstall,
       dismissPrompt,
       shouldShowPrompt,
-      needRefresh,
-      updateServiceWorker
     }}>
       {children}
     </PwaContext.Provider>

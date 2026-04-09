@@ -2,9 +2,13 @@ import { defineConfig } from "vite";
 import { reactRouter } from "@react-router/dev/vite";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
+import pkg from "./package.json";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   server: {
     host: "::",
     port: 8080,
@@ -23,7 +27,7 @@ export default defineConfig(() => ({
     reactRouter(),
     VitePWA({
       strategies: "generateSW",
-      registerType: "prompt",
+      registerType: "autoUpdate",
       devOptions: { enabled: false },
       includeAssets: [
         "robots.txt",

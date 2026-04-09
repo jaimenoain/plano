@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useState } from "react";
+import { StrictMode, useCallback, useEffect, useState } from "react";
 import {
   Links,
   Link,
@@ -18,7 +18,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { PwaProvider } from "@/hooks/usePwaInstall";
+import { useVersionNotification } from "@/hooks/useVersionNotification";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { PwaPrompt } from "@/components/pwa/PwaPrompt";
@@ -121,6 +123,19 @@ gtag('config', 'G-QW7R06L5TL');
 
 function AppShell({ initialSidebarOpen }: { initialSidebarOpen: boolean | null }) {
   const { user, loading: authLoading } = useAuth();
+
+  const notifyVersion = useCallback((version: string) => {
+    toast.info(`Plano has been updated`, {
+      description: `You're now on v${version}. Reload for the latest experience.`,
+      action: {
+        label: "Reload",
+        onClick: () => window.location.reload(),
+      },
+      duration: 15_000,
+    });
+  }, []);
+
+  useVersionNotification(notifyVersion);
 
   useLoginTracker();
   usePresenceTracker();
