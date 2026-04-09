@@ -162,7 +162,12 @@ export function ReviewCard({
           id: `video-${entry.id}`,
           type: 'video',
           url: entry.video_url,
-          poster: (entry.images && entry.images.length > 0) ? entry.images[0].url : posterUrl || undefined
+          poster:
+            entry.images && entry.images.length > 0
+              ? entry.images[0].url
+              : showCommunityImages
+                ? posterUrl || undefined
+                : undefined,
       });
   }
   if (entry.images && entry.images.length > 0) {

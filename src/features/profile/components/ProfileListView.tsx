@@ -10,7 +10,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { getBuildingImageUrl } from "@/utils/image";
+import { profileLogCardImageUrl } from "@/features/profile/utils/profileLogCardImageUrl";
 import { StatusBadge } from "./StatusBadge";
 import { InlineRating } from "./InlineRating";
 import { InlineReviewEditor } from "./InlineReviewEditor";
@@ -19,6 +19,8 @@ interface ProfileListViewProps {
   data: FeedReview[];
   isOwnProfile: boolean;
   onUpdate: (id: string, updates: { status?: string; rating?: number | null; content?: string }) => void;
+  /** When false (Hero off), thumbnails use only photos on the user’s review, not building hero/community. */
+  showCommunityImages?: boolean;
 }
 
 function getCityFromAddress(address: string | null | undefined): string {
@@ -30,7 +32,12 @@ function getCityFromAddress(address: string | null | undefined): string {
   return parts[0];
 }
 
-export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListViewProps) {
+export function ProfileListView({
+  data,
+  isOwnProfile,
+  onUpdate,
+  showCommunityImages = true,
+}: ProfileListViewProps) {
   const navigate = useNavigate();
   const { isMobile } = useSidebar();
 
@@ -67,9 +74,7 @@ export function ProfileListView({ data, isOwnProfile, onUpdate }: ProfileListVie
                 : "—";
 
             const location = review.building.city || getCityFromAddress(review.building.address);
-            const imageUrl =
-              getBuildingImageUrl(review.building.main_image_url) ??
-              getBuildingImageUrl(review.building.community_preview_url);
+            const imageUrl = profileLogCardImageUrl(review, showCommunityImages);
 
             return (
               <TableRow

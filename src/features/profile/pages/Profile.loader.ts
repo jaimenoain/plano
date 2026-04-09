@@ -25,7 +25,7 @@ export async function profileLoader({ request, params }: LoaderFunctionArgs) {
 
   let query = supabase
     .from("profiles")
-    .select("id, username, avatar_url, bio");
+    .select("id, username, avatar_url, bio, firm, website");
 
   if (isUuid) {
     query = query.eq("id", usernameParam);

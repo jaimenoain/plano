@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { EmptyFeed } from "./EmptyFeed";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // @vitest-environment happy-dom
@@ -38,6 +38,10 @@ import { useSuggestedFeed } from "@/features/feed/hooks/useSuggestedFeed";
 describe("EmptyFeed", () => {
   const queryClient = new QueryClient();
 
+  beforeEach(() => {
+    vi.mocked(useSuggestedFeed).mockReset();
+  });
+
   const renderComponent = () =>
     render(
       <QueryClientProvider client={queryClient}>
@@ -48,26 +52,35 @@ describe("EmptyFeed", () => {
     );
 
   it("renders loading state", () => {
-    (useSuggestedFeed as any).mockReturnValue({
+    vi.mocked(useSuggestedFeed).mockReturnValue({
       isLoading: true,
       data: null,
-    });
+      toggleLike: vi.fn(),
+      toggleImageLike: vi.fn(),
+    } as ReturnType<typeof useSuggestedFeed>);
     const { container } = renderComponent();
     expect(container.querySelector(".animate-spin")).toBeTruthy();
   });
 
-  it("renders fallback when empty", () => {
-    (useSuggestedFeed as any).mockReturnValue({
+  it("renders fallback when empty", async () => {
+    vi.mocked(useSuggestedFeed).mockReturnValue({
       isLoading: false,
       data: { pages: [] },
-    });
+      toggleLike: vi.fn(),
+      toggleImageLike: vi.fn(),
+    } as ReturnType<typeof useSuggestedFeed>);
     renderComponent();
-    expect(screen.getByText("Your feed is empty. Follow others to see their building logs and visits.")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /your feed is empty/i })).toBeTruthy();
+    });
+    expect(
+      screen.getByText(/Follow others to see their building logs, ratings, and visits here\./),
+    ).toBeTruthy();
   });
 
-  it("renders suggestions when data exists", () => {
+  it("renders suggestions when data exists", async () => {
     const now = new Date().toISOString();
-    (useSuggestedFeed as any).mockReturnValue({
+    vi.mocked(useSuggestedFeed).mockReturnValue({
       isLoading: false,
       data: {
         pages: [
@@ -82,36 +95,36 @@ describe("EmptyFeed", () => {
               created_at: now,
             },
             {
-                id: "2",
-                building: { name: "Test Building 2", id: "b2", slug: "test2", short_id: "t2" },
-                user: { username: "tester2", avatar_url: null },
-                likes_count: 5,
-                comments_count: 2,
-                is_liked: false,
-                created_at: now,
+              id: "2",
+              building: { name: "Test Building 2", id: "b2", slug: "test2", short_id: "t2" },
+              user: { username: "tester2", avatar_url: null },
+              likes_count: 5,
+              comments_count: 2,
+              is_liked: false,
+              created_at: now,
             },
             {
-                id: "3",
-                building: { name: "Test Building 3", id: "b3", slug: "test3", short_id: "t3" },
-                user: { username: "tester3", avatar_url: null },
-                likes_count: 5,
-                comments_count: 2,
-                is_liked: false,
-                created_at: now,
-            }
+              id: "3",
+              building: { name: "Test Building 3", id: "b3", slug: "test3", short_id: "t3" },
+              user: { username: "tester3", avatar_url: null },
+              likes_count: 5,
+              comments_count: 2,
+              is_liked: false,
+              created_at: now,
+            },
           ],
         ],
       },
-    });
+      toggleLike: vi.fn(),
+      toggleImageLike: vi.fn(),
+    } as ReturnType<typeof useSuggestedFeed>);
     renderComponent();
-    expect(screen.getByText("Welcome to Plano!")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("From the community")).toBeTruthy();
+    });
     expect(screen.getByText("Test Building 1")).toBeTruthy();
     expect(screen.getByText("Test Building 2")).toBeTruthy();
     expect(screen.getByText("Test Building 3")).toBeTruthy();
-
-    // Check for PeopleYouMayKnow if we have 3 items (inserted at index 2, so after 3rd item? No, index 2 is 3rd item. So after 3rd item in map loop)
-    // Code says: {index === 2 && <PeopleYouMayKnow />}
-    // This renders it AFTER the 3rd item (index 0, 1, 2). Correct.
     expect(screen.getByTestId("people-you-may-know")).toBeTruthy();
   });
 });

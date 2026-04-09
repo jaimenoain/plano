@@ -1850,6 +1850,7 @@ export type Database = {
           country: string | null
           created_at: string
           favorites: Json | null
+          firm: string | null
           id: string
           invited_by: string | null
           last_online: string | null
@@ -1861,6 +1862,7 @@ export type Database = {
           updated_at: string | null
           username: string | null
           verified_architect_id: string | null
+          website: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1868,6 +1870,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           favorites?: Json | null
+          firm?: string | null
           id: string
           invited_by?: string | null
           last_online?: string | null
@@ -1879,6 +1882,7 @@ export type Database = {
           updated_at?: string | null
           username?: string | null
           verified_architect_id?: string | null
+          website?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1886,6 +1890,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           favorites?: Json | null
+          firm?: string | null
           id?: string
           invited_by?: string | null
           last_online?: string | null
@@ -1897,6 +1902,7 @@ export type Database = {
           updated_at?: string | null
           username?: string | null
           verified_architect_id?: string | null
+          website?: string | null
         }
         Relationships: []
       }

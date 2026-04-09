@@ -21,3 +21,30 @@ export const profileUpdateSchema = z.object({
 });
 
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+
+/** Inline header editor on `/profile/:username` (bio, optional firm, website). */
+export const profileHeaderUpdateSchema = z.object({
+  bio: z
+    .string()
+    .max(500, "Bio must be at most 500 characters")
+    .transform((s) => {
+      const t = s.trim();
+      return t.length === 0 ? null : t;
+    }),
+  firm: z
+    .string()
+    .max(500, "Firm name must be at most 500 characters")
+    .transform((s) => {
+      const t = s.trim();
+      return t.length === 0 ? null : t;
+    }),
+  website: z
+    .string()
+    .max(2000, "Website must be at most 2000 characters")
+    .transform((s) => {
+      const t = s.trim();
+      return t.length === 0 ? null : t;
+    }),
+});
+
+export type ProfileHeaderUpdateInput = z.infer<typeof profileHeaderUpdateSchema>;

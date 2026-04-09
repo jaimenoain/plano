@@ -1,13 +1,6 @@
 /**
  * Profile.tsx — Redesigned with A24 editorial aesthetic (v2)
  *
- * SCHEMA MIGRATION REQUIRED for architect firm / website fields:
- *   ALTER TABLE profiles ADD COLUMN IF NOT EXISTS firm text;
- *   ALTER TABLE profiles ADD COLUMN IF NOT EXISTS website text;
- *
- * All data-fetching logic, hooks, effects and handlers are unchanged.
- * Only the render output has been redesigned.
- *
  * Key visual changes:
  *  - Avatar is a first-class portrait photo (3:4, right column, full-bleed)
  *  - Metrics ARE the tabs — no separate stats row + tab strip
@@ -99,8 +92,13 @@ import {
   type BuildingCreditEmbed,
 } from "@/features/credits/api/credits";
 import { getClaimedPersonSummaryForProfile } from "@/features/credits/api/people";
+import { profileHeaderUpdateSchema } from "@/lib/validations/profile";
+import { profileLogCardImageUrl } from "@/features/profile/utils/profileLogCardImageUrl";
 
 export { profileLoader as loader } from "./Profile.loader";
+
+const PROFILE_PAGE_SELECT =
+  "id, username, avatar_url, bio, favorites, last_online, verified_architect_id, firm, website" as const;
 
 // ─── Hydrate / Error Boundaries ──────────────────────────────────────────────
 export function HydrateFallback() {
@@ -180,8 +178,8 @@ interface Profile {
   username: string | null;
   avatar_url: string | null;
   bio: string | null;
-  firm?: string | null;     // MIGRATION: ALTER TABLE profiles ADD COLUMN firm text
-  website?: string | null;  // MIGRATION: ALTER TABLE profiles ADD COLUMN website text
+  firm?: string | null;
+  website?: string | null;
   last_online?: string | null;
   role?: string;
   verified_architect_id?: string | null;
@@ -293,7 +291,8 @@ export default function Profile() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const { containerRef, isVisible } = useIntersectionObserver();
-  const [showCommunityImages, setShowCommunityImages] = useState(false);
+  /** Hero on: building hero / community preview (then user photos). Hero off: only photos on the user’s review. */
+  const [showCommunityImages, setShowCommunityImages] = useState(true);
 
   // ── Drag State ──
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -400,9 +399,7 @@ export default function Profile() {
       setLoading(true);
       let uid: string | null = null;
       try {
-        // Select only columns present on `profiles` (see `integrations/supabase/types.ts` / DATA_CONTRACT).
-        // firm/website are optional UI fields until a migration adds those columns.
-        let query = supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id");
+        let query = supabase.from("profiles").select(PROFILE_PAGE_SELECT);
         let data: { id: string; username?: string | null; favorites?: unknown; [key: string]: unknown } | null = null;
         if (routeUsername) {
           const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(routeUsername);
@@ -421,15 +418,16 @@ export default function Profile() {
           }
         } else if (currentUser) {
           uid = currentUser.id;
-          const res = await supabase.from("profiles").select("id, username, avatar_url, bio, favorites, last_online, verified_architect_id").eq("id", uid).maybeSingle();
+          const res = await supabase.from("profiles").select(PROFILE_PAGE_SELECT).eq("id", uid).maybeSingle();
           data = res.data;
         }
         if (data) {
-          setProfile(data as unknown as Profile);
+          const row = data as unknown as Profile;
+          setProfile(row);
           uid = data.id;
-          setDraftFirm("");
-          setDraftBio((data.bio as string) || "");
-          setDraftWebsite("");
+          setDraftFirm(row.firm ?? "");
+          setDraftBio(row.bio ?? "");
+          setDraftWebsite(row.website ?? "");
         }
         setTargetUserId(uid);
       } finally {
@@ -654,18 +652,54 @@ export default function Profile() {
 
   const handleSaveHeader = async () => {
     if (!currentUser || !targetUserId) return;
+    const parsed = profileHeaderUpdateSchema.safeParse({
+      bio: draftBio,
+      firm: draftFirm,
+      website: draftWebsite,
+    });
+    if (!parsed.success) {
+      toast({
+        variant: "destructive",
+        title: "Validation error",
+        description: parsed.error.issues[0]?.message ?? "Invalid profile data",
+      });
+      return;
+    }
+    const v = parsed.data;
     setIsSavingHeader(true);
     try {
-      const { error } = await supabase.from("profiles").update({
-        bio: draftBio.trim() || null,
-      }).eq("id", targetUserId);
+      const payload: {
+        bio: string | null;
+        website: string | null;
+        firm?: string | null;
+        updated_at: string;
+      } = {
+        bio: v.bio,
+        website: v.website,
+        updated_at: new Date().toISOString(),
+      };
+      if (verifiedArchitectId) {
+        payload.firm = v.firm;
+      }
+      const { error } = await supabase.from("profiles").update(payload).eq("id", targetUserId);
       if (error) throw error;
-      setProfile(prev => prev ? { ...prev, bio: draftBio.trim() || null } : prev);
+      setProfile(prev =>
+        prev
+          ? {
+              ...prev,
+              bio: v.bio,
+              website: v.website,
+              ...(verifiedArchitectId ? { firm: v.firm } : {}),
+            }
+          : prev,
+      );
       setIsEditingHeader(false);
       toast({ description: "Profile updated" });
     } catch (_error) {
       toast({ variant: "destructive", description: "Failed to update profile" });
-    } finally { setIsSavingHeader(false); }
+    } finally {
+      setIsSavingHeader(false);
+    }
   };
 
   const openUserList = async (type: "followers" | "following") => {
@@ -1041,7 +1075,12 @@ export default function Profile() {
                           </motion.div>
                         ) : viewMode === "list" ? (
                           <motion.div key="list" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }}>
-                            <ProfileListView data={filteredContent} isOwnProfile={isOwnProfile} onUpdate={handleUpdate} />
+                            <ProfileListView
+                              data={filteredContent}
+                              isOwnProfile={isOwnProfile}
+                              onUpdate={handleUpdate}
+                              showCommunityImages={showCommunityImages}
+                            />
                           </motion.div>
                         ) : (
                           <motion.div key="kanban" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }}>
@@ -1255,11 +1294,7 @@ export default function Profile() {
 // ─── Editorial Building Card ──────────────────────────────────────────────────
 // No card chrome. 3:4 portrait image, bold name, faint meta below.
 function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedReview; showCommunityImages: boolean }) {
-  const heroFromBuilding =
-    getBuildingImageUrl(entry.building.main_image_url) ??
-    getBuildingImageUrl(entry.building.community_preview_url);
-  const imageUrl =
-    (showCommunityImages && entry.images?.[0]?.url) || heroFromBuilding;
+  const imageUrl = profileLogCardImageUrl(entry, showCommunityImages);
   const topCredit = entry.building.creditedEntities?.[0];
   const meta = [topCredit?.name, entry.building.year_completed].filter(Boolean).join(" · ");
   const url = getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id);

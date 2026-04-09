@@ -44,6 +44,8 @@ CREATE TABLE public.profiles (
   username      text        CHECK (char_length(username) >= 3),
   avatar_url    text,
   bio           text,
+  firm          text,       -- Optional practice / firm name on profile header (migration `20270842000000_profiles_firm_website.sql`)
+  website       text,       -- Optional personal website or portfolio URL on profile header
   country       text,
   location      text,
   invited_by    text,
