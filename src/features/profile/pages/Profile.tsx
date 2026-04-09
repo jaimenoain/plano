@@ -440,7 +440,12 @@ export default function Profile() {
   }, [routeUsername, currentUser, navigate, authLoading]);
 
   useEffect(() => { if (targetUserId) { fetchStats(); } }, [targetUserId, collectionsRefreshKey]);
-  useEffect(() => { if (targetUserId) { checkIfFollowing(); fetchSquad(); } }, [targetUserId, currentUser]);
+  useEffect(() => {
+    if (!targetUserId) return;
+    setIsFollowing(false);
+    void checkIfFollowing();
+    void fetchSquad();
+  }, [targetUserId, currentUser]);
 
   useEffect(() => {
     if (!targetUserId) {

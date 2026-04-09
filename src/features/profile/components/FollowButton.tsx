@@ -20,6 +20,12 @@ export function FollowButton({ userId, initialIsFollowing, isFollower, className
   const [isLoading, setIsLoading] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
+  // Parent (e.g. Profile) loads follow state async; keep local state in sync when the prop updates.
+  useEffect(() => {
+    if (initialIsFollowing === undefined) return;
+    setIsFollowing(initialIsFollowing);
+  }, [initialIsFollowing]);
+
   useEffect(() => {
     if (initialIsFollowing !== undefined || !user) return;
 
@@ -37,7 +43,7 @@ export function FollowButton({ userId, initialIsFollowing, isFollower, className
 }
     };
 
-    checkStatus();
+    void checkStatus();
   }, [userId, user, initialIsFollowing]);
 
   const handleToggleFollow = async (e: React.MouseEvent) => {
