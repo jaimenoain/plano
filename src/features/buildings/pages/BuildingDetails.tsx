@@ -58,7 +58,6 @@ import { getBuildingUrl } from "@/utils/url";
 import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 import { BuildingImageCard } from "../components/BuildingImageCard";
-import { BuildingHeader } from "../components/BuildingHeader";
 import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
 import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingHero } from "../components/BuildingHero";
@@ -79,8 +78,8 @@ export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading...">
       <Skeleton className="aspect-[21/9] w-full rounded-sm" />
-      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
-        <Skeleton className="h-10 w-2/5 max-w-md" />
+      <div className="px-4 sm:px-6 lg:px-8 py-10 max-w-4xl mx-auto space-y-6">
+        <Skeleton className="h-12 w-3/5 max-w-lg md:h-14" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-11/12" />
       </div>
@@ -296,7 +295,6 @@ export default function BuildingDetails() {
       )
       .join("|");
   }, [buildingCredits]);
-  const [loading, setLoading] = useState(false);
   const [isCreator, setIsCreator] = useState(false);
   const [userStatus, setUserStatus] = useState<'visited' | 'pending' | 'ignored' | null>(null);
   const [myRating, setMyRating] = useState<number>(0);
@@ -361,8 +359,6 @@ export default function BuildingDetails() {
   const [showVisitWith, setShowVisitWith] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
-  const [interactiveUiReady, setInteractiveUiReady] = useState(false);
-
   const selectedIndex = useMemo(() => {
     if (!selectedImage) return -1;
     return displayImages.findIndex(img => img.id === selectedImage.id);
@@ -420,13 +416,11 @@ export default function BuildingDetails() {
   useEffect(() => {
     if (id) void fetchUserSpecificData();
   }, [id, user, buildingCreditsFingerprint]);
-  useEffect(() => { setInteractiveUiReady(true); }, []);
 
   // ─── DATA FETCHING ───────────────────────────────────────────────────────
 
   const fetchUserSpecificData = async () => {
     if (!id || !building) return;
-    setLoading(true);
     try {
       const resolvedBuildingId = building.id;
       if (user && building.created_by === user.id) setIsCreator(true);
@@ -589,8 +583,6 @@ export default function BuildingDetails() {
       await Promise.all(tasks);
     } catch (_error: unknown) {
       toast({ variant: "destructive", title: "Error", description: "Building not found" });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -946,36 +938,11 @@ export default function BuildingDetails() {
     return renderEditorialGrid(displayImages);
   }, [displayImages, renderEditorialGrid]);
 
-  // ─── LOADING / SSR STATES ────────────────────────────────────────────────
-
-  if (loading || !building) {
+  if (!building) {
     return (
       <AppLayout title="Loading...">
-        <div className="p-8"><Loader2 className="animate-spin" /></div>
-      </AppLayout>
-    );
-  }
-
-  if (!interactiveUiReady) {
-    return (
-      <AppLayout title={building.name} showBack>
-        <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
-        <div className="p-4 sm:p-6 lg:p-8">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <BuildingHeader
-              building={building}
-              primaryCredits={initialBuildingCredits}
-              showEditLink={false}
-              isEditing={false}
-              nameValue={draftOfficialData.name}
-              yearValue={draftOfficialData.year_completed}
-              onNameChange={() => {}}
-              onYearChange={() => {}}
-            />
-            <p className="text-base text-text-secondary leading-relaxed">
-              {buildingDescription(building, initialBuildingCredits)}
-            </p>
-          </div>
+        <div className="p-8 flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-primary" aria-hidden />
         </div>
       </AppLayout>
     );
