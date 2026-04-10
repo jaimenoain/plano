@@ -1,3 +1,6 @@
+# Default link for local CLI. Deploy Edge functions to the SAME project as VITE_SUPABASE_URL.
+# If production is different (e.g. gen-types uses another ref), deploy with:
+#   supabase functions deploy generate-upload-url --project-ref YOUR_PRODUCTION_REF
 project_id = "gyxspsuctbrxhwiyfvlj"
 
 [functions.delete-file]

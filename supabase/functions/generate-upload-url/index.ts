@@ -175,8 +175,20 @@ Deno.serve(async (req) => {
     const uploadUrl = signed.url
 
     return new Response(
-      JSON.stringify({ uploadUrl, key: fileKey }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
+      JSON.stringify({
+        uploadUrl,
+        key: fileKey,
+        /** Present only on aws4fetch builds; if missing in Network, the wrong Supabase project is deployed. */
+        presignEngine: 'aws4fetch-v1',
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'x-plano-presign-engine': 'aws4fetch-v1',
+        },
+        status: 200,
+      },
     )
   } catch (error) {
     console.error('Unhandled Error:', error)
