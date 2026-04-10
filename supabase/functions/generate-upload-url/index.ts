@@ -1,6 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { S3Client, PutObjectCommand } from 'https://esm.sh/@aws-sdk/client-s3@3'
-import { getSignedUrl } from 'https://esm.sh/@aws-sdk/s3-request-presigner@3'
+// Pin below 3.729: newer @aws-sdk/client-s3 adds CRC32 to presigned PutObject URLs
+// (query params x-amz-checksum-*), which breaks browser fetch() uploads vs S3 CORS.
+import { S3Client, PutObjectCommand } from 'https://esm.sh/@aws-sdk/client-s3@3.726.1'
+import { getSignedUrl } from 'https://esm.sh/@aws-sdk/s3-request-presigner@3.726.1'
+
+/**
+ * After deploy: presigned URLs must not include `x-amz-checksum-crc32` (SDK pin above).
+ * If the browser still reports CORS on PUT, configure the target S3 bucket (AWS_S3_BUCKET)
+ * with a rule that allows Origin https://www.plano.app (and https://plano.app), Methods PUT/HEAD/GET,
+ * AllowedHeaders ["*"], and optional ExposeHeaders ["ETag"].
+ */
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -127,15 +136,12 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Browser PUTs use fetch() without CRC headers. SDK ≥3.729 otherwise adds
-    // x-amz-checksum-* to the presigned URL, which breaks CORS preflight against S3.
     const s3Client = new S3Client({
       region: Deno.env.get('AWS_REGION') ?? 'us-east-1',
       credentials: {
         accessKeyId: Deno.env.get('AWS_ACCESS_KEY_ID') ?? '',
         secretAccessKey: Deno.env.get('AWS_SECRET_ACCESS_KEY') ?? '',
       },
-      requestChecksumCalculation: 'WHEN_REQUIRED',
     })
 
     const bucketName = Deno.env.get('AWS_S3_BUCKET')
