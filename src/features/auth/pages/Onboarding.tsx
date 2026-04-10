@@ -3,11 +3,12 @@ import { useNavigate, type MetaFunction } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { sanitizeUsername } from "@/lib/utils";
-import { Loader2, User, UserPlus, Check, Upload } from "lucide-react";
+import { cn, sanitizeUsername } from "@/lib/utils";
+import { Loader2, User, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { resizeImage } from "@/lib/image-compression";
@@ -36,7 +37,8 @@ export default function Onboarding() {
     avatar_url: string | null;
   } | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
+  /** When true, completing onboarding inserts a follow row for the inviter (default on). */
+  const [followInviterOnSignup, setFollowInviterOnSignup] = useState(true);
   const [loadingInitialData, setLoadingInitialData] = useState(true);
 
   // Load the current profile and check for inviter
@@ -142,41 +144,6 @@ export default function Onboarding() {
     loadData();
   }, [user]);
 
-  const handleFollowInviter = async () => {
-    if (!user || !inviter) return;
-    setFollowLoading(true);
-    
-    try {
-      // Ensure we have a username before following (double check)
-      if (!username) {
-        throw new Error("Username required to follow");
-      }
-
-      const { error } = await supabase
-        .from("follows")
-        .insert({
-          follower_id: user.id,
-          following_id: inviter.id
-        });
-
-      if (error) throw error;
-      
-      setIsFollowing(true);
-      toast({
-        title: "Following",
-        description: `You are now following ${inviter.username ?? "this user"}`,
-      });
-    } catch (_error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not follow user. Please try again.",
-      });
-    } finally {
-      setFollowLoading(false);
-    }
-  };
-
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!user) return;
     try {
@@ -216,17 +183,26 @@ export default function Onboarding() {
   const completeOnboarding = async () => {
     if (!user) return;
 
-    // Logic: If user was invited but hasn't followed the inviter yet, 
-    // send a notification to the user suggesting they follow them.
-    if (inviter && !isFollowing) {
-const { error: notifError } = await supabase
-        .from("notifications")
-        .insert({
-          user_id: user.id, // The notification is FOR the new user
-          actor_id: inviter.id, // The actor is the inviter
-          type: "suggest_follow",
-          is_read: false
-        });
+    let following = isFollowing;
+    if (inviter && !following && followInviterOnSignup) {
+      const { error: followError } = await supabase.from("follows").insert({
+        follower_id: user.id,
+        following_id: inviter.id,
+      });
+      if (!followError) {
+        following = true;
+        setIsFollowing(true);
+      }
+    }
+
+    // If user still does not follow the inviter, nudge in-app (unchanged fallback).
+    if (inviter && !following) {
+      const { error: notifError } = await supabase.from("notifications").insert({
+        user_id: user.id,
+        actor_id: inviter.id,
+        type: "suggest_follow",
+        is_read: false,
+      });
       if (notifError) {
         void notifError;
       }
@@ -311,34 +287,33 @@ const { error: notifError } = await supabase
         </div>
 
         {inviter && (
-          <div className="bg-surface-muted/50 border border-border-default rounded-sm p-4 flex items-center justify-between gap-3 text-left animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarImage src={inviter.avatar_url || undefined} />
-                <AvatarFallback>{(inviter.username ?? "?")[0]}</AvatarFallback>
-              </Avatar>
-              <div className="space-y-0.5">
-                <p className="text-sm font-medium text-text-primary">
+          <div className="bg-surface-muted/50 border border-border-default rounded-sm p-4 flex items-start gap-3 text-left animate-in fade-in slide-in-from-top-2">
+            <Avatar className="shrink-0">
+              <AvatarImage src={inviter.avatar_url || undefined} />
+              <AvatarFallback>{(inviter.username ?? "?")[0]}</AvatarFallback>
+            </Avatar>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="follow-inviter"
+                  checked={isFollowing ? true : followInviterOnSignup}
+                  disabled={isFollowing}
+                  onCheckedChange={(checked) =>
+                    setFollowInviterOnSignup(checked === true)
+                  }
+                />
+                <Label
+                  htmlFor="follow-inviter"
+                  className={cn(
+                    "text-sm font-medium leading-none text-text-primary",
+                    isFollowing ? "cursor-default opacity-70" : "cursor-pointer",
+                  )}
+                >
                   Follow {inviter.username ?? "this user"}
-                </p>
-                <p className="text-xs text-text-secondary">They invited you!</p>
+                </Label>
               </div>
+              <p className="pl-6 text-xs text-text-secondary">They invited you!</p>
             </div>
-            <Button
-              size="sm"
-              variant={isFollowing ? "outline" : "default"}
-              onClick={handleFollowInviter}
-              disabled={isFollowing || followLoading}
-              className="h-8"
-            >
-              {followLoading ? (
-                <Loader2 className="h-3 w-3 animate-spin text-text-secondary" />
-              ) : isFollowing ? (
-                <><Check className="h-3 w-3 mr-1" /> Following</>
-              ) : (
-                <><UserPlus className="h-3 w-3 mr-1" /> Follow</>
-              )}
-            </Button>
           </div>
         )}
 
