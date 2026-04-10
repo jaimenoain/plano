@@ -1047,17 +1047,25 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
 
         // Global search mode (RPC)
         try {
-          // Calculate buffered bounds
-          let min_lat, max_lat, min_lng, max_lng;
+          if (!debouncedBounds) {
+            return [];
+          }
 
-          if (debouncedBounds) {
-            const latBuffer = (debouncedBounds.north - debouncedBounds.south) * 0.25; // 25% buffer
-            const lngBuffer = (debouncedBounds.east - debouncedBounds.west) * 0.25;
+          const latBuffer = (debouncedBounds.north - debouncedBounds.south) * 0.25; // 25% buffer
+          const lngBuffer = (debouncedBounds.east - debouncedBounds.west) * 0.25;
 
-            min_lat = debouncedBounds.south - latBuffer;
-            max_lat = debouncedBounds.north + latBuffer;
-            min_lng = debouncedBounds.west - lngBuffer;
-            max_lng = debouncedBounds.east + lngBuffer;
+          const min_lat = debouncedBounds.south - latBuffer;
+          const max_lat = debouncedBounds.north + latBuffer;
+          const min_lng = debouncedBounds.west - lngBuffer;
+          const max_lng = debouncedBounds.east + lngBuffer;
+
+          if (
+            !Number.isFinite(min_lat) ||
+            !Number.isFinite(max_lat) ||
+            !Number.isFinite(min_lng) ||
+            !Number.isFinite(max_lng)
+          ) {
+            return [];
           }
 
           const { data, error } = await supabase.rpc('get_map_clusters', {

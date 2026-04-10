@@ -127,12 +127,15 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Browser PUTs use fetch() without CRC headers. SDK ≥3.729 otherwise adds
+    // x-amz-checksum-* to the presigned URL, which breaks CORS preflight against S3.
     const s3Client = new S3Client({
       region: Deno.env.get('AWS_REGION') ?? 'us-east-1',
       credentials: {
         accessKeyId: Deno.env.get('AWS_ACCESS_KEY_ID') ?? '',
         secretAccessKey: Deno.env.get('AWS_SECRET_ACCESS_KEY') ?? '',
       },
+      requestChecksumCalculation: 'WHEN_REQUIRED',
     })
 
     const bucketName = Deno.env.get('AWS_S3_BUCKET')
