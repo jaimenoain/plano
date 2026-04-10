@@ -1198,7 +1198,7 @@ import { z } from 'zod';
 const UpsertUserBuildingSchema = z.object({
   buildingId: z.string().uuid(),
   status: z.enum(['pending', 'visited', 'ignored']),
-  rating: z.number().int().min(1).max(3).optional().nullable(),
+  rating: z.number().int().min(0).max(3).optional().nullable(), // 0 = unset; persist null (DB allows 1–3 or null)
   content: z.string().max(10000).optional().nullable(),
   visibility: z.enum(['public', 'contacts', 'private']).default('public'),
   videoUrl: z.string().url().optional().nullable(),

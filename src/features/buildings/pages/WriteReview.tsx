@@ -619,7 +619,7 @@ toast({
         .upsert({
           user_id: user.id,
           building_id: buildingId,
-          rating: reviewValues.rating,
+          rating: reviewValues.rating === 0 ? null : reviewValues.rating,
           content: reviewValues.content ?? null,
           status: reviewValues.status,
           visibility: reviewValues.visibility,
