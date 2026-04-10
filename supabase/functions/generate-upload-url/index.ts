@@ -1,14 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-// Pin below 3.729: newer @aws-sdk/client-s3 adds CRC32 to presigned PutObject URLs
-// (query params x-amz-checksum-*), which breaks browser fetch() uploads vs S3 CORS.
-import { S3Client, PutObjectCommand } from 'https://esm.sh/@aws-sdk/client-s3@3.726.1'
-import { getSignedUrl } from 'https://esm.sh/@aws-sdk/s3-request-presigner@3.726.1'
+import { AwsClient } from 'https://esm.sh/aws4fetch@1.0.20'
 
 /**
- * After deploy: presigned URLs must not include `x-amz-checksum-crc32` (SDK pin above).
- * If the browser still reports CORS on PUT, configure the target S3 bucket (AWS_S3_BUCKET)
- * with a rule that allows Origin https://www.plano.app (and https://plano.app), Methods PUT/HEAD/GET,
- * AllowedHeaders ["*"], and optional ExposeHeaders ["ETag"].
+ * Presigned PUT URLs use SigV4 query signing only (no AWS SDK v3 flexible checksums).
+ * If the browser still reports CORS on PUT, configure the S3 bucket (AWS_S3_BUCKET) CORS:
+ * AllowedOrigins: https://www.plano.app, https://plano.app — AllowedMethods: PUT, HEAD, GET —
+ * AllowedHeaders: * (or include content-type).
  */
 
 const corsHeaders = {
@@ -16,14 +13,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function s3PathStyleObjectUrl(region: string, bucket: string, objectKey: string): string {
+  const host = region === 'us-east-1' ? 's3.amazonaws.com' : `s3.${region}.amazonaws.com`
+  const encodedKey = objectKey.split('/').map((p) => encodeURIComponent(p)).join('/')
+  return `https://${host}/${encodeURIComponent(bucket)}/${encodedKey}`
+}
+
 Deno.serve(async (req) => {
-  // 1. CORS Handling
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // 2. Validate Environment Variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
 
@@ -32,12 +33,11 @@ Deno.serve(async (req) => {
       throw new Error('Server misconfiguration: Missing Supabase Env Vars')
     }
 
-    // 3. Manual Auth Verification
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing Authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
@@ -48,16 +48,14 @@ Deno.serve(async (req) => {
 
     if (serviceRoleKey && token === serviceRoleKey) {
       console.log('Admin bypass: Service Role Key detected')
-      // Admin authenticated. Now safe to read body.
       body = await req.json()
       const { userId } = body
       user = { id: userId || 'admin_upload' }
     } else {
-      // Standard User
       const supabaseClient = createClient(
         supabaseUrl,
         supabaseAnonKey,
-        { auth: { persistSession: false } }
+        { auth: { persistSession: false } },
       )
       const {
         data: { user: authUser },
@@ -72,43 +70,39 @@ Deno.serve(async (req) => {
             details: userError ? userError.message : 'No user found',
             hint: 'Check Edge Function logs for details',
           }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
       }
       user = authUser
-      // User authenticated. Now safe to read body.
       body = await req.json()
     }
 
     console.log(`User authenticated: ${user.id}`)
 
-    // 4. Business Logic
     const { fileName, contentType, folderName } = body
 
     if (!fileName || !contentType) {
       return new Response(
         JSON.stringify({ error: 'Missing fileName or contentType' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
-    // Security check: Prevent path traversal
     const pathTraversalPattern = /[\\/]/
     if (pathTraversalPattern.test(fileName) || (folderName && pathTraversalPattern.test(folderName))) {
       return new Response(
         JSON.stringify({ error: 'Invalid characters in fileName or folderName' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
     if (fileName.includes('..') || (folderName && folderName.includes('..'))) {
       return new Response(
         JSON.stringify({ error: 'Path traversal detected in fileName or folderName' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
-    // Validate extension against contentType
     const mimeToExt: Record<string, string[]> = {
       'video/mp4': ['.mp4'],
       'video/webm': ['.webm'],
@@ -126,23 +120,19 @@ Deno.serve(async (req) => {
       if (!hasValidExt) {
         return new Response(
           JSON.stringify({ error: `Invalid file extension for content type ${contentType}` }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
       }
     } else if (contentType.startsWith('video/') || contentType.startsWith('image/')) {
       return new Response(
         JSON.stringify({ error: `Unsupported content type: ${contentType}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
-    const s3Client = new S3Client({
-      region: Deno.env.get('AWS_REGION') ?? 'us-east-1',
-      credentials: {
-        accessKeyId: Deno.env.get('AWS_ACCESS_KEY_ID') ?? '',
-        secretAccessKey: Deno.env.get('AWS_SECRET_ACCESS_KEY') ?? '',
-      },
-    })
+    const accessKeyId = Deno.env.get('AWS_ACCESS_KEY_ID') ?? ''
+    const secretAccessKey = Deno.env.get('AWS_SECRET_ACCESS_KEY') ?? ''
+    const sessionToken = Deno.env.get('AWS_SESSION_TOKEN') ?? ''
 
     const bucketName = Deno.env.get('AWS_S3_BUCKET')
     if (!bucketName) {
@@ -150,7 +140,8 @@ Deno.serve(async (req) => {
       throw new Error('AWS_S3_BUCKET environment variable is not set')
     }
 
-    // Determine folder prefix based on content type
+    const region = Deno.env.get('AWS_REGION') ?? 'us-east-1'
+
     const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime']
     let folderPrefix = 'review-images'
 
@@ -162,23 +153,36 @@ Deno.serve(async (req) => {
       ? `${folderPrefix}/${user.id}/${folderName}/${crypto.randomUUID()}-${fileName}`
       : `${folderPrefix}/${user.id}/${crypto.randomUUID()}-${fileName}`
 
-    const command = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: fileKey,
-      ContentType: contentType,
+    const objectUrl = s3PathStyleObjectUrl(region, bucketName, fileKey)
+    const url = new URL(objectUrl)
+    url.searchParams.set('X-Amz-Expires', '3600')
+    url.searchParams.set('X-Amz-Content-Sha256', 'UNSIGNED-PAYLOAD')
+
+    const aws = new AwsClient({
+      accessKeyId,
+      secretAccessKey,
+      ...(sessionToken ? { sessionToken } : {}),
+      service: 's3',
+      region,
+      retries: 0,
     })
 
-    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+    const signed = await aws.sign(url.toString(), {
+      method: 'PUT',
+      aws: { signQuery: true, service: 's3', region },
+    })
+
+    const uploadUrl = signed.url
 
     return new Response(
       JSON.stringify({ uploadUrl, key: fileKey }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
     )
   } catch (error) {
     console.error('Unhandled Error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 },
     )
   }
 })
