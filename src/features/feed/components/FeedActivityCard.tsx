@@ -80,10 +80,17 @@ export function FeedActivityCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        {/* Category label — micro uppercase */}
-        <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-text-secondary">
-          {activityStatus === "visited" ? "Visited" : "Bucket list"}
-        </span>
+        {/* Lead line: visited label, or who wants to visit (no separate "Bucket list" chrome) */}
+        {activityStatus === "visited" ? (
+          <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-text-secondary">
+            Visited
+          </span>
+        ) : (
+          <span className="font-mono text-[10px] tracking-[0.12em] text-text-secondary">
+            <span className="uppercase font-medium text-text-primary">{username}</span>
+            <span> wants to visit</span>
+          </span>
+        )}
 
         {/*
          * Building name — editorial scale.
@@ -109,14 +116,18 @@ export function FeedActivityCard({
           </p>
         )}
 
-        {/* Byline row */}
+        {/* Byline row — pending cards surface intent in the lead line above */}
         <div className="flex items-center gap-2 min-w-0 mt-2">
-          <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-            {username}
-          </span>
-          <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/50 shrink-0">
-            {actionCopy}
-          </span>
+          {activityStatus === "visited" && (
+            <>
+              <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
+                {username}
+              </span>
+              <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/50 shrink-0">
+                {actionCopy}
+              </span>
+            </>
+          )}
           <button
             type="button"
             onClick={handleSave}
