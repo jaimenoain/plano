@@ -841,7 +841,13 @@ export default function BuildingDetails() {
           </div>
 
           {/* ── USER ACTIONS ── */}
-          <div className="flex items-center gap-3 pb-8">
+          <div
+            className={cn(
+              "flex items-center gap-3 pb-8",
+              !(user && (userStatus === "visited" || userStatus === "pending")) &&
+                "border-b border-border-default",
+            )}
+          >
             <button
               type="button"
               onClick={() => handleStatusChange("visited")}
