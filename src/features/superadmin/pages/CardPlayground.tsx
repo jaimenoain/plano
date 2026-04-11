@@ -27,6 +27,9 @@ const PLAYGROUND_BACKGROUNDS: { id: PlaygroundBackgroundId; label: string; surfa
 
 type PlaygroundViewportId = "mobile" | "tablet" | "desktop";
 
+/** Single-fixture preview: feed card vs detail layout (per-fixture preference in playground state). */
+type PlaygroundCardViewMode = "feed" | "detail";
+
 const PLAYGROUND_VIEWPORTS: { id: PlaygroundViewportId; label: string; widthPx: number }[] = [
   { id: "mobile", label: "Mobile · 375", widthPx: 375 },
   { id: "tablet", label: "Tablet · 768", widthPx: 768 },
@@ -273,7 +276,7 @@ function PlaygroundToolbar({
         <div className="flex items-center gap-3">
           <Switch id="playground-prominence-diff" checked={prominenceDiff} onCheckedChange={setProminenceDiff} />
           <Label htmlFor="playground-prominence-diff" className="text-2xs text-text-primary cursor-pointer leading-snug">
-            Prominence diff — two feed cards (forced standard vs forced elevated)
+            Prominence diff — two cards (forced standard vs forced elevated)
           </Label>
         </div>
       </div>
@@ -281,42 +284,9 @@ function PlaygroundToolbar({
   );
 }
 
-function FixturePreviewPair({ entry, prominenceDiff }: { entry: FeedReview; prominenceDiff: boolean }) {
+/** Show-all grid: unchanged side-by-side feed + detail per fixture. */
+function FixtureShowAllPreview({ entry }: { entry: FeedReview }) {
   const spec = resolveCardSpec(entry);
-  if (prominenceDiff) {
-    return (
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="min-w-0 space-y-2">
-          <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">Forced standard</p>
-          <div className="hairline overflow-hidden rounded-lg border border-border-default">
-            <ReviewCardFeed
-              entry={entry}
-              onLike={noop}
-              onImageLike={noop}
-              onComment={noop}
-              showCommunityImages
-              prominenceOverride="standard"
-            />
-          </div>
-          <CardSpecDebugPanel spec={cardSpecWithProminence(spec, "standard")} title="CardSpec (prominence: standard)" />
-        </div>
-        <div className="min-w-0 space-y-2">
-          <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">Forced elevated</p>
-          <div className="hairline overflow-hidden rounded-lg border border-border-default">
-            <ReviewCardFeed
-              entry={entry}
-              onLike={noop}
-              onImageLike={noop}
-              onComment={noop}
-              showCommunityImages
-              prominenceOverride="elevated"
-            />
-          </div>
-          <CardSpecDebugPanel spec={cardSpecWithProminence(spec, "elevated")} title="CardSpec (prominence: elevated)" />
-        </div>
-      </div>
-    );
-  }
   return (
     <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:gap-10">
       <div className="w-full min-w-0 max-w-md shrink-0 space-y-2 xl:max-w-none xl:flex-1">
@@ -339,6 +309,78 @@ function FixturePreviewPair({ entry, prominenceDiff }: { entry: FeedReview; prom
         </div>
         <CardSpecDebugPanel spec={spec} title="CardSpec (same entry)" />
       </div>
+    </div>
+  );
+}
+
+function FixtureSinglePreview({
+  entry,
+  viewMode,
+  prominenceDiff,
+}: {
+  entry: FeedReview;
+  viewMode: PlaygroundCardViewMode;
+  prominenceDiff: boolean;
+}) {
+  const spec = resolveCardSpec(entry);
+  if (prominenceDiff) {
+    return (
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className="min-w-0 space-y-2">
+          <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">Forced standard</p>
+          <div className="hairline overflow-hidden rounded-lg border border-border-default">
+            {viewMode === "feed" ? (
+              <ReviewCardFeed
+                entry={entry}
+                onLike={noop}
+                onImageLike={noop}
+                onComment={noop}
+                showCommunityImages
+                prominenceOverride="standard"
+              />
+            ) : (
+              <ReviewCardDetail entry={entry} onLike={noop} onComment={noop} showCommunityImages />
+            )}
+          </div>
+          <CardSpecDebugPanel spec={cardSpecWithProminence(spec, "standard")} title="CardSpec (prominence: standard)" />
+        </div>
+        <div className="min-w-0 space-y-2">
+          <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">Forced elevated</p>
+          <div className="hairline overflow-hidden rounded-lg border border-border-default">
+            {viewMode === "feed" ? (
+              <ReviewCardFeed
+                entry={entry}
+                onLike={noop}
+                onImageLike={noop}
+                onComment={noop}
+                showCommunityImages
+                prominenceOverride="elevated"
+              />
+            ) : (
+              <ReviewCardDetail entry={entry} onLike={noop} onComment={noop} showCommunityImages />
+            )}
+          </div>
+          <CardSpecDebugPanel spec={cardSpecWithProminence(spec, "elevated")} title="CardSpec (prominence: elevated)" />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="min-w-0 space-y-2">
+      <div className="hairline overflow-hidden rounded-lg border border-border-default">
+        {viewMode === "feed" ? (
+          <ReviewCardFeed
+            entry={entry}
+            onLike={noop}
+            onImageLike={noop}
+            onComment={noop}
+            showCommunityImages
+          />
+        ) : (
+          <ReviewCardDetail entry={entry} onLike={noop} onComment={noop} showCommunityImages />
+        )}
+      </div>
+      <CardSpecDebugPanel spec={spec} title="CardSpec (from entry)" />
     </div>
   );
 }
@@ -537,11 +579,22 @@ function CardPlaygroundInner() {
   const [backgroundId, setBackgroundId] = useState<PlaygroundBackgroundId>("feed-light");
   const [viewportId, setViewportId] = useState<PlaygroundViewportId>("mobile");
   const [prominenceDiff, setProminenceDiff] = useState(false);
+  const [viewModeByFixtureId, setViewModeByFixtureId] = useState<Map<string, PlaygroundCardViewMode>>(() => new Map());
+
+  const setFixtureViewMode = (fixtureId: string, mode: PlaygroundCardViewMode) => {
+    setViewModeByFixtureId((prev) => {
+      const next = new Map(prev);
+      next.set(fixtureId, mode);
+      return next;
+    });
+  };
 
   const selected = useMemo(
     () => cardFixtures.find((f) => f.id === selectedId) ?? cardFixtures[0],
     [selectedId],
   );
+
+  const activeViewMode: PlaygroundCardViewMode = selected ? (viewModeByFixtureId.get(selected.id) ?? "feed") : "feed";
 
   const [editedEntry, setEditedEntry] = useState<FeedReview>(() =>
     structuredClone(cardFixtures[0]!.entry),
@@ -642,7 +695,7 @@ function CardPlaygroundInner() {
                     <CopyFixtureJsonButton entry={f.entry} />
                   </div>
                   <PlaygroundViewportFrame backgroundId={backgroundId} viewportId={viewportId}>
-                    <FixturePreviewPair entry={f.entry} prominenceDiff={false} />
+                    <FixtureShowAllPreview entry={f.entry} />
                   </PlaygroundViewportFrame>
                   <ShowAllGridArchetypeFooter fixture={f} />
                 </section>
@@ -663,8 +716,32 @@ function CardPlaygroundInner() {
                 setEntry={setEditedEntry}
                 onReset={() => setEditedEntry(structuredClone(selected.entry))}
               />
+              <div className="flex flex-wrap gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={activeViewMode === "feed" ? "default" : "outline"}
+                  className="text-2xs h-8"
+                  onClick={() => setFixtureViewMode(selected.id, "feed")}
+                >
+                  Feed
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={activeViewMode === "detail" ? "default" : "outline"}
+                  className="text-2xs h-8"
+                  onClick={() => setFixtureViewMode(selected.id, "detail")}
+                >
+                  Detail
+                </Button>
+              </div>
               <PlaygroundViewportFrame backgroundId={backgroundId} viewportId={viewportId}>
-                <FixturePreviewPair entry={editedEntry} prominenceDiff={prominenceDiff} />
+                <FixtureSinglePreview
+                  entry={editedEntry}
+                  viewMode={activeViewMode}
+                  prominenceDiff={prominenceDiff}
+                />
               </PlaygroundViewportFrame>
             </div>
           ) : null}
