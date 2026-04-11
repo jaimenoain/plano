@@ -63,20 +63,14 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
 
       {/* Metadata */}
       <div className="mt-4">
-        {/* Category label */}
-        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-          Collection
-        </span>
+        <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+          {ownerUsername} · {collection.buildingCount ?? 0} buildings
+        </p>
 
         {/* Collection name */}
         <h3 className="text-3xl font-semibold tracking-tight text-text-primary mt-1">
           {collection.name}
         </h3>
-
-        {/* Details row */}
-        <p className="text-sm text-text-secondary mt-1">
-          {ownerUsername} · {collection.buildingCount ?? 0} buildings
-        </p>
 
         {/* Description */}
         {collection.description && (

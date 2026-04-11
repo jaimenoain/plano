@@ -92,18 +92,21 @@ export function DiscoveryBuildingCard({
             )}
           </div>
 
-          {/* Badges */}
+          {/* Badges — status words removed; optional points-only chip when rated */}
           <div className="flex flex-wrap gap-2 mt-2">
-            {(userStatus === 'visited' || userStatus === 'pending') && (
-              <Badge variant="secondary" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-brand-primary/20 border max-w-full truncate">
-                {userStatus === 'visited' ? "Visited" : "Saved"}
-                {userRating && userRating > 0 && (
-                   <div className="flex gap-0.5 ml-1">
-                      {Array.from({ length: userRating }).map((_, i) => (
-                         <Circle key={i} className="w-2 h-2 fill-current" />
-                      ))}
-                   </div>
-                )}
+            {(userStatus === 'visited' || userStatus === 'pending') &&
+              userRating != null &&
+              userRating > 0 && (
+              <Badge
+                variant="secondary"
+                className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-brand-primary/20 border max-w-full truncate"
+                aria-label={`${userRating} ${userRating === 1 ? "point" : "points"}`}
+              >
+                <div className="flex gap-0.5">
+                  {Array.from({ length: userRating }).map((_, i) => (
+                    <Circle key={i} className="w-2 h-2 fill-current" aria-hidden />
+                  ))}
+                </div>
               </Badge>
             )}
             {(building.status === 'Lost' || building.status === 'Unbuilt') && (

@@ -1,3 +1,4 @@
+import { Bookmark } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
@@ -36,9 +37,6 @@ export function FeedActivityCard({
     getBuildingImageUrl(entry.building.main_image_url) ??
     getBuildingImageUrl(entry.building.community_preview_url);
 
-  const actionCopy =
-    activityStatus === "visited" ? "visited" : "wants to visit";
-
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
@@ -59,7 +57,7 @@ export function FeedActivityCard({
   return (
     <article
       onClick={handleCardClick}
-      className="flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
+      className="group/card flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
     >
       {/* Thumbnail — sharp edges, no radius */}
       {cardImageSrc && imageVisible && (
@@ -80,17 +78,12 @@ export function FeedActivityCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        {/* Lead line: visited label, or who wants to visit (no separate "Bucket list" chrome) */}
-        {activityStatus === "visited" ? (
-          <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-text-secondary">
-            Visited
+        <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary">
+          <span className="font-medium text-text-primary">{username}</span>
+          <span className="text-text-secondary normal-case">
+            {activityStatus === "visited" ? " visited" : " wants to visit"}
           </span>
-        ) : (
-          <span className="font-mono text-[10px] tracking-[0.12em] text-text-secondary">
-            <span className="uppercase font-medium text-text-primary">{username}</span>
-            <span> wants to visit</span>
-          </span>
-        )}
+        </p>
 
         {/*
          * Building name — editorial scale.
@@ -116,24 +109,23 @@ export function FeedActivityCard({
           </p>
         )}
 
-        {/* Byline row — pending cards surface intent in the lead line above */}
-        <div className="flex items-center gap-2 min-w-0 mt-2">
-          {activityStatus === "visited" && (
-            <>
-              <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-                {username}
-              </span>
-              <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/50 shrink-0">
-                {actionCopy}
-              </span>
-            </>
-          )}
+        <div className="flex items-center gap-2 min-w-0 mt-2 justify-end">
           <button
             type="button"
             onClick={handleSave}
-            className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto shrink-0"
+            aria-label={saved ? "Saved (demo)" : "Save (demo)"}
+            title={saved ? "Saved" : "Save"}
+            className={cn(
+              "shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
+              "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
+            )}
           >
-            {saved ? "Saved" : "Save"}
+            <Bookmark
+              className={cn("h-4 w-4", saved && "fill-text-primary text-text-primary")}
+              strokeWidth={1.75}
+              aria-hidden
+            />
           </button>
         </div>
       </div>

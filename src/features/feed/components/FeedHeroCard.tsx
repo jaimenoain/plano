@@ -1,3 +1,4 @@
+import { Bookmark } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -147,6 +148,7 @@ export function FeedHeroCard({
   };
 
   const username = entry.user?.username || "Unknown User";
+  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
   const mainTitle = entry.building.name;
   const credits = entry.building.creditedEntities;
   const primaryCreditLine =
@@ -228,7 +230,7 @@ export function FeedHeroCard({
     effectiveSpec.textWeight === "essay" && !essayExpanded && Boolean(entry.content?.trim());
 
   return (
-    <article onClick={handleCardClick} className="group relative w-full cursor-pointer">
+    <article onClick={handleCardClick} className="group/card relative w-full cursor-pointer">
       {/* Magazine spread: two-column on desktop, stacked on mobile */}
       <div className={cn(
         "grid grid-cols-1 gap-0 items-stretch",
@@ -245,15 +247,17 @@ export function FeedHeroCard({
         )}
 
         {/* Text column */}
-        <div className={cn(
-          "flex flex-col justify-center py-6 md:py-10",
-          hasImages && (isReversed ? "md:order-1 md:pr-10" : "md:order-2 md:pl-10"),
-          !hasImages && "max-w-xl"
-        )}>
-          {/* Category label */}
-          <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-3">
-            {entry.status === "visited" ? "Review" : "Building"}
-          </span>
+        <div
+          className={cn(
+            "flex flex-col justify-center py-6 md:py-10",
+            hasImages && (isReversed ? "md:order-1 md:pr-10" : "md:order-2 md:pl-10"),
+            !hasImages && "max-w-xl",
+          )}
+        >
+          <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mb-3">
+            <span className="font-medium text-text-primary">{username}</span>
+            <span className="text-text-secondary normal-case"> {userActionVerb}</span>
+          </p>
 
           {/* Building name — editorial scale */}
           <h2 className="font-sans text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none text-text-primary mb-3">
@@ -299,17 +303,25 @@ export function FeedHeroCard({
             </div>
           )}
 
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-              {username}
-            </span>
+          <div className="flex items-center gap-2 min-w-0 justify-end">
             <button
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className={`font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto shrink-0 ${isSaving ? "opacity-50" : ""}`}
+              aria-label={isSaved ? "Saved to your list" : "Save building to your list"}
+              title={isSaved ? "Saved to your list" : "Save to your list"}
+              className={cn(
+                "shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
+                "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
+                isSaving && "pointer-events-none opacity-50",
+              )}
             >
-              {isSaved ? "Saved" : "Save"}
+              <Bookmark
+                className={cn("h-4 w-4", isSaved && "fill-text-primary text-text-primary")}
+                strokeWidth={1.75}
+                aria-hidden
+              />
             </button>
           </div>
         </div>

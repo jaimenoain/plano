@@ -78,17 +78,10 @@ describe('DiscoveryBuildingCard Overflow', () => {
       </BrowserRouter>
     );
 
-    // 'visited' badge comes from the mock statuses
-    // The text 'Visited' is inside the Badge div
-    const visitedText = screen.getByText('Visited');
-    // The Badge is likely the parent or the element itself if it was just text, but here it has children (icon circle)
-    // The Badge component renders a div.
-    // Let's find the closest div with badge classes or just parent.
-    const visitedBadge = visitedText.closest('div[class*="rounded-sm"]');
-
-    expect(visitedBadge).not.toBeNull();
-    expect(visitedBadge?.className).toContain('max-w-full');
-    expect(visitedBadge?.className).toContain('truncate');
+    // Status words removed from chip; mock has visited + 5pt rating — chip is aria-labelled only.
+    const pointsBadge = screen.getByLabelText('5 points');
+    expect(pointsBadge.className).toContain('max-w-full');
+    expect(pointsBadge.className).toContain('truncate');
 
     // 'Lost' badge comes from building status
     const statusText = screen.getByText('Lost');

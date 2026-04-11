@@ -16,8 +16,7 @@
  *   - Save icon integrated into the name row (right side), no separate Button
  *
  * Swipe feedback stamps:
- *   - Replaced icon-in-box with rotated bold text: "SAVE" in neon, "SKIP" in red
- *   - More editorial, less app-like
+ *   - Rotated bookmark (save) in brand-primary, "HIDE" typographic stamp for skip
  *
  * Rating overlay:
  *   - "Add points? (Optional)" header → tiny tracking-widest uppercase label
@@ -226,7 +225,7 @@ export function DiscoveryCard({
   return (
     <motion.div
       ref={containerRef as RefCallback<HTMLDivElement>}
-      className="relative w-full h-full overflow-hidden min-w-0 bg-black snap-start touch-pan-y"
+      className="group/card relative w-full h-full overflow-hidden min-w-0 bg-black snap-start touch-pan-y"
       style={{ x, rotate, opacity }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
@@ -289,12 +288,12 @@ export function DiscoveryCard({
         style={{ opacity: likeOpacity }}
         className="absolute top-1/2 left-6 z-50 pointer-events-none -translate-y-1/2"
       >
-        <p
-          className="text-2xl font-bold tracking-[0.2em] uppercase text-brand-primary"
+        <Bookmark
+          className="h-16 w-16 text-brand-primary"
+          strokeWidth={1.75}
           style={{ transform: "rotate(-12deg)" }}
-        >
-          Save
-        </p>
+          aria-hidden
+        />
       </motion.div>
       <motion.div
         style={{ opacity: nopeOpacity }}
@@ -400,13 +399,19 @@ export function DiscoveryCard({
                       {val}
                     </span>
                   )}
-                  {/* Label */}
+                  {/* Label — save option is icon-only; points stay typographic */}
                   <span
                     className={`text-2xs font-medium uppercase tracking-widest transition-colors ${
-                      isSelected ? "text-brand-primary" : "text-white/20"
+                      val === null
+                        ? "sr-only"
+                        : isSelected
+                          ? "text-brand-primary"
+                          : "text-white/20"
                     }`}
                   >
-                    {val === null ? "Save" : `${val} pt${val !== 1 ? "s" : ""}`}
+                    {val === null
+                      ? "Save without rating"
+                      : `${val} pt${val !== 1 ? "s" : ""}`}
                   </span>
                 </button>
               );

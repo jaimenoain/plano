@@ -39,13 +39,8 @@ export function FeedClusterCard({
       onClick={handleClick}
       className="w-full cursor-pointer pb-6 border-b border-border-default"
     >
-      {/* Category label */}
-      <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-        Activity
-      </span>
-
       {/* User attribution */}
-      <div className="flex items-center gap-2.5 mt-2">
+      <div className="flex items-center gap-2.5">
         <Avatar className="h-6 w-6 shrink-0">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
@@ -56,10 +51,7 @@ export function FeedClusterCard({
       {/* Activity list */}
       <div className="mt-3 space-y-2">
         {visible.map((entry) => (
-          <div key={entry.id} className="flex items-baseline gap-2">
-            <span className="text-xs text-text-disabled">
-              {entry.status === "pending" ? "saved" : "visited"}
-            </span>
+          <div key={entry.id}>
             <span className="text-lg font-semibold text-text-primary leading-tight">
               {entry.building.name}
             </span>

@@ -1,8 +1,10 @@
+import { Bookmark } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
 import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
+import { cn } from "@/lib/utils";
 
 /**
  * Award points badge. Renders filled black dots only — no empty placeholders.
@@ -58,7 +60,7 @@ export function FeedCompactCard({
 
   const username = entry.user?.username || "Unknown User";
   const mainTitle = entry.building.name;
-  const actionText = entry.status === "pending" ? "saved" : "visited";
+  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
 
   const cardImageSrc =
     getBuildingImageUrl(entry.building.main_image_url) ??
@@ -67,7 +69,7 @@ export function FeedCompactCard({
   return (
     <div
       onClick={handleCardClick}
-      className="flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
+      className="group/card flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
     >
       {/* Thumbnail */}
       {cardImageSrc && imageVisible && (
@@ -83,10 +85,10 @@ export function FeedCompactCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        {/* Category label */}
-        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-          {actionText}
-        </span>
+        <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary">
+          <span className="font-medium text-text-primary">{username}</span>
+          <span className="text-text-secondary normal-case"> {userActionVerb}</span>
+        </p>
 
         {/* Building name — editorial scale */}
         <h3 className="text-3xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
@@ -106,16 +108,23 @@ export function FeedCompactCard({
           </p>
         )}
 
-        <div className="flex items-center gap-2 min-w-0 mt-3">
-          <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-            {username}
-          </span>
+        <div className="flex items-center gap-2 min-w-0 mt-3 justify-end">
           <button
             type="button"
             onClick={handleSave}
-            className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto shrink-0"
+            aria-label={saved ? "Saved (demo)" : "Save (demo)"}
+            title={saved ? "Saved" : "Save"}
+            className={cn(
+              "shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
+              "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
+            )}
           >
-            {saved ? "Saved" : "Save"}
+            <Bookmark
+              className={cn("h-4 w-4", saved && "fill-text-primary text-text-primary")}
+              strokeWidth={1.75}
+              aria-hidden
+            />
           </button>
         </div>
       </div>

@@ -1,9 +1,21 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import type { ReactElement } from "react";
+import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { MemoryRouter } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReviewCardFeed } from "./ReviewCardFeed";
 import type { FeedReview } from "@/types/feed";
 // @vitest-environment happy-dom
+
+const queryClient = new QueryClient();
+
+function renderWithProviders(ui: ReactElement) {
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
 
 vi.mock("@/features/auth/hooks/useAuth", () => ({
   useAuth: vi.fn(() => ({ user: null })),
@@ -24,6 +36,14 @@ vi.mock("@/integrations/supabase/client", () => ({
 vi.mock("@/features/profile/components/FollowButton", () => ({
   FollowButton: () => null,
 }));
+
+vi.mock("@/features/profile/hooks/useUserBuildingStatuses", () => ({
+  useUserBuildingStatuses: () => ({ statuses: {}, ratings: {} }),
+}));
+
+afterEach(() => {
+  cleanup();
+});
 
 const baseEntry: FeedReview = {
   id: "rev-1",
@@ -55,24 +75,17 @@ const baseEntry: FeedReview = {
 
 describe("ReviewCardFeed", () => {
   it("renders building title and author for a standard feed entry", () => {
-    render(
-      <MemoryRouter>
-        <ReviewCardFeed entry={baseEntry} />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<ReviewCardFeed entry={baseEntry} />);
 
     expect(screen.getByTestId("review-card-feed-rev-1")).toBeTruthy();
     expect(screen.getByText("Test Tower")).toBeTruthy();
     expect(screen.getByText("pat")).toBeTruthy();
   });
 
-  it("applies elevated shadow when prominenceOverride is elevated", () => {
-    const { container } = render(
-      <MemoryRouter>
-        <ReviewCardFeed entry={baseEntry} prominenceOverride="elevated" />
-      </MemoryRouter>,
-    );
-    const article = container.querySelector('[data-testid="review-card-feed-rev-1"]');
-    expect(article?.className).toContain("shadow-card-elevated");
+  it("renders save as bookmark control with accessible name on non-compact card", () => {
+    renderWithProviders(<ReviewCardFeed entry={baseEntry} />);
+    expect(
+      screen.getByRole("button", { name: /save building to your list/i }),
+    ).toBeTruthy();
   });
 });

@@ -596,7 +596,7 @@ export default function BuildingDetails() {
           const img = images[0];
           if (!img) return null;
           return (
-            <div key={block.key} className="mb-0.5">
+            <div key={block.key}>
               <div
                 className="group relative aspect-video w-full cursor-pointer overflow-hidden bg-surface-muted"
                 onClick={() => setSelectedImage(img)}
@@ -642,7 +642,7 @@ export default function BuildingDetails() {
           const img = images[0];
           if (!img) return null;
           return (
-            <div key={block.key} className="mb-0.5 grid grid-cols-1 sm:grid-cols-2">
+            <div key={block.key} className="grid grid-cols-1 sm:grid-cols-2">
               <div
                 className="group aspect-video cursor-pointer overflow-hidden bg-surface-muted sm:aspect-[4/5]"
                 onClick={() => setSelectedImage(img)}
@@ -669,7 +669,7 @@ export default function BuildingDetails() {
         case "mosaic": {
           const [first, second, third, ...rest] = images;
           return (
-            <div key={block.key} className="mb-0.5">
+            <div key={block.key}>
               <div
                 className="grid gap-0.5"
                 style={{ gridTemplateColumns: "3fr 2fr", gridTemplateRows: "280px" }}
@@ -750,7 +750,7 @@ export default function BuildingDetails() {
           if (!img) return null;
           const isTall = topLikes >= 10;
           return (
-            <div key={block.key} className="group mb-0.5">
+            <div key={block.key} className="group">
               <div
                 className={cn(
                   "relative w-full cursor-pointer overflow-hidden bg-surface-muted",
@@ -1497,7 +1497,9 @@ export default function BuildingDetails() {
           {/* Stream */}
           <WidgetErrorBoundary>
             {streamBlocks.length > 0 ? (
-              <div>{streamBlocks.map((block) => renderStreamBlock(block))}</div>
+              <div className="space-y-10">
+                {streamBlocks.map((block) => renderStreamBlock(block))}
+              </div>
             ) : (
               <div className="flex aspect-video flex-col items-center justify-center bg-surface-muted/20 p-6 text-center text-text-secondary">
                 <ImageIcon className="mb-3 h-10 w-10 text-text-disabled" />

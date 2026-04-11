@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Image as ImageIcon } from "lucide-react";
+import { Bookmark, Image as ImageIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,8 @@ import { FollowButton } from "@/features/profile/components/FollowButton";
 import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
 import { useReviewCardData, type ReviewCardMediaItem } from "@/features/feed/hooks/useReviewCardData";
 import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
+import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Award points badge. Renders filled black dots only — no empty placeholders.
@@ -104,6 +106,8 @@ export function ReviewCardFeed({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { statuses } = useUserBuildingStatuses();
+  const queryClient = useQueryClient();
   const isCompact = variant === "compact";
   const effectiveSpec = useMemo((): CardSpec => {
     const base = specProp ?? resolveCardSpec(entry);
@@ -124,6 +128,9 @@ export function ReviewCardFeed({
   }, [entry.id]);
 
   if (!data) return null;
+
+  const isSavedToList =
+    entry.building?.id != null && statuses[entry.building.id] === "pending";
 
   const {
     username,
@@ -182,6 +189,7 @@ export function ReviewCardFeed({
       );
       if (error) throw error;
       toast({ title: "Saved to your list" });
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
     } catch (_error) {
       toast({ variant: "destructive", title: "Failed to save" });
     } finally {
@@ -249,13 +257,26 @@ export function ReviewCardFeed({
     </div>
   );
 
+  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
+
+  // ── Activity lead ───────────────────────────────────────────────────────────
+  // Replaces category labels ("Review" / "Building"): who did what, above the title.
+  const ActivityLead = !hideUser && (
+    <p
+      className={cn(
+        "font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary min-w-0",
+        !isCompact ? "mb-2" : "mb-1",
+      )}
+    >
+      <span className="font-medium text-text-primary">{username}</span>
+      <span className="text-text-secondary normal-case"> {userActionVerb}</span>
+    </p>
+  );
+
   // ── Byline ──────────────────────────────────────────────────────────────────
-  // Space Mono strip: NAME · [ARCHITECT badge] · [Follow] · timestamp.
+  // Architect badge, follow CTA, timestamp — username lives on ActivityLead only.
   const Byline = !hideUser && (
     <div className="flex items-center gap-2 min-w-0">
-      <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-        {username}
-      </span>
       {isVerifiedArchitect && (
         <span className="font-mono text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
           Architect
@@ -275,14 +296,8 @@ export function ReviewCardFeed({
   // ── Building headline ───────────────────────────────────────────────────────
   // Only rendered when !hideBuildingInfo (e.g. suppressed on building detail page).
   // Scales with prominence: elevated → editorial hero size; standard → display size.
-  // Category label ("Review" / "Building") restored above headline for editorial context.
   const BuildingHeadline = !hideBuildingInfo && (
     <div>
-      {!isCompact && (
-        <span className="font-mono text-[10px] tracking-widest uppercase text-text-secondary block mb-2">
-          {entry.status === "visited" ? "Review" : "Building"}
-        </span>
-      )}
       <h2
         className={`font-sans font-black tracking-tight leading-none text-text-primary ${
           isCompact
@@ -448,7 +463,7 @@ export function ReviewCardFeed({
   );
 
   // ── Footer ───────────────────────────────────────────────────────────────────
-  // Text-only actions in Space Mono — no icons.
+  // Likes / comments in mono; save is a bookmark (desktop: show on card hover).
   const Footer = (
     <div
       className={`flex w-full max-w-full min-w-0 items-center gap-3 flex-wrap mt-auto ${
@@ -478,13 +493,26 @@ export function ReviewCardFeed({
       </button>
       {!isCompact && (
         <button
+          type="button"
           onClick={handleSave}
-          className={`font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto ${
-            isSaving ? "opacity-50" : ""
-          }`}
           disabled={isSaving}
+          aria-label={isSavedToList ? "Saved to your list" : "Save building to your list"}
+          title={isSavedToList ? "Saved to your list" : "Save to your list"}
+          className={cn(
+            "ml-auto shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
+            "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
+            isSaving && "pointer-events-none opacity-50",
+          )}
         >
-          Save
+          <Bookmark
+            className={cn(
+              "h-4 w-4",
+              isSavedToList && "fill-text-primary text-text-primary",
+            )}
+            strokeWidth={1.75}
+            aria-hidden
+          />
         </button>
       )}
     </div>
@@ -508,6 +536,7 @@ export function ReviewCardFeed({
             {MediaCompact}
             {/* Text lives in its own padded sub-div — image is flush to card edges. */}
             <div className="flex flex-col flex-1 min-w-0 px-3 py-2.5 gap-2">
+              {ActivityLead}
               {Byline}
               {BuildingHeadline}
               {entry.rating != null && entry.rating > 0 && (
@@ -522,6 +551,7 @@ export function ReviewCardFeed({
         ) : useCompactStackLayout ? (
           <div className={cn("flex flex-col", isArchitectOfBuilding && "pl-3 md:pl-4")}>
             <div className="flex flex-col gap-3">
+              {ActivityLead}
               {Byline}
               {BuildingHeadline}
               {entry.rating != null && entry.rating > 0 && (
@@ -568,6 +598,7 @@ export function ReviewCardFeed({
                   : "max-w-xl",
               )}
             >
+              {ActivityLead}
               {Byline}
               {BuildingHeadline}
               {entry.rating != null && entry.rating > 0 && (
